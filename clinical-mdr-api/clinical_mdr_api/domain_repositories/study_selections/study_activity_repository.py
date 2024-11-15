@@ -36,12 +36,15 @@ class SelectionHistory:
 
     study_selection_uid: str
     study_activity_subgroup_uid: str
+    study_activity_subgroup_order: int | None
     activity_subgroup_uid: str
     study_activity_group_uid: str
+    study_activity_group_order: int | None
     activity_group_uid: str
     activity_uid: str
     soa_group_term_uid: str
     study_soa_group_uid: str
+    study_soa_group_order: int | None
     user_initials: str
     change_type: str
     start_date: datetime.datetime
@@ -62,37 +65,33 @@ class StudySelectionActivityRepository(
     def _create_value_object_from_repository(
         self, selection: dict, acv: bool
     ) -> StudySelectionActivityVO:
+        study_activity_subgroup = selection.get("study_activity_subgroup", {})
+        study_activity_group = selection.get("study_activity_group", {})
         return StudySelectionActivityVO.from_input_values(
             study_selection_uid=selection["study_selection_uid"],
-            study_activity_subgroup_uid=selection.get(
-                "study_activity_subgroup", {}
-            ).get("selection_uid")
-            if selection.get("study_activity_subgroup")
+            study_activity_subgroup_uid=study_activity_subgroup.get("selection_uid")
+            if study_activity_subgroup
             else None,
-            activity_subgroup_uid=selection.get("study_activity_subgroup", {}).get(
-                "activity_subgroup_uid"
-            )
-            if selection.get("study_activity_subgroup")
+            study_activity_subgroup_order=study_activity_subgroup.get("order")
+            if study_activity_subgroup
             else None,
-            activity_subgroup_name=selection.get("study_activity_subgroup", {}).get(
-                "activity_subgroup_name"
-            )
-            if selection.get("study_activity_subgroup")
+            activity_subgroup_uid=study_activity_subgroup.get("activity_subgroup_uid")
+            if study_activity_subgroup
             else None,
-            study_activity_group_uid=selection.get("study_activity_group", {}).get(
-                "selection_uid"
-            )
-            if selection.get("study_activity_group")
+            activity_subgroup_name=study_activity_subgroup.get("activity_subgroup_name")
+            if study_activity_subgroup
             else None,
-            activity_group_uid=selection.get("study_activity_group", {}).get(
-                "activity_group_uid"
-            )
-            if selection.get("study_activity_group")
+            study_activity_group_uid=study_activity_group.get("selection_uid")
+            if study_activity_group
             else None,
-            activity_group_name=selection.get("study_activity_group", {}).get(
-                "activity_group_name"
-            )
-            if selection.get("study_activity_group")
+            study_activity_group_order=study_activity_group.get("order")
+            if study_activity_group
+            else None,
+            activity_group_uid=study_activity_group.get("activity_group_uid")
+            if study_activity_group
+            else None,
+            activity_group_name=study_activity_group.get("activity_group_name")
+            if study_activity_group
             else None,
             study_uid=selection["study_uid"],
             activity_uid=selection["activity_uid"],
@@ -101,6 +100,7 @@ class StudySelectionActivityRepository(
             activity_library_name=selection["activity_library_name"],
             soa_group_term_uid=selection["soa_group_term_uid"],
             study_soa_group_uid=selection["study_soa_group_uid"],
+            study_soa_group_order=selection["study_soa_group_order"],
             activity_order=selection["activity_order"],
             show_activity_in_protocol_flowchart=selection[
                 "show_activity_in_protocol_flowchart"
@@ -178,7 +178,8 @@ class StudySelectionActivityRepository(
                         selection_uid: study_activity_subgroup_selection.uid, 
                         activity_subgroup_uid:activity_subgroup_root.uid,
                         activity_subgroup_name:activity_subgroup_value.name,
-                        show_activity_subgroup_in_protocol_flowchart:study_activity_subgroup_selection.show_activity_subgroup_in_protocol_flowchart
+                        show_activity_subgroup_in_protocol_flowchart:study_activity_subgroup_selection.show_activity_subgroup_in_protocol_flowchart,
+                        order: study_activity_subgroup_selection.order
                     }]) AS study_activity_subgroup,
                 head([(sa)-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_GROUP]->(study_activity_group_selection)
                     -[:HAS_SELECTED_ACTIVITY_GROUP]->(activity_group_value:ActivityGroupValue)<-[:HAS_VERSION]-(activity_group_root:ActivityGroupRoot) | 
@@ -186,10 +187,12 @@ class StudySelectionActivityRepository(
                         selection_uid: study_activity_group_selection.uid, 
                         activity_group_uid: activity_group_root.uid,
                         activity_group_name:activity_group_value.name,
-                        show_activity_group_in_protocol_flowchart: study_activity_group_selection.show_activity_group_in_protocol_flowchart
+                        show_activity_group_in_protocol_flowchart: study_activity_group_selection.show_activity_group_in_protocol_flowchart,
+                        order: study_activity_group_selection.order
                     }]) AS study_activity_group,
                 elr.uid AS soa_group_term_uid,
                 soa_group.uid AS study_soa_group_uid,
+                soa_group.order AS study_soa_group_order,
                 coalesce(soa_group.show_soa_group_in_protocol_flowchart, false) AS show_soa_group_in_protocol_flowchart,
                 sa.accepted_version AS accepted_version,
                 ar.uid AS activity_uid,
@@ -202,33 +205,34 @@ class StudySelectionActivityRepository(
     def get_selection_history(
         self, selection: dict, change_type: str, end_date: datetime
     ):
+        study_activity_subgroup = selection.get("study_activity_subgroup", {})
+        study_activity_group = selection.get("study_activity_group", {})
         return SelectionHistory(
             study_selection_uid=selection["study_selection_uid"],
-            study_activity_subgroup_uid=selection.get(
-                "study_activity_subgroup", {}
-            ).get("selection_uid")
-            if selection.get("study_activity_subgroup")
+            study_activity_subgroup_uid=study_activity_subgroup.get("selection_uid")
+            if study_activity_subgroup
             else None,
-            activity_subgroup_uid=selection.get("study_activity_subgroup", {}).get(
-                "activity_subgroup_uid"
-            )
-            if selection.get("study_activity_subgroup")
+            study_activity_subgroup_order=study_activity_subgroup.get("order")
+            if study_activity_subgroup
             else None,
-            study_activity_group_uid=selection.get("study_activity_group", {}).get(
-                "selection_uid"
-            )
-            if selection.get("study_activity_group")
+            activity_subgroup_uid=study_activity_subgroup.get("activity_subgroup_uid")
+            if study_activity_subgroup
             else None,
-            activity_group_uid=selection.get("study_activity_group", {}).get(
-                "activity_group_uid"
-            )
-            if selection.get("study_activity_group")
+            study_activity_group_uid=study_activity_group.get("selection_uid")
+            if study_activity_group
+            else None,
+            study_activity_group_order=study_activity_group.get("order")
+            if study_activity_group
+            else None,
+            activity_group_uid=study_activity_group.get("activity_group_uid")
+            if study_activity_group
             else None,
             activity_uid=selection["activity_uid"],
             activity_order=selection["activity_order"],
             activity_version=selection["activity_version"],
             soa_group_term_uid=selection["soa_group_term_uid"],
             study_soa_group_uid=selection["study_soa_group_uid"],
+            study_soa_group_order=selection["study_soa_group_order"],
             user_initials=selection["user_initials"],
             change_type=change_type,
             start_date=convert_to_datetime(value=selection["start_date"]),
@@ -293,17 +297,20 @@ class StudySelectionActivityRepository(
                             {
                                 selection_uid: study_activity_subgroup_selection.uid, 
                                 activity_subgroup_uid:activity_subgroup_root.uid,
-                                show_activity_subgroup_in_protocol_flowchart:study_activity_subgroup_selection.show_activity_subgroup_in_protocol_flowchart
+                                show_activity_subgroup_in_protocol_flowchart:study_activity_subgroup_selection.show_activity_subgroup_in_protocol_flowchart,
+                                order: study_activity_subgroup_selection.order
                             }]) AS study_activity_subgroup,
                         head([(all_sa)-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_GROUP]->(study_activity_group_selection)
                             -[:HAS_SELECTED_ACTIVITY_GROUP]->(:ActivityGroupValue)<-[:HAS_VERSION]-(activity_group_root:ActivityGroupRoot) | 
                             {
                                 selection_uid: study_activity_group_selection.uid, 
                                 activity_group_uid: activity_group_root.uid,
-                                show_activity_group_in_protocol_flowchart:study_activity_group_selection.show_activity_group_in_protocol_flowchart
+                                show_activity_group_in_protocol_flowchart:study_activity_group_selection.show_activity_group_in_protocol_flowchart,
+                                order: study_activity_group_selection.order
                             }]) AS study_activity_group,
                         fgr.uid AS soa_group_term_uid,
                         soa_group.uid AS study_soa_group_uid,
+                        soa_group.order AS study_soa_group_order,
                         coalesce(soa_group.show_soa_group_in_protocol_flowchart, false) AS show_soa_group_in_protocol_flowchart,
                         ar.uid AS activity_uid,
                         asa.date AS start_date,

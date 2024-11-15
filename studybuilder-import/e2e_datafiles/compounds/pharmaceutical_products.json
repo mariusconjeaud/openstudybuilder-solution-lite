@@ -84,48 +84,6 @@
         ]
     },
     {
-        "external_id": "NPH INSULIN",
-        "dosage_forms": [
-            {
-                "name": "Injectable"
-            }
-        ],
-        "routes_of_administration": [
-            {
-                "name": "Subcutaneous"
-            }
-        ],
-        "formulations": [
-            {
-                "external_id": "B",
-                "ingredients": [
-                    {
-                        "external_id": "IA",
-                        "formulation_name": "A",
-                        "active_substance": {
-                            "external_id": "NPH INSULIN"
-                        },
-                        "strength": {
-                            "value": 5,
-                            "unit_label": "mg/mL"
-                        },
-                        "half_life": {
-                            "value": 8,
-                            "unit_label": "weeks"
-                        },
-                        "lag_times": [
-                            {
-                                "value": 8,
-                                "unit_label": "weeks",
-                                "sdtm_domain_label": "Adverse Event Domain"
-                            }
-                        ]
-                    }
-                ]
-            }
-        ]
-    },
-    {
         "external_id": "cagrilintide semaglutide",
         "dosage_forms": [
             {
@@ -145,7 +103,7 @@
                         "external_id": "IA",
                         "formulation_name": "B",
                         "active_substance": {
-                            "external_id": "CAGRILINTIDE"
+                            "external_id": "cagrilintide"
                         },
                         "strength": {
                             "value": 6.8,

@@ -1,5 +1,5 @@
 """
-Tests for /studies/{uid}/study-activity-instances endpoints
+Tests for /studies/{study_uid}/study-activity-instances endpoints
 """
 
 # pylint: disable=unused-argument

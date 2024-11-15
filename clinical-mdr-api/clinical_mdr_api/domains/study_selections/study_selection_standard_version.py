@@ -14,6 +14,7 @@ class StudyStandardVersionVO:
     start_date: datetime.datetime
     author: str
     ct_package_uid: str
+    automatically_created: bool = False
     uid: str | None = None
     end_date: datetime.datetime | None = None
 

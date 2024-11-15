@@ -3,6 +3,7 @@ import os
 from neomodel import db
 from starlette.testclient import TestClient
 
+from clinical_mdr_api.config import SDTM_CT_CATALOGUE_NAME
 from clinical_mdr_api.domain_repositories.models.study import StudyRoot
 from clinical_mdr_api.domain_repositories.models.syntax import (
     EndpointRoot,
@@ -225,6 +226,9 @@ class StudyArmsTest(api.APITest):
         inject_and_clear_db(self.TEST_DB_NAME)
         db.cypher_query(STARTUP_CT_TERM_NAME_CYPHER)
         db.cypher_query(STARTUP_STUDY_ARM_CYPHER)
+        TestUtils.set_study_standard_version(
+            study_uid="study_root", create_codelists_and_terms_for_package=False
+        )
         from clinical_mdr_api import main
 
         self.test_client = TestClient(main.app)
@@ -258,6 +262,10 @@ class StudyElementsTest(api.APITest):
         db.cypher_query(STARTUP_CT_CATALOGUE_CYPHER)
         db.cypher_query(STARTUP_CT_TERM_NAME_CYPHER)
         db.cypher_query(STARTUP_STUDY_ARM_CYPHER)
+        TestUtils.set_study_standard_version(
+            study_uid="study_root", create_codelists_and_terms_for_package=False
+        )
+
         from clinical_mdr_api import main
 
         self.test_client = TestClient(main.app)
@@ -381,6 +389,10 @@ class StudyBranchArmsTest(api.APITest):
         db.cypher_query(STARTUP_CT_CATALOGUE_CYPHER)
         StudyRoot.generate_node_uids_if_not_present()
         self.study = StudyRoot.nodes.all()[0]
+        TestUtils.create_ct_catalogue(catalogue_name=SDTM_CT_CATALOGUE_NAME)
+        TestUtils.set_study_standard_version(
+            study_uid=self.study.uid, create_codelists_and_terms_for_package=False
+        )
         # Create an epoch
         create_study_epoch_codelists_ret_cat_and_lib()
         catalogue_name, library_name = get_catalogue_name_library_name()
@@ -629,6 +641,10 @@ class StudyDesignCellsTest(api.APITest):
 
         StudyRoot.generate_node_uids_if_not_present()
         self.study = StudyRoot.nodes.all()[0]
+        TestUtils.create_ct_catalogue(catalogue_name=SDTM_CT_CATALOGUE_NAME)
+        TestUtils.set_study_standard_version(
+            study_uid=self.study.uid, create_codelists_and_terms_for_package=False
+        )
 
         # Create an epoch
         create_study_epoch_codelists_ret_cat_and_lib()
@@ -698,6 +714,10 @@ class StudyDesignJointTest(api.APITest):
         db.cypher_query(STARTUP_CT_CATALOGUE_CYPHER)
         StudyRoot.generate_node_uids_if_not_present()
         self.study = StudyRoot.nodes.all()[0]
+        TestUtils.create_ct_catalogue(catalogue_name=SDTM_CT_CATALOGUE_NAME)
+        TestUtils.set_study_standard_version(
+            study_uid=self.study.uid, create_codelists_and_terms_for_package=False
+        )
         # Create an epoch
         create_study_epoch_codelists_ret_cat_and_lib()
         catalogue_name, library_name = get_catalogue_name_library_name()

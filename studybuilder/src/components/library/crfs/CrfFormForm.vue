@@ -209,7 +209,7 @@
         >
           <template #selection="{ item, index }">
             <div v-if="index === 0" data-cy="form-aliases">
-              <span>{{ item.name }}</span>
+              <span>{{ item.title }}</span>
             </div>
             <span v-if="index === 1" class="grey--text text-caption">
               (+{{ form.alias_uids.length - 1 }})

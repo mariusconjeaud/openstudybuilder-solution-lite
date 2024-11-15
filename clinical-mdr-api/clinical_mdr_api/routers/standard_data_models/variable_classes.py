@@ -164,7 +164,7 @@ def get_distinct_values_for_header(
 
 
 @router.get(
-    "/class-variables/{uid}",
+    "/class-variables/{class_variable_uid}",
     dependencies=[rbac.LIBRARY_READ],
     summary="Get details on a specific class variable",
     description="""
@@ -187,7 +187,7 @@ Possible errors:
     },
 )
 def get_class_variable(
-    uid: str = ClassVariableUID,
+    class_variable_uid: str = ClassVariableUID,
     data_model_name: str = Query(
         ...,
         description="The name of the selected Data model, for instance 'SDTM'",
@@ -203,7 +203,7 @@ def get_class_variable(
 ):
     class_variable_service = VariableClassService()
     return class_variable_service.get_by_uid(
-        uid=uid,
+        uid=class_variable_uid,
         data_model_name=data_model_name,
         data_model_version=data_model_version,
         dataset_class_name=dataset_class_name,

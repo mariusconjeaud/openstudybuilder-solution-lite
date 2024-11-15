@@ -554,7 +554,8 @@ class StudyFlowchartService:
             for visit in self._get_study_visits(
                 study_uid, study_value_version=study_value_version
             )
-            if visit.show_visit and visit.study_epoch_name != config.BASIC_EPOCH_NAME
+            if visit.show_visit
+            and visit.study_epoch.sponsor_preferred_name != config.BASIC_EPOCH_NAME
         }
         # group visits in nested dict: study_epoch_uid -> [ consecutive_visit_group |  visit_uid ] -> [Visits]
         grouped_visits = self._group_visits(visits.values())
@@ -758,7 +759,8 @@ class StudyFlowchartService:
             for visit in self._get_study_visits(
                 study_uid, study_value_version=study_value_version
             )
-            if visit.show_visit and visit.study_epoch_name != config.BASIC_EPOCH_NAME
+            if visit.show_visit
+            and visit.study_epoch.sponsor_preferred_name != config.BASIC_EPOCH_NAME
         }
 
         # group visits in nested dict: study_epoch_uid -> [ consecutive_visit_group |  visit_uid ] -> [Visits]
@@ -843,7 +845,7 @@ class StudyFlowchartService:
 
                     rows[-2].cells.append(
                         TableCell(
-                            text=visit.study_epoch_name,
+                            text=visit.study_epoch.sponsor_preferred_name,
                             span=len(visit_groups),
                             style="header2",
                         )
@@ -1042,7 +1044,7 @@ class StudyFlowchartService:
 
                     epochs_row.cells.append(
                         TableCell(
-                            text=visit.study_epoch_name,
+                            text=visit.study_epoch.sponsor_preferred_name,
                             span=len(visit_groups),
                             style="header1",
                             refs=[
@@ -1071,7 +1073,8 @@ class StudyFlowchartService:
                             prev_visit_type_uid = visit.visit_type_uid
                             milestones_row.cells.append(
                                 prev_milestone_cell := TableCell(
-                                    visit.visit_type_name, style="header1"
+                                    visit.visit_type.sponsor_preferred_name,
+                                    style="header1",
                                 )
                             )
 
@@ -1121,6 +1124,13 @@ class StudyFlowchartService:
                     visit.max_visit_window_value,
                 ):
                     if (
+                        visit.min_visit_window_value
+                        == visit.max_visit_window_value
+                        == 0
+                    ):
+                        # visit window is zero
+                        visit_window = "0"
+                    elif (
                         visit.min_visit_window_value * -1
                         == visit.max_visit_window_value
                     ):
@@ -1777,7 +1787,7 @@ class StudyFlowchartService:
         ORDER BY study_activity.order, study_visit.visit_number
         RETURN
             CASE
-                WHEN has_version.status = "RELEASED"
+                WHEN has_version.status IN ["RELEASED", "LOCKED"]
                 THEN has_version.version
                 ELSE "LATEST on "+apoc.temporal.format(datetime(), 'yyyy-MM-dd HH:mm:ss zzz')
             END as study_version,
@@ -1851,7 +1861,7 @@ class StudyFlowchartService:
             ORDER BY study_activity.order, study_visit.visit_number
             RETURN
                 CASE
-                    WHEN has_version.status = "RELEASED"
+                    WHEN has_version.status IN ["RELEASED", "LOCKED"]
                     THEN has_version.version
                     ELSE "LATEST on "+apoc.temporal.format(datetime(), 'yyyy-MM-dd HH:mm:ss zzz')
                 END as study_version,

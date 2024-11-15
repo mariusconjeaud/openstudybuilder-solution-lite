@@ -1,5 +1,5 @@
 """
-Tests for /studies/{uid}/study-endpoints endpoints
+Tests for /studies/{study_uid}/study-endpoints endpoints
 """
 
 # pylint: disable=unused-argument
@@ -59,6 +59,7 @@ def test_data():
     inject_base_data()
     global study
     study = TestUtils.create_study()
+    TestUtils.set_study_standard_version(study_uid=study.uid)
     TestUtils.create_study_fields_configuration()
 
     db.cypher_query(CREATE_BASE_TEMPLATE_PARAMETER_TREE)

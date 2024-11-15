@@ -189,7 +189,7 @@ def create(
 
 
 @router.get(
-    "/terms/{uid}",
+    "/terms/{dictionary_term_uid}",
     dependencies=[rbac.LIBRARY_READ],
     summary="List details on the specific dictionary term",
     description="""
@@ -212,13 +212,13 @@ Possible errors:
         500: _generic_descriptions.ERROR_500,
     },
 )
-def get_codelists(uid: str = DictionaryTermUID):
+def get_codelists(dictionary_term_uid: str = DictionaryTermUID):
     dictionary_term_service = DictionaryTermGenericService()
-    return dictionary_term_service.get_by_uid(term_uid=uid)
+    return dictionary_term_service.get_by_uid(term_uid=dictionary_term_uid)
 
 
 @router.get(
-    "/terms/{uid}/versions",
+    "/terms/{dictionary_term_uid}/versions",
     dependencies=[rbac.LIBRARY_READ],
     summary="List version history for a specific dictionary term",
     description="""
@@ -240,18 +240,18 @@ Possible errors:
     responses={
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The dictionary term with the specified 'uid' wasn't found.",
+            "description": "Not Found - The dictionary term with the specified 'dictionary_term_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def get_versions(uid: str = DictionaryTermUID):
+def get_versions(dictionary_term_uid: str = DictionaryTermUID):
     dictionary_term_service = DictionaryTermGenericService()
-    return dictionary_term_service.get_version_history(term_uid=uid)
+    return dictionary_term_service.get_version_history(term_uid=dictionary_term_uid)
 
 
 @router.patch(
-    "/terms/{uid}",
+    "/terms/{dictionary_term_uid}",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Update a dictionary term",
     description="""
@@ -288,25 +288,25 @@ Possible errors:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The term with the specified 'uid' wasn't found.",
+            "description": "Not Found - The term with the specified 'dictionary_term_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def edit(
-    uid: str = DictionaryTermUID,
+    dictionary_term_uid: str = DictionaryTermUID,
     dictionary_term_input: models.DictionaryTermEditInput = Body(
         description="The new parameter terms for the dictionary term including the change description.",
     ),
 ):
     dictionary_term_service = DictionaryTermGenericService()
     return dictionary_term_service.edit_draft(
-        term_uid=uid, term_input=dictionary_term_input
+        term_uid=dictionary_term_uid, term_input=dictionary_term_input
     )
 
 
 @router.post(
-    "/terms/{uid}/versions",
+    "/terms/{dictionary_term_uid}/versions",
     dependencies=[rbac.LIBRARY_WRITE],
     summary=" Create a new version of a dictionary term",
     description="""
@@ -340,18 +340,18 @@ Possible errors:
             "model": ErrorResponse,
             "description": "Not Found - Reasons include e.g.: \n"
             "- The dictionary term is not in final status.\n"
-            "- The dictionary term with the specified 'uid' could not be found.",
+            "- The dictionary term with the specified 'dictionary_term_uid' could not be found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def create_new_version(uid: str = DictionaryTermUID):
+def create_new_version(dictionary_term_uid: str = DictionaryTermUID):
     dictionary_term_service = DictionaryTermGenericService()
-    return dictionary_term_service.create_new_version(term_uid=uid)
+    return dictionary_term_service.create_new_version(term_uid=dictionary_term_uid)
 
 
 @router.post(
-    "/terms/{uid}/approvals",
+    "/terms/{dictionary_term_uid}/approvals",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Approve draft version of the dictionary term",
     description="""
@@ -384,18 +384,18 @@ Possible errors:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The term with the specified 'uid' wasn't found.",
+            "description": "Not Found - The term with the specified 'dictionary_term_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def approve(uid: str = DictionaryTermUID):
+def approve(dictionary_term_uid: str = DictionaryTermUID):
     dictionary_term_service = DictionaryTermGenericService()
-    return dictionary_term_service.approve(term_uid=uid)
+    return dictionary_term_service.approve(term_uid=dictionary_term_uid)
 
 
 @router.delete(
-    "/terms/{uid}/activations",
+    "/terms/{dictionary_term_uid}/activations",
     dependencies=[rbac.LIBRARY_WRITE],
     summary=" Inactivate final version of a dictionary term",
     description="""
@@ -427,18 +427,18 @@ Possible errors:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The term with the specified 'uid' could not be found.",
+            "description": "Not Found - The term with the specified 'dictionary_term_uid' could not be found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def inactivate(uid: str = DictionaryTermUID):
+def inactivate(dictionary_term_uid: str = DictionaryTermUID):
     dictionary_term_service = DictionaryTermGenericService()
-    return dictionary_term_service.inactivate_final(term_uid=uid)
+    return dictionary_term_service.inactivate_final(term_uid=dictionary_term_uid)
 
 
 @router.post(
-    "/terms/{uid}/activations",
+    "/terms/{dictionary_term_uid}/activations",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Reactivate retired version of a dictionary term",
     description="""
@@ -470,18 +470,18 @@ Possible errors:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The term with the specified 'uid' could not be found.",
+            "description": "Not Found - The term with the specified 'dictionary_term_uid' could not be found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def reactivate(uid: str = DictionaryTermUID):
+def reactivate(dictionary_term_uid: str = DictionaryTermUID):
     dictionary_term_service = DictionaryTermGenericService()
-    return dictionary_term_service.reactivate_retired(term_uid=uid)
+    return dictionary_term_service.reactivate_retired(term_uid=dictionary_term_uid)
 
 
 @router.delete(
-    "/terms/{uid}",
+    "/terms/{dictionary_term_uid}",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Delete draft version of a dictionary term",
     description="""
@@ -511,14 +511,14 @@ Possible errors:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - An term with the specified 'uid' could not be found.",
+            "description": "Not Found - An term with the specified 'dictionary_term_uid' could not be found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def delete_ct_term(uid: str = DictionaryTermUID):
+def delete_ct_term(dictionary_term_uid: str = DictionaryTermUID):
     dictionary_term_service = DictionaryTermGenericService()
-    dictionary_term_service.soft_delete(term_uid=uid)
+    dictionary_term_service.soft_delete(term_uid=dictionary_term_uid)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
@@ -554,7 +554,7 @@ def create_substance(
 
 
 @router.get(
-    "/substances/{uid}",
+    "/substances/{dictionary_term_uid}",
     dependencies=[rbac.LIBRARY_READ],
     summary="Details of the specific substance dictionary term",
     description="""
@@ -577,9 +577,9 @@ Possible errors:
         500: _generic_descriptions.ERROR_500,
     },
 )
-def get_substance_by_id(uid: str = DictionaryTermUID):
+def get_substance_by_id(dictionary_term_uid: str = DictionaryTermUID):
     dictionary_term_service = DictionaryTermSubstanceService()
-    return dictionary_term_service.get_by_uid(term_uid=uid)
+    return dictionary_term_service.get_by_uid(term_uid=dictionary_term_uid)
 
 
 @router.get(
@@ -640,7 +640,7 @@ def get_substances(
 
 
 @router.patch(
-    "/substances/{uid}",
+    "/substances/{dictionary_term_uid}",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Update a substance dictionary term",
     description="""
@@ -675,18 +675,18 @@ Possible errors:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The term with the specified 'uid' wasn't found.",
+            "description": "Not Found - The term with the specified 'dictionary_term_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def edit_substance(
-    uid: str = DictionaryTermUID,
+    dictionary_term_uid: str = DictionaryTermUID,
     dictionary_term_input: models.DictionaryTermSubstanceEditInput = Body(
         description="The new parameter terms for the dictionary term including the change description.",
     ),
 ):
     dictionary_term_service = DictionaryTermSubstanceService()
     return dictionary_term_service.edit_draft(
-        term_uid=uid, term_input=dictionary_term_input
+        term_uid=dictionary_term_uid, term_input=dictionary_term_input
     )

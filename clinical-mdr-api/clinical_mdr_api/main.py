@@ -128,7 +128,7 @@ allows any request to specify any user id value. If the `X-Test-User-Id` header 
 
 ## System information:
 
-System information is provided by a separate [System Information](../system/docs) sub-app which does not require authentication.
+System information is provided by a separate [System Information](./system/docs) sub-app which does not require authentication.
 """,
 )
 
@@ -174,6 +174,11 @@ def pydantic_validation_error_handler(request: Request, exception: ValidationErr
 from clinical_mdr_api import routers
 
 # Include routers here
+app.include_router(
+    routers.feature_flags_router,
+    prefix="/feature-flags",
+    tags=["Feature Flags"],
+)
 app.include_router(
     routers.notifications_router,
     prefix="/notifications",

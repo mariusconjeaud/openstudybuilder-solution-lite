@@ -1,4 +1,5 @@
-from typing import Any, Callable, Self
+from datetime import datetime
+from typing import Any, Callable, Self, Sequence
 
 from pydantic import Field
 
@@ -272,6 +273,69 @@ class SimpleCTTermAttributes(BaseModel):
     preferred_term: str | None = Field(
         None, title="preferred_term", description="", nullable=True
     )
+
+
+class SimpleCTTermNameWithConflictFlag(BaseModel):
+    @classmethod
+    def from_ct_code(
+        cls,
+        c_code: str,
+        find_term_by_uid: Callable[[str], Any | None],
+        at_specific_date=None,
+    ) -> Self | Sequence[Self] | None:
+        simple_ctterm_model = None
+        if c_code is not None:
+            if "ct_term_generic_repository" in find_term_by_uid.__module__:
+                term = find_term_by_uid(c_code, at_specific_date=at_specific_date)
+            else:
+                term = find_term_by_uid(c_code)
+
+            if term is not None:
+                if hasattr(term, "ct_term_vo"):
+                    simple_ctterm_model = cls(
+                        term_uid=c_code,
+                        sponsor_preferred_name=term.ct_term_vo.name,
+                        queried_effective_date=term.ct_term_vo.queried_effective_date,
+                        date_conflict=term.ct_term_vo.date_conflict,
+                    )
+            else:
+                simple_ctterm_model = cls(term_uid=c_code)
+        else:
+            simple_ctterm_model = None
+        return simple_ctterm_model
+
+    @classmethod
+    def from_ct_codes(
+        cls,
+        c_codes: Sequence[str],
+        find_term_by_uids: Callable[[str], Any | None],
+        at_specific_date=None,
+    ) -> Self | Sequence[Self] | None:
+        simple_ctterm_models = []
+        if c_codes:
+            terms: Sequence[CTTermNameAR] = find_term_by_uids(
+                term_uids=c_codes, at_specific_date=at_specific_date
+            )
+            for term in terms:
+                if hasattr(term, "ct_term_vo"):
+                    simple_ctterm_models.append(
+                        cls(
+                            term_uid=term.uid,
+                            sponsor_preferred_name=term.ct_term_vo.name,
+                            queried_effective_date=term.ct_term_vo.queried_effective_date,
+                            date_conflict=term.ct_term_vo.date_conflict,
+                        )
+                    )
+        return simple_ctterm_models
+
+    term_uid: str = Field(..., title="term_uid", description="")
+    sponsor_preferred_name: str | None = Field(
+        None, title="name", description="", nullable=True
+    )
+    queried_effective_date: datetime | None = Field(
+        None, title="queried_effective_date", description=""
+    )
+    date_conflict: bool | None = Field(None, title="date_conflict", description="")
 
 
 class SimpleTermModel(BaseModel):

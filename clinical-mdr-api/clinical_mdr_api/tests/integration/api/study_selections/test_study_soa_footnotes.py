@@ -1,5 +1,5 @@
 """
-Tests for /studies/{uid}/study-soa-footnotes endpoints
+Tests for /studies/{study_uid}/study-soa-footnotes endpoints
 """
 import json
 import logging
@@ -91,6 +91,7 @@ def test_data():
     second_study = inject_base_data()
     global study
     study = TestUtils.create_study()
+    TestUtils.set_study_standard_version(study_uid=study.uid)
     global footnotes
     global footnote_templates
     global soa_footnotes

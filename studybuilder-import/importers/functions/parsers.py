@@ -40,17 +40,16 @@ def parse_float(value: str) -> Optional[float]:
 
 
 def map_boolean(bool_str: str, raise_exception=False, default=False) -> bool:
-    if bool_str in ("Y", "y", "T", "True", "TRUE", "true", "Yes", "yes"):
+    if bool_str in ("Y", "y", "T", "True", "TRUE", "true", "Yes", "yes", "1"):
         return True
-    elif bool_str in ("N", "n", "F", "False", "FALSE", "false", "No", "no"):
+    if bool_str in ("N", "n", "F", "False", "FALSE", "false", "No", "no", "0"):
         return False
-    else:
-        if raise_exception:
-            raise ValueError(f"Unable to map string :'{bool_str}' to a boolean value")
-        logger.warning(
-            f"Unable to map string :'{bool_str}' to a boolean value, default is set to {default}"
-        )
-        return default
+    if raise_exception:
+        raise ValueError(f"Unable to map string :'{bool_str}' to a boolean value")
+    logger.warning(
+        f"Unable to map string :'{bool_str}' to a boolean value, default is set to {default}"
+    )
+    return default
 
 
 def find_term_by_name(term_name: str, all_terms: Sequence[dict]) -> Optional[str]:
@@ -59,7 +58,7 @@ def find_term_by_name(term_name: str, all_terms: Sequence[dict]) -> Optional[str
         if term["name"]["sponsor_preferred_name"].lower() == term_name.lower():
             term_uid = term["term_uid"]
             break
-        elif term["attributes"]["code_submission_value"] is not None:
+        if term["attributes"]["code_submission_value"] is not None:
             if term["attributes"]["code_submission_value"].lower() == term_name.lower():
                 term_uid = term["term_uid"]
                 break

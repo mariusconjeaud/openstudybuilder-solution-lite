@@ -8,6 +8,7 @@ from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryItemMetadataVO,
     LibraryVO,
 )
+from clinical_mdr_api.exceptions import BusinessLogicException
 
 
 @dataclass(frozen=True)
@@ -46,15 +47,24 @@ class OdmStudyEventVO(ConceptVO):
 
     def validate(
         self,
-        concept_exists_by_callback: Callable[[str, str, bool], bool],
-        previous_name: str | None = None,
-        previous_oid: str | None = None,
+        odm_object_exists_callback: Callable,
     ) -> None:
-        self.duplication_check(
-            [("name", self.name, previous_name), ("OID", self.oid, previous_oid)],
-            concept_exists_by_callback,
-            "ODM Study Event",
-        )
+        data = {
+            "name": self.name,
+            "oid": self.oid,
+            "effective_date": self.effective_date.strftime("%Y-%m-%d")
+            if self.effective_date
+            else None,
+            "retired_date": self.retired_date.strftime("%Y-%m-%d")
+            if self.retired_date
+            else None,
+            "description": self.description,
+            "display_in_tree": self.display_in_tree,
+        }
+        if uids := odm_object_exists_callback(**data):
+            raise BusinessLogicException(
+                f"ODM Study Event already exists with UID ({uids[0]}) and data {data}"
+            )
 
 
 @dataclass
@@ -91,15 +101,11 @@ class OdmStudyEventAR(OdmARBase):
         concept_vo: OdmStudyEventVO,
         library: LibraryVO,
         generate_uid_callback: Callable[[], str | None] = (lambda: None),
-        concept_exists_by_callback: Callable[
-            [str, str, bool], bool
-        ] = lambda x, y, z: True,
+        odm_object_exists_callback: Callable = lambda _: True,
     ) -> Self:
         item_metadata = LibraryItemMetadataVO.get_initial_item_metadata(author=author)
 
-        concept_vo.validate(
-            concept_exists_by_callback=concept_exists_by_callback,
-        )
+        concept_vo.validate(odm_object_exists_callback=odm_object_exists_callback)
 
         return cls(
             _uid=generate_uid_callback(),
@@ -116,15 +122,12 @@ class OdmStudyEventAR(OdmARBase):
         concept_exists_by_callback: Callable[
             [str, str, bool], bool
         ] = lambda x, y, z: True,
+        odm_object_exists_callback: Callable = lambda _: True,
     ) -> None:
         """
         Creates a new draft version for the object.
         """
-        concept_vo.validate(
-            concept_exists_by_callback=concept_exists_by_callback,
-            previous_name=self.name,
-            previous_oid=self._concept_vo.oid,
-        )
+        concept_vo.validate(odm_object_exists_callback=odm_object_exists_callback)
 
         if self._concept_vo != concept_vo:
             super()._edit_draft(change_description=change_description, author=author)

@@ -9,29 +9,21 @@ from clinical_mdr_api.models.notification import Notification
 
 
 class NotificationRepository:
-    def _transform_to_model(
-        self, data: list[list[NotificationNode]], single=True
-    ) -> Notification | list[Notification]:
-        def _get(item: NotificationNode) -> Notification:
-            return Notification(
-                sn=item.sn,
-                title=item.title,
-                description=item.description,
-                notification_type=item.notification_type,
-                started_at=item.started_at,
-                ended_at=item.ended_at,
-                published_at=item.published_at,
-            )
+    def _transform_to_model(self, item: NotificationNode) -> Notification:
+        return Notification(
+            sn=item.sn,
+            title=item.title,
+            description=item.description,
+            notification_type=item.notification_type,
+            started_at=item.started_at,
+            ended_at=item.ended_at,
+            published_at=item.published_at,
+        )
 
-        if single:
-            return _get(data[0][0])
-
-        rs: list[Notification] = []
-
-        for elm in data:
-            rs.append(_get(elm[0]))
-
-        return rs
+    def _transform_to_models(
+        self, data: list[list[NotificationNode]]
+    ) -> list[Notification]:
+        return [self._transform_to_model(elm[0]) for elm in data]
 
     def retrieve_all_notifications(self) -> list[Notification]:
         rs = db.cypher_query(
@@ -42,7 +34,7 @@ class NotificationRepository:
             resolve_objects=True,
         )
 
-        return self._transform_to_model(rs[0], False)
+        return self._transform_to_models(rs[0])
 
     def retrieve_all_active_notifications(self) -> list[Notification]:
         rs = db.cypher_query(
@@ -59,7 +51,7 @@ class NotificationRepository:
             resolve_objects=True,
         )
 
-        return self._transform_to_model(rs[0], False)
+        return self._transform_to_models(rs[0])
 
     def retrieve_notification(self, sn: int) -> Notification:
         rs = db.cypher_query(
@@ -72,7 +64,7 @@ class NotificationRepository:
         )
 
         if rs[0]:
-            return self._transform_to_model(rs[0])
+            return self._transform_to_model(rs[0][0][0])
 
         raise NotFoundException(f"Couldn't find Notification with Serial Number ({sn})")
 
@@ -119,7 +111,7 @@ class NotificationRepository:
             resolve_objects=True,
         )
 
-        return self._transform_to_model(rs[0])
+        return self._transform_to_model(rs[0][0][0])
 
     def update_notification(
         self,
@@ -156,7 +148,7 @@ class NotificationRepository:
         )
 
         if rs[0]:
-            return self._transform_to_model(rs[0])
+            return self._transform_to_model(rs[0][0][0])
 
         raise NotFoundException(f"Couldn't find Notification with Serial Number ({sn})")
 

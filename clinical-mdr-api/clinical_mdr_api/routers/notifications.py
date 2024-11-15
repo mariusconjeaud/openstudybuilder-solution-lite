@@ -30,7 +30,7 @@ def get_all_notifications() -> list[Notification]:
 
 
 @router.get(
-    "/{sn}",
+    "/{serial_number}",
     dependencies=[rbac.ADMIN_READ],
     summary="Returns the notification identified by the provided Serial Number.",
     response_model=Notification,
@@ -40,9 +40,9 @@ def get_all_notifications() -> list[Notification]:
         500: _generic_descriptions.ERROR_500,
     },
 )
-@decorators.validate_serial_number_less_than_max_int_neo4j()
-def get_notification(sn: int = SN) -> Notification:
-    return service.get_notification(sn)
+@decorators.validate_serial_number_against_neo4j_max_and_min_int()
+def get_notification(serial_number: int = SN) -> Notification:
+    return service.get_notification(serial_number)
 
 
 @router.post(
@@ -63,7 +63,7 @@ def create_notification(
 
 
 @router.patch(
-    "/{sn}",
+    "/{serial_number}",
     dependencies=[rbac.ADMIN_WRITE],
     summary="Updates the notification identified by the provided Serial Number.",
     response_model=Notification,
@@ -73,16 +73,16 @@ def create_notification(
         500: _generic_descriptions.ERROR_500,
     },
 )
-@decorators.validate_serial_number_less_than_max_int_neo4j()
+@decorators.validate_serial_number_against_neo4j_max_and_min_int()
 def update_notification(
-    sn: int = SN,
+    serial_number: int = SN,
     notification_input: NotificationInput = Body(),
 ) -> Notification:
-    return service.update_notification(sn, notification_input)
+    return service.update_notification(serial_number, notification_input)
 
 
 @router.delete(
-    "/{sn}",
+    "/{serial_number}",
     dependencies=[rbac.ADMIN_WRITE],
     summary="Deletes the notification identified by the provided Serial Number.",
     status_code=204,
@@ -91,6 +91,6 @@ def update_notification(
         500: _generic_descriptions.ERROR_500,
     },
 )
-@decorators.validate_serial_number_less_than_max_int_neo4j()
-def delete_notification(sn: int = SN) -> None:
-    return service.delete_notification(sn)
+@decorators.validate_serial_number_against_neo4j_max_and_min_int()
+def delete_notification(serial_number: int = SN) -> None:
+    return service.delete_notification(serial_number)

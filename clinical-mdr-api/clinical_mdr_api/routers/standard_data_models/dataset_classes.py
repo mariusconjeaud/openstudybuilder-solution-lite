@@ -133,7 +133,7 @@ def get_distinct_values_for_header(
 
 
 @router.get(
-    "/dataset-classes/{uid}",
+    "/dataset-classes/{dataset_class_uid}",
     dependencies=[rbac.LIBRARY_READ],
     summary="Get details on a specific dataset class",
     description="""
@@ -155,6 +155,6 @@ Possible errors:
         500: _generic_descriptions.ERROR_500,
     },
 )
-def get_dataset_class(uid: str = DatasetClassUID):
+def get_dataset_class(dataset_class_uid: str = DatasetClassUID):
     dataset_class_service = DatasetClassService()
-    return dataset_class_service.get_by_uid(uid=uid)
+    return dataset_class_service.get_by_uid(uid=dataset_class_uid)

@@ -188,9 +188,9 @@ def create(
 
 
 @router.get(
-    "/codelists/{uid}",
+    "/codelists/{dictionary_codelist_uid}",
     dependencies=[rbac.LIBRARY_READ],
-    summary="List details on the dictionary codelist with {uid}",
+    summary="List details on the dictionary codelist with {dictionary_codelist_uid}",
     description="""
 State before:
  - The selected codelist must exist.
@@ -208,7 +208,7 @@ State after:
     },
 )
 def get_codelist(
-    uid: str = DictionaryCodelistUID,
+    dictionary_codelist_uid: str = DictionaryCodelistUID,
     version: str
     | None = Query(
         None,
@@ -219,11 +219,13 @@ def get_codelist(
     ),
 ):
     dictionary_codelist_service = DictionaryCodelistGenericService()
-    return dictionary_codelist_service.get_by_uid(codelist_uid=uid, version=version)
+    return dictionary_codelist_service.get_by_uid(
+        codelist_uid=dictionary_codelist_uid, version=version
+    )
 
 
 @router.get(
-    "/codelists/{uid}/versions",
+    "/codelists/{dictionary_codelist_uid}/versions",
     dependencies=[rbac.LIBRARY_READ],
     summary="List version history for a dictionary codelist",
     description="""
@@ -245,20 +247,22 @@ Possible errors:
     responses={
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The dictionary codelist with the specified 'uid' wasn't found.",
+            "description": "Not Found - The dictionary codelist with the specified 'dictionary_codelist_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def get_versions(
-    uid: str = DictionaryCodelistUID,
+    dictionary_codelist_uid: str = DictionaryCodelistUID,
 ):
     dictionary_codelist_service = DictionaryCodelistGenericService()
-    return dictionary_codelist_service.get_version_history(codelist_uid=uid)
+    return dictionary_codelist_service.get_version_history(
+        codelist_uid=dictionary_codelist_uid
+    )
 
 
 @router.patch(
-    "/codelists/{uid}",
+    "/codelists/{dictionary_codelist_uid}",
     dependencies=[rbac.LIBRARY_WRITE],
     summary=" Update name or template parameter flag for dictionary codelist",
     description="""
@@ -295,19 +299,19 @@ Possible errors:
     },
 )
 def edit(
-    uid: str = DictionaryCodelistUID,
+    dictionary_codelist_uid: str = DictionaryCodelistUID,
     dictionary_codelist_input: models.DictionaryCodelistEditInput = Body(
         description="The new parameter terms for the dictionary codelist including the change description.",
     ),
 ):
     dictionary_codelist_service = DictionaryCodelistGenericService()
     return dictionary_codelist_service.edit_draft(
-        codelist_uid=uid, codelist_input=dictionary_codelist_input
+        codelist_uid=dictionary_codelist_uid, codelist_input=dictionary_codelist_input
     )
 
 
 @router.post(
-    "/codelists/{uid}/versions",
+    "/codelists/{dictionary_codelist_uid}/versions",
     dependencies=[rbac.LIBRARY_WRITE],
     summary=" Create a new version of the dictionary codelist",
     description="""
@@ -343,20 +347,22 @@ Possible errors:
             "model": ErrorResponse,
             "description": "Not Found - Reasons include e.g.: \n"
             "- The dictionary codelist is not in final status.\n"
-            "- The dictionary codelist with the specified 'uid' could not be found.",
+            "- The dictionary codelist with the specified 'dictionary_codelist_uid' could not be found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def create_new_version(
-    uid: str = DictionaryCodelistUID,
+    dictionary_codelist_uid: str = DictionaryCodelistUID,
 ):
     dictionary_codelist_service = DictionaryCodelistGenericService()
-    return dictionary_codelist_service.create_new_version(codelist_uid=uid)
+    return dictionary_codelist_service.create_new_version(
+        codelist_uid=dictionary_codelist_uid
+    )
 
 
 @router.post(
-    "/codelists/{uid}/approvals",
+    "/codelists/{dictionary_codelist_uid}/approvals",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Approve draft version of the dictionary codelist",
     description="""
@@ -394,14 +400,14 @@ Possible errors:
     },
 )
 def approve(
-    uid: str = DictionaryCodelistUID,
+    dictionary_codelist_uid: str = DictionaryCodelistUID,
 ):
     dictionary_codelist_service = DictionaryCodelistGenericService()
-    return dictionary_codelist_service.approve(codelist_uid=uid)
+    return dictionary_codelist_service.approve(codelist_uid=dictionary_codelist_uid)
 
 
 @router.post(
-    "/codelists/{uid}/terms",
+    "/codelists/{dictionary_codelist_uid}/terms",
     dependencies=[rbac.LIBRARY_WRITE],
     summary=" Attaches a dictionary term to a dictionary codelist",
     description="""
@@ -414,7 +420,7 @@ Business logic:
 Possible errors:
  - Invalid codelist_uid.
 -  Invalid term_uid.
--  Codelist with {uid} is not extensible.
+-  Codelist with {dictionary_codelist_uid} is not extensible.
 - Term is already part of the specified codelist.""",
     response_model=models.DictionaryCodelist,
     status_code=201,
@@ -422,7 +428,7 @@ Possible errors:
         201: {
             "description": "The HAS_TERM relationship was successfully created.\n"
             "The TemplateParameter labels and HAS_PARAMETER_TERM relationship were successfully added "
-            "if dictionary codelist identified by 'uid' is a TemplateParameter."
+            "if dictionary codelist identified by 'dictionary_codelist_uid' is a TemplateParameter."
         },
         400: {
             "model": ErrorResponse,
@@ -435,25 +441,25 @@ Possible errors:
     },
 )
 def add_term(
-    uid: str = DictionaryCodelistUID,
+    dictionary_codelist_uid: str = DictionaryCodelistUID,
     term_input: models.DictionaryCodelistTermInput = Body(
         description="UID of the DictionaryTermRoot node."
     ),
 ):
     dictionary_codelist_service = DictionaryCodelistGenericService()
     return dictionary_codelist_service.add_term(
-        codelist_uid=uid, term_uid=term_input.term_uid
+        codelist_uid=dictionary_codelist_uid, term_uid=term_input.term_uid
     )
 
 
 @router.delete(
-    "/codelists/{codelist_uid}/terms/{term_uid}",
+    "/codelists/{dictionary_codelist_uid}/terms/{dictionary_term_uid}",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Removes a dictionary term from a dictionary codelist",
     description="""
 State before:
  - Codelist identified by codelist_uid must exist.
- - Term identified by term_uid must exist.
+ - Term identified by dictionary_term_uid must exist.
  - Codelist contains the term that is being removed.
 
 
@@ -463,7 +469,7 @@ Business logic:
 
 Possible errors:
  - Invalid codelist_uid.
- - Invalid term_uid.
+ - Invalid dictionary_term_uid.
 - Term is not part of the specified codelist. """,
     response_model=models.DictionaryCodelist,
     status_code=201,
@@ -485,10 +491,10 @@ Possible errors:
     },
 )
 def remove_term(
-    codelist_uid: str = DictionaryCodelistUID,
-    term_uid: str = TermUID,
+    dictionary_codelist_uid: str = DictionaryCodelistUID,
+    dictionary_term_uid: str = TermUID,
 ):
     dictionary_codelist_service = DictionaryCodelistGenericService()
     return dictionary_codelist_service.remove_term(
-        codelist_uid=codelist_uid, term_uid=term_uid
+        codelist_uid=dictionary_codelist_uid, term_uid=dictionary_term_uid
     )

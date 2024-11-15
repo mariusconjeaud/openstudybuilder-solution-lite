@@ -119,7 +119,7 @@ def get_distinct_values_for_header(
 
 
 @router.get(
-    "/{uid}",
+    "/{odm_formal_expression_uid}",
     dependencies=[rbac.LIBRARY_READ],
     summary="Get details on a specific ODM Formal Expression (in a specific version)",
     description="",
@@ -130,13 +130,13 @@ def get_distinct_values_for_header(
         500: _generic_descriptions.ERROR_500,
     },
 )
-def get_odm_formal_expression(uid: str = OdmFormalExpressionUID):
+def get_odm_formal_expression(odm_formal_expression_uid: str = OdmFormalExpressionUID):
     odm_formal_expression_service = OdmFormalExpressionService()
-    return odm_formal_expression_service.get_by_uid(uid=uid)
+    return odm_formal_expression_service.get_by_uid(uid=odm_formal_expression_uid)
 
 
 @router.get(
-    "/{uid}/relationships",
+    "/{odm_formal_expression_uid}/relationships",
     dependencies=[rbac.LIBRARY_READ],
     summary="Get UIDs of a specific ODM Formal Expression's relationships",
     description="",
@@ -147,13 +147,15 @@ def get_odm_formal_expression(uid: str = OdmFormalExpressionUID):
         500: _generic_descriptions.ERROR_500,
     },
 )
-def get_active_relationships(uid: str = OdmFormalExpressionUID):
+def get_active_relationships(odm_formal_expression_uid: str = OdmFormalExpressionUID):
     odm_formal_expression_service = OdmFormalExpressionService()
-    return odm_formal_expression_service.get_active_relationships(uid=uid)
+    return odm_formal_expression_service.get_active_relationships(
+        uid=odm_formal_expression_uid
+    )
 
 
 @router.get(
-    "/{uid}/versions",
+    "/{odm_formal_expression_uid}/versions",
     dependencies=[rbac.LIBRARY_READ],
     summary="List version history for ODM Formal Expression",
     description="""
@@ -175,14 +177,18 @@ Possible errors:
     responses={
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The ODM Formal Expression with the specified 'uid' wasn't found.",
+            "description": "Not Found - The ODM Formal Expression with the specified 'odm_formal_expression_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def get_odm_formal_expression_versions(uid: str = OdmFormalExpressionUID):
+def get_odm_formal_expression_versions(
+    odm_formal_expression_uid: str = OdmFormalExpressionUID,
+):
     odm_formal_expression_service = OdmFormalExpressionService()
-    return odm_formal_expression_service.get_version_history(uid=uid)
+    return odm_formal_expression_service.get_version_history(
+        uid=odm_formal_expression_uid
+    )
 
 
 @router.post(
@@ -217,7 +223,7 @@ def create_odm_formal_expression(
 
 
 @router.patch(
-    "/{uid}",
+    "/{odm_formal_expression_uid}",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Update ODM Formal Expression",
     description="",
@@ -234,25 +240,26 @@ def create_odm_formal_expression(
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The ODM Formal Expression with the specified 'uid' wasn't found.",
+            "description": "Not Found - The ODM Formal Expression with the specified 'odm_formal_expression_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def edit_odm_formal_expression(
-    uid: str = OdmFormalExpressionUID,
+    odm_formal_expression_uid: str = OdmFormalExpressionUID,
     odm_formal_expression_edit_input: OdmFormalExpressionPatchInput = Body(
         description=""
     ),
 ):
     odm_formal_expression_service = OdmFormalExpressionService()
     return odm_formal_expression_service.edit_draft(
-        uid=uid, concept_edit_input=odm_formal_expression_edit_input
+        uid=odm_formal_expression_uid,
+        concept_edit_input=odm_formal_expression_edit_input,
     )
 
 
 @router.post(
-    "/{uid}/versions",
+    "/{odm_formal_expression_uid}/versions",
     dependencies=[rbac.LIBRARY_WRITE],
     summary=" Create a new version of ODM Formal Expression",
     description="""
@@ -282,18 +289,22 @@ Possible errors:
             "model": ErrorResponse,
             "description": "Not Found - Reasons include e.g.: \n"
             "- The ODM Formal Expression is not in final status.\n"
-            "- The ODM Formal Expression with the specified 'uid' could not be found.",
+            "- The ODM Formal Expression with the specified 'odm_formal_expression_uid' could not be found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def create_odm_formal_expression_version(uid: str = OdmFormalExpressionUID):
+def create_odm_formal_expression_version(
+    odm_formal_expression_uid: str = OdmFormalExpressionUID,
+):
     odm_formal_expression_service = OdmFormalExpressionService()
-    return odm_formal_expression_service.create_new_version(uid=uid)
+    return odm_formal_expression_service.create_new_version(
+        uid=odm_formal_expression_uid
+    )
 
 
 @router.post(
-    "/{uid}/approvals",
+    "/{odm_formal_expression_uid}/approvals",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Approve draft version of ODM Formal Expression",
     description="",
@@ -309,18 +320,20 @@ def create_odm_formal_expression_version(uid: str = OdmFormalExpressionUID):
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The ODM Formal Expression with the specified 'uid' wasn't found.",
+            "description": "Not Found - The ODM Formal Expression with the specified 'odm_formal_expression_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def approve_odm_formal_expression(uid: str = OdmFormalExpressionUID):
+def approve_odm_formal_expression(
+    odm_formal_expression_uid: str = OdmFormalExpressionUID,
+):
     odm_formal_expression_service = OdmFormalExpressionService()
-    return odm_formal_expression_service.approve(uid=uid)
+    return odm_formal_expression_service.approve(uid=odm_formal_expression_uid)
 
 
 @router.delete(
-    "/{uid}/activations",
+    "/{odm_formal_expression_uid}/activations",
     dependencies=[rbac.LIBRARY_WRITE],
     summary=" Inactivate final version of ODM Formal Expression",
     description="",
@@ -335,18 +348,20 @@ def approve_odm_formal_expression(uid: str = OdmFormalExpressionUID):
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The ODM Formal Expression with the specified 'uid' could not be found.",
+            "description": "Not Found - The ODM Formal Expression with the specified 'odm_formal_expression_uid' could not be found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def inactivate_odm_formal_expression(uid: str = OdmFormalExpressionUID):
+def inactivate_odm_formal_expression(
+    odm_formal_expression_uid: str = OdmFormalExpressionUID,
+):
     odm_formal_expression_service = OdmFormalExpressionService()
-    return odm_formal_expression_service.inactivate_final(uid=uid)
+    return odm_formal_expression_service.inactivate_final(uid=odm_formal_expression_uid)
 
 
 @router.post(
-    "/{uid}/activations",
+    "/{odm_formal_expression_uid}/activations",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Reactivate retired version of a ODM Formal Expression",
     description="",
@@ -361,18 +376,22 @@ def inactivate_odm_formal_expression(uid: str = OdmFormalExpressionUID):
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The ODM Formal Expression with the specified 'uid' could not be found.",
+            "description": "Not Found - The ODM Formal Expression with the specified 'odm_formal_expression_uid' could not be found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def reactivate_odm_formal_expression(uid: str = OdmFormalExpressionUID):
+def reactivate_odm_formal_expression(
+    odm_formal_expression_uid: str = OdmFormalExpressionUID,
+):
     odm_formal_expression_service = OdmFormalExpressionService()
-    return odm_formal_expression_service.reactivate_retired(uid=uid)
+    return odm_formal_expression_service.reactivate_retired(
+        uid=odm_formal_expression_uid
+    )
 
 
 @router.delete(
-    "/{uid}",
+    "/{odm_formal_expression_uid}",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Delete draft version of ODM Formal Expression",
     description="",
@@ -391,11 +410,13 @@ def reactivate_odm_formal_expression(uid: str = OdmFormalExpressionUID):
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - An ODM Formal Expression with the specified 'uid' could not be found.",
+            "description": "Not Found - An ODM Formal Expression with the specified 'odm_formal_expression_uid' could not be found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def delete_odm_formal_expression(uid: str = OdmFormalExpressionUID):
+def delete_odm_formal_expression(
+    odm_formal_expression_uid: str = OdmFormalExpressionUID,
+):
     odm_formal_expression_service = OdmFormalExpressionService()
-    odm_formal_expression_service.soft_delete(uid=uid)
+    odm_formal_expression_service.soft_delete(uid=odm_formal_expression_uid)

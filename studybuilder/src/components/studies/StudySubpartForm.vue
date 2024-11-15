@@ -116,7 +116,7 @@
               v-model="form.study_acronym"
               :label="$t('StudyForm.acronym')"
               density="compact"
-              clearable
+              disabled
             />
           </v-col>
         </v-row>
@@ -303,7 +303,9 @@ export default {
   },
   methods: {
     initForm() {
-      this.form = {}
+      this.form = {
+        study_acronym: this.selectedStudy.current_metadata.identification_metadata.study_acronym
+      }
       this.formStore.save(this.form)
     },
     selectStudy(study) {

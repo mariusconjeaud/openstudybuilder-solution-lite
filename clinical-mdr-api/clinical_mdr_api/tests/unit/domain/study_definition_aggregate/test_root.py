@@ -955,7 +955,7 @@ class TestStudyDefinitionAR(unittest.TestCase):
                     ver_metadata=StudyVersionMetadataVO(
                         study_status=StudyStatus.DRAFT,
                         version_number=None,
-                        # the last one is checked before so we assume it's teh right one
+                        # the last one is checked before so we assume it's the right one
                         version_timestamp=study.current_metadata.ver_metadata.version_timestamp,
                     ),
                     study_description=StudyDescriptionVO(

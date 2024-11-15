@@ -18,7 +18,7 @@ router = APIRouter(prefix="/studyDefinitions")
     responses={
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The study with the specified 'uid' wasn't found.",
+            "description": "Not Found - The study with the specified 'study_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },

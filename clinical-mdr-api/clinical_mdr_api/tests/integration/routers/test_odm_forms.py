@@ -53,6 +53,7 @@ class OdmFormNegativeTest(api.APITest):
     def setUp(self):
         inject_and_clear_db(self.TEST_DB_NAME)
         db.cypher_query(STARTUP_ODM_DESCRIPTIONS)
+        db.cypher_query(STARTUP_CT_TERM)
         db.cypher_query(STARTUP_ODM_ALIASES)
         db.cypher_query(STARTUP_ODM_ITEM_GROUPS)
         db.cypher_query(STARTUP_ODM_VENDOR_NAMESPACES)

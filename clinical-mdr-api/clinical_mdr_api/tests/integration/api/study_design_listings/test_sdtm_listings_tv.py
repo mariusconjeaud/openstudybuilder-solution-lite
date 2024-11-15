@@ -15,6 +15,7 @@ import pytest
 from fastapi.testclient import TestClient
 from neomodel import db
 
+from clinical_mdr_api.config import CDISC_LIBRARY_NAME, SDTM_CT_CATALOGUE_NAME
 from clinical_mdr_api.main import app
 from clinical_mdr_api.models.listings.listings_sdtm import StudyVisitListing
 from clinical_mdr_api.tests.integration.utils.api import inject_and_clear_db
@@ -53,6 +54,13 @@ def test_data():
     generate_study_root()
     create_some_visits()
     TestUtils.create_study_fields_configuration()
+    # Creating codelists, library and catalogue for study standard version
+    TestUtils.create_library(name=CDISC_LIBRARY_NAME, is_editable=True)
+    TestUtils.create_ct_catalogue(
+        library=CDISC_LIBRARY_NAME, catalogue_name=SDTM_CT_CATALOGUE_NAME
+    )
+    TestUtils.create_ct_codelists_using_cypher()
+    TestUtils.set_study_standard_version(study_uid=study_uid)
 
 
 def test_tv_listing(api_client):

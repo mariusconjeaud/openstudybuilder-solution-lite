@@ -4,7 +4,7 @@ import pytest
 
 from clinical_mdr_api.tests.oauth.markers import if_oauth_enabled
 
-# Skipp all tests in this module if OAuth is not enabled
+# Skip all tests in this module if OAuth is not enabled
 pytestmark = if_oauth_enabled
 
 SKIP_PATHS = {"/openapi.json", "/docs", "/docs/oauth2-redirect", "/redoc"}

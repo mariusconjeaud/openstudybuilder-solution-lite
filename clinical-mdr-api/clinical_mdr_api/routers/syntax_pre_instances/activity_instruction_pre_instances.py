@@ -205,9 +205,9 @@ def retrieve_audit_trail(
 
 
 @router.get(
-    "/{uid}",
+    "/{activity_instruction_pre_instance_uid}",
     dependencies=[rbac.LIBRARY_READ],
-    summary="Returns the latest/newest version of a specific activity instruction pre-instance identified by 'uid'.",
+    summary="Returns the latest/newest version of a specific activity instruction pre-instance identified by 'activity_instruction_pre_instance_uid'.",
     description="""If multiple request query parameters are used, then they need to
     match all at the same time (they are combined with the AND operation).""",
     response_model=models.ActivityInstructionPreInstance | None,
@@ -216,21 +216,23 @@ def retrieve_audit_trail(
         404: {
             "model": ErrorResponse,
             "description": "Not Found - "
-            "The activity instruction pre-instance with the specified 'uid' (and the specified date/time and/or status) wasn't found.",
+            "The activity instruction pre-instance with the specified 'activity_instruction_pre_instance_uid' (and the specified date/time and/or status) wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def get(
-    uid: str = ActivityInstructionPreInstanceUID,
+    activity_instruction_pre_instance_uid: str = ActivityInstructionPreInstanceUID,
 ):
-    return ActivityInstructionPreInstanceService().get_by_uid(uid=uid)
+    return ActivityInstructionPreInstanceService().get_by_uid(
+        uid=activity_instruction_pre_instance_uid
+    )
 
 
 @router.patch(
-    "/{uid}",
+    "/{activity_instruction_pre_instance_uid}",
     dependencies=[rbac.LIBRARY_WRITE],
-    summary="Updates the Activity Instruction Pre-Instance identified by 'uid'.",
+    summary="Updates the Activity Instruction Pre-Instance identified by 'activity_instruction_pre_instance_uid'.",
     description="""This request is only valid if the Activity Instruction Pre-Instance
 * is in 'Draft' status and
 * belongs to a library that allows editing (the 'is_editable' property of the library needs to be true). 
@@ -255,25 +257,28 @@ If the request succeeds:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The Activity Instruction Pre-Instance with the specified 'uid' wasn't found.",
+            "description": "Not Found - The Activity Instruction Pre-Instance with the specified 'activity_instruction_pre_instance_uid' wasn't found.",
         },
         500: {"model": ErrorResponse, "description": "Internal Server Error"},
     },
 )
 def edit(
-    uid: str = ActivityInstructionPreInstanceUID,
+    activity_instruction_pre_instance_uid: str = ActivityInstructionPreInstanceUID,
     activity_instruction_pre_instance: models.ActivityInstructionPreInstanceEditInput = Body(
         None,
         description="The new parameter terms for the Activity Instruction Pre-Instance, its indexings and the change description.",
     ),
 ):
-    return Service().edit_draft(uid=uid, template=activity_instruction_pre_instance)
+    return Service().edit_draft(
+        uid=activity_instruction_pre_instance_uid,
+        template=activity_instruction_pre_instance,
+    )
 
 
 @router.patch(
-    "/{uid}/indexings",
+    "/{activity_instruction_pre_instance_uid}/indexings",
     dependencies=[rbac.LIBRARY_WRITE],
-    summary="Updates the indexings of the Activity Instruction Pre-Instance identified by 'uid'.",
+    summary="Updates the indexings of the Activity Instruction Pre-Instance identified by 'activity_instruction_pre_instance_uid'.",
     description="""This request is only valid if the Pre-Instance
     * belongs to a library that allows editing (the 'is_editable' property of the library needs to be true).
     
@@ -287,25 +292,27 @@ def edit(
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The Pre-Instance with the specified 'uid' could not be found.",
+            "description": "Not Found - The Pre-Instance with the specified 'activity_instruction_pre_instance_uid' could not be found.",
         },
         500: {"model": ErrorResponse, "description": "Internal Server Error"},
     },
 )
 def patch_indexings(
-    uid: str = ActivityInstructionPreInstanceUID,
+    activity_instruction_pre_instance_uid: str = ActivityInstructionPreInstanceUID,
     indexings: models.ActivityInstructionPreInstanceIndexingsInput = Body(
         None,
         description="The lists of UIDs for the new indexings to be set, grouped by indexings to be updated.",
     ),
 ) -> models.ActivityInstructionPreInstance:
-    return Service().patch_indexings(uid=uid, indexings=indexings)
+    return Service().patch_indexings(
+        uid=activity_instruction_pre_instance_uid, indexings=indexings
+    )
 
 
 @router.get(
-    "/{uid}/versions",
+    "/{activity_instruction_pre_instance_uid}/versions",
     dependencies=[rbac.LIBRARY_READ],
-    summary="Returns the version history of a specific Activity Instruction Pre-Instance identified by 'uid'.",
+    summary="Returns the version history of a specific Activity Instruction Pre-Instance identified by 'activity_instruction_pre_instance_uid'.",
     description=f"""
 The returned versions are ordered by `start_date` descending (newest entries first).
 
@@ -317,7 +324,7 @@ The returned versions are ordered by `start_date` descending (newest entries fir
         200: {"description": "OK."},
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The Activity Instruction Pre-Instance with the specified 'uid' wasn't found.",
+            "description": "Not Found - The Activity Instruction Pre-Instance with the specified 'activity_instruction_pre_instance_uid' wasn't found.",
         },
         500: {"model": ErrorResponse, "description": "Internal Server Error"},
     },
@@ -369,15 +376,15 @@ The returned versions are ordered by `start_date` descending (newest entries fir
 # pylint: disable=unused-argument
 def get_versions(
     request: Request,  # request is actually required by the allow_exports decorator
-    uid: str = ActivityInstructionPreInstanceUID,
+    activity_instruction_pre_instance_uid: str = ActivityInstructionPreInstanceUID,
 ):
-    return Service().get_version_history(uid)
+    return Service().get_version_history(activity_instruction_pre_instance_uid)
 
 
 @router.post(
-    "/{uid}/versions",
+    "/{activity_instruction_pre_instance_uid}/versions",
     dependencies=[rbac.LIBRARY_WRITE],
-    summary="Creates a new version of the Activity Instruction Pre-Instance identified by 'uid'.",
+    summary="Creates a new version of the Activity Instruction Pre-Instance identified by 'activity_instruction_pre_instance_uid'.",
     description="""This request is only valid if the Activity Instruction Pre-Instance
 * is in 'Final' or 'Retired' status only (so no latest 'Draft' status exists) and
 * belongs to a library that allows editing (the 'is_editable' property of the library needs to be true).
@@ -403,21 +410,21 @@ Only the surrounding text (excluding the parameters) can be changed.
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The Activity Instruction Pre-Instance with the specified 'uid' could not be found.",
+            "description": "Not Found - The Activity Instruction Pre-Instance with the specified 'activity_instruction_pre_instance_uid' could not be found.",
         },
         500: {"model": ErrorResponse, "description": "Internal Server Error"},
     },
 )
 def create_new_version(
-    uid: str = ActivityInstructionPreInstanceUID,
+    activity_instruction_pre_instance_uid: str = ActivityInstructionPreInstanceUID,
 ):
-    return Service().create_new_version(uid=uid)
+    return Service().create_new_version(uid=activity_instruction_pre_instance_uid)
 
 
 @router.delete(
-    "/{uid}/activations",
+    "/{activity_instruction_pre_instance_uid}/activations",
     dependencies=[rbac.LIBRARY_WRITE],
-    summary="Inactivates/deactivates the activity instruction pre-instance identified by 'uid'.",
+    summary="Inactivates/deactivates the activity instruction pre-instance identified by 'activity_instruction_pre_instance_uid'.",
     description="""This request is only valid if the activity instruction pre-instance
 * is in 'Final' status only (so no latest 'Draft' status exists).
 
@@ -437,21 +444,23 @@ If the request succeeds:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The activity instruction pre-instance with the specified 'uid' wasn't found.",
+            "description": "Not Found - The activity instruction pre-instance with the specified 'activity_instruction_pre_instance_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def inactivate(
-    uid: str = ActivityInstructionPreInstanceUID,
+    activity_instruction_pre_instance_uid: str = ActivityInstructionPreInstanceUID,
 ):
-    return ActivityInstructionPreInstanceService().inactivate_final(uid)
+    return ActivityInstructionPreInstanceService().inactivate_final(
+        activity_instruction_pre_instance_uid
+    )
 
 
 @router.post(
-    "/{uid}/activations",
+    "/{activity_instruction_pre_instance_uid}/activations",
     dependencies=[rbac.LIBRARY_WRITE],
-    summary="Reactivates the activity instruction pre-instance identified by 'uid'.",
+    summary="Reactivates the activity instruction pre-instance identified by 'activity_instruction_pre_instance_uid'.",
     description="""This request is only valid if the activity instruction pre-instance
 * is in 'Retired' status only (so no latest 'Draft' status exists).
 
@@ -471,21 +480,23 @@ If the request succeeds:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The activity instruction pre-instance with the specified 'uid' wasn't found.",
+            "description": "Not Found - The activity instruction pre-instance with the specified 'activity_instruction_pre_instance_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def reactivate(
-    uid: str = ActivityInstructionPreInstanceUID,
+    activity_instruction_pre_instance_uid: str = ActivityInstructionPreInstanceUID,
 ):
-    return ActivityInstructionPreInstanceService().reactivate_retired(uid)
+    return ActivityInstructionPreInstanceService().reactivate_retired(
+        activity_instruction_pre_instance_uid
+    )
 
 
 @router.delete(
-    "/{uid}",
+    "/{activity_instruction_pre_instance_uid}",
     dependencies=[rbac.LIBRARY_WRITE],
-    summary="Deletes the Activity Instruction Pre-Instance identified by 'uid'.",
+    summary="Deletes the Activity Instruction Pre-Instance identified by 'activity_instruction_pre_instance_uid'.",
     description="""This request is only valid if \n
 * the Activity Instruction Pre-Instance is in 'Draft' status and
 * the Activity Instruction Pre-Instance has never been in 'Final' status and
@@ -510,16 +521,16 @@ def reactivate(
     },
 )
 def delete(
-    uid: str = ActivityInstructionPreInstanceUID,
+    activity_instruction_pre_instance_uid: str = ActivityInstructionPreInstanceUID,
 ):
-    Service().soft_delete(uid)
+    Service().soft_delete(activity_instruction_pre_instance_uid)
     return Response(status_code=fast_api_status.HTTP_204_NO_CONTENT)
 
 
 @router.post(
-    "/{uid}/approvals",
+    "/{activity_instruction_pre_instance_uid}/approvals",
     dependencies=[rbac.LIBRARY_WRITE],
-    summary="Approves the Activity Instruction Pre-Instance identified by 'uid'.",
+    summary="Approves the Activity Instruction Pre-Instance identified by 'activity_instruction_pre_instance_uid'.",
     description="""This request is only valid if the Activity Instruction Pre-Instance
 * is in 'Draft' status and
 * belongs to a library that allows editing (the 'is_editable' property of the library needs to be true).
@@ -541,12 +552,12 @@ If the request succeeds:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The Activity Instruction Pre-Instance with the specified 'uid' wasn't found.",
+            "description": "Not Found - The Activity Instruction Pre-Instance with the specified 'activity_instruction_pre_instance_uid' wasn't found.",
         },
         500: {"model": ErrorResponse, "description": "Internal Server Error"},
     },
 )
 def approve(
-    uid: str = ActivityInstructionPreInstanceUID,
+    activity_instruction_pre_instance_uid: str = ActivityInstructionPreInstanceUID,
 ):
-    return Service().approve(uid)
+    return Service().approve(activity_instruction_pre_instance_uid)

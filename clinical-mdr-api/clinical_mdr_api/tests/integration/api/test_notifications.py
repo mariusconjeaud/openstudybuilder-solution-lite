@@ -161,14 +161,17 @@ def test_delete_notification(api_client):
     )
 
 
-def test_validate_serial_number_less_than_max_int_neo4j(api_client):
+def validate_serial_number_against_neo4j_max_and_min_int(api_client):
     serial_number = 9223372036854775808
     max_int = 9223372036854775807
+    min_int = -9223372036854775807
+
+    # Test positive integer
     response = api_client.get(f"/notifications/{serial_number}")
     assert response.status_code == 400
     assert (
         response.json()["message"]
-        == f"Serial Number must not be greater than {max_int}"
+        == f"Serial Number must not be greater than {max_int} and less than {min_int}"
     )
 
     response = api_client.patch(
@@ -185,12 +188,44 @@ def test_validate_serial_number_less_than_max_int_neo4j(api_client):
     assert response.status_code == 400
     assert (
         response.json()["message"]
-        == f"Serial Number must not be greater than {max_int}"
+        == f"Serial Number must not be greater than {max_int} and less than {min_int}"
     )
 
     response = api_client.delete(f"/notifications/{serial_number}")
     assert response.status_code == 400
     assert (
         response.json()["message"]
-        == f"Serial Number must not be greater than {max_int}"
+        == f"Serial Number must not be greater than {max_int} and less than {min_int}"
+    )
+
+    # Test negative integer
+    response = api_client.get(f"/notifications/-{serial_number}")
+    assert response.status_code == 400
+    assert (
+        response.json()["message"]
+        == f"Serial Number must not be greater than {max_int} and less than {min_int}"
+    )
+
+    response = api_client.patch(
+        f"/notifications/-{serial_number}",
+        json={
+            "title": "Title",
+            "notification_type": "warning",
+            "description": "Description",
+            "started_at": None,
+            "ended_at": None,
+            "published": False,
+        },
+    )
+    assert response.status_code == 400
+    assert (
+        response.json()["message"]
+        == f"Serial Number must not be greater than {max_int} and less than {min_int}"
+    )
+
+    response = api_client.delete(f"/notifications/-{serial_number}")
+    assert response.status_code == 400
+    assert (
+        response.json()["message"]
+        == f"Serial Number must not be greater than {max_int} and less than {min_int}"
     )

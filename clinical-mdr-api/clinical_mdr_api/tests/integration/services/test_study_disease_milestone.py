@@ -3,6 +3,7 @@ import unittest
 from neomodel import db
 
 from clinical_mdr_api import exceptions
+from clinical_mdr_api.config import SDTM_CT_CATALOGUE_NAME
 from clinical_mdr_api.domain_repositories.models.study import StudyRoot
 from clinical_mdr_api.models.study_selections.study_disease_milestone import (
     StudyDiseaseMilestone,
@@ -35,6 +36,11 @@ class TestStudyDiseaseMilestoneManagement(unittest.TestCase):
         # Generate UIDs
         StudyRoot.generate_node_uids_if_not_present()
         self.study = StudyRoot.nodes.all()[0]
+        TestUtils.create_ct_catalogue(catalogue_name=SDTM_CT_CATALOGUE_NAME)
+        TestUtils.set_study_standard_version(
+            study_uid=self.study.uid, create_codelists_and_terms_for_package=False
+        )
+
         create_study_disease_milestone_codelists_ret_cat_and_lib()
 
     def test__list_disease_milestone_studies(self):

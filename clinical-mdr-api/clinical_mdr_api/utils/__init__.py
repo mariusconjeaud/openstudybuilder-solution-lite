@@ -18,14 +18,14 @@ def strtobool(value: str) -> int:
     raise ValueError(f"invalid truth value: {value:s}")
 
 
-def booltostr(value: bool | str, true_format: str = "Yes") -> str:
+def booltostr(value: bool | str | int, true_format: str = "Yes") -> str:
     """
     Converts a boolean value to a string representation.
-    True values are 'y', 'Yes', 'yes', 't', 'true', 'on', and '1';
-    False values are 'n', 'No', 'no', 'f', 'false', 'off', and '0'.
+    True values are 'y', 'Y', 'Yes', 'yes', 't', 'true', 'on', and '1';
+    False values are 'n', 'N', 'No', 'no', 'f', 'false', 'off', and '0'.
 
     Args:
-        value (bool | str): The boolean value to convert. If a string is passed, it will be converted to a boolean.
+        value (bool | str | int): The boolean value to convert. If a string is passed, it will be converted to a boolean.
         true_format (str, optional): The string representation of the True value. Defaults to "Yes".
 
     Returns:
@@ -39,6 +39,7 @@ def booltostr(value: bool | str, true_format: str = "Yes") -> str:
 
     mapping = {
         "y": "n",
+        "Y": "N",
         "Yes": "No",
         "yes": "no",
         "t": "f",

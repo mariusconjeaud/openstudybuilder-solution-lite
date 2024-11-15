@@ -1,78 +1,41 @@
 <template>
-  <div>
-    <v-tabs v-model="activeTab">
+  <div class="px-4">
+    <div class="page-title d-flex align-center">
+      {{ $t('StudyDisclosure.study_disclosure') }}
+    </div>
+    <v-tabs v-model="activeTab" bg-color="white" class="topRadius elevation-4">
       <v-tab v-for="tab of tabs" :key="tab.tab" :href="tab.tab">
         {{ tab.name }}
       </v-tab>
     </v-tabs>
-    <v-tabs-items v-model="activeTab">
-      <v-tab-item id="tab-0">
-        <UnderConstruction />
-      </v-tab-item>
-      <v-tab-item id="tab-1">
-        <UnderConstruction />
-      </v-tab-item>
-      <v-tab-item id="tab-2">
-        <UnderConstruction />
-      </v-tab-item>
-      <v-tab-item id="tab-3">
-        <UnderConstruction />
-      </v-tab-item>
-    </v-tabs-items>
+    <v-window v-model="activeTab" class="bg-white bottomRadius  elevation-4">
+      <v-window-item value="study_disclosure">
+        <StudyDisclosureTable />
+      </v-window-item>
+    </v-window>
   </div>
 </template>
 
-<script>
-import UnderConstruction from '@/components/layout/UnderConstruction.vue'
-import { useAppStore } from '@/stores/app'
+<script setup>
+import { useI18n } from 'vue-i18n'
+import { ref } from 'vue'
+import StudyDisclosureTable from '@/components/studies/StudyDisclosureTable.vue'
 
-export default {
-  components: {
-    UnderConstruction,
-  },
-  setup() {
-    const appStore = useAppStore()
-    return {
-      addBreadcrumbsLevel: appStore.addBreadcrumbsLevel,
-    }
-  },
-  data() {
-    return {
-      activeTab: null,
-      tabs: [
-        { tab: '#tab-0', name: this.$t('Sidebar.study.cdisc_ctr') },
-        { tab: '#tab-1', name: this.$t('Sidebar.study.clinical_trials_gov') },
-        { tab: '#tab-2', name: this.$t('Sidebar.study.eudra_ct') },
-        { tab: '#tab-3', name: this.$t('Sidebar.study.who_ictrp') },
-      ],
-    }
-  },
-  watch: {
-    activeTab(value) {
-      localStorage.setItem('templatesTab', value)
-      const tabName = value
-        ? this.tabs.find((el) => el.tab.substring(1) === value).name
-        : this.tabs[0].name
-      this.addBreadcrumbsLevel({
-        text: tabName,
-        to: { name: 'StudyProperties', params: { tab: tabName } },
-        index: 3,
-        replace: true,
-      })
-    },
-  },
-  mounted() {
-    this.activeTab = localStorage.getItem('templatesTab') || 'tab-0'
-    const tabName = this.activeTab
-      ? this.tabs.find((el) => el.tab.substring(1) === this.activeTab).name
-      : this.tabs[0].name
-    setTimeout(() => {
-      this.addBreadcrumbsLevel({
-        text: tabName,
-        index: 3,
-        replace: true,
-      })
-    }, 100)
-  },
-}
+const { t } = useI18n()
+  
+const activeTab = ref(null)
+const tabs = [
+  { tab: 'study_disclosure', name: t('StudyDisclosure.tab_1') },
+]
+
 </script>
+<style>
+.topRadius {
+  border-top-right-radius: 12px;
+  border-top-left-radius: 12px;
+}
+.bottomRadius {
+  border-bottom-left-radius: 12px;
+  border-bottom-right-radius: 12px;
+}
+</style>

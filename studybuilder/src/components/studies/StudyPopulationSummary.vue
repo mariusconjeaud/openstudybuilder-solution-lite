@@ -36,12 +36,12 @@ const params = [
   {
     label: t('StudyPopulationForm.therapeuticarea'),
     name: 'therapeutic_area_codes',
-    valuesDisplay: 'terms',
+    valuesDisplay: 'dictionaryTerms',
   },
   {
     label: t('StudyPopulationForm.disease_condition'),
     name: 'disease_condition_or_indication_codes',
-    valuesDisplay: 'terms',
+    valuesDisplay: 'dictionaryTerms',
   },
   {
     label: t('StudyPopulationForm.stable_disease_min_duration'),
@@ -56,7 +56,7 @@ const params = [
   {
     label: t('StudyPopulationForm.diagnosis_group'),
     name: 'diagnosis_group_codes',
-    valuesDisplay: 'terms',
+    valuesDisplay: 'dictionaryTerms',
   },
   {
     label: t('StudyPopulationForm.relapse_criteria'),
@@ -74,7 +74,7 @@ const params = [
   {
     label: t('StudyPopulationForm.sex_of_study_participants'),
     name: 'sex_of_participants_code',
-    valuesDisplay: 'terms',
+    valuesDisplay: 'term',
   },
   {
     label: t('StudyPopulationForm.planned_min_age'),

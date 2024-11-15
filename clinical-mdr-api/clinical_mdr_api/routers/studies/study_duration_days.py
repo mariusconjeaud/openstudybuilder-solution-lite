@@ -124,7 +124,7 @@ def get_distinct_values_for_header(
 
 
 @router.get(
-    "/{uid}",
+    "/{study_duration_day_uid}",
     dependencies=[rbac.LIBRARY_READ],
     summary="Get details on a specific study duration day",
     description="""
@@ -144,9 +144,9 @@ Possible errors:
         500: _generic_descriptions.ERROR_500,
     },
 )
-def get_study_duration_day(uid: str = StudyDurationDaysUID):
+def get_study_duration_day(study_duration_day_uid: str = StudyDurationDaysUID):
     study_duration_days_service = StudyDurationDaysService()
-    return study_duration_days_service.get_by_uid(uid=uid)
+    return study_duration_days_service.get_by_uid(uid=study_duration_day_uid)
 
 
 @router.post(

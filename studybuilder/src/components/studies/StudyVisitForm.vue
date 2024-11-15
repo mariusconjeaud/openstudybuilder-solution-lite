@@ -779,6 +779,7 @@ watch(
     if (value) {
       form.value.time_value = 0
       disableTimeValue.value = true
+      form.value.time_reference_uid = timeReferences.value.find(val => val.name.sponsor_preferred_name === visitConstants.TIMEREF_GLOBAL_ANCHOR_VISIT).term_uid
     } else {
       disableTimeValue.value = false
     }

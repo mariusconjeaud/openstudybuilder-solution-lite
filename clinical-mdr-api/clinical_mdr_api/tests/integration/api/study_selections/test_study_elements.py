@@ -1,5 +1,5 @@
 """
-Tests for /studies/{uid}/study-elements endpoints
+Tests for /studies/{study_uid}/study-elements endpoints
 """
 
 # pylint: disable=unused-argument
@@ -66,6 +66,9 @@ def test_data():
 
     global study
     study = TestUtils.create_study()
+    TestUtils.set_study_standard_version(
+        study_uid=study.uid,
+    )
     element_subtype_codelist = TestUtils.create_ct_codelist(
         name=settings.STUDY_ELEMENT_SUBTYPE_NAME,
         sponsor_preferred_name=settings.STUDY_ELEMENT_SUBTYPE_NAME,
@@ -100,13 +103,7 @@ def test_data():
         effective_date=ct_term_start_date,
         approve=True,
     )
-    cdisc_package_name = "SDTM CT 2020-03-27"
-    TestUtils.create_ct_package(
-        catalogue=catalogue_name,
-        name=cdisc_package_name,
-        approve_elements=False,
-        effective_date=datetime(2020, 3, 27, tzinfo=timezone.utc),
-    )
+
     # patch the date of the latest HAS_VERSION FINAL relationship so it can be detected by the selected study_standard_Version
     params = {
         "uid": initial_ct_term_study_standard_test.term_uid,
@@ -340,24 +337,11 @@ def test_study_element_version_selecting_ct_package(api_client):
     assert res["element_subtype"]["term_uid"] == ctterm_uid
     assert res["element_subtype"]["sponsor_preferred_name"] == new_ctterm_name
 
-    # get ct_packages
-    response = api_client.get(
-        "/ct/packages",
+    TestUtils.set_study_standard_version(
+        study_uid=study_for_ctterm_versioning.uid,
+        package_name="SDTM CT 2020-03-27",
+        effective_date=datetime(2020, 3, 27, tzinfo=timezone.utc),
     )
-    res = response.json()
-    assert response.status_code == 200
-    ct_package_uid = res[0]["uid"]
-
-    # create study standard version
-    response = api_client.post(
-        f"/studies/{study_for_ctterm_versioning.uid}/study-standard-versions",
-        json={
-            "ct_package_uid": ct_package_uid,
-        },
-    )
-    res = response.json()
-    assert response.status_code == 201
-    assert res["ct_package"]["uid"] == ct_package_uid
 
     # get study selection with previous ctterm
     response = api_client.get(

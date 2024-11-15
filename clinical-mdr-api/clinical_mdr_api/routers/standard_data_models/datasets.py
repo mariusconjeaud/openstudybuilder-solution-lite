@@ -151,7 +151,7 @@ def get_distinct_values_for_header(
 
 
 @router.get(
-    "/datasets/{uid}",
+    "/datasets/{dataset_uid}",
     dependencies=[rbac.LIBRARY_READ],
     summary="Get details on a specific dataset",
     description="""
@@ -182,11 +182,11 @@ def get_dataset(
         ...,
         description="The version of the selected Data model implementation guide, for instance '2.2'",
     ),
-    uid: str = DatasetUID,
+    dataset_uid: str = DatasetUID,
 ):
     dataset_service = DatasetService()
     return dataset_service.get_by_uid(
-        uid=uid,
+        uid=dataset_uid,
         data_model_ig_version=data_model_ig_version,
         data_model_ig_name=data_model_ig_name,
     )

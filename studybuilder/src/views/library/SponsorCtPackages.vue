@@ -19,6 +19,12 @@ const appStore = useAppStore()
 const route = useRoute()
 
 watch(
+  () => route.params.catalogue_name,
+  (value) => {
+    updateCatalogueInBreadcrumbs(value, true)
+  }
+)
+watch(
   () => route.params.package_name,
   (value) => {
     if (value) {
@@ -30,16 +36,31 @@ watch(
 )
 
 onMounted(() => {
+  if (route.params.catalogue_name) {
+    updateCatalogueInBreadcrumbs(route.params.catalogue_name)
+  }
   if (route.params.package_name) {
-    updatePackageInBreadcrumbs(route.params.package_name)
+    updatePackageInBreadcrumbs(
+      route.params.package_name,
+      route.params.catalogue_name
+    )
   }
 })
+
+function updateCatalogueInBreadcrumbs(catalogueName, replace) {
+  appStore.addBreadcrumbsLevel(
+    catalogueName,
+    { name: 'SponsorCtPackages', params: { catalogue_name: catalogueName } },
+    3,
+    replace
+  )
+}
 
 function updatePackageInBreadcrumbs(packageName, replace) {
   appStore.addBreadcrumbsLevel(
     packageName,
     { name: 'SponsorCtPackages', params: { package_name: packageName } },
-    3,
+    4,
     replace
   )
 }

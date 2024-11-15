@@ -113,7 +113,9 @@ class ActivityInstanceService(ConceptGenericService[ActivityInstanceAR]):
         )
 
     def non_transactional_edit(
-        self, uid: str, concept_edit_input: ActivityInstanceEditInput
+        self,
+        uid: str,
+        concept_edit_input: ActivityInstanceEditInput,
     ) -> ActivityInstance:
         try:
             item = self._find_by_uid_or_raise_not_found(uid=uid, for_update=True)

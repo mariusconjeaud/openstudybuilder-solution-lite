@@ -143,6 +143,7 @@ def enable_cdc(driver, database_name):
         raise RuntimeError(
             f"Failed to enable log enrichment, current setting is {current_enrichment_setting}"
         )
+    time.sleep(1.0)
     return prev_log_enrichment_setting
 
 

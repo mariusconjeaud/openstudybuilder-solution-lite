@@ -22,6 +22,7 @@
               density="compact"
               clearable
               data-cy="project-id"
+              :disabled="isStudyASubPart(props.editedStudy)"
               @update:model-value="updateProject"
             />
           </v-col>
@@ -65,6 +66,7 @@
               density="compact"
               clearable
               data-cy="study-number"
+              :disabled="isStudyASubPart(props.editedStudy)"
             />
           </v-col>
         </v-row>
@@ -230,6 +232,10 @@ function hasChanged() {
   } else {
     return false
   }
+}
+
+function isStudyASubPart(study) {
+  return study !== null && study.study_parent_part !== null
 }
 
 function updateStudy() {

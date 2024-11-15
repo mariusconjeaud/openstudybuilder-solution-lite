@@ -20,6 +20,7 @@ from clinical_mdr_api.models.concepts.activities.activity import (
     ActivityForStudyActivity,
     ActivityGroupingHierarchySimpleModel,
 )
+from clinical_mdr_api.models.controlled_terminologies.ct_term_name import CTTermName
 from clinical_mdr_api.models.study_selections.study import StudySoaPreferencesInput
 from clinical_mdr_api.models.study_selections.study_epoch import StudyEpoch
 from clinical_mdr_api.models.study_selections.study_selection import (
@@ -45,7 +46,7 @@ from clinical_mdr_api.services.utils.table_f import (
 
 class MockStudyEpoch(BaseModel):
     uid: str
-    epoch_name: str
+    epoch_ctterm: CTTermName
 
 
 class MockStudyFlowchartService(StudyFlowchartService):
@@ -97,7 +98,7 @@ def check_flowchart_table_dimensions(
 def check_flowchart_table_first_rows(
     table: TableWithFootnotes,
     operational: bool,
-    study_epochs: list[StudyEpoch],
+    study_epochs: list[StudyEpoch | MockStudyEpoch],
     study_visits: list[models.StudyVisit],
     soa_preferences: StudySoaPreferencesInput,
 ):
@@ -120,13 +121,16 @@ def check_flowchart_table_first_rows(
     # only one visit per group is considered
     visit: models.StudyVisit
     for _, e in {
-        (visit.consecutive_visit_group or visit.visit_name, visit.study_epoch_name)
+        (
+            visit.consecutive_visit_group or visit.visit_name,
+            visit.study_epoch.sponsor_preferred_name,
+        )
         for visit in study_visits
     }:
         num_visits_per_epoch[e] += 1
 
     i = 3 if operational else 1
-    epoch: StudyEpoch
+    epoch: StudyEpoch | MockStudyEpoch
     for epoch in study_epochs:
         cell = row.cells[i]
 
@@ -134,7 +138,7 @@ def check_flowchart_table_first_rows(
         assert cell.style == "header1"
 
         # THEN cell text is epoch name
-        assert cell.text == epoch.epoch_name
+        assert cell.text == epoch.epoch_ctterm.sponsor_preferred_name
 
         # THEN cell refs
         assert len(cell.refs) == 1
@@ -142,7 +146,9 @@ def check_flowchart_table_first_rows(
         assert cell.refs[0].uid == epoch.uid
 
         # THEN span is number of visits
-        assert cell.span == num_visits_per_epoch[epoch.epoch_name]
+        assert (
+            cell.span == num_visits_per_epoch[epoch.epoch_ctterm.sponsor_preferred_name]
+        )
 
         for j in range(1, cell.span):
             # THEN span of following cells are 0 for the next visits of the epoch
@@ -181,7 +187,7 @@ def check_flowchart_table_first_rows(
                 else:
                     # Different visit_type, new label
                     prev_visit_type_uid = visit.visit_type_uid
-                    assert row.cells[i].text == visit.visit_type_name
+                    assert row.cells[i].text == visit.visit_type.sponsor_preferred_name
                     assert row.cells[i].style == "header1"
                     assert row.cells[i].span > 0
 
@@ -362,7 +368,9 @@ def check_flowchart_table_visit_rows(
                 )
 
         # THEN text in forth row
-        if visit.min_visit_window_value == -visit.max_visit_window_value:
+        if visit.min_visit_window_value == visit.max_visit_window_value == 0:
+            assert table.rows[row_idx + 2].cells[i].text == "0"
+        elif visit.min_visit_window_value == -visit.max_visit_window_value:
             assert (
                 table.rows[row_idx + 2].cells[i].text
                 == f"±{visit.max_visit_window_value:0.0f}"
@@ -568,7 +576,8 @@ def test_get_header_rows(study_flowchart_service, time_unit):
     visits = [
         visit
         for visit in study_flowchart_service._get_study_visits()
-        if visit.show_visit and visit.study_epoch_name != config.BASIC_EPOCH_NAME
+        if visit.show_visit
+        and visit.study_epoch.sponsor_preferred_name != config.BASIC_EPOCH_NAME
     ]
     grouped_visits = study_flowchart_service._group_visits(visits)
 
@@ -691,17 +700,23 @@ def test_get_header_rows_with_soa_preferences(
     epochs = list(
         {
             visit.study_epoch_uid: MockStudyEpoch(
-                uid=visit.study_epoch_uid, epoch_name=visit.study_epoch_name
+                uid=visit.study_epoch_uid,
+                epoch_ctterm=CTTermName(
+                    sponsor_preferred_name=visit.study_epoch.sponsor_preferred_name,
+                    sponsor_preferred_name_sentence_case=visit.study_epoch.sponsor_preferred_name,
+                ),
             )
             for visit in STUDY_VISITS
-            if visit.show_visit and visit.study_epoch_name != config.BASIC_EPOCH_NAME
+            if visit.show_visit
+            and visit.study_epoch.sponsor_preferred_name != config.BASIC_EPOCH_NAME
         }.values()
     )
 
     visits = [
         visit
         for visit in STUDY_VISITS
-        if visit.show_visit and visit.study_epoch_name != config.BASIC_EPOCH_NAME
+        if visit.show_visit
+        and visit.study_epoch.sponsor_preferred_name != config.BASIC_EPOCH_NAME
     ]
     grouped_visits = StudyFlowchartService._group_visits(visits)
 
@@ -762,12 +777,24 @@ STUDY_VISITS = [
         uid="StudyVisit_000012",
         study_uid="Study_000002",
         study_epoch_name="Screening",
+        study_epoch={
+            "sponsor_preferred_name": "Screening",
+            "sponsor_preferred_name_sentence_case": "screening",
+        },
         epoch_uid="C48262_SCREENING",
         order=1,
         visit_type_name="Screening",
+        visit_type={
+            "sponsor_preferred_name": "Screening",
+            "sponsor_preferred_name_sentence_case": "screening",
+        },
         time_reference_name="Global anchor visit",
         time_unit_name="days",
         visit_contact_mode_name="On Site Visit",
+        visit_contact_mode={
+            "sponsor_preferred_name": "On Site Visit",
+            "sponsor_preferred_name_sentence_case": "screening",
+        },
         epoch_allocation_name=None,
         duration_time=-1209600.0,
         duration_time_unit="UnitDefinition_000364",
@@ -823,12 +850,24 @@ STUDY_VISITS = [
         uid="StudyVisit_000013",
         study_uid="Study_000002",
         study_epoch_name="Run-in",
+        study_epoch={
+            "sponsor_preferred_name": "Run-in",
+            "sponsor_preferred_name_sentence_case": "screening",
+        },
         epoch_uid="C98779_RUN-IN",
         order=2,
         visit_type_name="Start of run-in",
+        visit_type={
+            "sponsor_preferred_name": "Start of run-in",
+            "sponsor_preferred_name_sentence_case": "screening",
+        },
         time_reference_name="Global anchor visit",
         time_unit_name="days",
         visit_contact_mode_name="On Site Visit",
+        visit_contact_mode={
+            "sponsor_preferred_name": "On Site Visit",
+            "sponsor_preferred_name_sentence_case": "screening",
+        },
         epoch_allocation_name=None,
         duration_time=-259200.0,
         duration_time_unit="UnitDefinition_000364",
@@ -884,12 +923,24 @@ STUDY_VISITS = [
         uid="StudyVisit_000014",
         study_uid="Study_000002",
         study_epoch_name="Run-in",
+        study_epoch={
+            "sponsor_preferred_name": "Run-in",
+            "sponsor_preferred_name_sentence_case": "screening",
+        },
         epoch_uid="C98779_RUN-IN",
         order=3,
         visit_type_name="Pre-treatment",
+        visit_type={
+            "sponsor_preferred_name": "Pre-treatment",
+            "sponsor_preferred_name_sentence_case": "screening",
+        },
         time_reference_name="Global anchor visit",
         time_unit_name="days",
         visit_contact_mode_name="On Site Visit",
+        visit_contact_mode={
+            "sponsor_preferred_name": "On Site Visit",
+            "sponsor_preferred_name_sentence_case": "screening",
+        },
         epoch_allocation_name="Current Visit",
         duration_time=-172800.0,
         duration_time_unit="UnitDefinition_000364",
@@ -945,12 +996,24 @@ STUDY_VISITS = [
         uid="StudyVisit_000015",
         study_uid="Study_000002",
         study_epoch_name="Run-in",
+        study_epoch={
+            "sponsor_preferred_name": "Run-in",
+            "sponsor_preferred_name_sentence_case": "screening",
+        },
         epoch_uid="C98779_RUN-IN",
         order=4,
         visit_type_name="Pre-treatment",
+        visit_type={
+            "sponsor_preferred_name": "Pre-treatment",
+            "sponsor_preferred_name_sentence_case": "screening",
+        },
         time_reference_name="Global anchor visit",
         time_unit_name="days",
         visit_contact_mode_name="On Site Visit",
+        visit_contact_mode={
+            "sponsor_preferred_name": "On Site Visit",
+            "sponsor_preferred_name_sentence_case": "screening",
+        },
         epoch_allocation_name=None,
         duration_time=-86400.0,
         duration_time_unit="UnitDefinition_000364",
@@ -1006,12 +1069,24 @@ STUDY_VISITS = [
         uid="StudyVisit_000016",
         study_uid="Study_000002",
         study_epoch_name="Treatment 1",
+        study_epoch={
+            "sponsor_preferred_name": "Treatment 1",
+            "sponsor_preferred_name_sentence_case": "screening",
+        },
         epoch_uid="CTTerm_001163",
         order=5,
         visit_type_name="Treatment",
+        visit_type={
+            "sponsor_preferred_name": "Treatment",
+            "sponsor_preferred_name_sentence_case": "screening",
+        },
         time_reference_name="Global anchor visit",
         time_unit_name="days",
         visit_contact_mode_name="On Site Visit",
+        visit_contact_mode={
+            "sponsor_preferred_name": "On Site Visit",
+            "sponsor_preferred_name_sentence_case": "screening",
+        },
         epoch_allocation_name=None,
         duration_time=0.0,
         duration_time_unit="UnitDefinition_000364",
@@ -1067,12 +1142,24 @@ STUDY_VISITS = [
         uid="StudyVisit_000017",
         study_uid="Study_000002",
         study_epoch_name="Treatment 1",
+        study_epoch={
+            "sponsor_preferred_name": "Treatment 1",
+            "sponsor_preferred_name_sentence_case": "screening",
+        },
         epoch_uid="CTTerm_001163",
         order=6,
         visit_type_name="Treatment",
+        visit_type={
+            "sponsor_preferred_name": "Treatment",
+            "sponsor_preferred_name_sentence_case": "screening",
+        },
         time_reference_name="Global anchor visit",
         time_unit_name="days",
         visit_contact_mode_name="On Site Visit",
+        visit_contact_mode={
+            "sponsor_preferred_name": "On Site Visit",
+            "sponsor_preferred_name_sentence_case": "screening",
+        },
         epoch_allocation_name=None,
         duration_time=172800.0,
         duration_time_unit="UnitDefinition_000364",
@@ -1128,12 +1215,24 @@ STUDY_VISITS = [
         uid="StudyVisit_000018",
         study_uid="Study_000002",
         study_epoch_name="Treatment 1",
+        study_epoch={
+            "sponsor_preferred_name": "Treatment 1",
+            "sponsor_preferred_name_sentence_case": "screening",
+        },
         epoch_uid="CTTerm_001163",
         order=7,
         visit_type_name="Treatment",
+        visit_type={
+            "sponsor_preferred_name": "Treatment",
+            "sponsor_preferred_name_sentence_case": "screening",
+        },
         time_reference_name="Global anchor visit",
         time_unit_name="days",
         visit_contact_mode_name="On Site Visit",
+        visit_contact_mode={
+            "sponsor_preferred_name": "On Site Visit",
+            "sponsor_preferred_name_sentence_case": "screening",
+        },
         epoch_allocation_name=None,
         duration_time=345600.0,
         duration_time_unit="UnitDefinition_000364",
@@ -1189,12 +1288,24 @@ STUDY_VISITS = [
         uid="StudyVisit_000019",
         study_uid="Study_000002",
         study_epoch_name="Treatment 2",
+        study_epoch={
+            "sponsor_preferred_name": "Treatment 2",
+            "sponsor_preferred_name_sentence_case": "screening",
+        },
         epoch_uid="CTTerm_001162",
         order=8,
         visit_type_name="Treatment",
+        visit_type={
+            "sponsor_preferred_name": "Treatment",
+            "sponsor_preferred_name_sentence_case": "screening",
+        },
         time_reference_name="Global anchor visit",
         time_unit_name="days",
         visit_contact_mode_name="On Site Visit",
+        visit_contact_mode={
+            "sponsor_preferred_name": "On Site Visit",
+            "sponsor_preferred_name_sentence_case": "screening",
+        },
         epoch_allocation_name=None,
         duration_time=1209600.0,
         duration_time_unit="UnitDefinition_000364",
@@ -1250,12 +1361,24 @@ STUDY_VISITS = [
         uid="StudyVisit_000020",
         study_uid="Study_000002",
         study_epoch_name="Treatment 2",
+        study_epoch={
+            "sponsor_preferred_name": "Treatment 2",
+            "sponsor_preferred_name_sentence_case": "screening",
+        },
         epoch_uid="CTTerm_001162",
         order=9,
         visit_type_name="Treatment",
+        visit_type={
+            "sponsor_preferred_name": "Treatment",
+            "sponsor_preferred_name_sentence_case": "screening",
+        },
         time_reference_name="Global anchor visit",
         time_unit_name="days",
         visit_contact_mode_name="On Site Visit",
+        visit_contact_mode={
+            "sponsor_preferred_name": "On Site Visit",
+            "sponsor_preferred_name_sentence_case": "screening",
+        },
         epoch_allocation_name=None,
         duration_time=1382400.0,
         duration_time_unit="UnitDefinition_000364",
@@ -1311,12 +1434,24 @@ STUDY_VISITS = [
         uid="StudyVisit_000021",
         study_uid="Study_000002",
         study_epoch_name="Treatment 2",
+        study_epoch={
+            "sponsor_preferred_name": "Treatment 2",
+            "sponsor_preferred_name_sentence_case": "screening",
+        },
         epoch_uid="CTTerm_001162",
         order=10,
         visit_type_name="Treatment",
+        visit_type={
+            "sponsor_preferred_name": "Treatment",
+            "sponsor_preferred_name_sentence_case": "screening",
+        },
         time_reference_name="Global anchor visit",
         time_unit_name="days",
         visit_contact_mode_name="On Site Visit",
+        visit_contact_mode={
+            "sponsor_preferred_name": "On Site Visit",
+            "sponsor_preferred_name_sentence_case": "screening",
+        },
         epoch_allocation_name=None,
         duration_time=1555200.0,
         duration_time_unit="UnitDefinition_000364",
@@ -1372,12 +1507,24 @@ STUDY_VISITS = [
         uid="StudyVisit_000022",
         study_uid="Study_000002",
         study_epoch_name="Follow-up",
+        study_epoch={
+            "sponsor_preferred_name": "Follow-up",
+            "sponsor_preferred_name_sentence_case": "screening",
+        },
         epoch_uid="C99158_FOLLOW-UP",
         order=11,
         visit_type_name="Follow-up",
+        visit_type={
+            "sponsor_preferred_name": "Follow-up",
+            "sponsor_preferred_name_sentence_case": "screening",
+        },
         time_reference_name="Global anchor visit",
         time_unit_name="days",
         visit_contact_mode_name="On Site Visit",
+        visit_contact_mode={
+            "sponsor_preferred_name": "On Site Visit",
+            "sponsor_preferred_name_sentence_case": "screening",
+        },
         epoch_allocation_name=None,
         duration_time=1814400.0,
         duration_time_unit="UnitDefinition_000364",
@@ -1433,12 +1580,24 @@ STUDY_VISITS = [
         uid="StudyVisit_000023",
         study_uid="Study_000002",
         study_epoch_name="Basic",
+        study_epoch={
+            "sponsor_preferred_name": "Basic",
+            "sponsor_preferred_name_sentence_case": "screening",
+        },
         epoch_uid="CTTerm_000009",
         order=config.UNSCHEDULED_VISIT_NUMBER,
         visit_type_name="Unscheduled",
+        visit_type={
+            "sponsor_preferred_name": "Unscheduled",
+            "sponsor_preferred_name_sentence_case": "screening",
+        },
         time_reference_name=None,
         time_unit_name=None,
         visit_contact_mode_name="Virtual Visit",
+        visit_contact_mode={
+            "sponsor_preferred_name": "Virtual Visit",
+            "sponsor_preferred_name_sentence_case": "screening",
+        },
         epoch_allocation_name="Date Current Visit",
         duration_time=None,
         duration_time_unit=None,
@@ -1492,12 +1651,24 @@ STUDY_VISITS = [
         uid="StudyVisit_000024",
         study_uid="Study_000002",
         study_epoch_name="Basic",
+        study_epoch={
+            "sponsor_preferred_name": "Basic",
+            "sponsor_preferred_name_sentence_case": "screening",
+        },
         epoch_uid="CTTerm_000009",
         order=config.NON_VISIT_NUMBER,
         visit_type_name="Non-visit",
+        visit_type={
+            "sponsor_preferred_name": "Non-visit",
+            "sponsor_preferred_name_sentence_case": "screening",
+        },
         time_reference_name=None,
         time_unit_name=None,
         visit_contact_mode_name="Virtual Visit",
+        visit_contact_mode={
+            "sponsor_preferred_name": "Virtual Visit",
+            "sponsor_preferred_name_sentence_case": "screening",
+        },
         epoch_allocation_name="Date Current Visit",
         duration_time=None,
         duration_time_unit=None,
@@ -3338,14 +3509,14 @@ DETAILED_SOA_TABLE = TableWithFootnotes(
         TableRow(
             cells=[
                 TableCell(text="Visit window (days)", style="header4"),
-                TableCell(text="±0", style="header4"),
-                TableCell(text="±0", style="header4"),
-                TableCell(text="±0", style="header4"),
-                TableCell(text="±0", style="header4"),
-                TableCell(text="±0", style="header4"),
-                TableCell(text="±0", style="header4"),
-                TableCell(text="±0", style="header4"),
-                TableCell(text="±0", style="header4"),
+                TableCell(text="0", style="header4"),
+                TableCell(text="0", style="header4"),
+                TableCell(text="0", style="header4"),
+                TableCell(text="0", style="header4"),
+                TableCell(text="0", style="header4"),
+                TableCell(text="0", style="header4"),
+                TableCell(text="0", style="header4"),
+                TableCell(text="0", style="header4"),
             ],
             hide=False,
         ),
@@ -4276,14 +4447,14 @@ PROTOCOL_SOA_TABLE = TableWithFootnotes(
         TableRow(
             cells=[
                 TableCell(text="Visit window (days)", style="header4"),
-                TableCell(text="±0", style="header4"),
-                TableCell(text="±0", style="header4"),
-                TableCell(text="±0", style="header4"),
-                TableCell(text="±0", style="header4"),
-                TableCell(text="±0", style="header4"),
-                TableCell(text="±0", style="header4"),
-                TableCell(text="±0", style="header4"),
-                TableCell(text="±0", style="header4"),
+                TableCell(text="0", style="header4"),
+                TableCell(text="0", style="header4"),
+                TableCell(text="0", style="header4"),
+                TableCell(text="0", style="header4"),
+                TableCell(text="0", style="header4"),
+                TableCell(text="0", style="header4"),
+                TableCell(text="0", style="header4"),
+                TableCell(text="0", style="header4"),
             ],
             hide=False,
         ),

@@ -124,7 +124,7 @@ def get_distinct_values_for_header(
 
 
 @router.get(
-    "/{uid}",
+    "/{time_point_uid}",
     dependencies=[rbac.LIBRARY_READ],
     summary="Get details on a specific time point",
     description="""
@@ -144,9 +144,9 @@ Possible errors:
         500: _generic_descriptions.ERROR_500,
     },
 )
-def get_time_point(uid: str = TimePointUID):
+def get_time_point(time_point_uid: str = TimePointUID):
     time_point_service = TimePointService()
-    return time_point_service.get_by_uid(uid=uid)
+    return time_point_service.get_by_uid(uid=time_point_uid)
 
 
 @router.post(

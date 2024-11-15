@@ -142,7 +142,7 @@ def test_get_unit_definitions_pagination(api_client):
         pytest.param(3, 1, True, None, 3),
         pytest.param(3, 2, True, None, 3),
         pytest.param(10, 2, True, None, 10),
-        pytest.param(10, 3, True, None, 7),  # Total numer is 27
+        pytest.param(10, 3, True, None, 7),  # Total number is 27
         pytest.param(10, 1, True, '{"name": false}', 10),
         pytest.param(10, 2, True, '{"name": true}', 10),
     ],

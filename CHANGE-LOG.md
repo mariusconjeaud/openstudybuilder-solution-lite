@@ -1,6 +1,111 @@
 # OpenStudyBuilder Commits changelog
 
 
+
+## V 0.12
+
+New Features and Enhancements
+============
+
+### Fixes and Enhancements
+
+- Minor visual changes have been made to the System Announcement functionality to increase readability
+- The edit "Activity Instance" form has been rewritten so it only fetches up to 20 activities instead of all (1000+) activities. This makes the form usable after a fraction of a second instead of the more than 20 seconds it used to take. The parameters in the URL path has gotten a unified naming scheme making the API easier to use for API users. In the "Add Visits" form it is now more intuitive for Standard Developers what information needs to be filled out when creating a visit meant to be a Global Anchor visits.  The Protocol SoA no longer shows "+/-" in front of a time window value of 0. Neomodel has been upgraded to version 5.3
+- Various quality improvements by increased coverage of automated tests for the System Announcements functionality.
+- The online help has been updated to include details about selection by Study Acronym.
+- Footnotes can now be managed from the SoA table directly.
+- Backend updates have been implemented to prepare for the need to save the Protocol SoA in a new database design. No changes to the frontend or impact on end users.
+- Backend updates have been implemented to prepare for the ability to edit activity grouping
+- Up-versioning an Activity now retains the existing links between Activities and Activity Instances. This significantly improves the time spend on managing Activities for Standards Developers as it requires 10 mouse clicks to to add a link to an Activity Instance from an Activity
+- Under manage study StudyBuilder now support selection of Sponsor and CDISC CT Package. This selection will control display and submission values for study selections related to sponsor and/or CDISC CT.
+- Updated activity instance classes and activity item classes.
+
+### New Features
+
+- Implemented API endpoints to read and write the state of feature flags, which are simple toggles for enabling or disabling selected parts of the application. The features in question can be anything from a complete module, such as the "Compounds" module under Library/Concepts, or something much smaller as a single button in a form. Once fully implemented this will allow us to perform more targeted user research (e.g. A/B testing) as well as allow the open source community to configure what parts of the application to use.
+- The first version of the consumer API has been initiated and contains three endpoints to get a list of studies, a list of study visits for a study and an operational SoA for a study.
+- It is now possible to remove an activity directly from the Detailed Schedule of Activities (SoA) page
+- In the Studies part of the application the menu option 'Clinical Transparency' has been added. The new menu ensures the transparency information needed for upload to clinicaltrial.gov is made available in a downloadable format.
+
+
+
+Solved Bugs
+============
+
+### API
+
+ **Miscellaneous** 
+
+- Fix linking to System Information API in Swagger
+
+### General
+
+ **Miscellaneous** 
+
+- Performance issue or Slowness in StudyBuilder Application
+
+### Library
+
+ **Code Lists -> CT Catalogues** 
+
+- Error message when adding an existing term to a codelist
+- Remove codelist_library_name filter from term search in CT Catalogues
+
+ **Code Lists -> Sponsor -> All** 
+
+- Searched text gets added to output string
+
+ **Concepts -> Activities -> Activities Instances** 
+
+- Not able to change the activity for an activity instance
+
+ **Concepts -> Activities -> Requested Activities** 
+
+- Handling placeholders are not looking as expected
+- User cannot able to change subgroup in handling of activity request
+
+ **Syntax Templates -> Endpoint Templates** 
+
+- Rows per page dropdown not working for User Defined Syntax Templates
+
+### Studies
+
+ **Define Study -> Data Specifications -> Study Activity instances** 
+
+- When data collection = No, then 'add instance' must not be an option
+
+ **Define Study -> Study Activities -> Schedule of Activities > Detailed** 
+
+- Activities are assigned to non-visit and unscheduled visits via batch editing option
+- Cannot able to remove a few Study Footnotes from the same item in SoA by issuing a few API endpoint calls
+
+ **Define Study -> Study Activities -> Study Activities** 
+
+- Filtering in Study activities causes error
+- SoA group change having a dependency to activity grouping
+
+ **Define Study -> Study Structure -> Study Branch** 
+
+- Add branch arm: save button is spinning after the warning that subject number is higher than in arm
+
+ **Define Study -> Study Structure -> Study Branches** 
+
+- issue with ordering Study Branches
+
+ **Define Study -> Study Structure -> Study Visits** 
+
+- Issue with displaying save icon when Study visits in edit mode
+- It is possible to mark visits without timing (non-visit, unscheduled visit) as SoA milestone via edit mode
+
+ **Manage Study -> Study -> Study Subparts** 
+
+- Sorting not working as expected in Study Subparts table
+- It should be not possible to update study id of the study subpart
+- Study subpart was created without "study acronym" which cannot be edited further
+
+
+
+
 ## V 0.11.2
 
 No New features and/or enhancements added

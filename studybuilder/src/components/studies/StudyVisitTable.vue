@@ -136,7 +136,7 @@
         />
       </template>
       <template #[`item.is_soa_milestone`]="{ item }">
-        <div v-if="editMode">
+        <div v-if="editMode && ![visitConstants.CLASS_NON_VISIT, visitConstants.CLASS_UNSCHEDULED_VISIT].includes(item.visit_class)">
           <v-checkbox
             v-model="item.is_soa_milestone"
             :disabled="item.disabled && itemsDisabled"
@@ -159,6 +159,12 @@
         >
           {{ item.visit_name }}
         </router-link>
+      </template>
+      <template #[`item.study_epoch.sponsor_preferred_name`]="{ item }">
+        <CTTermDisplay :term="item.study_epoch" />
+      </template>
+      <template #[`item.visit_type.sponsor_preferred_name`]="{ item }">
+        <CTTermDisplay :term="item.visit_type" />
       </template>
       <template #[`item.visit_class`]="{ item }">
         <div v-if="editMode">
@@ -324,7 +330,7 @@
           {{ item.time_value }} {{ getUnitName(item.time_unit_uid) }}
         </div>
       </template>
-      <template #[`item.visit_contact_mode_name`]="{ item }">
+      <template #[`item.visit_contact_mode.sponsor_preferred_name`]="{ item }">
         <div
           v-if="
             editMode && item.visit_class === visitConstants.CLASS_SINGLE_VISIT
@@ -342,7 +348,7 @@
           />
         </div>
         <div v-else>
-          {{ item.visit_contact_mode_name }}
+          <CTTermDisplay :term="item.visit_contact_mode" />
         </div>
       </template>
       <template #[`item.time_reference_name`]="{ item }">
@@ -449,19 +455,23 @@
           :actions="actions"
           :item="item"
         />
-        <v-btn
-          v-if="itemsDisabled && !item.disabled"
-          size="x-small"
-          color="success"
-          icon="mdi-content-save-outline"
-          @click="saveVisit(item)"
-        />
-        <v-btn
-          v-if="itemsDisabled && !item.disabled"
-          size="x-small"
-          icon="mdi-close"
-          @click="cancelVisitEditing"
-        />
+        <v-row v-if="editMode && itemsDisabled && !item.disabled">
+          <v-btn
+            size="x-small"
+            variant="outlined"
+            color="nnBaseBlue"
+            icon="mdi-content-save-outline"
+            class="mb-1"
+            @click="saveVisit(item)"
+          />
+          <v-btn
+            size="x-small"
+            variant="outlined"
+            color="nnBaseBlue"
+            icon="mdi-close"
+            @click="cancelVisitEditing"
+          />
+        </v-row>
       </template>
     </NNTable>
     <StudyVisitsDuplicateForm
@@ -519,6 +529,7 @@ import BarChart from '@/components/tools/BarChart.vue'
 import BubbleChart from '@/components/tools/BubbleChart.vue'
 import CollapsibleVisitGroupForm from './CollapsibleVisitGroupForm.vue'
 import ConfirmDialog from '@/components/tools/ConfirmDialog.vue'
+import CTTermDisplay from '@/components/tools/CTTermDisplay.vue'
 import visitConstants from '@/constants/visits'
 import filteringParameters from '@/utils/filteringParameters'
 import studyConstants from '@/constants/study'
@@ -567,20 +578,28 @@ const actions = ref([
     label: t('StudyVisitTable.duplicate'),
     icon: 'mdi-plus-box-multiple-outline',
     iconColor: 'primary',
+    condition: (item) =>
+      item.visit_class !== visitConstants.CLASS_MANUALLY_DEFINED_VISIT,
     click: openDuplicateForm,
     accessRole: roles.STUDY_WRITE,
   },
   {
     label: t('_global.history'),
     icon: 'mdi-history',
-    condition: (item) => item.visit_class === 'SINGLE_VISIT' && !editMode.value,
+    condition: (item) => item.visit_class === visitConstants.CLASS_SINGLE_VISIT && !editMode.value,
     click: openVisitHistory,
   },
 ])
 const headers = ref([
   { title: '', key: 'actions', width: '1%' },
-  { title: t('StudyVisitForm.study_epoch'), key: 'study_epoch_name' },
-  { title: t('StudyVisitForm.visit_type'), key: 'visit_type_name' },
+  {
+    title: t('StudyVisitForm.study_epoch'),
+    key: 'study_epoch.sponsor_preferred_name',
+  },
+  {
+    title: t('StudyVisitForm.visit_type'),
+    key: 'visit_type.sponsor_preferred_name',
+  },
   { title: t('StudyVisitForm.soa_milestone'), key: 'is_soa_milestone' },
   { title: t('StudyVisitForm.visit_class'), key: 'visit_class' },
   { title: t('StudyVisitForm.visit_sub_class'), key: 'visit_subclass' },
@@ -598,7 +617,10 @@ const headers = ref([
     title: t('StudyVisitForm.global_anchor_visit'),
     key: 'is_global_anchor_visit',
   },
-  { title: t('StudyVisitForm.contact_mode'), key: 'visit_contact_mode_name' },
+  {
+    title: t('StudyVisitForm.contact_mode'),
+    key: 'visit_contact_mode.sponsor_preferred_name',
+  },
   { title: t('StudyVisitForm.time_reference'), key: 'time_reference_name' },
   { title: t('StudyVisitForm.time_value'), key: 'time_value' },
   { title: t('StudyVisitForm.visit_number'), key: 'visit_number' },
@@ -633,8 +655,14 @@ const headers = ref([
 ])
 const defaultColumns = ref([
   { title: '', key: 'actions', width: '1%' },
-  { title: t('StudyVisitForm.study_epoch'), key: 'study_epoch_name' },
-  { title: t('StudyVisitForm.visit_type'), key: 'visit_type_name' },
+  {
+    title: t('StudyVisitForm.study_epoch'),
+    key: 'study_epoch.sponsor_preferred_name',
+  },
+  {
+    title: t('StudyVisitForm.visit_type'),
+    key: 'visit_type.sponsor_preferred_name',
+  },
   { title: t('StudyVisitForm.soa_milestone'), key: 'is_soa_milestone' },
   { title: t('StudyVisitForm.visit_class'), key: 'visit_class' },
   { title: t('StudyVisitForm.visit_sub_class'), key: 'visit_subclass' },
@@ -652,7 +680,10 @@ const defaultColumns = ref([
     title: t('StudyVisitForm.global_anchor_visit'),
     key: 'is_global_anchor_visit',
   },
-  { title: t('StudyVisitForm.contact_mode'), key: 'visit_contact_mode_name' },
+  {
+    title: t('StudyVisitForm.contact_mode'),
+    key: 'visit_contact_mode.sponsor_preferred_name',
+  },
   { title: t('StudyVisitForm.time_reference'), key: 'time_reference_name' },
   { title: t('StudyVisitForm.time_value'), key: 'time_value' },
   { title: t('StudyVisitForm.visit_number'), key: 'visit_number' },
@@ -976,6 +1007,7 @@ function openEditMode() {
 function closeEditMode() {
   tableRef.value.filterTable()
   editMode.value = false
+  itemsDisabled.value = false
   headers.value = defaultColumns.value
 }
 

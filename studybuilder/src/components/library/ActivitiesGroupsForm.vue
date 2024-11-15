@@ -251,6 +251,7 @@ export default {
             .update(
               this.editedGroupOrSubgroup.uid,
               this.form,
+              {},
               'activity-groups'
             )
             .then(
@@ -269,6 +270,7 @@ export default {
             .update(
               this.editedGroupOrSubgroup.uid,
               this.form,
+              {},
               'activity-sub-groups'
             )
             .then(

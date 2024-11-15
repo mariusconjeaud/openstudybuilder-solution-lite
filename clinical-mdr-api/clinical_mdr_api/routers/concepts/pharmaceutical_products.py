@@ -243,7 +243,7 @@ def get_distinct_values_for_header(
 
 
 @router.get(
-    "/pharmaceutical-products/{uid}",
+    "/pharmaceutical-products/{pharmaceutical_product_uid}",
     dependencies=[rbac.LIBRARY_READ],
     summary="Get details on a specific pharmaceutical product (in a specific version)",
     description="""
@@ -258,14 +258,14 @@ Possible errors:
     },
 )
 def get_activity(
-    uid: str = PharmaceuticalProductUID,
+    pharmaceutical_product_uid: str = PharmaceuticalProductUID,
 ):
     pharmaceutical_product_service = PharmaceuticalProductService()
-    return pharmaceutical_product_service.get_by_uid(uid=uid)
+    return pharmaceutical_product_service.get_by_uid(uid=pharmaceutical_product_uid)
 
 
 @router.get(
-    "/pharmaceutical-products/{uid}/versions",
+    "/pharmaceutical-products/{pharmaceutical_product_uid}/versions",
     dependencies=[rbac.LIBRARY_READ],
     summary="List version history for pharmaceutical products",
     description="""
@@ -287,16 +287,18 @@ Possible errors:
     responses={
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The pharmaceutical product with the specified 'uid' wasn't found.",
+            "description": "Not Found - The pharmaceutical product with the specified 'pharmaceutical_product_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def get_versions(
-    uid: str = PharmaceuticalProductUID,
+    pharmaceutical_product_uid: str = PharmaceuticalProductUID,
 ):
     pharmaceutical_product_service = PharmaceuticalProductService()
-    return pharmaceutical_product_service.get_version_history(uid=uid)
+    return pharmaceutical_product_service.get_version_history(
+        uid=pharmaceutical_product_uid
+    )
 
 
 @router.post(
@@ -350,7 +352,7 @@ def create(
 
 
 @router.patch(
-    "/pharmaceutical-products/{uid}",
+    "/pharmaceutical-products/{pharmaceutical_product_uid}",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Update pharmaceutical product",
     description="""
@@ -384,25 +386,26 @@ Possible errors:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The pharmaceutical product with the specified 'uid' wasn't found.",
+            "description": "Not Found - The pharmaceutical product with the specified 'pharmaceutical_product_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def edit(
-    uid: str = PharmaceuticalProductUID,
+    pharmaceutical_product_uid: str = PharmaceuticalProductUID,
     pharmaceutical_product_edit_input: PharmaceuticalProductEditInput = Body(
         description=""
     ),
 ):
     pharmaceutical_product_service = PharmaceuticalProductService()
     return pharmaceutical_product_service.edit_draft(
-        uid=uid, concept_edit_input=pharmaceutical_product_edit_input
+        uid=pharmaceutical_product_uid,
+        concept_edit_input=pharmaceutical_product_edit_input,
     )
 
 
 @router.post(
-    "/pharmaceutical-products/{uid}/approvals",
+    "/pharmaceutical-products/{pharmaceutical_product_uid}/approvals",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Approve draft version of a pharmaceutical product",
     description="""
@@ -434,20 +437,20 @@ Possible errors:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The pharmaceutical product with the specified 'uid' wasn't found.",
+            "description": "Not Found - The pharmaceutical product with the specified 'pharmaceutical_product_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def approve(
-    uid: str = PharmaceuticalProductUID,
+    pharmaceutical_product_uid: str = PharmaceuticalProductUID,
 ):
     pharmaceutical_product_service = PharmaceuticalProductService()
-    return pharmaceutical_product_service.approve(uid=uid)
+    return pharmaceutical_product_service.approve(uid=pharmaceutical_product_uid)
 
 
 @router.post(
-    "/pharmaceutical-products/{uid}/versions",
+    "/pharmaceutical-products/{pharmaceutical_product_uid}/versions",
     dependencies=[rbac.LIBRARY_WRITE],
     summary=" Create a new version of a pharmaceutical product",
     description="""
@@ -477,20 +480,22 @@ Possible errors:
             "model": ErrorResponse,
             "description": "Not Found - Reasons include e.g.: \n"
             "- The pharmaceutical product is not in final status.\n"
-            "- The pharmaceutical product with the specified 'uid' could not be found.",
+            "- The pharmaceutical product with the specified 'pharmaceutical_product_uid' could not be found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def create_new_version(
-    uid: str = PharmaceuticalProductUID,
+    pharmaceutical_product_uid: str = PharmaceuticalProductUID,
 ):
     pharmaceutical_product_service = PharmaceuticalProductService()
-    return pharmaceutical_product_service.create_new_version(uid=uid)
+    return pharmaceutical_product_service.create_new_version(
+        uid=pharmaceutical_product_uid
+    )
 
 
 @router.delete(
-    "/pharmaceutical-products/{uid}/activations",
+    "/pharmaceutical-products/{pharmaceutical_product_uid}/activations",
     dependencies=[rbac.LIBRARY_WRITE],
     summary=" Inactivate final version of a pharmaceutical product",
     description="""
@@ -521,20 +526,22 @@ Possible errors:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The pharmaceutical product with the specified 'uid' could not be found.",
+            "description": "Not Found - The pharmaceutical product with the specified 'pharmaceutical_product_uid' could not be found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def inactivate(
-    uid: str = PharmaceuticalProductUID,
+    pharmaceutical_product_uid: str = PharmaceuticalProductUID,
 ):
     pharmaceutical_product_service = PharmaceuticalProductService()
-    return pharmaceutical_product_service.inactivate_final(uid=uid)
+    return pharmaceutical_product_service.inactivate_final(
+        uid=pharmaceutical_product_uid
+    )
 
 
 @router.post(
-    "/pharmaceutical-products/{uid}/activations",
+    "/pharmaceutical-products/{pharmaceutical_product_uid}/activations",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Reactivate retired version of a pharmaceutical product",
     description="""
@@ -565,20 +572,22 @@ Possible errors:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The pharmaceutical product with the specified 'uid' could not be found.",
+            "description": "Not Found - The pharmaceutical product with the specified 'pharmaceutical_product_uid' could not be found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def reactivate(
-    uid: str = PharmaceuticalProductUID,
+    pharmaceutical_product_uid: str = PharmaceuticalProductUID,
 ):
     pharmaceutical_product_service = PharmaceuticalProductService()
-    return pharmaceutical_product_service.reactivate_retired(uid=uid)
+    return pharmaceutical_product_service.reactivate_retired(
+        uid=pharmaceutical_product_uid
+    )
 
 
 @router.delete(
-    "/pharmaceutical-products/{uid}",
+    "/pharmaceutical-products/{pharmaceutical_product_uid}",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Delete draft version of a pharmaceutical product",
     description="""
@@ -611,13 +620,13 @@ Possible errors:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - A pharmaceutical product with the specified 'uid' could not be found.",
+            "description": "Not Found - A pharmaceutical product with the specified 'pharmaceutical_product_uid' could not be found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def delete(
-    uid: str = PharmaceuticalProductUID,
+    pharmaceutical_product_uid: str = PharmaceuticalProductUID,
 ):
     pharmaceutical_product_service = PharmaceuticalProductService()
-    pharmaceutical_product_service.soft_delete(uid=uid)
+    pharmaceutical_product_service.soft_delete(uid=pharmaceutical_product_uid)

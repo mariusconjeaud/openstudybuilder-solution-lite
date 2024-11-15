@@ -122,7 +122,7 @@ def get_distinct_values_for_header(
 
 
 @router.get(
-    "/{uid}",
+    "/{lag_time_uid}",
     dependencies=[rbac.LIBRARY_READ],
     summary="Get details on a specific lag time",
     description="""
@@ -142,9 +142,9 @@ Possible errors:
         500: _generic_descriptions.ERROR_500,
     },
 )
-def get_lag_time(uid: str = LagTimeUID):
+def get_lag_time(lag_time_uid: str = LagTimeUID):
     lag_time_service = LagTimeService()
-    return lag_time_service.get_by_uid(uid=uid)
+    return lag_time_service.get_by_uid(uid=lag_time_uid)
 
 
 @router.post(

@@ -1,6 +1,8 @@
+import re
+
 from fastapi import FastAPI
 from fastapi.routing import APIRoute
-from neomodel.core import db
+from neomodel.sync_.core import db
 
 # Helpers
 from starlette.routing import Mount
@@ -1377,7 +1379,8 @@ MERGE (activity_group_root1:ConceptRoot:ActivityGroupRoot {uid:"activity_group_r
 MERGE (avf1:ActivityValidGroup {uid:"ActivityValidGroup_000001"})
 MERGE (avf1)-[:IN_GROUP]->(activity_group_value1)
 MERGE (activity_subgroup_value1)-[:HAS_GROUP]->(avf1)
-MERGE (activity_group_root1)-[:HAS_VERSION]->(activity_group_value1)
+MERGE (activity_group_root1)-[group_has_version:HAS_VERSION]->(activity_group_value1)
+SET group_has_version = draft_properties
 
 MERGE (library)-[:CONTAINS_CONCEPT]->(activity_subgroup_root2:ConceptRoot:ActivitySubGroupRoot {uid:"activity_subgroup_root2"})
 -[:LATEST]->(activity_subgroup_value2:ConceptValue:ActivitySubGroupValue {
@@ -1393,7 +1396,8 @@ SET has_version2 = draft_properties
 WITH *
 MERGE (activity_group_root2:ConceptRoot:ActivityGroupRoot {uid:"activity_group_root2"})
 -[:LATEST]->(activity_group_value2:ConceptValue:ActivityGroupValue)
-MERGE (activity_group_root2)-[:HAS_VERSION]->(activity_group_value2)
+MERGE (activity_group_root2)-[hvg2:HAS_VERSION]->(activity_group_value2)
+SET hvg2 = draft_properties
 MERGE (avf2:ActivityValidGroup {uid:"ActivityValidGroup_000002"})
 MERGE (avf2)-[:IN_GROUP]->(activity_group_value2)
 MERGE (activity_subgroup_value2)-[:HAS_GROUP]->(avf2)
@@ -1475,7 +1479,8 @@ MERGE (activity_root2)-[has_version2:HAS_VERSION]->(activity_value2)
 SET has_version2 = draft_properties
 MERGE (activity_subgroup_root2:ConceptRoot:ActivitySubGroupRoot {uid:"activity_subgroup_root2"})
 -[:LATEST]->(activity_subgroup_value2:ConceptValue:ActivitySubGroupValue)
-MERGE (activity_subgroup_root2)-[:HAS_VERSION]->(activity_subgroup_value2)
+MERGE (activity_subgroup_root2)-[hvsg2:HAS_VERSION]->(activity_subgroup_value2)
+SET hvsg2 = draft_properties
 MERGE (activity_value2)-[:HAS_GROUPING]->(activity_grouping2:ActivityGrouping {uid:"ActivityGrouping_000002"})
 WITH *
 MERGE (activity_valid_group2:ActivityValidGroup {uid:"ActivityValidGroup_000002"})
@@ -1483,7 +1488,8 @@ MERGE (activity_grouping2)-[:IN_SUBGROUP]->(activity_valid_group2)
 MERGE (activity_valid_group2)<-[:HAS_GROUP]-(activity_subgroup_value2)
 WITH *
 MERGE (activity_group_root2:ActivityGroupRoot:ConceptRoot {uid:"activity_group_root2"})-[:LATEST]->(activity_group_value2:ActivityGroupValue:ConceptValue)
-MERGE (activity_group_root2)-[:HAS_VERSION]->(activity_group_value2)
+MERGE (activity_group_root2)-[hvg2:HAS_VERSION]->(activity_group_value2)
+SET hvg2 = draft_properties
 MERGE (activity_valid_group2)-[:IN_GROUP]->(activity_group_value2)
 
 MERGE (library)-[:CONTAINS_CONCEPT]->(activity_root3:ConceptRoot:ActivityRoot {uid:"activity_root3"})
@@ -2451,7 +2457,10 @@ MERGE (l:Library {name:"CDISC"})
 ON CREATE 
     SET l.is_editable = false
 MERGE (catalogue:CTCatalogue {uid:"CTCatalogue_000001", name:"catalogue_name"})
-MERGE (n:Counter{count:1, counterId:"CTCodelistCounter"}) 
+MERGE (m:Counter{counterId:"CTCodelistCounter"})
+ON CREATE SET m:CTCodelistCounter, m.count=0
+WITH m
+CALL apoc.atomic.add(m,'count',1,1) yield oldValue, newValue
 MERGE (codelist:CTCodelistRoot {uid:"CTCodelist_000001"})
 MERGE (catalogue)-[:HAS_CODELIST]->(codelist)
 MERGE (c:ClinicalProgramme)
@@ -3214,7 +3223,7 @@ set has_term.order = 1
 MERGE (cnr)-[clname_hv:HAS_VERSION]->(cnv)
 set clname_hv = final_properties
 
-MERGE (catalogue:CTCatalogue {uid:"CTCatalogue_000001", name:"SDTM CT"})
+MERGE (catalogue:CTCatalogue {name:"SDTM CT"})
 MERGE (catalogue)-[:HAS_CODELIST]->(codelistroot)
 """
 
@@ -3408,19 +3417,10 @@ def get_path(path):
 
 
 def is_specific(path):
+    # return "_uid}" in path
     if any(
         x in path
-        for x in (
-            "{sn}",
-            "{uid}",
-            "{catalogue_name}",
-            "{codelist_uid}",
-            "{term_uid}",
-            "{study_number}",
-            "{thread_uid}",
-            "{reply_uid}",
-            "{study_uid}",
-        )
+        for x in ("_uid}", "{serial_number}", "{catalogue_name}", "{study_number}")
     ):
         return True
     return False
@@ -3428,14 +3428,9 @@ def is_specific(path):
 
 def create_stub(path, methods):
     if is_specific(path):
-        path = path.replace("{uid}", "1")
-        path = path.replace("{codelist_uid}", "1")
+        path = re.sub(r"{[^}]+_uid}", "1", path)
         path = path.replace("{catalogue_name}", "1")
-        path = path.replace("{term_uid}", "1")
         path = path.replace("{study_number}", "1")
-        path = path.replace("{thread_uid}", "1")
-        path = path.replace("{reply_uid}", "1")
-        path = path.replace("{study_uid}", "1")
         retval = {
             "id": 1,
             "path_spec": path,
@@ -3467,7 +3462,9 @@ def _create_paths(app: FastAPI, path_prefix="") -> list[dict[str, any]]:
     return paths
 
 
-def inject_base_data(inject_unit_subset: bool = True) -> Study:
+def inject_base_data(
+    inject_unit_subset: bool = True, inject_more_catalogues: bool = True
+) -> Study:
     """
     The data included as generic base data is the following
     - names specified below
@@ -3497,14 +3494,18 @@ def inject_base_data(inject_unit_subset: bool = True) -> Study:
     )
 
     ## Libraries
-    TestUtils.create_library("CDISC", True)
+    TestUtils.create_library(config.CDISC_LIBRARY_NAME, True)
     TestUtils.create_library("Sponsor", True)
     TestUtils.create_library("SNOMED", True)
     TestUtils.create_library(name=config.REQUESTED_LIBRARY_NAME, is_editable=True)
     with db.write_transaction:
-        sdtm = CTCatalogue(name="SDTM CT").save()
-        cdisc = Library.nodes.get(name="CDISC")
+        sdtm = CTCatalogue(name=config.SDTM_CT_CATALOGUE_NAME).save()
+        cdisc = Library.nodes.get(name=config.CDISC_LIBRARY_NAME)
         sdtm.contains_catalogue.connect(cdisc)
+        if inject_more_catalogues:
+            sdtm = CTCatalogue(name=config.ADAM_CT_CATALOGUE_NAME).save()
+            cdisc = Library.nodes.get(name=config.CDISC_LIBRARY_NAME)
+            sdtm.contains_catalogue.connect(cdisc)
     unit_subsets = []
     if inject_unit_subset:
         unit_subset_codelist = TestUtils.create_ct_codelist(
@@ -3551,5 +3552,9 @@ def inject_base_data(inject_unit_subset: bool = True) -> Study:
 
     ## Study
     study = TestUtils.create_study("123", "study_root", project.project_number)
+
+    TestUtils.set_study_standard_version(
+        study_uid=study.uid, catalogue=config.SDTM_CT_CATALOGUE_NAME
+    )
 
     return study

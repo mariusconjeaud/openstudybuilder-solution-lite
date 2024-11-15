@@ -813,6 +813,12 @@ export default {
       data
     )
   },
+  batchUpdateStudyFootnotes(studyUid, data) {
+    return repository.patch(
+      `${resource}/${studyUid}/study-soa-footnotes/batch-edit`,
+      data
+    )
+  },
   deleteStudyFootnote(studyUid, studyFootnoteUid) {
     return repository.delete(
       `${resource}/${studyUid}/study-soa-footnotes/${studyFootnoteUid}`
@@ -861,4 +867,14 @@ export default {
       `studies/${studyUid}/study-standard-versions/audit-trail`
     )
   },
+  getPharmaCm(studyUid) {
+    return repository.get(
+      `${resource}/${studyUid}/pharma-cm`
+    )
+  },
+  getPharmaCmXml(studyUid) {
+    return repository.get(
+      `${resource}/${studyUid}/pharma-cm.xml`
+    )
+  }
 }

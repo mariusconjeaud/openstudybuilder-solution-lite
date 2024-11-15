@@ -37,6 +37,11 @@
         variant="flat"
         :text="$t('StudyActivityInstances.action_needed')"
       />
+      <v-chip
+        class="ml-2 na"
+        variant="flat"
+        :text="$t('StudyActivityInstances.na')"
+      />
       <v-spacer />
     </template>
     <template #[`item.activity_instance.name`]="{ item }">
@@ -51,7 +56,9 @@
         {{
           item.activity_instance
             ? item.activity_instance.name
-            : $t('StudyActivityInstances.add_instance')
+            : (item.activity.is_data_collected
+              ? $t('StudyActivityInstances.add_instance')
+              : $t('StudyActivityInstances.na'))
         }}
       </div>
     </template>
@@ -211,7 +218,7 @@ function getInstanceCssClass(item) {
     }
   }
   return !item.activity.is_data_collected
-    ? 'px-1 instanceAvailable row-pointer'
+    ? 'px-1 na row-pointer'
     : 'px-1 noInstance row-pointer'
 }
 
@@ -413,6 +420,11 @@ function actionsMenuBadge(item) {
 }
 .suggestion {
   background-color: rgb(217, 201, 106);
+  border-radius: 5px;
+  color: black;
+}
+.na {
+  background-color: rgb(179, 179, 179);
   border-radius: 5px;
   color: black;
 }

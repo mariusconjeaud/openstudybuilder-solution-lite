@@ -7,6 +7,7 @@ from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryItemMetadataVO,
     LibraryVO,
 )
+from clinical_mdr_api.exceptions import BusinessLogicException
 
 
 @dataclass(frozen=True)
@@ -24,16 +25,12 @@ class OdmAliasVO(ConceptVO):
             is_template_parameter=False,
         )
 
-    def validate(
-        self,
-        concept_exists_by_callback: Callable[[str, str, bool], bool],
-        previous_name: str | None = None,
-    ) -> None:
-        self.duplication_check(
-            [("name", self.name, previous_name)],
-            concept_exists_by_callback,
-            "ODM Alias",
-        )
+    def validate(self, odm_object_exists_callback: Callable) -> None:
+        data = {"name": self.name, "context": self.context}
+        if uids := odm_object_exists_callback(**data):
+            raise BusinessLogicException(
+                f"ODM Alias already exists with UID ({uids[0]}) and data {data}"
+            )
 
 
 @dataclass
@@ -70,13 +67,11 @@ class OdmAliasAR(OdmARBase):
         concept_vo: OdmAliasVO,
         library: LibraryVO,
         generate_uid_callback: Callable[[], str | None] = (lambda: None),
-        concept_exists_by_callback: Callable[
-            [str, str, bool], bool
-        ] = lambda x, y, z: True,
+        odm_object_exists_callback: Callable = lambda _: True,
     ) -> Self:
         item_metadata = LibraryItemMetadataVO.get_initial_item_metadata(author=author)
 
-        concept_vo.validate(concept_exists_by_callback=concept_exists_by_callback)
+        concept_vo.validate(odm_object_exists_callback=odm_object_exists_callback)
 
         return cls(
             _uid=generate_uid_callback(),
@@ -93,14 +88,12 @@ class OdmAliasAR(OdmARBase):
         concept_exists_by_callback: Callable[
             [str, str, bool], bool
         ] = lambda x, y, z: True,
+        odm_object_exists_callback: Callable = lambda _: True,
     ) -> None:
         """
         Creates a new draft version for the object.
         """
-        concept_vo.validate(
-            concept_exists_by_callback=concept_exists_by_callback,
-            previous_name=self.name,
-        )
+        concept_vo.validate(odm_object_exists_callback=odm_object_exists_callback)
         if self._concept_vo != concept_vo:
             super()._edit_draft(change_description=change_description, author=author)
             self._concept_vo = concept_vo

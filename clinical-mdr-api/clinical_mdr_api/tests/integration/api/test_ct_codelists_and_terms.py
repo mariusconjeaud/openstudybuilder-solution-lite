@@ -110,10 +110,11 @@ def test_get_ct_terms_pagination(api_client, base_url, page_size, sort_by):
         results_paginated[page_number] = res_names
         log.info("Page %s: %s", page_number, res_names)
 
+    # Some CTTerm uids may be duplicated as same CTTerm exists in a few CTCodelists
     results_paginated_merged = list(
-        set(list(reduce(lambda a, b: a + b, list(results_paginated.values()))))
+        reduce(lambda a, b: a + b, list(results_paginated.values()))
     )
-    log.info("All unique rows returned by pagination: %s", results_paginated_merged)
+    log.info("All rows returned by pagination: %s", results_paginated_merged)
 
     res_all = api_client.get(
         f"{base_url}?page_number=1&page_size=100&sort_by={sort_by}"

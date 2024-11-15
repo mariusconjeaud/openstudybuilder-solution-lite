@@ -133,7 +133,7 @@ def get_distinct_values_for_header(
 
 
 @router.get(
-    "/data-model-igs/{uid}",
+    "/data-model-igs/{data_model_ig_uid}",
     dependencies=[rbac.LIBRARY_READ],
     summary="Get details on a specific data mode implementation guide",
     description="""
@@ -155,6 +155,6 @@ Possible errors:
         500: _generic_descriptions.ERROR_500,
     },
 )
-def get_data_model(uid: str = DataModelIGUID):
+def get_data_model(data_model_ig_uid: str = DataModelIGUID):
     data_model_ig_service = DataModelIGService()
-    return data_model_ig_service.get_by_uid(uid=uid)
+    return data_model_ig_service.get_by_uid(uid=data_model_ig_uid)

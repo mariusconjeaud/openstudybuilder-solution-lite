@@ -160,7 +160,7 @@ const routes = [
         },
       },
       {
-        path: 'sponsor-ct-packages/:package_name?',
+        path: 'sponsor-ct-packages/:catalogue_name?/:package_name?',
         name: 'SponsorCtPackages',
         component: () => import('../views/library/SponsorCtPackages.vue'),
         meta: {
@@ -535,16 +535,16 @@ const routes = [
           authRequired: true,
         },
       },
-      // {
-      //   path: ':study_id/data_standard_versions/:tab?',
-      //   name: 'StudyDataStandardVersions',
-      //   component: () =>
-      //     import('../views/studies/StudyDataStandardVersions.vue'),
-      //   meta: {
-      //     studyRequired: true,
-      //     authRequired: true,
-      //   },
-      // },
+      {
+        path: ':study_id/data_standard_versions/:tab?',
+        name: 'StudyDataStandardVersions',
+        component: () =>
+          import('../views/studies/StudyDataStandardVersions.vue'),
+        meta: {
+          studyRequired: true,
+          authRequired: true,
+        },
+      },
       // {
       //   path: '/studies/:study_id/specification_dashboard',
       //   name: 'SpecificationDashboard',
@@ -630,6 +630,15 @@ const routes = [
         path: ':study_id/protocol_elements/:tab?',
         name: 'ProtocolElements',
         component: () => import('../views/studies/ProtocolElements.vue'),
+        meta: {
+          studyRequired: true,
+          authRequired: true,
+        },
+      },
+      {
+        path: ':study_id/study_disclosure/:tab?',
+        name: 'StudyDisclosure',
+        component: () => import('../views/studies/StudyDisclosure.vue'),
         meta: {
           studyRequired: true,
           authRequired: true,

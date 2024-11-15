@@ -29,9 +29,9 @@ def get_brands() -> list[models.Brand]:
 
 
 @router.get(
-    "/{uid}",
+    "/{brand_uid}",
     dependencies=[rbac.LIBRARY_READ],
-    summary="Returns the brand identified by the specified 'uid'.",
+    summary="Returns the brand identified by the specified 'brand_uid'.",
     response_model=models.Brand,
     status_code=200,
     responses={
@@ -40,9 +40,9 @@ def get_brands() -> list[models.Brand]:
     },
 )
 def get_brand(
-    uid: str = BrandUID,
+    brand_uid: str = BrandUID,
 ) -> models.Brand:
-    return Service().get_brand(uid)
+    return Service().get_brand(brand_uid)
 
 
 @router.post(
@@ -70,9 +70,9 @@ def create(
 
 
 @router.delete(
-    "/{uid}",
+    "/{brand_uid}",
     dependencies=[rbac.LIBRARY_WRITE],
-    summary="Deletes the brand identified by 'uid'.",
+    summary="Deletes the brand identified by 'brand_uid'.",
     response_model=None,
     status_code=204,
     responses={
@@ -80,6 +80,6 @@ def create(
         500: _generic_descriptions.ERROR_500,
     },
 )
-def delete(uid: str = BrandUID) -> None:
-    Service().delete(uid)
+def delete(brand_uid: str = BrandUID) -> None:
+    Service().delete(brand_uid)
     return Response(status_code=status.HTTP_204_NO_CONTENT)

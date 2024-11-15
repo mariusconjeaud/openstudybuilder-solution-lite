@@ -262,3 +262,156 @@ class OdmGenericRepository(ConceptGenericRepository[_AggregateRootType], ABC):
             )
 
         return rs
+
+    def odm_object_exists(
+        self,
+        description_uids: list[str] | None = None,
+        alias_uids: list[str] | None = None,
+        sdtm_domain_uids: list[str] | None = None,
+        term_uids: list[str] | None = None,
+        unit_definition_uids: list[str] | None = None,
+        formal_expression_uids: list[str] | None = None,
+        scope_uid: str | None = None,
+        codelist_uid: str | None = None,
+        **value_attributes,
+    ):
+        """
+        Checks whether an ODM object exists in the database based on various filtering criteria.
+        This method constructs a Cypher query dynamically using the provided UID lists
+        and additional value node attributes to search for matching objects in the database.
+
+        Args:
+            description_uids (list[str] | None): List of UIDs for ODM Descriptions to match.
+            alias_uids (list[str] | None): List of UIDs for ODM Aliases to match.
+            sdtm_domain_uids (list[str] | None): List of UIDs for SDTM Domains to match.
+            term_uids (list[str] | None): List of UIDs for terms to match in CT Codelist Terms.
+            unit_definition_uids (list[str] | None): List of UIDs for Unit Definitions to match.
+            formal_expression_uids (list[str] | None): List of UIDs for ODM Formal Expressions to match.
+            scope_uid (str | None): UID for a specific scope to match.
+            codelist_uid (str | None): UID for a CT Codelist to match.
+            **value_attributes: Arbitrary key-value pairs to match against properties of the ODM object.
+
+        Returns:
+            list[str] | None: Returns a list of the UIDs of the matching ODM objects if it exist, otherwise returns `None`.
+        """
+        if not description_uids:
+            description_uids = []
+        if not alias_uids:
+            alias_uids = []
+        if not sdtm_domain_uids:
+            sdtm_domain_uids = []
+        if not term_uids:
+            term_uids = []
+        if not unit_definition_uids:
+            unit_definition_uids = []
+        if not formal_expression_uids:
+            formal_expression_uids = []
+
+        query = f"""
+            MATCH (root:{self.root_class.__label__})-[:LATEST]->(value:{self.value_class.__label__})
+        """
+
+        params = {}
+
+        if description_uids:
+            query += " MATCH (desc_root:OdmDescriptionRoot)<-[:HAS_DESCRIPTION]-(root) "
+            params["description_uids"] = description_uids
+
+        if alias_uids:
+            query += " MATCH (alias_root:OdmAliasRoot)<-[:HAS_ALIAS]-(root) "
+            params["alias_uids"] = alias_uids
+
+        if scope_uid:
+            query += " MATCH (:CTTermRoot {uid: $scope_uid})<-[:HAS_SCOPE]-(root) "
+            params["scope_uid"] = scope_uid
+
+        if sdtm_domain_uids:
+            query += " MATCH (ct_term_root:CTTermRoot)<-[:HAS_SDTM_DOMAIN]-(root) "
+            params["sdtm_domain_uids"] = sdtm_domain_uids
+
+        if codelist_uid:
+            query += (
+                " MATCH (:CTCodelistRoot {uid: $codelist_uid})<-[:HAS_CODELIST]-(root) "
+            )
+            params["codelist_uid"] = codelist_uid
+
+        if term_uids:
+            params["term_uids"] = term_uids
+            query += " MATCH (ct_term_root:CTTermRoot)<-[:HAS_CODELIST_TERM]-(root) "
+
+        if unit_definition_uids:
+            params["unit_definition_uids"] = unit_definition_uids
+            query += " MATCH (unit_definition_root:UnitDefinitionRoot)<-[:HAS_UNIT_DEFINITION]-(root) "
+
+        if formal_expression_uids:
+            params["formal_expression_uids"] = formal_expression_uids
+            query += " MATCH (odm_formal_expression:OdmFormalExpressionRoot)<-[:HAS_FORMAL_EXPRESSION]-(root) "
+
+        wheres = []
+        for key, value in value_attributes.items():
+            if value is not None:
+                wheres.append(f"value.{key} = ${key}")
+
+                params[key] = value
+            else:
+                wheres.append(f"value.{key} IS NULL")
+
+        query += " WHERE " + " AND ".join(wheres)
+
+        _where = []
+        # pylint: disable=too-many-boolean-expressions
+        if (
+            description_uids
+            or alias_uids
+            or description_uids
+            or alias_uids
+            or sdtm_domain_uids
+            or term_uids
+            or unit_definition_uids
+            or formal_expression_uids
+        ):
+            query += " WITH root"
+
+            if description_uids:
+                query += ", apoc.coll.sort(COLLECT(DISTINCT desc_root.uid)) AS description_uids"
+                _where.append("description_uids = apoc.coll.sort($description_uids)")
+
+            if alias_uids:
+                query += (
+                    ", apoc.coll.sort(COLLECT(DISTINCT alias_root.uid)) AS alias_uids"
+                )
+                _where.append("alias_uids = apoc.coll.sort($alias_uids)")
+
+            if sdtm_domain_uids:
+                query += ", apoc.coll.sort(COLLECT(DISTINCT ct_term_root.uid)) AS sdtm_domain_uids"
+                _where.append("sdtm_domain_uids = apoc.coll.sort($sdtm_domain_uids)")
+
+            if term_uids:
+                query += (
+                    ", apoc.coll.sort(COLLECT(DISTINCT ct_term_root.uid)) AS term_uids"
+                )
+                _where.append("term_uids = apoc.coll.sort($term_uids)")
+
+            if unit_definition_uids:
+                query += ", apoc.coll.sort(COLLECT(DISTINCT unit_definition_root.uid)) AS unit_definition_uids"
+                _where.append(
+                    "unit_definition_uids = apoc.coll.sort($unit_definition_uids)"
+                )
+
+            if formal_expression_uids:
+                query += ", apoc.coll.sort(COLLECT(DISTINCT odm_formal_expression.uid)) AS formal_expression_uids"
+                _where.append(
+                    "formal_expression_uids = apoc.coll.sort($formal_expression_uids)"
+                )
+
+        if _where:
+            query += " WHERE " + " AND ".join(_where)
+
+        query += " RETURN root.uid"
+
+        rs = db.cypher_query(query=query, params=params)
+
+        if rs[0]:
+            return rs[0][0]
+
+        return None

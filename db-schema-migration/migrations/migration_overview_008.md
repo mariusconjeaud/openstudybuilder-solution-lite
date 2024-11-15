@@ -38,7 +38,7 @@
 - Existing `StudyCompound`, `StudyCompoundDosing` nodes removed, together with any relationships from/to them.
 
 
-## 3. Numnbers for Non-Visit and Unscheduled-Visit should be changed.
+## 3. Numbers for Non-Visit and Unscheduled-Visit should be changed.
 -------------------------------------  
 ### Change Description
 - The visit properties that contain Non-visit and Unscheduled-Visit numbers should be changed.

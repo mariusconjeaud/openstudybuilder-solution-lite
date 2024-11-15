@@ -2,7 +2,7 @@
   <td :colspan="columns.length" class="pa-0">
     <v-data-table
       id="items"
-      :sort-by="{ key: 'order_number', order: 'asc' }"
+      :initial-sort-by="[{ key: 'order_number', order: 'asc' }]"
       :headers="columns"
       :items="items"
       item-value="name"

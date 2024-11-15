@@ -115,7 +115,7 @@ def get_distinct_values_for_header(
 
 
 @router.get(
-    "/{uid}",
+    "/{odm_condition_uid}",
     dependencies=[rbac.LIBRARY_READ],
     summary="Get details on a specific ODM Condition (in a specific version)",
     description="",
@@ -126,13 +126,13 @@ def get_distinct_values_for_header(
         500: _generic_descriptions.ERROR_500,
     },
 )
-def get_odm_condition(uid: str = OdmConditionUID):
+def get_odm_condition(odm_condition_uid: str = OdmConditionUID):
     odm_condition_service = OdmConditionService()
-    return odm_condition_service.get_by_uid(uid=uid)
+    return odm_condition_service.get_by_uid(uid=odm_condition_uid)
 
 
 @router.get(
-    "/{uid}/relationships",
+    "/{odm_condition_uid}/relationships",
     dependencies=[rbac.LIBRARY_READ],
     summary="Get UIDs of a specific ODM Condition's relationships",
     description="",
@@ -143,13 +143,13 @@ def get_odm_condition(uid: str = OdmConditionUID):
         500: _generic_descriptions.ERROR_500,
     },
 )
-def get_active_relationships(uid: str = OdmConditionUID):
+def get_active_relationships(odm_condition_uid: str = OdmConditionUID):
     odm_condition_service = OdmConditionService()
-    return odm_condition_service.get_active_relationships(uid=uid)
+    return odm_condition_service.get_active_relationships(uid=odm_condition_uid)
 
 
 @router.get(
-    "/{uid}/versions",
+    "/{odm_condition_uid}/versions",
     dependencies=[rbac.LIBRARY_READ],
     summary="List version history for ODM Condition",
     description="""
@@ -171,14 +171,14 @@ Possible errors:
     responses={
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The ODM Condition with the specified 'uid' wasn't found.",
+            "description": "Not Found - The ODM Condition with the specified 'odm_condition_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def get_odm_condition_versions(uid: str = OdmConditionUID):
+def get_odm_condition_versions(odm_condition_uid: str = OdmConditionUID):
     odm_condition_service = OdmConditionService()
-    return odm_condition_service.get_version_history(uid=uid)
+    return odm_condition_service.get_version_history(uid=odm_condition_uid)
 
 
 @router.post(
@@ -209,7 +209,7 @@ def create_odm_condition(
 
 
 @router.patch(
-    "/{uid}",
+    "/{odm_condition_uid}",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Update ODM Condition",
     description="",
@@ -226,23 +226,23 @@ def create_odm_condition(
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The ODM Condition with the specified 'uid' wasn't found.",
+            "description": "Not Found - The ODM Condition with the specified 'odm_condition_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def edit_odm_condition(
-    uid: str = OdmConditionUID,
+    odm_condition_uid: str = OdmConditionUID,
     odm_condition_edit_input: OdmConditionPatchInput = Body(description=""),
 ):
     odm_condition_service = OdmConditionService()
     return odm_condition_service.update_with_relations(
-        uid=uid, concept_edit_input=odm_condition_edit_input
+        uid=odm_condition_uid, concept_edit_input=odm_condition_edit_input
     )
 
 
 @router.post(
-    "/{uid}/versions",
+    "/{odm_condition_uid}/versions",
     dependencies=[rbac.LIBRARY_WRITE],
     summary=" Create a new version of ODM Condition",
     description="""
@@ -272,18 +272,18 @@ Possible errors:
             "model": ErrorResponse,
             "description": "Not Found - Reasons include e.g.: \n"
             "- The ODM Condition is not in final status.\n"
-            "- The ODM Condition with the specified 'uid' could not be found.",
+            "- The ODM Condition with the specified 'odm_condition_uid' could not be found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def create_odm_condition_version(uid: str = OdmConditionUID):
+def create_odm_condition_version(odm_condition_uid: str = OdmConditionUID):
     odm_condition_service = OdmConditionService()
-    return odm_condition_service.create_new_version(uid=uid)
+    return odm_condition_service.create_new_version(uid=odm_condition_uid)
 
 
 @router.post(
-    "/{uid}/approvals",
+    "/{odm_condition_uid}/approvals",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Approve draft version of ODM Condition",
     description="",
@@ -299,18 +299,18 @@ def create_odm_condition_version(uid: str = OdmConditionUID):
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The ODM Condition with the specified 'uid' wasn't found.",
+            "description": "Not Found - The ODM Condition with the specified 'odm_condition_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def approve_odm_condition(uid: str = OdmConditionUID):
+def approve_odm_condition(odm_condition_uid: str = OdmConditionUID):
     odm_condition_service = OdmConditionService()
-    return odm_condition_service.approve(uid=uid)
+    return odm_condition_service.approve(uid=odm_condition_uid)
 
 
 @router.delete(
-    "/{uid}/activations",
+    "/{odm_condition_uid}/activations",
     dependencies=[rbac.LIBRARY_WRITE],
     summary=" Inactivate final version of ODM Condition",
     description="",
@@ -325,18 +325,18 @@ def approve_odm_condition(uid: str = OdmConditionUID):
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The ODM Condition with the specified 'uid' could not be found.",
+            "description": "Not Found - The ODM Condition with the specified 'odm_condition_uid' could not be found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def inactivate_odm_condition(uid: str = OdmConditionUID):
+def inactivate_odm_condition(odm_condition_uid: str = OdmConditionUID):
     odm_condition_service = OdmConditionService()
-    return odm_condition_service.inactivate_final(uid=uid)
+    return odm_condition_service.inactivate_final(uid=odm_condition_uid)
 
 
 @router.post(
-    "/{uid}/activations",
+    "/{odm_condition_uid}/activations",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Reactivate retired version of a ODM Condition",
     description="",
@@ -351,18 +351,18 @@ def inactivate_odm_condition(uid: str = OdmConditionUID):
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The ODM Condition with the specified 'uid' could not be found.",
+            "description": "Not Found - The ODM Condition with the specified 'odm_condition_uid' could not be found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def reactivate_odm_condition(uid: str = OdmConditionUID):
+def reactivate_odm_condition(odm_condition_uid: str = OdmConditionUID):
     odm_condition_service = OdmConditionService()
-    return odm_condition_service.reactivate_retired(uid=uid)
+    return odm_condition_service.reactivate_retired(uid=odm_condition_uid)
 
 
 @router.delete(
-    "/{uid}",
+    "/{odm_condition_uid}",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Delete draft version of ODM Condition",
     description="",
@@ -381,11 +381,11 @@ def reactivate_odm_condition(uid: str = OdmConditionUID):
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - An ODM Condition with the specified 'uid' could not be found.",
+            "description": "Not Found - An ODM Condition with the specified 'odm_condition_uid' could not be found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def delete_odm_condition(uid: str = OdmConditionUID):
+def delete_odm_condition(odm_condition_uid: str = OdmConditionUID):
     odm_condition_service = OdmConditionService()
-    odm_condition_service.soft_delete(uid=uid)
+    odm_condition_service.soft_delete(uid=odm_condition_uid)

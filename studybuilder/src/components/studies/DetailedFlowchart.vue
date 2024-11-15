@@ -4,7 +4,7 @@
     v-resize="onResize"
     class="pa-4 bg-white"
     style="overflow-x: auto"
-  >
+  > 
     <v-row style="justify-content: center">
       <v-btn-toggle
         v-model="layout"
@@ -50,9 +50,9 @@
             color="nnBaseBlue"
             :title="$t('GroupStudyVisits.title')"
             :disabled="
-              footnoteMode ||
-              !checkPermission($roles.STUDY_WRITE) ||
-              selectedStudyVersion !== null
+            footnoteMode ||
+            !checkPermission($roles.STUDY_WRITE) ||
+            selectedStudyVersion !== null
             "
             :loading="soaContentLoadingStore.loading"
             icon="mdi-arrow-expand-horizontal"
@@ -65,9 +65,9 @@
             color="nnBaseBlue"
             :title="$t('DetailedFlowchart.hide_activity_selection')"
             :disabled="
-              footnoteMode ||
-              !checkPermission($roles.STUDY_WRITE) ||
-              selectedStudyVersion !== null
+            footnoteMode ||
+            !checkPermission($roles.STUDY_WRITE) ||
+            selectedStudyVersion !== null
             "
             icon="mdi-eye-off-outline"
             :loading="soaContentLoadingStore.loading"
@@ -80,9 +80,9 @@
             color="nnBaseBlue"
             :title="$t('DetailedFlowchart.show_activity_selection')"
             :disabled="
-              footnoteMode ||
-              !checkPermission($roles.STUDY_WRITE) ||
-              selectedStudyVersion !== null
+            footnoteMode ||
+            !checkPermission($roles.STUDY_WRITE) ||
+            selectedStudyVersion !== null
             "
             icon="mdi-eye-outline"
             :loading="soaContentLoadingStore.loading"
@@ -95,9 +95,9 @@
             color="nnBaseBlue"
             :title="$t('DetailedFlowchart.edit_activity_selection')"
             :disabled="
-              footnoteMode ||
-              !checkPermission($roles.STUDY_WRITE) ||
-              selectedStudyVersion !== null
+            footnoteMode ||
+            !checkPermission($roles.STUDY_WRITE) ||
+            selectedStudyVersion !== null
             "
             icon="mdi-pencil-box-multiple-outline"
             :loading="soaContentLoadingStore.loading"
@@ -181,7 +181,7 @@
                       text-color="nnWhite"
                       floating
                       :content="
-                        cell.refs ? getElementFootnotes(cell.refs[0].uid) : ''
+                      cell.refs ? getElementFootnotesLetters(cell.refs[0].uid) : ''
                       "
                       class="mt-3 mr-1 ml-2 mb-2"
                     >
@@ -189,31 +189,35 @@
                     </v-badge>
                     <v-btn
                       v-if="
-                        footnoteMode &&
-                        cell.text !== '' &&
-                        !checkIfElementHasFootnote(cell.refs[0].uid)
-                      "
+                            footnoteMode &&
+                            cell.text !== '' &&
+                            !checkIfElementHasFootnote(cell.refs[0].uid)
+                            "
                       size="small"
                       icon="mdi-plus-circle-outline"
                       class="mt-1 mx-0 px-0"
                       color="nnWhite"
                       variant="text"
                       @click="
-                        addElementForFootnote(cell.refs[0].uid, 'StudyEpoch', cell.text)
+                      addElementForFootnote(
+                        cell.refs[0].uid,
+                        'StudyEpoch',
+                        cell.text
+                      )
                       " />
                     <v-btn
                       v-else-if="
-                        footnoteMode &&
-                        cell.text !== '' &&
-                        checkIfElementHasFootnote(cell.refs[0].uid)
-                      "
+                                 footnoteMode &&
+                                 cell.text !== '' &&
+                                 checkIfElementHasFootnote(cell.refs[0].uid)
+                                 "
                       size="small"
                       icon="mdi-minus-circle"
                       color="nnWhite"
                       class="mt-1 mx-0 px-0"
                       variant="text"
                       @click="removeElementForFootnote(cell.refs[0].uid)"
-                  /></v-row>
+                    /></v-row>
                 </th>
               </template>
               <template v-else>
@@ -260,9 +264,9 @@
                       text-color="secondary"
                       floating
                       :content="
-                        cell.refs.length
-                          ? getElementFootnotes(cell.refs[0].uid)
-                          : ''
+                      cell.refs.length
+                      ? getElementFootnotesLetters(cell.refs[0].uid)
+                      : ''
                       "
                       class="visitFootnote"
                     >
@@ -270,22 +274,26 @@
                     </v-badge>
                     <v-btn
                       v-if="
-                        footnoteMode &&
-                        !checkIfElementHasFootnote(cell.refs[0].uid)
-                      "
+                            footnoteMode &&
+                            !checkIfElementHasFootnote(cell.refs[0].uid)
+                            "
                       size="small"
                       icon="mdi-plus-circle-outline"
                       class="mb-1 mx-0 px-0"
                       variant="text"
                       @click="
-                        addElementForFootnote(cell.refs[0].uid, 'StudyVisit', cell.text)
+                      addElementForFootnote(
+                        cell.refs[0].uid,
+                        'StudyVisit',
+                        cell.text
+                      )
                       "
                     />
                     <v-btn
                       v-else-if="
-                        footnoteMode &&
-                        checkIfElementHasFootnote(cell.refs[0].uid)
-                      "
+                                 footnoteMode &&
+                                 checkIfElementHasFootnote(cell.refs[0].uid)
+                                 "
                       size="small"
                       icon="mdi-minus-circle"
                       color="nnBaseBlue"
@@ -300,9 +308,9 @@
                       hide-details
                       multiple
                       :disabled="
-                        footnoteMode ||
-                        !checkPermission($roles.STUDY_WRITE) ||
-                        selectedStudyVersion !== null
+                      footnoteMode ||
+                      !checkPermission($roles.STUDY_WRITE) ||
+                      selectedStudyVersion !== null
                       "
                     />
                     <v-btn
@@ -312,9 +320,9 @@
                       size="x-small"
                       :title="$t('GroupStudyVisits.delete_title')"
                       :disabled="
-                        footnoteMode ||
-                        !checkPermission($roles.STUDY_WRITE) ||
-                        selectedStudyVersion !== null
+                      footnoteMode ||
+                      !checkPermission($roles.STUDY_WRITE) ||
+                      selectedStudyVersion !== null
                       "
                       variant="text"
                       @click="deleteVisitGroup(cell.text)"
@@ -338,7 +346,7 @@
                   :style="`top: ${thirdHeaderRowTop}px`"
                   scope="col"
                   :class="
-                    cell.text.includes('Study') ? 'header zindex25 pl-6' : ''
+                  cell.text.includes('Study') ? 'header zindex25 pl-6' : ''
                   "
                 >
                   {{ cell.text }}
@@ -387,6 +395,11 @@
                 :class="getSoaRowClasses(row)"
               >
                 <td class="sticky-column" style="left: 0px">
+                  <ActionsMenu
+                    v-if="getSoaRowType(row) === 'activity'"
+                    :actions="actions"
+                    :item="row.cells[0].refs[0]"
+                  />
                   <v-btn
                     v-if="!readOnly && getSoaRowType(row) !== 'activity'"
                     :icon="getDisplayButtonIcon(`row-${index}`)"
@@ -401,54 +414,54 @@
                   <div class="d-flex align-center justify-start">
                     <v-checkbox
                       v-if="
-                        !readOnly &&
-                        !footnoteMode &&
-                        getSoaRowType(row) === 'activity'
-                      "
+                            !readOnly &&
+                            !footnoteMode &&
+                            getSoaRowType(row) === 'activity'
+                            "
                       color="primary"
                       hide-details
                       :model-value="
-                        studyActivitySelection.findIndex(
-                          (cell) =>
-                            cell.refs[0].uid === row.cells[0].refs[0].uid
-                        ) !== -1
+                      studyActivitySelection.findIndex(
+                        (cell) =>
+                        cell.refs[0].uid === row.cells[0].refs[0].uid
+                      ) !== -1
                       "
                       :disabled="
-                        !checkPermission($roles.STUDY_WRITE) ||
-                        selectedStudyVersion !== null
+                      !checkPermission($roles.STUDY_WRITE) ||
+                      selectedStudyVersion !== null
                       "
                       class="flex-grow-0"
                       @update:model-value="
-                        (value) => toggleActivitySelection(row, value)
-                      "
+                             (value) => toggleActivitySelection(row, value)
+                             "
                     />
                     <v-checkbox
                       v-if="
-                        !readOnly &&
-                        !footnoteMode &&
-                        getSoaRowType(row) === 'subGroup'
-                      "
+                            !readOnly &&
+                            !footnoteMode &&
+                            getSoaRowType(row) === 'subGroup'
+                            "
                       color="primary"
                       true-icon="mdi-checkbox-multiple-marked-outline"
                       false-icon="mdi-checkbox-multiple-blank-outline"
                       hide-details
                       :disabled="
-                        !checkPermission($roles.STUDY_WRITE) ||
-                        selectedStudyVersion !== null
+                      !checkPermission($roles.STUDY_WRITE) ||
+                      selectedStudyVersion !== null
                       "
                       class="flex-grow-0"
                       @update:model-value="
-                        (value) => toggleSubgroupActivitiesSelection(row, value)
-                      "
+                             (value) => toggleSubgroupActivitiesSelection(row, value)
+                             "
                     />
                     <v-badge
                       color="transparent"
                       text-color="secondary"
                       floating
                       :content="
-                        row.cells[0].refs.length
-                          ? getElementFootnotes(row.cells[0].refs[0].uid)
-                          : ''
+                      row.cells[0].refs.length
+                      ? getElementFootnotesLetters(row.cells[0].refs[0].uid)
+                      : ''
                       "
                     >
                       <span class="text-uppercase">
@@ -457,33 +470,33 @@
                     </v-badge>
                     <v-btn
                       v-if="
-                        footnoteMode &&
-                        row.cells[0].refs[0] &&
-                        !checkIfElementHasFootnote(row.cells[0].refs[0].uid)
-                      "
+                            footnoteMode &&
+                            row.cells[0].refs[0] &&
+                            !checkIfElementHasFootnote(row.cells[0].refs[0].uid)
+                            "
                       icon="mdi-plus-circle-outline"
                       class="mx-0 px-0"
                       variant="text"
                       @click="
-                        addElementForFootnote(
-                          row.cells[0].refs[0].uid,
-                          row.cells[0].refs[0].type,
-                          row.cells[0].text
-                        )
+                      addElementForFootnote(
+                        row.cells[0].refs[0].uid,
+                        row.cells[0].refs[0].type,
+                        row.cells[0].text
+                      )
                       "
                     />
                     <v-btn
                       v-else-if="
-                        footnoteMode &&
-                        row.cells[0].refs[0] &&
-                        checkIfElementHasFootnote(row.cells[0].refs[0].uid)
-                      "
+                                 footnoteMode &&
+                                 row.cells[0].refs[0] &&
+                                 checkIfElementHasFootnote(row.cells[0].refs[0].uid)
+                                 "
                       icon="mdi-minus-circle"
                       class="mx-0 px-0"
                       color="nnBaseBlue"
                       variant="text"
                       @click="
-                        removeElementForFootnote(row.cells[0].refs[0].uid)
+                      removeElementForFootnote(row.cells[0].refs[0].uid)
                       "
                     />
                   </div>
@@ -494,9 +507,9 @@
                     icon
                     :title="$t('DetailedFlowchart.toggle_soa_group_display')"
                     :disabled="
-                      footnoteMode ||
-                      !checkPermission($roles.STUDY_WRITE) ||
-                      selectedStudyVersion !== null
+                    footnoteMode ||
+                    !checkPermission($roles.STUDY_WRITE) ||
+                    selectedStudyVersion !== null
                     "
                     variant="text"
                     @click="toggleLevelDisplay(row)"
@@ -516,36 +529,44 @@
                   v-else
                   :key="`row-${index}-cell-${visitIndex}`"
                 >
-                    <v-row class="mt-0">
-                      <v-badge
-                        color="transparent"
-                        text-color="secondary"
-                        offset-y="18"
-                        :content="
-                          row.cells[visitIndex + 1].refs &&
-                          row.cells[visitIndex + 1].refs.length
-                            ? getElementFootnotes(
-                                row.cells[visitIndex + 1].refs[0].uid
-                              )
-                            : ''
-                        "
-                        overlap
+                  <v-row class="mt-0">
+                    <v-badge
+                      color="transparent"
+                      text-color="secondary"
+                      offset-y="18"
+                      :content="
+                      row.cells[visitIndex + 1].refs &&
+                      row.cells[visitIndex + 1].refs.length
+                      ? getElementFootnotesLetters(
+                        row.cells[visitIndex + 1].refs[0].uid
+                      )
+                      : ''
+                      "
+                      overlap
+                    >
+                      <v-speed-dial
+                        v-if="
+                              !footnoteMode &&
+                              !readOnly &&
+                              currentSelectionMatrix[row.cells[0].refs[0].uid][
+                              visitCell.refs[0].uid
+                              ]
+                              "
+                        open-on-hover
+                        submenu
+                        location="right bottom"
+                        transition="scale-transition"
                       >
-                        <v-checkbox
-                          v-if="
-                            !footnoteMode &&
-                            !readOnly &&
-                            currentSelectionMatrix[row.cells[0].refs[0].uid][
-                              visitCell.refs[0].uid
-                            ]
-                          "
-                          v-model="
-                            currentSelectionMatrix[row.cells[0].refs[0].uid][
-                              visitCell.refs[0].uid
-                            ].value
-                          "
-                          color="success"
-                          :disabled="
+                        <template #activator="{ props: activatorProps }">
+                          <v-checkbox
+                            v-bind="activatorProps"
+                            v-model="
+                                    currentSelectionMatrix[row.cells[0].refs[0].uid][
+                                    visitCell.refs[0].uid
+                                    ].value
+                                    "
+                            color="success"
+                            :disabled="
                             isCheckboxDisabled(
                               row.cells[0].refs[0].uid,
                               visitCell.refs[0].uid
@@ -553,63 +574,92 @@
                             footnoteMode ||
                             !checkPermission($roles.STUDY_WRITE) ||
                             selectedStudyVersion !== null
-                          "
-                          hide-details
-                          true-icon="mdi-checkbox-marked-circle-outline"
-                          false-icon="mdi-checkbox-blank-circle-outline"
-                          class="mx-0 ml-2 px-0"
-                          @update:model-value="
-                            (value) =>
-                              updateSchedule(
-                                value,
-                                row.cells[0].refs[0].uid,
-                                visitCell
-                              )
-                          "
+                            "
+                            hide-details
+                            true-icon="mdi-checkbox-marked-circle-outline"
+                            false-icon="mdi-checkbox-blank-circle-outline"
+                            class="mx-0 ml-2 px-0"
+                            @update:model-value="
+                                   (value) =>
+                                   updateSchedule(
+                                     value,
+                                     row.cells[0].refs[0].uid,
+                                     visitCell
+                                   )
+                                   "
+                          />
+                        </template>
+                        <v-btn
+                          key="1"
+                          style="scale: 80%;"
+                          size="x-small"
+                          class="ml-n2 mb-1"
+                          variant="outlined"
+                          color="nnBaseBlue"
+                          icon="mdi-plus"
+                          @click="enableFootnoteModeWithElement(
+                            row.cells[visitIndex + 1].refs[0].uid,
+                            row.cells[visitIndex + 1].refs[0].type,
+                            row.cells[visitIndex + 1].refs[0].text
+                          )"
                         />
+                        <v-btn
+                          v-if="Boolean(getElementFootnotesLetters(
+                                row.cells[visitIndex + 1].refs[0].uid
+                                ))"
+                          key="2"
+                          class="ml-n2 mb-n3"
+                          style="scale: 80%;"
+                          size="x-small"
+                          variant="outlined"
+                          color="nnBaseBlue"
+                          icon="mdi-minus"
+                          @click="openRemoveFootnoteForm(row.cells[visitIndex + 1])"
+                        />
+                      </v-speed-dial>
                       <v-btn
                         v-else-if="
-                          footnoteMode &&
-                          currentSelectionMatrix[row.cells[0].refs[0].uid][
-                            visitCell.refs[0].uid
-                          ].uid &&
-                          !checkIfElementHasFootnote(
-                            row.cells[visitIndex + 1].refs[0].uid
-                          )
-                        "
+                                   footnoteMode &&
+                                   currentSelectionMatrix[row.cells[0].refs[0].uid][
+                                   visitCell.refs[0].uid
+                                   ].uid &&
+                                   !checkIfElementHasFootnote(
+                                   row.cells[visitIndex + 1].refs[0].uid
+                                   )
+                                   "
                         icon="mdi-plus-circle-outline"
                         class="mx-0 px-0"
                         variant="text"
                         @click="
-                          addElementForFootnote(
-                            row.cells[visitIndex + 1].refs[0].uid,
-                            row.cells[visitIndex + 1].refs[0].type,
-                            row.cells[visitIndex + 1].refs[0].text
-                          )
+                        addElementForFootnote(
+                          row.cells[visitIndex + 1].refs[0].uid,
+                          row.cells[visitIndex + 1].refs[0].type,
+                          row.cells[visitIndex + 1].refs[0].text
+                        )
                         "
                       />
                       <v-btn
                         v-else-if="
-                          footnoteMode &&
-                          currentSelectionMatrix[row.cells[0].refs[0].uid][
-                            visitCell.refs[0].uid
-                          ].uid &&
-                          checkIfElementHasFootnote(
-                            row.cells[visitIndex + 1].refs[0].uid
-                          )
-                        "
+                                   footnoteMode &&
+                                   currentSelectionMatrix[row.cells[0].refs[0].uid][
+                                   visitCell.refs[0].uid
+                                   ].uid &&
+                                   checkIfElementHasFootnote(
+                                   row.cells[visitIndex + 1].refs[0].uid
+                                   )
+                                   "
                         icon="mdi-minus-circle"
                         class="mx-0 px-0"
                         color="nnBaseBlue"
                         variant="text"
                         @click="
-                          removeElementForFootnote(
-                            row.cells[visitIndex + 1].refs[0].uid
-                          )
+                        removeElementForFootnote(
+                          row.cells[visitIndex + 1].refs[0].uid
+                        )
                         "
                       />
-                      </v-badge>
-                    </v-row>
+                    </v-badge>
+                  </v-row>
                 </td>
               </tr>
             </template>
@@ -624,25 +674,29 @@
         />
       </div>
     </div>
-    <v-card v-if="footnoteMode" elevation="24" class="bottomCard">
+    <v-card v-if="footnoteMode" elevation="24" class="bottomCard" id="bottomCard">
       <v-row>
         <v-col cols="8">
-          <v-card color="nnLightBlue200" class="ml-4" style="width: fit-content;">
+          <v-card
+            color="nnLightBlue200"
+            class="ml-4"
+            style="width: fit-content"
+          >
             <v-card-text>
               <v-icon class="pb-1 mr-2">mdi-information-outline</v-icon>
               <div
                 v-if="activeFootnote"
                 v-html="
-                  $t('StudyFootnoteEditForm.select_footnote_items', {
-                    footnote: activeFootnote.template
+                      $t('StudyFootnoteEditForm.select_footnote_items', {
+                      footnote: activeFootnote.template
                       ? activeFootnote.template.name_plain
                       : activeFootnote.footnote.name_plain,
-                  })
-                "
+                      })
+                      "
               />
               <div v-else>
                 {{
-                  $t('StudyFootnoteEditForm.select_to_create_footnote_items')
+                $t('StudyFootnoteEditForm.select_to_create_footnote_items')
                 }}
               </div>
             </v-card-text>
@@ -664,15 +718,20 @@
             rounded
             :loading="footnoteUpdateLoading"
             :text="
-              activeFootnote
-                ? $t('StudyFootnoteEditForm.save_linking')
-                : $t('_global.continue')
+            activeFootnote
+            ? $t('StudyFootnoteEditForm.save_linking')
+            : $t('_global.continue')
             "
             @click="saveElementsForFootnote"
           />
         </v-col>
       </v-row>
     </v-card>
+    <RemoveFootnoteForm
+      :open="showRemoveFootnoteForm"
+      :item-uid="removeItemUid"
+      @close="closeRemoveFootnoteForm"
+    />
     <StudyActivityScheduleBatchEditForm
       :open="showBatchEditForm"
       :selection="formattedStudyActivitySelection"
@@ -746,6 +805,8 @@ import { useFootnotesStore } from '@/stores/studies-footnotes'
 import { useSoaContentLoadingStore } from '@/stores/soa-content-loading'
 import soaDownloads from '@/utils/soaDownloads'
 import ProtocolFlowchart from './ProtocolFlowchart.vue'
+import RemoveFootnoteForm from './RemoveFootnoteForm.vue'
+import ActionsMenu from '@/components/tools/ActionsMenu.vue'
 
 export default {
   components: {
@@ -756,6 +817,8 @@ export default {
     StudyFootnoteTable,
     ProtocolFlowchart,
     StudyFootnoteForm,
+    RemoveFootnoteForm,
+    ActionsMenu
   },
   inject: ['eventBusEmit'],
   props: {
@@ -829,6 +892,16 @@ export default {
       historyItemsTotal: 0,
       soaContent: null,
       layout: 'detailed',
+      showRemoveFootnoteForm: false,
+      removeItemUid: '',
+      actions: [
+        {
+          label: this.$t('DetailedFlowchart.remove_activity'),
+          icon: 'mdi-delete-outline',
+          accessRole: this.$roles.STUDY_WRITE,
+          click: this.removeActivity,
+        },
+      ]
     }
   },
   computed: {
@@ -905,7 +978,7 @@ export default {
     },
     selectedVisits() {
       return this.selectedVisitIndexes.map((cell) => this.soaVisitRow[cell])
-    },
+    }
   },
   watch: {
     redirectFootnote(value) {
@@ -929,6 +1002,7 @@ export default {
     }
   },
   updated() {
+    this.observeWidth()
     if (!this.$refs.firstHeader) {
       return
     }
@@ -942,6 +1016,39 @@ export default {
     this.secondColWidth = this.$refs.secondCol.clientWidth
   },
   methods: {
+    observeWidth() {
+      const resizeObserver = new ResizeObserver(function(el) {
+        if (el[0].target.offsetWidth && document.getElementById('bottomCard').style) {
+          document.getElementById('bottomCard').style.left = el[0].target.offsetWidth + 'px'
+        }
+      })
+      resizeObserver.observe(document.getElementById('sideBar'))
+    },
+    async removeActivity(activity) {
+      const options = { type: 'warning' }
+      if (!(await this.$refs.confirm.open(this.$t('DetailedFlowchart.remove_activity_msg'), options))) {
+        return
+      }
+      this.loadingSoaContent = true
+      study
+        .deleteStudyActivity(this.selectedStudy.uid, activity.uid)
+        .then(() => {
+          this.eventBusEmit('notification', {
+            type: 'success',
+            msg: this.$t('DetailedFlowchart.remove_activity_success'),
+          })
+          this.loadSoaContent(true)
+        })
+    },
+    openRemoveFootnoteForm(ele) {
+      this.removeItemUid = ele.refs[0].uid
+      this.showRemoveFootnoteForm = true
+    },
+    closeRemoveFootnoteForm() {
+      this.removeItemUid = null
+      this.showRemoveFootnoteForm = false
+      this.loadSoaContent(true)
+    },
     showSoaRow(index, row) {
       let key = `row-${index}`
       let result = true
@@ -1062,6 +1169,23 @@ export default {
       return result
     },
     getElementFootnotes(uid) {
+      let footnotesLetters = []
+      this.footnotesStore.studyFootnotes.forEach((footnote) => {
+        footnote.referenced_items.forEach((item) => {
+          if (item.item_uid === uid) {
+            footnotesLetters.push({ order: dataFormating.letteredOrder(footnote.order), uid: footnote.uid })
+          } else if (
+            uid &&
+            typeof uid !== 'string' &&
+            uid.includes(item.item_uid)
+          ) {
+            footnotesLetters.push({ order: dataFormating.letteredOrder(footnote.order), uid: footnote.uid })
+          }
+        })
+      })
+      return footnotesLetters
+    },
+    getElementFootnotesLetters(uid) {
       let footnotesLetters = ''
       this.footnotesStore.studyFootnotes.forEach((footnote) => {
         footnote.referenced_items.forEach((item) => {
@@ -1083,6 +1207,14 @@ export default {
         this.activeFootnote = footnote
         this.elementsForFootnote.referenced_items = footnote.referenced_items
       }
+      this.footnoteMode = true
+    },
+    enableFootnoteModeWithElement(uid, type, name) {
+      this.elementsForFootnote.referenced_items.push({
+        item_uid: uid,
+        item_type: type,
+        item_name: name,
+      })
       this.footnoteMode = true
     },
     disableFootnoteMode() {
@@ -1194,8 +1326,8 @@ export default {
     },
     getDisplayButtonIcon(rowKey) {
       return this.getCurrentDisplayValue(rowKey)
-        ? 'mdi-chevron-down'
-        : 'mdi-chevron-right'
+           ? 'mdi-chevron-down'
+           : 'mdi-chevron-right'
     },
     getLevelDisplayState(row) {
       return !row.hide
@@ -1217,7 +1349,7 @@ export default {
         for (let i = 0; i < this.studyActivitySelection.length; i++) {
           if (
             this.studyActivitySelection[i].refs[0].uid ===
-            activityCell.refs[0].uid
+              activityCell.refs[0].uid
           ) {
             this.studyActivitySelection.splice(i, 1)
             break
@@ -1325,12 +1457,12 @@ export default {
             studyVisitCell.refs[0].uid
           ].uid
         study
-          .deleteStudyActivitySchedule(this.selectedStudy.uid, scheduleUid)
-          .then(() => {
-            this.currentSelectionMatrix[studyActivityUid][
-              studyVisitCell.refs[0].uid
-            ].uid = null
-          })
+              .deleteStudyActivitySchedule(this.selectedStudy.uid, scheduleUid)
+              .then(() => {
+                this.currentSelectionMatrix[studyActivityUid][
+                  studyVisitCell.refs[0].uid
+                ].uid = null
+              })
       }
     },
     async openBatchEditForm() {
@@ -1501,7 +1633,14 @@ export default {
         })
         .catch((err) => {
           if (err.response.status === 400) {
-            this.showCollapsibleGroupForm = true
+            if (err.response.data.type !== 'BusinessLogicException') {
+              this.showCollapsibleGroupForm = true
+            } else {
+              this.eventBusEmit('notification', {
+                msg: err.response.data.message,
+                type: 'error',
+              })
+            }
           }
         })
     },
@@ -1594,95 +1733,94 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-table {
-  width: 100%;
-  text-align: left;
-  border-spacing: 0px;
-  border-collapse: collapse;
-}
-thead {
-  background-color: rgb(var(--v-theme-tableGray));
-  font-weight: 600;
-}
-tr {
-  padding: 4px;
-  &.section {
-    background-color: rgb(var(--v-theme-tableGray));
-    font-weight: 600;
-  }
-}
-tbody tr {
-  border-bottom: 1px solid rgb(var(--v-theme-greyBackground));
-}
-th {
-  vertical-align: bottom;
-  background-color: rgb(var(--v-theme-nnLightBlue100));
-  min-width: 120px;
-}
-th,
-td {
-  position: relative;
-  padding: 6px;
-  font-size: 14px;
-  z-index: 0;
-}
+ table {
+   width: 100%;
+   text-align: left;
+   border-spacing: 0px;
+   border-collapse: collapse;
+ }
+ thead {
+   background-color: rgb(var(--v-theme-tableGray));
+   font-weight: 600;
+ }
+ tr {
+   padding: 4px;
+   &.section {
+     background-color: rgb(var(--v-theme-tableGray));
+     font-weight: 600;
+   }
+ }
+ tbody tr {
+   border-bottom: 1px solid rgb(var(--v-theme-greyBackground));
+ }
+ th {
+   vertical-align: bottom;
+   background-color: rgb(var(--v-theme-nnLightBlue100));
+   min-width: 120px;
+ }
+ th,
+ td {
+   position: relative;
+   padding: 6px;
+   font-size: 14px;
+   z-index: 0;
+ }
 
-td {
-  background-color: inherit;
-}
+ td {
+   background-color: inherit;
+ }
 
-.sticky-header {
-  overflow-y: auto;
+ .sticky-header {
+   overflow-y: auto;
 
-  thead th {
-    position: sticky;
-    top: 0;
-    z-index: 3;
-  }
-}
-.sticky-column {
-  position: sticky;
-  left: 0px;
-  z-index: 4 !important;
-}
-.header {
-  background-color: rgb(var(--v-theme-nnTrueBlue));
-  color: rgb(var(--v-theme-nnWhite));
-  z-index: 10;
-  left: 0px;
-}
-.zindex25 {
-  z-index: 25 !important;
-}
-.bottomCard {
-  align-content: center;
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  z-index: 1100;
-  height: 100px;
-  width: 100%;
-}
-.flowchart {
-  background-color: rgb(var(--v-theme-nnSeaBlue300));
-}
-.group {
-  background-color: rgb(var(--v-theme-nnSeaBlue200));
-}
-.subgroup {
-  background-color: rgb(var(--v-theme-nnSeaBlue100));
-  font-weight: 600;
-}
-.text-strong {
-  font-weight: 600;
-}
-.visitFootnote {
-  margin-bottom: 8px;
-}
-.layoutSelector {
-  border-color: rgb(var(--v-theme-nnBaseBlue));
-}
-.v-card-text {
-  display: inline-flex;
-}
+   thead th {
+     position: sticky;
+     top: 0;
+     z-index: 3;
+   }
+ }
+ .sticky-column {
+   position: sticky;
+   left: 0px;
+   z-index: 4 !important;
+ }
+ .header {
+   background-color: rgb(var(--v-theme-nnTrueBlue));
+   color: rgb(var(--v-theme-nnWhite));
+   z-index: 10;
+   left: 0px;
+ }
+ .zindex25 {
+   z-index: 25 !important;
+ }
+ .bottomCard {
+   align-content: center;
+   position: fixed;
+   bottom: 0;
+   z-index: 1100;
+   height: 100px;
+   width: -webkit-fill-available;
+ }
+ .flowchart {
+   background-color: rgb(var(--v-theme-nnSeaBlue300));
+ }
+ .group {
+   background-color: rgb(var(--v-theme-nnSeaBlue200));
+ }
+ .subgroup {
+   background-color: rgb(var(--v-theme-nnSeaBlue100));
+   font-weight: 600;
+ }
+ .text-strong {
+   font-weight: 600;
+ }
+ .visitFootnote {
+   margin-bottom: 8px;
+ }
+ .layoutSelector {
+   border-color: rgb(var(--v-theme-nnBaseBlue));
+ }
+ .v-card-text {
+   display: inline-flex;
+ }
 </style>

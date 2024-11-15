@@ -541,6 +541,10 @@ const props = defineProps({
     type: Array,
     default: null,
   },
+  initialSortBy: {
+    type: Array,
+    default: () => [],
+  },
 })
 const emit = defineEmits(['filter'])
 
@@ -564,7 +568,7 @@ const apiParams = new Map()
 const trigger = ref(0)
 const showColumnNames = ref(false)
 const showHistory = ref(false)
-const sortBy = ref([])
+const sortBy = ref(props.initialSortBy)
 const selectedColumnData = ref({})
 const confirm = ref()
 const selectedColumns = ref([])
@@ -677,7 +681,11 @@ onMounted(() => {
     )
   } else if (props.defaultFilters) {
     itemsToFilter.value = props.defaultFilters
-  } else if (!props.defaultFilters && !props.disableFiltering && !props.onlyTextSearch) {
+  } else if (
+    !props.defaultFilters &&
+    !props.disableFiltering &&
+    !props.onlyTextSearch
+  ) {
     itemsToFilter.value = shownColumns.value.slice(1, shownColumns.value.length)
   }
   if (props.items && props.items.length) {

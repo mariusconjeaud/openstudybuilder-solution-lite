@@ -117,15 +117,6 @@ class CTPackageService:
         finally:
             self._close_all_repos()
 
-    def get_ct_package_by_uid(
-        self,
-        ct_package_uid: str,
-    ) -> CTPackage:
-        try:
-            return self._repos.ct_package_repository.find_by_uid(uid=ct_package_uid)
-        finally:
-            self._close_all_repos()
-
     def get_ct_packages_codelist_changes(
         self,
         catalogue_name: str,

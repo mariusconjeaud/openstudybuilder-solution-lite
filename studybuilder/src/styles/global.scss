@@ -261,6 +261,16 @@ label.required::after {
   color: red;
 }
 
+input[type="datetime-local"] {
+    color: rgb(var(--v-theme-darkGrey));
+}
+
+.nn-label {
+    font-size: 0.9em;
+    margin-bottom: 5px;
+    color: rgb(var(--v-theme-primary));
+}
+
 // Landing pages
 .fullscreen-bg {
   padding: 2rem;

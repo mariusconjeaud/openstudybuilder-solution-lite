@@ -1,5 +1,5 @@
 """
-Tests for /studies/{uid}/study-design-cells endpoints
+Tests for /studies/{study_uid}/study-design-cells endpoints
 """
 
 # pylint: disable=unused-argument
@@ -79,17 +79,7 @@ def test_data():
     study = TestUtils.create_study()
     db.cypher_query(STARTUP_STUDY_LIST_CYPHER)
     db.cypher_query(STARTUP_CT_CATALOGUE_CYPHER)
-
-    # TODO - complete study standard version testing
-    # catalogue = "SDTM CT"
-    # cdisc_package_name = "SDTM CT "+str(date.today())
-
-    # standards_ct_package_uid = TestUtils.create_ct_package(
-    #     catalogue=catalogue, name=cdisc_package_name
-    # )
-    # TestUtils.create_study_standard_version(
-    #     study_uid=study.uid, ct_package_uid=standards_ct_package_uid
-    # )
+    TestUtils.set_study_standard_version(study_uid=study.uid)
 
     catalogue_name, library_name = get_catalogue_name_library_name()
     # Create a study arm

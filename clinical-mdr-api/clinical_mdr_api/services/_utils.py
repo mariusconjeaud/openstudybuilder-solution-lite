@@ -740,7 +740,11 @@ def service_level_generic_header_filtering(
     # Transform into a set in order to remove duplicates, then cast back to list
     is_hashable = bool(extracted_values and isinstance(extracted_values[0], Hashable))
     for extracted_value in extracted_values:
-        value_to_return = extracted_value if is_hashable else extracted_value.name
+        if is_hashable:
+            value_to_return = extracted_value
+        else:
+            value_to_return = extracted_value.name
+
         if value_to_return not in return_values:
             return_values.append(value_to_return)
 
@@ -956,7 +960,7 @@ def calculate_diffs_history(
 ):
     selection_history = get_all_object_versions(study_uid=study_uid)
     unique_list_uids = list({x.uid for x in selection_history})
-    unique_list_uids.sort()
+    unique_list_uids.sort(reverse=True)
     # list of all study_elements
     data = []
     ith_selection_history = []

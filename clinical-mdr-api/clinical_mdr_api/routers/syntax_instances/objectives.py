@@ -209,9 +209,9 @@ def retrieve_audit_trail(
 
 
 @router.get(
-    "/{uid}",
+    "/{objective_uid}",
     dependencies=[rbac.LIBRARY_READ],
-    summary="Returns the latest/newest version of a specific objective identified by 'uid'.",
+    summary="Returns the latest/newest version of a specific objective identified by 'objective_uid'.",
     description="""If multiple request query parameters are used, then they need to
     match all at the same time (they are combined with the AND operation).""",
     response_model=models.Objective | None,
@@ -219,13 +219,13 @@ def retrieve_audit_trail(
     responses={
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The objective with the specified 'uid' (and the specified date/time and/or status) wasn't found.",
+            "description": "Not Found - The objective with the specified 'objective_uid' (and the specified date/time and/or status) wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def get(
-    uid: str = ObjectiveUID,
+    objective_uid: str = ObjectiveUID,
     status: LibraryItemStatus
     | None = Query(
         None,
@@ -245,13 +245,13 @@ def get(
         r"E.g. '0.1', '0.2', '1.0', ...",
     ),
 ):
-    return Service().get_by_uid(uid=uid, version=version, status=status)
+    return Service().get_by_uid(uid=objective_uid, version=version, status=status)
 
 
 @router.get(
-    "/{uid}/versions",
+    "/{objective_uid}/versions",
     dependencies=[rbac.LIBRARY_READ],
-    summary="Returns the version history of a specific objective identified by 'uid'.",
+    summary="Returns the version history of a specific objective identified by 'objective_uid'.",
     description="The returned versions are ordered by\n"
     "0. start_date descending (newest entries first)",
     response_model=list[models.ObjectiveVersion],
@@ -259,17 +259,17 @@ def get(
     responses={
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The objective with the specified 'uid' wasn't found.",
+            "description": "Not Found - The objective with the specified 'objective_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def get_versions(uid: str = ObjectiveUID):
-    return Service().get_version_history(uid=uid)
+def get_versions(objective_uid: str = ObjectiveUID):
+    return Service().get_version_history(uid=objective_uid)
 
 
 @router.get(
-    "/{uid}/studies",
+    "/{objective_uid}/studies",
     dependencies=[rbac.STUDY_READ],
     summary="",
     description="",
@@ -278,20 +278,20 @@ def get_versions(uid: str = ObjectiveUID):
     responses={
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The objective with the specified 'uid' wasn't found.",
+            "description": "Not Found - The objective with the specified 'objective_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def get_studies(
-    uid: str = ObjectiveUID,
+    objective_uid: str = ObjectiveUID,
     include_sections: list[StudyComponentEnum]
     | None = Query(None, description=study_section_description("include")),
     exclude_sections: list[StudyComponentEnum]
     | None = Query(None, description=study_section_description("exclude")),
 ):
     return Service().get_referencing_studies(
-        uid=uid,
+        uid=objective_uid,
         node_type=ObjectiveValue,
         include_sections=include_sections,
         exclude_sections=exclude_sections,
@@ -381,9 +381,9 @@ def preview(
 
 
 @router.patch(
-    "/{uid}",
+    "/{objective_uid}",
     dependencies=[rbac.LIBRARY_WRITE_OR_STUDY_WRITE],
-    summary="Updates the objective identified by 'uid'.",
+    summary="Updates the objective identified by 'objective_uid'.",
     description="""This request is only valid if the objective
 * is in 'Draft' status and
 * belongs to a library that allows editing (the 'is_editable' property of the library needs to be true). 
@@ -407,24 +407,24 @@ If the request succeeds:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The objective with the specified 'uid' wasn't found.",
+            "description": "Not Found - The objective with the specified 'objective_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def edit(
-    uid: str = ObjectiveUID,
+    objective_uid: str = ObjectiveUID,
     objective: models.ObjectiveEditInput = Body(
         description="The new parameter terms for the objective including the change description.",
     ),
 ):
-    return Service().edit_draft(uid, objective)
+    return Service().edit_draft(objective_uid, objective)
 
 
 @router.post(
-    "/{uid}/approvals",
+    "/{objective_uid}/approvals",
     dependencies=[rbac.LIBRARY_WRITE_OR_STUDY_WRITE],
-    summary="Approves the objective identified by 'uid'.",
+    summary="Approves the objective identified by 'objective_uid'.",
     description="""This request is only valid if the objective
 * is in 'Draft' status and
 * belongs to a library that allows editing (the 'is_editable' property of the library needs to be true).
@@ -446,19 +446,19 @@ If the request succeeds:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The objective with the specified 'uid' wasn't found.",
+            "description": "Not Found - The objective with the specified 'objective_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def approve(uid: str = ObjectiveUID):
-    return Service().approve(uid)
+def approve(objective_uid: str = ObjectiveUID):
+    return Service().approve(objective_uid)
 
 
 @router.delete(
-    "/{uid}/activations",
+    "/{objective_uid}/activations",
     dependencies=[rbac.LIBRARY_WRITE],
-    summary="Inactivates/deactivates the objective identified by 'uid'.",
+    summary="Inactivates/deactivates the objective identified by 'objective_uid'.",
     description="""This request is only valid if the objective
 * is in 'Final' status only (so no latest 'Draft' status exists).
 
@@ -478,19 +478,19 @@ If the request succeeds:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The objective with the specified 'uid' wasn't found.",
+            "description": "Not Found - The objective with the specified 'objective_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def inactivate(uid: str = ObjectiveUID):
-    return Service().inactivate_final(uid=uid)
+def inactivate(objective_uid: str = ObjectiveUID):
+    return Service().inactivate_final(uid=objective_uid)
 
 
 @router.post(
-    "/{uid}/activations",
+    "/{objective_uid}/activations",
     dependencies=[rbac.LIBRARY_WRITE],
-    summary="Reactivates the objective identified by 'uid'.",
+    summary="Reactivates the objective identified by 'objective_uid'.",
     description="""This request is only valid if the objective
 * is in 'Retired' status only (so no latest 'Draft' status exists).
 
@@ -510,19 +510,19 @@ If the request succeeds:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The objective with the specified 'uid' wasn't found.",
+            "description": "Not Found - The objective with the specified 'objective_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def reactivate(uid: str = ObjectiveUID):
-    return Service().reactivate_retired(uid)
+def reactivate(objective_uid: str = ObjectiveUID):
+    return Service().reactivate_retired(objective_uid)
 
 
 @router.delete(
-    "/{uid}",
+    "/{objective_uid}",
     dependencies=[rbac.LIBRARY_WRITE],
-    summary="Deletes the objective identified by 'uid'.",
+    summary="Deletes the objective identified by 'objective_uid'.",
     description="""This request is only valid if \n
 * the objective is in 'Draft' status and
 * the objective has never been in 'Final' status and
@@ -544,17 +544,17 @@ def reactivate(uid: str = ObjectiveUID):
         500: _generic_descriptions.ERROR_500,
     },
 )
-def delete(uid: str = ObjectiveUID):
-    Service().soft_delete(uid)
+def delete(objective_uid: str = ObjectiveUID):
+    Service().soft_delete(objective_uid)
     return Response(status_code=fast_api_status.HTTP_204_NO_CONTENT)
 
 
 @router.get(
-    "/{uid}/parameters",
+    "/{objective_uid}/parameters",
     dependencies=[rbac.LIBRARY_READ],
-    summary="Returns all template parameters available for the objective identified by 'uid'. Includes the available values per parameter.",
+    summary="Returns all template parameters available for the objective identified by 'objective_uid'. Includes the available values per parameter.",
     description="Returns all template parameters used in the objective template "
-    "that is the basis for the objective identified by 'uid'. "
+    "that is the basis for the objective identified by 'objective_uid'. "
     "Includes the available values per parameter.",
     response_model=list[models.TemplateParameter],
     status_code=200,
@@ -564,7 +564,7 @@ def delete(uid: str = ObjectiveUID):
     },
 )
 def get_parameters(
-    uid: str = Path(None, description="The unique id of the objective."),
+    objective_uid: str = Path(None, description="The unique id of the objective."),
     study_uid: str
     | None = Query(
         None,
@@ -572,5 +572,5 @@ def get_parameters(
     ),
 ):
     return Service().get_parameters(
-        uid=uid, study_uid=study_uid, include_study_endpoints=True
+        uid=objective_uid, study_uid=study_uid, include_study_endpoints=True
     )

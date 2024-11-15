@@ -82,9 +82,9 @@ def get_all(
 
 
 @router.get(
-    "/{uid}",
+    "/{configuration_uid}",
     dependencies=[rbac.LIBRARY_READ],
-    summary="Returns the latest/newest version of a specific configuration identified by 'uid'.",
+    summary="Returns the latest/newest version of a specific configuration identified by 'configuration_uid'.",
     description="""If multiple request query parameters are used, then they need to
     match all at the same time (they are combined with the AND operation).""",
     response_model=CTConfigModel,
@@ -92,14 +92,14 @@ def get_all(
     responses={
         404: {
             "model": ErrorResponse,
-            "description": """Not Found - The configuration with the specified 'uid'
+            "description": """Not Found - The configuration with the specified 'configuration_uid'
             (and the specified date/time, version and/or status) wasn't found.""",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def get_by_uid(
-    uid: str = CodelistConfigUID,
+    configuration_uid: str = CodelistConfigUID,
     at_specified_date_time: datetime
     | None = Query(
         None,
@@ -128,7 +128,7 @@ def get_by_uid(
     service: Service = Depends(),
 ) -> CTConfigModel:
     return service.get_by_uid(
-        uid,
+        configuration_uid,
         version=version,
         status=status,
         at_specified_datetime=at_specified_date_time,
@@ -136,9 +136,9 @@ def get_by_uid(
 
 
 @router.get(
-    "/{uid}/versions",
+    "/{configuration_uid}/versions",
     dependencies=[rbac.LIBRARY_READ],
-    summary="Returns the version history of a specific configuration identified by 'uid'.",
+    summary="Returns the version history of a specific configuration identified by 'configuration_uid'.",
     description="The returned versions are ordered by\n"
     "0. start_date descending (newest entries first)",
     response_model=list[CTConfigModel],
@@ -162,7 +162,7 @@ def get_by_uid(
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The configuration with the specified 'uid' wasn't found.",
+            "description": "Not Found - The configuration with the specified 'configuration_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
@@ -190,10 +190,10 @@ def get_by_uid(
 #  pylint: disable=unused-argument
 def get_versions(
     request: Request,  # request is actually required by the allow_exports decorator
-    uid: str = CodelistConfigUID,
+    configuration_uid: str = CodelistConfigUID,
     service: Service = Depends(),
 ) -> list[CTConfigModel]:
-    return service.get_versions(uid)
+    return service.get_versions(configuration_uid)
 
 
 @router.post(
@@ -230,9 +230,9 @@ def post(
 
 
 @router.patch(
-    "/{uid}",
+    "/{configuration_uid}",
     dependencies=[rbac.LIBRARY_WRITE],
-    summary="Updates the configuration identified by 'uid'.",
+    summary="Updates the configuration identified by 'configuration_uid'.",
     description="""This request is only valid if the configuration
 * is in 'Draft' status and
 
@@ -252,25 +252,25 @@ If the request succeeds:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The configuration with the specified 'uid' could not be found.",
+            "description": "Not Found - The configuration with the specified 'configuration_uid' could not be found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def patch(
-    uid: str = CodelistConfigUID,
+    configuration_uid: str = CodelistConfigUID,
     patch_input: CTConfigPatchInput = Body(
         description="The new content of the configuration including the change description.",
     ),
     service: Service = Depends(),
 ) -> CTConfigModel:
-    return service.patch(uid, patch_input)
+    return service.patch(configuration_uid, patch_input)
 
 
 @router.post(
-    "/{uid}/versions",
+    "/{configuration_uid}/versions",
     dependencies=[rbac.LIBRARY_WRITE],
-    summary="Creates a new version of the configuration identified by 'uid'.",
+    summary="Creates a new version of the configuration identified by 'configuration_uid'.",
     description="""This request is only valid if the configuration
 * is in 'Final' or 'Retired' status only (so no latest 'Draft' status exists) 
 
@@ -291,21 +291,21 @@ If the request succeeds:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The  configuration with the specified 'uid' could not be found.",
+            "description": "Not Found - The  configuration with the specified 'configuration_uid' could not be found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def new_version(
-    uid: str = CodelistConfigUID, service: Service = Depends()
+    configuration_uid: str = CodelistConfigUID, service: Service = Depends()
 ) -> CTConfigModel:
-    return service.new_version(uid)
+    return service.new_version(configuration_uid)
 
 
 @router.post(
-    "/{uid}/approvals",
+    "/{configuration_uid}/approvals",
     dependencies=[rbac.LIBRARY_WRITE],
-    summary="Approves the configuration identified by 'uid'.",
+    summary="Approves the configuration identified by 'configuration_uid'.",
     description="""This request is only valid if the configuration
 * is in 'Draft' status
 
@@ -325,21 +325,21 @@ If the request succeeds:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The configuration with the specified 'uid' could not be found.",
+            "description": "Not Found - The configuration with the specified 'configuration_uid' could not be found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def approve(
-    uid: str = CodelistConfigUID, service: Service = Depends()
+    configuration_uid: str = CodelistConfigUID, service: Service = Depends()
 ) -> CTConfigModel:
-    return service.approve(uid)
+    return service.approve(configuration_uid)
 
 
 @router.delete(
-    "/{uid}/activations",
+    "/{configuration_uid}/activations",
     dependencies=[rbac.LIBRARY_WRITE],
-    summary="Inactivates/deactivates the configuration identified by 'uid'.",
+    summary="Inactivates/deactivates the configuration identified by 'configuration_uid'.",
     description="""This request is only valid if the configuration
 * is in 'Final' status only (so no latest 'Draft' status exists).
 
@@ -359,21 +359,21 @@ If the request succeeds:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The configuration with the specified 'uid' could not be found.",
+            "description": "Not Found - The configuration with the specified 'configuration_uid' could not be found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def inactivate(
-    uid: str = CodelistConfigUID, service: Service = Depends()
+    configuration_uid: str = CodelistConfigUID, service: Service = Depends()
 ) -> CTConfigModel:
-    return service.inactivate(uid)
+    return service.inactivate(configuration_uid)
 
 
 @router.post(
-    "/{uid}/activations",
+    "/{configuration_uid}/activations",
     dependencies=[rbac.LIBRARY_WRITE],
-    summary="Reactivates the configuration identified by 'uid'.",
+    summary="Reactivates the configuration identified by 'configuration_uid'.",
     description="""This request is only valid if the configuration
 * is in 'Retired' status only (so no latest 'Draft' status exists).
 
@@ -393,21 +393,21 @@ If the request succeeds:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The configuration with the specified 'uid' could not be found.",
+            "description": "Not Found - The configuration with the specified 'configuration_uid' could not be found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def reactivate(
-    uid: str = CodelistConfigUID, service: Service = Depends()
+    configuration_uid: str = CodelistConfigUID, service: Service = Depends()
 ) -> CTConfigModel:
-    return service.reactivate(uid)
+    return service.reactivate(configuration_uid)
 
 
 @router.delete(
-    "/{uid}",
+    "/{configuration_uid}",
     dependencies=[rbac.LIBRARY_WRITE],
-    summary="Deletes the configuration identified by 'uid'.",
+    summary="Deletes the configuration identified by 'configuration_uid'.",
     description="""This request is only valid if \n
 * the configuration is in 'Draft' status and
 * the configuration has never been in 'Final' status.
@@ -431,6 +431,8 @@ def reactivate(
         500: _generic_descriptions.ERROR_500,
     },
 )
-def delete(uid: str = CodelistConfigUID, service: Service = Depends()) -> None:
-    service.delete(uid)
+def delete(
+    configuration_uid: str = CodelistConfigUID, service: Service = Depends()
+) -> None:
+    service.delete(configuration_uid)
     return Response(status_code=fast_api_status.HTTP_204_NO_CONTENT)

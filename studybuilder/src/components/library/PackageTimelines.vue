@@ -18,7 +18,9 @@
       <PackageTimeline
         :ref="(el) => (timelineRefs[catalogue] = el)"
         :catalogue-packages="cataloguePackages"
+        :with-add-button="sponsor"
         @package-changed="(pkg) => emit('packageChanged', catalogue, pkg)"
+        @add-package="emit('addPackage')"
       >
         <template v-for="(_, slot) of $slots" #[slot]="scope">
           <slot :name="slot" v-bind="scope" :catalogue_name="catalogue" />
@@ -52,7 +54,7 @@ const props = defineProps({
     default: false,
   },
 })
-const emit = defineEmits(['catalogueChanged', 'packageChanged'])
+const emit = defineEmits(['addPackage', 'catalogueChanged', 'packageChanged'])
 const ctCataloguesStore = useCtCataloguesStore()
 const { tabKeys, updateTabKey } = useTabKeys()
 
@@ -75,8 +77,11 @@ watch(tab, (newValue, oldValue) => {
   })
 })
 
-onMounted(() => {
-  controlledTerminology.getPackages().then((resp) => {
+function fetchPackages() {
+  const endpoint = props.sponsor
+    ? controlledTerminology.getSponsorPackages
+    : controlledTerminology.getPackages
+  endpoint().then((resp) => {
     packages.value = sortPackages(resp.data)
     if (props.catalogueName) {
       tab.value = props.catalogueName
@@ -84,6 +89,10 @@ onMounted(() => {
       tab.value = Object.keys(packages.value)[0]
     }
   })
+}
+
+onMounted(() => {
+  fetchPackages()
 })
 
 function sortPackages(packages) {
@@ -106,4 +115,9 @@ function sortPackages(packages) {
   }
   return result
 }
+
+defineExpose({
+  packages,
+  fetchPackages,
+})
 </script>

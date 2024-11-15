@@ -111,7 +111,7 @@ def get_distinct_values_for_header(
 
 
 @router.get(
-    "/{uid}",
+    "/{odm_method_uid}",
     dependencies=[rbac.LIBRARY_READ],
     summary="Get details on a specific ODM Method (in a specific version)",
     description="",
@@ -122,13 +122,13 @@ def get_distinct_values_for_header(
         500: _generic_descriptions.ERROR_500,
     },
 )
-def get_odm_method(uid: str = OdmMethodUID):
+def get_odm_method(odm_method_uid: str = OdmMethodUID):
     odm_method_service = OdmMethodService()
-    return odm_method_service.get_by_uid(uid=uid)
+    return odm_method_service.get_by_uid(uid=odm_method_uid)
 
 
 @router.get(
-    "/{uid}/relationships",
+    "/{odm_method_uid}/relationships",
     dependencies=[rbac.LIBRARY_READ],
     summary="Get UIDs of a specific ODM Method's relationships",
     description="",
@@ -139,13 +139,13 @@ def get_odm_method(uid: str = OdmMethodUID):
         500: _generic_descriptions.ERROR_500,
     },
 )
-def get_active_relationships(uid: str = OdmMethodUID):
+def get_active_relationships(odm_method_uid: str = OdmMethodUID):
     odm_method_service = OdmMethodService()
-    return odm_method_service.get_active_relationships(uid=uid)
+    return odm_method_service.get_active_relationships(uid=odm_method_uid)
 
 
 @router.get(
-    "/{uid}/versions",
+    "/{odm_method_uid}/versions",
     dependencies=[rbac.LIBRARY_READ],
     summary="List version history for ODM Method",
     description="""
@@ -167,14 +167,14 @@ Possible errors:
     responses={
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The ODM Method with the specified 'uid' wasn't found.",
+            "description": "Not Found - The ODM Method with the specified 'odm_method_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def get_odm_method_versions(uid: str = OdmMethodUID):
+def get_odm_method_versions(odm_method_uid: str = OdmMethodUID):
     odm_method_service = OdmMethodService()
-    return odm_method_service.get_version_history(uid=uid)
+    return odm_method_service.get_version_history(uid=odm_method_uid)
 
 
 @router.post(
@@ -205,7 +205,7 @@ def create_odm_method(
 
 
 @router.patch(
-    "/{uid}",
+    "/{odm_method_uid}",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Update ODM Method",
     description="",
@@ -222,23 +222,23 @@ def create_odm_method(
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The ODM Method with the specified 'uid' wasn't found.",
+            "description": "Not Found - The ODM Method with the specified 'odm_method_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def edit_odm_method(
-    uid: str = OdmMethodUID,
+    odm_method_uid: str = OdmMethodUID,
     odm_method_edit_input: OdmMethodPatchInput = Body(description=""),
 ):
     odm_method_service = OdmMethodService()
     return odm_method_service.update_with_relations(
-        uid=uid, concept_edit_input=odm_method_edit_input
+        uid=odm_method_uid, concept_edit_input=odm_method_edit_input
     )
 
 
 @router.post(
-    "/{uid}/versions",
+    "/{odm_method_uid}/versions",
     dependencies=[rbac.LIBRARY_WRITE],
     summary=" Create a new version of ODM Method",
     description="""
@@ -268,18 +268,18 @@ Possible errors:
             "model": ErrorResponse,
             "description": "Not Found - Reasons include e.g.: \n"
             "- The ODM Method is not in final status.\n"
-            "- The ODM Method with the specified 'uid' could not be found.",
+            "- The ODM Method with the specified 'odm_method_uid' could not be found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def create_odm_method_version(uid: str = OdmMethodUID):
+def create_odm_method_version(odm_method_uid: str = OdmMethodUID):
     odm_method_service = OdmMethodService()
-    return odm_method_service.create_new_version(uid=uid)
+    return odm_method_service.create_new_version(uid=odm_method_uid)
 
 
 @router.post(
-    "/{uid}/approvals",
+    "/{odm_method_uid}/approvals",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Approve draft version of ODM Method",
     description="",
@@ -295,18 +295,18 @@ def create_odm_method_version(uid: str = OdmMethodUID):
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The ODM Method with the specified 'uid' wasn't found.",
+            "description": "Not Found - The ODM Method with the specified 'odm_method_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def approve_odm_method(uid: str = OdmMethodUID):
+def approve_odm_method(odm_method_uid: str = OdmMethodUID):
     odm_method_service = OdmMethodService()
-    return odm_method_service.approve(uid=uid)
+    return odm_method_service.approve(uid=odm_method_uid)
 
 
 @router.delete(
-    "/{uid}/activations",
+    "/{odm_method_uid}/activations",
     dependencies=[rbac.LIBRARY_WRITE],
     summary=" Inactivate final version of ODM Method",
     description="",
@@ -321,18 +321,18 @@ def approve_odm_method(uid: str = OdmMethodUID):
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The ODM Method with the specified 'uid' could not be found.",
+            "description": "Not Found - The ODM Method with the specified 'odm_method_uid' could not be found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def inactivate_odm_method(uid: str = OdmMethodUID):
+def inactivate_odm_method(odm_method_uid: str = OdmMethodUID):
     odm_method_service = OdmMethodService()
-    return odm_method_service.inactivate_final(uid=uid)
+    return odm_method_service.inactivate_final(uid=odm_method_uid)
 
 
 @router.post(
-    "/{uid}/activations",
+    "/{odm_method_uid}/activations",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Reactivate retired version of a ODM Method",
     description="",
@@ -347,18 +347,18 @@ def inactivate_odm_method(uid: str = OdmMethodUID):
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The ODM Method with the specified 'uid' could not be found.",
+            "description": "Not Found - The ODM Method with the specified 'odm_method_uid' could not be found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def reactivate_odm_method(uid: str = OdmMethodUID):
+def reactivate_odm_method(odm_method_uid: str = OdmMethodUID):
     odm_method_service = OdmMethodService()
-    return odm_method_service.reactivate_retired(uid=uid)
+    return odm_method_service.reactivate_retired(uid=odm_method_uid)
 
 
 @router.delete(
-    "/{uid}",
+    "/{odm_method_uid}",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Delete draft version of ODM Method",
     description="",
@@ -375,11 +375,11 @@ def reactivate_odm_method(uid: str = OdmMethodUID):
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - An ODM Method with the specified 'uid' could not be found.",
+            "description": "Not Found - An ODM Method with the specified 'odm_method_uid' could not be found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def delete_odm_method(uid: str = OdmMethodUID):
+def delete_odm_method(odm_method_uid: str = OdmMethodUID):
     odm_method_service = OdmMethodService()
-    odm_method_service.soft_delete(uid=uid)
+    odm_method_service.soft_delete(uid=odm_method_uid)

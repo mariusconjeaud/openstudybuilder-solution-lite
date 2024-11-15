@@ -250,7 +250,7 @@ def get_distinct_values_for_header(
 
 
 @router.get(
-    "/medicinal-products/{uid}",
+    "/medicinal-products/{medicinal_product_uid}",
     dependencies=[rbac.LIBRARY_READ],
     summary="Get details on a specific medicinal product (in a specific version)",
     description="""
@@ -265,14 +265,14 @@ Possible errors:
     },
 )
 def get_activity(
-    uid: str = MedicinalProductUID,
+    medicinal_product_uid: str = MedicinalProductUID,
 ):
     medicinal_product_service = MedicinalProductService()
-    return medicinal_product_service.get_by_uid(uid=uid)
+    return medicinal_product_service.get_by_uid(uid=medicinal_product_uid)
 
 
 @router.get(
-    "/medicinal-products/{uid}/versions",
+    "/medicinal-products/{medicinal_product_uid}/versions",
     dependencies=[rbac.LIBRARY_READ],
     summary="List version history for medicinal products",
     description="""
@@ -294,16 +294,16 @@ Possible errors:
     responses={
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The medicinal product with the specified 'uid' wasn't found.",
+            "description": "Not Found - The medicinal product with the specified 'medicinal_product_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def get_versions(
-    uid: str = MedicinalProductUID,
+    medicinal_product_uid: str = MedicinalProductUID,
 ):
     medicinal_product_service = MedicinalProductService()
-    return medicinal_product_service.get_version_history(uid=uid)
+    return medicinal_product_service.get_version_history(uid=medicinal_product_uid)
 
 
 @router.post(
@@ -355,7 +355,7 @@ def create(
 
 
 @router.patch(
-    "/medicinal-products/{uid}",
+    "/medicinal-products/{medicinal_product_uid}",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Update medicinal product",
     description="""
@@ -389,23 +389,23 @@ Possible errors:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The medicinal product with the specified 'uid' wasn't found.",
+            "description": "Not Found - The medicinal product with the specified 'medicinal_product_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def edit(
-    uid: str = MedicinalProductUID,
+    medicinal_product_uid: str = MedicinalProductUID,
     medicinal_product_edit_input: MedicinalProductEditInput = Body(description=""),
 ):
     medicinal_product_service = MedicinalProductService()
     return medicinal_product_service.edit_draft(
-        uid=uid, concept_edit_input=medicinal_product_edit_input
+        uid=medicinal_product_uid, concept_edit_input=medicinal_product_edit_input
     )
 
 
 @router.post(
-    "/medicinal-products/{uid}/approvals",
+    "/medicinal-products/{medicinal_product_uid}/approvals",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Approve draft version of a medicinal product",
     description="""
@@ -437,20 +437,20 @@ Possible errors:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The medicinal product with the specified 'uid' wasn't found.",
+            "description": "Not Found - The medicinal product with the specified 'medicinal_product_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def approve(
-    uid: str = MedicinalProductUID,
+    medicinal_product_uid: str = MedicinalProductUID,
 ):
     medicinal_product_service = MedicinalProductService()
-    return medicinal_product_service.approve(uid=uid)
+    return medicinal_product_service.approve(uid=medicinal_product_uid)
 
 
 @router.post(
-    "/medicinal-products/{uid}/versions",
+    "/medicinal-products/{medicinal_product_uid}/versions",
     dependencies=[rbac.LIBRARY_WRITE],
     summary=" Create a new version of a medicinal product",
     description="""
@@ -480,20 +480,20 @@ Possible errors:
             "model": ErrorResponse,
             "description": "Not Found - Reasons include e.g.: \n"
             "- The medicinal product is not in final status.\n"
-            "- The medicinal product with the specified 'uid' could not be found.",
+            "- The medicinal product with the specified 'medicinal_product_uid' could not be found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def create_new_version(
-    uid: str = MedicinalProductUID,
+    medicinal_product_uid: str = MedicinalProductUID,
 ):
     medicinal_product_service = MedicinalProductService()
-    return medicinal_product_service.create_new_version(uid=uid)
+    return medicinal_product_service.create_new_version(uid=medicinal_product_uid)
 
 
 @router.delete(
-    "/medicinal-products/{uid}/activations",
+    "/medicinal-products/{medicinal_product_uid}/activations",
     dependencies=[rbac.LIBRARY_WRITE],
     summary=" Inactivate final version of a medicinal product",
     description="""
@@ -524,20 +524,20 @@ Possible errors:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The medicinal product with the specified 'uid' could not be found.",
+            "description": "Not Found - The medicinal product with the specified 'medicinal_product_uid' could not be found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def inactivate(
-    uid: str = MedicinalProductUID,
+    medicinal_product_uid: str = MedicinalProductUID,
 ):
     medicinal_product_service = MedicinalProductService()
-    return medicinal_product_service.inactivate_final(uid=uid)
+    return medicinal_product_service.inactivate_final(uid=medicinal_product_uid)
 
 
 @router.post(
-    "/medicinal-products/{uid}/activations",
+    "/medicinal-products/{medicinal_product_uid}/activations",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Reactivate retired version of a medicinal product",
     description="""
@@ -568,20 +568,20 @@ Possible errors:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The medicinal product with the specified 'uid' could not be found.",
+            "description": "Not Found - The medicinal product with the specified 'medicinal_product_uid' could not be found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def reactivate(
-    uid: str = MedicinalProductUID,
+    medicinal_product_uid: str = MedicinalProductUID,
 ):
     medicinal_product_service = MedicinalProductService()
-    return medicinal_product_service.reactivate_retired(uid=uid)
+    return medicinal_product_service.reactivate_retired(uid=medicinal_product_uid)
 
 
 @router.delete(
-    "/medicinal-products/{uid}",
+    "/medicinal-products/{medicinal_product_uid}",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Delete draft version of a medicinal product",
     description="""
@@ -614,13 +614,13 @@ Possible errors:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - A medicinal product with the specified 'uid' could not be found.",
+            "description": "Not Found - A medicinal product with the specified 'medicinal_product_uid' could not be found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def delete(
-    uid: str = MedicinalProductUID,
+    medicinal_product_uid: str = MedicinalProductUID,
 ):
     medicinal_product_service = MedicinalProductService()
-    medicinal_product_service.soft_delete(uid=uid)
+    medicinal_product_service.soft_delete(uid=medicinal_product_uid)

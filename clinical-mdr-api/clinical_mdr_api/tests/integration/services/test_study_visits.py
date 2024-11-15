@@ -2,7 +2,7 @@ import unittest
 
 from neomodel import db
 
-from clinical_mdr_api.config import NON_VISIT_NUMBER
+from clinical_mdr_api.config import NON_VISIT_NUMBER, SDTM_CT_CATALOGUE_NAME
 from clinical_mdr_api.domains.study_selections.study_epoch import (
     StudyEpochVO,
     TimelineAR,
@@ -56,6 +56,10 @@ class TestStudyVisitManagement(unittest.TestCase):
         create_library_data()
 
         self.study = generate_study_root()
+        TestUtils.create_ct_catalogue(catalogue_name=SDTM_CT_CATALOGUE_NAME)
+        TestUtils.set_study_standard_version(
+            study_uid=self.study.uid, create_codelists_and_terms_for_package=False
+        )
         create_study_visit_codelists()
 
         self.epoch1 = create_study_epoch("EpochSubType_0001")
@@ -220,12 +224,12 @@ class TestStudyVisitManagement(unittest.TestCase):
         references = visit_service.get_all_references(self.study.uid)
         self.assertEqual(len(references), 2)
         visit: StudyVisit = references[0]
-        self.assertEqual(visit.visit_type_name, "BASELINE")
+        self.assertEqual(visit.visit_type.sponsor_preferred_name, "BASELINE")
         self.assertEqual(visit.study_duration_weeks_label, "0 weeks")
         self.assertEqual(visit.week_in_study_label, "Week 0")
 
         visit: StudyVisit = references[1]
-        self.assertEqual(visit.visit_type_name, "BASELINE2")
+        self.assertEqual(visit.visit_type.sponsor_preferred_name, "BASELINE2")
         self.assertEqual(visit.study_duration_weeks_label, "4 weeks")
         self.assertEqual(visit.week_in_study_label, "Week 4")
 
@@ -788,7 +792,9 @@ class TestStudyVisitManagement(unittest.TestCase):
         )
         self.assertEqual(global_anchor_visit.uid, vis.uid)
         self.assertEqual(global_anchor_visit.visit_name, vis.visit_name)
-        self.assertEqual(global_anchor_visit.visit_type_name, vis.visit_type_name)
+        self.assertEqual(
+            global_anchor_visit.visit_type_name, vis.visit_type.sponsor_preferred_name
+        )
 
     def test__get_anchor_visits_in_a_group_of_subvisits(self):
         visit_service = StudyVisitService(study_uid=self.study.uid)
@@ -845,7 +851,10 @@ class TestStudyVisitManagement(unittest.TestCase):
         self.assertEqual(len(anchor_visits), 1)
         self.assertEqual(anchor_visit.uid, anchor_visits[0].uid)
         self.assertEqual(anchor_visit.visit_name, anchor_visits[0].visit_name)
-        self.assertEqual(anchor_visit.visit_type_name, anchor_visits[0].visit_type_name)
+        self.assertEqual(
+            anchor_visit.visit_type.sponsor_preferred_name,
+            anchor_visits[0].visit_type_name,
+        )
 
     def test__epochs_durations_are_calculated_properly_when_having_empty_epoch(self):
         epoch_service = StudyEpochService()
@@ -1130,7 +1139,7 @@ class TestStudyVisitManagement(unittest.TestCase):
         self.assertEqual(all_visits[1].time_value, 10)
         self.assertEqual(all_visits[2].time_value, None)
         self.assertEqual(all_visits[2].time_reference_uid, None)
-        self.assertEqual(all_visits[2].time_reference_name, None)
+        self.assertEqual(all_visits[2].time_reference, None)
         self.assertEqual(all_visits[2].visit_number, NON_VISIT_NUMBER)
         self.assertEqual(all_visits[2].min_visit_window_value, -9999)
         self.assertEqual(all_visits[2].max_visit_window_value, 9999)
@@ -1230,7 +1239,7 @@ class TestStudyVisitManagement(unittest.TestCase):
         self.assertEqual(all_visits[1].time_value, 10)
         self.assertEqual(all_visits[2].time_value, None)
         self.assertEqual(all_visits[2].time_reference_uid, None)
-        self.assertEqual(all_visits[2].time_reference_name, None)
+        self.assertEqual(all_visits[2].time_reference, None)
         self.assertEqual(all_visits[2].visit_number, special_visit_anchor.visit_number)
         self.assertEqual(
             all_visits[2].visit_short_name, special_visit_anchor.visit_short_name + "A"
@@ -1320,7 +1329,7 @@ class TestStudyVisitManagement(unittest.TestCase):
         consecutive_visit_group = (
             f"{second_vis.visit_short_name}-{third_visit.visit_short_name}"
         )
-        with self.assertRaises(ValidationException) as message:
+        with self.assertRaises(BusinessLogicException) as message:
             visit_service.assign_visit_consecutive_group(
                 study_uid=self.study.uid,
                 visits_to_assign=[second_vis.uid, fourth_visit.uid],
@@ -1558,7 +1567,8 @@ class TestStudyVisitManagement(unittest.TestCase):
             all_visits[2].visit_contact_mode_uid, all_visits[1].visit_contact_mode_uid
         )
         self.assertEqual(
-            all_visits[2].visit_contact_mode_name, all_visits[1].visit_contact_mode_name
+            all_visits[2].visit_contact_mode.sponsor_preferred_name,
+            all_visits[1].visit_contact_mode.sponsor_preferred_name,
         )
 
     def test__group_visits_in_consecutive_group__visits_are_already_in_consecutive_groups(
@@ -1639,7 +1649,7 @@ class TestStudyVisitManagement(unittest.TestCase):
             visit_subclass="SINGLE_VISIT",
         )
 
-        with self.assertRaises(ValidationException) as message:
+        with self.assertRaises(BusinessLogicException) as message:
             visit_service.assign_visit_consecutive_group(
                 study_uid=self.study.uid,
                 visits_to_assign=[second_visit.uid, third_visit.uid, fourth_visit.uid],
@@ -1668,6 +1678,83 @@ class TestStudyVisitManagement(unittest.TestCase):
         self.assertEqual(len(all_visits), 4)
         self.assertEqual(
             all_visits[3].consecutive_visit_group, all_visits[1].consecutive_visit_group
+        )
+
+        all_available_consecutive_groups = visit_service.get_consecutive_groups(
+            study_uid=self.study.uid
+        )
+        self.assertEqual(all_available_consecutive_groups, {consecutive_visit_group})
+
+    def test__consecutive_visits_should_be_subsequent(
+        self,
+    ):
+        visit_service: StudyVisitService = StudyVisitService(study_uid=self.study.uid)
+        first_visit = create_visit_with_update(
+            study_epoch_uid=self.epoch1.uid,
+            visit_type_uid="VisitType_0001",
+            time_reference_uid="VisitSubType_0001",
+            time_value=0,
+            time_unit_uid=self.day_uid,
+            is_global_anchor_visit=True,
+            visit_class="SINGLE_VISIT",
+            visit_subclass="SINGLE_VISIT",
+        )
+        second_visit = create_visit_with_update(
+            study_epoch_uid=self.epoch2.uid,
+            visit_type_uid="VisitType_0002",
+            time_reference_uid="VisitSubType_0001",
+            time_value=10,
+            time_unit_uid=self.day_uid,
+            is_global_anchor_visit=False,
+            visit_class="SINGLE_VISIT",
+            visit_subclass="SINGLE_VISIT",
+        )
+        third_visit = create_visit_with_update(
+            study_epoch_uid=self.epoch2.uid,
+            visit_type_uid="VisitType_0002",
+            time_reference_uid="VisitSubType_0001",
+            time_value=11,
+            time_unit_uid=self.day_uid,
+            is_global_anchor_visit=False,
+            visit_class="SINGLE_VISIT",
+            visit_subclass="SINGLE_VISIT",
+        )
+
+        with self.assertRaises(BusinessLogicException) as message:
+            visit_service.assign_visit_consecutive_group(
+                study_uid=self.study.uid,
+                visits_to_assign=[first_visit.uid, second_visit.uid],
+                overwrite_visit_from_template=None,
+            )
+            self.assertEqual(
+                f"Given Visits can't be collapsed as they exist in different Epochs [{first_visit.study_epoch.sponsor_preferred_name, second_visit.study_epoch.sponsor_preferred_name}]",
+                str(message.exception),
+            )
+
+        with self.assertRaises(BusinessLogicException) as message:
+            visit_service.assign_visit_consecutive_group(
+                study_uid=self.study.uid,
+                visits_to_assign=[first_visit.uid, third_visit.uid],
+                overwrite_visit_from_template=None,
+            )
+            self.assertEqual(
+                "To create visits group please select consecutive visits.",
+                str(message.exception),
+            )
+
+        consecutive_visit_group = (
+            f"{second_visit.visit_short_name}-{third_visit.visit_short_name}"
+        )
+        visit_service.assign_visit_consecutive_group(
+            study_uid=self.study.uid,
+            visits_to_assign=[second_visit.uid, third_visit.uid],
+            overwrite_visit_from_template=None,
+        )
+        all_visits = visit_service.get_all_visits(study_uid=self.study.uid).items
+
+        self.assertEqual(len(all_visits), 3)
+        self.assertEqual(
+            all_visits[1].consecutive_visit_group, all_visits[2].consecutive_visit_group
         )
 
         all_available_consecutive_groups = visit_service.get_consecutive_groups(

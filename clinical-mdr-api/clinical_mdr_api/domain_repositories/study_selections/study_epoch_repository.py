@@ -25,9 +25,6 @@ from clinical_mdr_api.domains.study_definition_aggregates.study_metadata import 
 )
 from clinical_mdr_api.domains.study_selections import study_epoch
 from clinical_mdr_api.domains.study_selections.study_epoch import (
-    EpochNamedTuple,
-    EpochSubtypeNamedTuple,
-    EpochTypeNamedTuple,
     StudyEpochEpoch,
     StudyEpochHistoryVO,
     StudyEpochSubType,
@@ -254,33 +251,6 @@ class StudyEpochRepository:
             reverse=True,
         )
 
-    def get_all_epoch_versions(
-        self,
-        study_uid: str,
-        get_ct_terms_for_epoch: Callable[[str], CTTermName],
-    ):
-        return sorted(
-            [
-                self._from_neomodel_to_history_vo(
-                    study_epoch_ogm_input=StudyEpochOGMVer.from_orm(se_node),
-                    get_ct_terms_for_epoch=get_ct_terms_for_epoch,
-                )
-                for se_node in to_relation_trees(
-                    StudyEpoch.nodes.fetch_relations(
-                        "has_after__audit_trail",
-                        "has_epoch",
-                        "has_epoch_subtype",
-                        "has_epoch_type",
-                    )
-                    .fetch_optional_relations("has_duration_unit", "has_before")
-                    .filter(has_after__audit_trail__uid=study_uid)
-                    .order_by("order")
-                )
-            ],
-            key=lambda item: item.start_date,
-            reverse=True,
-        )
-
     def _from_neomodel_to_vo(self, study_epoch_ogm_input: StudyEpochOGM):
         return StudyEpochVO(
             uid=study_epoch_ogm_input.uid,
@@ -311,16 +281,7 @@ class StudyEpochRepository:
             )
             history_study_epoch_epoch = copy.deepcopy(StudyEpochEpoch)
             history_study_epoch_epoch.clear()
-            history_study_epoch_epoch.update(
-                [
-                    (
-                        epoch_term.term_uid,
-                        EpochNamedTuple(
-                            epoch_term.term_uid, epoch_term.sponsor_preferred_name
-                        ),
-                    )
-                ]
-            )
+            history_study_epoch_epoch.update([(epoch_term.term_uid, epoch_term)])
 
             epoch_subtype_term: CTTermName = get_ct_terms_for_epoch(
                 study_epoch_ogm_input.epoch_subtype, at_specific_date=effective_date
@@ -328,15 +289,7 @@ class StudyEpochRepository:
             history_study_epoch_subtype = copy.deepcopy(StudyEpochSubType)
             history_study_epoch_subtype.clear()
             history_study_epoch_subtype.update(
-                [
-                    (
-                        epoch_subtype_term.term_uid,
-                        EpochSubtypeNamedTuple(
-                            epoch_subtype_term.term_uid,
-                            epoch_subtype_term.sponsor_preferred_name,
-                        ),
-                    )
-                ]
+                [(epoch_subtype_term.term_uid, epoch_subtype_term)]
             )
 
             epoch_type_term: CTTermName = get_ct_terms_for_epoch(
@@ -345,15 +298,7 @@ class StudyEpochRepository:
             history_study_epoch_type = copy.deepcopy(StudyEpochType)
             history_study_epoch_type.clear()
             history_study_epoch_type.update(
-                [
-                    (
-                        epoch_type_term.term_uid,
-                        EpochTypeNamedTuple(
-                            epoch_type_term.term_uid,
-                            epoch_type_term.sponsor_preferred_name,
-                        ),
-                    )
-                ]
+                [(epoch_type_term.term_uid, epoch_type_term)]
             )
 
         return StudyEpochHistoryVO(
@@ -414,11 +359,11 @@ class StudyEpochRepository:
         new_study_epoch.save()
         if item.uid is None:
             item.uid = new_study_epoch.uid
-        ct_epoch_subtype = CTTermRoot.nodes.get(uid=item.subtype.name)
+        ct_epoch_subtype = CTTermRoot.nodes.get(uid=item.subtype.term_uid)
         new_study_epoch.has_epoch_subtype.connect(ct_epoch_subtype)
-        ct_epoch_type = CTTermRoot.nodes.get(uid=item.epoch_type.name)
+        ct_epoch_type = CTTermRoot.nodes.get(uid=item.epoch_type.term_uid)
         new_study_epoch.has_epoch_type.connect(ct_epoch_type)
-        ct_epoch = CTTermRoot.nodes.get(uid=item.epoch.name)
+        ct_epoch = CTTermRoot.nodes.get(uid=item.epoch.term_uid)
         new_study_epoch.has_epoch.connect(ct_epoch)
         if create:
             new_study_epoch.study_value.connect(study_value)

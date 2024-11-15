@@ -41,7 +41,7 @@ class OdmAliasService(OdmGenericService[OdmAliasAR]):
             ),
             library=library,
             generate_uid_callback=self.repository.generate_uid,
-            concept_exists_by_callback=self._repos.odm_alias_repository.exists_by,
+            odm_object_exists_callback=self._repos.odm_alias_repository.odm_object_exists,
         )
 
     def _edit_aggregate(
@@ -54,7 +54,7 @@ class OdmAliasService(OdmGenericService[OdmAliasAR]):
                 name=concept_edit_input.name,
                 context=concept_edit_input.context,
             ),
-            concept_exists_by_callback=self._repos.odm_alias_repository.exists_by,
+            odm_object_exists_callback=self._repos.odm_alias_repository.odm_object_exists,
         )
         return item
 

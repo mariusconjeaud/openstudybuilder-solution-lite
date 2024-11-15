@@ -233,9 +233,9 @@ def retrieve_audit_trail(
 
 
 @router.get(
-    "/{uid}",
+    "/{criteria_uid}",
     dependencies=[rbac.LIBRARY_READ],
-    summary="Returns the latest/newest version of a specific criteria identified by 'uid'.",
+    summary="Returns the latest/newest version of a specific criteria identified by 'criteria_uid'.",
     description="""If multiple request query parameters are used, then they need to
     match all at the same time (they are combined with the AND operation).""",
     response_model=models.CriteriaWithType | None,
@@ -243,21 +243,21 @@ def retrieve_audit_trail(
     responses={
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The criteria with the specified 'uid' (and the specified date/time and/or status) wasn't found.",
+            "description": "Not Found - The criteria with the specified 'criteria_uid' (and the specified date/time and/or status) wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def get(
-    uid: str = CriteriaUID,
+    criteria_uid: str = CriteriaUID,
 ):
-    return CriteriaService().get_by_uid(uid=uid)
+    return CriteriaService().get_by_uid(uid=criteria_uid)
 
 
 @router.get(
-    "/{uid}/versions",
+    "/{criteria_uid}/versions",
     dependencies=[rbac.LIBRARY_READ],
-    summary="Returns the version history of a specific criteria identified by 'uid'.",
+    summary="Returns the version history of a specific criteria identified by 'criteria_uid'.",
     description="The returned versions are ordered by\n"
     "0. start_date descending (newest entries first)",
     response_model=list[models.CriteriaVersion],
@@ -265,13 +265,13 @@ def get(
     responses={
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The criteria with the specified 'uid' wasn't found.",
+            "description": "Not Found - The criteria with the specified 'criteria_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def get_versions(uid: str = CriteriaUID):
-    return Service().get_version_history(uid=uid)
+def get_versions(criteria_uid: str = CriteriaUID):
+    return Service().get_version_history(uid=criteria_uid)
 
 
 @router.post(
@@ -359,9 +359,9 @@ def preview(
 
 
 @router.patch(
-    "/{uid}",
+    "/{criteria_uid}",
     dependencies=[rbac.LIBRARY_WRITE],
-    summary="Updates the criteria identified by 'uid'.",
+    summary="Updates the criteria identified by 'criteria_uid'.",
     description="""This request is only valid if the criteria
 * is in 'Draft' status and
 * belongs to a library that allows editing (the 'is_editable' property of the library needs to be true). 
@@ -385,24 +385,24 @@ If the request succeeds:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The criteria with the specified 'uid' wasn't found.",
+            "description": "Not Found - The criteria with the specified 'criteria_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def edit(
-    uid: str = CriteriaUID,
+    criteria_uid: str = CriteriaUID,
     criteria: models.CriteriaEditInput = Body(
         description="The new parameter terms for the criteria including the change description.",
     ),
 ):
-    return Service().edit_draft(uid, criteria)
+    return Service().edit_draft(criteria_uid, criteria)
 
 
 @router.post(
-    "/{uid}/approvals",
+    "/{criteria_uid}/approvals",
     dependencies=[rbac.LIBRARY_WRITE],
-    summary="Approves the criteria identified by 'uid'.",
+    summary="Approves the criteria identified by 'criteria_uid'.",
     description="""This request is only valid if the criteria
 * is in 'Draft' status and
 * belongs to a library that allows editing (the 'is_editable' property of the library needs to be true).
@@ -424,19 +424,19 @@ If the request succeeds:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The criteria with the specified 'uid' wasn't found.",
+            "description": "Not Found - The criteria with the specified 'criteria_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def approve(uid: str = CriteriaUID):
-    return Service().approve(uid)
+def approve(criteria_uid: str = CriteriaUID):
+    return Service().approve(criteria_uid)
 
 
 @router.delete(
-    "/{uid}/activations",
+    "/{criteria_uid}/activations",
     dependencies=[rbac.LIBRARY_WRITE],
-    summary="Inactivates/deactivates the criteria identified by 'uid'.",
+    summary="Inactivates/deactivates the criteria identified by 'criteria_uid'.",
     description="""This request is only valid if the criteria
 * is in 'Final' status only (so no latest 'Draft' status exists).
 
@@ -456,19 +456,19 @@ If the request succeeds:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The criteria with the specified 'uid' wasn't found.",
+            "description": "Not Found - The criteria with the specified 'criteria_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def inactivate(uid: str = CriteriaUID):
-    return Service().inactivate_final(uid=uid)
+def inactivate(criteria_uid: str = CriteriaUID):
+    return Service().inactivate_final(uid=criteria_uid)
 
 
 @router.post(
-    "/{uid}/activations",
+    "/{criteria_uid}/activations",
     dependencies=[rbac.LIBRARY_WRITE],
-    summary="Reactivates the criteria identified by 'uid'.",
+    summary="Reactivates the criteria identified by 'criteria_uid'.",
     description="""This request is only valid if the criteria
 * is in 'Retired' status only (so no latest 'Draft' status exists).
 
@@ -488,19 +488,19 @@ If the request succeeds:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The criteria with the specified 'uid' wasn't found.",
+            "description": "Not Found - The criteria with the specified 'criteria_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def reactivate(uid: str = CriteriaUID):
-    return Service().reactivate_retired(uid)
+def reactivate(criteria_uid: str = CriteriaUID):
+    return Service().reactivate_retired(criteria_uid)
 
 
 @router.delete(
-    "/{uid}",
+    "/{criteria_uid}",
     dependencies=[rbac.LIBRARY_WRITE],
-    summary="Deletes the criteria identified by 'uid'.",
+    summary="Deletes the criteria identified by 'criteria_uid'.",
     description="""This request is only valid if \n
 * the criteria is in 'Draft' status and
 * the criteria has never been in 'Final' status and
@@ -522,13 +522,13 @@ def reactivate(uid: str = CriteriaUID):
         500: _generic_descriptions.ERROR_500,
     },
 )
-def delete(uid: str = CriteriaUID):
-    Service().soft_delete(uid)
+def delete(criteria_uid: str = CriteriaUID):
+    Service().soft_delete(criteria_uid)
     return Response(status_code=fast_api_status.HTTP_204_NO_CONTENT)
 
 
 @router.get(
-    "/{uid}/studies",
+    "/{criteria_uid}/studies",
     dependencies=[rbac.STUDY_READ],
     summary="",
     description="",
@@ -537,20 +537,20 @@ def delete(uid: str = CriteriaUID):
     responses={
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The criteria with the specified 'uid' wasn't found.",
+            "description": "Not Found - The criteria with the specified 'criteria_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def get_studies(
-    uid: str = CriteriaUID,
+    criteria_uid: str = CriteriaUID,
     include_sections: list[StudyComponentEnum]
     | None = Query(None, description=study_section_description("include")),
     exclude_sections: list[StudyComponentEnum]
     | None = Query(None, description=study_section_description("exclude")),
 ):
     return Service().get_referencing_studies(
-        uid=uid,
+        uid=criteria_uid,
         node_type=CriteriaValue,
         include_sections=include_sections,
         exclude_sections=exclude_sections,
@@ -560,11 +560,11 @@ def get_studies(
 # TODO this criteria potentially returns duplicated entries (by intention, currently).
 #       however: check if that is ok with regard to the data volume we expect in the future. is paging needed?
 @router.get(
-    "/{uid}/parameters",
+    "/{criteria_uid}/parameters",
     dependencies=[rbac.LIBRARY_READ],
-    summary="Returns all template parameters available for the criteria identified by 'uid'. Includes the available values per parameter.",
+    summary="Returns all template parameters available for the criteria identified by 'criteria_uid'. Includes the available values per parameter.",
     description="""Returns all template parameters used in the criteria template
-that is the basis for the criteria identified by 'uid'. 
+that is the basis for the criteria identified by 'criteria_uid'. 
 Includes the available values per parameter.
 
 The returned parameters are ordered
@@ -584,6 +584,6 @@ In that case, the same parameter (with the same values) is included multiple tim
     },
 )
 def get_parameters(
-    uid: str = Path(None, description="The unique id of the criteria."),
+    criteria_uid: str = Path(None, description="The unique id of the criteria."),
 ):
-    return CriteriaService().get_parameters(uid)
+    return CriteriaService().get_parameters(criteria_uid)

@@ -273,6 +273,7 @@ export default {
   methods: {
     closeForm() {
       this.showForm = false
+      this.navigateToVersion(this.item, null)
       this.fetchItem()
     },
     closePage() {
@@ -321,7 +322,11 @@ export default {
       })
     },
     approveItem() {
-      activities.approve(this.itemUid, this.source).then(() => {
+      const options = {}
+      if (this.source === 'activities') {
+        options.cascade_edit_and_approve = true
+      }
+      activities.approve(this.itemUid, this.source, options).then(() => {
         this.eventBusEmit('notification', {
           msg: this.$t(`ActivitiesTable.approve_${this.source}_success`),
           type: 'success',

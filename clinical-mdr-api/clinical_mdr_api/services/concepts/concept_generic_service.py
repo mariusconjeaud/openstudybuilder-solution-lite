@@ -330,6 +330,9 @@ class ConceptGenericService(Generic[_AggregateRootType], ABC):
 
     @db.transaction
     def create_new_version(self, uid: str) -> BaseModel:
+        return self.non_transactional_create_new_version(uid)
+
+    def non_transactional_create_new_version(self, uid: str) -> BaseModel:
         try:
             item = self._find_by_uid_or_raise_not_found(uid, for_update=True)
             item.create_new_version(author=self.user_initials)
@@ -386,11 +389,18 @@ class ConceptGenericService(Generic[_AggregateRootType], ABC):
         return self._transform_aggregate_root_to_pydantic_model(concept_ar)
 
     @db.transaction
-    def approve(self, uid: str) -> BaseModel:
+    def approve(self, uid: str, cascade_edit_and_approve: bool = False) -> BaseModel:
+        return self.non_transactional_approve(uid, cascade_edit_and_approve)
+
+    def non_transactional_approve(
+        self, uid: str, cascade_edit_and_approve: bool = False
+    ) -> BaseModel:
         try:
             item = self._find_by_uid_or_raise_not_found(uid, for_update=True)
             item.approve(author=self.user_initials)
             self.repository.save(item)
+            if cascade_edit_and_approve:
+                self.cascade_edit_and_approve(item)
             return self._transform_aggregate_root_to_pydantic_model(item)
         except VersioningException as e:
             raise exceptions.BusinessLogicException(e.msg)
@@ -431,3 +441,6 @@ class ConceptGenericService(Generic[_AggregateRootType], ABC):
             raise exceptions.BusinessLogicException(
                 f"There is no library identified by provided library name ({library})"
             )
+
+    def cascade_edit_and_approve(self, item: BaseModel):
+        pass

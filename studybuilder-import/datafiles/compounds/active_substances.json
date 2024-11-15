@@ -18,5 +18,25 @@
     "unii": {
       "substance_unii": "1Y17CTI5SR"
     }
+  },
+  {
+    "external_id": "semaglutide",
+    "analyte_number": "AN000028",
+    "short_number": "NNC0113-0217",
+    "long_number": "NNC 0113-0000-0217",
+    "inn": "semaglutide",
+    "unii": {
+      "substance_unii": "53AXN4NNHX"
+    }
+  },
+  {
+    "external_id": "cagrilintide",
+    "analyte_number": "AN000070",
+    "short_number": "NNC0174-0833",
+    "long_number": "NNC 0174-0000-0833",
+    "inn": "cagrilintide",
+    "unii": {
+      "substance_unii": "AO43BIF1U8"
+    }
   }
 ]

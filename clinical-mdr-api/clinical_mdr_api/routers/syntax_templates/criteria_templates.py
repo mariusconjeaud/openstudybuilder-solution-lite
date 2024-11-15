@@ -268,9 +268,9 @@ def retrieve_audit_trail(
 
 
 @router.get(
-    "/{uid}",
+    "/{criteria_template_uid}",
     dependencies=[rbac.LIBRARY_READ],
-    summary="Returns the latest/newest version of a specific criteria template identified by 'uid'.",
+    summary="Returns the latest/newest version of a specific criteria template identified by 'criteria_template_uid'.",
     description="""If multiple request query parameters are used, then they need to
     match all at the same time (they are combined with the AND operation).""",
     response_model=CriteriaTemplateWithCount | None,
@@ -278,21 +278,21 @@ def retrieve_audit_trail(
     responses={
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The criteria template with the specified 'uid' (and the specified date/time and/or status) wasn't found.",
+            "description": "Not Found - The criteria template with the specified 'criteria_template_uid' (and the specified date/time and/or status) wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def get_criteria_template(
-    uid: str = CriteriaTemplateUID,
+    criteria_template_uid: str = CriteriaTemplateUID,
 ):
-    return Service().get_by_uid(uid=uid)
+    return Service().get_by_uid(uid=criteria_template_uid)
 
 
 @router.get(
-    "/{uid}/versions",
+    "/{criteria_template_uid}/versions",
     dependencies=[rbac.LIBRARY_READ],
-    summary="Returns the version history of a specific criteria template identified by 'uid'.",
+    summary="Returns the version history of a specific criteria template identified by 'criteria_template_uid'.",
     description=f"""
 The returned versions are ordered by `start_date` descending (newest entries first)
 
@@ -341,7 +341,7 @@ The returned versions are ordered by `start_date` descending (newest entries fir
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The criteria template with the specified 'uid' wasn't found.",
+            "description": "Not Found - The criteria template with the specified 'criteria_template_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
@@ -369,15 +369,15 @@ The returned versions are ordered by `start_date` descending (newest entries fir
 #  pylint: disable=unused-argument
 def get_criteria_template_versions(
     request: Request,  # request is actually required by the allow_exports decorator
-    uid: str = CriteriaTemplateUID,
+    criteria_template_uid: str = CriteriaTemplateUID,
 ):
-    return Service().get_version_history(uid=uid)
+    return Service().get_version_history(uid=criteria_template_uid)
 
 
 @router.get(
-    "/{uid}/versions/{version}",
+    "/{criteria_template_uid}/versions/{version}",
     dependencies=[rbac.LIBRARY_READ],
-    summary="Returns a specific version of a specific criteria template identified by 'uid' and 'version'.",
+    summary="Returns a specific version of a specific criteria template identified by 'criteria_template_uid' and 'version'.",
     description="**Multiple versions**:\n\n"
     "Technically, there can be multiple versions of the criteria template with the same version number. "
     "This is due to the fact, that the version number remains the same when inactivating or reactivating an criteria template "
@@ -388,13 +388,13 @@ def get_criteria_template_versions(
     responses={
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The criteria template with the specified 'uid' and 'version' wasn't found.",
+            "description": "Not Found - The criteria template with the specified 'criteria_template_uid' and 'version' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def get_criteria_template_version(
-    uid: str = CriteriaTemplateUID,
+    criteria_template_uid: str = CriteriaTemplateUID,
     version: str = Path(
         None,
         description="A specific version number of the criteria template. "
@@ -402,26 +402,26 @@ def get_criteria_template_version(
         "E.g. '0.1', '0.2', '1.0', ...",
     ),
 ):
-    return Service().get_specific_version(uid=uid, version=version)
+    return Service().get_specific_version(uid=criteria_template_uid, version=version)
 
 
 @router.get(
-    "/{uid}/releases",
+    "/{criteria_template_uid}/releases",
     dependencies=[rbac.LIBRARY_READ],
-    summary="List all final versions of a template identified by 'uid', including number of studies using a specific version",
+    summary="List all final versions of a template identified by 'criteria_template_uid', including number of studies using a specific version",
     description="",
     response_model=list[models.CriteriaTemplate],
     status_code=200,
     responses={
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The criteria template with the specified 'uid' wasn't found.",
+            "description": "Not Found - The criteria template with the specified 'criteria_template_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def get_criteria_template_releases(uid: str = CriteriaTemplateUID):
-    return Service().get_releases(uid=uid, return_study_count=False)
+def get_criteria_template_releases(criteria_template_uid: str = CriteriaTemplateUID):
+    return Service().get_releases(uid=criteria_template_uid, return_study_count=False)
 
 
 @router.post(
@@ -467,9 +467,9 @@ def create_criteria_template(
 
 
 @router.patch(
-    "/{uid}",
+    "/{criteria_template_uid}",
     dependencies=[rbac.LIBRARY_WRITE_OR_STUDY_WRITE],
-    summary="Updates the criteria template identified by 'uid'.",
+    summary="Updates the criteria template identified by 'criteria_template_uid'.",
     description="""This request is only valid if the criteria template
 * is in 'Draft' status and
 * belongs to a library that allows editing (the 'is_editable' property of the library needs to be true). 
@@ -497,24 +497,24 @@ Once the criteria template has been approved, only the surrounding text (excludi
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The criteria template with the specified 'uid' could not be found.",
+            "description": "Not Found - The criteria template with the specified 'criteria_template_uid' could not be found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def edit(
-    uid: str = CriteriaTemplateUID,
+    criteria_template_uid: str = CriteriaTemplateUID,
     criteria_template: models.CriteriaTemplateEditInput = Body(
         description="The new content of the criteria template including the change description.",
     ),
 ):
-    return Service().edit_draft(uid=uid, template=criteria_template)
+    return Service().edit_draft(uid=criteria_template_uid, template=criteria_template)
 
 
 @router.patch(
-    "/{uid}/indexings",
+    "/{criteria_template_uid}/indexings",
     dependencies=[rbac.LIBRARY_WRITE],
-    summary="Updates the indexings of the criteria template identified by 'uid'.",
+    summary="Updates the indexings of the criteria template identified by 'criteria_template_uid'.",
     description="""This request is only valid if the template
     * belongs to a library that allows editing (the 'is_editable' property of the library needs to be true).
     
@@ -528,24 +528,24 @@ def edit(
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The template with the specified 'uid' could not be found.",
+            "description": "Not Found - The template with the specified 'criteria_template_uid' could not be found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def patch_indexings(
-    uid: str = CriteriaTemplateUID,
+    criteria_template_uid: str = CriteriaTemplateUID,
     indexings: models.CriteriaTemplateEditIndexingsInput = Body(
         description="The lists of UIDs for the new indexings to be set, grouped by indexings to be updated.",
     ),
 ) -> models.CriteriaTemplate:
-    return Service().patch_indexings(uid=uid, indexings=indexings)
+    return Service().patch_indexings(uid=criteria_template_uid, indexings=indexings)
 
 
 @router.post(
-    "/{uid}/versions",
+    "/{criteria_template_uid}/versions",
     dependencies=[rbac.LIBRARY_WRITE],
-    summary="Creates a new version of the criteria template identified by 'uid'.",
+    summary="Creates a new version of the criteria template identified by 'criteria_template_uid'.",
     description="""This request is only valid if the criteria template
 * is in 'Final' or 'Retired' status only (so no latest 'Draft' status exists) and
 * belongs to a library that allows editing (the 'is_editable' property of the library needs to be true).
@@ -571,24 +571,26 @@ Only the surrounding text (excluding the parameters) can be changed.
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The criteria template with the specified 'uid' could not be found.",
+            "description": "Not Found - The criteria template with the specified 'criteria_template_uid' could not be found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def create_new_version(
-    uid: str = CriteriaTemplateUID,
+    criteria_template_uid: str = CriteriaTemplateUID,
     criteria_template: models.CriteriaTemplateEditInput = Body(
         description="The content of the criteria template for the new 'Draft' version including the change description.",
     ),
 ):
-    return Service().create_new_version(uid=uid, template=criteria_template)
+    return Service().create_new_version(
+        uid=criteria_template_uid, template=criteria_template
+    )
 
 
 @router.post(
-    "/{uid}/approvals",
+    "/{criteria_template_uid}/approvals",
     dependencies=[rbac.LIBRARY_WRITE_OR_STUDY_WRITE],
-    summary="Approves the criteria template identified by 'uid'.",
+    summary="Approves the criteria template identified by 'criteria_template_uid'.",
     description="""This request is only valid if the criteria template
 * is in 'Draft' status and
 * belongs to a library that allows editing (the 'is_editable' property of the library needs to be true).
@@ -610,7 +612,7 @@ If the request succeeds:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The criteria template with the specified 'uid' could not be found.",
+            "description": "Not Found - The criteria template with the specified 'criteria_template_uid' could not be found.",
         },
         409: {
             "model": ErrorResponse,
@@ -620,7 +622,7 @@ If the request succeeds:
     },
 )
 def approve(
-    uid: str = CriteriaTemplateUID,
+    criteria_template_uid: str = CriteriaTemplateUID,
     cascade: bool = False,
 ):
     """
@@ -628,14 +630,14 @@ def approve(
     from this template and cascade is false
     """
     if not cascade:
-        return Service().approve(uid=uid)
-    return Service().approve_cascade(uid=uid)
+        return Service().approve(uid=criteria_template_uid)
+    return Service().approve_cascade(uid=criteria_template_uid)
 
 
 @router.delete(
-    "/{uid}/activations",
+    "/{criteria_template_uid}/activations",
     dependencies=[rbac.LIBRARY_WRITE],
-    summary="Inactivates/deactivates the criteria template identified by 'uid' and its Pre-Instances.",
+    summary="Inactivates/deactivates the criteria template identified by 'criteria_template_uid' and its Pre-Instances.",
     description="""This request is only valid if the criteria template
 * is in 'Final' status only (so no latest 'Draft' status exists).
 
@@ -655,19 +657,19 @@ If the request succeeds:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The criteria template with the specified 'uid' could not be found.",
+            "description": "Not Found - The criteria template with the specified 'criteria_template_uid' could not be found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def inactivate(uid: str = CriteriaTemplateUID):
-    return Service().inactivate_final(uid=uid)
+def inactivate(criteria_template_uid: str = CriteriaTemplateUID):
+    return Service().inactivate_final(uid=criteria_template_uid)
 
 
 @router.post(
-    "/{uid}/activations",
+    "/{criteria_template_uid}/activations",
     dependencies=[rbac.LIBRARY_WRITE],
-    summary="Reactivates the criteria template identified by 'uid' and its Pre-Instances.",
+    summary="Reactivates the criteria template identified by 'criteria_template_uid' and its Pre-Instances.",
     description="""This request is only valid if the criteria template
 * is in 'Retired' status only (so no latest 'Draft' status exists).
 
@@ -687,19 +689,19 @@ If the request succeeds:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The criteria template with the specified 'uid' could not be found.",
+            "description": "Not Found - The criteria template with the specified 'criteria_template_uid' could not be found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def reactivate(uid: str = CriteriaTemplateUID):
-    return Service().reactivate_retired(uid=uid)
+def reactivate(criteria_template_uid: str = CriteriaTemplateUID):
+    return Service().reactivate_retired(uid=criteria_template_uid)
 
 
 @router.delete(
-    "/{uid}",
+    "/{criteria_template_uid}",
     dependencies=[rbac.LIBRARY_WRITE],
-    summary="Deletes the criteria template identified by 'uid'.",
+    summary="Deletes the criteria template identified by 'criteria_template_uid'.",
     description="""This request is only valid if \n
 * the criteria template is in 'Draft' status and
 * the criteria template has never been in 'Final' status and
@@ -725,17 +727,17 @@ def reactivate(uid: str = CriteriaTemplateUID):
         500: _generic_descriptions.ERROR_500,
     },
 )
-def delete_criteria_template(uid: str = CriteriaTemplateUID):
-    Service().soft_delete(uid)
+def delete_criteria_template(criteria_template_uid: str = CriteriaTemplateUID):
+    Service().soft_delete(criteria_template_uid)
     return Response(status_code=fast_api_status.HTTP_204_NO_CONTENT)
 
 
 # TODO this endpoint potentially returns duplicated entries (intentionally, currently).
 #       however: check if that is ok with regards to the data volume we expect in the future. is paging needed?
 @router.get(
-    "/{uid}/parameters",
+    "/{criteria_template_uid}/parameters",
     dependencies=[rbac.LIBRARY_READ],
-    summary="Returns all parameters used in the criteria template identified by 'uid'. Includes the available terms per parameter.",
+    summary="Returns all parameters used in the criteria template identified by 'criteria_template_uid'. Includes the available terms per parameter.",
     description="""The returned parameters are ordered
 0. as they occur in the criteria template
 
@@ -753,9 +755,11 @@ In that case, the same parameter (with the same terms) is included multiple time
     },
 )
 def get_parameters(
-    uid: str = Path(None, description="The unique id of the criteria template."),
+    criteria_template_uid: str = Path(
+        None, description="The unique id of the criteria template."
+    ),
 ):
-    return Service().get_parameters(uid=uid)
+    return Service().get_parameters(uid=criteria_template_uid)
 
 
 @router.post(
@@ -763,7 +767,7 @@ def get_parameters(
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Validates the content of an criteria template without actually processing it.",
     description="""Be aware that - even if this request is accepted - there is no guarantee that
-a following request to e.g. *[POST] /criteria-templates* or *[PATCH] /criteria-templates/{uid}*
+a following request to e.g. *[POST] /criteria-templates* or *[PATCH] /criteria-templates/{criteria_template_uid}*
 with the same content will succeed.
 
 """
@@ -791,7 +795,7 @@ def pre_validate(
 
 
 @router.post(
-    "/{uid}/pre-instances",
+    "/{criteria_template_uid}/pre-instances",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Create a Pre-Instance",
     description="",
@@ -810,16 +814,16 @@ def pre_validate(
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The criteria template with the specified 'uid' could not be found.",
+            "description": "Not Found - The criteria template with the specified 'criteria_template_uid' could not be found.",
         },
         500: {"model": ErrorResponse, "description": "Internal Server Error"},
     },
 )
 def create_pre_instance(
-    uid: str = CriteriaTemplateUID,
+    criteria_template_uid: str = CriteriaTemplateUID,
     pre_instance: CriteriaPreInstanceCreateInput = Body(description=""),
 ) -> models.CriteriaTemplate:
     return CriteriaPreInstanceService().create(
         template=pre_instance,
-        template_uid=uid,
+        template_uid=criteria_template_uid,
     )

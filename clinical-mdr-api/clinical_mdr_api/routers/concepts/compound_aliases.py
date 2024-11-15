@@ -241,7 +241,7 @@ def get_distinct_values_for_header(
 
 
 @router.get(
-    "/compound-aliases/{uid}",
+    "/compound-aliases/{compound_alias_uid}",
     dependencies=[rbac.LIBRARY_READ],
     summary="Get details on a specific compound aliases (in a specific version)",
     description="""
@@ -266,13 +266,13 @@ Possible errors:
         500: _generic_descriptions.ERROR_500,
     },
 )
-def get(uid: str = CompoundAliasUID):
+def get(compound_alias_uid: str = CompoundAliasUID):
     service = CompoundAliasService()
-    return service.get_by_uid(uid=uid)
+    return service.get_by_uid(uid=compound_alias_uid)
 
 
 @router.get(
-    "/compound-aliases/{uid}/versions",
+    "/compound-aliases/{compound_alias_uid}/versions",
     dependencies=[rbac.LIBRARY_READ],
     summary="List version history for compound aliases",
     description="""
@@ -294,14 +294,14 @@ Possible errors:
     responses={
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The compound alias with the specified 'uid' wasn't found.",
+            "description": "Not Found - The compound alias with the specified 'compound_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def get_versions(uid: str = CompoundAliasUID):
+def get_versions(compound_alias_uid: str = CompoundAliasUID):
     service = CompoundAliasService()
-    return service.get_version_history(uid=uid)
+    return service.get_version_history(uid=compound_alias_uid)
 
 
 @router.post(
@@ -349,7 +349,7 @@ def create(
 
 
 @router.patch(
-    "/compound-aliases/{uid}",
+    "/compound-aliases/{compound_alias_uid}",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Update compound alias",
     description="""
@@ -383,21 +383,23 @@ Possible errors:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The compound alias with the specified 'uid' wasn't found.",
+            "description": "Not Found - The compound alias with the specified 'compound_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def edit(
-    uid: str = CompoundAliasUID,
+    compound_alias_uid: str = CompoundAliasUID,
     compound_edit_input: CompoundAliasEditInput = Body(description=""),
 ):
     service = CompoundAliasService()
-    return service.edit_draft(uid=uid, concept_edit_input=compound_edit_input)
+    return service.edit_draft(
+        uid=compound_alias_uid, concept_edit_input=compound_edit_input
+    )
 
 
 @router.post(
-    "/compound-aliases/{uid}/approvals",
+    "/compound-aliases/{compound_alias_uid}/approvals",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Approve draft version of a compound alias",
     description="""
@@ -429,18 +431,18 @@ Possible errors:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The compound alias with the specified 'uid' wasn't found.",
+            "description": "Not Found - The compound alias with the specified 'compound_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def approve(uid: str = CompoundAliasUID):
+def approve(compound_alias_uid: str = CompoundAliasUID):
     service = CompoundAliasService()
-    return service.approve(uid=uid)
+    return service.approve(uid=compound_alias_uid)
 
 
 @router.post(
-    "/compound-aliases/{uid}/versions",
+    "/compound-aliases/{compound_alias_uid}/versions",
     dependencies=[rbac.LIBRARY_WRITE],
     summary=" Create a new version of a compound alias",
     description="""
@@ -470,18 +472,18 @@ Possible errors:
             "model": ErrorResponse,
             "description": "Not Found - Reasons include e.g.: \n"
             "- The compound alias is not in final status.\n"
-            "- The compound alias with the specified 'uid' could not be found.",
+            "- The compound alias with the specified 'compound_uid' could not be found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def create_new_version(uid: str = CompoundAliasUID):
+def create_new_version(compound_alias_uid: str = CompoundAliasUID):
     service = CompoundAliasService()
-    return service.create_new_version(uid=uid)
+    return service.create_new_version(uid=compound_alias_uid)
 
 
 @router.delete(
-    "/compound-aliases/{uid}/activations",
+    "/compound-aliases/{compound_alias_uid}/activations",
     dependencies=[rbac.LIBRARY_WRITE],
     summary=" Inactivate final version of an compound alias",
     description="""
@@ -512,18 +514,18 @@ Possible errors:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The compound alias with the specified 'uid' could not be found.",
+            "description": "Not Found - The compound alias with the specified 'compound_uid' could not be found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def inactivate(uid: str = CompoundAliasUID):
+def inactivate(compound_alias_uid: str = CompoundAliasUID):
     service = CompoundAliasService()
-    return service.inactivate_final(uid=uid)
+    return service.inactivate_final(uid=compound_alias_uid)
 
 
 @router.post(
-    "/compound-aliases/{uid}/activations",
+    "/compound-aliases/{compound_alias_uid}/activations",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Reactivate retired version of an compound alias",
     description="""
@@ -554,18 +556,18 @@ Possible errors:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The compound alias with the specified 'uid' could not be found.",
+            "description": "Not Found - The compound alias with the specified 'compound_uid' could not be found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def reactivate(uid: str = CompoundAliasUID):
+def reactivate(compound_alias_uid: str = CompoundAliasUID):
     service = CompoundAliasService()
-    return service.reactivate_retired(uid=uid)
+    return service.reactivate_retired(uid=compound_alias_uid)
 
 
 @router.delete(
-    "/compound-aliases/{uid}",
+    "/compound-aliases/{compound_alias_uid}",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Delete draft version of an compound alias",
     description="""
@@ -598,11 +600,11 @@ Possible errors:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - An compound alias with the specified 'uid' could not be found.",
+            "description": "Not Found - An compound alias with the specified 'compound_uid' could not be found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def delete(uid: str = CompoundAliasUID):
+def delete(compound_alias_uid: str = CompoundAliasUID):
     service = CompoundAliasService()
-    service.soft_delete(uid=uid)
+    service.soft_delete(uid=compound_alias_uid)

@@ -104,7 +104,7 @@ ACTIVITY_SUBGROUP_FIELDS_NOT_NULL = ["uid", "name", "start_date", "activity_grou
         pytest.param(3, 1, True, None, 3),
         pytest.param(3, 2, True, None, 3),
         pytest.param(10, 2, True, None, 0),
-        pytest.param(10, 3, True, None, 0),  # Total numer of activity sub groups is 7
+        pytest.param(10, 3, True, None, 0),  # Total number of activity sub groups is 7
         pytest.param(10, 1, True, '{"activity_groups": false}', 7),
         pytest.param(10, 1, True, '{"activity_groups": true}', 7),
     ],

@@ -77,18 +77,29 @@ class OdmItemGroupVO(ConceptVO):
 
     def validate(
         self,
-        concept_exists_by_callback: Callable[[str, str, bool], bool],
+        odm_object_exists_callback: Callable,
         odm_description_exists_by_callback: Callable[[str, str, bool], bool],
         odm_alias_exists_by_callback: Callable[[str, str, bool], bool],
         find_term_callback: Callable[[str], CTTermAttributesAR | None],
-        previous_name: str | None = None,
-        previous_oid: str | None = None,
     ) -> None:
-        self.duplication_check(
-            [("name", self.name, previous_name), ("OID", self.oid, previous_oid)],
-            concept_exists_by_callback,
-            "ODM Item Group",
-        )
+        data = {
+            "description_uids": self.description_uids,
+            "alias_uids": self.alias_uids,
+            "sdtm_domain_uids": self.sdtm_domain_uids,
+            "name": self.name,
+            "oid": self.oid,
+            "repeating": bool(self.repeating),
+            "is_reference_data": bool(self.is_reference_data),
+            "sas_dataset_name": self.sas_dataset_name,
+            "origin": self.origin,
+            "purpose": self.purpose,
+            "comment": self.comment,
+        }
+        if uids := odm_object_exists_callback(**data):
+            raise BusinessLogicException(
+                f"ODM Item Group already exists with UID ({uids[0]}) and data {data}"
+            )
+
         self.check_concepts_exist(
             [
                 (
@@ -146,7 +157,7 @@ class OdmItemGroupAR(OdmARBase):
         concept_vo: OdmItemGroupVO,
         library: LibraryVO,
         generate_uid_callback: Callable[[], str | None] = (lambda: None),
-        concept_exists_by_callback: Callable[[str, str], bool] = lambda x, y, z: True,
+        odm_object_exists_callback: Callable = lambda _: True,
         odm_description_exists_by_callback: Callable[
             [str, str, bool], bool
         ] = lambda x, y, z: True,
@@ -158,7 +169,7 @@ class OdmItemGroupAR(OdmARBase):
         item_metadata = LibraryItemMetadataVO.get_initial_item_metadata(author=author)
 
         concept_vo.validate(
-            concept_exists_by_callback=concept_exists_by_callback,
+            odm_object_exists_callback=odm_object_exists_callback,
             odm_description_exists_by_callback=odm_description_exists_by_callback,
             odm_alias_exists_by_callback=odm_alias_exists_by_callback,
             find_term_callback=find_term_callback,
@@ -176,7 +187,10 @@ class OdmItemGroupAR(OdmARBase):
         author: str,
         change_description: str | None,
         concept_vo: OdmItemGroupVO,
-        concept_exists_by_callback: Callable[[str, str], bool] = lambda x, y, z: True,
+        concept_exists_by_callback: Callable[
+            [str, str, bool], bool
+        ] = lambda x, y, z: True,
+        odm_object_exists_callback: Callable = lambda _: True,
         odm_description_exists_by_callback: Callable[
             [str, str, bool], bool
         ] = lambda x, y, z: True,
@@ -189,12 +203,10 @@ class OdmItemGroupAR(OdmARBase):
         Creates a new draft version for the object.
         """
         concept_vo.validate(
-            concept_exists_by_callback=concept_exists_by_callback,
+            odm_object_exists_callback=odm_object_exists_callback,
             odm_description_exists_by_callback=odm_description_exists_by_callback,
             odm_alias_exists_by_callback=odm_alias_exists_by_callback,
             find_term_callback=find_term_callback,
-            previous_name=self.name,
-            previous_oid=self._concept_vo.oid,
         )
 
         if self._concept_vo != concept_vo:

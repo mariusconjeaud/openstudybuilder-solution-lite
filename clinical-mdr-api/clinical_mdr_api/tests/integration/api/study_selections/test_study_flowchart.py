@@ -245,7 +245,7 @@ def test_flowchart_html(
     # THEN returns HTML content-type HTTP header
     assert_response_content_type(response, "text/html")
 
-    # THEN body is a parseable HTML document
+    # THEN body is a parsable HTML document
     # html.parser does not supplement the document with additional elements for the sake of well-formedness
     doc = BeautifulSoup(response.text, features="html.parser")
     # THEN document has HTML tag
@@ -324,7 +324,7 @@ def test_flowchart_docx(
     # THEN returns DOCX content type HTTP header
     assert_response_content_type(response, DOCX_CONTENT_TYPE)
 
-    # THEN body is a parseable DOCX document
+    # THEN body is a parsable DOCX document
     docx_doc = docx.Document(BytesIO(response.content))
 
     # THEN the document contains exactly one table
@@ -403,7 +403,7 @@ def test_flowchart_html_debug(
     # THEN returns HTML content-type HTTP header
     assert_response_content_type(response, "text/html")
 
-    # THEN body is a parseable HTML document
+    # THEN body is a parsable HTML document
     # html.parser does not supplement the document with additional elements for the sake of well-formedness
     doc = BeautifulSoup(response.text, features="html.parser")
     # THEN document has HTML tag

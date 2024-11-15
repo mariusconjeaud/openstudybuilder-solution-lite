@@ -24,9 +24,9 @@ def load_env(key: str, default: Optional[str] = None):
         raise EnvironmentError("Failed because {} is not set.".format(key))
     if value is not None:
         return value
-    else:
-        logger.warning("%s is not set, using default value: %s", key, value)
-        return default
+
+    logger.warning("%s is not set, using default value: %s", key, value)
+    return default
 
 
 # API_BASE_URL = load_env("API_BASE_URL")
@@ -38,14 +38,13 @@ def sanitize_value(val: str):
         val = val.strip()
     if val == "False":
         return False
-    elif val == "None":
+    if val == "None":
         return None
-    elif val == "":
+    if val == "":
         return None
-    elif val == "True":
+    if val == "True":
         return True
-    else:
-        return val
+    return val
 
 
 def camel_case_data(datadict):

@@ -7,7 +7,7 @@
       <v-card>
         <v-card-text class="text-body-2">
           <v-row>
-            <v-col md="4" sm="12">
+            <v-col md="6" sm="12">
               <v-sheet
                 color="nnSeaBlue100"
                 rounded="lg"
@@ -24,10 +24,12 @@
                     />
                   </div>
                   <div class="text-nnTrueBlue pt-2">
-                    <div class="font-weight-bold mb-2">
+                    <div class="font-weight-bold mb-2 title">
                       {{ $t('SystemAnnouncementsView.show_title') }}
                     </div>
-                    <span>{{ $t('SystemAnnouncementsView.show_help') }}</span>
+                    <span style="font-size: 14px">{{
+                      $t('SystemAnnouncementsView.show_help')
+                    }}</span>
                   </div>
                 </div>
               </v-sheet>
@@ -53,6 +55,7 @@
                 variant="outlined"
                 density="compact"
                 :rules="[formRules.required]"
+                class="mb-3"
               />
               <v-textarea
                 v-model="form.description"
@@ -86,7 +89,7 @@
           <SystemAnnouncement :announcement="form" />
         </v-card-text>
       </v-card>
-      <div class="d-flex actions bg-white pa-6 border-t-thin">
+      <v-app-bar location="bottom" flat class="border-t-thin pa-2">
         <v-spacer />
         <v-btn
           color="secondary"
@@ -107,7 +110,7 @@
         >
           {{ $t('_global.save_changes') }}
         </v-btn>
-      </div>
+      </v-app-bar>
     </v-form>
   </div>
 </template>
@@ -215,10 +218,7 @@ notificationsApi.get().then((resp) => {
 </script>
 
 <style scoped>
-.actions {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
+.title {
+  font-size: 18px;
 }
 </style>

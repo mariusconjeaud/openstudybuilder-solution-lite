@@ -119,7 +119,7 @@ def get_distinct_values_for_header(
 
 
 @router.get(
-    "/{uid}",
+    "/{odm_vendor_attribute_uid}",
     dependencies=[rbac.LIBRARY_READ],
     summary="Get details on a specific ODM Vendor Attribute (in a specific version)",
     description="",
@@ -130,13 +130,13 @@ def get_distinct_values_for_header(
         500: _generic_descriptions.ERROR_500,
     },
 )
-def get_odm_vendor_attribute(uid: str = OdmVendorAttributeUID):
+def get_odm_vendor_attribute(odm_vendor_attribute_uid: str = OdmVendorAttributeUID):
     odm_vendor_attribute_service = OdmVendorAttributeService()
-    return odm_vendor_attribute_service.get_by_uid(uid=uid)
+    return odm_vendor_attribute_service.get_by_uid(uid=odm_vendor_attribute_uid)
 
 
 @router.get(
-    "/{uid}/relationships",
+    "/{odm_vendor_attribute_uid}/relationships",
     dependencies=[rbac.LIBRARY_READ],
     summary="Get UIDs of a specific ODM Vendor Attribute's relationships",
     description="",
@@ -147,13 +147,15 @@ def get_odm_vendor_attribute(uid: str = OdmVendorAttributeUID):
         500: _generic_descriptions.ERROR_500,
     },
 )
-def get_active_relationships(uid: str = OdmVendorAttributeUID):
+def get_active_relationships(odm_vendor_attribute_uid: str = OdmVendorAttributeUID):
     odm_vendor_attribute_service = OdmVendorAttributeService()
-    return odm_vendor_attribute_service.get_active_relationships(uid=uid)
+    return odm_vendor_attribute_service.get_active_relationships(
+        uid=odm_vendor_attribute_uid
+    )
 
 
 @router.get(
-    "/{uid}/versions",
+    "/{odm_vendor_attribute_uid}/versions",
     dependencies=[rbac.LIBRARY_READ],
     summary="List version history for ODM Vendor Attribute",
     description="""
@@ -175,14 +177,18 @@ Possible errors:
     responses={
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The ODM Vendor Attribute with the specified 'uid' wasn't found.",
+            "description": "Not Found - The ODM Vendor Attribute with the specified 'odm_vendor_attribute_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def get_odm_vendor_attribute_versions(uid: str = OdmVendorAttributeUID):
+def get_odm_vendor_attribute_versions(
+    odm_vendor_attribute_uid: str = OdmVendorAttributeUID,
+):
     odm_vendor_attribute_service = OdmVendorAttributeService()
-    return odm_vendor_attribute_service.get_version_history(uid=uid)
+    return odm_vendor_attribute_service.get_version_history(
+        uid=odm_vendor_attribute_uid
+    )
 
 
 @router.post(
@@ -217,7 +223,7 @@ def create_odm_vendor_attribute(
 
 
 @router.patch(
-    "/{uid}",
+    "/{odm_vendor_attribute_uid}",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Update ODM Vendor Attribute",
     description="",
@@ -234,25 +240,25 @@ def create_odm_vendor_attribute(
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The ODM Vendor Attribute with the specified 'uid' wasn't found.",
+            "description": "Not Found - The ODM Vendor Attribute with the specified 'odm_vendor_attribute_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def edit_odm_vendor_attribute(
-    uid: str = OdmVendorAttributeUID,
+    odm_vendor_attribute_uid: str = OdmVendorAttributeUID,
     odm_vendor_attribute_edit_input: OdmVendorAttributePatchInput = Body(
         description=""
     ),
 ):
     odm_vendor_attribute_service = OdmVendorAttributeService()
     return odm_vendor_attribute_service.edit_draft(
-        uid=uid, concept_edit_input=odm_vendor_attribute_edit_input
+        uid=odm_vendor_attribute_uid, concept_edit_input=odm_vendor_attribute_edit_input
     )
 
 
 @router.post(
-    "/{uid}/versions",
+    "/{odm_vendor_attribute_uid}/versions",
     dependencies=[rbac.LIBRARY_WRITE],
     summary=" Create a new version of ODM Vendor Attribute",
     description="""
@@ -282,18 +288,20 @@ Possible errors:
             "model": ErrorResponse,
             "description": "Not Found - Reasons include e.g.: \n"
             "- The ODM Vendor Attribute is not in final status.\n"
-            "- The ODM Vendor Attribute with the specified 'uid' could not be found.",
+            "- The ODM Vendor Attribute with the specified 'odm_vendor_attribute_uid' could not be found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def create_odm_vendor_attribute_version(uid: str = OdmVendorAttributeUID):
+def create_odm_vendor_attribute_version(
+    odm_vendor_attribute_uid: str = OdmVendorAttributeUID,
+):
     odm_vendor_attribute_service = OdmVendorAttributeService()
-    return odm_vendor_attribute_service.create_new_version(uid=uid)
+    return odm_vendor_attribute_service.create_new_version(uid=odm_vendor_attribute_uid)
 
 
 @router.post(
-    "/{uid}/approvals",
+    "/{odm_vendor_attribute_uid}/approvals",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Approve draft version of ODM Vendor Attribute",
     description="",
@@ -309,18 +317,18 @@ def create_odm_vendor_attribute_version(uid: str = OdmVendorAttributeUID):
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The ODM Vendor Attribute with the specified 'uid' wasn't found.",
+            "description": "Not Found - The ODM Vendor Attribute with the specified 'odm_vendor_attribute_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def approve_odm_vendor_attribute(uid: str = OdmVendorAttributeUID):
+def approve_odm_vendor_attribute(odm_vendor_attribute_uid: str = OdmVendorAttributeUID):
     odm_vendor_attribute_service = OdmVendorAttributeService()
-    return odm_vendor_attribute_service.approve(uid=uid)
+    return odm_vendor_attribute_service.approve(uid=odm_vendor_attribute_uid)
 
 
 @router.delete(
-    "/{uid}/activations",
+    "/{odm_vendor_attribute_uid}/activations",
     dependencies=[rbac.LIBRARY_WRITE],
     summary=" Inactivate final version of ODM Vendor Attribute",
     description="",
@@ -335,18 +343,20 @@ def approve_odm_vendor_attribute(uid: str = OdmVendorAttributeUID):
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The ODM Vendor Attribute with the specified 'uid' could not be found.",
+            "description": "Not Found - The ODM Vendor Attribute with the specified 'odm_vendor_attribute_uid' could not be found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def inactivate_odm_vendor_attribute(uid: str = OdmVendorAttributeUID):
+def inactivate_odm_vendor_attribute(
+    odm_vendor_attribute_uid: str = OdmVendorAttributeUID,
+):
     odm_vendor_attribute_service = OdmVendorAttributeService()
-    return odm_vendor_attribute_service.inactivate_final(uid=uid)
+    return odm_vendor_attribute_service.inactivate_final(uid=odm_vendor_attribute_uid)
 
 
 @router.post(
-    "/{uid}/activations",
+    "/{odm_vendor_attribute_uid}/activations",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Reactivate retired version of a ODM Vendor Attribute",
     description="",
@@ -361,18 +371,20 @@ def inactivate_odm_vendor_attribute(uid: str = OdmVendorAttributeUID):
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The ODM Vendor Attribute with the specified 'uid' could not be found.",
+            "description": "Not Found - The ODM Vendor Attribute with the specified 'odm_vendor_attribute_uid' could not be found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def reactivate_odm_vendor_attribute(uid: str = OdmVendorAttributeUID):
+def reactivate_odm_vendor_attribute(
+    odm_vendor_attribute_uid: str = OdmVendorAttributeUID,
+):
     odm_vendor_attribute_service = OdmVendorAttributeService()
-    return odm_vendor_attribute_service.reactivate_retired(uid=uid)
+    return odm_vendor_attribute_service.reactivate_retired(uid=odm_vendor_attribute_uid)
 
 
 @router.delete(
-    "/{uid}",
+    "/{odm_vendor_attribute_uid}",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Delete draft version of ODM Vendor Attribute",
     description="",
@@ -391,11 +403,11 @@ def reactivate_odm_vendor_attribute(uid: str = OdmVendorAttributeUID):
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - An ODM Vendor Attribute with the specified 'uid' could not be found.",
+            "description": "Not Found - An ODM Vendor Attribute with the specified 'odm_vendor_attribute_uid' could not be found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def delete_odm_vendor_attribute(uid: str = OdmVendorAttributeUID):
+def delete_odm_vendor_attribute(odm_vendor_attribute_uid: str = OdmVendorAttributeUID):
     odm_vendor_attribute_service = OdmVendorAttributeService()
-    odm_vendor_attribute_service.soft_delete(uid=uid)
+    odm_vendor_attribute_service.soft_delete(uid=odm_vendor_attribute_uid)

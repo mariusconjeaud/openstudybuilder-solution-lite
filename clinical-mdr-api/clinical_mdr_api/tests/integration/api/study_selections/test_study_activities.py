@@ -1,5 +1,5 @@
 """
-Tests for /studies/{uid}/study-activities endpoints
+Tests for /studies/{study_uid}/study-activities endpoints
 """
 
 # pylint: disable=unused-argument
@@ -241,15 +241,6 @@ def test_data():
         library_name=library_name,
         effective_date=ct_term_start_date,
         approve=True,
-    )
-
-    cdisc_package_name = "SDTM CT 2020-03-27"
-
-    TestUtils.create_ct_package(
-        catalogue=catalogue_name,
-        name=cdisc_package_name,
-        approve_elements=False,
-        effective_date=datetime(2020, 3, 27, tzinfo=timezone.utc),
     )
 
     # patch the date of the latest HAS_VERSION FINAL relationship so it can be detected by the selected study_standard_Version
@@ -600,6 +591,7 @@ def test_delete_study_activity(api_client):
 
 def test_cascade_delete_on_activities_schedules(api_client):
     study_for_cascade = TestUtils.create_study(project_number=project.project_number)
+    TestUtils.set_study_standard_version(study_uid=study_for_cascade.uid)
     response = api_client.post(
         f"/studies/{study_for_cascade.uid}/study-activities",
         json={
@@ -940,6 +932,8 @@ def test_versioning_on_activity_activity_instruction_activity_schedule_as_group(
         json={"current_metadata": {"study_description": {"study_title": "new title"}}},
     )
     assert response.status_code == 200
+    # Set StudyStandardVersion before locking
+    TestUtils.set_study_standard_version(study_uid=study_for_versioning.uid)
 
     # Lock
     response = api_client.post(
@@ -1022,6 +1016,9 @@ def test_versioning_on_activity_activity_instruction_activity_schedule_as_group(
     # get all
     for i, _ in enumerate(before_visits["items"]):
         before_visits["items"][i]["study_version"] = mock.ANY
+        for j in before_visits["items"][i]:
+            if isinstance(before_visits["items"][i][j], dict):
+                before_visits["items"][i][j]["queried_effective_date"] = mock.ANY
     assert (
         before_visits
         == api_client.get(
@@ -1030,6 +1027,9 @@ def test_versioning_on_activity_activity_instruction_activity_schedule_as_group(
     )
     for i, _ in enumerate(before_activities["items"]):
         before_activities["items"][i]["study_version"] = mock.ANY
+        for j in before_visits["items"][i]:
+            if isinstance(before_visits["items"][i][j], dict):
+                before_visits["items"][i][j]["queried_effective_date"] = mock.ANY
     assert (
         before_activities
         == api_client.get(
@@ -1038,6 +1038,9 @@ def test_versioning_on_activity_activity_instruction_activity_schedule_as_group(
     )
     for i, _ in enumerate(before_activity_schedules):
         before_activity_schedules[i]["study_version"] = mock.ANY
+        for j in before_visits["items"][i]:
+            if isinstance(before_visits["items"][i][j], dict):
+                before_visits["items"][i][j]["queried_effective_date"] = mock.ANY
     assert (
         before_activity_schedules
         == api_client.get(
@@ -1046,6 +1049,9 @@ def test_versioning_on_activity_activity_instruction_activity_schedule_as_group(
     )
     for i, _ in enumerate(before_activity_instructions):
         before_activity_instructions[i]["study_version"] = mock.ANY
+        for j in before_visits["items"][i]:
+            if isinstance(before_visits["items"][i][j], dict):
+                before_visits["items"][i][j]["queried_effective_date"] = mock.ANY
     assert (
         before_activity_instructions
         == api_client.get(
@@ -1556,7 +1562,7 @@ def test_detailed_soa_export(api_client):
         == study_for_export.current_metadata.identification_metadata.study_number
     )
     assert res[0]["visit"] == first_visit.visit_short_name
-    assert res[0]["epoch"] == study_epoch.epoch_name
+    assert res[0]["epoch"] == study_epoch.epoch_ctterm.sponsor_preferred_name
     assert res[0]["activity"] == randomized_activity.name
     assert res[0]["activity_subgroup"] == randomisation_activity_subgroup.name
     assert res[0]["activity_group"] == general_activity_group.name
@@ -1566,7 +1572,7 @@ def test_detailed_soa_export(api_client):
         == study_for_export.current_metadata.identification_metadata.study_number
     )
     assert res[1]["visit"] == first_visit.visit_short_name
-    assert res[1]["epoch"] == study_epoch.epoch_name
+    assert res[1]["epoch"] == study_epoch.epoch_ctterm.sponsor_preferred_name
     assert res[1]["activity"] == body_mes_activity.name
     assert res[1]["activity_subgroup"] == randomisation_activity_subgroup.name
     assert res[1]["activity_group"] == general_activity_group.name
@@ -1576,7 +1582,7 @@ def test_detailed_soa_export(api_client):
         == study_for_export.current_metadata.identification_metadata.study_number
     )
     assert res[2]["visit"] == first_visit.visit_short_name
-    assert res[2]["epoch"] == study_epoch.epoch_name
+    assert res[2]["epoch"] == study_epoch.epoch_ctterm.sponsor_preferred_name
     assert res[2]["activity"] == weight_activity.name
     assert res[2]["activity_subgroup"] == body_measurements_activity_subgroup.name
     assert res[2]["activity_group"] == general_activity_group.name
@@ -1662,6 +1668,9 @@ def test_protocol_soa_html_with_time_units_and_study_versioning(api_client):
         json={"current_metadata": {"study_description": {"study_title": "new title"}}},
     )
     assert response.status_code == 200
+    # Set StudyStandardVersion before locking
+    TestUtils.set_study_standard_version(study_uid=study_for_export.uid)
+
     # Lock
     response = api_client.post(
         f"/studies/{study_for_export.uid}/locks",
@@ -1766,7 +1775,7 @@ def test_protocol_soa_export(api_client):
         == study_for_export.current_metadata.identification_metadata.study_number
     )
     assert res[0]["visit"] == first_visit.visit_short_name
-    assert res[0]["epoch"] == study_epoch.epoch_name
+    assert res[0]["epoch"] == study_epoch.epoch_ctterm.sponsor_preferred_name
     assert res[0]["activity"] == randomized_activity.name
     assert res[0]["activity_subgroup"] == randomisation_activity_subgroup.name
     assert res[0]["activity_group"] == general_activity_group.name
@@ -1780,7 +1789,7 @@ def test_protocol_soa_export(api_client):
         == study_for_export.current_metadata.identification_metadata.study_number
     )
     assert res[1]["visit"] == first_visit.visit_short_name
-    assert res[1]["epoch"] == study_epoch.epoch_name
+    assert res[1]["epoch"] == study_epoch.epoch_ctterm.sponsor_preferred_name
     assert res[1]["activity"] == weight_activity.name
     assert res[1]["activity_subgroup"] == body_measurements_activity_subgroup.name
     assert res[1]["activity_group"] == general_activity_group.name
@@ -1900,7 +1909,7 @@ def test_operational_soa_export(api_client):
         == study_for_export.current_metadata.identification_metadata.study_number
     )
     assert res[0]["visit"] == first_visit.visit_short_name
-    assert res[0]["epoch"] == study_epoch.epoch_name
+    assert res[0]["epoch"] == study_epoch.epoch_ctterm.sponsor_preferred_name
     assert res[0]["activity_instance"] == randomized_activity_instance.name
     assert res[0]["topic_code"] == randomized_activity_instance.topic_code
     assert res[0]["param_code"] == randomized_activity_instance.adam_param_code
@@ -1919,7 +1928,7 @@ def test_operational_soa_export(api_client):
         == study_for_export.current_metadata.identification_metadata.study_number
     )
     assert res[1]["visit"] == first_visit.visit_short_name
-    assert res[1]["epoch"] == study_epoch.epoch_name
+    assert res[1]["epoch"] == study_epoch.epoch_ctterm.sponsor_preferred_name
     assert res[1]["activity"] == sa_body_mes.activity.name
     assert res[1]["activity_instance"] is None
     assert res[1]["topic_code"] is None
@@ -1937,7 +1946,7 @@ def test_operational_soa_export(api_client):
         == study_for_export.current_metadata.identification_metadata.study_number
     )
     assert res[2]["visit"] == first_visit.visit_short_name
-    assert res[2]["epoch"] == study_epoch.epoch_name
+    assert res[2]["epoch"] == study_epoch.epoch_ctterm.sponsor_preferred_name
     assert res[2]["activity"] == sa_weight.activity.name
     assert res[2]["activity_instance"] is None
     assert res[2]["topic_code"] is None
@@ -1986,7 +1995,7 @@ def test_only_placeholder_study_activity_can_have_subgroup_and_group_not_specifi
     )
 
 
-def test_delete_activity_placehodler_with_not_finalized_request_retires_the_request(
+def test_delete_activity_placeholder_with_not_finalized_request_retires_the_request(
     api_client,
 ):
     activity_request = TestUtils.create_activity(
@@ -2242,24 +2251,11 @@ def test_study_activity_version_selecting_ct_package(api_client):
         == new_ctterm_name
     )
 
-    # get ct_packages
-    response = api_client.get(
-        "/ct/packages",
+    TestUtils.set_study_standard_version(
+        study_uid=study_for_ctterm_versioning.uid,
+        package_name="SDTM CT 2020-03-27",
+        effective_date=datetime(2020, 3, 27, tzinfo=timezone.utc),
     )
-    res = response.json()
-    assert response.status_code == 200
-    ct_package_uid = res[0]["uid"]
-
-    # create study standard version
-    response = api_client.post(
-        f"/studies/{study_for_ctterm_versioning.uid}/study-standard-versions",
-        json={
-            "ct_package_uid": ct_package_uid,
-        },
-    )
-    res = response.json()
-    assert response.status_code == 201
-    assert res["ct_package"]["uid"] == ct_package_uid
 
     # get study selection with previous ctterm
     response = api_client.get(
@@ -2319,3 +2315,215 @@ def test_study_activity_version_selecting_ct_package(api_client):
         res[1][study_selection_ctterm_keys][study_selection_ctterm_name_key]
         == new_ctterm_name
     )
+
+
+def test_edit_study_activity_groupings(api_client):
+    # ===== create study activity groupings =====
+    # create activity group
+    lab_assessment_activity_group = TestUtils.create_activity_group(
+        name="Lab Assessment"
+    )
+    vital_signs_activity_group = TestUtils.create_activity_group(name="Vital Signs")
+    incorrect_activity_group = TestUtils.create_activity_group(name="Incorrect Group")
+    # create activity subgroup
+    blood_activity_subgroup = TestUtils.create_activity_subgroup(
+        name="Blood", activity_groups=[lab_assessment_activity_group.uid]
+    )
+    blood_secondary_activity_subgroup = TestUtils.create_activity_subgroup(
+        name="BloodTwo",
+        activity_groups=[
+            vital_signs_activity_group.uid,
+            lab_assessment_activity_group.uid,
+        ],
+    )
+    blood_incorrect_activity_subgroup = TestUtils.create_activity_subgroup(
+        name="Blood Incorrect", activity_groups=[incorrect_activity_group.uid]
+    )
+    blood_tertiary_activity_subgroup = TestUtils.create_activity_subgroup(
+        name="BloodThree", activity_groups=[vital_signs_activity_group.uid]
+    )
+
+    # create activity
+    blood_pressure_activity = TestUtils.create_activity(
+        name="Blood Pressure",
+        activity_subgroups=[
+            blood_activity_subgroup.uid,
+            blood_secondary_activity_subgroup.uid,
+            blood_secondary_activity_subgroup.uid,
+            blood_tertiary_activity_subgroup.uid,
+        ],
+        activity_groups=[
+            lab_assessment_activity_group.uid,
+            lab_assessment_activity_group.uid,
+            vital_signs_activity_group.uid,
+            vital_signs_activity_group.uid,
+        ],
+    )
+    # create study activity
+    blood_pressure_study_activity = TestUtils.create_study_activity(
+        study_uid=study.uid,
+        activity_uid=blood_pressure_activity.uid,
+        activity_group_uid=vital_signs_activity_group.uid,
+        activity_subgroup_uid=blood_secondary_activity_subgroup.uid,
+        soa_group_term_uid="term_efficacy_uid",
+    )
+    # validate study activity exists
+    response = api_client.get(
+        f"/studies/{study.uid}/study-activities/{blood_pressure_study_activity.study_activity_uid}"
+    )
+    assert response.status_code == 200
+    # test change of activity group and subgroup
+    response = api_client.patch(
+        f"/studies/{study.uid}/study-activities/{blood_pressure_study_activity.study_activity_uid}",
+        json={
+            "activity_group_uid": vital_signs_activity_group.uid,
+            "activity_subgroup_uid": blood_tertiary_activity_subgroup.uid,
+        },
+    )
+    assert response.status_code == 200
+    res = response.json()
+    assert (
+        res["study_activity_group"]["activity_group_uid"]
+        == vital_signs_activity_group.uid
+    )
+    assert (
+        res["study_activity_subgroup"]["activity_subgroup_uid"]
+        == blood_tertiary_activity_subgroup.uid
+    )
+    # test change of incorrect activity group and subgroup
+    response = api_client.patch(
+        f"/studies/{study.uid}/study-activities/{blood_pressure_study_activity.study_activity_uid}",
+        json={
+            "activity_group_uid": incorrect_activity_group.uid,
+            "activity_subgroup_uid": blood_incorrect_activity_subgroup.uid,
+        },
+    )
+    assert response.status_code == 400
+    assert (
+        response.json()["message"]
+        == f"Provided activity group is not included in {blood_pressure_activity.uid} activity groupings"
+    )
+    # test change of just activity group
+    response = api_client.patch(
+        f"/studies/{study.uid}/study-activities/{blood_pressure_study_activity.study_activity_uid}",
+        json={"activity_group_uid": lab_assessment_activity_group.uid},
+    )
+    assert response.status_code == 400
+    res = response.json()
+    assert res["message"] == "An activity subgroup is required for the selection"
+    # test change of just activity subgroup
+    response = api_client.patch(
+        f"/studies/{study.uid}/study-activities/{blood_pressure_study_activity.study_activity_uid}",
+        json={"activity_subgroup_uid": blood_activity_subgroup.uid},
+    )
+    assert response.status_code == 400
+    res = response.json()
+    assert res["message"] == "An activity group is required for the selection"
+    # test change of activity group and subgroup to the same values
+    response = api_client.patch(
+        f"/studies/{study.uid}/study-activities/{blood_pressure_study_activity.study_activity_uid}",
+        json={
+            "activity_group_uid": vital_signs_activity_group.uid,
+            "activity_subgroup_uid": blood_tertiary_activity_subgroup.uid,
+        },
+    )
+    assert response.status_code == 200
+    res = response.json()
+    assert (
+        res["study_activity_subgroup"]["activity_subgroup_uid"]
+        == blood_tertiary_activity_subgroup.uid
+    )
+    assert (
+        res["study_activity_group"]["activity_group_uid"]
+        == vital_signs_activity_group.uid
+    )
+    # test change of activity group and subgroup to non existent values
+    response = api_client.patch(
+        f"/studies/{study.uid}/study-activities/{blood_pressure_study_activity.study_activity_uid}",
+        json={
+            "activity_group_uid": "non_existent",
+            "activity_subgroup_uid": "non_existent",
+        },
+    )
+    assert response.status_code == 400
+    # test change if non existent activity subgroup
+    response = api_client.patch(
+        f"/studies/{study.uid}/study-activities/{blood_pressure_study_activity.study_activity_uid}",
+        json={
+            "activity_group_uid": vital_signs_activity_group.uid,
+            "activity_subgroup_uid": "non_existent",
+        },
+    )
+    assert response.status_code == 400
+
+
+def test_sync_study_activity_to_latest_version_of_activity(api_client):
+    # create activity
+    activity_name_before_change = "Activity V1"
+    activity_to_change = TestUtils.create_activity(
+        name=activity_name_before_change,
+        activity_subgroups=[
+            randomisation_activity_subgroup.uid,
+        ],
+        activity_groups=[
+            general_activity_group.uid,
+        ],
+    )
+    # create study activity
+    study_activity_v1 = TestUtils.create_study_activity(
+        study_uid=study.uid,
+        activity_uid=activity_to_change.uid,
+        activity_group_uid=general_activity_group.uid,
+        activity_subgroup_uid=randomisation_activity_subgroup.uid,
+        soa_group_term_uid="term_efficacy_uid",
+    )
+    response = api_client.get(
+        f"/studies/{study.uid}/study-activities/{study_activity_v1.study_activity_uid}"
+    )
+    assert response.status_code == 200
+    res = response.json()
+    assert res["latest_activity"] is None
+    assert res["activity"]["uid"] == activity_to_change.uid
+    assert res["activity"]["name"] == activity_name_before_change
+
+    # create new draft version for activity
+    response = api_client.post(
+        f"/concepts/activities/activities/{activity_to_change.uid}/versions"
+    )
+    assert response.status_code == 201
+
+    # patch library activity
+    activity_name_after_change = "Activity V2"
+    response = api_client.patch(
+        f"/concepts/activities/activities/{activity_to_change.uid}",
+        json={
+            "name": activity_name_after_change,
+            "name_sentence_case": activity_name_after_change.lower(),
+        },
+    )
+    assert response.status_code == 200
+    response = api_client.post(
+        f"/concepts/activities/activities/{activity_to_change.uid}/approvals"
+    )
+    assert response.status_code == 201
+
+    # check if study activity sees that change was made on library level
+    response = api_client.get(
+        f"/studies/{study.uid}/study-activities/{study_activity_v1.study_activity_uid}"
+    )
+    assert response.status_code == 200
+    res = response.json()
+    assert res["latest_activity"]["uid"] == activity_to_change.uid
+    assert res["latest_activity"]["name"] == activity_name_after_change
+    assert res["activity"]["uid"] == activity_to_change.uid
+    assert res["activity"]["name"] == activity_name_before_change
+
+    # sync to latest version of activity
+    response = api_client.post(
+        f"/studies/{study.uid}/study-activities/{study_activity_v1.study_activity_uid}/sync-latest-version",
+    )
+    assert response.status_code == 201
+    res = response.json()
+    assert res["latest_activity"] is None
+    assert res["activity"]["uid"] == activity_to_change.uid
+    assert res["activity"]["name"] == activity_name_after_change

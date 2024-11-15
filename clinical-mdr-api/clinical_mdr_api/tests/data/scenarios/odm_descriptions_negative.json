@@ -43,6 +43,36 @@
         }
     },
     {
+        "name": "Test cannot create a new ODM Description with same properties",
+        "request": {
+            "headers": {},
+            "method": "POST",
+            "request": {
+                "library_name": "Sponsor",
+                "name": "name1",
+                "language": "ENG",
+                "description": "description1",
+                "instruction": "instruction1",
+                "sponsor_instruction": "sponsor_instruction1"
+            },
+            "url": "concepts/odms/descriptions"
+        },
+        "response": {
+            "code": 400,
+            "headers": {
+                "content-length": "459",
+                "content-type": "application/json"
+            },
+            "result": {
+                "message": "ODM Description already exists with UID (OdmDescription_000001) and data {'name': 'name1', 'language': 'ENG', 'description': 'description1', 'instruction': 'instruction1', 'sponsor_instruction': 'sponsor_instruction1'}",
+                "time": "2022-03-07T12: 14: 18.116363",
+                "path": "http://testserver/concepts/odms/descriptions",
+                "method": "POST",
+                "type": "BusinessLogicException"
+            }
+        }
+    },
+    {
         "name": "Test cannot inactivate an ODM Description that is in Draft status",
         "request": {
             "headers": {},

@@ -16,7 +16,7 @@ class XMLResponse(Response):
 
 
 @router.get(
-    "/studies/{uid}/ctr/odm.xml",
+    "/studies/{study_uid}/ctr/odm.xml",
     dependencies=[rbac.STUDY_READ],
     summary="Returns study disclosure document in CTR ODM XML format",
     status_code=200,
@@ -27,6 +27,6 @@ class XMLResponse(Response):
     },
 )
 def get_odm_xml(
-    uid: str = StudyUID,
+    study_uid: str = StudyUID,
 ) -> XMLResponse:
-    return XMLResponse(content=CTRXMLService().get_ctr_odm(uid))
+    return XMLResponse(content=CTRXMLService().get_ctr_odm(study_uid))

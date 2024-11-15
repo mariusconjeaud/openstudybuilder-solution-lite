@@ -12,10 +12,7 @@ from clinical_mdr_api.domain_repositories.models.generic import (
 )
 from clinical_mdr_api.domain_repositories.models.study_audit_trail import StudyAction
 from clinical_mdr_api.domain_repositories.models.study_field import StudyField
-from clinical_mdr_api.domain_repositories.models.study_selections import (
-    StudySelection,
-    StudySelectionMetadata,
-)
+from clinical_mdr_api.domain_repositories.models.study_selections import StudySelection
 from clinical_mdr_api.repositories._utils import sb_clear_cache
 
 
@@ -277,27 +274,15 @@ def manage_previous_connected_study_selection_relationships(
     ]
     # MAINTAIN non filtered relationships, just for those non filtered relationships nodes with StudyValue connection
     for connected_rel_name, connected_type in relationships_to_maintain:
-        # If we are maintaining relationships outgoing from one of below types
-        # we are directly getting all connected_nodes from this node, we don't want to compare it with assigned StudyValue
-        if isinstance(previous_item, (StudySelectionMetadata)):
-            all_connected_nodes = getattr(previous_item, connected_rel_name).all()
-            # Get only latest connected nodes
-            connected_nodes = []
-            for connected_node in all_connected_nodes:
-                before_action = connected_node.has_before.get_or_none()
-                # if node doesn't have a BEFORE assigned it means it latest version
-                if not before_action:
-                    connected_nodes.append(connected_node)
-        else:
-            connected_nodes: list[
-                Type[connected_type]
-            ] = get_connected_node_by_rel_name_and_study_value(
-                node=previous_item,
-                connected_rel_name=connected_rel_name,
-                study_value=study_value_node,
-                multiple_returned_nodes=True,
-                at_least_one_returned=False,
-            )
+        connected_nodes: list[
+            Type[connected_type]
+        ] = get_connected_node_by_rel_name_and_study_value(
+            node=previous_item,
+            connected_rel_name=connected_rel_name,
+            study_value=study_value_node,
+            multiple_returned_nodes=True,
+            at_least_one_returned=False,
+        )
         # connect to those connected nodes with same study_value as new_item
         for i_connected_node in connected_nodes:
             getattr(new_item, connected_rel_name).connect(i_connected_node)

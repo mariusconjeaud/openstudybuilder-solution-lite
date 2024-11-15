@@ -654,7 +654,10 @@ def create_study_epochs(epoch_dict, study, epoch_terms) -> dict[str, StudyEpoch]
 
     log.info(
         "created StudyEpochs: %s",
-        {epoch.uid: epoch.epoch_subtype_name for epoch in epochs.values()},
+        {
+            epoch.uid: epoch.epoch_subtype_ctterm.sponsor_preferred_name
+            for epoch in epochs.values()
+        },
     )
 
     return epochs
@@ -1081,7 +1084,7 @@ def create_study_activities(
 ) -> dict[str, models.StudySelectionActivity]:
     log.debug("creating StudyActivities")
 
-    study_activites = {}
+    study_activities = {}
 
     for name, act in ACTIVITIES.items():
         activity = activities[name]
@@ -1120,17 +1123,17 @@ def create_study_activities(
             ),
         )
 
-        study_activites[name] = study_activity
+        study_activities[name] = study_activity
 
     log.info(
         "created StudyActivities: %s",
         {
             sa.study_activity_uid: f"{sa.activity.name}"
-            for sa in study_activites.values()
+            for sa in study_activities.values()
         },
     )
 
-    return study_activites
+    return study_activities
 
 
 def get_study_activity_instances(
@@ -1464,7 +1467,7 @@ def test_get_flowchart_table(
         hide_soa_groups=hide_soa_groups,
     )
 
-    # Collect test data for comparation
+    # Collect test data for comparison
 
     if time_unit is None:
         service = StudyFlowchartService()
@@ -1948,7 +1951,7 @@ def test_download_detailed_soa_content(
             res["study_number"]
             == tst_data.study.current_metadata.identification_metadata.study_number
         )
-        assert res["epoch"] == study_visit.study_epoch_name
+        assert res["epoch"] == study_visit.study_epoch.sponsor_preferred_name
         assert res["visit"] == study_visit.visit_short_name
         assert res["soa_group"] == study_activity.study_soa_group.soa_group_name
         assert (
@@ -2013,7 +2016,7 @@ def test_download_operational_soa_content(
     sched: StudyActivitySchedule
     for i, (res, sched) in enumerate(zip(results, schedules)):
         study_activity = study_activities_map[sched.study_activity_uid]
-        study_activity_intance = study_activity_instances_map[
+        study_activity_instance = study_activity_instances_map[
             sched.study_activity_instance_uid
         ]
         study_visit = study_visits_map[sched.study_visit_uid]
@@ -2026,7 +2029,7 @@ def test_download_operational_soa_content(
             res["study_number"]
             == tst_data.study.current_metadata.identification_metadata.study_number
         )
-        assert res["epoch"] == study_visit.study_epoch_name
+        assert res["epoch"] == study_visit.study_epoch.sponsor_preferred_name
         assert res["visit"] == study_visit.visit_short_name
         assert res["soa_group"] == study_activity.study_soa_group.soa_group_name
         assert (
@@ -2040,17 +2043,17 @@ def test_download_operational_soa_content(
         assert res["activity"] == study_activity.activity.name
 
         assert res["activity_instance"] == (
-            study_activity_intance.activity_instance.name
-            if study_activity_intance.activity_instance
+            study_activity_instance.activity_instance.name
+            if study_activity_instance.activity_instance
             else None
         )
         assert res["param_code"] == (
-            study_activity_intance.activity_instance.adam_param_code
-            if study_activity_intance.activity_instance
+            study_activity_instance.activity_instance.adam_param_code
+            if study_activity_instance.activity_instance
             else None
         )
         assert res["topic_code"] == (
-            study_activity_intance.activity_instance.topic_code
-            if study_activity_intance.activity_instance
+            study_activity_instance.activity_instance.topic_code
+            if study_activity_instance.activity_instance
             else None
         )

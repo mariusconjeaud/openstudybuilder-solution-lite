@@ -1,16 +1,18 @@
 <template>
-  <PackageTimeline
-    v-if="!loading"
-    :package-name="packageName"
-    :catalogue-packages="packages"
-    :with-add-button="packages.length !== 0"
+  <PackageTimelines
+    ref="timelines"
+    :catalogue-name="props.catalogueName"
+    :package-name="props.packageName"
+    sponsor
+    @catalogue-changed="updateUrl"
     @package-changed="updateUrl"
     @add-package="showCreationForm = true"
   >
-    <template #default="{ selectedPackage }">
+    <template #default="{ catalogue_name, selectedPackage }">
       <CodelistTable
-        v-if="packages.length"
+        v-if="!_isEmpty(timelines.packages)"
         ref="table"
+        :catalogue="catalogue_name"
         :package="selectedPackage"
         sponsor
         read-only
@@ -38,20 +40,27 @@
         </v-card-text>
       </v-card>
     </template>
-  </PackageTimeline>
-  <SponsorCTPackageForm :open="showCreationForm" @close="closeCreationForm" />
+  </PackageTimelines>
+  <SponsorCTPackageForm
+    :open="showCreationForm"
+    @close="closeCreationForm"
+    @created="timelines.fetchPackages()"
+  />
 </template>
 
 <script setup>
 import { ref } from 'vue'
-import { DateTime } from 'luxon'
 import { useRouter } from 'vue-router'
-import controlledTerminology from '@/api/controlledTerminology'
+import _isEmpty from 'lodash/isEmpty'
 import CodelistTable from './CodelistTable.vue'
-import PackageTimeline from './PackageTimeline.vue'
+import PackageTimelines from './PackageTimelines.vue'
 import SponsorCTPackageForm from './SponsorCTPackageForm.vue'
 
 const props = defineProps({
+  catalogueName: {
+    type: String,
+    default: null,
+  },
   packageName: {
     type: String,
     default: '',
@@ -59,34 +68,22 @@ const props = defineProps({
 })
 const router = useRouter()
 
-const loading = ref(true)
-const packages = ref([])
 const showCreationForm = ref(false)
 const table = ref()
+const timelines = ref()
 
-function fetchPackages() {
-  loading.value = true
-  controlledTerminology.getSponsorPackages().then((resp) => {
-    packages.value = resp.data
-    for (const pkg of packages.value) {
-      pkg.date = DateTime.fromISO(pkg.effective_date).toJSDate()
-    }
-    loading.value = false
-  })
-}
-
-function updateUrl(pkg) {
+function updateUrl(catalogueName, pkg) {
   router.push({
     name: 'SponsorCtPackages',
-    params: { package_name: pkg ? pkg.name : null },
+    params: {
+      catalogue_name: catalogueName,
+      package_name: pkg ? pkg.name : null,
+    },
   })
   table.value.refresh()
 }
 
 function closeCreationForm() {
   showCreationForm.value = false
-  fetchPackages()
 }
-
-fetchPackages()
 </script>

@@ -204,9 +204,9 @@ def retrieve_audit_trail(
 
 
 @router.get(
-    "/{uid}",
+    "/{endpoint_pre_instance_uid}",
     dependencies=[rbac.LIBRARY_READ],
-    summary="Returns the latest/newest version of a specific endpoint pre-instance identified by 'uid'.",
+    summary="Returns the latest/newest version of a specific endpoint pre-instance identified by 'endpoint_pre_instance_uid'.",
     description="""If multiple request query parameters are used, then they need to
     match all at the same time (they are combined with the AND operation).""",
     response_model=models.EndpointPreInstance | None,
@@ -214,21 +214,21 @@ def retrieve_audit_trail(
     responses={
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The endpoint pre-instance with the specified 'uid' (and the specified date/time and/or status) wasn't found.",
+            "description": "Not Found - The endpoint pre-instance with the specified 'endpoint_pre_instance_uid' (and the specified date/time and/or status) wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def get(
-    uid: str = EndpointPreInstanceUID,
+    endpoint_pre_instance_uid: str = EndpointPreInstanceUID,
 ):
-    return EndpointPreInstanceService().get_by_uid(uid=uid)
+    return EndpointPreInstanceService().get_by_uid(uid=endpoint_pre_instance_uid)
 
 
 @router.patch(
-    "/{uid}",
+    "/{endpoint_pre_instance_uid}",
     dependencies=[rbac.LIBRARY_WRITE],
-    summary="Updates the Endpoint Pre-Instance identified by 'uid'.",
+    summary="Updates the Endpoint Pre-Instance identified by 'endpoint_pre_instance_uid'.",
     description="""This request is only valid if the Endpoint Pre-Instance
 * is in 'Draft' status and
 * belongs to a library that allows editing (the 'is_editable' property of the library needs to be true). 
@@ -253,25 +253,27 @@ If the request succeeds:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The Endpoint Pre-Instance with the specified 'uid' wasn't found.",
+            "description": "Not Found - The Endpoint Pre-Instance with the specified 'endpoint_pre_instance_uid' wasn't found.",
         },
         500: {"model": ErrorResponse, "description": "Internal Server Error"},
     },
 )
 def edit(
-    uid: str = EndpointPreInstanceUID,
+    endpoint_pre_instance_uid: str = EndpointPreInstanceUID,
     endpoint_pre_instance: models.EndpointPreInstanceEditInput = Body(
         None,
         description="The new parameter terms for the Endpoint Pre-Instance, its indexings and the change description.",
     ),
 ):
-    return Service().edit_draft(uid=uid, template=endpoint_pre_instance)
+    return Service().edit_draft(
+        uid=endpoint_pre_instance_uid, template=endpoint_pre_instance
+    )
 
 
 @router.patch(
-    "/{uid}/indexings",
+    "/{endpoint_pre_instance_uid}/indexings",
     dependencies=[rbac.LIBRARY_WRITE],
-    summary="Updates the indexings of the Endpoint Pre-Instance identified by 'uid'.",
+    summary="Updates the indexings of the Endpoint Pre-Instance identified by 'endpoint_pre_instance_uid'.",
     description="""This request is only valid if the pre-instance
     * belongs to a library that allows editing (the 'is_editable' property of the library needs to be true).
     
@@ -285,25 +287,25 @@ def edit(
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The pre-instance with the specified 'uid' could not be found.",
+            "description": "Not Found - The pre-instance with the specified 'endpoint_pre_instance_uid' could not be found.",
         },
         500: {"model": ErrorResponse, "description": "Internal Server Error"},
     },
 )
 def patch_indexings(
-    uid: str = EndpointPreInstanceUID,
+    endpoint_pre_instance_uid: str = EndpointPreInstanceUID,
     indexings: models.EndpointPreInstanceIndexingsInput = Body(
         None,
         description="The lists of UIDs for the new indexings to be set, grouped by indexings to be updated.",
     ),
 ) -> models.EndpointPreInstance:
-    return Service().patch_indexings(uid=uid, indexings=indexings)
+    return Service().patch_indexings(uid=endpoint_pre_instance_uid, indexings=indexings)
 
 
 @router.get(
-    "/{uid}/versions",
+    "/{endpoint_pre_instance_uid}/versions",
     dependencies=[rbac.LIBRARY_READ],
-    summary="Returns the version history of a specific Endpoint Pre-Instance identified by 'uid'.",
+    summary="Returns the version history of a specific Endpoint Pre-Instance identified by 'endpoint_pre_instance_uid'.",
     description=f"""
 The returned versions are ordered by `start_date` descending (newest entries first).
 
@@ -315,7 +317,7 @@ The returned versions are ordered by `start_date` descending (newest entries fir
         200: {"description": "OK."},
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The Endpoint Pre-Instance with the specified 'uid' wasn't found.",
+            "description": "Not Found - The Endpoint Pre-Instance with the specified 'endpoint_pre_instance_uid' wasn't found.",
         },
         500: {"model": ErrorResponse, "description": "Internal Server Error"},
     },
@@ -367,15 +369,15 @@ The returned versions are ordered by `start_date` descending (newest entries fir
 # pylint: disable=unused-argument
 def get_versions(
     request: Request,  # request is actually required by the allow_exports decorator
-    uid: str = EndpointPreInstanceUID,
+    endpoint_pre_instance_uid: str = EndpointPreInstanceUID,
 ):
-    return Service().get_version_history(uid)
+    return Service().get_version_history(endpoint_pre_instance_uid)
 
 
 @router.post(
-    "/{uid}/versions",
+    "/{endpoint_pre_instance_uid}/versions",
     dependencies=[rbac.LIBRARY_WRITE],
-    summary="Creates a new version of the Endpoint Pre-Instance identified by 'uid'.",
+    summary="Creates a new version of the Endpoint Pre-Instance identified by 'endpoint_pre_instance_uid'.",
     description="""This request is only valid if the Endpoint Pre-Instance
 * is in 'Final' or 'Retired' status only (so no latest 'Draft' status exists) and
 * belongs to a library that allows editing (the 'is_editable' property of the library needs to be true).
@@ -401,21 +403,21 @@ Only the surrounding text (excluding the parameters) can be changed.
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The Endpoint Pre-Instance with the specified 'uid' could not be found.",
+            "description": "Not Found - The Endpoint Pre-Instance with the specified 'endpoint_pre_instance_uid' could not be found.",
         },
         500: {"model": ErrorResponse, "description": "Internal Server Error"},
     },
 )
 def create_new_version(
-    uid: str = EndpointPreInstanceUID,
+    endpoint_pre_instance_uid: str = EndpointPreInstanceUID,
 ):
-    return Service().create_new_version(uid=uid)
+    return Service().create_new_version(uid=endpoint_pre_instance_uid)
 
 
 @router.delete(
-    "/{uid}/activations",
+    "/{endpoint_pre_instance_uid}/activations",
     dependencies=[rbac.LIBRARY_WRITE],
-    summary="Inactivates/deactivates the endpoint pre-instance identified by 'uid'.",
+    summary="Inactivates/deactivates the endpoint pre-instance identified by 'endpoint_pre_instance_uid'.",
     description="""This request is only valid if the endpoint pre-instance
 * is in 'Final' status only (so no latest 'Draft' status exists).
 
@@ -435,21 +437,21 @@ If the request succeeds:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The endpoint pre-instance with the specified 'uid' wasn't found.",
+            "description": "Not Found - The endpoint pre-instance with the specified 'endpoint_pre_instance_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def inactivate(
-    uid: str = EndpointPreInstanceUID,
+    endpoint_pre_instance_uid: str = EndpointPreInstanceUID,
 ):
-    return EndpointPreInstanceService().inactivate_final(uid)
+    return EndpointPreInstanceService().inactivate_final(endpoint_pre_instance_uid)
 
 
 @router.post(
-    "/{uid}/activations",
+    "/{endpoint_pre_instance_uid}/activations",
     dependencies=[rbac.LIBRARY_WRITE],
-    summary="Reactivates the endpoint pre-instance identified by 'uid'.",
+    summary="Reactivates the endpoint pre-instance identified by 'endpoint_pre_instance_uid'.",
     description="""This request is only valid if the endpoint pre-instance
 * is in 'Retired' status only (so no latest 'Draft' status exists).
 
@@ -469,21 +471,21 @@ If the request succeeds:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The endpoint pre-instance with the specified 'uid' wasn't found.",
+            "description": "Not Found - The endpoint pre-instance with the specified 'endpoint_pre_instance_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def reactivate(
-    uid: str = EndpointPreInstanceUID,
+    endpoint_pre_instance_uid: str = EndpointPreInstanceUID,
 ):
-    return EndpointPreInstanceService().reactivate_retired(uid)
+    return EndpointPreInstanceService().reactivate_retired(endpoint_pre_instance_uid)
 
 
 @router.delete(
-    "/{uid}",
+    "/{endpoint_pre_instance_uid}",
     dependencies=[rbac.LIBRARY_WRITE],
-    summary="Deletes the Endpoint Pre-Instance identified by 'uid'.",
+    summary="Deletes the Endpoint Pre-Instance identified by 'endpoint_pre_instance_uid'.",
     description="""This request is only valid if \n
 * the Endpoint Pre-Instance is in 'Draft' status and
 * the Endpoint Pre-Instance has never been in 'Final' status and
@@ -508,16 +510,16 @@ def reactivate(
     },
 )
 def delete(
-    uid: str = EndpointPreInstanceUID,
+    endpoint_pre_instance_uid: str = EndpointPreInstanceUID,
 ):
-    Service().soft_delete(uid)
+    Service().soft_delete(endpoint_pre_instance_uid)
     return Response(status_code=fast_api_status.HTTP_204_NO_CONTENT)
 
 
 @router.post(
-    "/{uid}/approvals",
+    "/{endpoint_pre_instance_uid}/approvals",
     dependencies=[rbac.LIBRARY_WRITE],
-    summary="Approves the Endpoint Pre-Instance identified by 'uid'.",
+    summary="Approves the Endpoint Pre-Instance identified by 'endpoint_pre_instance_uid'.",
     description="""This request is only valid if the Endpoint Pre-Instance
 * is in 'Draft' status and
 * belongs to a library that allows editing (the 'is_editable' property of the library needs to be true).
@@ -539,12 +541,12 @@ If the request succeeds:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The Endpoint Pre-Instance with the specified 'uid' wasn't found.",
+            "description": "Not Found - The Endpoint Pre-Instance with the specified 'endpoint_pre_instance_uid' wasn't found.",
         },
         500: {"model": ErrorResponse, "description": "Internal Server Error"},
     },
 )
 def approve(
-    uid: str = EndpointPreInstanceUID,
+    endpoint_pre_instance_uid: str = EndpointPreInstanceUID,
 ):
-    return Service().approve(uid)
+    return Service().approve(endpoint_pre_instance_uid)

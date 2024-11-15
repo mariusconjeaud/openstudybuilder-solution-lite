@@ -3,6 +3,7 @@ from typing import Any
 
 from neomodel import db
 
+from clinical_mdr_api.config import SDTM_CT_CATALOGUE_NAME
 from clinical_mdr_api.domain_repositories.models.generic import Library
 from clinical_mdr_api.domain_repositories.models.study import StudyRoot
 from clinical_mdr_api.domain_repositories.models.syntax import (
@@ -59,6 +60,10 @@ class TestStudyObjectiveUpversion(unittest.TestCase):
         db.cypher_query(STARTUP_PARAMETERS_CYPHER)
         db.cypher_query(STARTUP_STUDY_OBJECTIVE_CYPHER)
         StudyRoot.generate_node_uids_if_not_present()
+        TestUtils.create_ct_catalogue(catalogue_name=SDTM_CT_CATALOGUE_NAME)
+        TestUtils.set_study_standard_version(
+            study_uid="study_root", create_codelists_and_terms_for_package=False
+        )
         ObjectiveRoot.generate_node_uids_if_not_present()
         ObjectiveTemplateRoot.generate_node_uids_if_not_present()
 

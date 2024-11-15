@@ -62,7 +62,7 @@ loggers:
     level: INFO
 
   uvicorn.access:
-    # Skipp Uvicorn's access logging, we do it in TracingMiddleware with correlation ids
+    # Skip Uvicorn's access logging, we do it in TracingMiddleware with correlation ids
     propagate: false
 
   neo4j:

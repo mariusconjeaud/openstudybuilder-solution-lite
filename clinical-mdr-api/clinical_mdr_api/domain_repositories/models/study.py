@@ -18,9 +18,11 @@ from clinical_mdr_api.domain_repositories.models.study_field import (
 from clinical_mdr_api.domain_repositories.models.study_selections import (
     AuditTrailMixin,
     StudyActivity,
+    StudyActivityGroup,
     StudyActivityInstance,
     StudyActivityInstruction,
     StudyActivitySchedule,
+    StudyActivitySubGroup,
     StudyArm,
     StudyBranchArm,
     StudyCohort,
@@ -32,6 +34,7 @@ from clinical_mdr_api.domain_repositories.models.study_selections import (
     StudyEndpoint,
     StudyObjective,
     StudySoAFootnote,
+    StudySoAGroup,
 )
 
 
@@ -100,6 +103,15 @@ class StudyValue(ClinicalMdrNode, AuditTrailMixin):
     )
     has_study_activity = RelationshipTo(
         StudyActivity, "HAS_STUDY_ACTIVITY", model=ClinicalMdrRel
+    )
+    has_study_soa_group = RelationshipTo(
+        StudySoAGroup, "HAS_STUDY_SOA_GROUP", model=ClinicalMdrRel
+    )
+    has_study_activity_subgroup = RelationshipTo(
+        StudyActivitySubGroup, "HAS_STUDY_ACTIVITY_SUBGROUP", model=ClinicalMdrRel
+    )
+    has_study_activity_group = RelationshipTo(
+        StudyActivityGroup, "HAS_STUDY_ACTIVITY_GROUP", model=ClinicalMdrRel
     )
     has_study_activity_instance = RelationshipTo(
         StudyActivityInstance, "HAS_STUDY_ACTIVITY_INSTANCE", model=ClinicalMdrRel

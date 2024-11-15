@@ -292,7 +292,7 @@ async function submit() {
       }
     )
   } else {
-    activities.update(props.editedActivity.uid, form.value, 'activities').then(
+    activities.update(props.editedActivity.uid, form.value, {}, 'activities').then(
       () => {
         eventBusEmit('notification', {
           msg: t('ActivityForms.activity_updated'),

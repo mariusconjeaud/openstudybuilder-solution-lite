@@ -4,6 +4,7 @@ from clinical_mdr_api.domain_repositories.concepts.activities.activity_sub_group
 from clinical_mdr_api.domains.concepts.activities.activity_sub_group import (
     ActivitySubGroupAR,
     ActivitySubGroupVO,
+    SimpleActivityGroupVO,
 )
 from clinical_mdr_api.models.concepts.activities.activity_sub_group import (
     ActivitySubGroup,
@@ -39,7 +40,12 @@ class ActivitySubGroupService(ConceptGenericService[ActivitySubGroupAR]):
                 name_sentence_case=concept_input.name_sentence_case,
                 definition=concept_input.definition,
                 abbreviation=concept_input.abbreviation,
-                activity_groups=concept_input.activity_groups,
+                activity_groups=[
+                    SimpleActivityGroupVO(activity_group_uid=activity_group)
+                    for activity_group in concept_input.activity_groups
+                ]
+                if concept_input.activity_groups
+                else [],
             ),
             library=library,
             generate_uid_callback=self.repository.generate_uid,
@@ -60,7 +66,12 @@ class ActivitySubGroupService(ConceptGenericService[ActivitySubGroupAR]):
                 name_sentence_case=concept_edit_input.name_sentence_case,
                 definition=concept_edit_input.definition,
                 abbreviation=concept_edit_input.abbreviation,
-                activity_groups=concept_edit_input.activity_groups,
+                activity_groups=[
+                    SimpleActivityGroupVO(activity_group_uid=activity_group)
+                    for activity_group in concept_edit_input.activity_groups
+                ]
+                if concept_edit_input.activity_groups
+                else [],
             ),
             concept_exists_by_callback=self._repos.activity_subgroup_repository.exists_by,
             activity_group_exists=self._repos.activity_group_repository.final_concept_exists,

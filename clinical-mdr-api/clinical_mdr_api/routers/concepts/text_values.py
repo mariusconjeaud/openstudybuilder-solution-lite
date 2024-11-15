@@ -124,7 +124,7 @@ def get_distinct_values_for_header(
 
 
 @router.get(
-    "/{uid}",
+    "/{text_value_uid}",
     dependencies=[rbac.LIBRARY_READ],
     summary="Get details on a specific text value",
     description="""
@@ -144,9 +144,9 @@ Possible errors:
         500: _generic_descriptions.ERROR_500,
     },
 )
-def get_text_value(uid: str = TextValueUID):
+def get_text_value(text_value_uid: str = TextValueUID):
     text_value_service = TextValueService()
-    return text_value_service.get_by_uid(uid=uid)
+    return text_value_service.get_by_uid(uid=text_value_uid)
 
 
 @router.post(

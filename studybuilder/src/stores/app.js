@@ -328,14 +328,14 @@ export const useAppStore = defineStore('app', {
                 url: { name: 'StudyStatus', params: { study_id: studyId } },
                 studyRequired: true,
               },
-              // {
-              //   title: i18n.t('Sidebar.study.data_standard_versions'),
-              //   url: {
-              //     name: 'StudyDataStandardVersions',
-              //     params: { study_id: studyId },
-              //   },
-              //   studyRequired: true,
-              // },
+              {
+                title: i18n.t('Sidebar.study.data_standard_versions'),
+                url: {
+                  name: 'StudyDataStandardVersions',
+                  params: { study_id: studyId },
+                },
+                studyRequired: true,
+              },
             ],
           },
           {
@@ -479,6 +479,14 @@ export const useAppStore = defineStore('app', {
                 title: i18n.t('Sidebar.study.usdm'),
                 url: {
                   name: 'Usdm',
+                  params: { study_id: studyId },
+                },
+                studyRequired: true,
+              },
+              {
+                title: i18n.t('Sidebar.study.study_disclosure'),
+                url: {
+                  name: 'StudyDisclosure',
                   params: { study_id: studyId },
                 },
                 studyRequired: true,
@@ -633,6 +641,11 @@ export const useAppStore = defineStore('app', {
         to,
         exact: true,
       }
+      if (!to) {
+        item.to = {}
+        item.disabled = true
+      }
+
       const lastIndex = this.breadcrumbs.length - 1
       if (
         this.breadcrumbs.length &&

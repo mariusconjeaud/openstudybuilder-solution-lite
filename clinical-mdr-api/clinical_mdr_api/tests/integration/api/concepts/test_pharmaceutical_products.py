@@ -596,7 +596,7 @@ def test_get_pharmaceutical_products_pagination(api_client):
         pytest.param(10, 2, True, None, 10),
         pytest.param(
             10, 3, True, None, 4
-        ),  # Total numer of pharmaceutical products is 24, so the last page should have 4 items
+        ),  # Total number of pharmaceutical products is 24, so the last page should have 4 items
         pytest.param(10, 1, True, '{"external_id": false}', 10),
         pytest.param(10, 2, True, '{"external_id": true}', 10),
     ],

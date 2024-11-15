@@ -1,5 +1,5 @@
 import datetime
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Callable
 
 from clinical_mdr_api import exceptions
@@ -16,9 +16,11 @@ class StudySelectionActivityVO(study_selection_base.StudySelectionBaseVO):
 
     study_selection_uid: str
     study_activity_subgroup_uid: str | None
+    study_activity_subgroup_order: int | None
     activity_subgroup_uid: str | None
     activity_subgroup_name: str | None
     study_activity_group_uid: str | None
+    study_activity_group_order: int | None
     activity_group_uid: str | None
     activity_group_name: str | None
     study_uid: str
@@ -26,6 +28,7 @@ class StudySelectionActivityVO(study_selection_base.StudySelectionBaseVO):
     activity_version: str | None
     activity_library_name: str | None
     study_soa_group_uid: str
+    study_soa_group_order: int | None
     soa_group_term_uid: str
     activity_order: int | None
     show_activity_in_protocol_flowchart: bool
@@ -47,11 +50,14 @@ class StudySelectionActivityVO(study_selection_base.StudySelectionBaseVO):
         study_soa_group_uid: str,
         soa_group_term_uid: str,
         user_initials: str,
+        study_soa_group_order: int | None = None,
         activity_library_name: str | None = None,
         study_activity_subgroup_uid: str | None = None,
+        study_activity_subgroup_order: int | None = None,
         activity_subgroup_uid: str | None = None,
         activity_subgroup_name: str | None = None,
         study_activity_group_uid: str | None = None,
+        study_activity_group_order: int | None = None,
         activity_group_uid: str | None = None,
         activity_group_name: str | None = None,
         show_activity_in_protocol_flowchart: bool | None = False,
@@ -78,6 +84,7 @@ class StudySelectionActivityVO(study_selection_base.StudySelectionBaseVO):
             activity_library_name=normalize_string(activity_library_name),
             activity_version=activity_version,
             study_soa_group_uid=normalize_string(study_soa_group_uid),
+            study_soa_group_order=study_soa_group_order,
             soa_group_term_uid=normalize_string(soa_group_term_uid),
             show_activity_in_protocol_flowchart=show_activity_in_protocol_flowchart,
             show_activity_group_in_protocol_flowchart=show_activity_group_in_protocol_flowchart,
@@ -86,9 +93,11 @@ class StudySelectionActivityVO(study_selection_base.StudySelectionBaseVO):
             start_date=start_date,
             study_selection_uid=normalize_string(study_selection_uid),
             study_activity_subgroup_uid=normalize_string(study_activity_subgroup_uid),
+            study_activity_subgroup_order=study_activity_subgroup_order,
             activity_subgroup_uid=normalize_string(activity_subgroup_uid),
             activity_subgroup_name=normalize_string(activity_subgroup_name),
             study_activity_group_uid=normalize_string(study_activity_group_uid),
+            study_activity_group_order=study_activity_group_order,
             activity_group_uid=normalize_string(activity_group_uid),
             activity_group_name=normalize_string(activity_group_name),
             activity_order=activity_order,
@@ -110,6 +119,9 @@ class StudySelectionActivityVO(study_selection_base.StudySelectionBaseVO):
             raise exceptions.ValidationException(
                 f"There is no approved flowchart group identified by provided term uid ({self.soa_group_term_uid})"
             )
+
+    def update_version(self, activity_version: str):
+        return replace(self, activity_version=activity_version)
 
 
 @dataclass

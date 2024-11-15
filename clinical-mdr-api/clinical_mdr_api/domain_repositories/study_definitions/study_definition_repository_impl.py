@@ -4,8 +4,8 @@ from datetime import datetime, timezone
 from decimal import Decimal
 from typing import Any, Mapping, MutableSequence, Sequence, cast
 
-from neomodel import NodeMeta, db
 from neomodel.exceptions import DoesNotExist
+from neomodel.sync_.core import NodeMeta, db
 
 from clinical_mdr_api import exceptions
 from clinical_mdr_api.config import (
@@ -84,6 +84,33 @@ from clinical_mdr_api.repositories._utils import (
     FilterOperator,
 )
 from clinical_mdr_api.services._utils import calculate_diffs
+
+MAINTAIN_RELATIONSHIPS_FOR_NEW_STUDY_VALUE = {
+    "belongs_to_study_parent_part",
+    "has_study_activity",
+    "has_study_activity_group",
+    "has_study_activity_instance",
+    "has_study_activity_instruction",
+    "has_study_activity_schedule",
+    "has_study_activity_subgroup",
+    "has_study_arm",
+    "has_study_branch_arm",
+    "has_study_cohort",
+    "has_study_compound",
+    "has_study_compound_dosing",
+    "has_study_criteria",
+    "has_study_design_cell",
+    "has_study_disease_milestone",
+    "has_study_element",
+    "has_study_endpoint",
+    "has_study_epoch",
+    "has_study_footnote",
+    "has_study_objective",
+    "has_study_soa_group",
+    "has_study_standard_version",
+    "has_study_subpart",
+    "has_study_visit",
+}
 
 
 def _is_metadata_snapshot_and_status_equal_comparing_study_value_properties(
@@ -633,30 +660,7 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
             expected_latest_value,
             date,
         )
-        for rel in [
-            "has_study_objective",
-            "has_study_endpoint",
-            "has_study_criteria",
-            "has_study_activity",
-            "has_study_activity_instance",
-            "has_study_activity_schedule",
-            "has_study_epoch",
-            "has_study_visit",
-            "has_study_arm",
-            "has_study_branch_arm",
-            "has_study_cohort",
-            "has_study_element",
-            "has_study_activity_schedule",
-            "has_study_design_cell",
-            "has_study_activity_instruction",
-            "has_study_compound",
-            "has_study_compound_dosing",
-            "has_study_disease_milestone",
-            "has_study_standard_version",
-            "has_study_footnote",
-            "has_study_subpart",
-            "belongs_to_study_parent_part",
-        ]:
+        for rel in MAINTAIN_RELATIONSHIPS_FOR_NEW_STUDY_VALUE:
             self._maintain_study_relationship_on_save(
                 rel, expected_latest_value, previous_value
             )
@@ -676,29 +680,7 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
         # check if new value node is created
         if expected_latest_value is not previous_value:
             study_selection_nodes = getattr(previous_value, relation_name).all()
-            if relation_name not in [
-                "has_study_objective",
-                "has_study_endpoint",
-                "has_study_criteria",
-                "has_study_activity",
-                "has_study_activity_instance",
-                "has_study_activity_schedule",
-                "has_study_activity_instruction",
-                "has_study_visit",
-                "has_study_epoch",
-                "has_study_element",
-                "has_study_design_cell",
-                "has_study_cohort",
-                "has_study_arm",
-                "has_study_branch_arm",
-                "has_study_compound",
-                "has_study_compound_dosing",
-                "has_study_disease_milestone",
-                "has_study_standard_version",
-                "has_study_footnote",
-                "has_study_subpart",
-                "belongs_to_study_parent_part",
-            ]:
+            if relation_name not in MAINTAIN_RELATIONSHIPS_FOR_NEW_STUDY_VALUE:
                 # remove the relation from the old value node
                 getattr(previous_value, relation_name).disconnect_all()
             # add the relation to the new node

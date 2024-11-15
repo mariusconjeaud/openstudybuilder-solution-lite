@@ -112,9 +112,9 @@ def get_comment_threads(
 
 
 @router.get(
-    "/comment-threads/{uid}",
+    "/comment-threads/{comment_thread_uid}",
     dependencies=[rbac.ANY],
-    summary="Returns the comment thread identified by the specified 'uid'.",
+    summary="Returns the comment thread identified by the specified 'comment_thread_uid'.",
     response_model=models.CommentThread,
     status_code=200,
     responses={
@@ -122,8 +122,10 @@ def get_comment_threads(
         500: _generic_descriptions.ERROR_500,
     },
 )
-def get_comment_thread(uid: str = CommentThreadUID) -> models.CommentThread:
-    return Service().get_comment_thread(uid)
+def get_comment_thread(
+    comment_thread_uid: str = CommentThreadUID,
+) -> models.CommentThread:
+    return Service().get_comment_thread(comment_thread_uid)
 
 
 @router.post(
@@ -146,7 +148,7 @@ def create_comment_thread(
 
 
 @router.patch(
-    "/comment-threads/{uid}",
+    "/comment-threads/{comment_thread_uid}",
     dependencies=[rbac.ANY],
     summary="Edits a comment thread's 'text' and/or 'status' properties",
     response_model=models.CommentThread,
@@ -158,18 +160,18 @@ def create_comment_thread(
     },
 )
 def edit_comment_thread(
-    uid: str = CommentThreadUID,
+    comment_thread_uid: str = CommentThreadUID,
     edit_input: models.CommentThreadEditInput = Body(
         description="Properties of the comment thread that shall be updated"
     ),
 ) -> models.CommentThread:
-    return Service().edit_comment_thread(uid, edit_input)
+    return Service().edit_comment_thread(comment_thread_uid, edit_input)
 
 
 @router.delete(
-    "/comment-threads/{uid}",
+    "/comment-threads/{comment_thread_uid}",
     dependencies=[rbac.ANY],
-    summary="Deletes the comment thread identified by 'uid'.",
+    summary="Deletes the comment thread identified by 'comment_thread_uid'.",
     response_model=None,
     status_code=204,
     responses={
@@ -177,13 +179,13 @@ def edit_comment_thread(
         500: _generic_descriptions.ERROR_500,
     },
 )
-def delete_comment_thread(uid: str = CommentThreadUID) -> Response:
-    Service().delete_comment_thread(uid)
+def delete_comment_thread(comment_thread_uid: str = CommentThreadUID) -> Response:
+    Service().delete_comment_thread(comment_thread_uid)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.post(
-    "/comment-threads/{thread_uid}/replies",
+    "/comment-threads/{comment_thread_uid}/replies",
     dependencies=[rbac.ANY],
     summary="Creates a reply to a comment thread",
     response_model=models.CommentReply,
@@ -195,16 +197,16 @@ def delete_comment_thread(uid: str = CommentThreadUID) -> Response:
     },
 )
 def create_comment_reply(
-    thread_uid: str = CommentThreadUID,
+    comment_thread_uid: str = CommentThreadUID,
     create_input: models.CommentReplyCreateInput = Body(
         description="Comment reply that shall be created"
     ),
 ) -> models.CommentReply:
-    return Service().create_comment_reply(thread_uid, create_input)
+    return Service().create_comment_reply(comment_thread_uid, create_input)
 
 
 @router.get(
-    "/comment-threads/{thread_uid}/replies",
+    "/comment-threads/{comment_thread_uid}/replies",
     dependencies=[rbac.ANY],
     summary="Returns all replies to the specified comment thread",
     response_model=list[models.CommentReply],
@@ -215,13 +217,13 @@ def create_comment_reply(
     },
 )
 def get_comment_thread_replies(
-    thread_uid: str = CommentThreadUID,
+    comment_thread_uid: str = CommentThreadUID,
 ) -> list[models.CommentReply]:
-    return Service().get_all_comment_thread_replies(thread_uid)
+    return Service().get_all_comment_thread_replies(comment_thread_uid)
 
 
 @router.get(
-    "/comment-threads/{thread_uid}/replies/{reply_uid}",
+    "/comment-threads/{comment_thread_uid}/replies/{reply_uid}",
     dependencies=[rbac.ANY],
     summary="Returns the comment thread reply identified by the specified 'reply_uid'.",
     response_model=models.CommentReply,
@@ -233,13 +235,13 @@ def get_comment_thread_replies(
 )
 # pylint: disable=unused-argument
 def get_comment_thread_reply(
-    thread_uid: str = CommentThreadUID, reply_uid: str = CommentReplyUID
+    comment_thread_uid: str = CommentThreadUID, reply_uid: str = CommentReplyUID
 ) -> models.CommentThread:
     return Service().get_comment_thread_reply(reply_uid)
 
 
 @router.patch(
-    "/comment-threads/{thread_uid}/replies/{reply_uid}",
+    "/comment-threads/{comment_thread_uid}/replies/{reply_uid}",
     dependencies=[rbac.ANY],
     summary="Edits the specified comment reply's text",
     response_model=models.CommentReply,
@@ -252,7 +254,7 @@ def get_comment_thread_reply(
 )
 # pylint: disable=unused-argument
 def edit_comment_thread_reply(
-    thread_uid: str = CommentThreadUID,
+    comment_thread_uid: str = CommentThreadUID,
     reply_uid: str = CommentReplyUID,
     edit_input: models.CommentReplyEditInput = Body(
         description="Updated text of the comment reply"
@@ -262,7 +264,7 @@ def edit_comment_thread_reply(
 
 
 @router.delete(
-    "/comment-threads/{thread_uid}/replies/{reply_uid}",
+    "/comment-threads/{comment_thread_uid}/replies/{reply_uid}",
     dependencies=[rbac.ANY],
     summary="Deletes the comment reply identified by 'reply_uid'.",
     response_model=None,
@@ -274,7 +276,7 @@ def edit_comment_thread_reply(
 )
 # pylint: disable=unused-argument
 def delete_comment_reply(
-    thread_uid: str = CommentThreadUID, reply_uid: str = CommentReplyUID
+    comment_thread_uid: str = CommentThreadUID, reply_uid: str = CommentReplyUID
 ):
     Service().delete_comment_reply(reply_uid)
     return Response(status_code=status.HTTP_204_NO_CONTENT)

@@ -18,7 +18,7 @@ from clinical_mdr_api.services.studies.study_compound_dosing_selection import (
 
 
 @router.get(
-    "/studies/{uid}/study-compound-dosings",
+    "/studies/{study_uid}/study-compound-dosings",
     dependencies=[rbac.STUDY_READ],
     summary="List all study compound dosings currently defined for the study",
     description=_generic_descriptions.DATA_EXPORTS_HEADER,
@@ -58,7 +58,7 @@ from clinical_mdr_api.services.studies.study_compound_dosing_selection import (
 # pylint: disable=unused-argument
 def get_all_selected_compound_dosings(
     request: Request,  # request is actually required by the allow_exports decorator
-    uid: str = utils.studyUID,
+    study_uid: str = utils.studyUID,
     study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
     filters: Json
     | None = Query(
@@ -81,7 +81,7 @@ def get_all_selected_compound_dosings(
 ) -> CustomPage[models.StudyCompoundDosing]:
     service = StudyCompoundDosingSelectionService()
     all_items = service.get_all_compound_dosings(
-        study_uid=uid,
+        study_uid=study_uid,
         study_value_version=study_value_version,
         filter_by=filters,
         filter_operator=FilterOperator.from_str(operator),
@@ -99,7 +99,7 @@ def get_all_selected_compound_dosings(
 
 
 @router.get(
-    "/studies/{uid}/study-compound-dosings/headers",
+    "/studies/{study_uid}/study-compound-dosings/headers",
     dependencies=[rbac.STUDY_READ],
     summary="Returns possible values from the database for a given header",
     description="""Allowed parameters include : field name for which to get possible
@@ -115,7 +115,7 @@ def get_all_selected_compound_dosings(
     },
 )
 def get_distinct_values_for_header(
-    uid: str = utils.studyUID,
+    study_uid: str = utils.studyUID,
     field_name: str = Query(..., description=_generic_descriptions.HEADER_FIELD_NAME),
     search_string: str
     | None = Query("", description=_generic_descriptions.HEADER_SEARCH_STRING),
@@ -131,7 +131,7 @@ def get_distinct_values_for_header(
 ):
     service = StudyCompoundDosingSelectionService()
     return service.get_distinct_values_for_header(
-        study_uid=uid,
+        study_uid=study_uid,
         field_name=field_name,
         search_string=search_string,
         filter_by=filters,
@@ -181,7 +181,7 @@ def get_distinct_compound_dosings_values_for_header(
 
 
 @router.get(
-    "/studies/{uid}/study-compound-dosings/audit-trail",
+    "/studies/{study_uid}/study-compound-dosings/audit-trail",
     dependencies=[rbac.STUDY_READ],
     summary="List full audit trail related to definition of all study compound dosings.",
     description="""
@@ -215,14 +215,14 @@ Returned data:
     },
 )
 def get_all_compound_dosings_audit_trail(
-    uid: str = utils.studyUID,
+    study_uid: str = utils.studyUID,
 ) -> list[models.StudyCompoundDosing]:
     service = StudyCompoundDosingSelectionService()
-    return service.get_all_selection_audit_trail(study_uid=uid)
+    return service.get_all_selection_audit_trail(study_uid=study_uid)
 
 
 @router.get(
-    "/studies/{uid}/study-compound-dosings/{study_compound_dosing_uid}/audit-trail",
+    "/studies/{study_uid}/study-compound-dosings/{study_compound_dosing_uid}/audit-trail",
     dependencies=[rbac.STUDY_READ],
     summary="List audit trail related to definition of a specific study compound dosing.",
     description="""
@@ -260,17 +260,17 @@ Returned data:
     },
 )
 def get_compound_dosing_audit_trail(
-    uid: str = utils.studyUID,
+    study_uid: str = utils.studyUID,
     study_compound_dosing_uid: str = utils.study_compound_dosing_uid,
 ) -> models.StudyCompoundDosing:
     service = StudyCompoundDosingSelectionService()
     return service.get_compound_dosing_audit_trail(
-        study_uid=uid, compound_dosing_uid=study_compound_dosing_uid
+        study_uid=study_uid, compound_dosing_uid=study_compound_dosing_uid
     )
 
 
 @router.post(
-    "/studies/{uid}/study-compound-dosings",
+    "/studies/{study_uid}/study-compound-dosings",
     dependencies=[rbac.STUDY_WRITE],
     summary="Add a study compound dosing to a study",
     response_model=models.StudyCompoundDosing,
@@ -283,24 +283,24 @@ def get_compound_dosing_audit_trail(
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - Study, study compound or study element is not found with the passed 'uid'.",
+            "description": "Not Found - Study, study compound or study element is not found with the passed 'study_uid'.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-@decorators.validate_if_study_is_not_locked("uid")
+@decorators.validate_if_study_is_not_locked("study_uid")
 def create_study_compound_dosing(
-    uid: str = utils.studyUID,
+    study_uid: str = utils.studyUID,
     selection: models.StudyCompoundDosingInput = Body(
         description="Related parameters of the compound dosing that shall be created.",
     ),
 ) -> models.StudyCompoundDosing:
     service = StudyCompoundDosingSelectionService()
-    return service.make_selection(study_uid=uid, selection_create_input=selection)
+    return service.make_selection(study_uid=study_uid, selection_create_input=selection)
 
 
 @router.delete(
-    "/studies/{uid}/study-compound-dosings/{study_compound_dosing_uid}",
+    "/studies/{study_uid}/study-compound-dosings/{study_compound_dosing_uid}",
     dependencies=[rbac.STUDY_WRITE],
     summary="Delete a study compound dosing",
     response_model=None,
@@ -314,21 +314,21 @@ def create_study_compound_dosing(
         500: _generic_descriptions.ERROR_500,
     },
 )
-@decorators.validate_if_study_is_not_locked("uid")
+@decorators.validate_if_study_is_not_locked("study_uid")
 def delete_compound_dosing(
-    uid: str = utils.studyUID,
+    study_uid: str = utils.studyUID,
     study_compound_dosing_uid: str = utils.study_compound_dosing_uid,
 ):
-    StudyService().check_if_study_exists(uid)
+    StudyService().check_if_study_exists(study_uid)
     service = StudyCompoundDosingSelectionService()
     service.delete_selection(
-        study_uid=uid, study_selection_uid=study_compound_dosing_uid
+        study_uid=study_uid, study_selection_uid=study_compound_dosing_uid
     )
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.patch(
-    "/studies/{uid}/study-compound-dosings/{study_compound_dosing_uid}",
+    "/studies/{study_uid}/study-compound-dosings/{study_compound_dosing_uid}",
     dependencies=[rbac.STUDY_WRITE],
     summary="Edit or replace a study compound dosing",
     description="""
@@ -355,9 +355,9 @@ State after:
         500: _generic_descriptions.ERROR_500,
     },
 )
-@decorators.validate_if_study_is_not_locked("uid")
+@decorators.validate_if_study_is_not_locked("study_uid")
 def update_compound_dosing(
-    uid: str = utils.studyUID,
+    study_uid: str = utils.studyUID,
     study_compound_dosing_uid: str = utils.study_compound_dosing_uid,
     selection: models.StudyCompoundDosingInput = Body(
         description="Related parameters of the selection that shall be updated."
@@ -365,7 +365,7 @@ def update_compound_dosing(
 ) -> models.StudyCompoundDosing:
     service = StudyCompoundDosingSelectionService()
     return service.patch_selection(
-        study_uid=uid,
+        study_uid=study_uid,
         study_selection_uid=study_compound_dosing_uid,
         selection_update_input=selection,
     )

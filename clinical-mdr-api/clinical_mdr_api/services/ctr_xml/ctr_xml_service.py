@@ -211,7 +211,7 @@ class ODMBuilder:
         return [
             ctrxml.StudyEventDef(
                 oid=visit.uid,
-                name=f"{visit.visit_type_name} {visit.visit_name}",
+                name=f"{visit.visit_type.sponsor_preferred_name} {visit.visit_name}",
                 repeating=ctrxml.YesOrNo.NO,
                 type=ctrxml.EventType.SCHEDULED,
                 category=visit.study_epoch_name,

@@ -143,7 +143,7 @@ def get_distinct_values_for_header(
 @router.get(
     "/codelists/{codelist_uid}/names",
     dependencies=[rbac.LIBRARY_READ],
-    summary="Returns the latest/newest version of a specific codelist identified by 'uid'",
+    summary="Returns the latest/newest version of a specific codelist identified by 'codelist_uid'",
     response_model=models.CTCodelistName,
     status_code=200,
     responses={

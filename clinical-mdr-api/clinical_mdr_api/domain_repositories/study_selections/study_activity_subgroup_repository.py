@@ -34,6 +34,8 @@ class SelectionHistory:
     study_selection_uid: str
     activity_subgroup_uid: str
     show_activity_subgroup_in_protocol_flowchart: bool
+    study_activity_group_uid: str
+    order: int | None
     user_initials: str
     change_type: str
     start_date: datetime.datetime
@@ -60,6 +62,8 @@ class StudySelectionActivitySubGroupRepository(
             show_activity_subgroup_in_protocol_flowchart=selection[
                 "show_activity_subgroup_in_protocol_flowchart"
             ],
+            study_activity_group_uid=selection["study_activity_group_uid"],
+            order=selection["order"],
             start_date=convert_to_datetime(value=selection["start_date"]),
             user_initials=selection["user_initials"],
             accepted_version=acv,
@@ -89,6 +93,9 @@ class StudySelectionActivitySubGroupRepository(
                 sa.accepted_version AS accepted_version,
                 sa.show_activity_subgroup_in_protocol_flowchart AS show_activity_subgroup_in_protocol_flowchart,
                 ar.uid AS activity_subgroup_uid,
+                head([(sa)<-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_SUBGROUP]-(:StudyActivity)-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_GROUP]->(study_activity_group:StudyActivityGroup) 
+                    | study_activity_group.uid]) as study_activity_group_uid,
+                sa.order AS order,
                 sac.date AS start_date,
                 sac.user_initials AS user_initials,
                 hv_ver.version AS activity_subgroup_version"""
@@ -103,6 +110,8 @@ class StudySelectionActivitySubGroupRepository(
             show_activity_subgroup_in_protocol_flowchart=selection[
                 "show_activity_subgroup_in_protocol_flowchart"
             ],
+            study_activity_group_uid=selection["study_activity_group_uid"],
+            order=selection["order"],
             user_initials=selection["user_initials"],
             change_type=change_type,
             start_date=convert_to_datetime(value=selection["start_date"]),
@@ -146,6 +155,9 @@ class StudySelectionActivitySubGroupRepository(
                         all_sa.uid AS study_selection_uid,
                         all_sa.show_activity_subgroup_in_protocol_flowchart AS show_activity_subgroup_in_protocol_flowchart,
                         ar.uid AS activity_subgroup_uid,
+                        head([(all_sa)<-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_SUBGROUP]-(:StudyActivity)-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_GROUP]->(study_activity_group:StudyActivityGroup) 
+                            | study_activity_group.uid]) as study_activity_group_uid,
+                        sa.order AS order,
                         asa.date AS start_date,
                         asa.user_initials AS user_initials,
                         labels(asa) AS change_type,
@@ -189,10 +201,14 @@ class StudySelectionActivitySubGroupRepository(
         )
         study_activity_subgroup_selection_node.save()
 
+        if not for_deletion:
+            # Connect new node with study value
+            latest_study_value_node.has_study_activity_subgroup.connect(
+                study_activity_subgroup_selection_node
+            )
+
         # Connect new node with audit trail
-        audit_node.study_selection_metadata_has_after.connect(
-            study_activity_subgroup_selection_node
-        )
+        audit_node.has_after.connect(study_activity_subgroup_selection_node)
         # Connect new node with Activity subgroup value
         study_activity_subgroup_selection_node.has_selected_activity_subgroup.connect(
             latest_activity_subgroup_value_node

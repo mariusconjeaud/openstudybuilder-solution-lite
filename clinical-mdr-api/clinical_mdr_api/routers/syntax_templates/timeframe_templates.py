@@ -250,9 +250,9 @@ def retrieve_audit_trail(
 
 
 @router.get(
-    "/{uid}",
+    "/{timeframe_template_uid}",
     dependencies=[rbac.LIBRARY_READ],
-    summary="Returns the latest/newest version of a specific timeframe template identified by 'uid'.",
+    summary="Returns the latest/newest version of a specific timeframe template identified by 'timeframe_template_uid'.",
     description="""If multiple request query parameters are used, then they need to
     match all at the same time (they are combined with the AND operation).""",
     response_model=TimeframeTemplateWithCount,
@@ -260,21 +260,21 @@ def retrieve_audit_trail(
     responses={
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The timeframe template with the specified 'uid' (and the specified date/time and/or status) wasn't found.",
+            "description": "Not Found - The timeframe template with the specified 'timeframe_template_uid' (and the specified date/time and/or status) wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def get_timeframe_template(
-    uid: str = TimeframeTemplateUID,
+    timeframe_template_uid: str = TimeframeTemplateUID,
 ) -> TimeframeTemplate:
-    return Service().get_by_uid(uid)
+    return Service().get_by_uid(timeframe_template_uid)
 
 
 @router.get(
-    "/{uid}/versions",
+    "/{timeframe_template_uid}/versions",
     dependencies=[rbac.LIBRARY_READ],
-    summary="Returns the version history of a specific timeframe template identified by 'uid'.",
+    summary="Returns the version history of a specific timeframe template identified by 'timeframe_template_uid'.",
     description=f"""
 The returned versions are ordered by `start_date` descending (newest entries first).
 
@@ -301,7 +301,7 @@ The returned versions are ordered by `start_date` descending (newest entries fir
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The timeframe template with the specified 'uid' wasn't found.",
+            "description": "Not Found - The timeframe template with the specified 'timeframe_template_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
@@ -329,15 +329,15 @@ The returned versions are ordered by `start_date` descending (newest entries fir
 # pylint: disable=unused-argument
 def get_timeframe_template_versions(
     request: Request,  # request is actually required by the allow_exports decorator
-    uid: str = TimeframeTemplateUID,
+    timeframe_template_uid: str = TimeframeTemplateUID,
 ) -> list[TimeframeTemplateVersion]:
-    return Service().get_version_history(uid)
+    return Service().get_version_history(timeframe_template_uid)
 
 
 @router.get(
-    "/{uid}/versions/{version}",
+    "/{timeframe_template_uid}/versions/{version}",
     dependencies=[rbac.LIBRARY_READ],
-    summary="Returns a specific version of a specific timeframe template identified by 'uid' and 'version'.",
+    summary="Returns a specific version of a specific timeframe template identified by 'timeframe_template_uid' and 'version'.",
     description="**Multiple versions**:\n\n"
     "Technically, there can be multiple versions of the timeframe template with the same version number. "
     "This is due to the fact, that the version number remains the same when inactivating or reactivating an timeframe template "
@@ -348,13 +348,13 @@ def get_timeframe_template_versions(
     responses={
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The timeframe template with the specified 'uid' and 'version' wasn't found.",
+            "description": "Not Found - The timeframe template with the specified 'timeframe_template_uid' and 'version' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def get_timeframe_template_version(
-    uid: str = TimeframeTemplateUID,
+    timeframe_template_uid: str = TimeframeTemplateUID,
     version: str = Path(
         None,
         description="A specific version number of the timeframe template. "
@@ -362,7 +362,7 @@ def get_timeframe_template_version(
         "E.g. '0.1', '0.2', '1.0', ...",
     ),
 ) -> TimeframeTemplate:
-    return Service().get_specific_version(uid, version)
+    return Service().get_specific_version(timeframe_template_uid, version)
 
 
 @router.post(
@@ -408,9 +408,9 @@ def create_timeframe_template(
 
 
 @router.patch(
-    "/{uid}",
+    "/{timeframe_template_uid}",
     dependencies=[rbac.LIBRARY_WRITE],
-    summary="Updates the timeframe template identified by 'uid'.",
+    summary="Updates the timeframe template identified by 'timeframe_template_uid'.",
     description="""This request is only valid if the timeframe template
 * is in 'Draft' status and
 * belongs to a library that allows editing (the 'is_editable' property of the library needs to be true).
@@ -438,24 +438,24 @@ Once the timeframe template has been approved, only the surrounding text (exclud
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The timeframe template with the specified 'uid' could not be found.",
+            "description": "Not Found - The timeframe template with the specified 'timeframe_template_uid' could not be found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def edit(
-    uid: str = TimeframeTemplateUID,
+    timeframe_template_uid: str = TimeframeTemplateUID,
     timeframe_template: TimeframeTemplateEditInput = Body(
         description="The new content of the timeframe template including the change description.",
     ),
 ) -> TimeframeTemplate:
-    return Service().edit_draft(uid, timeframe_template)
+    return Service().edit_draft(timeframe_template_uid, timeframe_template)
 
 
 @router.post(
-    "/{uid}/versions",
+    "/{timeframe_template_uid}/versions",
     dependencies=[rbac.LIBRARY_WRITE],
-    summary="Creates a new version of the timeframe template identified by 'uid'.",
+    summary="Creates a new version of the timeframe template identified by 'timeframe_template_uid'.",
     description="""This request is only valid if the timeframe template
 * is in 'Final' or 'Retired' status only (so no latest 'Draft' status exists) and
 * belongs to a library that allows editing (the 'is_editable' property of the library needs to be true).
@@ -481,24 +481,24 @@ Only the surrounding text (excluding the parameters) can be changed.
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The timeframe template with the specified 'uid' could not be found.",
+            "description": "Not Found - The timeframe template with the specified 'timeframe_template_uid' could not be found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def create_new_version(
-    uid: str = TimeframeTemplateUID,
+    timeframe_template_uid: str = TimeframeTemplateUID,
     timeframe_template: TimeframeTemplateEditInput = Body(
         description="The content of the timeframe template for the new 'Draft' version including the change description.",
     ),
 ) -> TimeframeTemplate:
-    return Service().create_new_version(uid, timeframe_template)
+    return Service().create_new_version(timeframe_template_uid, timeframe_template)
 
 
 @router.post(
-    "/{uid}/approvals",
+    "/{timeframe_template_uid}/approvals",
     dependencies=[rbac.LIBRARY_WRITE],
-    summary="Approves the timeframe template identified by 'uid'.",
+    summary="Approves the timeframe template identified by 'timeframe_template_uid'.",
     description="""This request is only valid if the timeframe template
 * is in 'Draft' status and
 * belongs to a library that allows editing (the 'is_editable' property of the library needs to be true).
@@ -521,7 +521,7 @@ If the request succeeds:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The timeframe template with the specified 'uid' could not be found.",
+            "description": "Not Found - The timeframe template with the specified 'timeframe_template_uid' could not be found.",
         },
         409: {
             "model": ErrorResponse,
@@ -531,7 +531,7 @@ If the request succeeds:
     },
 )
 def approve(
-    uid: str = TimeframeTemplateUID,
+    timeframe_template_uid: str = TimeframeTemplateUID,
     cascade: bool = False,
 ) -> TimeframeTemplate:
     """
@@ -539,14 +539,14 @@ def approve(
     from this template and cascade is false
     """
     if not cascade:
-        return Service().approve(uid=uid)
-    return Service().approve_cascade(uid=uid)
+        return Service().approve(uid=timeframe_template_uid)
+    return Service().approve_cascade(uid=timeframe_template_uid)
 
 
 @router.delete(
-    "/{uid}/activations",
+    "/{timeframe_template_uid}/activations",
     dependencies=[rbac.LIBRARY_WRITE],
-    summary="Inactivates/deactivates the timeframe template identified by 'uid'.",
+    summary="Inactivates/deactivates the timeframe template identified by 'timeframe_template_uid'.",
     description="""This request is only valid if the timeframe template
 * is in 'Final' status only (so no latest 'Draft' status exists).
 
@@ -566,20 +566,20 @@ If the request succeeds:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The timeframe template with the specified 'uid' could not be found.",
+            "description": "Not Found - The timeframe template with the specified 'timeframe_template_uid' could not be found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def inactivate(uid: str = TimeframeTemplateUID) -> TimeframeTemplate:
+def inactivate(timeframe_template_uid: str = TimeframeTemplateUID) -> TimeframeTemplate:
     # TODO: do sth to make static code analysis work fine for this code
-    return Service().inactivate_final(uid)
+    return Service().inactivate_final(timeframe_template_uid)
 
 
 @router.post(
-    "/{uid}/activations",
+    "/{timeframe_template_uid}/activations",
     dependencies=[rbac.LIBRARY_WRITE],
-    summary="Reactivates the timeframe template identified by 'uid'.",
+    summary="Reactivates the timeframe template identified by 'timeframe_template_uid'.",
     description="""This request is only valid if the timeframe template
 * is in 'Retired' status only (so no latest 'Draft' status exists).
 
@@ -599,20 +599,20 @@ If the request succeeds:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The timeframe template with the specified 'uid' could not be found.",
+            "description": "Not Found - The timeframe template with the specified 'timeframe_template_uid' could not be found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def reactivate(uid: str = TimeframeTemplateUID) -> TimeframeTemplate:
+def reactivate(timeframe_template_uid: str = TimeframeTemplateUID) -> TimeframeTemplate:
     # TODO: do sth to allow for static code analysis of this code
-    return Service().reactivate_retired(uid)
+    return Service().reactivate_retired(timeframe_template_uid)
 
 
 @router.delete(
-    "/{uid}",
+    "/{timeframe_template_uid}",
     dependencies=[rbac.LIBRARY_WRITE],
-    summary="Deletes the timeframe template identified by 'uid'.",
+    summary="Deletes the timeframe template identified by 'timeframe_template_uid'.",
     description="""This request is only valid if \n
 * the timeframe template is in 'Draft' status and
 * the timeframe template has never been in 'Final' status and
@@ -638,17 +638,19 @@ def reactivate(uid: str = TimeframeTemplateUID) -> TimeframeTemplate:
         500: _generic_descriptions.ERROR_500,
     },
 )
-def delete_timeframe_template(uid: str = TimeframeTemplateUID) -> Response:
-    Service().soft_delete(uid)
+def delete_timeframe_template(
+    timeframe_template_uid: str = TimeframeTemplateUID,
+) -> Response:
+    Service().soft_delete(timeframe_template_uid)
     return Response(status_code=fast_api_status.HTTP_204_NO_CONTENT)
 
 
 # TODO this endpoint potentially returns duplicated entries (by intention, currently).
 #       however: check if that is ok with regard to the data volume we expect in the future. is paging needed?
 @router.get(
-    "/{uid}/parameters",
+    "/{timeframe_template_uid}/parameters",
     dependencies=[rbac.LIBRARY_READ],
-    summary="Returns all parameters used in the timeframe template identified by 'uid'. Includes the available values per parameter.",
+    summary="Returns all parameters used in the timeframe template identified by 'timeframe_template_uid'. Includes the available values per parameter.",
     description="""The returned parameters are ordered
 0. as they occur in the timeframe template
 
@@ -666,14 +668,16 @@ In that case, the same parameter (with the same values) is included multiple tim
     },
 )
 def get_parameters(
-    uid: str = Path(None, description="The unique id of the timeframe template."),
+    timeframe_template_uid: str = Path(
+        None, description="The unique id of the timeframe template."
+    ),
     study_uid: str
     | None = Query(
         None,
         description="if specified only valid parameters for a given study will be returned.",
     ),
 ):
-    return Service().get_parameters(uid, study_uid=study_uid)
+    return Service().get_parameters(timeframe_template_uid, study_uid=study_uid)
 
 
 @router.post(
@@ -681,7 +685,7 @@ def get_parameters(
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Validates the content of an timeframe template without actually processing it.",
     description="""Be aware that - even if this request is accepted - there is no guarantee that
-a following request to e.g. *[POST] /timeframe-templates* or *[PATCH] /timeframe-templates/{uid}*
+a following request to e.g. *[POST] /timeframe-templates* or *[PATCH] /timeframe-templates/{timeframe_template_uid}*
 with the same content will succeed.
 
 """

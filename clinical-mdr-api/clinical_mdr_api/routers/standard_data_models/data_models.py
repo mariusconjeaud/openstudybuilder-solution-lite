@@ -131,7 +131,7 @@ def get_distinct_values_for_header(
 
 
 @router.get(
-    "/data-models/{uid}",
+    "/data-models/{data_model_uid}",
     dependencies=[rbac.LIBRARY_READ],
     summary="Get details on a specific data model",
     description="""
@@ -153,6 +153,6 @@ Possible errors:
         500: _generic_descriptions.ERROR_500,
     },
 )
-def get_data_model(uid: str = DataModelUID):
+def get_data_model(data_model_uid: str = DataModelUID):
     data_model_service = DataModelService()
-    return data_model_service.get_by_uid(uid=uid)
+    return data_model_service.get_by_uid(uid=data_model_uid)

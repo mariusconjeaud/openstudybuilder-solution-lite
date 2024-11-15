@@ -1,9 +1,11 @@
 import logging
 import os
 import urllib.parse
+from datetime import datetime
 from typing import Any
 
-from neomodel.core import db
+import neo4j
+from neomodel.sync_.core import db
 
 from consumer_api.shared import config, exceptions
 
@@ -111,3 +113,16 @@ def strtobool(value: str) -> int:
     if val in ("n", "no", "f", "false", "off", "0"):
         return 0
     raise ValueError(f"invalid truth value: {value:s}")
+
+
+def convert_to_datetime(value: neo4j.time.DateTime) -> datetime | None:
+    """
+    Converts a DateTime object from the database to a Python datetime object.
+
+    Args:
+        value (neo4j.time.DateTime): The DateTime object to convert.
+
+    Returns:
+        datetime: The Python datetime object.
+    """
+    return value.to_native() if value is not None else None

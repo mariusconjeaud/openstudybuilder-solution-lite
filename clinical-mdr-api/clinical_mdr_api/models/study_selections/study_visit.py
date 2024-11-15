@@ -12,10 +12,7 @@ from clinical_mdr_api.config import (
 from clinical_mdr_api.domains.study_definition_aggregates.study_metadata import (
     StudyStatus,
 )
-from clinical_mdr_api.domains.study_selections.study_epoch import (
-    EpochNamedTuple,
-    StudyEpochEpoch,
-)
+from clinical_mdr_api.domains.study_selections.study_epoch import StudyEpochEpoch
 from clinical_mdr_api.domains.study_selections.study_visit import (
     StudyVisitContactMode,
     StudyVisitEpochAllocation,
@@ -31,6 +28,7 @@ from clinical_mdr_api.domains.study_selections.study_visit import (
     VisitTimeReferenceNamedTuple,
     VisitTypeNamedTuple,
 )
+from clinical_mdr_api.models.controlled_terminologies.ct_term_name import CTTermName
 from clinical_mdr_api.models.utils import BaseModel
 
 
@@ -290,7 +288,7 @@ class StudyEpochSimpleOGM(BaseModel):
         description="The uid of the study",
         source="has_after.audit_trail.uid",
     )
-    epoch: EpochNamedTuple = Field(
+    epoch: CTTermName = Field(
         ...,
         title="Visit name name",
         description="The name of the visit",
@@ -299,7 +297,7 @@ class StudyEpochSimpleOGM(BaseModel):
 
     @validator("epoch", pre=True)
     # pylint: disable=no-self-argument,unused-argument
-    def instantiate_epoch(cls, value, values) -> EpochNamedTuple:
+    def instantiate_epoch(cls, value, values) -> CTTermName:
         return StudyEpochEpoch[value]
 
     order: int = Field(
@@ -631,7 +629,7 @@ class StudyVisit(StudyVisitEditInput):
         title="study version or date information",
         description="Study version number, if specified, otherwise None.",
     )
-    study_epoch_name: str
+    study_epoch: CTTermName
     # study_epoch_name can be calculated from uid
     epoch_uid: str = Field(
         ...,
@@ -641,20 +639,23 @@ class StudyVisit(StudyVisitEditInput):
 
     order: int
 
+    visit_type: CTTermName
     visit_type_name: str
 
     time_reference_uid: str | None
-    time_reference_name: str | None
+    time_reference: CTTermName | None
     time_value: int | None
     time_unit_uid: str | None
     time_unit_name: str | None
+    # time_reference_name: str | None
+    time_unit: CTTermName | None
     visit_contact_mode_uid: str
-    visit_contact_mode_name: str
+    visit_contact_mode: CTTermName
     epoch_allocation_uid: str | None
-    epoch_allocation_name: str | None
+    epoch_allocation: CTTermName | None
 
     repeating_frequency_uid: str | None
-    repeating_frequency_name: str | None
+    repeating_frequency: CTTermName | None
 
     duration_time: float | None
     duration_time_unit: str | None

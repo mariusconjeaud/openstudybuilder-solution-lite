@@ -48,8 +48,8 @@ export default {
   delete(uid, source) {
     return repository.delete(`${resource}/${source}/${uid}`)
   },
-  approve(uid, source) {
-    return repository.post(`${resource}/${source}/${uid}/approvals`)
+  approve(uid, source, params) {
+    return repository.post(`${resource}/${source}/${uid}/approvals`, {}, { params })
   },
   newVersion(uid, source) {
     return repository.post(`${resource}/${source}/${uid}/versions`)
@@ -110,11 +110,11 @@ export default {
     }
     return repository.post(`${resource}/${source}`, params)
   },
-  update(uid, data, source) {
-    const params = {
+  update(uid, data, params, source) {
+    const patch_data = {
       ...data,
     }
-    return repository.patch(`${resource}/${source}/${uid}`, params)
+    return repository.patch(`${resource}/${source}/${uid}`, patch_data, { params })
   },
   createFromActivityRequest(data) {
     return repository.post(`${resource}/activities/sponsor-activities`, data)

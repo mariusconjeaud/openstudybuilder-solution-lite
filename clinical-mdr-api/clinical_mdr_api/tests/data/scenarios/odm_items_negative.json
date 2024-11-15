@@ -197,7 +197,8 @@
                 "type": "BusinessLogicException"
             }
         }
-    },    {
+    },
+    {
         "name": "Test cannot add a non-compatible ODM Vendor Element to an ODM Item",
         "request": {
             "headers": {},
@@ -499,7 +500,7 @@
         }
     },
     {
-        "name": "Test cannot create a new ODM Item with existing name",
+        "name": "Test cannot create a new ODM Item with same properties",
         "request": {
             "headers": {},
             "method": "POST",
@@ -516,12 +517,29 @@
                 "origin": "origin1",
                 "comment": "comment1",
                 "descriptions": [
+                    "odm_description2",
                     "odm_description3"
                 ],
-                "alias_uids": [],
-                "unit_definitions": [],
-                "codelist_uid": null,
-                "terms": []
+                "alias_uids": [
+                    "odm_alias1"
+                ],
+                "unit_definitions": [
+                    {
+                        "uid": "unit_definition_root1",
+                        "mandatory": false,
+                        "order": 1
+                    }
+                ],
+                "codelist_uid": "editable_cr",
+                "terms": [
+                    {
+                        "uid": "term_root_final",
+                        "mandatory": true,
+                        "order": 1,
+                        "display_text": null,
+                        "version": "1.0"
+                    }
+                ]
             },
             "url": "concepts/odms/items"
         },
@@ -532,7 +550,7 @@
                 "content-type": "application/json"
             },
             "result": {
-                "message": "ODM Item with ['name: name1', 'OID: oid1'] already exists.",
+                "message": "ODM Item already exists with UID (OdmItem_000001) and data {'description_uids': ['odm_description2', 'odm_description3'], 'alias_uids': ['odm_alias1'], 'unit_definition_uids': ['unit_definition_root1'], 'codelist_uid': 'editable_cr', 'term_uids': ['term_root_final'], 'name': 'name1', 'oid': 'oid1', 'datatype': 'datatype1', 'prompt': 'prompt1', 'length': 11, 'significant_digits': 11, 'sas_field_name': 'sas_field_name1', 'sds_var_name': 'sds_var_name1', 'origin': 'origin1', 'comment': 'comment1'}",
                 "time": "2022-03-07T12: 14: 18.116363",
                 "path": "http://testserver/concepts/odms/items",
                 "method": "POST",

@@ -2,20 +2,20 @@
 
 - aiohttp==3.8.6
 ├── aiosignal [required: >=1.1.2, installed: 1.3.1]
-│   └── frozenlist [required: >=1.1.0, installed: 1.4.0]
+│   └── frozenlist [required: >=1.1.0, installed: 1.4.1]
 ├── async-timeout [required: >=4.0.0a3,<5.0, installed: 4.0.3]
-├── attrs [required: >=17.3.0, installed: 23.1.0]
+├── attrs [required: >=17.3.0, installed: 24.2.0]
 ├── charset-normalizer [required: >=2.0,<4.0, installed: 3.3.2]
-├── frozenlist [required: >=1.1.1, installed: 1.4.0]
-├── multidict [required: >=4.5,<7.0, installed: 6.0.4]
-└── yarl [required: >=1.0,<2.0, installed: 1.9.3]
-    ├── idna [required: >=2.0, installed: 3.6]
-    └── multidict [required: >=4.0, installed: 6.0.4]
+├── frozenlist [required: >=1.1.1, installed: 1.4.1]
+├── multidict [required: >=4.5,<7.0, installed: 6.1.0]
+└── yarl [required: >=1.0,<2.0, installed: 1.11.1]
+    ├── idna [required: >=2.0, installed: 3.10]
+    └── multidict [required: >=4.0, installed: 6.1.0]
 - requests==2.28.2
-├── certifi [required: >=2017.4.17, installed: 2023.11.17]
+├── certifi [required: >=2017.4.17, installed: 2024.8.30]
 ├── charset-normalizer [required: >=2,<4, installed: 3.3.2]
-├── idna [required: >=2.5,<4, installed: 3.6]
-└── urllib3 [required: >=1.21.1,<1.27, installed: 1.26.18]
+├── idna [required: >=2.5,<4, installed: 3.10]
+└── urllib3 [required: >=1.21.1,<1.27, installed: 1.26.20]
 
 
 ## Third-party package licenses
@@ -558,7 +558,7 @@ Apache License
 
 BSD 3-Clause License
 
-Copyright (c) 2013-2023, Kim Davies and contributors.
+Copyright (c) 2013-2024, Kim Davies and contributors.
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -593,7 +593,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ### License for 3rd party library multidict
 
-   Copyright 2016-2021 Andrew Svetlov and aio-libs team
+   Copyright 2016 Andrew Svetlov and aio-libs contributors
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.

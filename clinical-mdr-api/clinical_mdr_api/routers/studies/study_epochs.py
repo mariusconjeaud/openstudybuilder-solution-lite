@@ -32,7 +32,7 @@ study_visit_uid_description = Path(
 
 
 @router.get(
-    "/studies/{uid}/study-epochs",
+    "/studies/{study_uid}/study-epochs",
     dependencies=[rbac.STUDY_READ],
     summary="List all study epochs currently selected for the study.",
     description=f"""
@@ -109,13 +109,15 @@ def get_all(
     operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
     total_count: bool
     | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
 ) -> CustomPage[study_epoch.StudyEpoch]:
-    service = StudyEpochService(study_uid=uid, study_value_version=study_value_version)
+    service = StudyEpochService(
+        study_uid=study_uid, study_value_version=study_value_version
+    )
 
     all_items = service.get_all_epochs(
-        study_uid=uid,
+        study_uid=study_uid,
         page_number=page_number,
         page_size=page_size,
         total_count=total_count,
@@ -134,7 +136,7 @@ def get_all(
 
 
 @router.get(
-    "/studies/{uid}/study-epochs/headers",
+    "/studies/{study_uid}/study-epochs/headers",
     dependencies=[rbac.STUDY_READ],
     summary="Returns possible values from the database for a given header",
     description="""Allowed parameters include : field name for which to get possible
@@ -162,12 +164,14 @@ def get_distinct_values_for_header(
     operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
     result_count: int
     | None = Query(10, description=_generic_descriptions.HEADER_RESULT_COUNT),
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
 ):
-    service = StudyEpochService(study_uid=uid, study_value_version=study_value_version)
+    service = StudyEpochService(
+        study_uid=study_uid, study_value_version=study_value_version
+    )
     return service.get_distinct_values_for_header(
-        study_uid=uid,
+        study_uid=study_uid,
         field_name=field_name,
         search_string=search_string,
         filter_by=filters,
@@ -178,7 +182,7 @@ def get_distinct_values_for_header(
 
 
 @router.get(
-    "/studies/{uid}/study-epochs/{study_epoch_uid}",
+    "/studies/{study_uid}/study-epochs/{study_epoch_uid}",
     dependencies=[rbac.STUDY_READ],
     summary="List all definitions for a specific study epoch",
     description="""
@@ -213,18 +217,22 @@ Possible errors:
 )
 # pylint: disable=unused-argument
 def get_study_epoch(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     study_epoch_uid: str = study_epoch_uid_description,
     study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
 ) -> study_epoch.StudyEpoch:
-    service = StudyEpochService(study_uid=uid, study_value_version=study_value_version)
+    service = StudyEpochService(
+        study_uid=study_uid, study_value_version=study_value_version
+    )
     return service.find_by_uid(
-        uid=study_epoch_uid, study_uid=uid, study_value_version=study_value_version
+        uid=study_epoch_uid,
+        study_uid=study_uid,
+        study_value_version=study_value_version,
     )
 
 
 @router.get(
-    "/studies/{uid}/study-epochs/{study_epoch_uid}/audit-trail",
+    "/studies/{study_uid}/study-epochs/{study_epoch_uid}/audit-trail",
     dependencies=[rbac.STUDY_READ],
     summary="List audit trail related to definition of a specific study epoch",
     description="""
@@ -253,15 +261,15 @@ Possible errors:
     },
 )
 def get_study_epoch_audit_trail(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     study_epoch_uid: str = study_epoch_uid_description,
 ) -> list[study_epoch.StudyEpochVersion]:
-    service = StudyEpochService(study_uid=uid)
-    return service.audit_trail(study_uid=uid, epoch_uid=study_epoch_uid)
+    service = StudyEpochService(study_uid=study_uid)
+    return service.audit_trail(study_uid=study_uid, epoch_uid=study_epoch_uid)
 
 
 @router.get(
-    "/studies/{uid}/study-epoch/audit-trail",
+    "/studies/{study_uid}/study-epoch/audit-trail",
     dependencies=[rbac.STUDY_READ],
     summary="List audit trail related to all study epochs within the specified study-uid",
     description="""
@@ -290,14 +298,14 @@ Possible errors:
     },
 )
 def get_study_epochs_all_audit_trail(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
 ) -> list[study_epoch.StudyEpochVersion]:
-    service = StudyEpochService(study_uid=uid)
-    return service.audit_trail_all_epochs(uid)
+    service = StudyEpochService(study_uid=study_uid)
+    return service.audit_trail_all_epochs(study_uid)
 
 
 @router.post(
-    "/studies/{uid}/study-epochs",
+    "/studies/{study_uid}/study-epochs",
     dependencies=[rbac.STUDY_WRITE],
     summary="Add a study epoch to a study",
     description="""
@@ -325,24 +333,24 @@ Possible errors:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - Study is not found with the passed 'uid'.",
+            "description": "Not Found - Study is not found with the passed 'study_uid'.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-@decorators.validate_if_study_is_not_locked("uid")
+@decorators.validate_if_study_is_not_locked("study_uid")
 def post_new_epoch_create(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     selection: study_epoch.StudyEpochCreateInput = Body(
         description="Related parameters of the selection that shall be created."
     ),
 ) -> study_epoch.StudyEpoch:
-    service = StudyEpochService(study_uid=uid)
-    return service.create(study_uid=uid, study_epoch_input=selection)
+    service = StudyEpochService(study_uid=study_uid)
+    return service.create(study_uid=study_uid, study_epoch_input=selection)
 
 
 @router.post(
-    "/studies/{uid}/study-epochs/preview",
+    "/studies/{study_uid}/study-epochs/preview",
     dependencies=[rbac.STUDY_WRITE],
     summary="Preview a study epoch",
     response_model=study_epoch.StudyEpoch,
@@ -351,24 +359,24 @@ def post_new_epoch_create(
     responses={
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - Study is not found with the passed 'uid'.",
+            "description": "Not Found - Study is not found with the passed 'study_uid'.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-@decorators.validate_if_study_is_not_locked("uid")
+@decorators.validate_if_study_is_not_locked("study_uid")
 def post_preview_epoch(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     selection: study_epoch.StudyEpochCreateInput = Body(
         description="Related parameters of the epoch that shall be created."
     ),
 ) -> study_epoch.StudyEpoch:
-    service = StudyEpochService(study_uid=uid)
-    return service.preview(study_uid=uid, study_epoch_input=selection)
+    service = StudyEpochService(study_uid=study_uid)
+    return service.preview(study_uid=study_uid, study_epoch_input=selection)
 
 
 @router.delete(
-    "/studies/{uid}/study-epochs/{study_epoch_uid}",
+    "/studies/{study_uid}/study-epochs/{study_epoch_uid}",
     dependencies=[rbac.STUDY_WRITE],
     summary="Delete a study epoch.",
     description="""
@@ -399,19 +407,19 @@ Possible errors:
         500: _generic_descriptions.ERROR_500,
     },
 )
-@decorators.validate_if_study_is_not_locked("uid")
+@decorators.validate_if_study_is_not_locked("study_uid")
 def delete_study_epoch(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     study_epoch_uid: str = study_epoch_uid_description,
 ):
-    service = StudyEpochService(study_uid=uid)
+    service = StudyEpochService(study_uid=study_uid)
 
-    service.delete(study_uid=uid, study_epoch_uid=study_epoch_uid)
+    service.delete(study_uid=study_uid, study_epoch_uid=study_epoch_uid)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.patch(
-    "/studies/{uid}/study-epochs/{study_epoch_uid}/order/{new_order}",
+    "/studies/{study_uid}/study-epochs/{study_epoch_uid}/order/{new_order}",
     dependencies=[rbac.STUDY_WRITE],
     summary="Change display order of study epoch",
     description="""
@@ -451,21 +459,21 @@ Possible errors:
         500: _generic_descriptions.ERROR_500,
     },
 )
-@decorators.validate_if_study_is_not_locked("uid")
+@decorators.validate_if_study_is_not_locked("study_uid")
 # pylint: disable=unused-argument
 def patch_reorder(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     study_epoch_uid: str = study_epoch_uid_description,
     new_order: int = 0,
 ) -> study_epoch.StudyEpoch:
-    service = StudyEpochService(study_uid=uid)
+    service = StudyEpochService(study_uid=study_uid)
     return service.reorder(
-        study_epoch_uid=study_epoch_uid, study_uid=uid, new_order=new_order
+        study_epoch_uid=study_epoch_uid, study_uid=study_uid, new_order=new_order
     )
 
 
 @router.patch(
-    "/studies/{uid}/study-epochs/{study_epoch_uid}",
+    "/studies/{study_uid}/study-epochs/{study_epoch_uid}",
     dependencies=[rbac.STUDY_WRITE],
     summary="Edit a study epoch",
     description="""
@@ -496,18 +504,20 @@ Possible errors:
         500: _generic_descriptions.ERROR_500,
     },
 )
-@decorators.validate_if_study_is_not_locked("uid")
+@decorators.validate_if_study_is_not_locked("study_uid")
 # pylint: disable=unused-argument
 def patch_update_epoch(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     study_epoch_uid: str = study_epoch_uid_description,
     selection: study_epoch.StudyEpochEditInput = Body(
         description="Related parameters of the selection that shall be created."
     ),
 ) -> study_epoch.StudyEpoch:
-    service = StudyEpochService(study_uid=uid)
+    service = StudyEpochService(study_uid=study_uid)
     return service.edit(
-        study_uid=uid, study_epoch_uid=study_epoch_uid, study_epoch_input=selection
+        study_uid=study_uid,
+        study_epoch_uid=study_epoch_uid,
+        study_epoch_input=selection,
     )
 
 
@@ -539,7 +549,7 @@ def get_all_configs(
 
 
 @router.get(
-    "/studies/{uid}/allowed-consecutive-groups",
+    "/studies/{study_uid}/allowed-consecutive-groups",
     dependencies=[rbac.STUDY_READ],
     summary="Returns all consecutive groups",
     response_model=set[str],
@@ -551,8 +561,10 @@ def get_all_configs(
     },
 )
 def get_all_consecutive_groups(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
 ) -> set[str]:
-    service = StudyVisitService(study_uid=uid, study_value_version=study_value_version)
-    return service.get_consecutive_groups(uid)
+    service = StudyVisitService(
+        study_uid=study_uid, study_value_version=study_value_version
+    )
+    return service.get_consecutive_groups(study_uid)

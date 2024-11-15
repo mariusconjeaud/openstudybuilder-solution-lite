@@ -14,5 +14,13 @@
     "abbreviation": null,
     "library_name": "Sponsor",
     "is_sponsor_compound": true
+  },
+  {
+    "name": "cagrilintide semaglutide",
+    "name_sentence_case": "cagrilintide semaglutide",
+    "definition": null,
+    "abbreviation": null,
+    "library_name": "Sponsor",
+    "is_sponsor_compound": true
   }
 ]

@@ -137,8 +137,9 @@ class StudySelectionBranchArmRepository:
                 ar.uid AS arm_root_uid,
                 sba.text AS text,
                 sa.date AS start_date,
-                sa.user_initials AS user_initials
-                ORDER BY order
+                sa.user_initials AS user_initials,
+                ar.order AS arm_order
+                ORDER BY arm_order, order
             """
 
         all_branch_arm_selections = db.cypher_query(query, query_parameters)

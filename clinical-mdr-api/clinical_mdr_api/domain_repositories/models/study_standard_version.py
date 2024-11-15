@@ -1,4 +1,5 @@
 from neomodel import (  # ZeroOrOne,
+    BooleanProperty,
     One,
     RelationshipFrom,
     RelationshipTo,
@@ -18,6 +19,7 @@ class StudyStandardVersion(StudySelection):
     )
     status = StringProperty()
     description = StringProperty()
+    automatically_created = BooleanProperty()
     has_ct_package = RelationshipTo(
         CTPackage,
         "HAS_CT_PACKAGE",

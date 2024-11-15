@@ -36,6 +36,8 @@ class SelectionHistory:
     show_soa_group_in_protocol_flowchart: bool
     user_initials: str | None
     change_type: str
+    order: int | None
+    study_activity_group_uids: list[str] | None
     start_date: datetime.datetime
     end_date: datetime.datetime | None
 
@@ -55,6 +57,10 @@ class StudySoAGroupRepository(StudySelectionActivityBaseRepository[StudySoAGroup
             show_soa_group_in_protocol_flowchart=selection[
                 "show_soa_group_in_protocol_flowchart"
             ],
+            study_activity_group_uids=selection["study_activity_group_uids"]
+            if selection["study_activity_group_uids"]
+            else None,
+            order=selection["order"],
             study_uid=selection["study_uid"],
             start_date=convert_to_datetime(value=selection["start_date"]),
             user_initials=selection["user_initials"],
@@ -87,6 +93,9 @@ class StudySoAGroupRepository(StudySelectionActivityBaseRepository[StudySoAGroup
                 sa.uid AS study_selection_uid,
                 sa.show_soa_group_in_protocol_flowchart AS show_soa_group_in_protocol_flowchart,
                 elr.uid AS soa_group_term_uid,
+                apoc.coll.toSet([(sa)<-[:STUDY_ACTIVITY_HAS_STUDY_SOA_GROUP]-(:StudyActivity)-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_GROUP]->(study_activity_group:StudyActivityGroup) 
+                    | study_activity_group.uid]) AS study_activity_group_uids,
+                sa.order AS order,
                 sa.accepted_version AS accepted_version,
                 sac.date AS start_date,
                 sac.user_initials AS user_initials"""
@@ -101,6 +110,10 @@ class StudySoAGroupRepository(StudySelectionActivityBaseRepository[StudySoAGroup
             show_soa_group_in_protocol_flowchart=selection[
                 "show_soa_group_in_protocol_flowchart"
             ],
+            study_activity_group_uids=selection["study_activity_group_uids"]
+            if selection["study_activity_group_uids"]
+            else None,
+            order=selection["order"],
             change_type=change_type,
             start_date=convert_to_datetime(value=selection["start_date"]),
             end_date=end_date,
@@ -135,6 +148,9 @@ class StudySoAGroupRepository(StudySelectionActivityBaseRepository[StudySoAGroup
                         all_sa.uid AS study_selection_uid,
                         all_sa.show_soa_group_in_protocol_flowchart AS show_soa_group_in_protocol_flowchart,
                         fgr.uid AS soa_group_term_uid,
+                        apoc.coll.toSet([(all_sa)<-[:STUDY_ACTIVITY_HAS_STUDY_SOA_GROUP]-(:StudyActivity)-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_GROUP]->(study_activity_group:StudyActivityGroup) 
+                            | study_activity_group.uid]) as study_activity_group_uids,
+                        sa.order AS order,
                         asa.date AS start_date,
                         asa.user_initials AS user_initials,
                         labels(asa) AS change_type,
@@ -166,8 +182,12 @@ class StudySoAGroupRepository(StudySelectionActivityBaseRepository[StudySoAGroup
         study_soa_group_node.accepted_version = selection.accepted_version
         study_soa_group_node.save()
 
+        if not for_deletion:
+            # Connect new node with study value
+            latest_study_value_node.has_study_soa_group.connect(study_soa_group_node)
+
         # Connect new node with audit trail
-        audit_node.study_selection_metadata_has_after.connect(study_soa_group_node)
+        audit_node.has_after.connect(study_soa_group_node)
         # Set flowchart group
         ct_term_root = CTTermRoot.nodes.get(uid=selection.soa_group_term_uid)
         study_soa_group_node.has_flowchart_group.connect(ct_term_root)

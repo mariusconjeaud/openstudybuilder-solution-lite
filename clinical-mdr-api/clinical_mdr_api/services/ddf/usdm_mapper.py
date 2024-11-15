@@ -58,6 +58,8 @@ def get_ddf_timing_type_code_fixed():
 def get_ddf_timing_iso_duration_value(time_value: int, time_unit_name: str) -> str:
     timing_value = "P"
     abs_time_value = abs(time_value)
+    if time_unit_name == "weeks":
+        timing_value = timing_value + f"{abs_time_value}W"
     if time_unit_name == "days":
         timing_value = timing_value + f"{abs_time_value}D"
     elif time_unit_name == "hours":
@@ -349,14 +351,14 @@ class USDMMapper:
         ddf_study_epochs = [
             StudyEpoch(
                 id=se.uid,
-                name=se.epoch_name,
+                name=se.epoch_ctterm.sponsor_preferred_name,
                 description=se.description,
                 type=USDMCode(
                     id=str(uuid.uuid4()),
-                    code=se.epoch_type,
+                    code=se.epoch_type_ctterm.term_uid,
                     codeSystem="openstudybuilder.org",
                     codeSystemVersion="",
-                    decode=se.epoch_type_name,
+                    decode=se.epoch_type_ctterm.sponsor_preferred_name,
                 ),
                 nextId=str(osb_study_epochs[i + 1].uid)
                 if add_next_and_previous_ids and i + 1 < len(osb_study_epochs)
@@ -434,7 +436,7 @@ class USDMMapper:
                 code=osb_study_intervention.intervention_model_code.term_uid,
                 codeSystem="openstudybuilder.org",
                 codeSystemVersion="",
-                decode=osb_study_intervention.intervention_model_code.name,
+                decode=osb_study_intervention.intervention_model_code.sponsor_preferred_name,
             )
             usdm_study_intervention_codes.append(intervention_model_code)
 
@@ -444,7 +446,7 @@ class USDMMapper:
                 code=osb_study_intervention.intervention_type_code.term_uid,
                 codeSystem="openstudybuilder.org",
                 codeSystemVersion="",
-                decode=osb_study_intervention.intervention_type_code.name,
+                decode=osb_study_intervention.intervention_type_code.sponsor_preferred_name,
             )
             usdm_study_intervention_codes.append(intervention_type_code)
 
@@ -454,7 +456,7 @@ class USDMMapper:
                 code=osb_study_intervention.control_type_code.term_uid,
                 codeSystem="openstudybuilder.org",
                 codeSystemVersion="",
-                decode=osb_study_intervention.control_type_code.name,
+                decode=osb_study_intervention.control_type_code.sponsor_preferred_name,
             )
             usdm_study_intervention_codes.append(intervention_control_type_code)
 
@@ -464,7 +466,7 @@ class USDMMapper:
                 code=osb_study_intervention.trial_blinding_schema_code.term_uid,
                 codeSystem="openstudybuilder.org",
                 codeSystemVersion="",
-                decode=osb_study_intervention.trial_blinding_schema_code.name,
+                decode=osb_study_intervention.trial_blinding_schema_code.sponsor_preferred_name,
             )
             usdm_study_intervention_codes.append(
                 intervention_trial_blinding_schema_code
@@ -486,8 +488,9 @@ class USDMMapper:
         return USDMStudyIntervention(
             id=str(uuid.uuid4()),
             name="Study Intervention",
-            description=osb_study_intervention.intervention_model_code.name
-            if osb_study_intervention.intervention_model_code.name is not None
+            description=osb_study_intervention.intervention_model_code.sponsor_preferred_name
+            if osb_study_intervention.intervention_model_code.sponsor_preferred_name
+            is not None
             else None,
             codes=usdm_study_intervention_codes,
             # TODO: mandatory attributes missing
@@ -574,7 +577,7 @@ class USDMMapper:
                     else "",
                     codeSystem="openstudybuilder.org",
                     codeSystemVersion="",
-                    decode=osb_study_population.sex_of_participants_code.name
+                    decode=osb_study_population.sex_of_participants_code.sponsor_preferred_name
                     if osb_study_population.sex_of_participants_code is not None
                     else "",
                 )
@@ -697,8 +700,8 @@ class USDMMapper:
                 ddf_timing = USDMTiming(
                     id=ddf_timing_id,
                     name=ddf_timing_id,
-                    label=osb_visit.study_epoch_name,
-                    description=osb_visit.study_epoch_name,
+                    label=osb_visit.study_epoch.sponsor_preferred_name,
+                    description=osb_visit.study_epoch.sponsor_preferred_name,
                     type=ddf_timing_code,
                     relativeToFrom=get_ddf_timing_relative_to_from()
                     or get_void_usdm_code(),
@@ -797,7 +800,7 @@ class USDMMapper:
                         code=sv.visit_contact_mode_uid,
                         codeSystem="openstudybuilder.org",
                         codeSystemVersion="",
-                        decode=sv.visit_contact_mode_name,
+                        decode=sv.visit_contact_mode.sponsor_preferred_name,
                     )
                 ],
                 nextId=str(ordered_osb_study_visits[i + 1].uid)
@@ -840,7 +843,7 @@ class USDMMapper:
                     code=osb_trial_intent_type_code.term_uid,
                     codeSystem="openstudybuilder.org",
                     codeSystemVersion="",
-                    decode=osb_trial_intent_type_code.name,
+                    decode=osb_trial_intent_type_code.sponsor_preferred_name,
                 )
                 for osb_trial_intent_type_code in study.current_metadata.study_intervention.trial_intent_types_codes
             ]
@@ -853,7 +856,7 @@ class USDMMapper:
                 code=osb_trial_type_code.term_uid,
                 codeSystem="openstudybuilder.org",
                 codeSystemVersion="",
-                decode=osb_trial_type_code.name,
+                decode=osb_trial_type_code.sponsor_preferred_name,
             )
             for osb_trial_type_code in study.current_metadata.high_level_study_design.trial_type_codes
         ]

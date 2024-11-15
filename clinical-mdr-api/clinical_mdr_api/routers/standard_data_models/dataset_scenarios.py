@@ -154,7 +154,7 @@ def get_distinct_values_for_header(
 
 
 @router.get(
-    "/dataset-scenarios/{uid}",
+    "/dataset-scenarios/{dataset_scenario_uid}",
     dependencies=[rbac.LIBRARY_READ],
     summary="Get details on a specific dataset scenario",
     description="""
@@ -177,7 +177,7 @@ Possible errors:
     },
 )
 def get_dataset_scenario(
-    uid: str = DatasetScenarioUID,
+    dataset_scenario_uid: str = DatasetScenarioUID,
     data_model_ig_name: str = Query(
         ...,
         description="The name of the selected Data model IG, for instance 'SDTMIG'",
@@ -189,7 +189,7 @@ def get_dataset_scenario(
 ):
     dataset_scenario_service = DatasetScenarioService()
     return dataset_scenario_service.get_by_uid(
-        uid=uid,
+        uid=dataset_scenario_uid,
         data_model_ig_name=data_model_ig_name,
         data_model_ig_version=data_model_ig_version,
     )

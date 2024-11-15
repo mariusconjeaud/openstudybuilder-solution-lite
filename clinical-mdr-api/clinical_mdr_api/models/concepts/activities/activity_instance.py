@@ -100,14 +100,17 @@ class ActivityInstance(ActivityBase):
                     activity_group=ActivityHierarchySimpleModel.from_activity_uid(
                         uid=activity_grouping.activity_group_uid,
                         find_activity_by_uid=find_activity_group_by_uid,
+                        version=activity_grouping.activity_group_version,
                     ),
                     activity_subgroup=ActivityHierarchySimpleModel.from_activity_uid(
                         uid=activity_grouping.activity_subgroup_uid,
                         find_activity_by_uid=find_activity_subgroup_by_uid,
+                        version=activity_grouping.activity_subgroup_version,
                     ),
                     activity=ActivityHierarchySimpleModel.from_activity_uid(
                         uid=activity_grouping.activity_uid,
                         find_activity_by_uid=find_activity_hierarchy_by_uid,
+                        version=activity_grouping.activity_version,
                     ),
                 )
                 for activity_grouping in activity_ar.concept_vo.activity_groupings

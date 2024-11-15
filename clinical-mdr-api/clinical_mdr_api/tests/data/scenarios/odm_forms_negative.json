@@ -10,6 +10,7 @@
                 "oid": "oid1",
                 "sdtm_version": "0.1",
                 "repeating": "No",
+                "scope_uid": "term1",
                 "descriptions": [
                     "odm_description2",
                     "odm_description3"
@@ -39,7 +40,11 @@
                 "change_description": "Initial version",
                 "user_initials": "TODO user initials",
                 "sdtm_version": "0.1",
-                "scope": null,
+                "scope": {
+                    "uid": "term1",
+                    "code_submission_value": "code_submission_value1",
+                    "preferred_term": "preferred_term1"
+                },
                 "descriptions": [
                     {
                         "uid": "odm_description2",
@@ -307,7 +312,7 @@
         }
     },
     {
-        "name": "Test cannot create a new ODM Form with existing name and oid",
+        "name": "Test cannot create a new ODM Form with same properties",
         "request": {
             "headers": {},
             "method": "POST",
@@ -317,10 +322,14 @@
                 "oid": "oid1",
                 "sdtm_version": "0.1",
                 "repeating": "No",
+                "scope_uid": "term1",
                 "descriptions": [
+                    "odm_description2",
                     "odm_description3"
                 ],
-                "alias_uids": []
+                "alias_uids": [
+                    "odm_alias1"
+                ]
             },
             "url": "concepts/odms/forms"
         },
@@ -331,7 +340,7 @@
                 "content-type": "application/json"
             },
             "result": {
-                "message": "ODM Form with ['name: name1', 'OID: oid1'] already exists.",
+                "message": "ODM Form already exists with UID (OdmForm_000001) and data {'description_uids': ['odm_description2', 'odm_description3'], 'alias_uids': ['odm_alias1'], 'scope_uid': 'term1', 'name': 'name1', 'oid': 'oid1', 'sdtm_version': '0.1', 'repeating': False}",
                 "time": "2022-03-07T12: 14: 18.116363",
                 "path": "http://testserver/concepts/odms/forms",
                 "method": "POST",

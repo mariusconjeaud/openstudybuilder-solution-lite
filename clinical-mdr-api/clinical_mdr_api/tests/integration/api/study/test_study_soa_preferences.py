@@ -33,6 +33,9 @@ def dummy_study(request, base_data, tst_project) -> Study:
     # Study title has to be set before locking
     TestUtils.set_study_title(study.uid)
 
+    # Study standatd version has to be set before locking
+    TestUtils.set_study_standard_version(study_uid=study.uid)
+
     return study
 
 

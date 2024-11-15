@@ -736,12 +736,14 @@ class StudyEpochListingModel(BaseModel):
         return cls(
             uid=study_epoch.uid,
             order=study_epoch.order,
-            name=none_to_empty_str(study_epoch.epoch_name),
+            name=none_to_empty_str(study_epoch.epoch_ctterm.sponsor_preferred_name),
             type=ct_term_uid_to_str(
-                study_epoch.epoch_type, find_term_by_uid=find_term_by_uid
+                study_epoch.epoch_type_ctterm.term_uid,
+                find_term_by_uid=find_term_by_uid,
             ),
             subtype=ct_term_uid_to_str(
-                study_epoch.epoch_subtype, find_term_by_uid=find_term_by_uid
+                study_epoch.epoch_subtype_ctterm.term_uid,
+                find_term_by_uid=find_term_by_uid,
             ),
             start_rule=none_to_empty_str(study_epoch.start_rule),
             end_rule=none_to_empty_str(study_epoch.end_rule),
@@ -876,9 +878,9 @@ class StudyVisitListingModel(BaseModel):
     ) -> Self:
         return cls(
             epoch_uid=study_visit_vo.epoch_uid,
-            epoch_name=study_visit_vo.epoch.epoch.value,
-            visit_type=study_visit_vo.visit_type.value,
-            contact_model=study_visit_vo.visit_contact_mode.value,
+            epoch_name=study_visit_vo.epoch.epoch.sponsor_preferred_name,
+            visit_type=study_visit_vo.visit_type.sponsor_preferred_name,
+            contact_model=study_visit_vo.visit_contact_mode.sponsor_preferred_name,
             visit_no=study_visit_vo.unique_visit_number,
             name=study_visit_vo.derive_visit_name(),
             short_name=study_visit_vo.visit_short_name,
@@ -894,7 +896,7 @@ class StudyVisitListingModel(BaseModel):
             ),
             desc=none_to_empty_str(study_visit_vo.description),
             epoch_alloc=none_to_empty_str(
-                study_visit_vo.epoch_allocation.value
+                study_visit_vo.epoch_allocation.sponsor_preferred_name
                 if study_visit_vo.epoch_allocation
                 else None
             ),

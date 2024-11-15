@@ -100,7 +100,7 @@
                 "version": "0.1"
             },
             "save": {
-                "uid": "uid"
+                "endpoint_uid": "uid"
             }
         }
     },
@@ -110,7 +110,7 @@
             "headers": {},
             "method": "POST",
             "request": {},
-            "url": "/endpoints/{uid}/approvals"
+            "url": "/endpoints/{endpoint_uid}/approvals"
         },
         "response": {
             "code": 201,
@@ -167,7 +167,7 @@
             "headers": {},
             "method": "PATCH",
             "request": {},
-            "url": "/endpoints/{uid}/approvals"
+            "url": "/endpoints/{endpoint_uid}/approvals"
         },
         "response": {
             "code": 405,
@@ -185,7 +185,7 @@
             "headers": {},
             "method": "POST",
             "request": {},
-            "url": "/endpoints/{uid}/approvals"
+            "url": "/endpoints/{endpoint_uid}/approvals"
         },
         "response": {
             "code": 400,
@@ -208,7 +208,7 @@
             "headers": {},
             "method": "GET",
             "request": {},
-            "url": "/endpoints/{uid}/parameters"
+            "url": "/endpoints/{endpoint_uid}/parameters"
         },
         "response": {
             "code": 200,
@@ -262,7 +262,7 @@
                     }
                 ]
             },
-            "url": "/endpoints/{uid}"
+            "url": "/endpoints/{endpoint_uid}"
         },
         "response": {
             "code": 422,
@@ -307,7 +307,7 @@
                     }
                 ]
             },
-            "url": "/endpoints/{uid}"
+            "url": "/endpoints/{endpoint_uid}"
         },
         "response": {
             "code": 400,

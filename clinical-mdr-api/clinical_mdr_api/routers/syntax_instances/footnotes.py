@@ -233,9 +233,9 @@ def retrieve_audit_trail(
 
 
 @router.get(
-    "/{uid}",
+    "/{footnote_uid}",
     dependencies=[rbac.LIBRARY_READ],
-    summary="Returns the latest/newest version of a specific footnote identified by 'uid'.",
+    summary="Returns the latest/newest version of a specific footnote identified by 'footnote_uid'.",
     description="""If multiple request query parameters are used, then they need to
     match all at the same time (they are combined with the AND operation).""",
     response_model=models.FootnoteWithType | None,
@@ -243,21 +243,21 @@ def retrieve_audit_trail(
     responses={
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The footnote with the specified 'uid' (and the specified date/time and/or status) wasn't found.",
+            "description": "Not Found - The footnote with the specified 'footnote_uid' (and the specified date/time and/or status) wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def get(
-    uid: str = FootnoteUID,
+    footnote_uid: str = FootnoteUID,
 ):
-    return FootnoteService().get_by_uid(uid=uid)
+    return FootnoteService().get_by_uid(uid=footnote_uid)
 
 
 @router.get(
-    "/{uid}/versions",
+    "/{footnote_uid}/versions",
     dependencies=[rbac.LIBRARY_READ],
-    summary="Returns the version history of a specific footnote identified by 'uid'.",
+    summary="Returns the version history of a specific footnote identified by 'footnote_uid'.",
     description="The returned versions are ordered by\n"
     "0. start_date descending (newest entries first)",
     response_model=list[models.FootnoteVersion],
@@ -265,13 +265,13 @@ def get(
     responses={
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The footnote with the specified 'uid' wasn't found.",
+            "description": "Not Found - The footnote with the specified 'footnote_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def get_versions(uid: str = FootnoteUID):
-    return Service().get_version_history(uid=uid)
+def get_versions(footnote_uid: str = FootnoteUID):
+    return Service().get_version_history(uid=footnote_uid)
 
 
 @router.post(
@@ -359,9 +359,9 @@ def preview(
 
 
 @router.patch(
-    "/{uid}",
+    "/{footnote_uid}",
     dependencies=[rbac.LIBRARY_WRITE_OR_STUDY_WRITE],
-    summary="Updates the footnote identified by 'uid'.",
+    summary="Updates the footnote identified by 'footnote_uid'.",
     description="""This request is only valid if the footnote
 * is in 'Draft' status and
 * belongs to a library that allows editing (the 'is_editable' property of the library needs to be true). 
@@ -385,24 +385,24 @@ If the request succeeds:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The footnote with the specified 'uid' wasn't found.",
+            "description": "Not Found - The footnote with the specified 'footnote_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def edit(
-    uid: str = FootnoteUID,
+    footnote_uid: str = FootnoteUID,
     footnote: models.FootnoteEditInput = Body(
         description="The new parameter terms for the footnote including the change description.",
     ),
 ):
-    return Service().edit_draft(uid, footnote)
+    return Service().edit_draft(footnote_uid, footnote)
 
 
 @router.post(
-    "/{uid}/approvals",
+    "/{footnote_uid}/approvals",
     dependencies=[rbac.LIBRARY_WRITE_OR_STUDY_WRITE],
-    summary="Approves the footnote identified by 'uid'.",
+    summary="Approves the footnote identified by 'footnote_uid'.",
     description="""This request is only valid if the footnote
 * is in 'Draft' status and
 * belongs to a library that allows editing (the 'is_editable' property of the library needs to be true).
@@ -424,19 +424,19 @@ If the request succeeds:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The footnote with the specified 'uid' wasn't found.",
+            "description": "Not Found - The footnote with the specified 'footnote_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def approve(uid: str = FootnoteUID):
-    return Service().approve(uid)
+def approve(footnote_uid: str = FootnoteUID):
+    return Service().approve(footnote_uid)
 
 
 @router.delete(
-    "/{uid}/activations",
+    "/{footnote_uid}/activations",
     dependencies=[rbac.LIBRARY_WRITE],
-    summary="Inactivates/deactivates the footnote identified by 'uid'.",
+    summary="Inactivates/deactivates the footnote identified by 'footnote_uid'.",
     description="""This request is only valid if the footnote
 * is in 'Final' status only (so no latest 'Draft' status exists).
 
@@ -456,19 +456,19 @@ If the request succeeds:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The footnote with the specified 'uid' wasn't found.",
+            "description": "Not Found - The footnote with the specified 'footnote_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def inactivate(uid: str = FootnoteUID):
-    return Service().inactivate_final(uid=uid)
+def inactivate(footnote_uid: str = FootnoteUID):
+    return Service().inactivate_final(uid=footnote_uid)
 
 
 @router.post(
-    "/{uid}/activations",
+    "/{footnote_uid}/activations",
     dependencies=[rbac.LIBRARY_WRITE],
-    summary="Reactivates the footnote identified by 'uid'.",
+    summary="Reactivates the footnote identified by 'footnote_uid'.",
     description="""This request is only valid if the footnote
 * is in 'Retired' status only (so no latest 'Draft' status exists).
 
@@ -488,19 +488,19 @@ If the request succeeds:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The footnote with the specified 'uid' wasn't found.",
+            "description": "Not Found - The footnote with the specified 'footnote_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def reactivate(uid: str = FootnoteUID):
-    return Service().reactivate_retired(uid)
+def reactivate(footnote_uid: str = FootnoteUID):
+    return Service().reactivate_retired(footnote_uid)
 
 
 @router.delete(
-    "/{uid}",
+    "/{footnote_uid}",
     dependencies=[rbac.LIBRARY_WRITE],
-    summary="Deletes the footnote identified by 'uid'.",
+    summary="Deletes the footnote identified by 'footnote_uid'.",
     description="""This request is only valid if \n
 * the footnote is in 'Draft' status and
 * the footnote has never been in 'Final' status and
@@ -522,13 +522,13 @@ def reactivate(uid: str = FootnoteUID):
         500: _generic_descriptions.ERROR_500,
     },
 )
-def delete(uid: str = FootnoteUID):
-    Service().soft_delete(uid)
+def delete(footnote_uid: str = FootnoteUID):
+    Service().soft_delete(footnote_uid)
     return Response(status_code=fast_api_status.HTTP_204_NO_CONTENT)
 
 
 @router.get(
-    "/{uid}/studies",
+    "/{footnote_uid}/studies",
     dependencies=[rbac.STUDY_READ],
     summary="",
     description="",
@@ -537,20 +537,20 @@ def delete(uid: str = FootnoteUID):
     responses={
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The footnote with the specified 'uid' wasn't found.",
+            "description": "Not Found - The footnote with the specified 'footnote_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def get_studies(
-    uid: str = FootnoteUID,
+    footnote_uid: str = FootnoteUID,
     include_sections: list[StudyComponentEnum]
     | None = Query(None, description=study_section_description("include")),
     exclude_sections: list[StudyComponentEnum]
     | None = Query(None, description=study_section_description("exclude")),
 ):
     return Service().get_referencing_studies(
-        uid=uid,
+        uid=footnote_uid,
         node_type=FootnoteValue,
         include_sections=include_sections,
         exclude_sections=exclude_sections,
@@ -558,11 +558,11 @@ def get_studies(
 
 
 @router.get(
-    "/{uid}/parameters",
+    "/{footnote_uid}/parameters",
     dependencies=[rbac.LIBRARY_READ],
-    summary="Returns all template parameters available for the footnote identified by 'uid'. Includes the available values per parameter.",
+    summary="Returns all template parameters available for the footnote identified by 'footnote_uid'. Includes the available values per parameter.",
     description="""Returns all template parameters used in the footnote template
-that is the basis for the footnote identified by 'uid'. 
+that is the basis for the footnote identified by 'footnote_uid'. 
 Includes the available values per parameter.
 
 The returned parameters are ordered
@@ -582,6 +582,6 @@ In that case, the same parameter (with the same values) is included multiple tim
     },
 )
 def get_parameters(
-    uid: str = Path(None, description="The unique id of the footnote."),
+    footnote_uid: str = Path(None, description="The unique id of the footnote."),
 ):
-    return FootnoteService().get_parameters(uid)
+    return FootnoteService().get_parameters(footnote_uid)

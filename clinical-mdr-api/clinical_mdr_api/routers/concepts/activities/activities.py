@@ -328,7 +328,7 @@ def get_distinct_values_for_header(
 
 
 @router.get(
-    "/activities/{uid}",
+    "/activities/{activity_uid}",
     dependencies=[rbac.LIBRARY_READ],
     summary="Get details on a specific activity (in a specific version)",
     description="""
@@ -354,13 +354,13 @@ Possible errors:
         500: _generic_descriptions.ERROR_500,
     },
 )
-def get_activity(uid: str = ActivityUID):
+def get_activity(activity_uid: str = ActivityUID):
     activity_service = ActivityService()
-    return activity_service.get_by_uid(uid=uid)
+    return activity_service.get_by_uid(uid=activity_uid)
 
 
 @router.get(
-    "/activities/{uid}/overview",
+    "/activities/{activity_uid}/overview",
     dependencies=[rbac.LIBRARY_READ],
     summary="Get detailed overview a specific activity",
     description="""
@@ -403,18 +403,20 @@ Possible errors:
 # pylint: disable=unused-argument
 def get_activity_overview(
     request: Request,  # request is actually required by the allow_exports decorator
-    uid: str = ActivityUID,
+    activity_uid: str = ActivityUID,
     version: str
     | None = Query(
         None, description="Select specific version, omit to view latest version"
     ),
 ):
     activity_service = ActivityService()
-    return activity_service.get_activity_overview(activity_uid=uid, version=version)
+    return activity_service.get_activity_overview(
+        activity_uid=activity_uid, version=version
+    )
 
 
 @router.get(
-    "/activities/{uid}/overview.cosmos",
+    "/activities/{activity_uid}/overview.cosmos",
     dependencies=[rbac.LIBRARY_READ],
     summary="Get a COSMoS compatible representation of a specific activity",
     description="""
@@ -443,14 +445,16 @@ Possible errors:
 # pylint: disable=unused-argument
 def get_cosmos_activity_overview(
     request: Request,  # request is actually required by the allow_exports decorator
-    uid: str = ActivityUID,
+    activity_uid: str = ActivityUID,
 ):
     activity_service = ActivityService()
-    return YAMLResponse(activity_service.get_cosmos_activity_overview(activity_uid=uid))
+    return YAMLResponse(
+        activity_service.get_cosmos_activity_overview(activity_uid=activity_uid)
+    )
 
 
 @router.get(
-    "/activities/{uid}/versions",
+    "/activities/{activity_uid}/versions",
     dependencies=[rbac.LIBRARY_READ],
     summary="List version history for activities",
     description="""
@@ -473,14 +477,14 @@ Possible errors:
     responses={
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The activity with the specified 'uid' wasn't found.",
+            "description": "Not Found - The activity with the specified 'activity_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def get_versions(uid: str = ActivityUID):
+def get_versions(activity_uid: str = ActivityUID):
     activity_service = ActivityService()
-    return activity_service.get_version_history(uid=uid)
+    return activity_service.get_version_history(uid=activity_uid)
 
 
 @router.post(
@@ -578,7 +582,7 @@ def create_sponsor_activity_from_activity_request(
 
 
 @router.patch(
-    "/activities/{uid}/activity-request-rejections",
+    "/activities/{activity_uid}/activity-request-rejections",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Reject and retire an Activity Request",
     description="""
@@ -611,18 +615,18 @@ Possible errors:
     },
 )
 def reject_activity_request(
-    uid: str = ActivityUID,
+    activity_uid: str = ActivityUID,
     activity_request_rejection_input: ActivityRequestRejectInput = Body(description=""),
 ):
     activity_service = ActivityService()
     return activity_service.reject_activity_request(
-        activity_request_uid=uid,
+        activity_request_uid=activity_uid,
         activity_request_rejection_input=activity_request_rejection_input,
     )
 
 
 @router.patch(
-    "/activities/{uid}",
+    "/activities/{activity_uid}",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Update activity",
     description="""
@@ -633,7 +637,7 @@ State before:
 Business logic:
  - If activities exist in status draft then attributes are updated.
  - If links to CT are selected or updated then relationships are made to CTTermRoots.
-- If the linked activity is updated, the relationships are updated to point to the activity value node.
+ - If the linked activity is updated, the relationships are updated to point to the activity value node.
 
 State after:
  - attributes are updated for the activity.
@@ -657,21 +661,23 @@ Possible errors:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The activity with the specified 'uid' wasn't found.",
+            "description": "Not Found - The activity with the specified 'activity_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def edit(
-    uid: str = ActivityUID,
+    activity_uid: str = ActivityUID,
     activity_edit_input: ActivityEditInput = Body(description=""),
 ):
     activity_service = ActivityService()
-    return activity_service.edit_draft(uid=uid, concept_edit_input=activity_edit_input)
+    return activity_service.edit_draft(
+        uid=activity_uid, concept_edit_input=activity_edit_input
+    )
 
 
 @router.post(
-    "/activities/{uid}/versions",
+    "/activities/{activity_uid}/versions",
     dependencies=[rbac.LIBRARY_WRITE],
     summary=" Create a new version of activity",
     description="""
@@ -702,18 +708,18 @@ Possible errors:
             "model": ErrorResponse,
             "description": "Not Found - Reasons include e.g.: \n"
             "- The activity is not in final status.\n"
-            "- The activity with the specified 'uid' could not be found.",
+            "- The activity with the specified 'activity_uid' could not be found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def new_version(uid: str = ActivityUID):
+def new_version(activity_uid: str = ActivityUID):
     activity_service = ActivityService()
-    return activity_service.create_new_version(uid=uid)
+    return activity_service.create_new_version(uid=activity_uid)
 
 
 @router.post(
-    "/activities/{uid}/approvals",
+    "/activities/{activity_uid}/approvals",
     dependencies=[rbac.LIBRARY_WRITE_OR_STUDY_WRITE],
     summary="Approve draft version of activity",
     description="""
@@ -725,6 +731,8 @@ Business logic:
  - The status of the new approved version will be automatically set to 'Final'.
  - The 'version' property of the new version will be automatically set to the version of the latest 'Final' version increased by +1.0.
  - The 'change_description' property will be set automatically 'Approved version'.
+ - If cascade_edit_and_approve is set to True, all activity instances that are linked to the latest 'Final' version of this activity
+   are updated to link to the newly approved activity, and then approved.
 
 State after:
  - Activity changed status to Final and assigned a new major version number.
@@ -746,18 +754,24 @@ Possible errors:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The activity with the specified 'uid' wasn't found.",
+            "description": "Not Found - The activity with the specified 'activity_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def approve(uid: str = ActivityUID):
+def approve(
+    activity_uid: str = ActivityUID,
+    cascade_edit_and_approve: bool
+    | None = Query(False, description="Approve all linked activity instances"),
+):
     activity_service = ActivityService()
-    return activity_service.approve(uid=uid)
+    return activity_service.approve(
+        uid=activity_uid, cascade_edit_and_approve=cascade_edit_and_approve
+    )
 
 
 @router.delete(
-    "/activities/{uid}/activations",
+    "/activities/{activity_uid}/activations",
     dependencies=[rbac.LIBRARY_WRITE],
     summary=" Inactivate final version of activity",
     description="""
@@ -789,18 +803,18 @@ Possible errors:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The activity with the specified 'uid' could not be found.",
+            "description": "Not Found - The activity with the specified 'activity_uid' could not be found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def inactivate(uid: str = ActivityUID):
+def inactivate(activity_uid: str = ActivityUID):
     activity_service = ActivityService()
-    return activity_service.inactivate_final(uid=uid)
+    return activity_service.inactivate_final(uid=activity_uid)
 
 
 @router.post(
-    "/activities/{uid}/activations",
+    "/activities/{activity_uid}/activations",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Reactivate retired version of a activity",
     description="""
@@ -832,18 +846,18 @@ Possible errors:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The activity with the specified 'uid' could not be found.",
+            "description": "Not Found - The activity with the specified 'activity_uid' could not be found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def reactivate(uid: str = ActivityUID):
+def reactivate(activity_uid: str = ActivityUID):
     activity_service = ActivityService()
-    return activity_service.reactivate_retired(uid=uid)
+    return activity_service.reactivate_retired(uid=activity_uid)
 
 
 @router.delete(
-    "/activities/{uid}",
+    "/activities/{activity_uid}",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Delete draft version of activity",
     description="""
@@ -874,12 +888,12 @@ Possible errors:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - An activity with the specified 'uid' could not be found.",
+            "description": "Not Found - An activity with the specified 'activity_uid' could not be found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def delete_activity(uid: str = ActivityUID):
+def delete_activity(activity_uid: str = ActivityUID):
     activity_service = ActivityService()
-    activity_service.soft_delete(uid=uid)
+    activity_service.soft_delete(uid=activity_uid)
     return Response(status_code=status.HTTP_204_NO_CONTENT)

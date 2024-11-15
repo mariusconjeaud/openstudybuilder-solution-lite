@@ -215,21 +215,6 @@ export default {
       if (!this.form.planned_study_length) {
         this.form.planned_study_length = {}
       }
-      for (const prop of [
-        'intervention_type_code',
-        'control_type_code',
-        'intervention_model_code',
-        'trial_blinding_schema_code',
-      ]) {
-        if (this.form[prop]) {
-          this.form[prop].sponsor_preferred_name = this.form[prop].name
-        }
-      }
-      if (this.form.trial_intent_types_codes) {
-        for (const item of this.form.trial_intent_types_codes) {
-          item.sponsor_preferred_name = item.name
-        }
-      }
       this.formStore.save(this.form)
     },
     setNullValueTrialIntentTypesCodes() {

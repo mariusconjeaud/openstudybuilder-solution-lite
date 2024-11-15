@@ -295,7 +295,7 @@ def test_get_compounds_pagination(api_client):
         pytest.param(3, 1, True, None, 3),
         pytest.param(3, 2, True, None, 3),
         pytest.param(10, 2, True, None, 10),
-        pytest.param(10, 3, True, None, 5),  # Total numer of compounds is 25
+        pytest.param(10, 3, True, None, 5),  # Total number of compounds is 25
         pytest.param(10, 1, True, '{"name": false}', 10),
         pytest.param(10, 2, True, '{"name": true}', 10),
     ],

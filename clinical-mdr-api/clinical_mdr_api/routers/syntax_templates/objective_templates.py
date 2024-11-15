@@ -257,9 +257,9 @@ def retrieve_audit_trail(
 
 
 @router.get(
-    "/{uid}",
+    "/{objective_template_uid}",
     dependencies=[rbac.LIBRARY_READ],
-    summary="Returns the latest/newest version of a specific objective template identified by 'uid'.",
+    summary="Returns the latest/newest version of a specific objective template identified by 'objective_template_uid'.",
     description="""If multiple request query parameters are used, then they need to
     match all at the same time (they are combined with the AND operation).""",
     response_model=ObjectiveTemplateWithCount,
@@ -267,21 +267,21 @@ def retrieve_audit_trail(
     responses={
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The objective template with the specified 'uid' (and the specified date/time and/or status) wasn't found.",
+            "description": "Not Found - The objective template with the specified 'objective_template_uid' (and the specified date/time and/or status) wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def get_objective_template(
-    uid: str = ObjectiveTemplateUID,
+    objective_template_uid: str = ObjectiveTemplateUID,
 ) -> models.ObjectiveTemplate:
-    return Service().get_by_uid(uid=uid)
+    return Service().get_by_uid(uid=objective_template_uid)
 
 
 @router.get(
-    "/{uid}/versions",
+    "/{objective_template_uid}/versions",
     dependencies=[rbac.LIBRARY_READ],
-    summary="Returns the version history of a specific objective template identified by 'uid'.",
+    summary="Returns the version history of a specific objective template identified by 'objective_template_uid'.",
     description=f"""
 The returned versions are ordered by `start_date` descending (newest entries first).
 
@@ -308,7 +308,7 @@ The returned versions are ordered by `start_date` descending (newest entries fir
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The objective template with the specified 'uid' wasn't found.",
+            "description": "Not Found - The objective template with the specified 'objective_template_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
@@ -336,15 +336,15 @@ The returned versions are ordered by `start_date` descending (newest entries fir
 # pylint: disable=unused-argument
 def get_objective_template_versions(
     request: Request,  # request is actually required by the allow_exports decorator
-    uid: str = ObjectiveTemplateUID,
+    objective_template_uid: str = ObjectiveTemplateUID,
 ):
-    return Service().get_version_history(uid=uid)
+    return Service().get_version_history(uid=objective_template_uid)
 
 
 @router.get(
-    "/{uid}/versions/{version}",
+    "/{objective_template_uid}/versions/{version}",
     dependencies=[rbac.LIBRARY_READ],
-    summary="Returns a specific version of a specific objective template identified by 'uid' and 'version'.",
+    summary="Returns a specific version of a specific objective template identified by 'objective_template_uid' and 'version'.",
     description="**Multiple versions**:\n\n"
     "Technically, there can be multiple versions of the objective template with the same version number. "
     "This is due to the fact, that the version number remains the same when inactivating or reactivating an objective template "
@@ -355,13 +355,13 @@ def get_objective_template_versions(
     responses={
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The objective template with the specified 'uid' and 'version' wasn't found.",
+            "description": "Not Found - The objective template with the specified 'objective_template_uid' and 'version' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def get_objective_template_version(
-    uid: str = ObjectiveTemplateUID,
+    objective_template_uid: str = ObjectiveTemplateUID,
     version: str = Path(
         None,
         description="A specific version number of the objective template. "
@@ -369,26 +369,26 @@ def get_objective_template_version(
         "E.g. '0.1', '0.2', '1.0', ...",
     ),
 ):
-    return Service().get_specific_version(uid=uid, version=version)
+    return Service().get_specific_version(uid=objective_template_uid, version=version)
 
 
 @router.get(
-    "/{uid}/releases",
+    "/{objective_template_uid}/releases",
     dependencies=[rbac.LIBRARY_READ],
-    summary="List all final versions of a template identified by 'uid', including number of studies using a specific version",
+    summary="List all final versions of a template identified by 'objective_template_uid', including number of studies using a specific version",
     description="",
     response_model=list[models.ObjectiveTemplate],
     status_code=200,
     responses={
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The objective template with the specified 'uid' wasn't found.",
+            "description": "Not Found - The objective template with the specified 'objective_template_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def get_objective_template_releases(uid: str = ObjectiveTemplateUID):
-    return Service().get_releases(uid=uid, return_study_count=False)
+def get_objective_template_releases(objective_template_uid: str = ObjectiveTemplateUID):
+    return Service().get_releases(uid=objective_template_uid, return_study_count=False)
 
 
 @router.post(
@@ -434,9 +434,9 @@ def create_objective_template(
 
 
 @router.patch(
-    "/{uid}",
+    "/{objective_template_uid}",
     dependencies=[rbac.LIBRARY_WRITE_OR_STUDY_WRITE],
-    summary="Updates the objective template identified by 'uid'.",
+    summary="Updates the objective template identified by 'objective_template_uid'.",
     description="""This request is only valid if the objective template
 * is in 'Draft' status and
 * belongs to a library that allows editing (the 'is_editable' property of the library needs to be true). 
@@ -464,24 +464,24 @@ Once the objective template has been approved, only the surrounding text (exclud
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The objective template with the specified 'uid' could not be found.",
+            "description": "Not Found - The objective template with the specified 'objective_template_uid' could not be found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def edit(
-    uid: str = ObjectiveTemplateUID,
+    objective_template_uid: str = ObjectiveTemplateUID,
     objective_template: models.ObjectiveTemplateEditInput = Body(
         description="The new content of the objective template including the change description.",
     ),
 ) -> models.ObjectiveTemplate:
-    return Service().edit_draft(uid=uid, template=objective_template)
+    return Service().edit_draft(uid=objective_template_uid, template=objective_template)
 
 
 @router.patch(
-    "/{uid}/indexings",
+    "/{objective_template_uid}/indexings",
     dependencies=[rbac.LIBRARY_WRITE],
-    summary="Updates the indexings of the objective template identified by 'uid'.",
+    summary="Updates the indexings of the objective template identified by 'objective_template_uid'.",
     description="""This request is only valid if the template
     * belongs to a library that allows editing (the 'is_editable' property of the library needs to be true).
     
@@ -495,24 +495,24 @@ def edit(
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The template with the specified 'uid' could not be found.",
+            "description": "Not Found - The template with the specified 'objective_template_uid' could not be found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def patch_indexings(
-    uid: str = ObjectiveTemplateUID,
+    objective_template_uid: str = ObjectiveTemplateUID,
     indexings: models.ObjectiveTemplateEditIndexingsInput = Body(
         description="The lists of UIDs for the new indexings to be set, grouped by indexings to be updated.",
     ),
 ) -> models.ObjectiveTemplate:
-    return Service().patch_indexings(uid=uid, indexings=indexings)
+    return Service().patch_indexings(uid=objective_template_uid, indexings=indexings)
 
 
 @router.post(
-    "/{uid}/versions",
+    "/{objective_template_uid}/versions",
     dependencies=[rbac.LIBRARY_WRITE],
-    summary="Creates a new version of the objective template identified by 'uid'.",
+    summary="Creates a new version of the objective template identified by 'objective_template_uid'.",
     description="""This request is only valid if the objective template
 * is in 'Final' or 'Retired' status only (so no latest 'Draft' status exists) and
 * belongs to a library that allows editing (the 'is_editable' property of the library needs to be true).
@@ -538,26 +538,28 @@ Only the surrounding text (excluding the parameters) can be changed.
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The objective template with the specified 'uid' could not be found.",
+            "description": "Not Found - The objective template with the specified 'objective_template_uid' could not be found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def create_new_version(
-    uid: str = ObjectiveTemplateUID,
+    objective_template_uid: str = ObjectiveTemplateUID,
     objective_template: models.ObjectiveTemplateEditInput = Body(
         description="The content of the objective template for the new 'Draft' version including the change description.",
     ),
 ) -> models.ObjectiveTemplate:
     # return service.create_new_version_of_final_or_retired(uid, objective_template)
     # TODO: do sth not to mislead static code analysis
-    return Service().create_new_version(uid=uid, template=objective_template)
+    return Service().create_new_version(
+        uid=objective_template_uid, template=objective_template
+    )
 
 
 @router.post(
-    "/{uid}/approvals",
+    "/{objective_template_uid}/approvals",
     dependencies=[rbac.LIBRARY_WRITE_OR_STUDY_WRITE],
-    summary="Approves the objective template identified by 'uid'.",
+    summary="Approves the objective template identified by 'objective_template_uid'.",
     description="""This request is only valid if the objective template
 * is in 'Draft' status and
 * belongs to a library that allows editing (the 'is_editable' property of the library needs to be true).
@@ -579,7 +581,7 @@ If the request succeeds:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The objective template with the specified 'uid' could not be found.",
+            "description": "Not Found - The objective template with the specified 'objective_template_uid' could not be found.",
         },
         409: {
             "model": ErrorResponse,
@@ -589,7 +591,7 @@ If the request succeeds:
     },
 )
 def approve(
-    uid: str = ObjectiveTemplateUID,
+    objective_template_uid: str = ObjectiveTemplateUID,
     cascade: bool = False,
 ):
     """
@@ -597,14 +599,14 @@ def approve(
     from this template and cascade is false
     """
     if not cascade:
-        return Service().approve(uid=uid)
-    return Service().approve_cascade(uid=uid)
+        return Service().approve(uid=objective_template_uid)
+    return Service().approve_cascade(uid=objective_template_uid)
 
 
 @router.delete(
-    "/{uid}/activations",
+    "/{objective_template_uid}/activations",
     dependencies=[rbac.LIBRARY_WRITE],
-    summary="Inactivates/deactivates the objective template identified by 'uid' and its Pre-Instances.",
+    summary="Inactivates/deactivates the objective template identified by 'objective_template_uid' and its Pre-Instances.",
     description="""This request is only valid if the objective template
 * is in 'Final' status only (so no latest 'Draft' status exists).
 
@@ -624,21 +626,23 @@ If the request succeeds:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The objective template with the specified 'uid' could not be found.",
+            "description": "Not Found - The objective template with the specified 'objective_template_uid' could not be found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def inactivate(uid: str = ObjectiveTemplateUID) -> models.ObjectiveTemplate:
+def inactivate(
+    objective_template_uid: str = ObjectiveTemplateUID,
+) -> models.ObjectiveTemplate:
     # return service.inactivate_final(uid)
     # TODO: do sth to make static code analysis work for this code
-    return Service().inactivate_final(uid=uid)
+    return Service().inactivate_final(uid=objective_template_uid)
 
 
 @router.post(
-    "/{uid}/activations",
+    "/{objective_template_uid}/activations",
     dependencies=[rbac.LIBRARY_WRITE],
-    summary="Reactivates the objective template identified by 'uid' and its Pre-Instances.",
+    summary="Reactivates the objective template identified by 'objective_template_uid' and its Pre-Instances.",
     description="""This request is only valid if the objective template
 * is in 'Retired' status only (so no latest 'Draft' status exists).
 
@@ -658,21 +662,23 @@ If the request succeeds:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The objective template with the specified 'uid' could not be found.",
+            "description": "Not Found - The objective template with the specified 'objective_template_uid' could not be found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def reactivate(uid: str = ObjectiveTemplateUID) -> models.ObjectiveTemplate:
+def reactivate(
+    objective_template_uid: str = ObjectiveTemplateUID,
+) -> models.ObjectiveTemplate:
     # return service.reactivate_retired(uid)
     # TODO: do sth to allow for static code analysis of this code
-    return Service().reactivate_retired(uid)
+    return Service().reactivate_retired(objective_template_uid)
 
 
 @router.delete(
-    "/{uid}",
+    "/{objective_template_uid}",
     dependencies=[rbac.LIBRARY_WRITE],
-    summary="Deletes the objective template identified by 'uid'.",
+    summary="Deletes the objective template identified by 'objective_template_uid'.",
     description="""This request is only valid if \n
 * the objective template is in 'Draft' status and
 * the objective template has never been in 'Final' status and
@@ -698,18 +704,20 @@ def reactivate(uid: str = ObjectiveTemplateUID) -> models.ObjectiveTemplate:
         500: _generic_descriptions.ERROR_500,
     },
 )
-def delete_objective_template(uid: str = ObjectiveTemplateUID) -> None:
+def delete_objective_template(
+    objective_template_uid: str = ObjectiveTemplateUID,
+) -> None:
     # service.soft_delete(uid)
-    Service().soft_delete(uid)
+    Service().soft_delete(objective_template_uid)
     return Response(status_code=fast_api_status.HTTP_204_NO_CONTENT)
 
 
 # TODO this endpoint potentially returns duplicated entries (by intention, currently).
 #       however: check if that is ok with regard to the data volume we expect in the future. is paging needed?
 @router.get(
-    "/{uid}/parameters",
+    "/{objective_template_uid}/parameters",
     dependencies=[rbac.LIBRARY_READ],
-    summary="Returns all parameters used in the objective template identified by 'uid'. Includes the available terms per parameter.",
+    summary="Returns all parameters used in the objective template identified by 'objective_template_uid'. Includes the available terms per parameter.",
     description="""The returned parameters are ordered
 0. as they occur in the objective template
 
@@ -727,7 +735,9 @@ In that case, the same parameter (with the same terms) is included multiple time
     },
 )
 def get_parameters(
-    uid: str = Path(None, description="The unique id of the objective template."),
+    objective_template_uid: str = Path(
+        None, description="The unique id of the objective template."
+    ),
     study_uid: str
     | None = Query(
         None,
@@ -735,7 +745,7 @@ def get_parameters(
     ),
 ):
     return Service().get_parameters(
-        uid=uid, study_uid=study_uid, include_study_endpoints=True
+        uid=objective_template_uid, study_uid=study_uid, include_study_endpoints=True
     )
 
 
@@ -744,7 +754,7 @@ def get_parameters(
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Validates the content of an objective template without actually processing it.",
     description="""Be aware that - even if this request is accepted - there is no guarantee that
-a following request to e.g. *[POST] /objective-templates* or *[PATCH] /objective-templates/{uid}*
+a following request to e.g. *[POST] /objective-templates* or *[PATCH] /objective-templates/{objective_template_uid}*
 with the same content will succeed.
 
 """
@@ -773,7 +783,7 @@ def pre_validate(
 
 
 @router.post(
-    "/{uid}/pre-instances",
+    "/{objective_template_uid}/pre-instances",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Create a Pre-Instance",
     description="",
@@ -792,16 +802,16 @@ def pre_validate(
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The objective template with the specified 'uid' could not be found.",
+            "description": "Not Found - The objective template with the specified 'objective_template_uid' could not be found.",
         },
         500: {"model": ErrorResponse, "description": "Internal Server Error"},
     },
 )
 def create_pre_instance(
-    uid: str = ObjectiveTemplateUID,
+    objective_template_uid: str = ObjectiveTemplateUID,
     pre_instance: ObjectivePreInstanceCreateInput = Body(description=""),
 ) -> models.ObjectiveTemplate:
     return ObjectivePreInstanceService().create(
         template=pre_instance,
-        template_uid=uid,
+        template_uid=objective_template_uid,
     )

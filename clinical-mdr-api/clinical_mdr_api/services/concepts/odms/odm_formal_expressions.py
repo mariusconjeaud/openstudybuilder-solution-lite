@@ -42,6 +42,7 @@ class OdmFormalExpressionService(OdmGenericService[OdmFormalExpressionAR]):
             ),
             library=library,
             generate_uid_callback=self.repository.generate_uid,
+            odm_object_exists_callback=self._repos.odm_formal_expression_repository.odm_object_exists,
         )
 
     def _edit_aggregate(
@@ -56,6 +57,7 @@ class OdmFormalExpressionService(OdmGenericService[OdmFormalExpressionAR]):
                 context=concept_edit_input.context,
                 expression=concept_edit_input.expression,
             ),
+            odm_object_exists_callback=self._repos.odm_formal_expression_repository.odm_object_exists,
         )
         return item
 

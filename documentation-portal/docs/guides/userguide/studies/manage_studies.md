@@ -9,7 +9,7 @@ This user guide explain how to manage study definitions in the StudyBuilder appl
 
 ## Search and Select Study
 
-You can select a study both in the **SELECT STUDY** in the top banner as well as on the menu **Manage Studies** --> **Study List**. On the **Study List** menu you also have column filtering options and the possibility to add new studies.
+You can select a study from the **SELECT STUDY** button in the top banner or the side menu **Study List**. From the **Study List** menu you can search among the studies already created or add a new study.
 
 
 ## Delete Study

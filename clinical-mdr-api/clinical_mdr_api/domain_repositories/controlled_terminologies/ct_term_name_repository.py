@@ -1,5 +1,3 @@
-from datetime import datetime
-
 from neomodel import db
 
 from clinical_mdr_api.domain_repositories._generic_repository_interface import (
@@ -77,8 +75,6 @@ class CTTermNameRepository(CTTermGenericRepository[CTTermNameAR]):
         relationship: VersionRelationship,
         value: CTTermNameValue,
         study_count: int = 0,
-        queried_effective_date: datetime | None = None,
-        date_conflict: bool | None = False,
         **_kwargs,
     ) -> CTTermNameAR:
         codelists: list[CTTermCodelistVO] = []
@@ -99,8 +95,10 @@ class CTTermNameRepository(CTTermGenericRepository[CTTermNameAR]):
                 name=value.name,
                 name_sentence_case=value.name_sentence_case,
                 catalogue_name=_kwargs["ctterm_names"]["catalogue"],
-                queried_effective_date=queried_effective_date,
-                date_conflict=date_conflict,
+                queried_effective_date=_kwargs["ctterm_names"][
+                    "queried_effective_date"
+                ],
+                date_conflict=_kwargs["ctterm_names"]["date_conflict"],
             ),
             library=LibraryVO.from_input_values_2(
                 library_name=library.name,

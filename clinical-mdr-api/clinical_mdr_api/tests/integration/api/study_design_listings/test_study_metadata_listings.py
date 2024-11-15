@@ -708,6 +708,8 @@ def test_study_metadata_listing_with_subpart(api_client):
     subpart_acronym = "test"
     # create parent study
     parent_study = TestUtils.create_study(project_number=project_id)
+    TestUtils.set_study_standard_version(study_uid=parent_study.uid)
+
     p_study_number = parent_study.current_metadata.identification_metadata.study_number
     # connect study to parent
     response = api_client.patch(

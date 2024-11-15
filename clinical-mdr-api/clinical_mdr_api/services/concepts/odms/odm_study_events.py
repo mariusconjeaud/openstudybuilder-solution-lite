@@ -53,7 +53,7 @@ class OdmStudyEventService(OdmGenericService[OdmStudyEventAR]):
             ),
             library=library,
             generate_uid_callback=self.repository.generate_uid,
-            concept_exists_by_callback=self._repos.odm_study_event_repository.exists_by,
+            odm_object_exists_callback=self._repos.odm_study_event_repository.odm_object_exists,
         )
 
     def _edit_aggregate(
@@ -71,7 +71,7 @@ class OdmStudyEventService(OdmGenericService[OdmStudyEventAR]):
                 display_in_tree=concept_edit_input.display_in_tree,
                 form_uids=[],
             ),
-            concept_exists_by_callback=self._repos.odm_study_event_repository.exists_by,
+            odm_object_exists_callback=self._repos.odm_study_event_repository.odm_object_exists,
         )
         return item
 

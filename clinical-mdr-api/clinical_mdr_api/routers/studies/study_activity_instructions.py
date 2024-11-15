@@ -65,7 +65,7 @@ def get_all_activity_instructions_for_all_studies(
 
 
 @router.get(
-    "/studies/{uid}/study-activity-instructions",
+    "/studies/{study_uid}/study-activity-instructions",
     dependencies=[rbac.STUDY_READ],
     summary="List all study activity instructions currently defined for the study",
     response_model=list[models.StudyActivityInstruction],
@@ -80,17 +80,17 @@ def get_all_activity_instructions_for_all_studies(
     },
 )
 def get_all_selected_instructions(
-    uid: str = utils.studyUID,
+    study_uid: str = utils.studyUID,
     study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
 ) -> list[models.StudyActivityInstruction]:
     service = StudyActivityInstructionService()
     return service.get_all_instructions(
-        study_uid=uid, study_value_version=study_value_version
+        study_uid=study_uid, study_value_version=study_value_version
     )
 
 
 @router.delete(
-    "/studies/{uid}/study-activity-instructions/{study_activity_instruction_uid}",
+    "/studies/{study_uid}/study-activity-instructions/{study_activity_instruction_uid}",
     dependencies=[rbac.STUDY_WRITE],
     summary="Delete a study activity instruction",
     response_model=None,
@@ -104,17 +104,17 @@ def get_all_selected_instructions(
         500: _generic_descriptions.ERROR_500,
     },
 )
-def delete_activity_instructon(
-    uid: str = utils.studyUID,
+def delete_activity_instruction(
+    study_uid: str = utils.studyUID,
     study_activity_instruction_uid: str = utils.study_activity_instruction_uid,
 ):
     service = StudyActivityInstructionService()
-    service.delete(study_uid=uid, instruction_uid=study_activity_instruction_uid)
+    service.delete(study_uid=study_uid, instruction_uid=study_activity_instruction_uid)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.post(
-    "/studies/{uid}/study-activity-instructions/batch",
+    "/studies/{study_uid}/study-activity-instructions/batch",
     dependencies=[rbac.STUDY_WRITE],
     summary="Batch operations (create, delete) for study activity instructions",
     response_model=list[models.StudyActivityInstructionBatchOutput],
@@ -125,10 +125,10 @@ def delete_activity_instructon(
     },
 )
 def activity_instruction_batch_operations(
-    uid: str = utils.studyUID,
+    study_uid: str = utils.studyUID,
     operations: list[models.StudyActivityInstructionBatchInput] = Body(
         description="List of operation to perform"
     ),
 ) -> list[models.StudyActivityInstructionBatchOutput]:
     service = StudyActivityInstructionService()
-    return service.handle_batch_operations(uid, operations)
+    return service.handle_batch_operations(study_uid, operations)

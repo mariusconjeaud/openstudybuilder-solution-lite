@@ -47,12 +47,3 @@ RDF based tools can be connected to the system via the [neosemantic](https://neo
 
 
 
-
-
-## Title
-
-### Context
-
-### Decision
-
-### Consequences

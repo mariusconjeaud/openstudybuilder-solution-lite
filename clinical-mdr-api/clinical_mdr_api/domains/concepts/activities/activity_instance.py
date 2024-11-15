@@ -18,6 +18,7 @@ from clinical_mdr_api.domains.versioned_object_aggregate import (
 @dataclass(frozen=True)
 class ActivityInstanceGroupingVO(ActivityGroupingVO):
     activity_uid: str | None = None
+    activity_version: str | None = None
 
 
 @dataclass(frozen=True)

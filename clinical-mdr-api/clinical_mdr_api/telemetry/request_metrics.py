@@ -127,6 +127,6 @@ def patch_neomodel_database():
 
     log.info("Patching neomodel.util.Database")
 
-    neomodel.util.Database._run_cypher_query = wrap(
-        neomodel.util.Database._run_cypher_query
+    neomodel.sync_.core.Database._run_cypher_query = wrap(
+        neomodel.sync_.core.Database._run_cypher_query
     )

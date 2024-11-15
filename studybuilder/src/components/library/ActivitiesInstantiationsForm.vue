@@ -24,7 +24,8 @@
               clearable
               class="mt-4"
               return-object
-              @update:model-value="selectedGroupings = []"
+              @update:model-value="clearGroupings"
+              @update:search="updateActivities"
             />
           </v-col>
         </v-row>
@@ -224,6 +225,7 @@ export default {
         },
       ],
       selectedActivity: null,
+      previouslySelectedActivity: null,
       selectedGroupings: [],
     }
   },
@@ -289,6 +291,11 @@ export default {
         }
       },
       immediate: true,
+    },
+    selectedActivity() {
+      if (this.editedActivity && this.activities.length > 0) {
+        this.setActivityGroupings()
+      }
     },
   },
   mounted() {
@@ -398,7 +405,7 @@ export default {
           }
         )
       } else {
-        activities.update(this.editedActivity.uid, this.form, source).then(
+        activities.update(this.editedActivity.uid, this.form, {}, source).then(
           () => {
             this.eventBusEmit('notification', {
               msg: this.$t('ActivityForms.activity_updated'),
@@ -414,34 +421,100 @@ export default {
     getObserver(step) {
       return this.$refs[`observer_${step}`]
     },
-    getActivities() {
+    getActivities(searchstring) {
+      // Get filtered activities for search string in autocomplete
       const params = {
-        page_size: 0,
+        page_size: 20,
         filters: {
           status: { v: [statuses.FINAL] },
           library_name: { v: [libraries.LIBRARY_SPONSOR] },
         },
       }
+      if (searchstring) {
+        params.filters.name = { v: [searchstring], op: 'co' }
+      }
       activities.get(params, 'activities').then((resp) => {
-        this.activities = resp.data.items
+        const fetched_activities = resp.data.items
+        // Check if the selected activity is in the fetched activities, fetch it if not
+        const params = {
+          page_size: 2,
+          filters: {
+            uid: { v: [], op: 'eq' },
+          },
+        }
+        if (
+          this.editedActivity && this.editedActivity.activities.length > 0
+          && !fetched_activities.some((act) => act.uid === this.editedActivity.activities[0].uid)
+        ) {
+          params.filters.uid.v.push(this.editedActivity.activities[0].uid)
+        }
+        if (
+          this.selectedActivity
+          && !fetched_activities.some((act) => act.uid === this.selectedActivity.uid)
+        ) {
+          params.filters.uid.v.push(this.selectedActivity.uid)
+        }
+        if (params.filters.uid.v.length > 0) {
+          // The selected activity is not in the fetched activities, fetch it
+          activities.get(params, 'activities').then((resp) => {
+            if (resp.data.items.length > 0) {
+              fetched_activities.push(resp.data.items[0])
+              this.activities = fetched_activities
+            }
+          })
+        } else {
+          this.activities = fetched_activities
+        }
       })
     },
     setActivityGroupings() {
-      this.selectedActivity = this.activities.find(
-        (act) => act.uid === this.editedActivity.activities[0].uid
-      )
-      if (this.editedActivity.activity_groupings.length > 0) {
-        this.selectedGroupings = []
-        this.editedActivity.activity_groupings.forEach((grouping) => {
-          this.selectedGroupings.push(
-            this.selectedActivity.activity_groupings.find(
-              (group) =>
-                group.activity_group_uid === grouping.activity_group.uid &&
-                group.activity_subgroup_uid === grouping.activity_subgroup.uid
+      if (!this.selectedActivity && this.editedActivity && this.editedActivity.activities.length > 0) {
+        // editedActivity is set, but selectedActivity is not set.
+        // This means that the form is newly opened to edit an existing instance.
+        // Set selectedActivity to the activity of the edited instance.
+        this.selectedActivity = this.activities.find(
+          (act) => act.uid === this.editedActivity.activities[0].uid
+        )
+        this.previouslySelectedActivity = this.selectedActivity
+        if (this.editedActivity.activity_groupings.length > 0) {
+          this.selectedGroupings = []
+          this.editedActivity.activity_groupings.forEach((grouping) => {
+            this.selectedGroupings.push(
+              this.selectedActivity.activity_groupings.find(
+                (group) =>
+                  group.activity_group_uid === grouping.activity_group.uid &&
+                  group.activity_subgroup_uid === grouping.activity_subgroup.uid
+              )
             )
-          )
-        })
+          })
+        }
       }
+      else if (!this.selectedActivity) {
+        // No activity is selected, clear groupings
+        this.selectedGroupings = []
+        if (this.editedActivity) {
+          this.editedActivity.activity_groupings = []
+        }
+      }
+    },
+    clearGroupings() {
+      if (this.selectedActivity && this.previouslySelectedActivity && this.selectedActivity.uid === this.previouslySelectedActivity.uid) {
+        // No change, just return
+        return
+      }
+      this.selectedGroupings = []
+      if (this.editedActivity) {
+        this.editedActivity.activities = []
+        this.editedActivity.activity_groupings = []
+      }
+      this.previouslySelectedActivity = this.selectedActivity
+    },
+    updateActivities(value) {
+      if (this.selectedActivity && value === this.selectedActivity.name) {
+        // The v-autocomplete got focus, which triggers a needless search with the current value.
+        return
+      }
+      this.getActivities(value)
     },
   },
 }

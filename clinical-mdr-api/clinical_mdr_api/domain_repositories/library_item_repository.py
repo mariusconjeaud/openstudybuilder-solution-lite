@@ -1197,7 +1197,8 @@ class LibraryItemRepositoryImplBase(
                 for_audit_trail=for_audit_trail,
             )
             cypher_query += (
-                ", false AS is_latest_fallback UNION ALL "
+                ", false AS is_latest_fallback "
+                + " UNION ALL "
                 + latest_match_stmt
                 + latest_return_stmt
                 + ", true AS is_latest_fallback"
@@ -1223,23 +1224,25 @@ class LibraryItemRepositoryImplBase(
                 f"No {self.root_class.__label__} with UID ({uid}) found in given status, date and version."
             )
 
-        queried_effective_date = None
-        date_conflict = False
-        if issubclass(self.root_class, CTTermNameRoot) and at_specific_date is not None:
-            # Last entry in each result row is a boolean
-            # indicating if the returned value is the requested one for date
-            # or the default latest final one
-            # Drop that last column once it has been used
-            non_latest_results = [r[:-1] for r in result if r[-1] is False]
-            if len(non_latest_results) > 0:
-                # Keep only non latest results if any
-                result = non_latest_results
-                queried_effective_date = at_specific_date
-            else:
-                # Keep only latest results if no results at date
-                # And raise date conflict flag
-                result = [r[:-1] for r in result if r[-1] is True]
-                date_conflict = True
+        if issubclass(self.root_class, CTTermNameRoot):
+            for i, _ in enumerate(result):
+                result[i][5]["queried_effective_date"] = None
+                result[i][5]["date_conflict"] = False
+            if at_specific_date is not None:
+                # Last entry in each result row is a boolean is_latest_fallback
+                # indicating if the returned value is the requested one for date
+                # or the default latest final one
+                # Drop that last column once it has been used
+                non_latest_results = [r[:-1] for r in result if r[-1] is False]
+                if len(non_latest_results) > 0:
+                    # Keep only non latest results if any
+                    result = non_latest_results
+                    result[0][5]["queried_effective_date"] = at_specific_date
+                else:
+                    # Keep only latest results if no results at date
+                    # And raise date conflict flag
+                    result = [r[:-1] for r in result if r[-1] is True]
+                    result[0][5]["date_conflict"] = True
 
         for (
             library,
@@ -1283,8 +1286,6 @@ class LibraryItemRepositoryImplBase(
                 activity_groups=activity_groups[0] if activity_groups else [],
                 activity_subgroups=activity_subgroups[0] if activity_subgroups else [],
                 instance_template=instance_template,
-                queried_effective_date=queried_effective_date,
-                date_conflict=date_conflict,
             )
 
             if value and relationship:
@@ -1364,6 +1365,7 @@ class LibraryItemRepositoryImplBase(
         key=hashkey_library_item_with_metadata_get_all,
         lock=lock_store_item_by_uid,
     )
+    # pylint: disable=too-many-locals
     def get_all_optimized(
         self,
         *,
@@ -1413,11 +1415,94 @@ class LibraryItemRepositoryImplBase(
         if at_specific_date:
             params["at_specific_date"] = at_specific_date
 
-        result, _ = db.cypher_query(
-            match_stmt + return_stmt,
-            params=params,
-            resolve_objects=True,
-        )
+        cypher_query = match_stmt + return_stmt
+
+        # If a CTTermName is requested at a specific date and we do not want to raise an exception if not found,
+        # We retrieve both this version if available and the latest
+        # Then we return the latest if there is no available version at the given date
+        # This is for returning Terms in the context of a study with a StudyStandardVersion
+        if issubclass(self.root_class, CTTermNameRoot) and at_specific_date is not None:
+            latest_match_stmt, latest_return_stmt = self._find_cypher_query_optimized(
+                get_latest_final=True,
+                with_pagination=bool(page_size),
+                return_study_count=return_study_count,
+                where_stmt=where_stmt,
+                for_audit_trail=for_audit_trail,
+                include_retired_versions=include_retired_versions,
+            )
+            cypher_query += (
+                ", false AS is_latest_fallback "
+                + " UNION ALL "
+                + latest_match_stmt
+                + latest_return_stmt
+                + ", true AS is_latest_fallback"
+            )
+
+        try:
+            result, _ = db.cypher_query(
+                cypher_query,
+                params=params,
+                resolve_objects=True,
+            )
+        except NodeClassNotDefined as exc:
+            raise VersioningException(
+                "Object labels were changed - likely the object was deleted in a concurrent transaction."
+            ) from exc
+
+        if not result:
+            if issubclass(self.root_class, CTTermNameRoot):
+                raise NotFoundException(
+                    f"No {self.root_class.__label__} found in given status, date and version ; nor was a latest final one found."
+                )
+
+        if issubclass(self.root_class, CTTermNameRoot):
+            for i, i_result in enumerate(result):
+                result[i][5]["queried_effective_date"] = None
+                result[i][5]["date_conflict"] = False
+            if at_specific_date is not None:
+                # Last entry in each result row is a boolean is_latest_fallback
+                # indicating if the returned value is the requested one for date
+                # or the default latest final one
+                # Drop that last column once it has been used
+                matched_element_ids = list(
+                    set(i_result[5]["ctterm_name_element_id"] for i_result in result)
+                )
+                not_matched = [
+                    param
+                    for param in params["uids"]
+                    if (not param in matched_element_ids)
+                ]
+                if len(not_matched) > 0:
+                    raise NotFoundException(
+                        f"No {self.root_class.__label__} found in given status, date and version ; nor was a latest final one found for these ElementID {not_matched}"
+                    )
+                total_result = []
+                # for every uid to query
+                for param in params["uids"]:
+                    # give me the results of the specific uid
+                    filtered_result = [
+                        i_result
+                        for i_result in result
+                        if i_result[5]["ctterm_name_element_id"] == param
+                    ]
+                    non_latest_results = [
+                        r[:-1] for r in filtered_result if r[-1] is False
+                    ]
+                    if len(non_latest_results) > 0:
+                        # Keep only non latest results if any
+                        non_latest_results[0][5][
+                            "queried_effective_date"
+                        ] = at_specific_date
+                        total_result.append(non_latest_results[0])
+                    else:
+                        # Keep only latest results if no results at date
+                        # And raise date conflict flag
+                        latest_result = [
+                            r[:-1] for r in filtered_result if r[-1] is True
+                        ]
+                        latest_result[0][5]["date_conflict"] = True
+                        total_result.append(latest_result[0])
+                result = total_result
 
         for (
             library,
@@ -1957,9 +2042,10 @@ class LibraryItemRepositoryImplBase(
 
         Specific behavior
             get_latest_final
-                - True : will return the latest final version, without the need to pass parameters
-                This allows you to UNION a query getting a term at a date with a specific status,
-                with a second query which returns the latest final regardless of status.
+                - True : - Will return the latest final version, without the need to pass parameters
+                        This allows you to UNION a query getting a term at a date with a specific status,
+                        with a second query which returns the latest final regardless of status.
+                        - This flag, renders the status, version and specific_date unusable when calling find_cypher_query_optimized
 
 
 
@@ -2005,6 +2091,8 @@ class LibraryItemRepositoryImplBase(
                 version_where_stmt += """(ver_rel.start_date<= datetime($at_specific_date) < datetime(ver_rel.end_date))
                                             OR (ver_rel.end_date IS NULL AND (ver_rel.start_date <= datetime($at_specific_date)))"""
         if with_versions_in_where:
+            # when the versions in where are specified the scope is that we want to retrieve the latest version,
+            # so in method _where_stmt_optimized will be used the latest_version to get the the version number of it.
             ver_rel_filtering = f"""
                 CALL{{
                     WITH _root
@@ -2204,17 +2292,8 @@ class LibraryItemRepositoryImplBase(
             )
             else "0 as study_count "
         )
-        with_agg_codelist = (
-            """, collect(DISTINCT {
-                uid: ctcodelist_root.uid
-                ,order: ctterm_root__ct_codelist_root.order
-                ,codelist_library_name: codelist_library.name
-            }) as codelists"""
-            if self._is_repository_related_to_ct()
-            else ""
-        )
 
-        match_stmt += "WITH *, " + with_agg_study_count + with_agg_codelist
+        match_stmt += "WITH *, " + with_agg_study_count
 
         if where_stmt:
             match_stmt += f" {where_stmt} "
@@ -2242,7 +2321,7 @@ class LibraryItemRepositoryImplBase(
             """
 
         if not for_audit_trail:
-            if not uid:
+            if not uid and not issubclass(self.root_class, CTTermNameRoot):
                 return_stmt += f" {self._sort_stmt(sort_by)} "
 
                 if with_pagination:
@@ -2260,14 +2339,25 @@ class LibraryItemRepositoryImplBase(
 
     def _ctterm_name_match_return_stmt(self):
         match_stmt = """
-            MATCH (root)<-[:HAS_NAME_ROOT]-(ctterm_root)<-[ctterm_root__ct_codelist_root]-(ctcodelist_root:CTCodelistRoot)<-[:HAS_CODELIST]-(ct_catalogue:CTCatalogue)
-            MATCH (ctcodelist_root)<-[:CONTAINS_CODELIST]-(codelist_library:Library)
+            MATCH (root)<-[root_has_name_root__ctterm_root:HAS_NAME_ROOT]-(ctterm_root)
+            CALL{
+                WITH ctterm_root
+                MATCH (ctterm_root)<-[ctterm_root__ct_codelist_root:HAS_TERM]-(ctcodelist_root:CTCodelistRoot)<-[:HAS_CODELIST]-(ct_catalogue:CTCatalogue)
+                MATCH (ctcodelist_root)<-[:CONTAINS_CODELIST]-(codelist_library:Library)
+                RETURN collect(DISTINCT {
+                    uid: ctcodelist_root.uid
+                    ,order: ctterm_root__ct_codelist_root.order
+                    ,codelist_library_name: codelist_library.name
+                    ,ct_catalogue_name: ct_catalogue.name
+                }) as codelists
+            } 
         """
         ctterm_names_return = """,
             {
                 ctterm_root_uid: ctterm_root.uid
-                ,catalogue: ct_catalogue.name
+                ,catalogue: codelists[0].ct_catalogue_name
                 ,codelists: codelists
+                ,ctterm_name_element_id: elementID(root)
             } as ctterm_name
         """
         return match_stmt, ctterm_names_return
@@ -2285,21 +2375,18 @@ class LibraryItemRepositoryImplBase(
             // ACTIVITY INSTANCE GROUPINGS
             CALL{
                 WITH root,ver_rel,activity_instance_value
-                MATCH (root)-[ver_rel]->(activity_instance_value)-[:HAS_ACTIVITY]->(activity_instance_grouping:ActivityGrouping)
-                MATCH (activity_instance_grouping)-[:HAS_GROUPING]-(:ActivityValue)<-[:HAS_VERSION]-(activity_instance_grouping_activity:ActivityRoot)
-                //ACTIVITY INSTANCE GROUPINGS VALID GROUPS
-                CALL{
-                    WITH activity_instance_grouping
-                    MATCH (activity_instance_grouping)-[:IN_SUBGROUP]->(activity_valid_group:ActivityValidGroup)
-                    MATCH (activity_instance_grouping_activity_sub_group_value:ActivitySubGroupValue)-[:HAS_GROUP]->(activity_valid_group:ActivityValidGroup)-[:IN_GROUP]->(activity_instance_grouping_activity_group_value:ActivityGroupValue)
-                    MATCH (activity_instance_grouping_activity_sub_group_value)<-[:HAS_VERSION]-(activity_instance_grouping_activity_sub_group_root:ActivitySubGroupRoot)
-                    MATCH (activity_instance_grouping_activity_group_value)<-[:HAS_VERSION]-(activity_instance_grouping_activity_group_root:ActivityGroupRoot)
-                    RETURN collect(DISTINCT {subgroup_uid:activity_instance_grouping_activity_sub_group_root.uid, group_uid:activity_instance_grouping_activity_group_root.uid }) as activity_instance_valid_groups
-                }
-                RETURN  COLLECT( distinct {
-                    activity_instance_valid_groups: activity_instance_valid_groups, 
-                    activity_instance_grouping_activity_uid: activity_instance_grouping_activity.uid
-                }) as activity_instance_groupings
+                WITH *, 
+                 [(root)-[ver_rel]->(activity_instance_value)-[:HAS_ACTIVITY]->(activity_instance_grouping:ActivityGrouping)-[:IN_SUBGROUP]->(activity_valid_group:ActivityValidGroup) | 
+                    {
+                        activity: head(apoc.coll.sortMulti([(activity_instance_grouping)-[:HAS_GROUPING]-(:ActivityValue)<-[has_version:HAS_VERSION]-
+                            (activity_root:ActivityRoot) | {uid:activity_root.uid,version:has_version.version}], ['has_version.version'])),
+                        activity_subgroup: head(apoc.coll.sortMulti([(activity_valid_group)<-[:HAS_GROUP]-(:ActivitySubGroupValue)<-[has_version:HAS_VERSION]-
+                            (activity_subgroup_root:ActivitySubGroupRoot) | {uid:activity_subgroup_root.uid,version:has_version.version}], ['has_version.version'])), 
+                        activity_group: head(apoc.coll.sortMulti([(activity_valid_group)-[:IN_GROUP]-(:ActivityGroupValue)<-[has_version:HAS_VERSION]-
+                            (activity_group_root:ActivityGroupRoot) | {uid:activity_group_root.uid, version:has_version.version}], ['has_version.version']))
+                    }
+                ] as activity_instance_groupings
+                RETURN activity_instance_groupings
             }
             // ACTIVITY ITEMS
             CALL{
@@ -2344,11 +2431,18 @@ class LibraryItemRepositoryImplBase(
         match_stmt = """
             MATCH (root)-[ver_rel]->(activity_value:ActivityValue)
             OPTIONAL MATCH (activity_value)-[:REPLACED_BY_ACTIVITY]->(replaced_by_activity:ActivityRoot)
-            CALL{
+            CALL
+            {
                 WITH root,activity_value,ver_rel
-                MATCH (root)-[ver_rel]->(activity_value:ActivityValue)-[:HAS_GROUPING]->(:ActivityGrouping)-[:IN_SUBGROUP]->(activity_valid_group:ActivityValidGroup)
-                MATCH (activity_group_root:ActivityGroupRoot)-[:HAS_VERSION]->(:ActivityGroupValue)<-[:IN_GROUP]-(activity_valid_group)<-[:HAS_GROUP]-(:ActivitySubGroupValue)<-[:HAS_VERSION]-(activity_sub_group_root:ActivitySubGroupRoot)
-                RETURN collect(distinct {activity_group_uid: activity_group_root.uid, activity_subgroup_uid: activity_sub_group_root.uid}) as activity_groupings
+                WITH *, [(root)-[ver_rel]->(activity_value:ActivityValue)-[:HAS_GROUPING]->(:ActivityGrouping)-[:IN_SUBGROUP]->(activity_valid_group:ActivityValidGroup) | 
+                    {
+                        activity_subgroup: head(apoc.coll.sortMulti([(activity_valid_group)<-[:HAS_GROUP]-(:ActivitySubGroupValue)<-[has_version:HAS_VERSION]-
+                            (activity_subgroup_root:ActivitySubGroupRoot) | {uid:activity_subgroup_root.uid,version:has_version.version}], ['has_version.version'])), 
+                        activity_group: head(apoc.coll.sortMulti([(activity_valid_group)-[:IN_GROUP]-(:ActivityGroupValue)<-[has_version:HAS_VERSION]-
+                            (activity_group_root:ActivityGroupRoot) | {uid:activity_group_root.uid, version:has_version.version}], ['has_version.version']))
+                    }
+                    ] as activity_groupings
+                RETURN activity_groupings
             }
         """
 
@@ -2365,14 +2459,19 @@ class LibraryItemRepositoryImplBase(
         match_stmt = """
             CALL{
                 WITH root
-                OPTIONAL MATCH (root)-[:LATEST]->(:ActivitySubGroupValue)-[:HAS_GROUP]->(:ActivityValidGroup)-[:IN_GROUP]->(:ActivityGroupValue)<-[:HAS_VERSION]-(activity_group:ActivityGroupRoot)
-                RETURN collect(DISTINCT activity_group.uid) as activity_groups_uids
+                WITH *,
+                [(root)-[:LATEST]->(concept_value)-[:HAS_GROUP]->(activity_valid_group:ActivityValidGroup) |
+                    {
+                        activity_group:head(apoc.coll.sortMulti([(activity_valid_group)-[:IN_GROUP]-(:ActivityGroupValue)<-[has_version:HAS_VERSION]-
+                            (activity_group_root:ActivityGroupRoot) | {uid:activity_group_root.uid, version:has_version.version} ], ['has_version.version']))
+                    }] AS activity_groups
+                RETURN activity_groups
             }
         """
 
         activity_subgroups_root_return = """,
             {
-                activity_groups_uids: activity_groups_uids
+                activity_groups: activity_groups
             } as activity_subgroups_root
         """
 

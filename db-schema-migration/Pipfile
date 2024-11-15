@@ -23,9 +23,9 @@ python_version = "3.11"
 
 [scripts]
 build-sbom = "pipelines/scripts/build-sbom.sh"
-test = "python -m pytest -s --cov-report html:test_coverage --cov-report xml:reports/coverage.xml --cov-append --cov --junitxml=reports/test_report.xml tests/test_migration_008.py"
-verify = "python -m pytest -s --cov-report html:test_coverage --cov-report xml:reports/coverage.xml --cov-append --cov --junitxml=reports/test_report.xml verifications/verification_008.py"
-migrate = "python -m migrations.migration_008"
+test = "python -m pytest -s --cov-report html:test_coverage --cov-report xml:reports/coverage.xml --cov-append --cov --junitxml=reports/test_report.xml tests/test_migration_009.py"
+verify = "python -m pytest -s --cov-report html:test_coverage --cov-report xml:reports/coverage.xml --cov-append --cov --junitxml=reports/test_report.xml verifications/verification_009.py"
+migrate = "python -m migrations.migration_009"
 test_corrections = "python -m pytest -s --cov-report html:test_coverage --cov-report xml:reports/coverage.xml --cov-append --cov --junitxml=reports/test_report.xml tests/test_correction_008.py"
 verify_corrections = "python -m pytest -s --cov-report html:test_coverage --cov-report xml:reports/coverage.xml --cov-append --cov --junitxml=reports/test_report.xml verifications/correction_verification_008.py"
 apply_corrections = "python -m data_corrections.correction_008"

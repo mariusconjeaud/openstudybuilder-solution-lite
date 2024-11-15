@@ -31,26 +31,22 @@
           </tr>
         </template>
       </v-data-table-server>
+      <div v-if="!simpleStyling">
+        <div>{{ $t('HistoryTable.legend') }}</div>
+        <div class="ml-2 font-weight-black">
+          {{ $t('HistoryTable.current_version') }}
+        </div>
+        <div class="ml-2">
+          {{ $t('HistoryTable.older_version') }}
+        </div>
+        <div class="ml-2 text-red">
+          {{ $t('HistoryTable.deleted_version') }}
+        </div>
+        <div class="ml-2 bg-blue-lighten-4 difference">
+          {{ $t('HistoryTable.changed_value') }}
+        </div>
+      </div>
     </v-card-text>
-    <v-card-actions v-if="!simpleStyling">
-      <v-row>
-        <v-col>
-          <div>{{ $t('HistoryTable.legend') }}</div>
-          <div class="ml-2 font-weight-black">
-            {{ $t('HistoryTable.current_version') }}
-          </div>
-          <div class="ml-2">
-            {{ $t('HistoryTable.older_version') }}
-          </div>
-          <div class="ml-2 text-red">
-            {{ $t('HistoryTable.deleted_version') }}
-          </div>
-          <div class="ml-2 bg-blue-lighten-4 difference">
-            {{ $t('HistoryTable.changed_value') }}
-          </div>
-        </v-col>
-      </v-row>
-    </v-card-actions>
     <v-card-actions class="bg-white fixed-actions py-6 border-t-thin">
       <v-spacer />
       <DataTableExportButton

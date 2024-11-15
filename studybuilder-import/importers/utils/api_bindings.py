@@ -93,10 +93,9 @@ def status_ok(status):
 def get_error_message(response):
     if "message" in response:
         return response["message"]
-    elif "detail" in response:
+    if "detail" in response:
         return str(response["detail"])
-    else:
-        return str(response)
+    return str(response)
 
 
 # ---------------------------------------------------------------
@@ -178,11 +177,11 @@ class ApiBinding:
             self.metrics.icrement(simple_path + "--DELETE")
             self.log.debug("DELETE %s %s", path, "success")
             return True
-        else:
-            self.log.debug("DELETE %s", path)
-            self.log.warning(response.text)
-            self.metrics.icrement(simple_path + "--ERROR")
-            return False
+
+        self.log.debug("DELETE %s", path)
+        self.log.warning(response.text)
+        self.metrics.icrement(simple_path + "--ERROR")
+        return False
 
     def simple_post_to_api(self, path, body, simple_path=None, params=None):
         if simple_path is None:
@@ -197,26 +196,26 @@ class ApiBinding:
             self.metrics.icrement(simple_path + "--POST")
             self.log.debug("POST %s %s", path, "success")
             return response.json()
+
+        self.log.debug("POST %s", path)
+        if "message" in response.json() and (
+            "already exist" in response.json()["message"]
+            or "all ready" in response.json()["message"]
+            or "Duplicate template" in response.json()["message"]
+            or "There is already" in response.json()["message"]
+        ):
+            self.log.warning(response.json()["message"])
+            self.metrics.icrement(simple_path + "--AlreadyExists")
+        elif (
+            "message" in response.json()
+            and "no approved objective" in response.json()["message"]
+        ):
+            self.log.warning(response.json()["message"])
+            self.metrics.icrement(simple_path + "--NoObjective")
         else:
-            self.log.debug("POST %s", path)
-            if "message" in response.json() and (
-                "already exist" in response.json()["message"]
-                or "all ready" in response.json()["message"]
-                or "Duplicate template" in response.json()["message"]
-                or "There is already" in response.json()["message"]
-            ):
-                self.log.warning(response.json()["message"])
-                self.metrics.icrement(simple_path + "--AlreadyExists")
-            elif (
-                "message" in response.json()
-                and "no approved objective" in response.json()["message"]
-            ):
-                self.log.warning(response.json()["message"])
-                self.metrics.icrement(simple_path + "--NoObjective")
-            else:
-                self.log.warning(response.text)
-                self.metrics.icrement(simple_path + "--ERROR")
-            return None
+            self.log.warning(response.text)
+            self.metrics.icrement(simple_path + "--ERROR")
+        return None
 
     def post_to_api(self, object, body=None, path=None):
         if path is None:
@@ -240,32 +239,27 @@ class ApiBinding:
                 self.log.debug("POST %s %s", object["path"], "success")
             return response.json()
 
+        if "name" in object["body"]:
+            self.log.debug("POST %s %s", object["path"], object["body"]["name"])
         else:
-            if "name" in object["body"]:
-                self.log.debug("POST %s %s", object["path"], object["body"]["name"])
-            else:
-                self.log.debug("POST %s %s", object["path"], "no name")
-            if "message" in response.json() and (
-                "already exists" in response.json()["message"]
-                or "Duplicate template" in response.json()["message"]
-                or "already has" in response.json()["message"]
-            ):
-                self.log.warning(
-                    "Post to %s failed: %s", path, response.json()["message"]
-                )
-                self.metrics.icrement(short_path + "--AlreadyExists")
-            elif "message" in response.json() and (
-                "not found" in response.json()["message"]
-                or "does not exist" in response.json()["message"]
-            ):
-                self.log.warning(
-                    "Post to %s failed: %s", path, response.json()["message"]
-                )
-                self.metrics.icrement(short_path + "--NotFound")
-            else:
-                self.log.warning("Post to %s failed: %s", path, response.text)
-                self.metrics.icrement(short_path + "--ERROR")
-            return None
+            self.log.debug("POST %s %s", object["path"], "no name")
+        if "message" in response.json() and (
+            "already exists" in response.json()["message"]
+            or "Duplicate template" in response.json()["message"]
+            or "already has" in response.json()["message"]
+        ):
+            self.log.warning("Post to %s failed: %s", path, response.json()["message"])
+            self.metrics.icrement(short_path + "--AlreadyExists")
+        elif "message" in response.json() and (
+            "not found" in response.json()["message"]
+            or "does not exist" in response.json()["message"]
+        ):
+            self.log.warning("Post to %s failed: %s", path, response.json()["message"])
+            self.metrics.icrement(short_path + "--NotFound")
+        else:
+            self.log.warning("Post to %s failed: %s", path, response.text)
+            self.metrics.icrement(short_path + "--ERROR")
+        return None
 
     def patch_to_api(self, body, path):
         url = path_join(self.api_base_url, path, body["uid"])
@@ -274,18 +268,18 @@ class ApiBinding:
             self.metrics.icrement(path + "--Patch")
             self.log.info("Patch %s %s", path, "success")
             return response.json()
+
+        self.log.warning("Patch %s %s", path, "error")
+        if (
+            "message" in response.json().keys()
+            and "already exists" in response.json()["message"]
+        ):
+            self.log.warning(response.json()["message"])
+            self.metrics.icrement(path + "--AlreadyExists")
         else:
-            self.log.warning("Patch %s %s", path, "error")
-            if (
-                "message" in response.json().keys()
-                and "already exists" in response.json()["message"]
-            ):
-                self.log.warning(response.json()["message"])
-                self.metrics.icrement(path + "--AlreadyExists")
-            else:
-                self.log.warning(response.text)
-                self.metrics.icrement(path + "--Patch-ERROR")
-            return None
+            self.log.warning(response.text)
+            self.metrics.icrement(path + "--Patch-ERROR")
+        return None
 
     def approve_item(self, uid: str, url: str):
         full_url = path_join(self.api_base_url, url, uid, "approvals")
@@ -293,8 +287,8 @@ class ApiBinding:
         if not response.ok:
             self.log.warning("Failed to approve %s %s", uid, response.content)
             return None
-        else:
-            return response.json()
+
+        return response.json()
 
     def approve_item_names_and_attributes(self, uid: str, url: str):
         full_url = path_join(self.api_base_url, url, uid, "names/approvals")
@@ -309,8 +303,8 @@ class ApiBinding:
                 "Failed to approve attributes %s %s", uid, response.content
             )
             return False
-        else:
-            return True
+
+        return True
 
     def get_all_from_api(self, path, params=None, items_only=True):
         # print(path_join(self.api_base_url, path), params, self.api_headers)
@@ -340,30 +334,30 @@ class ApiBinding:
             if "items" in res and items_only:
                 self.metrics.icrement(path + "--GET", len(res["items"]))
                 return res["items"]
-            else:
-                return res
+
+            return res
+
+        try:
+            message = response.json().get("message")
+        except json.JSONDecodeError:
+            message = None
+        if message is not None:
+            self.log.error(
+                "get %s, message: %s, status: %s %s",
+                path,
+                message,
+                response.status_code,
+                response.reason,
+            )
         else:
-            try:
-                message = response.json().get("message")
-            except json.JSONDecodeError:
-                message = None
-            if message is not None:
-                self.log.error(
-                    "get %s, message: %s, status: %s %s",
-                    path,
-                    message,
-                    response.status_code,
-                    response.reason,
-                )
-            else:
-                self.log.error(
-                    "get %s reply: %s status: %s %s",
-                    path,
-                    response.text,
-                    response.status_code,
-                    response.reason,
-                )
-            return None
+            self.log.error(
+                "get %s reply: %s status: %s %s",
+                path,
+                response.text,
+                response.status_code,
+                response.reason,
+            )
+        return None
 
     def get_all_from_api_paged(
         self, path, params=None, items_only=True, page_size=1000
@@ -402,17 +396,17 @@ class ApiBinding:
             for response_item in responses:
                 identifiers.append(response_item[identifier])
             return identifiers
-        else:
-            identifiers = {}
-            if responses == None:
-                return identifiers
-            for response_item in responses:
-                identifiers[response_item[identifier]] = response_item[value]
+
+        identifiers = {}
+        if responses is None:
             return identifiers
+        for response_item in responses:
+            identifiers[response_item[identifier]] = response_item[value]
+        return identifiers
 
     def response_to_dict(self, responses: list, identifier: str):
         items = {}
-        if responses == None:
+        if responses is None:
             return items
         for response_item in responses:
             items[response_item[identifier]] = response_item
@@ -424,7 +418,7 @@ class ApiBinding:
         self, responses: list, identifier: str, values: Sequence[str]
     ):
         identifiers = {}
-        if responses == None:
+        if responses is None:
             return identifiers
         for response_item in responses:
             ident = response_item[identifier].lower()
@@ -599,7 +593,7 @@ class ApiBinding:
         response.raise_for_status()
         result = response.json()
         objective_temp_dict = {}
-        result = result["items"] if type(result) is dict else result
+        result = result["items"] if isinstance(result, dict) else result
         for res in result:
             objective_temp_dict[res["name"]] = res
         return objective_temp_dict
@@ -613,8 +607,8 @@ class ApiBinding:
         )
         if response.ok and len(response.json()["items"]):
             return response.json()["items"][0]
-        else:
-            return None
+
+        return None
 
     # Find the uid for a dictionary from its name
     def find_dictionary_uid(self, name):
@@ -626,8 +620,8 @@ class ApiBinding:
         if response.ok:
             # This assumes there is only one version, do we need to handle multiple?
             return response.json()["items"][0]["codelist_uid"]
-        else:
-            return None
+
+        return None
 
     # Find a term via its name from a dictionary
     def find_dictionary_item_uid_from_name(self, dict_uid, name):
@@ -641,10 +635,9 @@ class ApiBinding:
             },
             headers=self.api_headers,
         )
-        if response.ok:
-            if len(response.json()["items"]) > 0:
-                # This assumes there is only one version, do we need to handle multiple?
-                return response.json()["items"][0]["term_uid"]
+        if response.ok and len(response.json()["items"]) > 0:
+            # This assumes there is only one version, do we need to handle multiple?
+            return response.json()["items"][0]["term_uid"]
         return None
 
     def get_studies_as_dict(self, path="/studies"):
@@ -670,8 +663,8 @@ class ApiBinding:
         if not res.ok:
             self.log.warning("Failed to approve %s", path)
             return False
-        else:
-            return True
+
+        return True
 
     def simple_approve2(self, url: str, path: str, label=""):
         url = path_join(url, path)
@@ -680,9 +673,9 @@ class ApiBinding:
             self.log.warning("Failed to approve %s", url)
             self.metrics.icrement(f"{url}--{label}ApproveError")
             return False
-        else:
-            self.metrics.icrement(f"{url}--{label}Approve")
-            return True
+
+        self.metrics.icrement(f"{url}--{label}Approve")
+        return True
 
     def simple_patch(self, body, url, path):
         full_url = path_join(self.api_base_url, url)
@@ -691,23 +684,23 @@ class ApiBinding:
             self.metrics.icrement(path + "--Patch")
             self.log.info("Patch %s %s", path, "success")
             return response.json()
+
+        if (
+            "message" in response.json().keys()
+            and "already exists" in response.json()["message"]
+        ):
+            self.log.warning("Patch %s %s", url, "error, item already exists")
+            self.metrics.icrement(path + "--AlreadyExists")
+        elif (
+            "message" in response.json().keys()
+            and "does not exist" in response.json()["message"]
+        ):
+            self.log.warning("Patch %s %s", url, "error, item not found")
+            self.metrics.icrement(path + "--NotFound")
         else:
-            if (
-                "message" in response.json().keys()
-                and "already exists" in response.json()["message"]
-            ):
-                self.log.warning("Patch %s %s", url, "error, item already exists")
-                self.metrics.icrement(path + "--AlreadyExists")
-            elif (
-                "message" in response.json().keys()
-                and "does not exist" in response.json()["message"]
-            ):
-                self.log.warning("Patch %s %s", url, "error, item not found")
-                self.metrics.icrement(path + "--NotFound")
-            else:
-                self.log.warning("Patch %s %s", url, response.text)
-                self.metrics.icrement(path + "--Patch-ERROR")
-            return None
+            self.log.warning("Patch %s %s", url, response.text)
+            self.metrics.icrement(path + "--Patch-ERROR")
+        return None
 
     # ---------------------------------------------------------------
     # Async building blocks
@@ -796,9 +789,13 @@ class ApiBinding:
             if response.ok:
                 result = await response.json()
             else:
-                error_result = await response.json()
+                try:
+                    error_result = await response.json()
+                    error_message = get_error_message(error_result)
+                except aiohttp.ContentTypeError:
+                    error_message = await response.text()
                 self.log.warning(
-                    f"Failed to approve '{uid}', status: {status}, message: {get_error_message(error_result)}"
+                    f"Failed to approve {url}, status: {status}, message: {error_message}"
                 )
                 result = {}
             if not response.ok:
@@ -832,7 +829,7 @@ class ApiBinding:
             )
             return
         uid = response.get("uid")
-        if approve == True and uid != None:
+        if approve is True and uid is not None:
             # Sleeping to avoid errors when running locally (with limited resources for the db).
             time.sleep(SLEEP_BEFORE_APPROVE)
             self.log.info(f"Approve object with uid '{uid}'")
@@ -840,7 +837,7 @@ class ApiBinding:
                 uid=uid, url=data["approve_path"], session=session
             )
             return result
-        elif approve == True and uid is None:
+        if approve is True and uid is None:
             self.log.error("No uid returned, unable to approve")
         return response
 

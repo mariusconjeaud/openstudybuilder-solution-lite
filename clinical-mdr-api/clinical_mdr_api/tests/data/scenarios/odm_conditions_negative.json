@@ -152,7 +152,7 @@
         }
     },
     {
-        "name": "Test cannot create a new ODM Condition with existing name and oid",
+        "name": "Test cannot create a new ODM Condition with same properties",
         "request": {
             "headers": {},
             "method": "POST",
@@ -160,11 +160,16 @@
                 "library_name": "Sponsor",
                 "name": "name1",
                 "oid": "oid1",
-                "formal_expressions": [],
+                "formal_expressions": [
+                    "odm_formal_expression1"
+                ],
                 "descriptions": [
+                    "odm_description2",
                     "odm_description3"
                 ],
-                "alias_uids": []
+                "alias_uids": [
+                    "odm_alias1"
+                ]
             },
             "url": "concepts/odms/conditions"
         },
@@ -175,7 +180,7 @@
                 "content-type": "application/json"
             },
             "result": {
-                "message": "ODM Condition with ['name: name1', 'OID: oid1'] already exists.",
+                "message": "ODM Condition already exists with UID (OdmCondition_000001) and data {'description_uids': ['odm_description2', 'odm_description3'], 'alias_uids': ['odm_alias1'], 'formal_expression_uids': ['odm_formal_expression1'], 'name': 'name1', 'oid': 'oid1'}",
                 "time": "2022-03-07T12: 14: 18.116363",
                 "path": "http://testserver/concepts/odms/conditions",
                 "method": "POST",
