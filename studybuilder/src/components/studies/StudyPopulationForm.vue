@@ -295,10 +295,6 @@ export default {
       if (!this.form.stable_disease_minimum_duration) {
         this.form.stable_disease_minimum_duration = {}
       }
-      if (this.form.sex_of_participants_code) {
-        this.form.sex_of_participants_code.sponsor_preferred_name =
-          this.form.sex_of_participants_code.name
-      }
     },
     setNullValueStudyDisease() {
       this.form.disease_condition_or_indication_codes = []

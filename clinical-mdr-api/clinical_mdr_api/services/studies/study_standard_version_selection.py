@@ -165,17 +165,23 @@ class StudyStandardVersionService:
         study_uid: str,
         study_standard_version_input: StudyStandardVersionInput,
     ) -> StudyStandardVersion:
-        study_standard_version = self.repo.find_standard_version_in_study(study_uid)
-        if study_standard_version:
-            raise exceptions.ValidationException(
-                f"Already exists a Standard Version {study_standard_version[0].uid} for the study: {study_uid}"
-            )
-
-        if not self._repos.ct_package_repository.package_exists(
-            study_standard_version_input.ct_package_uid
-        ):
+        ct_package = self._repos.ct_package_repository.find_by_uid(
+            uid=study_standard_version_input.ct_package_uid,
+        )
+        if not ct_package:
             raise exceptions.NotFoundException(
                 f"Could not find CTPackage with uid {study_standard_version_input.ct_package_uid}"
+            )
+        study_standard_versions = self.repo.find_standard_versions_in_study(study_uid)
+        is_catalogue_used = [
+            (study_standard_version.uid, study_standard_version.ct_package_uid)
+            for study_standard_version in study_standard_versions
+            if ct_package.catalogue_name in study_standard_version.ct_package_uid
+        ]
+        # CHECK IF IT EXISTS FOR THE SPECIFIC CATALOGUE that is requesting
+        if is_catalogue_used:
+            raise exceptions.ValidationException(
+                f"Already exists a Standard Version {is_catalogue_used[0]} for the catalogue: {ct_package.catalogue_name}"
             )
 
         created_study_standard_version = self._from_input_values(
@@ -205,15 +211,30 @@ class StudyStandardVersionService:
             and study_standard_version_input.description
             != study_standard_version.description
         ):
-            if (
-                study_standard_version_input.ct_package_uid is not None
-                and not self._repos.ct_package_repository.package_exists(
-                    study_standard_version_input.ct_package_uid
+            ct_package = None
+            if study_standard_version_input.ct_package_uid is not None:
+                ct_package = self._repos.ct_package_repository.find_by_uid(
+                    uid=study_standard_version_input.ct_package_uid,
                 )
-            ):
-                raise exceptions.NotFoundException(
-                    f"Could not find CTPackage with uid {study_standard_version_input.ct_package_uid}"
+                if not ct_package:
+                    raise exceptions.NotFoundException(
+                        f"Could not find CTPackage with uid {study_standard_version_input.ct_package_uid}"
+                    )
+                study_standard_versions = self.repo.find_standard_versions_in_study(
+                    study_uid
                 )
+                is_catalogue_used = [
+                    (study_standard_version.uid, study_standard_version.ct_package_uid)
+                    for i_study_standard_version in study_standard_versions
+                    if ct_package.catalogue_name
+                    in i_study_standard_version.ct_package_uid
+                    and i_study_standard_version.uid != study_standard_version_uid
+                ]
+                # CHECK IF IT EXISTS FOR THE SPECIFIC CATALOGUE that is requesting
+                if is_catalogue_used:
+                    raise exceptions.ValidationException(
+                        f"Already exists a Standard Version {is_catalogue_used[0]} for the catalogue: {ct_package.catalogue_name}"
+                    )
 
             fill_missing_values_in_base_model_from_reference_base_model(
                 base_model_with_missing_values=study_standard_version_input,

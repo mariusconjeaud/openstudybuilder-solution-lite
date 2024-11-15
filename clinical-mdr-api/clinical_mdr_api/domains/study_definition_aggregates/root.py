@@ -538,6 +538,7 @@ class StudyDefinitionAR:
                     project_exists_callback=project_exists_callback,
                     study_number_exists_callback=study_number_exists_callback,
                     is_subpart=is_subpart,
+                    previous_is_subpart=previous_is_subpart,
                     updatable_subpart=updatable_subpart,
                     previous_project_number=self.current_metadata.id_metadata.project_number,
                 )
@@ -730,7 +731,7 @@ class StudyDefinitionAR:
             study_description=current_metadata.study_description,
         )
 
-        # append that version to teh list
+        # append that version to the list
         self._locked_metadata_versions.append(locked_metadata)
 
     def unlock(self, author: str | None = None) -> None:

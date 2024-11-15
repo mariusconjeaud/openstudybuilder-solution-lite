@@ -13,10 +13,7 @@ from clinical_mdr_api.domain_repositories.models.study_audit_trail import (
     Edit,
     StudyAction,
 )
-from clinical_mdr_api.domain_repositories.models.study_selections import (
-    StudySelection,
-    StudySelectionMetadata,
-)
+from clinical_mdr_api.domain_repositories.models.study_selections import StudySelection
 from clinical_mdr_api.domains.study_selections.study_selection_base import (
     StudySelectionBaseAR,
     StudySelectionBaseVO,
@@ -367,12 +364,7 @@ class StudySelectionActivityBaseRepository(Generic[_AggregateRootType], abc.ABC)
         audit_node.date = datetime.datetime.now(datetime.timezone.utc)
         audit_node.save()
 
-        if isinstance(study_activity_selection_node, StudySelectionMetadata):
-            audit_node.study_selection_metadata_has_before.connect(
-                study_activity_selection_node
-            )
-        else:
-            audit_node.has_before.connect(study_activity_selection_node)
+        audit_node.has_before.connect(study_activity_selection_node)
         study_root_node.audit_trail.connect(audit_node)
         return audit_node
 

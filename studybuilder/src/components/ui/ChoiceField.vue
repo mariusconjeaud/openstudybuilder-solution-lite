@@ -7,7 +7,7 @@
       <div
         v-for="(choice, index) in choices"
         :key="`choice-${index}`"
-        class="choice rounded pa-6 mr-4 mb-4"
+        class="choice rounded mr-3 mb-4"
         :style="props.width ? `width: ${props.width}px` : ''"
         :class="{
           'choice--disabled': disabled,
@@ -20,10 +20,10 @@
             <v-radio :value="choice.value" density="compact" />
           </div>
           <div class="pt-1">
-            <div class="text-nnTrueBlue mb-2 font-weight-bold">
+            <div class="text-nnTrueBlue mb-2 font-weight-bold title">
               {{ choice.title }}
             </div>
-            <div class="text-nnTrueBlue">{{ choice.help }}</div>
+            <div class="text-nnTrueBlue text">{{ choice.help }}</div>
           </div>
         </div>
       </div>
@@ -75,6 +75,7 @@ function selectChoice(value) {
 .choice {
   border: 1px solid #dbdddf;
   cursor: pointer;
+  padding: 14px 16px;
 
   &--selected {
     background-color: rgb(var(--v-theme-nnSeaBlue100));
@@ -83,6 +84,13 @@ function selectChoice(value) {
   &--disabled {
     cursor: unset;
     opacity: 0.5;
+  }
+
+  .title {
+    font-size: 14px;
+  }
+  .text {
+    font-size: 14px;
   }
 }
 .label--disabled {

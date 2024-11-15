@@ -233,7 +233,7 @@ def get_odm_form_that_belongs_to_study_event(
 
 
 @router.get(
-    "/{uid}",
+    "/{odm_form_uid}",
     dependencies=[rbac.LIBRARY_READ],
     summary="Get details on a specific ODM Form (in a specific version)",
     description="",
@@ -244,13 +244,13 @@ def get_odm_form_that_belongs_to_study_event(
         500: _generic_descriptions.ERROR_500,
     },
 )
-def get_odm_form(uid: str = OdmFormUID):
+def get_odm_form(odm_form_uid: str = OdmFormUID):
     odm_form_service = OdmFormService()
-    return odm_form_service.get_by_uid(uid=uid)
+    return odm_form_service.get_by_uid(uid=odm_form_uid)
 
 
 @router.get(
-    "/{uid}/relationships",
+    "/{odm_form_uid}/relationships",
     dependencies=[rbac.LIBRARY_READ],
     summary="Get UIDs of a specific ODM Form's relationships",
     description="",
@@ -261,13 +261,13 @@ def get_odm_form(uid: str = OdmFormUID):
         500: _generic_descriptions.ERROR_500,
     },
 )
-def get_active_relationships(uid: str = OdmFormUID):
+def get_active_relationships(odm_form_uid: str = OdmFormUID):
     odm_form_service = OdmFormService()
-    return odm_form_service.get_active_relationships(uid=uid)
+    return odm_form_service.get_active_relationships(uid=odm_form_uid)
 
 
 @router.get(
-    "/{uid}/versions",
+    "/{odm_form_uid}/versions",
     dependencies=[rbac.LIBRARY_READ],
     summary="List version history for ODM Form",
     description="""
@@ -289,14 +289,14 @@ Possible errors:
     responses={
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The ODM Form with the specified 'uid' wasn't found.",
+            "description": "Not Found - The ODM Form with the specified 'odm_form_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def get_odm_form_versions(uid: str = OdmFormUID):
+def get_odm_form_versions(odm_form_uid: str = OdmFormUID):
     odm_form_service = OdmFormService()
-    return odm_form_service.get_version_history(uid=uid)
+    return odm_form_service.get_version_history(uid=odm_form_uid)
 
 
 @router.post(
@@ -326,7 +326,7 @@ def create_odm_form(
 
 
 @router.patch(
-    "/{uid}",
+    "/{odm_form_uid}",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Update ODM Form",
     description="",
@@ -343,23 +343,23 @@ def create_odm_form(
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The ODM Form with the specified 'uid' wasn't found.",
+            "description": "Not Found - The ODM Form with the specified 'odm_form_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def edit_odm_form(
-    uid: str = OdmFormUID,
+    odm_form_uid: str = OdmFormUID,
     odm_form_edit_input: OdmFormPatchInput = Body(description=""),
 ):
     odm_form_service = OdmFormService()
     return odm_form_service.update_with_relations(
-        uid=uid, concept_edit_input=odm_form_edit_input
+        uid=odm_form_uid, concept_edit_input=odm_form_edit_input
     )
 
 
 @router.post(
-    "/{uid}/versions",
+    "/{odm_form_uid}/versions",
     dependencies=[rbac.LIBRARY_WRITE],
     summary=" Create a new version of ODM Form",
     description="""
@@ -389,18 +389,18 @@ Possible errors:
             "model": ErrorResponse,
             "description": "Not Found - Reasons include e.g.: \n"
             "- The ODM Form is not in final status.\n"
-            "- The ODM Form with the specified 'uid' could not be found.",
+            "- The ODM Form with the specified 'odm_form_uid' could not be found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def create_odm_form_version(uid: str = OdmFormUID):
+def create_odm_form_version(odm_form_uid: str = OdmFormUID):
     odm_form_service = OdmFormService()
-    return odm_form_service.create_new_version(uid=uid)
+    return odm_form_service.create_new_version(uid=odm_form_uid)
 
 
 @router.post(
-    "/{uid}/approvals",
+    "/{odm_form_uid}/approvals",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Approve draft version of ODM Form",
     description="",
@@ -416,18 +416,18 @@ def create_odm_form_version(uid: str = OdmFormUID):
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The ODM Form with the specified 'uid' wasn't found.",
+            "description": "Not Found - The ODM Form with the specified 'odm_form_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def approve_odm_form(uid: str = OdmFormUID):
+def approve_odm_form(odm_form_uid: str = OdmFormUID):
     odm_form_service = OdmFormService()
-    return odm_form_service.approve(uid=uid)
+    return odm_form_service.approve(uid=odm_form_uid)
 
 
 @router.delete(
-    "/{uid}/activations",
+    "/{odm_form_uid}/activations",
     dependencies=[rbac.LIBRARY_WRITE],
     summary=" Inactivate final version of ODM Form",
     description="",
@@ -442,18 +442,18 @@ def approve_odm_form(uid: str = OdmFormUID):
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The ODM Form with the specified 'uid' could not be found.",
+            "description": "Not Found - The ODM Form with the specified 'odm_form_uid' could not be found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def inactivate_odm_form(uid: str = OdmFormUID):
+def inactivate_odm_form(odm_form_uid: str = OdmFormUID):
     odm_form_service = OdmFormService()
-    return odm_form_service.inactivate_final(uid=uid)
+    return odm_form_service.inactivate_final(uid=odm_form_uid)
 
 
 @router.post(
-    "/{uid}/activations",
+    "/{odm_form_uid}/activations",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Reactivate retired version of a ODM Form",
     description="",
@@ -468,18 +468,18 @@ def inactivate_odm_form(uid: str = OdmFormUID):
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The ODM Form with the specified 'uid' could not be found.",
+            "description": "Not Found - The ODM Form with the specified 'odm_form_uid' could not be found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def reactivate_odm_form(uid: str = OdmFormUID):
+def reactivate_odm_form(odm_form_uid: str = OdmFormUID):
     odm_form_service = OdmFormService()
-    return odm_form_service.reactivate_retired(uid=uid)
+    return odm_form_service.reactivate_retired(uid=odm_form_uid)
 
 
 @router.post(
-    "/{uid}/activity-groups",
+    "/{odm_form_uid}/activity-groups",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Adds activity groups to the ODM Form.",
     description="",
@@ -495,13 +495,13 @@ def reactivate_odm_form(uid: str = OdmFormUID):
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The activity groups with the specified 'uid' wasn't found.",
+            "description": "Not Found - The activity groups with the specified 'odm_form_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def add_activity_groups_to_odm_form(
-    uid: str = OdmFormUID,
+    odm_form_uid: str = OdmFormUID,
     override: bool = Query(
         False,
         description="If true, all existing activity group relationships will be replaced with the provided activity group relationships.",
@@ -512,14 +512,14 @@ def add_activity_groups_to_odm_form(
 ):
     odm_form_service = OdmFormService()
     return odm_form_service.add_activity_groups(
-        uid=uid,
+        uid=odm_form_uid,
         odm_form_activity_group_post_input=odm_form_activity_group_post_input,
         override=override,
     )
 
 
 @router.post(
-    "/{uid}/item-groups",
+    "/{odm_form_uid}/item-groups",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Adds item groups to the ODM Form.",
     description="",
@@ -535,13 +535,13 @@ def add_activity_groups_to_odm_form(
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The item groups with the specified 'uid' wasn't found.",
+            "description": "Not Found - The item groups with the specified 'odm_form_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def add_item_groups_to_odm_form(
-    uid: str = OdmFormUID,
+    odm_form_uid: str = OdmFormUID,
     override: bool = Query(
         False,
         description="If true, all existing item group relationships will be replaced with the provided item group relationships.",
@@ -552,14 +552,14 @@ def add_item_groups_to_odm_form(
 ):
     odm_form_service = OdmFormService()
     return odm_form_service.add_item_groups(
-        uid=uid,
+        uid=odm_form_uid,
         odm_form_item_group_post_input=odm_form_item_group_post_input,
         override=override,
     )
 
 
 @router.post(
-    "/{uid}/vendor-elements",
+    "/{odm_form_uid}/vendor-elements",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Adds ODM Vendor Elements to the ODM Form.",
     description="",
@@ -575,13 +575,13 @@ def add_item_groups_to_odm_form(
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The ODM Vendor Elements with the specified 'uid' wasn't found.",
+            "description": "Not Found - The ODM Vendor Elements with the specified 'odm_form_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def add_vendor_elements_to_odm_form(
-    uid: str = OdmFormUID,
+    odm_form_uid: str = OdmFormUID,
     override: bool = Query(
         False,
         description="If true, all existing ODM Vendor Element relationships will be replaced with the provided ODM Vendor Element relationships.",
@@ -592,14 +592,14 @@ def add_vendor_elements_to_odm_form(
 ):
     odm_form_service = OdmFormService()
     return odm_form_service.add_vendor_elements(
-        uid=uid,
+        uid=odm_form_uid,
         odm_vendor_relation_post_input=odm_vendor_relation_post_input,
         override=override,
     )
 
 
 @router.post(
-    "/{uid}/vendor-attributes",
+    "/{odm_form_uid}/vendor-attributes",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Adds ODM Vendor Attributes to the ODM Form.",
     description="",
@@ -615,13 +615,13 @@ def add_vendor_elements_to_odm_form(
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The ODM Vendor Attributes with the specified 'uid' wasn't found.",
+            "description": "Not Found - The ODM Vendor Attributes with the specified 'odm_form_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def add_vendor_attributes_to_odm_form(
-    uid: str = OdmFormUID,
+    odm_form_uid: str = OdmFormUID,
     override: bool = Query(
         False,
         description="""If true, all existing ODM Vendor Attribute relationships will
@@ -633,14 +633,14 @@ def add_vendor_attributes_to_odm_form(
 ):
     odm_form_service = OdmFormService()
     return odm_form_service.add_vendor_attributes(
-        uid=uid,
+        uid=odm_form_uid,
         odm_vendor_relation_post_input=odm_vendor_relation_post_input,
         override=override,
     )
 
 
 @router.post(
-    "/{uid}/vendor-element-attributes",
+    "/{odm_form_uid}/vendor-element-attributes",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Adds ODM Vendor Element attributes to the ODM Form.",
     description="",
@@ -656,13 +656,13 @@ def add_vendor_attributes_to_odm_form(
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The ODM Vendor Element attributes with the specified 'uid' wasn't found.",
+            "description": "Not Found - The ODM Vendor Element attributes with the specified 'odm_form_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def add_vendor_element_attributes_to_odm_form(
-    uid: str = OdmFormUID,
+    odm_form_uid: str = OdmFormUID,
     override: bool = Query(
         False,
         description="""If true, all existing ODM Vendor Element attribute relationships
@@ -674,14 +674,14 @@ def add_vendor_element_attributes_to_odm_form(
 ):
     odm_form_service = OdmFormService()
     return odm_form_service.add_vendor_element_attributes(
-        uid=uid,
+        uid=odm_form_uid,
         odm_vendor_relation_post_input=odm_vendor_relation_post_input,
         override=override,
     )
 
 
 @router.post(
-    "/{uid}/vendors",
+    "/{odm_form_uid}/vendors",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Manages all ODM Vendors by replacing existing ODM Vendors by provided ODM Vendors.",
     description="",
@@ -697,23 +697,23 @@ def add_vendor_element_attributes_to_odm_form(
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The ODM Vendors with the specified 'uid' wasn't found.",
+            "description": "Not Found - The ODM Vendors with the specified 'odm_form_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def manage_vendors_of_odm_form(
-    uid: str = OdmFormUID,
+    odm_form_uid: str = OdmFormUID,
     odm_vendors_post_input: OdmVendorsPostInput = Body(description=""),
 ):
     odm_form_service = OdmFormService()
     return odm_form_service.manage_vendors(
-        uid=uid, odm_vendors_post_input=odm_vendors_post_input
+        uid=odm_form_uid, odm_vendors_post_input=odm_vendors_post_input
     )
 
 
 @router.delete(
-    "/{uid}",
+    "/{odm_form_uid}",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Delete draft version of ODM Form",
     description="",
@@ -730,11 +730,11 @@ def manage_vendors_of_odm_form(
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - An ODM Form with the specified 'uid' could not be found.",
+            "description": "Not Found - An ODM Form with the specified 'odm_form_uid' could not be found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def delete_odm_form(uid: str = OdmFormUID):
+def delete_odm_form(odm_form_uid: str = OdmFormUID):
     odm_form_service = OdmFormService()
-    odm_form_service.soft_delete(uid=uid)
+    odm_form_service.soft_delete(uid=odm_form_uid)

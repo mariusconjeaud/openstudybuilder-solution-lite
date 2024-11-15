@@ -495,7 +495,7 @@ def test_get_active_substances_pagination(api_client):
         pytest.param(3, 1, True, None, 3),
         pytest.param(3, 2, True, None, 3),
         pytest.param(10, 2, True, None, 10),
-        pytest.param(10, 3, True, None, 5),  # Total numer of active substances is 25
+        pytest.param(10, 3, True, None, 5),  # Total number of active substances is 25
         pytest.param(10, 1, True, '{"analyte_number": false}', 10),
         pytest.param(10, 2, True, '{"analyte_number": true}', 10),
     ],

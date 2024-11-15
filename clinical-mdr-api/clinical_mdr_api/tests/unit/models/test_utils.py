@@ -17,6 +17,8 @@ class TestModelUtils(unittest.TestCase):
             (0, "yes", "no"),
             (1, "y", "y"),
             (0, "y", "n"),
+            (1, "Y", "Y"),
+            (0, "Y", "N"),
             (1, "t", "t"),
             (0, "t", "f"),
             (1, "true", "true"),

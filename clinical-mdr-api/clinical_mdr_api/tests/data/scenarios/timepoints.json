@@ -61,7 +61,7 @@
                 "version": "0.1"
             },
             "save": {
-                "uid": "uid"
+                "timepoint_uid": "uid"
             }
         }
     },
@@ -109,7 +109,7 @@
                 "version": "0.1"
             },
             "save": {
-                "uid": "uid"
+                "timepoint_uid": "uid"
             }
         }
     },
@@ -119,7 +119,7 @@
             "headers": {},
             "method": "POST",
             "request": {},
-            "url": "/timepoints/{uid}/approvals"
+            "url": "/timepoints/{timepoint_uid}/approvals"
         },
         "response": {
             "code": 201,
@@ -157,7 +157,7 @@
             "headers": {},
             "method": "PATCH",
             "request": {},
-            "url": "/timepoints/{uid}/approvals"
+            "url": "/timepoints/{timepoint_uid}/approvals"
         },
         "response": {
             "code": 405,
@@ -175,7 +175,7 @@
             "headers": {},
             "method": "POST",
             "request": {},
-            "url": "/timepoints/{uid}/approvals"
+            "url": "/timepoints/{timepoint_uid}/approvals"
         },
         "response": {
             "code": 400,
@@ -197,7 +197,7 @@
             "headers": {},
             "method": "GET",
             "request": {},
-            "url": "/timepoints/{uid}/parameters"
+            "url": "/timepoints/{timepoint_uid}/parameters"
         },
         "response": {
             "code": 200,
@@ -214,7 +214,7 @@
             "headers": {},
             "method": "GET",
             "request": {},
-            "url": "/timepoints/{uid}/versions"
+            "url": "/timepoints/{timepoint_uid}/versions"
         },
         "response": {
             "code": 200,
@@ -310,7 +310,7 @@
                     }
                 ]
             },
-            "url": "/timepoints/{uid}"
+            "url": "/timepoints/{timepoint_uid}"
         },
         "response": {
             "code": 422,
@@ -342,7 +342,7 @@
                 "name": "test{test-uid}",
                 "parameter_terms": []
             },
-            "url": "/timepoints/{uid}"
+            "url": "/timepoints/{timepoint_uid}"
         },
         "response": {
             "code": 400,
@@ -367,7 +367,7 @@
                 "change_description": "Test new version creation",
                 "name": "test1"
             },
-            "url": "/timepoints/{uid}/versions"
+            "url": "/timepoints/{timepoint_uid}/versions"
         },
         "response": {
             "code": 404,
@@ -390,7 +390,7 @@
                 "name": "test{test-uid}",
                 "parameter_terms": []
             },
-            "url": "/timepoints/{uid}"
+            "url": "/timepoints/{timepoint_uid}"
         },
         "response": {
             "code": 400,

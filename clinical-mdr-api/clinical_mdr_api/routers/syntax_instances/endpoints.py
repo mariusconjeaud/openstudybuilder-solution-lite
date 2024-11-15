@@ -230,9 +230,9 @@ def retrieve_audit_trail(
 
 
 @router.get(
-    "/{uid}",
+    "/{endpoint_uid}",
     dependencies=[rbac.LIBRARY_READ],
-    summary="Returns the latest/newest version of a specific endpoint identified by 'uid'.",
+    summary="Returns the latest/newest version of a specific endpoint identified by 'endpoint_uid'.",
     description="""If multiple request query parameters are used, then they need to
     match all at the same time (they are combined with the AND operation).""",
     response_model=models.Endpoint | None,
@@ -240,21 +240,21 @@ def retrieve_audit_trail(
     responses={
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The endpoint with the specified 'uid' (and the specified date/time and/or status) wasn't found.",
+            "description": "Not Found - The endpoint with the specified 'endpoint_uid' (and the specified date/time and/or status) wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def get(
-    uid: str = EndpointUID,
+    endpoint_uid: str = EndpointUID,
 ):
-    return EndpointService().get_by_uid(uid=uid)
+    return EndpointService().get_by_uid(uid=endpoint_uid)
 
 
 @router.get(
-    "/{uid}/versions",
+    "/{endpoint_uid}/versions",
     dependencies=[rbac.LIBRARY_READ],
-    summary="Returns the version history of a specific endpoint identified by 'uid'.",
+    summary="Returns the version history of a specific endpoint identified by 'endpoint_uid'.",
     description=f"""
 The returned versions are ordered by `start_date` descending (newest entries first).
 
@@ -298,7 +298,7 @@ The returned versions are ordered by `start_date` descending (newest entries fir
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The endpoint with the specified 'uid' wasn't found.",
+            "description": "Not Found - The endpoint with the specified 'endpoint_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
@@ -349,13 +349,13 @@ The returned versions are ordered by `start_date` descending (newest entries fir
 # pylint: disable=unused-argument
 def get_versions(
     request: Request,  # request is actually required by the allow_exports decorator
-    uid: str = EndpointUID,
+    endpoint_uid: str = EndpointUID,
 ):
-    return EndpointService().get_version_history(uid)
+    return EndpointService().get_version_history(endpoint_uid)
 
 
 @router.get(
-    "/{uid}/studies",
+    "/{endpoint_uid}/studies",
     dependencies=[rbac.STUDY_READ],
     summary="",
     description="",
@@ -364,20 +364,20 @@ def get_versions(
     responses={
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The endpoint with the specified 'uid' wasn't found.",
+            "description": "Not Found - The endpoint with the specified 'endpoint_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def get_studies(
-    uid: str = EndpointUID,
+    endpoint_uid: str = EndpointUID,
     include_sections: list[StudyComponentEnum]
     | None = Query(None, description=study_section_description("include")),
     exclude_sections: list[StudyComponentEnum]
     | None = Query(None, description=study_section_description("exclude")),
 ):
     return Service().get_referencing_studies(
-        uid=uid,
+        uid=endpoint_uid,
         node_type=EndpointValue,
         include_sections=include_sections,
         exclude_sections=exclude_sections,
@@ -469,9 +469,9 @@ def preview(
 
 
 @router.patch(
-    "/{uid}",
+    "/{endpoint_uid}",
     dependencies=[rbac.LIBRARY_WRITE_OR_STUDY_WRITE],
-    summary="Updates the endpoint identified by 'uid'.",
+    summary="Updates the endpoint identified by 'endpoint_uid'.",
     description="""This request is only valid if the endpoint
 * is in 'Draft' status and
 * belongs to a library that allows editing (the 'is_editable' property of the library needs to be true). 
@@ -496,24 +496,24 @@ If the request succeeds:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The endpoint with the specified 'uid' wasn't found.",
+            "description": "Not Found - The endpoint with the specified 'endpoint_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def edit(
-    uid: str = EndpointUID,
+    endpoint_uid: str = EndpointUID,
     endpoint: models.EndpointEditInput = Body(
         description="The new parameter terms for the endpoint including the change description.",
     ),
 ):
-    return EndpointService().edit_draft(uid=uid, template=endpoint)
+    return EndpointService().edit_draft(uid=endpoint_uid, template=endpoint)
 
 
 @router.post(
-    "/{uid}/approvals",
+    "/{endpoint_uid}/approvals",
     dependencies=[rbac.LIBRARY_WRITE_OR_STUDY_WRITE],
-    summary="Approves the endpoint identified by 'uid'.",
+    summary="Approves the endpoint identified by 'endpoint_uid'.",
     description="""This request is only valid if the endpoint
 * is in 'Draft' status and
 * belongs to a library that allows editing (the 'is_editable' property of the library needs to be true).
@@ -535,19 +535,19 @@ If the request succeeds:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The endpoint with the specified 'uid' wasn't found.",
+            "description": "Not Found - The endpoint with the specified 'endpoint_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def approve(uid: str = EndpointUID):
-    return EndpointService().approve(uid)
+def approve(endpoint_uid: str = EndpointUID):
+    return EndpointService().approve(endpoint_uid)
 
 
 @router.delete(
-    "/{uid}/activations",
+    "/{endpoint_uid}/activations",
     dependencies=[rbac.LIBRARY_WRITE],
-    summary="Inactivates/deactivates the endpoint identified by 'uid'.",
+    summary="Inactivates/deactivates the endpoint identified by 'endpoint_uid'.",
     description="""This request is only valid if the endpoint
 * is in 'Final' status only (so no latest 'Draft' status exists).
 
@@ -567,20 +567,20 @@ If the request succeeds:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The endpoint with the specified 'uid' wasn't found.",
+            "description": "Not Found - The endpoint with the specified 'endpoint_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def inactivate(uid: str = EndpointUID):
-    return EndpointService().inactivate_final(uid)
+def inactivate(endpoint_uid: str = EndpointUID):
+    return EndpointService().inactivate_final(endpoint_uid)
 
 
 # TODO check if * there is no other endpoint with the same name (it may be that one had been created after inactivating this one here)
 @router.post(
-    "/{uid}/activations",
+    "/{endpoint_uid}/activations",
     dependencies=[rbac.LIBRARY_WRITE],
-    summary="Reactivates the endpoint identified by 'uid'.",
+    summary="Reactivates the endpoint identified by 'endpoint_uid'.",
     description="""This request is only valid if the endpoint
 * is in 'Retired' status only (so no latest 'Draft' status exists).
 
@@ -600,19 +600,19 @@ If the request succeeds:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The endpoint with the specified 'uid' wasn't found.",
+            "description": "Not Found - The endpoint with the specified 'endpoint_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def reactivate(uid: str = EndpointUID):
-    return EndpointService().reactivate_retired(uid)
+def reactivate(endpoint_uid: str = EndpointUID):
+    return EndpointService().reactivate_retired(endpoint_uid)
 
 
 @router.delete(
-    "/{uid}",
+    "/{endpoint_uid}",
     dependencies=[rbac.LIBRARY_WRITE],
-    summary="Deletes the endpoint identified by 'uid'.",
+    summary="Deletes the endpoint identified by 'endpoint_uid'.",
     description="""This request is only valid if \n
 * the endpoint is in 'Draft' status and
 * the endpoint has never been in 'Final' status and
@@ -634,19 +634,19 @@ def reactivate(uid: str = EndpointUID):
         500: _generic_descriptions.ERROR_500,
     },
 )
-def delete(uid: str = EndpointUID):
-    EndpointService().soft_delete(uid)
+def delete(endpoint_uid: str = EndpointUID):
+    EndpointService().soft_delete(endpoint_uid)
     return Response(status_code=fast_api_status.HTTP_204_NO_CONTENT)
 
 
 # TODO this endpoint potentially returns duplicated entries (by intention, currently).
 #       however: check if that is ok with regard to the data volume we expect in the future. is paging needed?
 @router.get(
-    "/{uid}/parameters",
+    "/{endpoint_uid}/parameters",
     dependencies=[rbac.LIBRARY_READ],
-    summary="Returns all template parameters available for the endpoint identified by 'uid'. Includes the available values per parameter.",
+    summary="Returns all template parameters available for the endpoint identified by 'endpoint_uid'. Includes the available values per parameter.",
     description="""Returns all template parameters used in the endpoint template
-that is the basis for the endpoint identified by 'uid'. 
+that is the basis for the endpoint identified by 'endpoint_uid'. 
 Includes the available values per parameter.
 
 The returned parameters are ordered
@@ -666,6 +666,6 @@ In that case, the same parameter (with the same values) is included multiple tim
     },
 )
 def get_parameters(
-    uid: str = Path(None, description="The unique id of the endpoint."),
+    endpoint_uid: str = Path(None, description="The unique id of the endpoint."),
 ):
-    return EndpointService().get_parameters(uid)
+    return EndpointService().get_parameters(endpoint_uid)

@@ -156,8 +156,6 @@ class BaseModel(PydanticBaseModel):
                     value = getattr(node, source)
             else:
                 value = None
-            if issubclass(field.type_, BaseModel):
-                value = field.type_.from_orm(node._relations[source])
             # if obtained value is a list and field type is not List
             # it means that we are building some list[BaseModel] but its fields are not of list type
 

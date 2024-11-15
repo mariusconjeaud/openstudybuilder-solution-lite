@@ -28,6 +28,7 @@
               density="compact"
               variant="filled"
               hide-details
+              disabled
             />
           </v-col>
         </v-row>
@@ -119,6 +120,7 @@ function submit() {
     form.value.study_subpart_acronym
   delete payload.current_metadata.study_description
   delete payload.study_parent_part
+  delete payload.current_metadata.identification_metadata.registry_identifiers
   studies.updateStudy(payload.uid, payload).then(
     () => {
       eventBusEmit('notification', { msg: t('StudySubparts.subpart_edited') })

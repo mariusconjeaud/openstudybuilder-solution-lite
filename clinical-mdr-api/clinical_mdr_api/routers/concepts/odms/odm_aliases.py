@@ -140,7 +140,7 @@ def get_distinct_values_for_header(
 
 
 @router.get(
-    "/{uid}/relationships",
+    "/{odm_alias_uid}/relationships",
     dependencies=[rbac.LIBRARY_READ],
     summary="Get UIDs of a specific ODM Alias' relationships",
     description="",
@@ -151,13 +151,13 @@ def get_distinct_values_for_header(
         500: _generic_descriptions.ERROR_500,
     },
 )
-def get_active_relationships(uid: str = OdmAliasUID):
+def get_active_relationships(odm_alias_uid: str = OdmAliasUID):
     odm_alias_service = OdmAliasService()
-    return odm_alias_service.get_active_relationships(uid=uid)
+    return odm_alias_service.get_active_relationships(uid=odm_alias_uid)
 
 
 @router.get(
-    "/{uid}/versions",
+    "/{odm_alias_uid}/versions",
     dependencies=[rbac.LIBRARY_READ],
     summary="Return a listing of versions of a specific ODM Alias",
     description="""
@@ -179,14 +179,14 @@ Possible errors:
     responses={
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The ODM Alias with the specified 'uid' wasn't found.",
+            "description": "Not Found - The ODM Alias with the specified 'odm_alias_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def get_odm_alias_versions(uid: str = OdmAliasUID):
+def get_odm_alias_versions(odm_alias_uid: str = OdmAliasUID):
     odm_alias_service = OdmAliasService()
-    return odm_alias_service.get_version_history(uid=uid)
+    return odm_alias_service.get_version_history(uid=odm_alias_uid)
 
 
 @router.post(
@@ -234,7 +234,7 @@ def odm_alias_batch_operations(
 
 
 @router.patch(
-    "/{uid}",
+    "/{odm_alias_uid}",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Update an ODM Alias",
     description="",
@@ -251,23 +251,23 @@ def odm_alias_batch_operations(
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The ODM Alias with the specified 'uid' wasn't found.",
+            "description": "Not Found - The ODM Alias with the specified 'odm_alias_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def edit_odm_alias(
-    uid: str = OdmAliasUID,
+    odm_alias_uid: str = OdmAliasUID,
     odm_alias_edit_input: OdmAliasPatchInput = Body(description=""),
 ):
     odm_alias_service = OdmAliasService()
     return odm_alias_service.edit_draft(
-        uid=uid, concept_edit_input=odm_alias_edit_input
+        uid=odm_alias_uid, concept_edit_input=odm_alias_edit_input
     )
 
 
 @router.post(
-    "/{uid}/versions",
+    "/{odm_alias_uid}/versions",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Create a new version of an ODM Alias",
     description="""
@@ -297,18 +297,18 @@ Possible errors:
             "model": ErrorResponse,
             "description": "Not Found - Reasons include e.g.: \n"
             "- The ODM Alias is not in final status.\n"
-            "- The ODM Alias with the specified 'uid' could not be found.",
+            "- The ODM Alias with the specified 'odm_alias_uid' could not be found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def create_odm_alias_version(uid: str = OdmAliasUID):
+def create_odm_alias_version(odm_alias_uid: str = OdmAliasUID):
     odm_alias_service = OdmAliasService()
-    return odm_alias_service.create_new_version(uid=uid)
+    return odm_alias_service.create_new_version(uid=odm_alias_uid)
 
 
 @router.post(
-    "/{uid}/approvals",
+    "/{odm_alias_uid}/approvals",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Approve an ODM Alias",
     description="",
@@ -324,18 +324,18 @@ def create_odm_alias_version(uid: str = OdmAliasUID):
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The ODM Alias with the specified 'uid' wasn't found.",
+            "description": "Not Found - The ODM Alias with the specified 'odm_alias_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def approve_odm_alias(uid: str = OdmAliasUID):
+def approve_odm_alias(odm_alias_uid: str = OdmAliasUID):
     odm_alias_service = OdmAliasService()
-    return odm_alias_service.approve(uid=uid)
+    return odm_alias_service.approve(uid=odm_alias_uid)
 
 
 @router.delete(
-    "/{uid}/activations",
+    "/{odm_alias_uid}/activations",
     dependencies=[rbac.LIBRARY_WRITE],
     summary=" Inactivate an ODM Alias",
     description="",
@@ -350,18 +350,18 @@ def approve_odm_alias(uid: str = OdmAliasUID):
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The ODM Alias with the specified 'uid' could not be found.",
+            "description": "Not Found - The ODM Alias with the specified 'odm_alias_uid' could not be found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def inactivate_odm_alias(uid: str = OdmAliasUID):
+def inactivate_odm_alias(odm_alias_uid: str = OdmAliasUID):
     odm_alias_service = OdmAliasService()
-    return odm_alias_service.inactivate_final(uid=uid)
+    return odm_alias_service.inactivate_final(uid=odm_alias_uid)
 
 
 @router.post(
-    "/{uid}/activations",
+    "/{odm_alias_uid}/activations",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Reactivate an ODM Alias",
     description="",
@@ -376,18 +376,18 @@ def inactivate_odm_alias(uid: str = OdmAliasUID):
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The ODM Alias with the specified 'uid' could not be found.",
+            "description": "Not Found - The ODM Alias with the specified 'odm_alias_uid' could not be found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def reactivate_odm_alias(uid: str = OdmAliasUID):
+def reactivate_odm_alias(odm_alias_uid: str = OdmAliasUID):
     odm_alias_service = OdmAliasService()
-    return odm_alias_service.reactivate_retired(uid=uid)
+    return odm_alias_service.reactivate_retired(uid=odm_alias_uid)
 
 
 @router.delete(
-    "/{uid}",
+    "/{odm_alias_uid}",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Delete draft version of ODM Alias",
     description="",
@@ -404,11 +404,11 @@ def reactivate_odm_alias(uid: str = OdmAliasUID):
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - An ODM Alias with the specified 'uid' could not be found.",
+            "description": "Not Found - An ODM Alias with the specified 'odm_alias_uid' could not be found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def delete_odm_alias(uid: str = OdmAliasUID):
+def delete_odm_alias(odm_alias_uid: str = OdmAliasUID):
     odm_alias_service = OdmAliasService()
-    odm_alias_service.soft_delete(uid=uid)
+    odm_alias_service.soft_delete(uid=odm_alias_uid)

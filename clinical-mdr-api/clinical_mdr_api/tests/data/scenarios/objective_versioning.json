@@ -72,7 +72,7 @@
                 "version": "0.1"
             },
             "save": {
-                "uid": "uid"
+                "objective_uid": "uid"
             }
         }
     },
@@ -82,7 +82,7 @@
             "headers": {},
             "method": "POST",
             "request": {},
-            "url": "/objectives/{uid}/approvals"
+            "url": "/objectives/{objective_uid}/approvals"
         },
         "response": {
             "code": 201,
@@ -126,7 +126,7 @@
             "headers": {},
             "method": "PATCH",
             "request": {},
-            "url": "/objectives/{uid}/approvals"
+            "url": "/objectives/{objective_uid}/approvals"
         },
         "response": {
             "code": 405,
@@ -144,7 +144,7 @@
             "headers": {},
             "method": "POST",
             "request": {},
-            "url": "/objectives/{uid}/approvals"
+            "url": "/objectives/{objective_uid}/approvals"
         },
         "response": {
             "code": 400,
@@ -167,7 +167,7 @@
             "headers": {},
             "method": "GET",
             "request": {},
-            "url": "/objectives/{uid}/parameters"
+            "url": "/objectives/{objective_uid}/parameters"
         },
         "response": {
             "code": 200,
@@ -184,7 +184,7 @@
             "headers": {},
             "method": "GET",
             "request": {},
-            "url": "/objectives/{uid}/versions"
+            "url": "/objectives/{objective_uid}/versions"
         },
         "response": {
             "code": 200,
@@ -280,7 +280,7 @@
                 "name": "test{test-uid}",
                 "parameter_terms": []
             },
-            "url": "/objectives/{uid}"
+            "url": "/objectives/{objective_uid}"
         },
         "response": {
             "code": 422,
@@ -312,7 +312,7 @@
                 "name": "test{test-uid}",
                 "parameter_terms": []
             },
-            "url": "/objectives/{uid}"
+            "url": "/objectives/{objective_uid}"
         },
         "response": {
             "code": 400,

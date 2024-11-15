@@ -220,7 +220,7 @@ def get_odm_items_that_belongs_to_item_group():
 
 
 @router.get(
-    "/{uid}",
+    "/{odm_item_uid}",
     dependencies=[rbac.LIBRARY_READ],
     summary="Get details on a specific ODM Item (in a specific version)",
     description="",
@@ -231,13 +231,13 @@ def get_odm_items_that_belongs_to_item_group():
         500: _generic_descriptions.ERROR_500,
     },
 )
-def get_odm_item(uid: str = OdmItemUID):
+def get_odm_item(odm_item_uid: str = OdmItemUID):
     odm_item_service = OdmItemService()
-    return odm_item_service.get_by_uid(uid=uid)
+    return odm_item_service.get_by_uid(uid=odm_item_uid)
 
 
 @router.get(
-    "/{uid}/relationships",
+    "/{odm_item_uid}/relationships",
     dependencies=[rbac.LIBRARY_READ],
     summary="Get UIDs of a specific ODM Item's relationships",
     description="",
@@ -248,13 +248,13 @@ def get_odm_item(uid: str = OdmItemUID):
         500: _generic_descriptions.ERROR_500,
     },
 )
-def get_active_relationships(uid: str = OdmItemUID):
+def get_active_relationships(odm_item_uid: str = OdmItemUID):
     odm_item_service = OdmItemService()
-    return odm_item_service.get_active_relationships(uid=uid)
+    return odm_item_service.get_active_relationships(uid=odm_item_uid)
 
 
 @router.get(
-    "/{uid}/versions",
+    "/{odm_item_uid}/versions",
     dependencies=[rbac.LIBRARY_READ],
     summary="List version history for ODM Item",
     description="""
@@ -276,14 +276,14 @@ Possible errors:
     responses={
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The ODM Item with the specified 'uid' wasn't found.",
+            "description": "Not Found - The ODM Item with the specified 'odm_item_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def get_odm_item_versions(uid: str = OdmItemUID):
+def get_odm_item_versions(odm_item_uid: str = OdmItemUID):
     odm_item_service = OdmItemService()
-    return odm_item_service.get_version_history(uid=uid)
+    return odm_item_service.get_version_history(uid=odm_item_uid)
 
 
 @router.post(
@@ -310,7 +310,7 @@ def create_odm_item(odm_item_create_input: OdmItemPostInput = Body(description="
 
 
 @router.patch(
-    "/{uid}",
+    "/{odm_item_uid}",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Update ODM Item",
     description="",
@@ -327,23 +327,23 @@ def create_odm_item(odm_item_create_input: OdmItemPostInput = Body(description="
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The ODM Item with the specified 'uid' wasn't found.",
+            "description": "Not Found - The ODM Item with the specified 'odm_item_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def edit_odm_item(
-    uid: str = OdmItemUID,
+    odm_item_uid: str = OdmItemUID,
     odm_item_edit_input: OdmItemPatchInput = Body(description=""),
 ):
     odm_item_service = OdmItemService()
     return odm_item_service.update_with_relations(
-        uid=uid, concept_edit_input=odm_item_edit_input
+        uid=odm_item_uid, concept_edit_input=odm_item_edit_input
     )
 
 
 @router.post(
-    "/{uid}/versions",
+    "/{odm_item_uid}/versions",
     dependencies=[rbac.LIBRARY_WRITE],
     summary=" Create a new version of ODM Item",
     description="""
@@ -373,18 +373,18 @@ Possible errors:
             "model": ErrorResponse,
             "description": "Not Found - Reasons include e.g.: \n"
             "- The ODM Item is not in final status.\n"
-            "- The ODM Item with the specified 'uid' could not be found.",
+            "- The ODM Item with the specified 'odm_item_uid' could not be found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def create_odm_item_version(uid: str = OdmItemUID):
+def create_odm_item_version(odm_item_uid: str = OdmItemUID):
     odm_item_service = OdmItemService()
-    return odm_item_service.create_new_version(uid=uid)
+    return odm_item_service.create_new_version(uid=odm_item_uid)
 
 
 @router.post(
-    "/{uid}/approvals",
+    "/{odm_item_uid}/approvals",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Approve draft version of ODM Item",
     description="",
@@ -400,18 +400,18 @@ def create_odm_item_version(uid: str = OdmItemUID):
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The ODM Item with the specified 'uid' wasn't found.",
+            "description": "Not Found - The ODM Item with the specified 'odm_item_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def approve_odm_item(uid: str = OdmItemUID):
+def approve_odm_item(odm_item_uid: str = OdmItemUID):
     odm_item_service = OdmItemService()
-    return odm_item_service.approve(uid=uid)
+    return odm_item_service.approve(uid=odm_item_uid)
 
 
 @router.delete(
-    "/{uid}/activations",
+    "/{odm_item_uid}/activations",
     dependencies=[rbac.LIBRARY_WRITE],
     summary=" Inactivate final version of ODM Item",
     description="",
@@ -426,18 +426,18 @@ def approve_odm_item(uid: str = OdmItemUID):
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The ODM Item with the specified 'uid' could not be found.",
+            "description": "Not Found - The ODM Item with the specified 'odm_item_uid' could not be found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def inactivate_odm_item(uid: str = OdmItemUID):
+def inactivate_odm_item(odm_item_uid: str = OdmItemUID):
     odm_item_service = OdmItemService()
-    return odm_item_service.inactivate_final(uid=uid)
+    return odm_item_service.inactivate_final(uid=odm_item_uid)
 
 
 @router.post(
-    "/{uid}/activations",
+    "/{odm_item_uid}/activations",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Reactivate retired version of a ODM Item",
     description="",
@@ -452,18 +452,18 @@ def inactivate_odm_item(uid: str = OdmItemUID):
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The ODM Item with the specified 'uid' could not be found.",
+            "description": "Not Found - The ODM Item with the specified 'odm_item_uid' could not be found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def reactivate_odm_item(uid: str = OdmItemUID):
+def reactivate_odm_item(odm_item_uid: str = OdmItemUID):
     odm_item_service = OdmItemService()
-    return odm_item_service.reactivate_retired(uid=uid)
+    return odm_item_service.reactivate_retired(uid=odm_item_uid)
 
 
 @router.post(
-    "/{uid}/activities",
+    "/{odm_item_uid}/activities",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Add an activity to the ODM Item.",
     description="",
@@ -479,13 +479,13 @@ def reactivate_odm_item(uid: str = OdmItemUID):
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The activity with the specified 'uid' wasn't found.",
+            "description": "Not Found - The activity with the specified 'odm_item_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def add_activity_to_odm_item(
-    uid: str = OdmItemUID,
+    odm_item_uid: str = OdmItemUID,
     override: bool = Query(
         False,
         description="If true, the existing activity relationship will be replaced with the provided activity relationship.",
@@ -494,14 +494,14 @@ def add_activity_to_odm_item(
 ):
     odm_item_service = OdmItemService()
     return odm_item_service.add_activity(
-        uid=uid,
+        uid=odm_item_uid,
         odm_item_activity_post_input=odm_item_activity_post_input,
         override=override,
     )
 
 
 @router.post(
-    "/{uid}/vendor-elements",
+    "/{odm_item_uid}/vendor-elements",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Adds ODM Vendor Elements to the ODM Item.",
     description="",
@@ -517,13 +517,13 @@ def add_activity_to_odm_item(
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The ODM Vendor Elements with the specified 'uid' wasn't found.",
+            "description": "Not Found - The ODM Vendor Elements with the specified 'odm_item_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def add_vendor_elements_to_odm_item(
-    uid: str = OdmItemUID,
+    odm_item_uid: str = OdmItemUID,
     override: bool = Query(
         False,
         description="If true, all existing ODM Vendor Element relationships will be replaced with the provided ODM Vendor Element relationships.",
@@ -534,14 +534,14 @@ def add_vendor_elements_to_odm_item(
 ):
     odm_item_service = OdmItemService()
     return odm_item_service.add_vendor_elements(
-        uid=uid,
+        uid=odm_item_uid,
         odm_vendor_relation_post_input=odm_vendor_relation_post_input,
         override=override,
     )
 
 
 @router.post(
-    "/{uid}/vendor-attributes",
+    "/{odm_item_uid}/vendor-attributes",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Adds ODM Vendor Attributes to the ODM Item.",
     description="",
@@ -557,13 +557,13 @@ def add_vendor_elements_to_odm_item(
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The ODM Vendor Attributes with the specified 'uid' wasn't found.",
+            "description": "Not Found - The ODM Vendor Attributes with the specified 'odm_item_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def add_vendor_attributes_to_odm_item(
-    uid: str = OdmItemUID,
+    odm_item_uid: str = OdmItemUID,
     override: bool = Query(
         False,
         description="""If true, all existing ODM Vendor Attribute relationships will
@@ -575,14 +575,14 @@ def add_vendor_attributes_to_odm_item(
 ):
     odm_item_service = OdmItemService()
     return odm_item_service.add_vendor_attributes(
-        uid=uid,
+        uid=odm_item_uid,
         odm_vendor_relation_post_input=odm_vendor_relation_post_input,
         override=override,
     )
 
 
 @router.post(
-    "/{uid}/vendor-element-attributes",
+    "/{odm_item_uid}/vendor-element-attributes",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Adds ODM Vendor Element attributes to the ODM Item.",
     description="",
@@ -598,13 +598,13 @@ def add_vendor_attributes_to_odm_item(
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The ODM Vendor Element attributes with the specified 'uid' wasn't found.",
+            "description": "Not Found - The ODM Vendor Element attributes with the specified 'odm_item_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def add_vendor_element_attributes_to_odm_item(
-    uid: str = OdmItemUID,
+    odm_item_uid: str = OdmItemUID,
     override: bool = Query(
         False,
         description="""If true, all existing ODM Vendor Element attribute relationships will
@@ -616,14 +616,14 @@ def add_vendor_element_attributes_to_odm_item(
 ):
     odm_item_service = OdmItemService()
     return odm_item_service.add_vendor_element_attributes(
-        uid=uid,
+        uid=odm_item_uid,
         odm_vendor_relation_post_input=odm_vendor_relation_post_input,
         override=override,
     )
 
 
 @router.post(
-    "/{uid}/vendors",
+    "/{odm_item_uid}/vendors",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Manages all ODM Vendors by replacing existing ODM Vendors by provided ODM Vendors.",
     description="",
@@ -639,23 +639,23 @@ def add_vendor_element_attributes_to_odm_item(
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The ODM Vendors with the specified 'uid' wasn't found.",
+            "description": "Not Found - The ODM Vendors with the specified 'odm_item_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def manage_vendors_of_odm_item_group(
-    uid: str = OdmItemUID,
+    odm_item_uid: str = OdmItemUID,
     odm_vendors_post_input: OdmVendorsPostInput = Body(description=""),
 ):
     odm_item_group_service = OdmItemService()
     return odm_item_group_service.manage_vendors(
-        uid=uid, odm_vendors_post_input=odm_vendors_post_input
+        uid=odm_item_uid, odm_vendors_post_input=odm_vendors_post_input
     )
 
 
 @router.delete(
-    "/{uid}",
+    "/{odm_item_uid}",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Delete draft version of ODM Item",
     description="",
@@ -672,11 +672,11 @@ def manage_vendors_of_odm_item_group(
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - An ODM Item with the specified 'uid' could not be found.",
+            "description": "Not Found - An ODM Item with the specified 'odm_item_uid' could not be found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def delete_odm_item(uid: str = OdmItemUID):
+def delete_odm_item(odm_item_uid: str = OdmItemUID):
     odm_item_service = OdmItemService()
-    odm_item_service.soft_delete(uid=uid)
+    odm_item_service.soft_delete(uid=odm_item_uid)

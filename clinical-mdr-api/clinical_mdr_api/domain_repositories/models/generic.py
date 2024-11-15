@@ -5,7 +5,6 @@ from neomodel import (
     BooleanProperty,
     DateTimeProperty,
     IntegerProperty,
-    Property,
     RelationshipFrom,
     RelationshipTo,
     StringProperty,
@@ -13,7 +12,7 @@ from neomodel import (
     StructuredRel,
     db,
 )
-from neomodel.properties import validator
+from neomodel.properties import Property, validator
 
 from clinical_mdr_api.config import NUMBER_OF_UID_DIGITS
 from clinical_mdr_api.domain_repositories.models._utils import (

@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Any, Sequence
 
-from neomodel import NodeMeta, db
+from neomodel.sync_.core import NodeMeta, db
 
 from clinical_mdr_api import exceptions
 from clinical_mdr_api.domain_repositories.generic_repository import (
@@ -141,6 +141,50 @@ class StudyDefinitionRepository(ABC):
 
         # and that's it we are done
         return result
+
+    def get_study_structure_overview(self):
+        query = """
+MATCH (sr:StudyRoot)-[:LATEST]->(sv:StudyValue)
+CALL {
+    WITH sv
+    OPTIONAL MATCH (sv)-[:HAS_STUDY_ARM]->(arm:StudyArm)
+    OPTIONAL MATCH (sv)-[:HAS_STUDY_EPOCH]->(pre_treatment_epoch:StudyEpoch)-[:HAS_EPOCH_TYPE]->(:CTTermRoot)-[:HAS_ATTRIBUTES_ROOT]-(:CTTermAttributesRoot)-[:LATEST]-(:CTTermAttributesValue {code_submission_value: "PRE TREATMENT EPOCH TYPE"})
+    OPTIONAL MATCH (sv)-[:HAS_STUDY_EPOCH]->(treatment_epoch:StudyEpoch)-[:HAS_EPOCH_TYPE]->(:CTTermRoot)-[:HAS_ATTRIBUTES_ROOT]-(:CTTermAttributesRoot)-[:LATEST]-(:CTTermAttributesValue {code_submission_value: "TREATMENT"})
+    OPTIONAL MATCH (sv)-[:HAS_STUDY_EPOCH]->(no_treatment_epoch:StudyEpoch)-[:HAS_EPOCH_TYPE]->(:CTTermRoot)-[:HAS_ATTRIBUTES_ROOT]-(:CTTermAttributesRoot)-[:LATEST]-(:CTTermAttributesValue {code_submission_value: "NO TREATMENT EPOCH TYPE"})
+    OPTIONAL MATCH (sv)-[:HAS_STUDY_EPOCH]->(post_treatment_epoch:StudyEpoch)-[:HAS_EPOCH_TYPE]->(:CTTermRoot)-[:HAS_ATTRIBUTES_ROOT]-(:CTTermAttributesRoot)-[:LATEST]-(:CTTermAttributesValue {code_submission_value: "POST TREATMENT EPOCH TYPE"})
+    OPTIONAL MATCH (sv)-[:HAS_STUDY_ELEMENT]->(treatment_element:StudyElement)-[:HAS_ELEMENT_SUBTYPE]->(:CTTermRoot)-[:HAS_PARENT_TYPE]->(:CTTermRoot)-[:HAS_ATTRIBUTES_ROOT]-(:CTTermAttributesRoot)-[:LATEST]-(:CTTermAttributesValue {code_submission_value: "TREATMENT ELEMENT TYPE"})
+    OPTIONAL MATCH (sv)-[:HAS_STUDY_ELEMENT]->(no_treatment_element:StudyElement)-[:HAS_ELEMENT_SUBTYPE]->(:CTTermRoot)-[:HAS_PARENT_TYPE]->(:CTTermRoot)-[:HAS_ATTRIBUTES_ROOT]-(:CTTermAttributesRoot)-[:LATEST]-(:CTTermAttributesValue {code_submission_value: "NO TREATMENT ELEMENT TYPE"})
+    OPTIONAL MATCH (sv)-[:HAS_STUDY_COHORT]->(cohort:StudyCohort)
+    WITH
+        COUNT(DISTINCT arm) AS arm_count,
+        COUNT(DISTINCT pre_treatment_epoch) AS pre_treatment_epoch_count,
+        COUNT(DISTINCT treatment_epoch) AS treatment_epoch_count,
+        COUNT(DISTINCT no_treatment_epoch) AS no_treatment_epoch_count,
+        COUNT(DISTINCT post_treatment_epoch) AS post_treatment_epoch_count,
+        COUNT(DISTINCT treatment_element) AS treatment_element_count,
+        COUNT(DISTINCT no_treatment_element) AS no_treatment_element_count,
+        COUNT(DISTINCT cohort) AS cohort_count
+    RETURN
+        {
+            arms: arm_count,
+            pre_treatment_epochs: pre_treatment_epoch_count,
+            treatment_epochs: treatment_epoch_count,
+            no_treatment_epochs: no_treatment_epoch_count,
+            post_treatment_epochs: post_treatment_epoch_count,
+            treatment_elements: treatment_element_count,
+            no_treatment_elements: no_treatment_element_count,
+            cohorts: cohort_count
+        } as counts
+}
+RETURN
+    sr.uid,
+    sv.study_id_prefix + "-" + sv.study_number AS study_id,
+    counts
+"""
+
+        rs = db.cypher_query(query=query)
+
+        return rs
 
     def update_subpart_relationship(
         self,

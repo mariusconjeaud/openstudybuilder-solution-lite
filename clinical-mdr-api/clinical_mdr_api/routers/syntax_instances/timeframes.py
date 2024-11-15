@@ -220,9 +220,9 @@ def retrieve_audit_trail(
 
 
 @router.get(
-    "/{uid}",
+    "/{timeframe_uid}",
     dependencies=[rbac.LIBRARY_READ],
-    summary="Returns the latest/newest version of a specific timeframe identified by 'uid'.",
+    summary="Returns the latest/newest version of a specific timeframe identified by 'timeframe_uid'.",
     description="""If multiple request query parameters are used, then they need to
     match all at the same time (they are combined with the AND operation).""",
     response_model=models.Timeframe | None,
@@ -230,13 +230,13 @@ def retrieve_audit_trail(
     responses={
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The timeframe with the specified 'uid' (and the specified date/time and/or status) wasn't found.",
+            "description": "Not Found - The timeframe with the specified 'timeframe_uid' (and the specified date/time and/or status) wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def get(
-    uid: str = TimeframeUID,
+    timeframe_uid: str = TimeframeUID,
     status: LibraryItemStatus
     | None = Query(
         None,
@@ -256,13 +256,13 @@ def get(
         r"E.g. '0.1', '0.2', '1.0', ...",
     ),
 ):
-    return Service().get_by_uid(uid=uid, version=version, status=status)
+    return Service().get_by_uid(uid=timeframe_uid, version=version, status=status)
 
 
 @router.get(
-    "/{uid}/versions",
+    "/{timeframe_uid}/versions",
     dependencies=[rbac.LIBRARY_READ],
-    summary="Returns the version history of a specific timeframe identified by 'uid'.",
+    summary="Returns the version history of a specific timeframe identified by 'timeframe_uid'.",
     description="The returned versions are ordered by\n"
     "0. start_date descending (newest entries first)",
     response_model=list[models.TimeframeVersion],
@@ -270,13 +270,13 @@ def get(
     responses={
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The timeframe with the specified 'uid' wasn't found.",
+            "description": "Not Found - The timeframe with the specified 'timeframe_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def get_versions(uid: str = TimeframeUID):
-    return Service().get_version_history(uid)
+def get_versions(timeframe_uid: str = TimeframeUID):
+    return Service().get_version_history(timeframe_uid)
 
 
 @router.post(
@@ -362,9 +362,9 @@ def preview(
 
 
 @router.patch(
-    "/{uid}",
+    "/{timeframe_uid}",
     dependencies=[rbac.LIBRARY_WRITE],
-    summary="Updates the timeframe identified by 'uid'.",
+    summary="Updates the timeframe identified by 'timeframe_uid'.",
     description="""This request is only valid if the timeframe
 * is in 'Draft' status and
 * belongs to a library that allows editing (the 'is_editable' property of the library needs to be true). 
@@ -388,24 +388,24 @@ If the request succeeds:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The timeframe with the specified 'uid' wasn't found.",
+            "description": "Not Found - The timeframe with the specified 'timeframe_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def edit(
-    uid: str = TimeframeUID,
+    timeframe_uid: str = TimeframeUID,
     timeframe: models.TimeframeEditInput = Body(
         description="The new parameter terms for the timeframe including the change description.",
     ),
 ):
-    return Service().edit_draft(uid, timeframe)
+    return Service().edit_draft(timeframe_uid, timeframe)
 
 
 @router.post(
-    "/{uid}/approvals",
+    "/{timeframe_uid}/approvals",
     dependencies=[rbac.LIBRARY_WRITE_OR_STUDY_WRITE],
-    summary="Approves the timeframe identified by 'uid'.",
+    summary="Approves the timeframe identified by 'timeframe_uid'.",
     description="""This request is only valid if the timeframe
 * is in 'Draft' status and
 * belongs to a library that allows editing (the 'is_editable' property of the library needs to be true).
@@ -427,19 +427,19 @@ If the request succeeds:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The timeframe with the specified 'uid' wasn't found.",
+            "description": "Not Found - The timeframe with the specified 'timeframe_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def approve(uid: str = TimeframeUID):
-    return Service().approve(uid)
+def approve(timeframe_uid: str = TimeframeUID):
+    return Service().approve(timeframe_uid)
 
 
 @router.delete(
-    "/{uid}/activations",
+    "/{timeframe_uid}/activations",
     dependencies=[rbac.LIBRARY_WRITE],
-    summary="Inactivates/deactivates the timeframe identified by 'uid'.",
+    summary="Inactivates/deactivates the timeframe identified by 'timeframe_uid'.",
     description="""This request is only valid if the timeframe
 * is in 'Final' status only (so no latest 'Draft' status exists).
 
@@ -459,20 +459,20 @@ If the request succeeds:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The timeframe with the specified 'uid' wasn't found.",
+            "description": "Not Found - The timeframe with the specified 'timeframe_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def inactivate(uid: str = TimeframeUID):
-    return Service().inactivate_final(uid)
+def inactivate(timeframe_uid: str = TimeframeUID):
+    return Service().inactivate_final(timeframe_uid)
 
 
 # TODO check if * there is no other timeframe with the same name (it may be that one had been created after inactivating this one here)
 @router.post(
-    "/{uid}/activations",
+    "/{timeframe_uid}/activations",
     dependencies=[rbac.LIBRARY_WRITE],
-    summary="Reactivates the timeframe identified by 'uid'.",
+    summary="Reactivates the timeframe identified by 'timeframe_uid'.",
     description="""This request is only valid if the timeframe
 * is in 'Retired' status only (so no latest 'Draft' status exists).
 
@@ -492,19 +492,19 @@ If the request succeeds:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The timeframe with the specified 'uid' wasn't found.",
+            "description": "Not Found - The timeframe with the specified 'timeframe_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def reactivate(uid: str = TimeframeUID):
-    return Service().reactivate_retired(uid)
+def reactivate(timeframe_uid: str = TimeframeUID):
+    return Service().reactivate_retired(timeframe_uid)
 
 
 @router.delete(
-    "/{uid}",
+    "/{timeframe_uid}",
     dependencies=[rbac.LIBRARY_WRITE],
-    summary="Deletes the timeframe identified by 'uid'.",
+    summary="Deletes the timeframe identified by 'timeframe_uid'.",
     description="""This request is only valid if \n
 * the timeframe is in 'Draft' status and
 * the timeframe has never been in 'Final' status and
@@ -526,13 +526,13 @@ def reactivate(uid: str = TimeframeUID):
         500: _generic_descriptions.ERROR_500,
     },
 )
-def delete(uid: str = TimeframeUID):
-    Service().soft_delete(uid)
+def delete(timeframe_uid: str = TimeframeUID):
+    Service().soft_delete(timeframe_uid)
     return Response(status_code=fast_api_status.HTTP_204_NO_CONTENT)
 
 
 @router.get(
-    "/{uid}/studies",
+    "/{timeframe_uid}/studies",
     dependencies=[rbac.STUDY_READ],
     summary="",
     description="",
@@ -541,20 +541,20 @@ def delete(uid: str = TimeframeUID):
     responses={
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The timeframe with the specified 'uid' wasn't found.",
+            "description": "Not Found - The timeframe with the specified 'timeframe_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def get_studies(
-    uid: str = TimeframeUID,
+    timeframe_uid: str = TimeframeUID,
     include_sections: list[StudyComponentEnum]
     | None = Query(None, description=study_section_description("include")),
     exclude_sections: list[StudyComponentEnum]
     | None = Query(None, description=study_section_description("exclude")),
 ):
     return Service().get_referencing_studies(
-        uid=uid,
+        uid=timeframe_uid,
         node_type=TimeframeValue,
         include_sections=include_sections,
         exclude_sections=exclude_sections,
@@ -562,11 +562,11 @@ def get_studies(
 
 
 @router.get(
-    "/{uid}/parameters",
+    "/{timeframe_uid}/parameters",
     dependencies=[rbac.LIBRARY_READ],
-    summary="Returns all template parameters available for the timeframe identified by 'uid'. Includes the available values per parameter.",
+    summary="Returns all template parameters available for the timeframe identified by 'timeframe_uid'. Includes the available values per parameter.",
     description="Returns all template parameters used in the timeframe template "
-    "that is the basis for the timeframe identified by 'uid'. "
+    "that is the basis for the timeframe identified by 'timeframe_uid'. "
     "Includes the available values per parameter.",
     response_model=list[ComplexTemplateParameter],
     status_code=200,
@@ -576,11 +576,11 @@ def get_studies(
     },
 )
 def get_parameters(
-    uid: str = Path(None, description="The unique id of the timeframe."),
+    timeframe_uid: str = Path(None, description="The unique id of the timeframe."),
     study_uid: str
     | None = Query(
         None,
         description="if specified only valid parameters for a given study will be returned.",
     ),
 ):
-    return Service().get_parameters(uid, study_uid=study_uid)
+    return Service().get_parameters(timeframe_uid, study_uid=study_uid)

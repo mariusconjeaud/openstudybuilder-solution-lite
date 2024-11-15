@@ -14,7 +14,7 @@ RUN useradd --home-dir /home/$USER --user-group --create-home --uid $UID $USER
 ARG WORKDIR=/app
 WORKDIR $WORKDIR
 
-## Copy Pipfiles into the working direcotyr
+## Copy Pipfiles into the working directory
 COPY ./Pipfile* ./
 
 

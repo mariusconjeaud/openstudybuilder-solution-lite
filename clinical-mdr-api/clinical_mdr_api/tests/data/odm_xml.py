@@ -3271,10 +3271,10 @@ import_output1 = {
             "oid": "C.OID1",
             "formal_expressions": [
                 {
-                    "uid": "OdmFormalExpression_000002",
+                    "uid": "OdmFormalExpression_000001",
                     "context": "XPath",
                     "expression": "Formal Expression 1",
-                    "version": "1.0",
+                    "version": "2.0",
                 }
             ],
             "descriptions": [
@@ -3304,7 +3304,7 @@ import_output1 = {
             "oid": "C.OID2",
             "formal_expressions": [
                 {
-                    "uid": "OdmFormalExpression_000003",
+                    "uid": "OdmFormalExpression_000002",
                     "context": "XPath",
                     "expression": "Formal Expression 2",
                     "version": "1.0",
@@ -3361,7 +3361,7 @@ import_output1 = {
                     "uid": "OdmFormalExpression_000001",
                     "context": "XPath",
                     "expression": "Formal Expression 1",
-                    "version": "1.0",
+                    "version": "2.0",
                 }
             ],
             "descriptions": [
@@ -5048,7 +5048,7 @@ clinspark_output = {
             "scope": None,
             "descriptions": [
                 {
-                    "uid": "OdmDescription_000059",
+                    "uid": "OdmDescription_000057",
                     "name": "Body Measurements form including weight, height and BMI calculation. Expected use for screening visit.",
                     "language": "ENG",
                     "description": "Body Measurements form including weight, height and BMI calculation. Expected use for screening visit.",
@@ -5230,7 +5230,7 @@ clinspark_output = {
             "comment": None,
             "descriptions": [
                 {
-                    "uid": "OdmDescription_000058",
+                    "uid": "OdmDescription_000056",
                     "name": "Exposure as Collected",
                     "language": "ENG",
                     "description": "Exposure as Collected",
@@ -5506,7 +5506,7 @@ clinspark_output = {
             "comment": None,
             "descriptions": [
                 {
-                    "uid": "OdmDescription_000055",
+                    "uid": "OdmDescription_000054",
                     "name": "Body Measurements",
                     "language": "ENG",
                     "description": "Body Measurements",
@@ -5628,7 +5628,7 @@ clinspark_output = {
             "comment": None,
             "descriptions": [
                 {
-                    "uid": "OdmDescription_000054",
+                    "uid": "OdmDescription_000053",
                     "name": "Demographics",
                     "language": "ENG",
                     "description": "Demographics",
@@ -6067,7 +6067,7 @@ clinspark_output = {
             "comment": None,
             "descriptions": [
                 {
-                    "uid": "OdmDescription_000057",
+                    "uid": "OdmDescription_000056",
                     "name": "Exposure as Collected",
                     "language": "ENG",
                     "description": "Exposure as Collected",
@@ -6217,7 +6217,7 @@ clinspark_output = {
             "comment": None,
             "descriptions": [
                 {
-                    "uid": "OdmDescription_000056",
+                    "uid": "OdmDescription_000055",
                     "name": "Vital Signs",
                     "language": "ENG",
                     "description": "Vital Signs",
@@ -6952,7 +6952,7 @@ clinspark_output = {
             "comment": None,
             "descriptions": [
                 {
-                    "uid": "OdmDescription_000031",
+                    "uid": "OdmDescription_000030",
                     "name": "<Investigational medicinal product>",
                     "language": "ENG",
                     "description": "Please update this description",
@@ -7022,7 +7022,7 @@ clinspark_output = {
             "comment": None,
             "descriptions": [
                 {
-                    "uid": "OdmDescription_000028",
+                    "uid": "OdmDescription_000027",
                     "name": "ECCAT",
                     "language": "ENG",
                     "description": "Please update this description",
@@ -7076,7 +7076,7 @@ clinspark_output = {
             "comment": None,
             "descriptions": [
                 {
-                    "uid": "OdmDescription_000029",
+                    "uid": "OdmDescription_000028",
                     "name": "ECMOOD",
                     "language": "ENG",
                     "description": "Please update this description",
@@ -7138,7 +7138,7 @@ clinspark_output = {
             "comment": None,
             "descriptions": [
                 {
-                    "uid": "OdmDescription_000030",
+                    "uid": "OdmDescription_000029",
                     "name": "ECPRESP",
                     "language": "ENG",
                     "description": "Please update this description",
@@ -7192,7 +7192,7 @@ clinspark_output = {
             "comment": None,
             "descriptions": [
                 {
-                    "uid": "OdmDescription_000040",
+                    "uid": "OdmDescription_000039",
                     "name": "Has the investigational medicinal product been administered to the subject?",
                     "language": "ENG",
                     "description": "Please update this description",
@@ -7254,7 +7254,7 @@ clinspark_output = {
             "comment": None,
             "descriptions": [
                 {
-                    "uid": "OdmDescription_000051",
+                    "uid": "OdmDescription_000050",
                     "name": "Administered by",
                     "language": "ENG",
                     "description": "Please update this description",
@@ -7294,7 +7294,7 @@ clinspark_output = {
             "comment": None,
             "descriptions": [
                 {
-                    "uid": "OdmDescription_000043",
+                    "uid": "OdmDescription_000042",
                     "name": "Bleeding episode no.",
                     "language": "ENG",
                     "description": "Please update this description",
@@ -7334,7 +7334,7 @@ clinspark_output = {
             "comment": None,
             "descriptions": [
                 {
-                    "uid": "OdmDescription_000052",
+                    "uid": "OdmDescription_000051",
                     "name": "Checked by",
                     "language": "ENG",
                     "description": "Please update this description",
@@ -7374,7 +7374,7 @@ clinspark_output = {
             "comment": None,
             "descriptions": [
                 {
-                    "uid": "OdmDescription_000053",
+                    "uid": "OdmDescription_000052",
                     "name": "Comment",
                     "language": "ENG",
                     "description": "Please update this description",
@@ -7414,7 +7414,7 @@ clinspark_output = {
             "comment": None,
             "descriptions": [
                 {
-                    "uid": "OdmDescription_000032",
+                    "uid": "OdmDescription_000031",
                     "name": "Start date and time of prescription",
                     "language": "ENG",
                     "description": "Please update this description",
@@ -7454,7 +7454,7 @@ clinspark_output = {
             "comment": None,
             "descriptions": [
                 {
-                    "uid": "OdmDescription_000047",
+                    "uid": "OdmDescription_000046",
                     "name": "Actual Dose",
                     "language": "ENG",
                     "description": "Please update this description",
@@ -7494,7 +7494,7 @@ clinspark_output = {
             "comment": None,
             "descriptions": [
                 {
-                    "uid": "OdmDescription_000034",
+                    "uid": "OdmDescription_000033",
                     "name": "Dose form",
                     "language": "ENG",
                     "description": "Please update this description",
@@ -7556,7 +7556,7 @@ clinspark_output = {
             "comment": None,
             "descriptions": [
                 {
-                    "uid": "OdmDescription_000037",
+                    "uid": "OdmDescription_000036",
                     "name": "DUN (Dispensing Unit No.)",
                     "language": "ENG",
                     "description": "Please update this description",
@@ -7596,7 +7596,7 @@ clinspark_output = {
             "comment": None,
             "descriptions": [
                 {
-                    "uid": "OdmDescription_000046",
+                    "uid": "OdmDescription_000045",
                     "name": "End date and time of administration",
                     "language": "ENG",
                     "description": "Please update this description",
@@ -7636,7 +7636,7 @@ clinspark_output = {
             "comment": None,
             "descriptions": [
                 {
-                    "uid": "OdmDescription_000050",
+                    "uid": "OdmDescription_000049",
                     "name": "Injection site",
                     "language": "ENG",
                     "description": "Please update this description",
@@ -7706,7 +7706,7 @@ clinspark_output = {
             "comment": None,
             "descriptions": [
                 {
-                    "uid": "OdmDescription_000049",
+                    "uid": "OdmDescription_000048",
                     "name": "Laterality",
                     "language": "ENG",
                     "description": "Please update this description",
@@ -7768,7 +7768,7 @@ clinspark_output = {
             "comment": None,
             "descriptions": [
                 {
-                    "uid": "OdmDescription_000036",
+                    "uid": "OdmDescription_000035",
                     "name": "Morphology of injection site",
                     "language": "ENG",
                     "description": "Please update this description",
@@ -7808,7 +7808,7 @@ clinspark_output = {
             "comment": None,
             "descriptions": [
                 {
-                    "uid": "OdmDescription_000038",
+                    "uid": "OdmDescription_000037",
                     "name": "Number of injections",
                     "language": "ENG",
                     "description": "Please update this description",
@@ -7848,7 +7848,7 @@ clinspark_output = {
             "comment": None,
             "descriptions": [
                 {
-                    "uid": "OdmDescription_000033",
+                    "uid": "OdmDescription_000032",
                     "name": "Prescribed dose",
                     "language": "ENG",
                     "description": "Please update this description",
@@ -7888,7 +7888,7 @@ clinspark_output = {
             "comment": None,
             "descriptions": [
                 {
-                    "uid": "OdmDescription_000035",
+                    "uid": "OdmDescription_000034",
                     "name": "Requirements for dosing met?",
                     "language": "ENG",
                     "description": "Please update this description",
@@ -7950,7 +7950,7 @@ clinspark_output = {
             "comment": None,
             "descriptions": [
                 {
-                    "uid": "OdmDescription_000048",
+                    "uid": "OdmDescription_000047",
                     "name": "Route",
                     "language": "ENG",
                     "description": "Please update this description",
@@ -8012,7 +8012,7 @@ clinspark_output = {
             "comment": None,
             "descriptions": [
                 {
-                    "uid": "OdmDescription_000027",
+                    "uid": "OdmDescription_000026",
                     "name": "Seq. no.",
                     "language": "ENG",
                     "description": "Please update this description",
@@ -8052,7 +8052,7 @@ clinspark_output = {
             "comment": None,
             "descriptions": [
                 {
-                    "uid": "OdmDescription_000041",
+                    "uid": "OdmDescription_000040",
                     "name": "Specify reason",
                     "language": "ENG",
                     "description": "Please update this description",
@@ -8092,7 +8092,7 @@ clinspark_output = {
             "comment": None,
             "descriptions": [
                 {
-                    "uid": "OdmDescription_000045",
+                    "uid": "OdmDescription_000044",
                     "name": "Start date and time of administration",
                     "language": "ENG",
                     "description": "Please update this description",
@@ -8132,7 +8132,7 @@ clinspark_output = {
             "comment": None,
             "descriptions": [
                 {
-                    "uid": "OdmDescription_000044",
+                    "uid": "OdmDescription_000043",
                     "name": "Surgery no.",
                     "language": "ENG",
                     "description": "Please update this description",
@@ -8172,7 +8172,7 @@ clinspark_output = {
             "comment": None,
             "descriptions": [
                 {
-                    "uid": "OdmDescription_000042",
+                    "uid": "OdmDescription_000041",
                     "name": "Type of treatment",
                     "language": "ENG",
                     "description": "Please update this description",
@@ -8266,7 +8266,7 @@ clinspark_output = {
             "comment": None,
             "descriptions": [
                 {
-                    "uid": "OdmDescription_000039",
+                    "uid": "OdmDescription_000038",
                     "name": "Volume administered",
                     "language": "ENG",
                     "description": "Please update this description",
@@ -8514,7 +8514,7 @@ clinspark_output = {
             "comment": None,
             "descriptions": [
                 {
-                    "uid": "OdmDescription_000022",
+                    "uid": "OdmDescription_000008",
                     "name": "VSCAT",
                     "language": "ENG",
                     "description": "Please update this description",
@@ -8616,7 +8616,7 @@ clinspark_output = {
             "comment": None,
             "descriptions": [
                 {
-                    "uid": "OdmDescription_000023",
+                    "uid": "OdmDescription_000022",
                     "name": "Date of examination",
                     "language": "ENG",
                     "description": "Please update this description",
@@ -8656,7 +8656,7 @@ clinspark_output = {
             "comment": None,
             "descriptions": [
                 {
-                    "uid": "OdmDescription_000025",
+                    "uid": "OdmDescription_000024",
                     "name": "Diastolic blood pressure",
                     "language": "ENG",
                     "description": "Please update this description",
@@ -8824,7 +8824,7 @@ clinspark_output = {
             "comment": None,
             "descriptions": [
                 {
-                    "uid": "OdmDescription_000026",
+                    "uid": "OdmDescription_000025",
                     "name": "Pulse",
                     "language": "ENG",
                     "description": "Please update this description",
@@ -8864,7 +8864,7 @@ clinspark_output = {
             "comment": None,
             "descriptions": [
                 {
-                    "uid": "OdmDescription_000024",
+                    "uid": "OdmDescription_000023",
                     "name": "Systolic blood pressure",
                     "language": "ENG",
                     "description": "Please update this description",

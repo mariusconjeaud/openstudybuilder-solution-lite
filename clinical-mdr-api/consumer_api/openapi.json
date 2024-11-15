@@ -2,8 +2,8 @@
   "openapi": "3.0.2",
   "info": {
     "title": "StudyBuilder Consumer API",
-    "description": "Endpoints for exposing StudyBuilder data to external consumers",
-    "version": "0.1.37"
+    "description": "\n## NOTICE\n\nThis license information is applicable to the swagger documentation of the clinical-mdr-api, that is the openapi.json.\n\n## License Terms (MIT)\n\nCopyright (C) 2022 Novo Nordisk A/S, Danish company registration no. 24256790\n\nPermission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the \"Software\"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.\n\n## Licenses and Acknowledgements for Incorporated Software\n\nThis component contains software licensed under different licenses when compiled, please refer to the third-party-licenses.md file for further information and full license texts.\n\n## Authentication\n\nSupports OAuth2 [Authorization Code Flow](https://datatracker.ietf.org/doc/html/rfc6749#section-4.1),\nat paths described in the OpenID Connect Discovery metadata document (whose URL is defined by the `OAUTH_METADATA_URL` environment variable).\n\nMicrosoft Identity Platform documentation can be read \n([here](https://docs.microsoft.com/en-us/azure/active-directory/develop/v2-oauth2-auth-code-flow)).\n\n## System information:\n\nSystem information is provided by a separate [System Information](./system/docs) sub-app which does not require authentication.\n",
+    "version": "0.1.41"
   },
   "paths": {
     "/v1/studies": {
@@ -12,7 +12,7 @@
           "V1"
         ],
         "summary": "Get Studies",
-        "description": "Get a list of studies",
+        "description": "Get a paginated list of studies",
         "operationId": "get_studies_v1_studies_get",
         "parameters": [
           {
@@ -120,6 +120,258 @@
           }
         }
       }
+    },
+    "/v1/studies/{uid}/study-visits": {
+      "get": {
+        "tags": [
+          "V1"
+        ],
+        "summary": "Get Study Visits",
+        "description": "Get a paginated list of study visits",
+        "operationId": "get_study_visits_v1_studies__uid__study_visits_get",
+        "parameters": [
+          {
+            "description": "Study UID",
+            "required": true,
+            "schema": {
+              "title": "Uid",
+              "type": "string",
+              "description": "Study UID"
+            },
+            "name": "uid",
+            "in": "path"
+          },
+          {
+            "required": false,
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/SortByStudyVisits"
+                }
+              ],
+              "default": "uid"
+            },
+            "name": "sort_by",
+            "in": "query"
+          },
+          {
+            "required": false,
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/SortOrder"
+                }
+              ],
+              "default": "asc"
+            },
+            "name": "sort_order",
+            "in": "query"
+          },
+          {
+            "required": false,
+            "schema": {
+              "title": "Page Size",
+              "maximum": 1000.0,
+              "minimum": 1.0,
+              "type": "integer",
+              "default": 100
+            },
+            "name": "page_size",
+            "in": "query"
+          },
+          {
+            "required": false,
+            "schema": {
+              "title": "Page Number",
+              "minimum": 1.0,
+              "type": "integer",
+              "default": 1
+            },
+            "name": "page_number",
+            "in": "query"
+          },
+          {
+            "description": "Study Version Number",
+            "required": false,
+            "schema": {
+              "title": "Study Version Number",
+              "type": "string",
+              "description": "Study Version Number"
+            },
+            "name": "study_version_number",
+            "in": "query"
+          },
+          {
+            "description": "A value to be injected into User object as user id.",
+            "required": false,
+            "schema": {
+              "title": "X-Test-User-Id",
+              "type": "string",
+              "description": "A value to be injected into User object as user id."
+            },
+            "name": "x-test-user-id",
+            "in": "header"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedResponse_StudyVisit_"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/studies/{uid}/operational-soa": {
+      "get": {
+        "tags": [
+          "V1"
+        ],
+        "summary": "Get Study Operational Soa",
+        "description": "Get a paginated list of operational SoA items representing a point in the activities/visits matrix",
+        "operationId": "get_study_operational_soa_v1_studies__uid__operational_soa_get",
+        "parameters": [
+          {
+            "description": "Study UID",
+            "required": true,
+            "schema": {
+              "title": "Uid",
+              "type": "string",
+              "description": "Study UID"
+            },
+            "name": "uid",
+            "in": "path"
+          },
+          {
+            "required": false,
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/SortByStudyOperationalSoA"
+                }
+              ],
+              "default": "activity"
+            },
+            "name": "sort_by",
+            "in": "query"
+          },
+          {
+            "required": false,
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/SortOrder"
+                }
+              ],
+              "default": "asc"
+            },
+            "name": "sort_order",
+            "in": "query"
+          },
+          {
+            "required": false,
+            "schema": {
+              "title": "Page Size",
+              "maximum": 1000.0,
+              "minimum": 1.0,
+              "type": "integer",
+              "default": 100
+            },
+            "name": "page_size",
+            "in": "query"
+          },
+          {
+            "required": false,
+            "schema": {
+              "title": "Page Number",
+              "minimum": 1.0,
+              "type": "integer",
+              "default": 1
+            },
+            "name": "page_number",
+            "in": "query"
+          },
+          {
+            "description": "Study Version Number",
+            "required": false,
+            "schema": {
+              "title": "Study Version Number",
+              "type": "string",
+              "description": "Study Version Number"
+            },
+            "name": "study_version_number",
+            "in": "query"
+          },
+          {
+            "description": "A value to be injected into User object as user id.",
+            "required": false,
+            "schema": {
+              "title": "X-Test-User-Id",
+              "type": "string",
+              "description": "A value to be injected into User object as user id."
+            },
+            "name": "x-test-user-id",
+            "in": "header"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedResponse_StudyOperationalSoA_"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -176,6 +428,78 @@
           }
         }
       },
+      "PaginatedResponse_StudyOperationalSoA_": {
+        "title": "PaginatedResponse[StudyOperationalSoA]",
+        "required": [
+          "self",
+          "prev",
+          "next",
+          "items"
+        ],
+        "type": "object",
+        "properties": {
+          "self": {
+            "title": "Self",
+            "type": "string",
+            "description": "Pagination link pointing to the current page"
+          },
+          "prev": {
+            "title": "Prev",
+            "type": "string",
+            "description": "Pagination link pointing to the previous page"
+          },
+          "next": {
+            "title": "Next",
+            "type": "string",
+            "description": "Pagination link pointing to the next page"
+          },
+          "items": {
+            "title": "Items",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StudyOperationalSoA"
+            },
+            "description": "List of items"
+          }
+        },
+        "description": "Paginated response model"
+      },
+      "PaginatedResponse_StudyVisit_": {
+        "title": "PaginatedResponse[StudyVisit]",
+        "required": [
+          "self",
+          "prev",
+          "next",
+          "items"
+        ],
+        "type": "object",
+        "properties": {
+          "self": {
+            "title": "Self",
+            "type": "string",
+            "description": "Pagination link pointing to the current page"
+          },
+          "prev": {
+            "title": "Prev",
+            "type": "string",
+            "description": "Pagination link pointing to the previous page"
+          },
+          "next": {
+            "title": "Next",
+            "type": "string",
+            "description": "Pagination link pointing to the next page"
+          },
+          "items": {
+            "title": "Items",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StudyVisit"
+            },
+            "description": "List of items"
+          }
+        },
+        "description": "Paginated response model"
+      },
       "PaginatedResponse_Study_": {
         "title": "PaginatedResponse[Study]",
         "required": [
@@ -221,6 +545,23 @@
         ],
         "description": "An enumeration."
       },
+      "SortByStudyOperationalSoA": {
+        "title": "SortByStudyOperationalSoA",
+        "enum": [
+          "activity",
+          "visit_uid"
+        ],
+        "description": "An enumeration."
+      },
+      "SortByStudyVisits": {
+        "title": "SortByStudyVisits",
+        "enum": [
+          "uid",
+          "visit_name",
+          "unique_visit_number"
+        ],
+        "description": "An enumeration."
+      },
       "SortOrder": {
         "title": "SortOrder",
         "enum": [
@@ -234,7 +575,8 @@
         "required": [
           "uid",
           "id",
-          "id_prefix"
+          "id_prefix",
+          "versions"
         ],
         "type": "object",
         "properties": {
@@ -263,6 +605,313 @@
             "title": "Acronym",
             "type": "string",
             "description": "Study acronym",
+            "nullable": true
+          },
+          "versions": {
+            "title": "Versions",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StudyVersion"
+            },
+            "description": "Study versions"
+          }
+        }
+      },
+      "StudyOperationalSoA": {
+        "title": "StudyOperationalSoA",
+        "required": [
+          "study_uid",
+          "study_id",
+          "study_version_number",
+          "activity",
+          "activity_uid",
+          "activity_group",
+          "activity_group_uid",
+          "activity_subgroup",
+          "activity_subgroup_uid",
+          "activity_instance",
+          "activity_instance_uid",
+          "epoch",
+          "param_code",
+          "soa_group",
+          "topic_code",
+          "visit_short_name",
+          "visit_uid"
+        ],
+        "type": "object",
+        "properties": {
+          "study_uid": {
+            "title": "Study Uid",
+            "type": "string",
+            "description": "Study UID",
+            "nullable": true
+          },
+          "study_id": {
+            "title": "Study Id",
+            "type": "string",
+            "description": "Study ID",
+            "nullable": true
+          },
+          "study_version_number": {
+            "title": "Study Version Number",
+            "type": "string",
+            "description": "Study Version Number",
+            "nullable": true
+          },
+          "activity": {
+            "title": "Activity",
+            "type": "string",
+            "description": "Activity Name",
+            "nullable": true
+          },
+          "activity_uid": {
+            "title": "Activity Uid",
+            "type": "string",
+            "description": "Activity UID",
+            "nullable": true
+          },
+          "activity_group": {
+            "title": "Activity Group",
+            "type": "string",
+            "description": "Activity Group Name",
+            "nullable": true
+          },
+          "activity_group_uid": {
+            "title": "Activity Group Uid",
+            "type": "string",
+            "description": "Activity Group UID",
+            "nullable": true
+          },
+          "activity_subgroup": {
+            "title": "Activity Subgroup",
+            "type": "string",
+            "description": "Activity Subgroup Name",
+            "nullable": true
+          },
+          "activity_subgroup_uid": {
+            "title": "Activity Subgroup Uid",
+            "type": "string",
+            "description": "Activity Subgroup UID",
+            "nullable": true
+          },
+          "activity_instance": {
+            "title": "Activity Instance",
+            "type": "string",
+            "description": "Activity Instance Name",
+            "nullable": true
+          },
+          "activity_instance_uid": {
+            "title": "Activity Instance Uid",
+            "type": "string",
+            "description": "Activity Instance UID",
+            "nullable": true
+          },
+          "epoch": {
+            "title": "Epoch",
+            "type": "string",
+            "description": "Epoch Name",
+            "nullable": true
+          },
+          "param_code": {
+            "title": "Param Code",
+            "type": "string",
+            "description": "Param Code",
+            "nullable": true
+          },
+          "soa_group": {
+            "title": "Soa Group",
+            "type": "string",
+            "description": "SoS Group Name",
+            "nullable": true
+          },
+          "topic_code": {
+            "title": "Topic Code",
+            "type": "string",
+            "description": "Topic Code",
+            "nullable": true
+          },
+          "visit_short_name": {
+            "title": "Visit Short Name",
+            "type": "string",
+            "description": "Visit Short Name",
+            "nullable": true
+          },
+          "visit_uid": {
+            "title": "Visit Uid",
+            "type": "string",
+            "description": "Visit UID",
+            "nullable": true
+          }
+        }
+      },
+      "StudyVersion": {
+        "title": "StudyVersion",
+        "type": "object",
+        "properties": {
+          "version_status": {
+            "title": "Version Status",
+            "type": "string",
+            "description": "Study Status",
+            "nullable": true
+          },
+          "version_number": {
+            "title": "Version Number",
+            "type": "string",
+            "description": "Study Version Number",
+            "nullable": true
+          },
+          "version_started_at": {
+            "title": "Version Started At",
+            "type": "string",
+            "description": "Study Version Start Time",
+            "format": "date-time",
+            "nullable": true
+          },
+          "version_ended_at": {
+            "title": "Version Ended At",
+            "type": "string",
+            "description": "Study Version End Time",
+            "format": "date-time",
+            "nullable": true
+          },
+          "version_author": {
+            "title": "Version Author",
+            "type": "string",
+            "description": "Study Author",
+            "nullable": true
+          },
+          "version_description": {
+            "title": "Version Description",
+            "type": "string",
+            "description": "Study Description",
+            "nullable": true
+          }
+        }
+      },
+      "StudyVisit": {
+        "title": "StudyVisit",
+        "required": [
+          "study_uid",
+          "study_version_number",
+          "uid",
+          "visit_name",
+          "visit_order",
+          "unique_visit_number",
+          "visit_number",
+          "visit_short_name",
+          "visit_type_uid",
+          "visit_type_name",
+          "study_epoch_uid",
+          "study_epoch_name"
+        ],
+        "type": "object",
+        "properties": {
+          "study_uid": {
+            "title": "Study Uid",
+            "type": "string",
+            "description": "Study UID"
+          },
+          "study_version_number": {
+            "title": "Study Version Number",
+            "type": "string",
+            "description": "Study Version Number"
+          },
+          "uid": {
+            "title": "Uid",
+            "type": "string",
+            "description": "Study Visit UID"
+          },
+          "visit_name": {
+            "title": "Visit Name",
+            "type": "string",
+            "description": "Study Visit Name"
+          },
+          "visit_order": {
+            "title": "Visit Order",
+            "type": "integer",
+            "description": "Study Visit Order"
+          },
+          "unique_visit_number": {
+            "title": "Unique Visit Number",
+            "type": "integer",
+            "description": "Study Visit Unique Visit Number"
+          },
+          "visit_number": {
+            "title": "Visit Number",
+            "type": "number",
+            "description": "Study Visit Visit Number"
+          },
+          "visit_short_name": {
+            "title": "Visit Short Name",
+            "type": "string",
+            "description": "Study Visit Visit Short Name"
+          },
+          "visit_window_min": {
+            "title": "Visit Window Min",
+            "type": "integer",
+            "description": "Study Visit Min Visit Window Value",
+            "nullable": true
+          },
+          "visit_window_max": {
+            "title": "Visit Window Max",
+            "type": "integer",
+            "description": "Study Visit Max Visit Window Value",
+            "nullable": true
+          },
+          "visit_type_uid": {
+            "title": "Visit Type Uid",
+            "type": "string",
+            "description": "Study Visit Visit Type UID"
+          },
+          "visit_type_name": {
+            "title": "Visit Type Name",
+            "type": "string",
+            "description": "Study Visit Visit Type Name"
+          },
+          "visit_window_unit_uid": {
+            "title": "Visit Window Unit Uid",
+            "type": "string",
+            "description": "Study Visit Visit Window Unit UID",
+            "nullable": true
+          },
+          "visit_window_unit_name": {
+            "title": "Visit Window Unit Name",
+            "type": "string",
+            "description": "Study Visit Visit Window Unit Name",
+            "nullable": true
+          },
+          "study_epoch_uid": {
+            "title": "Study Epoch Uid",
+            "type": "string",
+            "description": "Study Visit Study Epoch UID"
+          },
+          "study_epoch_name": {
+            "title": "Study Epoch Name",
+            "type": "string",
+            "description": "Study Visit Study Epoch Name"
+          },
+          "time_unit_uid": {
+            "title": "Time Unit Uid",
+            "type": "string",
+            "description": "Study Visit Time Unit UID",
+            "nullable": true
+          },
+          "time_unit_name": {
+            "title": "Time Unit Name",
+            "type": "string",
+            "description": "Study Visit Time Unit Name",
+            "nullable": true
+          },
+          "time_value_uid": {
+            "title": "Time Value Uid",
+            "type": "string",
+            "description": "Study Visit Time Value UID",
+            "nullable": true
+          },
+          "time_value": {
+            "title": "Time Value",
+            "type": "integer",
+            "description": "Study Visit Time Value",
             "nullable": true
           }
         }

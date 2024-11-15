@@ -866,7 +866,9 @@ export default {
         await study.batchCreateStudyEndpoints(this.selectedStudy.uid, data)
       } else if (this.creationMode === 'scratch') {
         const data = JSON.parse(JSON.stringify(this.form))
-        data.timeframe_template.library.name = constants.LIBRARY_USER_DEFINED
+        if (data.timeframe_template) {
+          data.timeframe_template.library.name = constants.LIBRARY_USER_DEFINED
+        }
         args = {
           studyUid: this.selectedStudy.uid,
           data,
@@ -876,6 +878,7 @@ export default {
         await this.addStudyEndpoint(args)
       } else {
         for (const item of this.selectedStudyEndpoints) {
+          delete item.timeframe
           args = {
             studyUid: this.selectedStudy.uid,
             studyEndpoint: item,

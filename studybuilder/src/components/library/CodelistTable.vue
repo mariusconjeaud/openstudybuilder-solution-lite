@@ -49,6 +49,7 @@
         multiple
         :loading="loading"
         hide-no-data
+        clear-on-select
         @update:search="updateTerms"
       >
         <template #selection="{ index }">
@@ -131,7 +132,6 @@ import { useCtCataloguesStore } from '@/stores/library-ctcatalogues'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import controlledTerminology from '@/api/controlledTerminology'
-import libConstants from '@/constants/libraries'
 import ActionsMenu from '@/components/tools/ActionsMenu.vue'
 import CodelistCreationForm from '@/components/library/CodelistCreationForm.vue'
 import dataFormating from '@/utils/dataFormating'
@@ -380,7 +380,12 @@ const updateTerms = _debounce(function (value) {
   termsStore.reset()
   if (value) {
     loading.value = true
-    const filters = { '*': { v: [value] }, 'codelist_library_name': { v: [libConstants.LIBRARY_SPONSOR] } }
+    const filters = { '*': { v: [value] } }
+
+    if (props.library) {
+      filters['codelist_library_name'] = { v: [props.library] }
+    }
+
     termsStore.fetchTerms(filters, true).then(() => {
       loading.value = false
     })

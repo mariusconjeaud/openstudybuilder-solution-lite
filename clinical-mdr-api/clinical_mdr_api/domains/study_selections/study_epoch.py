@@ -1,5 +1,4 @@
 import datetime
-from collections import namedtuple
 from dataclasses import dataclass, field
 from typing import Mapping
 
@@ -20,15 +19,13 @@ from clinical_mdr_api.domains.study_selections.study_visit import (
     VisitClass,
     VisitSubclass,
 )
+from clinical_mdr_api.models.controlled_terminologies.ct_term_name import CTTermName
 
-EpochTypeNamedTuple = namedtuple("EpochTypeNamedTuple", ["name", "value"])
-StudyEpochType: dict[str, EpochTypeNamedTuple] = {}
+StudyEpochType: dict[str, CTTermName] = {}
 
-EpochSubtypeNamedTuple = namedtuple("EpochSubtypeNamedTuple", ["name", "value"])
-StudyEpochSubType: dict[str, EpochSubtypeNamedTuple] = {}
+StudyEpochSubType: dict[str, CTTermName] = {}
 
-EpochNamedTuple = namedtuple("EpochNamedTuple", ["name", "value"])
-StudyEpochEpoch: dict[str, EpochNamedTuple] = {}
+StudyEpochEpoch: dict[str, CTTermName] = {}
 
 
 @dataclass
@@ -37,9 +34,9 @@ class StudyEpochVO:
     start_rule: str
     end_rule: str
 
-    epoch: EpochNamedTuple
-    subtype: EpochSubtypeNamedTuple
-    epoch_type: EpochTypeNamedTuple
+    epoch: CTTermName
+    subtype: CTTermName
+    epoch_type: CTTermName
     description: str
 
     order: int
@@ -72,9 +69,9 @@ class StudyEpochVO:
         start_rule: str,
         end_rule: str,
         description: str,
-        epoch: EpochNamedTuple,
-        subtype: EpochSubtypeNamedTuple,
-        epoch_type: EpochTypeNamedTuple,
+        epoch: CTTermName,
+        subtype: CTTermName,
+        epoch_type: CTTermName,
         order: int,
         change_description: str,
         color_hash: str | None,
@@ -238,7 +235,7 @@ class TimelineAR:
 
         anchors = {}
         for visit in self._visits:
-            anchors[visit.visit_type.value] = visit
+            anchors[visit.visit_type.sponsor_preferred_name] = visit
 
         subvisit_sets = {}
         amount_of_subvisits_for_visit = {}
@@ -251,7 +248,7 @@ class TimelineAR:
                 special_visit_anchors[visit.visit_sublabel_reference] = None
         for order, visit in enumerate(self._visits):
             if visit.timepoint:
-                time_anchor = visit.timepoint.visit_timereference.value
+                time_anchor = visit.timepoint.visit_timereference.sponsor_preferred_name
             else:
                 time_anchor = None
             if time_anchor == PREVIOUS_VISIT_NAME:
@@ -277,7 +274,10 @@ class TimelineAR:
         last_visit_num = 1
         order = 1
         for visit in ordered_visits:
-            if visit.visit_type.value == STUDY_VISIT_TYPE_INFORMATION_VISIT:
+            if (
+                visit.visit_type.sponsor_preferred_name
+                == STUDY_VISIT_TYPE_INFORMATION_VISIT
+            ):
                 if visit == ordered_visits[0]:
                     visit.set_order_and_number(VISIT_0_NUMBER, VISIT_0_NUMBER)
                     continue
@@ -395,7 +395,11 @@ class TimelineAR:
             epoch_visits[epoch.uid] = []
 
         # removing basic epoch from the epoch list to not derive timings for that epoch
-        epochs = [epoch for epoch in epochs if epoch.subtype.value != BASIC_EPOCH_NAME]
+        epochs = [
+            epoch
+            for epoch in epochs
+            if epoch.subtype.sponsor_preferred_name != BASIC_EPOCH_NAME
+        ]
         for visit in self.ordered_study_visits:
             if visit.epoch_uid in epoch_visits:
                 epoch_visits[visit.epoch_uid].append(visit)

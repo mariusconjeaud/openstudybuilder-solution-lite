@@ -1,6 +1,6 @@
 import functools
 from copy import copy
-from datetime import datetime
+from datetime import date, datetime, timezone
 from string import ascii_lowercase
 from typing import Any, Callable, Collection, Iterable
 
@@ -41,6 +41,9 @@ from clinical_mdr_api.domains.study_definition_aggregates.study_metadata import 
     StudyPopulationVO,
     StudyStatus,
 )
+from clinical_mdr_api.domains.study_selections.study_selection_standard_version import (
+    StudyStandardVersionVO,
+)
 from clinical_mdr_api.models.study_selections.study import (
     CompactStudy,
     HighLevelStudyDesignJsonModel,
@@ -58,6 +61,7 @@ from clinical_mdr_api.models.study_selections.study import (
     StudyProtocolTitle,
     StudySoaPreferences,
     StudySoaPreferencesInput,
+    StudyStructureOverview,
     StudySubpartAuditTrail,
     StudySubpartCreateInput,
     StudySubpartReorderingInput,
@@ -76,6 +80,7 @@ from clinical_mdr_api.services._utils import (  # type: ignore
     service_level_generic_filtering,
     service_level_generic_header_filtering,
 )
+from clinical_mdr_api.utils import booltostr
 
 
 def validate_if_study_is_not_locked(
@@ -164,7 +169,7 @@ class StudyService:
         find_study_parent_part_by_uid: Callable[
             [str], StudyDefinitionAR | None
         ] = lambda _: None,
-        find_term_by_uid: Callable[[str], CTTermNameAR | None] = lambda _: None,
+        find_term_by_uids: Callable[[str], CTTermNameAR | None] = lambda _: None,
         find_dictionary_term_by_uid: Callable[
             [str], DictionaryTermAR | None
         ] = lambda _: None,
@@ -182,7 +187,7 @@ class StudyService:
             find_study_parent_part_by_uid=find_study_parent_part_by_uid,
             find_clinical_programme_by_uid=find_clinical_programme_by_uid,
             find_all_study_time_units=find_all_study_time_units,
-            find_term_by_uid=find_term_by_uid,
+            find_term_by_uids=find_term_by_uids,
             find_dictionary_term_by_uid=find_dictionary_term_by_uid,
             at_specified_date_time=at_specified_date_time,
             study_value_version=study_value_version,
@@ -208,7 +213,7 @@ class StudyService:
         find_study_parent_part_by_uid: Callable[
             [str], StudyDefinitionAR | None
         ] = lambda _: None,
-        find_term_by_uid: Callable[[str], CTTermNameAR | None] = lambda _: None,
+        find_term_by_uids: Callable[[str], CTTermNameAR | None] = lambda _: None,
         include_sections: list[StudyComponentEnum] | None = None,
         exclude_sections: list[StudyComponentEnum] | None = None,
     ) -> CompactStudy:
@@ -217,7 +222,7 @@ class StudyService:
             find_project_by_project_number=find_project_by_project_number,
             find_clinical_programme_by_uid=find_clinical_programme_by_uid,
             find_study_parent_part_by_uid=find_study_parent_part_by_uid,
-            find_term_by_uid=find_term_by_uid,
+            find_term_by_uids=find_term_by_uids,
         )
         return (
             StudyService.filter_result_by_requested_fields(
@@ -293,7 +298,7 @@ class StudyService:
                 find_clinical_programme_by_uid=self._repos.clinical_programme_repository.find_by_uid,
                 find_all_study_time_units=self._repos.unit_definition_repository.find_all,
                 find_study_parent_part_by_uid=self._repos.study_definition_repository.find_by_uid,
-                find_term_by_uid=self._repos.ct_term_name_repository.find_by_uid,
+                find_term_by_uids=self._repos.ct_term_name_repository.find_by_uids,
                 find_dictionary_term_by_uid=self._repos.dictionary_term_generic_repository.find_by_uid,
                 include_sections=include_sections,
                 exclude_sections=exclude_sections,
@@ -305,15 +310,68 @@ class StudyService:
         finally:
             self._close_all_repos()
 
+    @db.transaction
+    def get_study_structure_overview(
+        self,
+        sort_by: dict | None = None,
+        page_number: int = 1,
+        page_size: int = 0,
+        filter_by: dict | None = None,
+        filter_operator: FilterOperator | None = FilterOperator.AND,
+        total_count: bool = False,
+    ) -> Study:
+        all_items = (
+            self._repos.study_definition_repository.get_study_structure_overview()
+        )
+
+        parsed_items = [
+            StudyStructureOverview(
+                uid=item[0],
+                study_id=item[1],
+                arms=item[2]["arms"],
+                pre_treatment_epochs=item[2]["pre_treatment_epochs"],
+                treatment_epochs=item[2]["treatment_epochs"],
+                no_treatment_epochs=item[2]["no_treatment_epochs"],
+                post_treatment_epochs=item[2]["post_treatment_epochs"],
+                treatment_elements=item[2]["treatment_elements"],
+                no_treatment_elements=item[2]["no_treatment_elements"],
+                cohorts_in_study=booltostr(item[2]["cohorts"], "Y"),
+            )
+            for item in all_items[0]
+        ]
+
+        if not sort_by:
+            sort_by = {"study_id": False}
+
+        filtered_items = service_level_generic_filtering(
+            items=parsed_items,
+            filter_by=filter_by,
+            filter_operator=filter_operator,
+            sort_by=sort_by,
+            total_count=total_count,
+            page_number=page_number,
+            page_size=page_size,
+        )
+
+        return filtered_items
+
     def _extract_terms_at_date(self, study_uid, study_value_version: str = None):
-        study_standard_version = self._repos.study_standard_version_repository.find_standard_version_in_study(
+        study_standard_versions = self._repos.study_standard_version_repository.find_standard_versions_in_study(
             study_uid=study_uid,
             study_value_version=study_value_version,
         )
+        study_standard_versions_sdtm = [
+            study_standard_version
+            for study_standard_version in study_standard_versions
+            if "SDTM CT" in study_standard_version.ct_package_uid
+        ]
+        study_standard_version_sdtm = (
+            study_standard_versions_sdtm[0] if study_standard_versions_sdtm else None
+        )
         terms_at_specific_date = None
-        if study_standard_version:
+        if study_standard_version_sdtm:
             terms_at_specific_date = self._repos.ct_package_repository.find_by_uid(
-                study_standard_version[0].ct_package_uid
+                study_standard_version_sdtm.ct_package_uid
             ).effective_date
         return (
             datetime(
@@ -331,6 +389,7 @@ class StudyService:
 
     @db.transaction
     def lock(self, uid: str, change_description: str) -> Study:
+        # lock the study
         try:
             study_definition = self._repos.study_definition_repository.find_by_uid(
                 uid, for_update=True
@@ -342,6 +401,95 @@ class StudyService:
             if study_definition.study_parent_part_uid:
                 raise exceptions.BusinessLogicException(
                     f"Study Subparts cannot be locked independently from its Study Parent Part with uid ({study_definition.study_parent_part_uid})."
+                )
+            # get the study standard version
+            study_standard_versions = self._repos.study_standard_version_repository.find_standard_versions_in_study(
+                uid
+            )
+            study_standard_versions_sdtm = [
+                study_standard_version
+                for study_standard_version in study_standard_versions
+                if "SDTM CT" in study_standard_version.ct_package_uid
+            ]
+            study_standard_version_sdtm = (
+                study_standard_versions_sdtm[0]
+                if study_standard_versions_sdtm
+                else None
+            )
+            # if there's no study standard version, let's create one
+            if not study_standard_version_sdtm:
+                # get the ct_package latest (is at the end of the list)
+                all_ct_packages = self._repos.ct_package_repository.find_all(
+                    catalogue_name="SDTM CT",
+                    standards_only=True,
+                    sponsor_only=False,
+                )
+                # check if there's no sponsor ctPackage for that specific ctPackage, if not then create it
+                sponsor_ct_package_with_latest_ct_package = [
+                    ith
+                    for ith in self._repos.ct_package_repository.find_all(
+                        catalogue_name="SDTM CT",
+                        standards_only=True,
+                        sponsor_only=True,
+                    )
+                    if ith.effective_date == date.today()
+                ]
+                if not sponsor_ct_package_with_latest_ct_package:
+                    # create sponsor ct_package with today's date
+                    sponsor_ct_package_with_latest_ct_package = (
+                        self._repos.ct_package_repository.create_sponsor_package(
+                            extends_package=all_ct_packages[-1].uid,
+                            effective_date=date.today(),
+                            user_initials=self.user,
+                        )
+                    )
+                    # create study standard version
+                    self._repos.study_standard_version_repository.save(
+                        StudyStandardVersionVO(
+                            study_uid=uid,
+                            start_date=datetime.now(timezone.utc),
+                            study_status=StudyStatus.DRAFT,
+                            description=f"""A StudyStandardVersion is automatically created whenever the study is locked.
+                                            The StudyStandardVersion has been generated using the latest CTPackage available, with the unique ID '{all_ct_packages[-1].uid}'. 
+                                            Additionally, a Sponsor CTPackage was created with today's date as the effective date.""",
+                            author=self.user,
+                            ct_package_uid=sponsor_ct_package_with_latest_ct_package._uid,
+                            automatically_created=True,
+                        )
+                    )
+                else:
+                    # create study standard version
+                    self._repos.study_standard_version_repository.save(
+                        StudyStandardVersionVO(
+                            study_uid=uid,
+                            start_date=datetime.now(timezone.utc),
+                            study_status=StudyStatus.DRAFT,
+                            description=f"""A StudyStandardVersion is automatically created whenever the study is locked.
+                                            The StudyStandardVersion has been generated using the latest CTPackage available with ID '{all_ct_packages[-1].uid}' 
+                                            and the SponsorCTPackage with ID '{sponsor_ct_package_with_latest_ct_package[0]._uid}'""",
+                            author=self.user,
+                            ct_package_uid=sponsor_ct_package_with_latest_ct_package[
+                                0
+                            ]._uid,
+                            automatically_created=True,
+                        )
+                    )
+            study_standard_versions = self._repos.study_standard_version_repository.find_standard_versions_in_study(
+                uid
+            )
+            study_standard_versions_sdtm = [
+                study_standard_version
+                for study_standard_version in study_standard_versions
+                if "SDTM CT" in study_standard_version.ct_package_uid
+            ]
+            study_standard_version_sdtm = (
+                study_standard_versions_sdtm[0]
+                if study_standard_versions_sdtm
+                else None
+            )
+            if not study_standard_version_sdtm:
+                raise exceptions.ValidationException(
+                    "StudyStandardVersion has to be selected before Study is locked"
                 )
             study_definition.lock(
                 version_description=change_description,
@@ -366,7 +514,7 @@ class StudyService:
                 find_clinical_programme_by_uid=self._repos.clinical_programme_repository.find_by_uid,
                 find_all_study_time_units=self._repos.unit_definition_repository.find_all,
                 find_study_parent_part_by_uid=self._repos.study_definition_repository.find_by_uid,
-                find_term_by_uid=self._repos.ct_term_name_repository.find_by_uid,
+                find_term_by_uids=self._repos.ct_term_name_repository.find_by_uids,
                 find_dictionary_term_by_uid=self._repos.dictionary_term_generic_repository.find_by_uid,
             )
         finally:
@@ -389,6 +537,30 @@ class StudyService:
             study_definition.unlock()
             self._repos.study_definition_repository.save(study_definition)
 
+            study_standard_versions: StudyStandardVersionVO
+            study_standard_versions = self._repos.study_standard_version_repository.find_standard_versions_in_study(
+                uid
+            )
+            study_standard_versions_sdtm = [
+                study_standard_version
+                for study_standard_version in study_standard_versions
+                if "SDTM CT" in study_standard_version.ct_package_uid
+            ]
+            study_standard_version_sdtm = (
+                study_standard_versions_sdtm[0]
+                if study_standard_versions_sdtm
+                else None
+            )
+            # IF the study has an automatically created study standard version
+            if (
+                study_standard_version_sdtm
+                and study_standard_version_sdtm.automatically_created
+            ):
+                # delete
+                self._repos.study_standard_version_repository.save(
+                    study_standard_version_sdtm, delete_flag=True
+                )
+
             if study_definition.study_subpart_uids:
                 for study_subpart_uid in study_definition.study_subpart_uids:
                     study_subpart = self._repos.study_definition_repository.find_by_uid(
@@ -403,7 +575,7 @@ class StudyService:
                 find_clinical_programme_by_uid=self._repos.clinical_programme_repository.find_by_uid,
                 find_all_study_time_units=self._repos.unit_definition_repository.find_all,
                 find_study_parent_part_by_uid=self._repos.study_definition_repository.find_by_uid,
-                find_term_by_uid=self._repos.ct_term_name_repository.find_by_uid,
+                find_term_by_uids=self._repos.ct_term_name_repository.find_by_uids,
                 find_dictionary_term_by_uid=self._repos.dictionary_term_generic_repository.find_by_uid,
             )
         finally:
@@ -440,7 +612,7 @@ class StudyService:
                 find_clinical_programme_by_uid=self._repos.clinical_programme_repository.find_by_uid,
                 find_all_study_time_units=self._repos.unit_definition_repository.find_all,
                 find_study_parent_part_by_uid=self._repos.study_definition_repository.find_by_uid,
-                find_term_by_uid=self._repos.ct_term_name_repository.find_by_uid,
+                find_term_by_uids=self._repos.ct_term_name_repository.find_by_uids,
                 find_dictionary_term_by_uid=self._repos.dictionary_term_generic_repository.find_by_uid,
             )
         finally:
@@ -655,7 +827,7 @@ class StudyService:
                     find_project_by_project_number=self._repos.project_repository.find_by_project_number,
                     find_clinical_programme_by_uid=self._repos.clinical_programme_repository.find_by_uid,
                     find_study_parent_part_by_uid=self._repos.study_definition_repository.find_by_uid,
-                    find_term_by_uid=self._repos.ct_term_name_repository.find_by_uid,
+                    find_term_by_uids=self._repos.ct_term_name_repository.find_by_uids,
                 )
                 for item in all_items.items
             ]
@@ -687,7 +859,7 @@ class StudyService:
                 find_clinical_programme_by_uid=self._repos.clinical_programme_repository.find_by_uid,
                 find_all_study_time_units=self._repos.unit_definition_repository.find_all,
                 find_study_parent_part_by_uid=self._repos.study_definition_repository.find_by_uid,
-                find_term_by_uid=self._repos.ct_term_name_repository.find_by_uid,
+                find_term_by_uids=self._repos.ct_term_name_repository.find_by_uids,
             )
             for item in all_items.items
         ]
@@ -892,7 +1064,7 @@ class StudyService:
                 find_clinical_programme_by_uid=self._repos.clinical_programme_repository.find_by_uid,
                 find_all_study_time_units=self._repos.unit_definition_repository.find_all,
                 find_study_parent_part_by_uid=self._repos.study_definition_repository.find_by_uid,
-                find_term_by_uid=self._repos.ct_term_name_repository.find_by_uid,
+                find_term_by_uids=self._repos.ct_term_name_repository.find_by_uids,
             )
             return return_item
         finally:
@@ -910,7 +1082,7 @@ class StudyService:
             reference_base_model=StudyInterventionJsonModel.from_study_intervention_vo(
                 study_intervention_vo=current_study_intervention,
                 find_all_study_time_units=find_all_study_time_units,
-                find_term_by_uid=lambda _: None,
+                find_term_by_uids=lambda _: None,
             ),
         )
 
@@ -992,7 +1164,7 @@ class StudyService:
             reference_base_model=StudyPopulationJsonModel.from_study_population_vo(
                 study_population_vo=current_study_population,
                 find_all_study_time_units=find_all_study_time_units,
-                find_term_by_uid=lambda _: None,
+                find_term_by_uids=lambda _: None,
                 find_dictionary_term_by_uid=lambda _: None,
             ),
         )
@@ -1122,7 +1294,7 @@ class StudyService:
             reference_base_model=(
                 HighLevelStudyDesignJsonModel.from_high_level_study_design_vo(
                     high_level_study_design_vo=current_high_level_study_design,
-                    find_term_by_uid=lambda _: None,
+                    find_term_by_uids=lambda _: None,
                     find_all_study_time_units=find_all_study_time_units,
                 )
             ),
@@ -1203,7 +1375,7 @@ class StudyService:
                 study_identification_o=current_id_metadata,
                 find_project_by_project_number=find_project_by_project_number,
                 find_clinical_programme_by_uid=find_clinical_programme_by_uid,
-                find_term_by_uid=lambda _: None,
+                find_term_by_uids=lambda _: None,
             ),
         )
 
@@ -1424,7 +1596,7 @@ class StudyService:
                     # pylint: disable=line-too-long
                     study_patch_request.current_metadata.identification_metadata.registry_identifiers = RegistryIdentifiersJsonModel.from_study_registry_identifiers_vo(
                         parent_part_ar.current_metadata.id_metadata.registry_identifiers,
-                        self._repos.ct_term_name_repository.find_by_uid,
+                        self._repos.ct_term_name_repository.find_by_uids,
                     )
 
                 new_id_metadata = self._patch_prepare_new_id_metadata(
@@ -1552,7 +1724,7 @@ class StudyService:
                 find_clinical_programme_by_uid=self._repos.clinical_programme_repository.find_by_uid,
                 find_all_study_time_units=self._repos.unit_definition_repository.find_all,
                 find_study_parent_part_by_uid=self._repos.study_definition_repository.find_by_uid,
-                find_term_by_uid=self._repos.ct_term_name_repository.find_by_uid,
+                find_term_by_uids=self._repos.ct_term_name_repository.find_by_uids,
             )
         finally:
             self._close_all_repos()
@@ -1578,6 +1750,7 @@ class StudyService:
                         registry_identifiers=RegistryIdentifiersJsonModel.from_study_registry_identifiers_vo(
                             study_definition_ar.current_metadata.id_metadata.registry_identifiers,
                             self._repos.ct_term_name_repository.find_by_uid,
+                            self._repos.ct_term_name_repository.find_by_uids,
                         ),
                     ),
                     find_project_by_project_number=self._repos.project_repository.find_by_project_number,

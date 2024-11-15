@@ -244,7 +244,7 @@ def get_distinct_values_for_header(
 
 
 @router.get(
-    "/active-substances/{uid}",
+    "/active-substances/{active_substance_uid}",
     dependencies=[rbac.LIBRARY_READ],
     summary="Get details on a specific active substance (in a specific version)",
     description="""
@@ -258,13 +258,13 @@ Possible errors:
         500: _generic_descriptions.ERROR_500,
     },
 )
-def get_activity(uid: str = ActiveSubstanceUID):
+def get_activity(active_substance_uid: str = ActiveSubstanceUID):
     active_substance_service = ActiveSubstanceService()
-    return active_substance_service.get_by_uid(uid=uid)
+    return active_substance_service.get_by_uid(uid=active_substance_uid)
 
 
 @router.get(
-    "/active-substances/{uid}/versions",
+    "/active-substances/{active_substance_uid}/versions",
     dependencies=[rbac.LIBRARY_READ],
     summary="List version history for active substances",
     description="""
@@ -286,14 +286,14 @@ Possible errors:
     responses={
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The active substance with the specified 'uid' wasn't found.",
+            "description": "Not Found - The active substance with the specified 'active_substance_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def get_versions(uid: str = ActiveSubstanceUID):
+def get_versions(active_substance_uid: str = ActiveSubstanceUID):
     active_substance_service = ActiveSubstanceService()
-    return active_substance_service.get_version_history(uid=uid)
+    return active_substance_service.get_version_history(uid=active_substance_uid)
 
 
 @router.post(
@@ -343,7 +343,7 @@ def create(
 
 
 @router.patch(
-    "/active-substances/{uid}",
+    "/active-substances/{active_substance_uid}",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Update active_substance",
     description="""
@@ -377,23 +377,23 @@ Possible errors:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The active substance with the specified 'uid' wasn't found.",
+            "description": "Not Found - The active substance with the specified 'active_substance_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def edit(
-    uid: str = ActiveSubstanceUID,
+    active_substance_uid: str = ActiveSubstanceUID,
     active_substance_edit_input: ActiveSubstanceEditInput = Body(description=""),
 ):
     active_substance_service = ActiveSubstanceService()
     return active_substance_service.edit_draft(
-        uid=uid, concept_edit_input=active_substance_edit_input
+        uid=active_substance_uid, concept_edit_input=active_substance_edit_input
     )
 
 
 @router.post(
-    "/active-substances/{uid}/approvals",
+    "/active-substances/{active_substance_uid}/approvals",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Approve draft version of an active substance",
     description="""
@@ -425,18 +425,18 @@ Possible errors:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The active substance with the specified 'uid' wasn't found.",
+            "description": "Not Found - The active substance with the specified 'active_substance_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def approve(uid: str = ActiveSubstanceUID):
+def approve(active_substance_uid: str = ActiveSubstanceUID):
     active_substance_service = ActiveSubstanceService()
-    return active_substance_service.approve(uid=uid)
+    return active_substance_service.approve(uid=active_substance_uid)
 
 
 @router.post(
-    "/active-substances/{uid}/versions",
+    "/active-substances/{active_substance_uid}/versions",
     dependencies=[rbac.LIBRARY_WRITE],
     summary=" Create a new version of an active substance",
     description="""
@@ -466,18 +466,18 @@ Possible errors:
             "model": ErrorResponse,
             "description": "Not Found - Reasons include e.g.: \n"
             "- The active substance is not in final status.\n"
-            "- The active substance with the specified 'uid' could not be found.",
+            "- The active substance with the specified 'active_substance_uid' could not be found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def create_new_version(uid: str = ActiveSubstanceUID):
+def create_new_version(active_substance_uid: str = ActiveSubstanceUID):
     active_substance_service = ActiveSubstanceService()
-    return active_substance_service.create_new_version(uid=uid)
+    return active_substance_service.create_new_version(uid=active_substance_uid)
 
 
 @router.delete(
-    "/active-substances/{uid}/activations",
+    "/active-substances/{active_substance_uid}/activations",
     dependencies=[rbac.LIBRARY_WRITE],
     summary=" Inactivate final version of an active substance",
     description="""
@@ -508,18 +508,18 @@ Possible errors:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The active substance with the specified 'uid' could not be found.",
+            "description": "Not Found - The active substance with the specified 'active_substance_uid' could not be found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def inactivate(uid: str = ActiveSubstanceUID):
+def inactivate(active_substance_uid: str = ActiveSubstanceUID):
     active_substance_service = ActiveSubstanceService()
-    return active_substance_service.inactivate_final(uid=uid)
+    return active_substance_service.inactivate_final(uid=active_substance_uid)
 
 
 @router.post(
-    "/active-substances/{uid}/activations",
+    "/active-substances/{active_substance_uid}/activations",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Reactivate retired version of an active substance",
     description="""
@@ -550,18 +550,18 @@ Possible errors:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The active substance with the specified 'uid' could not be found.",
+            "description": "Not Found - The active substance with the specified 'active_substance_uid' could not be found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def reactivate(uid: str = ActiveSubstanceUID):
+def reactivate(active_substance_uid: str = ActiveSubstanceUID):
     active_substance_service = ActiveSubstanceService()
-    return active_substance_service.reactivate_retired(uid=uid)
+    return active_substance_service.reactivate_retired(uid=active_substance_uid)
 
 
 @router.delete(
-    "/active-substances/{uid}",
+    "/active-substances/{active_substance_uid}",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Delete draft version of an active substance",
     description="""
@@ -594,11 +594,11 @@ Possible errors:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - An active substance with the specified 'uid' could not be found.",
+            "description": "Not Found - An active substance with the specified 'active_substance_uid' could not be found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def delete(uid: str = ActiveSubstanceUID):
+def delete(active_substance_uid: str = ActiveSubstanceUID):
     active_substance_service = ActiveSubstanceService()
-    active_substance_service.soft_delete(uid=uid)
+    active_substance_service.soft_delete(uid=active_substance_uid)

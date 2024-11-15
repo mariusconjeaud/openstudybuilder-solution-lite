@@ -1,5 +1,5 @@
 """
-Tests for /studies/{uid}/study-arms endpoints
+Tests for /studies/{study_uid}/study-arms endpoints
 """
 
 # pylint: disable=unused-argument
@@ -74,15 +74,6 @@ def test_data():
         library_name=library_name,
         effective_date=datetime(2020, 3, 25, tzinfo=timezone.utc),
         approve=True,
-    )
-
-    cdisc_package_name = "SDTM CT 2020-03-27"
-
-    TestUtils.create_ct_package(
-        catalogue=catalogue_name,
-        name=cdisc_package_name,
-        approve_elements=False,
-        effective_date=datetime(2020, 3, 27, tzinfo=timezone.utc),
     )
 
     # patch the date of the latest HAS_VERSION FINAL relationship so it can be detected by the selected study_standard_Version
@@ -263,23 +254,21 @@ def test_study_arm_type_version_selecting_ct_package(api_client):
     assert res["arm_type"]["sponsor_preferred_name"] == new_ctterm_name
     study_selection_uid_study_standard_test = res["arm_uid"]
 
-    # get ct_packages
-    response = api_client.get(
-        "/ct/packages",
+    ct_package_uid = TestUtils.create_ct_package(
+        name="SDTM CT 2020-03-27",
+        approve_elements=False,
+        effective_date=datetime(2020, 3, 27, tzinfo=timezone.utc),
     )
-    res = response.json()
-    assert response.status_code == 200
-    ct_package_uid = res[0]["uid"]
 
-    # create study standard version
-    response = api_client.post(
-        f"/studies/{study.uid}/study-standard-versions",
+    # Patch study standard version created in inject_base_data
+    response = api_client.patch(
+        f"/studies/{study.uid}/study-standard-versions/StudyStandardVersion_000001",
         json={
             "ct_package_uid": ct_package_uid,
         },
     )
     res = response.json()
-    assert response.status_code == 201
+    assert response.status_code == 200
     assert res["ct_package"]["uid"] == ct_package_uid
 
     # get study selection with previous ctterm

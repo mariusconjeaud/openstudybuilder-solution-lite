@@ -26,15 +26,169 @@ def get_studies(
         filter_clause = "WHERE id CONTAINS toUpper($id)"
 
     base_query = f"""
-        MATCH (root:StudyRoot)-[:LATEST]->(val:StudyValue)
-        WITH    root.uid as uid,
-                val.study_acronym as acronym,
-                val.study_id_prefix as id_prefix,
-                val.study_number as number,
-                toUpper(COALESCE(val.study_id_prefix, '') + "-" + COALESCE(val.study_number, '')) as id
+        MATCH (study_root:StudyRoot)-[:LATEST]->(study_value:StudyValue)
+        OPTIONAL MATCH (study_root)-[hv:HAS_VERSION]->(:StudyValue)
+
+        WITH
+            study_root.uid as uid,
+            study_value.study_acronym as acronym,
+            study_value.study_id_prefix as id_prefix,
+            study_value.study_number as number,
+            toUpper(COALESCE(study_value.study_id_prefix, '') + "-" + COALESCE(study_value.study_number, '')) as id,
+            COLLECT({{
+                version_status: hv.status,
+                version_number: hv.version,
+                version_started_at: hv.start_date,
+                version_ended_at: hv.end_date,
+                version_author: hv.user_initials,
+                version_description: hv.change_description
+            }}) as versions
+
+
         {filter_clause}
+
         RETURN *
         """
+
+    full_query = " ".join(
+        [
+            base_query,
+            db_sort_clause(sort_by.value, sort_order.value),
+            db_pagination_clause(page_size, page_number),
+        ]
+    )
+    return query(full_query, params)
+
+
+def get_study_visits(
+    study_uid: str,
+    sort_by: models.SortByStudyVisits = models.SortByStudyVisits.UID,
+    sort_order: models.SortOrder = models.SortOrder.ASC,
+    page_size: int = 10,
+    page_number: int = 1,
+    study_version_number: str | None = None,
+) -> list[dict]:
+    validate_page_number_and_page_size(page_number, page_size)
+
+    params = {"study_uid": study_uid}
+
+    if not study_version_number:
+        base_query = "MATCH (study_root:StudyRoot {uid: $study_uid})-[hv:LATEST]->(study_value:StudyValue)"
+    else:
+        base_query = """MATCH (study_root:StudyRoot {uid: $study_uid})-[hv:HAS_VERSION {version: $study_version_number}]->(study_value:StudyValue)
+        WITH study_root, study_value, hv ORDER BY hv.end_date DESC LIMIT 1
+        """
+        params["study_version_number"] = study_version_number
+
+    base_query += """
+        MATCH (study_value)-[:HAS_STUDY_VISIT]-(study_visit:StudyVisit)
+        OPTIONAL MATCH (study_visit)-[:HAS_VISIT_NAME]->(:VisitNameRoot)-[:LATEST]->(visit_name_value:VisitNameValue)
+        OPTIONAL MATCH (study_visit)-[:HAS_VISIT_TYPE]->(visit_type_ct_term_root:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(visit_type_ct_term_name_value:CTTermNameValue)
+        OPTIONAL MATCH (study_visit)<-[:STUDY_EPOCH_HAS_STUDY_VISIT]-(study_epoch:StudyEpoch)-[:HAS_EPOCH]->(epoch_ct_term_root:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(:CTTermNameValue)
+        OPTIONAL MATCH (study_visit)-[:HAS_TIMEPOINT]->(:TimePointRoot)-[:LATEST]->(:TimePointValue)-[:HAS_UNIT_DEFINITION]->(time_unit_unit_definition_root:UnitDefinitionRoot)-[:LATEST]->(time_unit_unit_definition_value:UnitDefinitionValue)
+        OPTIONAL MATCH (study_visit)-[:HAS_TIMEPOINT]->(:TimePointRoot)-[:LATEST]->(:TimePointValue)-[:HAS_VALUE]->(time_value_root:NumericValueRoot)-[:LATEST]->(time_value_value:NumericValue)
+        OPTIONAL MATCH (study_visit)-[:HAS_WINDOW_UNIT]->(window_unit_unit_definition_root:UnitDefinitionRoot)-[:LATEST]->(window_unit_unit_definition_value:UnitDefinitionValue)
+
+        WITH
+            study_root.uid AS study_uid,
+            study_visit.uid AS uid,
+            study_visit.unique_visit_number AS unique_visit_number,
+            study_visit.visit_number AS visit_number,
+            study_visit.short_visit_label AS visit_short_name,
+            study_visit.visit_window_min AS visit_window_min,
+            study_visit.visit_window_max AS visit_window_max,
+            visit_name_value.name AS visit_name,
+            visit_type_ct_term_root.uid AS visit_type_uid,
+            visit_type_ct_term_name_value.name AS visit_type_name,
+            window_unit_unit_definition_root.uid AS visit_window_unit_uid,
+            window_unit_unit_definition_value.name AS visit_window_unit_name,
+            study_epoch.uid AS study_epoch_uid,
+            study_epoch.name AS study_epoch_name,
+            time_unit_unit_definition_root.uid AS time_unit_uid,
+            time_unit_unit_definition_value.name AS time_unit_name,
+            time_value_root.uid AS time_value_uid,
+            time_value_value.value AS time_value_value,
+            CASE
+                WHEN hv.status IN ["LOCKED", "RELEASED"]
+                THEN hv.version
+                ELSE "LATEST on " + apoc.temporal.format(datetime(), 'yyyy-MM-dd HH:mm:ss zzz')
+            END as study_version_number
+
+        RETURN *
+        """
+
+    full_query = " ".join(
+        [
+            base_query,
+            db_sort_clause(sort_by.value, sort_order.value),
+            db_pagination_clause(page_size, page_number),
+        ]
+    )
+    return query(full_query, params)
+
+
+def get_study_operational_soa(
+    study_uid: str,
+    sort_by: models.SortByStudyOperationalSoA = models.SortByStudyOperationalSoA.ACTIVITY,
+    sort_order: models.SortOrder = models.SortOrder.ASC,
+    page_size: int = 10,
+    page_number: int = 1,
+    study_version_number: str | None = None,
+) -> list[dict]:
+    validate_page_number_and_page_size(page_number, page_size)
+
+    params = {"study_uid": study_uid}
+
+    if not study_version_number:
+        base_query = "MATCH (study_root:StudyRoot {uid: $study_uid})-[hv:LATEST]->(study_value:StudyValue)"
+    else:
+        base_query = """MATCH (study_root:StudyRoot {uid: $study_uid})-[hv:HAS_VERSION {version: $study_version_number}]->(study_value:StudyValue)
+        WITH study_root, study_value, hv ORDER BY hv.end_date DESC LIMIT 1
+        """
+        params["study_version_number"] = study_version_number
+
+    base_query += """
+        MATCH (study_activity_schedule:StudyActivitySchedule)<-[:HAS_STUDY_ACTIVITY_SCHEDULE]-(study_value)
+        MATCH (study_activity_schedule)<-[:STUDY_VISIT_HAS_SCHEDULE]-(study_visit:StudyVisit)<-[:HAS_STUDY_VISIT]-(study_value)
+        MATCH (study_visit)<-[:STUDY_EPOCH_HAS_STUDY_VISIT]-(study_epoch:StudyEpoch)<-[:HAS_STUDY_EPOCH]-(study_value)
+        MATCH (study_activity_schedule)<-[:STUDY_ACTIVITY_HAS_SCHEDULE]-(study_activity:StudyActivity)-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_INSTANCE]->(study_activity_instance:StudyActivityInstance)<-[:HAS_STUDY_ACTIVITY_INSTANCE]-(study_value)
+
+        WITH
+            hv,
+            study_root,
+            study_value,
+            study_visit,
+            head([(study_activity)-[:HAS_SELECTED_ACTIVITY]->(activity_value:ActivityValue)<--(activity_root:ActivityRoot) | { uid: activity_root.uid, name: activity_value.name }]) as activity,
+            head([(study_activity_instance)-[:HAS_SELECTED_ACTIVITY_INSTANCE]->(activity_instance_value:ActivityInstanceValue)<--(activity_instance_root:ActivityInstanceRoot) | { uid: activity_instance_root.uid, name: activity_instance_value.name, topic_code: activity_instance_value.topic_code, adam_param_code: activity_instance_value.adam_param_code }]) as activity_instance,
+            head([(study_activity)-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_SUBGROUP]->(:StudyActivitySubGroup)-[:HAS_SELECTED_ACTIVITY_SUBGROUP]->(activity_subgroup_value:ActivitySubGroupValue)<--(activity_subgroup_root:ActivitySubGroupRoot) | { uid: activity_subgroup_root.uid, name: activity_subgroup_value.name }]) as activity_subgroup,
+            head([(study_activity)-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_GROUP]->(:StudyActivityGroup)-[:HAS_SELECTED_ACTIVITY_GROUP]->(activity_group_value:ActivityGroupValue)<--(activity_group_root:ActivityGroupRoot) | { uid: activity_group_root.uid, name: activity_group_value.name }]) as activity_group,
+            head([(study_activity)-[:STUDY_ACTIVITY_HAS_STUDY_SOA_GROUP]->(:StudySoAGroup)-[:HAS_FLOWCHART_GROUP]->(:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(term_name_value:CTTermNameValue) | term_name_value]) as term_name_value,
+            head([(study_epoch)-[:HAS_EPOCH]->(:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]-(epoch_term:CTTermNameValue) | epoch_term.name]) as epoch_name
+        ORDER BY study_activity.order, study_visit.visit_number
+
+        RETURN
+            study_root.uid AS study_uid,
+            toUpper(COALESCE(study_value.study_id_prefix, '') + "-" + COALESCE(study_value.study_number, '')) as study_id,
+            study_visit.uid AS visit_uid,
+            study_visit.short_visit_label AS visit_short_name,
+            epoch_name AS epoch,
+            activity.name AS activity,
+            activity.uid AS activity_uid,
+            activity_instance.name AS activity_instance,
+            activity_instance.uid AS activity_instance_uid,
+            activity_instance.topic_code AS topic_code,
+            activity_instance.adam_param_code AS param_code,
+            activity_subgroup.name AS activity_subgroup,
+            activity_subgroup.uid AS activity_subgroup_uid,
+            activity_group.name AS activity_group,
+            activity_group.uid AS activity_group_uid,
+            term_name_value.name as soa_group,
+            CASE
+                WHEN hv.status IN ["LOCKED", "RELEASED"]
+                THEN hv.version
+                ELSE "LATEST on " + apoc.temporal.format(datetime(), 'yyyy-MM-dd HH:mm:ss zzz')
+            END as study_version_number
+    """
 
     full_query = " ".join(
         [

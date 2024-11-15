@@ -116,6 +116,7 @@
         "edit_element": "Edit element",
         "link": "Link",
         "value": "Value",
+        "values": "Values",
         "type": "Type",
         "day": "Day",
         "week": "Week",
@@ -148,7 +149,9 @@
         "accept": "Accept",
         "reports": "Reports",
         "download": "Download",
-        "and_or": "And/Or"
+        "and_or": "And/Or",
+        "select": "Select",
+        "view_all": "View All"
     },
     "_errors": {
         "exclusive_select": "Field and Null Flavor can't be selected at the same time.",
@@ -1036,7 +1039,7 @@
             "study_criteria": "Study Criteria",
             "study_interventions": "Study Interventions",
             "eligibility_criteria": "Eligibility Criteria",
-            "study_disclosure": "Study Disclosure",
+            "study_disclosure": "Clinical Transparency",
             "cdisc_ctr": "CDISC CTR",
             "clinical_trials_gov": "ClinicalTrials.gov",
             "eudra_ct": "EudraCT",
@@ -2089,12 +2092,17 @@
         "ct_catalogue": "CT Catalogue",
         "cdisc_ct_package": "CDISC CT Package",
         "sponsor_ct_package": "Sponsor CT Package",
+        "automatically_created": "Automatically created",
         "confirm_delete": "Sponsor CT package selection ({package}) will be deleted",
         "delete_success": "Sponsor CT package selection has been deleted",
         "history_title": "Standard version selections history ({study})",
         "item_history_title": "History for standard version selection ({item})"
     },
     "CTStandardVersionsForm": {
+        "create_package": "Create CT package",
+        "select_package": "Select CT package",
+        "mode_create": "Create a new Sponsor CT Package",
+        "mode_select": "Select existing Sponsor CT Package",
         "add_title": "Add a sponsor CT Package for the study",
         "edit_title": "Edit sponsor CT Package",
         "add_success": "Sponsor CT package selection added",
@@ -2562,7 +2570,8 @@
     },
     "SponsorCTPackageForm": {
         "title": "Sponsor CT Package creation",
-        "package_label": "Select a CDISC CT SDTM package",
+        "catalogue_label": "Select a CDISC CT catalogue",
+        "package_label": "Select a CDISC CT package",
         "creation_success": "Sponsor CT package created"
     },
     "PackageTimeline": {
@@ -3194,7 +3203,8 @@
         "adam_code": "ADaM param code",
         "no_action_needed": "No action needed",
         "notification": "Notification",
-        "action_needed": "Action needed"
+        "action_needed": "Action needed",
+        "na": "Not applicable"
     },
     "StudyActivityForm": {
         "add_title": "Add study activities",
@@ -3257,7 +3267,10 @@
         "history_title": "Detailed SoA history for study [{study}]",
         "detailed": "Detailed",
         "protocol": "Protocol",
-        "operational": "Operational"
+        "operational": "Operational",
+        "remove_activity": "Remove Activity",
+        "remove_activity_msg": "Do you want to remove Activity?",
+        "remove_activity_success": "Study activity removed"
     },
     "StudyActivityInstructionTable": {
         "activities": "Activities",
@@ -4032,8 +4045,8 @@
     "StudyFootnoteEditForm": {
         "title": "Edit SoA footnote",
         "update_success": "SoA footnote updated",
-        "select_footnote_items": "Choose which elements of the SoA to link the footnote <strong> {footnote} </strong> to. You can choose more than one element.",
-        "select_to_create_footnote_items": "Choose which elements of the SoA to link the footnote to. You can choose more than one element.",
+        "select_footnote_items": "Chose where in the SoA to link the footnote <strong> {footnote} </strong> to. You can point to more than one location.",
+        "select_to_create_footnote_items": "Chose where in the SoA to link the footnote to. You can point to more than one location. ",
         "link_items": "Link SoA items",
         "linked_items": "Linked SoA items",
         "ref_activities": "Study Activities, Groups and Subgroups",
@@ -4041,6 +4054,10 @@
         "ref_schedules": "Study Schedules",
         "ref_soa_groups": "Study SoA Groups",
         "save_linking": "Save linking"
+    },
+    "StudyRemoveFootnoteForm": {
+        "title": "Remove footnote",
+        "remove_info": "Please check the footnote that you want to remove"
     },
     "Comments": {
         "filter_by_ALL": "All comments",
@@ -4146,5 +4163,64 @@
         "preview": "Preview system announcement",
         "add_success": "System announcement added",
         "update_success": "System announcement updated"
+    },
+    "StudyDisclosure": {
+        "study_disclosure": "Clinical Transparency",
+        "tab_1": "PharmaCM Specification",
+        "table_1": "Identification",
+        "table_2": "Secondary IDs",
+        "table_3": "Study Status",
+        "table_4": "Design",
+        "table_5": "Interventions",
+        "table_6": "Outcome Measures",
+        "table_7": "Eligibility",
+        "table_8": "Conditions",
+        "intervention_type": "Intervention Type",
+        "sb_term": "StudyBuilder term",
+        "pharma_term": "PharmaCM term",
+        "secondary_id": "Secondary ID",
+        "secondary_id_type": "Secondary ID Type",
+        "registry_id": "Registry Identifier",
+        "timeframe": "Time Frame",
+        "study_id": "Study ID",
+        "unique_id": "Unique Study ID",
+        "short_title": "Study Short Title",
+        "brief_title": "Brief Title",
+        "study_title": "Study Title",
+        "official_title": "Official Title",
+        "study_acronym": "Study Acronym",
+        "acronym": "Acronym",
+        "study_type_resp": "Study Type Response",
+        "not_available_in_sb": "Not available in StudyBuilder. Data available in COSMOS",
+        "record_verification_date": "Record Verification Date",
+        "overall_recruitment_status": "Overall Recruitment Status",
+        "study_start_date": "Study Start Date",
+        "primary_completion_date": "Primary Completion Date",
+        "study_completion_date": "Study Completion Date",
+        "study_type": "Study Type",
+        "indication_dict": "Indication SNOMED dictionary",
+        "studied_trial": "Primary Disease or Condition Being Studied in the Trial, or the Focus of the Study",
+        "trial_type": "Trial Intent Type Response",
+        "primary_purpose": "Primary Purpose",
+        "trial_phase_resp": "Trial Phase Response",
+        "study_phase": "Study Phase",
+        "study_phase_class": "Study Phase Classification",
+        "intervention_study_model": "Interventional Study Model",
+        "intervention_model": "Intervention Model",
+        "arms_num": "Number of Arms",
+        "study_attrs": "Study Attributes",
+        "allocation": "Allocation",
+        "total_subjects_num": "Total planned number of subjects",
+        "subjects_num": "Number of Subjects",
+        "min_age": "Minimum Age",
+        "max_age": "Maximum Age",
+        "healthy_volunteers": "Accepts Healthy Volunteers",
+        "inc_criteria": "Inclusion Criteria",
+        "exc_criteria": "Exclusion Criteria",
+        "download_xml": "Download .XML",
+        "intent_type": "Study Intent Type",
+        "study_randomised": "Study is randomised",
+        "arm_title": "Arm Title",
+        "outcome_measure": "Outcome Measure"
     }
 }

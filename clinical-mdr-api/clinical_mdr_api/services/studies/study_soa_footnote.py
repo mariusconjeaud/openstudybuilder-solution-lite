@@ -1,5 +1,6 @@
 from typing import Any, Callable
 
+from fastapi import status
 from neomodel import db
 
 from clinical_mdr_api import exceptions
@@ -18,9 +19,12 @@ from clinical_mdr_api.domains.syntax_instances.footnote import FootnoteAR
 from clinical_mdr_api.domains.versioned_object_aggregate import LibraryItemStatus
 from clinical_mdr_api.exceptions import NotFoundException
 from clinical_mdr_api.models import FootnoteCreateInput
+from clinical_mdr_api.models.error import BatchErrorResponse
 from clinical_mdr_api.models.study_selections.study_soa_footnote import (
     ReferencedItem,
     StudySoAFootnote,
+    StudySoAFootnoteBatchEditInput,
+    StudySoAFootnoteBatchOutput,
     StudySoAFootnoteCreateFootnoteInput,
     StudySoAFootnoteCreateInput,
     StudySoAFootnoteEditInput,
@@ -525,8 +529,7 @@ class StudySoAFootnoteService:
                         f"The SoaFootnote already exists for a Footnote with the following instantiation ({footnote_ar.name_plain})"
                     )
 
-    @db.transaction
-    def edit(
+    def non_transactional_edit(
         self,
         study_uid: str,
         study_soa_footnote_uid: str,
@@ -629,6 +632,50 @@ class StudySoAFootnoteService:
             study_uid=study_uid, all_soa_footnotes=all_soa_footnotes
         )
         return self._transform_vo_to_pydantic_model(new_footnote_vo)
+
+    @db.transaction
+    def edit(
+        self,
+        study_uid: str,
+        study_soa_footnote_uid: str,
+        footnote_edit_input: StudySoAFootnoteEditInput,
+        accept_version: bool = False,
+        sync_latest_version: bool = False,
+    ):
+        return self.non_transactional_edit(
+            study_uid=study_uid,
+            study_soa_footnote_uid=study_soa_footnote_uid,
+            footnote_edit_input=footnote_edit_input,
+            accept_version=accept_version,
+            sync_latest_version=sync_latest_version,
+        )
+
+    @db.transaction
+    def batch_edit(
+        self,
+        study_uid: str,
+        edit_payloads: list[StudySoAFootnoteBatchEditInput],
+    ) -> list[StudySoAFootnoteBatchOutput]:
+        results = []
+        for edit_payload in edit_payloads:
+            result = {}
+            try:
+                item = self.non_transactional_edit(
+                    study_uid=study_uid,
+                    study_soa_footnote_uid=edit_payload.study_soa_footnote_uid,
+                    footnote_edit_input=edit_payload,
+                )
+                response_code = status.HTTP_200_OK
+            except exceptions.MDRApiBaseException as error:
+                result["response_code"] = error.status_code
+                result["content"] = BatchErrorResponse(message=str(error))
+            else:
+                result["response_code"] = response_code
+                if item:
+                    result["content"] = item.dict()
+            finally:
+                results.append(StudySoAFootnoteBatchOutput(**result))
+        return results
 
     def preview_soa_footnote(
         self, study_uid: str, footnote_create_input: StudySoAFootnoteCreateFootnoteInput

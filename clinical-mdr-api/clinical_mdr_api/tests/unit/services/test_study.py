@@ -6,6 +6,9 @@ from typing import Iterable
 from unittest.mock import PropertyMock, patch
 
 from clinical_mdr_api.config import DEFAULT_STUDY_FIELD_CONFIG_FILE
+from clinical_mdr_api.domain_repositories.controlled_terminologies import (
+    ct_term_generic_repository,
+)
 from clinical_mdr_api.domains.study_definition_aggregates import study_configuration
 from clinical_mdr_api.domains.study_definition_aggregates.registry_identifiers import (
     RegistryIdentifiersVO,
@@ -38,6 +41,7 @@ from clinical_mdr_api.tests.unit.domain.clinical_programme_aggregate.test_clinic
 )
 from clinical_mdr_api.tests.unit.domain.controlled_terminology_aggregates.test_ct_term_names import (
     create_random_ct_term_name_ar,
+    create_random_ct_term_name_ars,
 )
 from clinical_mdr_api.tests.unit.domain.project_aggregate.test_project import (
     create_random_project,
@@ -131,6 +135,15 @@ class TestStudyService(unittest.TestCase):
         unit_definition_test_repo = UnitDefinitionRepositoryForTestImpl()
         ct_term_name_repository_property_mock.find_by_uid.return_value = (
             create_random_ct_term_name_ar()
+        )
+        ct_term_name_repository_property_mock.find_by_uids.side_effect = (
+            lambda term_uids, at_specific_date: (
+                create_random_ct_term_name_ars(term_uids=term_uids)
+            )
+        )
+        # Change the __module__ attribute to simulate the module change
+        ct_term_name_repository_property_mock.find_by_uids.__module__ = (
+            ct_term_generic_repository.__name__
         )
         unit_definition_repository_property_mock.find_all.return_value = (
             unit_definition_test_repo.find_all()
@@ -393,6 +406,15 @@ class TestStudyService(unittest.TestCase):
         ct_term_name_repository_property_mock.find_by_uid.return_value = (
             create_random_ct_term_name_ar()
         )
+        ct_term_name_repository_property_mock.find_by_uids.side_effect = (
+            lambda term_uids, at_specific_date: (
+                create_random_ct_term_name_ars(term_uids=term_uids)
+            )
+        )
+        # Change the __module__ attribute to simulate the module change
+        ct_term_name_repository_property_mock.find_by_uids.__module__ = (
+            ct_term_generic_repository.__name__
+        )
         study_service = StudyService()
         service_response = study_service.get_by_uid(
             uid=sample_study_definition.uid,
@@ -603,6 +625,15 @@ class TestStudyService(unittest.TestCase):
         ct_term_name_repository_property_mock.find_by_uid.return_value = (
             create_random_ct_term_name_ar()
         )
+        ct_term_name_repository_property_mock.find_by_uids.side_effect = (
+            lambda term_uids, at_specific_date: (
+                create_random_ct_term_name_ars(term_uids=term_uids)
+            )
+        )
+        # Change the __module__ attribute to simulate the module change
+        ct_term_name_repository_property_mock.find_by_uids.__module__ = (
+            ct_term_generic_repository.__name__
+        )
         # when
         project_repository_property_mock.find_by_project_number.return_value = create_random_project(
             clinical_programme_uid=random_str(),
@@ -779,6 +810,15 @@ class TestStudyService(unittest.TestCase):
         study_definition_repository_property_mock.return_value = test_repo
         ct_term_name_repository_property_mock.find_by_uid.return_value = (
             create_random_ct_term_name_ar()
+        )
+        ct_term_name_repository_property_mock.find_by_uids.side_effect = (
+            lambda term_uids, at_specific_date: (
+                create_random_ct_term_name_ars(term_uids=term_uids)
+            )
+        )
+        # Change the __module__ attribute to simulate the module change
+        ct_term_name_repository_property_mock.find_by_uids.__module__ = (
+            ct_term_generic_repository.__name__
         )
 
         # When

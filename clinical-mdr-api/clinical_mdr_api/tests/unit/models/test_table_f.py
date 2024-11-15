@@ -107,7 +107,7 @@ TEST_TABLE = TableWithFootnotes(
     num_header_cols=2,
     title="Hello Table",
     footnotes={
-        "a": SimpleFootnote(uid="fn01", text_html="not used", text_plain="Footote ej"),
+        "a": SimpleFootnote(uid="fn01", text_html="not used", text_plain="Footnote ej"),
         "hello": SimpleFootnote(
             uid="foot76",
             text_plain="Hello footnotes here and there",
@@ -168,7 +168,7 @@ EXPECTED_HTML = """<!DOCTYPE html>
     </table>
     <dl class="footnotes">
       <dt>a</dt>
-      <dd>Footote ej</dd>
+      <dd>Footnote ej</dd>
       <dt>hello</dt>
       <dd>Hello footnotes here and there</dd>
       <dt>z13</dt>
@@ -189,7 +189,7 @@ def test_table_to_html(test_table: TableWithFootnotes):
 
     html = table_to_html(TEST_TABLE)
 
-    # THEN body is a parseable HTML document
+    # THEN body is a parsable HTML document
     # html.parser does not supplement the document with additional elements for the sake of well-formedness
     doc = bs4.BeautifulSoup(html, features="html.parser")
 
@@ -306,7 +306,7 @@ def compare_html_footnotes(doc: bs4.BeautifulSoup, test_table: TableWithFootnote
     ), "number of <DT> and <DD> tags mismatch"
 
     # THEN number of footnotes match with footnotes list
-    assert len(dts) == len(test_table.footnotes), "mumber of footnotes mismatch"
+    assert len(dts) == len(test_table.footnotes), "number of footnotes mismatch"
 
     for r, (dt, dd, symbol) in enumerate(zip(dts, dds, test_table.footnotes.keys())):
         footnote = test_table.footnotes[symbol]
@@ -423,14 +423,14 @@ def compare_docx_footnotes(
 ):
     """Compares DOCX paragraphs with footnotes of TableWithFootnotes"""
 
-    # Table is not a paragraph, so all top-level paragraps of a SoA DOCX document are part of footnote listing
+    # Table is not a paragraph, so all top-level paragraphs of a SoA DOCX document are part of footnote listing
     footnote_paras = [parax for parax in docx_doc.paragraphs if parax.text.strip()]
 
     # THEN document lists footnotes
     assert len(footnote_paras), "footnotes listing was not found in DOCX document"
 
     # THEN number of footnotes match
-    assert len(footnote_paras) == len(footnotes), "mumber of footnotes mismatch"
+    assert len(footnote_paras) == len(footnotes), "number of footnotes mismatch"
 
     for row_idx, (parax, (symbol, footnote)) in enumerate(
         zip(footnote_paras, footnotes.items())

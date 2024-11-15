@@ -1,6 +1,7 @@
 <!-- eslint-disable vue/v-bind-style -->
 <template>
   <v-navigation-drawer
+    id="sideBar"
     :key="drawerRefreshKey"
     v-model="appStore.drawer"
     :rail="mini"

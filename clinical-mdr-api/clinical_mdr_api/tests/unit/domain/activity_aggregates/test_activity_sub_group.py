@@ -5,12 +5,20 @@ from clinical_mdr_api import exceptions
 from clinical_mdr_api.domains.concepts.activities.activity_sub_group import (
     ActivitySubGroupAR,
     ActivitySubGroupVO,
+    SimpleActivityGroupVO,
 )
 from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryItemStatus,
     LibraryVO,
 )
 from clinical_mdr_api.tests.unit.domain.utils import random_str
+
+
+def create_random_simple_activity_group_vo() -> SimpleActivityGroupVO:
+    random_simple_activity_group_vo = SimpleActivityGroupVO(
+        activity_group_uid=random_str()
+    )
+    return random_simple_activity_group_vo
 
 
 def create_random_activity_subgroup_vo() -> ActivitySubGroupVO:
@@ -20,7 +28,10 @@ def create_random_activity_subgroup_vo() -> ActivitySubGroupVO:
         name_sentence_case=name,
         definition=random_str(),
         abbreviation=random_str(),
-        activity_groups=[random_str(), random_str()],
+        activity_groups=[
+            create_random_simple_activity_group_vo(),
+            create_random_simple_activity_group_vo(),
+        ],
     )
     return random_activity_subgroup_vo
 

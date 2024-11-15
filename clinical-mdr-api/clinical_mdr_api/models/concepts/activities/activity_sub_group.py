@@ -29,10 +29,11 @@ class ActivitySubGroup(ActivityBase):
             abbreviation=activity_subgroup_ar.concept_vo.abbreviation,
             activity_groups=[
                 ActivityHierarchySimpleModel.from_activity_uid(
-                    uid=activity_group_uid,
+                    uid=activity_group.activity_group_uid,
+                    version=activity_group.activity_group_version,
                     find_activity_by_uid=find_activity_by_uid,
                 )
-                for activity_group_uid in activity_subgroup_ar.concept_vo.activity_groups
+                for activity_group in activity_subgroup_ar.concept_vo.activity_groups
             ],
             library_name=Library.from_library_vo(activity_subgroup_ar.library).name,
             start_date=activity_subgroup_ar.item_metadata.start_date,

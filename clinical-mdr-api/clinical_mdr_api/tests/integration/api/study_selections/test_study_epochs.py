@@ -1,5 +1,5 @@
 """
-Tests for /studies/{uid}/study-epochs endpoints
+Tests for /studies/{study_uid}/study-epochs endpoints
 """
 
 # pylint: disable=unused-argument
@@ -64,6 +64,8 @@ def test_data():
     global epoch_subtype2_uid
     global study
     study = TestUtils.create_study()
+    TestUtils.set_study_standard_version(study_uid=study.uid)
+
     db.cypher_query(STARTUP_STUDY_LIST_CYPHER)
     db.cypher_query(STARTUP_CT_CATALOGUE_CYPHER)
     create_study_epoch_codelists_ret_cat_and_lib()
@@ -125,13 +127,6 @@ def test_data():
         relationship_type="subtype",
     )
 
-    cdisc_package_name = "SDTM CT 2020-03-27"
-    TestUtils.create_ct_package(
-        catalogue=catalogue_name,
-        name=cdisc_package_name,
-        approve_elements=False,
-        effective_date=datetime(2020, 3, 27, tzinfo=timezone.utc),
-    )
     # patch the date of the latest HAS_VERSION FINAL relationship so it can be detected by the selected study_standard_Version
     params = {
         "uids": [
@@ -241,12 +236,12 @@ def test_study_epoch_with_study_epoch_subtype_relationship(api_client):
     )
     res = response.json()
     assert response.status_code == 200
-    assert res["epoch_subtype"] == epoch_subtype_uid
+    assert res["epoch_subtype_ctterm"]["term_uid"] == epoch_subtype_uid
     before_unlock = res
 
     # get study epoch headers
     response = api_client.get(
-        f"/studies/{study.uid}/study-epochs/headers?field_name=epoch_subtype",
+        f"/studies/{study.uid}/study-epochs/headers?field_name=epoch_subtype_ctterm.term_uid",
     )
     res = response.json()
     assert response.status_code == 200
@@ -267,7 +262,7 @@ def test_study_epoch_with_study_epoch_subtype_relationship(api_client):
     )
     res = response.json()
     assert response.status_code == 200
-    assert res["epoch_subtype"] == epoch_subtype2_uid
+    assert res["epoch_subtype_ctterm"]["term_uid"] == epoch_subtype2_uid
 
     # get all study epochs of a specific study version
     response = api_client.get(
@@ -288,7 +283,7 @@ def test_study_epoch_with_study_epoch_subtype_relationship(api_client):
 
     # get study epoch headers of specific study version
     response = api_client.get(
-        f"/studies/{study.uid}/study-epochs/headers?field_name=epoch_subtype&study_value_version=1",
+        f"/studies/{study.uid}/study-epochs/headers?field_name=epoch_subtype_ctterm.term_uid&study_value_version=1",
     )
     res = response.json()
     assert response.status_code == 200
@@ -300,7 +295,7 @@ def test_study_epoch_with_study_epoch_subtype_relationship(api_client):
     )
     res = response.json()
     assert response.status_code == 200
-    assert res["items"][0]["epoch_subtype"] == epoch_subtype2_uid
+    assert res["items"][0]["epoch_subtype_ctterm"]["term_uid"] == epoch_subtype2_uid
 
     # get specific study epoch
     response = api_client.get(
@@ -308,11 +303,11 @@ def test_study_epoch_with_study_epoch_subtype_relationship(api_client):
     )
     res = response.json()
     assert response.status_code == 200
-    assert res["epoch_subtype"] == epoch_subtype2_uid
+    assert res["epoch_subtype_ctterm"]["term_uid"] == epoch_subtype2_uid
 
     # get study epochs headers
     response = api_client.get(
-        f"/studies/{study.uid}/study-epochs/headers?field_name=epoch_subtype",
+        f"/studies/{study.uid}/study-epochs/headers?field_name=epoch_subtype_ctterm.term_uid",
     )
     res = response.json()
     assert response.status_code == 200
@@ -351,7 +346,7 @@ def test_study_epoch_order_when_epoch_get_deleted_or_modified(api_client):
     epoch_subtype_1 = response.json()
     assert response.status_code == 201
     assert epoch_subtype_1["order"] == 1
-    assert epoch_subtype_1["epoch_name"] == "Epoch Subtype"
+    assert epoch_subtype_1["epoch_ctterm"]["sponsor_preferred_name"] == "Epoch Subtype"
 
     response = api_client.post(
         f"/studies/{study_for_tests.uid}/study-epochs",
@@ -363,7 +358,9 @@ def test_study_epoch_order_when_epoch_get_deleted_or_modified(api_client):
     epoch_subtype_2 = response.json()
     assert response.status_code == 201
     assert epoch_subtype_2["order"] == 2
-    assert epoch_subtype_2["epoch_name"] == "Epoch Subtype 2"
+    assert (
+        epoch_subtype_2["epoch_ctterm"]["sponsor_preferred_name"] == "Epoch Subtype 2"
+    )
 
     # Deleting an Epoch from the same Subtype
     response = api_client.delete(
@@ -376,7 +373,10 @@ def test_study_epoch_order_when_epoch_get_deleted_or_modified(api_client):
     old_subtype_2_new_subtype_1 = response.json()
     assert response.status_code == 200
     assert old_subtype_2_new_subtype_1["order"] == 1
-    assert old_subtype_2_new_subtype_1["epoch_name"] == "Epoch Subtype"
+    assert (
+        old_subtype_2_new_subtype_1["epoch_ctterm"]["sponsor_preferred_name"]
+        == "Epoch Subtype"
+    )
 
     response = api_client.post(
         f"/studies/{study_for_tests.uid}/study-epochs",
@@ -388,7 +388,9 @@ def test_study_epoch_order_when_epoch_get_deleted_or_modified(api_client):
     epoch_subtype_2_1 = response.json()
     assert response.status_code == 201
     assert epoch_subtype_2_1["order"] == 2
-    assert epoch_subtype_2_1["epoch_name"] == "Epoch Subtype1"
+    assert (
+        epoch_subtype_2_1["epoch_ctterm"]["sponsor_preferred_name"] == "Epoch Subtype1"
+    )
 
     response = api_client.delete(
         f"/studies/{study_for_tests.uid}/study-epochs/{old_subtype_2_new_subtype_1['uid']}",
@@ -401,7 +403,9 @@ def test_study_epoch_order_when_epoch_get_deleted_or_modified(api_client):
     assert response.status_code == 200
     epoch_subtype_2_1 = response.json()
     assert epoch_subtype_2_1["order"] == 1
-    assert epoch_subtype_2_1["epoch_name"] == "Epoch Subtype1"
+    assert (
+        epoch_subtype_2_1["epoch_ctterm"]["sponsor_preferred_name"] == "Epoch Subtype1"
+    )
 
     response = api_client.get(
         f"/studies/{study_for_tests.uid}/study-epochs",
@@ -420,7 +424,10 @@ def test_study_epoch_order_when_epoch_get_deleted_or_modified(api_client):
     epoch_subtype_2_2 = response.json()
     assert response.status_code == 201
     assert epoch_subtype_2_2["order"] == 2
-    assert epoch_subtype_2_2["epoch_name"] == "Epoch Subtype1 2"
+    assert (
+        epoch_subtype_2_2["epoch_ctterm"]["sponsor_preferred_name"]
+        == "Epoch Subtype1 2"
+    )
 
     response = api_client.get(
         f"/studies/{study_for_tests.uid}/study-epochs/{epoch_subtype_2_1['uid']}",
@@ -428,7 +435,10 @@ def test_study_epoch_order_when_epoch_get_deleted_or_modified(api_client):
     assert response.status_code == 200
     epoch_subtype_2_1 = response.json()
     assert epoch_subtype_2_1["order"] == 1
-    assert epoch_subtype_2_1["epoch_name"] == "Epoch Subtype1 1"
+    assert (
+        epoch_subtype_2_1["epoch_ctterm"]["sponsor_preferred_name"]
+        == "Epoch Subtype1 1"
+    )
 
     response = api_client.post(
         f"/studies/{study_for_tests.uid}/study-epochs",
@@ -440,7 +450,10 @@ def test_study_epoch_order_when_epoch_get_deleted_or_modified(api_client):
     epoch_subtype_2_3 = response.json()
     assert response.status_code == 201
     assert epoch_subtype_2_3["order"] == 3
-    assert epoch_subtype_2_3["epoch_name"] == "Epoch Subtype1 3"
+    assert (
+        epoch_subtype_2_3["epoch_ctterm"]["sponsor_preferred_name"]
+        == "Epoch Subtype1 3"
+    )
 
     response = api_client.patch(
         f"/studies/{study_for_tests.uid}/study-epochs/{epoch_subtype_2_1['uid']}/order/2"
@@ -467,9 +480,9 @@ def test_study_epoch_version_selecting_ct_package(api_client):
     """change the name of a CTTerm, and verify that the study selection is still set to the old name of the CTTerm when the Sponsor Standard version is set"""
     study_selection_breadcrumb = "study-epochs"
     study_selection_ctterm_uid_input_key = "epoch_subtype"
-    # study_selection_ctterm_keys =
+    study_selection_ctterm_keys = "epoch_subtype_ctterm"
     # study_selection_ctterm_uid_key =
-    study_selection_ctterm_name_key = "epoch_subtype_name"
+    study_selection_ctterm_name_key = "sponsor_preferred_name"
     study_for_ctterm_versioning = TestUtils.create_study()
     response = api_client.post(
         f"/studies/{study_for_ctterm_versioning.uid}/{study_selection_breadcrumb}",
@@ -482,7 +495,10 @@ def test_study_epoch_version_selecting_ct_package(api_client):
     assert response.status_code == 201
     study_selection_uid_study_standard_test = res["uid"]
     assert res["order"] == 1
-    assert res[study_selection_ctterm_name_key] == "Epoch Subtype"
+    assert (
+        res[study_selection_ctterm_keys][study_selection_ctterm_name_key]
+        == "Epoch Subtype"
+    )
 
     # edit ctterm
     new_ctterm_name = "new ctterm name"
@@ -516,26 +532,16 @@ def test_study_epoch_version_selecting_ct_package(api_client):
     res = response.json()
     assert response.status_code == 200
     # assert res[study_selection_ctterm_name_key] == ctterm_uid
-    assert res[study_selection_ctterm_name_key] == new_ctterm_name
-
-    # get ct_packages
-    response = api_client.get(
-        "/ct/packages",
+    assert (
+        res[study_selection_ctterm_keys][study_selection_ctterm_name_key]
+        == new_ctterm_name
     )
-    res = response.json()
-    assert response.status_code == 200
-    ct_package_uid = res[0]["uid"]
 
-    # create study standard version
-    response = api_client.post(
-        f"/studies/{study_for_ctterm_versioning.uid}/study-standard-versions",
-        json={
-            "ct_package_uid": ct_package_uid,
-        },
+    TestUtils.set_study_standard_version(
+        study_uid=study_for_ctterm_versioning.uid,
+        package_name="SDTM CT 2020-03-27",
+        effective_date=datetime(2020, 3, 27, tzinfo=timezone.utc),
     )
-    res = response.json()
-    assert response.status_code == 201
-    assert res["ct_package"]["uid"] == ct_package_uid
 
     # get study selection with previous ctterm
     response = api_client.get(
@@ -545,7 +551,7 @@ def test_study_epoch_version_selecting_ct_package(api_client):
     assert response.status_code == 200
     # assert res[study_selection_ctterm_uid_key] == ctterm_uid
     assert (
-        res[study_selection_ctterm_name_key]
+        res[study_selection_ctterm_keys][study_selection_ctterm_name_key]
         == initial_ct_term_study_standard_test.sponsor_preferred_name
     )
 
@@ -561,7 +567,7 @@ def test_study_epoch_version_selecting_ct_package(api_client):
     res = response.json()
     assert response.status_code == 200
     assert (
-        res[study_selection_ctterm_name_key]
+        res[study_selection_ctterm_keys][study_selection_ctterm_name_key]
         == initial_ct_term_study_standard_test.sponsor_preferred_name
     )
 
@@ -572,10 +578,13 @@ def test_study_epoch_version_selecting_ct_package(api_client):
     res = response.json()
     assert response.status_code == 200
     assert (
-        res[0][study_selection_ctterm_name_key]
+        res[0][study_selection_ctterm_keys][study_selection_ctterm_name_key]
         == initial_ct_term_study_standard_test.sponsor_preferred_name
     )
-    assert res[1][study_selection_ctterm_name_key] == new_ctterm_name
+    assert (
+        res[1][study_selection_ctterm_keys][study_selection_ctterm_name_key]
+        == new_ctterm_name
+    )
 
     # get all objectives
     response = api_client.get(
@@ -584,10 +593,13 @@ def test_study_epoch_version_selecting_ct_package(api_client):
     res = response.json()
     assert response.status_code == 200
     assert (
-        res[0][study_selection_ctterm_name_key]
+        res[0][study_selection_ctterm_keys][study_selection_ctterm_name_key]
         == initial_ct_term_study_standard_test.sponsor_preferred_name
     )
-    assert res[1][study_selection_ctterm_name_key] == new_ctterm_name
+    assert (
+        res[1][study_selection_ctterm_keys][study_selection_ctterm_name_key]
+        == new_ctterm_name
+    )
 
 
 def test_study_epoch_audit_trail(api_client):

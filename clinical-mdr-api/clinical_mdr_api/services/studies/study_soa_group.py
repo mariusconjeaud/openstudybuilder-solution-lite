@@ -6,6 +6,7 @@ from clinical_mdr_api.domain_repositories.study_selections.study_soa_group_repos
     StudySoAGroupRepository,
 )
 from clinical_mdr_api.domains.study_selections.study_soa_group_selection import (
+    StudySoAGroupAR,
     StudySoAGroupVO,
 )
 from clinical_mdr_api.exceptions import ValidationException
@@ -17,7 +18,6 @@ from clinical_mdr_api.models.utils import BaseModel
 from clinical_mdr_api.services._meta_repository import MetaRepository
 from clinical_mdr_api.services.studies.study_activity_selection_base import (
     StudyActivitySelectionBaseService,
-    _AggregateRootType,
     _VOType,
 )
 
@@ -39,16 +39,26 @@ class StudySoAGroupService(StudyActivitySelectionBaseService):
         return True
 
     def _transform_all_to_response_model(
-        self, study_selection: _AggregateRootType
-    ) -> list[BaseModel]:
-        pass
+        self,
+        study_selection: StudySoAGroupAR,
+        study_value_version: str | None = None,
+    ) -> list[StudySoAGroup]:
+        result = []
+        for selection in study_selection.study_objects_selection:
+            result.append(
+                self._transform_from_vo_to_response_model(
+                    study_uid=study_selection.study_uid,
+                    specific_selection=selection,
+                )
+            )
+        return result
 
     def _transform_from_vo_to_response_model(
         self,
         study_uid: str,
         specific_selection: _VOType,
-        order: int,
-        terms_at_specific_datetime: datetime | None,
+        order: int | None = None,
+        terms_at_specific_datetime: datetime | None = None,
         accepted_version: bool | None = None,
     ) -> BaseModel:
         return StudySoAGroup.from_study_selection_activity_vo(

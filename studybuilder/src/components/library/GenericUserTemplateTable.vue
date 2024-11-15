@@ -7,7 +7,7 @@
     :export-object-label="objectType"
     :export-data-url="urlPrefix"
     :items-length="total"
-    :sort-by="[{ key: 'start_date' }]"
+    :initial-sort-by="[{ key: 'start_date' }]"
     sort-desc
     :column-data-resource="columnDataResource"
     :column-data-parameters="extendedColumnDataParameters"
@@ -105,15 +105,14 @@ export default {
     this.api = templates(this.urlPrefix)
   },
   methods: {
-    async filter(filters, sort, filtersUpdated) {
+    async filter(filters, options, filtersUpdated) {
       filters = filters
         ? { ...JSON.parse(filters), ...this.columnDataParameters.filters }
         : { ...this.columnDataParameters.filters }
       filters['library.name'] = { v: [libraryConstants.LIBRARY_USER_DEFINED] }
       const params = filteringParameters.prepareParameters(
-        this.options,
+        options,
         filters,
-        sort,
         filtersUpdated
       )
       this.api.get(params).then((resp) => {

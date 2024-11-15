@@ -47,7 +47,7 @@
     },
     "response": {
       "save": {
-        "uid": "uid"
+        "unit_definition_uid": "uid"
       },
       "code": 201,
       "headers": {
@@ -188,7 +188,7 @@
       "headers": {},
       "method": "DELETE",
       "request": {},
-      "url": "/concepts/unit-definitions/{uid}"
+      "url": "/concepts/unit-definitions/{unit_definition_uid}"
     },
     "response": {
       "code": 204,
@@ -244,7 +244,7 @@
     },
     "response": {
       "save": {
-        "uid": "uid",
+        "unit_definition_uid": "uid",
         "start_date_ofV0_1": "start_date"
       },
       "code": 201,
@@ -295,7 +295,7 @@
       "headers": {},
       "method": "DELETE",
       "request": {},
-      "url": "/concepts/unit-definitions/{uid}/activations"
+      "url": "/concepts/unit-definitions/{unit_definition_uid}/activations"
     },
     "response": {
       "code": 400,
@@ -315,7 +315,7 @@
       "headers": {},
       "method": "POST",
       "request": {},
-      "url": "/concepts/unit-definitions/{uid}/activations"
+      "url": "/concepts/unit-definitions/{unit_definition_uid}/activations"
     },
     "response": {
       "code": 400,
@@ -335,7 +335,7 @@
       "headers": {},
       "method": "POST",
       "request": {},
-      "url": "/concepts/unit-definitions/{uid}/versions"
+      "url": "/concepts/unit-definitions/{unit_definition_uid}/versions"
     },
     "response": {
       "code": 400,
@@ -410,7 +410,7 @@
       "headers": {},
       "method": "GET",
       "request": {},
-      "url": "/concepts/unit-definitions/{uid}"
+      "url": "/concepts/unit-definitions/{unit_definition_uid}"
     },
     "response": {
       "code": 200,
@@ -458,7 +458,7 @@
       "headers": {},
       "method": "GET",
       "request": {},
-      "url": "/concepts/unit-definitions/{uid}?status=Draft"
+      "url": "/concepts/unit-definitions/{unit_definition_uid}?status=Draft"
     },
     "response": {
       "code": 200,
@@ -506,7 +506,7 @@
       "headers": {},
       "method": "GET",
       "request": {},
-      "url": "/concepts/unit-definitions/{uid}?version=0.1"
+      "url": "/concepts/unit-definitions/{unit_definition_uid}?version=0.1"
     },
     "response": {
       "code": 200,
@@ -554,7 +554,7 @@
       "headers": {},
       "method": "GET",
       "request": {},
-      "url": "/concepts/unit-definitions/{uid}?at_specified_date={start_date_ofV0_1}"
+      "url": "/concepts/unit-definitions/{unit_definition_uid}?at_specified_date={start_date_ofV0_1}"
     },
     "response": {
       "code": 200,
@@ -602,7 +602,7 @@
       "headers": {},
       "method": "GET",
       "request": {},
-      "url": "/concepts/unit-definitions/{uid}?status=Final"
+      "url": "/concepts/unit-definitions/{unit_definition_uid}?status=Final"
     },
     "response": {
       "code": 404,
@@ -622,7 +622,7 @@
       "headers": {},
       "method": "GET",
       "request": {},
-      "url": "/concepts/unit-definitions/{uid}?version=0.2"
+      "url": "/concepts/unit-definitions/{unit_definition_uid}?version=0.2"
     },
     "response": {
       "code": 404,
@@ -642,7 +642,7 @@
       "headers": {},
       "method": "GET",
       "request": {},
-      "url": "/concepts/unit-definitions/{uid}?status=Retired"
+      "url": "/concepts/unit-definitions/{unit_definition_uid}?status=Retired"
     },
     "response": {
       "code": 404,
@@ -667,7 +667,7 @@
         "unit_dimension": "unit1-dimension-patched",
         "legacy_code": "unit1-legacy-code-patched"
       },
-      "url": "/concepts/unit-definitions/{uid}"
+      "url": "/concepts/unit-definitions/{unit_definition_uid}"
     },
     "response": {
       "save": {
@@ -773,7 +773,7 @@
       "headers": {},
       "method": "GET",
       "request": {},
-      "url": "/concepts/unit-definitions/{uid}"
+      "url": "/concepts/unit-definitions/{unit_definition_uid}"
     },
     "response": {
       "code": 200,
@@ -821,7 +821,7 @@
       "headers": {},
       "method": "GET",
       "request": {},
-      "url": "/concepts/unit-definitions/{uid}?status=Draft"
+      "url": "/concepts/unit-definitions/{unit_definition_uid}?status=Draft"
     },
     "response": {
       "code": 200,
@@ -869,7 +869,7 @@
       "headers": {},
       "method": "GET",
       "request": {},
-      "url": "/concepts/unit-definitions/{uid}?version=0.2"
+      "url": "/concepts/unit-definitions/{unit_definition_uid}?version=0.2"
     },
     "response": {
       "code": 200,
@@ -917,7 +917,7 @@
       "headers": {},
       "method": "GET",
       "request": {},
-      "url": "/concepts/unit-definitions/{uid}?at_specified_date={start_date_ofV0_2}"
+      "url": "/concepts/unit-definitions/{unit_definition_uid}?at_specified_date={start_date_ofV0_2}"
     },
     "response": {
       "code": 200,
@@ -965,7 +965,7 @@
       "headers": {},
       "method": "GET",
       "request": {},
-      "url": "/concepts/unit-definitions/{uid}?version=0.1"
+      "url": "/concepts/unit-definitions/{unit_definition_uid}?version=0.1"
     },
     "response": {
       "code": 200,
@@ -1013,7 +1013,7 @@
       "headers": {},
       "method": "GET",
       "request": {},
-      "url": "/concepts/unit-definitions/{uid}?status=Final"
+      "url": "/concepts/unit-definitions/{unit_definition_uid}?status=Final"
     },
     "response": {
       "code": 404,
@@ -1033,7 +1033,7 @@
       "headers": {},
       "method": "GET",
       "request": {},
-      "url": "/concepts/unit-definitions/{uid}?status=Retired"
+      "url": "/concepts/unit-definitions/{unit_definition_uid}?status=Retired"
     },
     "response": {
       "code": 404,
@@ -1053,7 +1053,7 @@
       "headers": {},
       "method": "POST",
       "request": {},
-      "url": "/concepts/unit-definitions/{uid}/approvals"
+      "url": "/concepts/unit-definitions/{unit_definition_uid}/approvals"
     },
     "response": {
       "code": 201,
@@ -1156,7 +1156,7 @@
       "headers": {},
       "method": "GET",
       "request": {},
-      "url": "/concepts/unit-definitions/{uid}"
+      "url": "/concepts/unit-definitions/{unit_definition_uid}"
     },
     "response": {
       "code": 200,
@@ -1204,7 +1204,7 @@
       "headers": {},
       "method": "GET",
       "request": {},
-      "url": "/concepts/unit-definitions/{uid}?status=Final"
+      "url": "/concepts/unit-definitions/{unit_definition_uid}?status=Final"
     },
     "response": {
       "code": 200,
@@ -1252,7 +1252,7 @@
       "headers": {},
       "method": "GET",
       "request": {},
-      "url": "/concepts/unit-definitions/{uid}?version=1.0"
+      "url": "/concepts/unit-definitions/{unit_definition_uid}?version=1.0"
     },
     "response": {
       "code": 200,
@@ -1300,7 +1300,7 @@
       "headers": {},
       "method": "POST",
       "request": {},
-      "url": "/concepts/unit-definitions/{uid}/approvals"
+      "url": "/concepts/unit-definitions/{unit_definition_uid}/approvals"
     },
     "response": {
       "code": 400,
@@ -1320,7 +1320,7 @@
       "headers": {},
       "method": "POST",
       "request": {},
-      "url": "/concepts/unit-definitions/{uid}/activations"
+      "url": "/concepts/unit-definitions/{unit_definition_uid}/activations"
     },
     "response": {
       "code": 400,
@@ -1345,7 +1345,7 @@
         "unit_dimension": "unit1-dimension-patched-fail",
         "legacy_code": "unit1-legacy-code-patched-fail"
       },
-      "url": "/concepts/unit-definitions/{uid}"
+      "url": "/concepts/unit-definitions/{unit_definition_uid}"
     },
     "response": {
       "code": 400,
@@ -1365,7 +1365,7 @@
       "headers": {},
       "method": "DELETE",
       "request": {},
-      "url": "/concepts/unit-definitions/{uid}"
+      "url": "/concepts/unit-definitions/{unit_definition_uid}"
     },
     "response": {
       "code": 400,
@@ -1385,7 +1385,7 @@
       "headers": {},
       "method": "DELETE",
       "request": {},
-      "url": "/concepts/unit-definitions/{uid}/activations"
+      "url": "/concepts/unit-definitions/{unit_definition_uid}/activations"
     },
     "response": {
       "code": 200,
@@ -1433,7 +1433,7 @@
       "headers": {},
       "method": "DELETE",
       "request": {},
-      "url": "/concepts/unit-definitions/{uid}/activations"
+      "url": "/concepts/unit-definitions/{unit_definition_uid}/activations"
     },
     "response": {
       "code": 400,
@@ -1453,7 +1453,7 @@
       "headers": {},
       "method": "POST",
       "request": {},
-      "url": "/concepts/unit-definitions/{uid}/versions"
+      "url": "/concepts/unit-definitions/{unit_definition_uid}/versions"
     },
     "response": {
       "code": 400,
@@ -1473,7 +1473,7 @@
       "headers": {},
       "method": "POST",
       "request": {},
-      "url": "/concepts/unit-definitions/{uid}/approvals"
+      "url": "/concepts/unit-definitions/{unit_definition_uid}/approvals"
     },
     "response": {
       "code": 400,
@@ -1498,7 +1498,7 @@
         "unit_dimension": "unit1-dimension-patched-fail",
         "legacy_code": "unit1-legacy-code-patched-fail"
       },
-      "url": "/concepts/unit-definitions/{uid}"
+      "url": "/concepts/unit-definitions/{unit_definition_uid}"
     },
     "response": {
       "code": 400,
@@ -1518,7 +1518,7 @@
       "headers": {},
       "method": "DELETE",
       "request": {},
-      "url": "/concepts/unit-definitions/{uid}"
+      "url": "/concepts/unit-definitions/{unit_definition_uid}"
     },
     "response": {
       "code": 400,
@@ -1538,7 +1538,7 @@
       "headers": {},
       "method": "POST",
       "request": {},
-      "url": "/concepts/unit-definitions/{uid}/activations"
+      "url": "/concepts/unit-definitions/{unit_definition_uid}/activations"
     },
     "response": {
       "code": 200,
@@ -1586,7 +1586,7 @@
       "headers": {},
       "method": "POST",
       "request": {},
-      "url": "/concepts/unit-definitions/{uid}/approvals"
+      "url": "/concepts/unit-definitions/{unit_definition_uid}/approvals"
     },
     "response": {
       "code": 400,
@@ -1606,7 +1606,7 @@
       "headers": {},
       "method": "POST",
       "request": {},
-      "url": "/concepts/unit-definitions/{uid}/activations"
+      "url": "/concepts/unit-definitions/{unit_definition_uid}/activations"
     },
     "response": {
       "code": 400,
@@ -1631,7 +1631,7 @@
         "unit_dimension": "unit1-dimension-patched-fail",
         "legacy_code": "unit1-legacy-code-patched-fail"
       },
-      "url": "/concepts/unit-definitions/{uid}"
+      "url": "/concepts/unit-definitions/{unit_definition_uid}"
     },
     "response": {
       "code": 400,
@@ -1651,7 +1651,7 @@
       "headers": {},
       "method": "DELETE",
       "request": {},
-      "url": "/concepts/unit-definitions/{uid}"
+      "url": "/concepts/unit-definitions/{unit_definition_uid}"
     },
     "response": {
       "code": 400,
@@ -1671,7 +1671,7 @@
       "headers": {},
       "method": "POST",
       "request": {},
-      "url": "/concepts/unit-definitions/{uid}/versions"
+      "url": "/concepts/unit-definitions/{unit_definition_uid}/versions"
     },
     "response": {
       "code": 201,
@@ -1719,7 +1719,7 @@
       "headers": {},
       "method": "DELETE",
       "request": {},
-      "url": "/concepts/unit-definitions/{uid}/activations"
+      "url": "/concepts/unit-definitions/{unit_definition_uid}/activations"
     },
     "response": {
       "code": 400,
@@ -1739,7 +1739,7 @@
       "headers": {},
       "method": "POST",
       "request": {},
-      "url": "/concepts/unit-definitions/{uid}/activations"
+      "url": "/concepts/unit-definitions/{unit_definition_uid}/activations"
     },
     "response": {
       "code": 400,
@@ -1759,7 +1759,7 @@
       "headers": {},
       "method": "POST",
       "request": {},
-      "url": "/concepts/unit-definitions/{uid}/versions"
+      "url": "/concepts/unit-definitions/{unit_definition_uid}/versions"
     },
     "response": {
       "code": 400,
@@ -1779,7 +1779,7 @@
       "headers": {},
       "method": "DELETE",
       "request": {},
-      "url": "/concepts/unit-definitions/{uid}"
+      "url": "/concepts/unit-definitions/{unit_definition_uid}"
     },
     "response": {
       "code": 400,
@@ -1804,7 +1804,7 @@
         "unit_dimension": "unit1-dimension-patched-2",
         "legacy_code": "unit1-legacy-code-patched-2"
       },
-      "url": "/concepts/unit-definitions/{uid}"
+      "url": "/concepts/unit-definitions/{unit_definition_uid}"
     },
     "response": {
       "code": 200,
@@ -1852,7 +1852,7 @@
       "headers": {},
       "method": "GET",
       "request": {},
-      "url": "/concepts/unit-definitions/{uid}"
+      "url": "/concepts/unit-definitions/{unit_definition_uid}"
     },
     "response": {
       "code": 200,
@@ -1900,7 +1900,7 @@
       "headers": {},
       "method": "GET",
       "request": {},
-      "url": "/concepts/unit-definitions/{uid}?status=Final"
+      "url": "/concepts/unit-definitions/{unit_definition_uid}?status=Final"
     },
     "response": {
       "code": 200,
@@ -1948,7 +1948,7 @@
       "headers": {},
       "method": "GET",
       "request": {},
-      "url": "/concepts/unit-definitions/{uid}/versions"
+      "url": "/concepts/unit-definitions/{unit_definition_uid}/versions"
     },
     "response": {
       "code": 200,
@@ -2267,7 +2267,7 @@
     "response": {
       "code": 201,
       "save": {
-        "uid": "uid"
+        "unit_definition_uid": "uid"
       },
       "headers": {
         "content-length": "336",
@@ -2319,7 +2319,7 @@
         "change_description": "Patched version",
         "unit_dimension": "unit1-dimension-patched-2"
       },
-      "url": "/concepts/unit-definitions/{uid}"
+      "url": "/concepts/unit-definitions/{unit_definition_uid}"
     },
     "response": {
       "code": 400,
@@ -2351,7 +2351,7 @@
         "unit_dimension": "unit1-dimension-patched",
         "legacy_code": "unit1-legacy-code-patched"
       },
-      "url": "/concepts/unit-definitions/{uid}"
+      "url": "/concepts/unit-definitions/{unit_definition_uid}"
     },
     "response": {
       "save": {

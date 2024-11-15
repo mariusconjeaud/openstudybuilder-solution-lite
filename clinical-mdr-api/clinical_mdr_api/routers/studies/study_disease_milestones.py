@@ -28,7 +28,7 @@ study_disease_milestone_uid_description = Path(
 
 
 @router.get(
-    "/studies/{uid}/study-disease-milestones",
+    "/studies/{study_uid}/study-disease-milestones",
     dependencies=[rbac.STUDY_READ],
     summary="List all study disease_milestones currently selected for the study.",
     description=f"""
@@ -101,12 +101,12 @@ def get_all(
     operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
     total_count: bool
     | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
-    uid: str = Path(description="the study"),
+    study_uid: str = Path(description="the study"),
     study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
 ) -> CustomPage[study_disease_milestone.StudyDiseaseMilestone]:
     disease_milestone_service = StudyDiseaseMilestoneService()
     all_items = disease_milestone_service.get_all_disease_milestones(
-        study_uid=uid,
+        study_uid=study_uid,
         page_number=page_number,
         page_size=page_size,
         total_count=total_count,
@@ -125,7 +125,7 @@ def get_all(
 
 
 @router.get(
-    "/studies/{uid}/study-disease-milestones/headers",
+    "/studies/{study_uid}/study-disease-milestones/headers",
     dependencies=[rbac.STUDY_READ],
     summary="Returns possible values from the database for a given header",
     description="""Allowed parameters include : field name for which to get possible
@@ -142,7 +142,7 @@ def get_all(
 )
 # pylint: disable=unused-argument
 def get_distinct_values_for_header(
-    uid: str = studyUID,  # TODO: Use this argument!
+    study_uid: str = studyUID,  # TODO: Use this argument!
     study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
     field_name: str = Query(..., description=_generic_descriptions.HEADER_FIELD_NAME),
     search_string: str
@@ -168,7 +168,7 @@ def get_distinct_values_for_header(
 
 
 @router.get(
-    "/studies/{uid}/study-disease-milestones/audit-trail",
+    "/studies/{study_uid}/study-disease-milestones/audit-trail",
     dependencies=[rbac.STUDY_READ],
     summary="List audit trail related to all study disease_milestones within the specified study-uid",
     description="""
@@ -197,14 +197,14 @@ Possible errors:
     },
 )
 def get_study_disease_milestones_all_audit_trail(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
 ) -> list[study_disease_milestone.StudyDiseaseMilestoneVersion]:
     service = StudyDiseaseMilestoneService()
-    return service.audit_trail_all_disease_milestones(uid)
+    return service.audit_trail_all_disease_milestones(study_uid)
 
 
 @router.get(
-    "/studies/{uid}/study-disease-milestones/{study_disease_milestone_uid}",
+    "/studies/{study_uid}/study-disease-milestones/{study_disease_milestone_uid}",
     dependencies=[rbac.STUDY_READ],
     summary="List all definitions for a specific study disease_milestone",
     description="""
@@ -239,7 +239,7 @@ Possible errors:
 )
 # pylint: disable=unused-argument
 def get_study_disease_milestone(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     study_disease_milestone_uid: str = study_disease_milestone_uid_description,
 ) -> study_disease_milestone.StudyDiseaseMilestone:
     service = StudyDiseaseMilestoneService()
@@ -247,7 +247,7 @@ def get_study_disease_milestone(
 
 
 @router.get(
-    "/studies/{uid}/study-disease-milestones/{study_disease_milestone_uid}/audit-trail",
+    "/studies/{study_uid}/study-disease-milestones/{study_disease_milestone_uid}/audit-trail",
     dependencies=[rbac.STUDY_READ],
     summary="List audit trail related to definition of a specific study disease_milestone",
     description="""
@@ -276,17 +276,17 @@ Possible errors:
     },
 )
 def get_study_disease_milestone_audit_trail(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     study_disease_milestone_uid: str = study_disease_milestone_uid_description,
 ) -> list[study_disease_milestone.StudyDiseaseMilestoneVersion]:
     service = StudyDiseaseMilestoneService()
     return service.audit_trail(
-        study_uid=uid, disease_milestone_uid=study_disease_milestone_uid
+        study_uid=study_uid, disease_milestone_uid=study_disease_milestone_uid
     )
 
 
 @router.post(
-    "/studies/{uid}/study-disease-milestones",
+    "/studies/{study_uid}/study-disease-milestones",
     dependencies=[rbac.STUDY_WRITE],
     summary="Add a study disease_milestone to a study",
     description="""
@@ -314,24 +314,24 @@ Possible errors:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - Study is not found with the passed 'uid'.",
+            "description": "Not Found - Study is not found with the passed 'study_uid'.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-@decorators.validate_if_study_is_not_locked("uid")
+@decorators.validate_if_study_is_not_locked("study_uid")
 def post_new_disease_milestone_create(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     selection: study_disease_milestone.StudyDiseaseMilestoneCreateInput = Body(
         description="Related parameters of the selection that shall be created."
     ),
 ) -> study_disease_milestone.StudyDiseaseMilestone:
     service = StudyDiseaseMilestoneService()
-    return service.create(study_uid=uid, study_disease_milestone_input=selection)
+    return service.create(study_uid=study_uid, study_disease_milestone_input=selection)
 
 
 @router.delete(
-    "/studies/{uid}/study-disease-milestones/{study_disease_milestone_uid}",
+    "/studies/{study_uid}/study-disease-milestones/{study_disease_milestone_uid}",
     dependencies=[rbac.STUDY_WRITE],
     summary="Delete a study disease_milestone.",
     description="""
@@ -362,10 +362,10 @@ Possible errors:
         500: _generic_descriptions.ERROR_500,
     },
 )
-@decorators.validate_if_study_is_not_locked("uid")
+@decorators.validate_if_study_is_not_locked("study_uid")
 # pylint: disable=unused-argument
 def delete_study_disease_milestone(
-    uid: str = studyUID,  # TODO: Use this argument!
+    study_uid: str = studyUID,  # TODO: Use this argument!
     study_disease_milestone_uid: str = study_disease_milestone_uid_description,
 ):
     service = StudyDiseaseMilestoneService()
@@ -375,7 +375,7 @@ def delete_study_disease_milestone(
 
 
 @router.patch(
-    "/studies/{uid}/study-disease-milestones/{study_disease_milestone_uid}/order",
+    "/studies/{study_uid}/study-disease-milestones/{study_disease_milestone_uid}/order",
     dependencies=[rbac.STUDY_WRITE],
     summary="Change display order of study disease_milestone",
     description="""
@@ -415,10 +415,10 @@ Possible errors:
         500: _generic_descriptions.ERROR_500,
     },
 )
-@decorators.validate_if_study_is_not_locked("uid")
+@decorators.validate_if_study_is_not_locked("study_uid")
 # pylint: disable=unused-argument
 def patch_reorder(
-    uid: str = studyUID,  # TODO: Use this argument!
+    study_uid: str = studyUID,  # TODO: Use this argument!
     study_disease_milestone_uid: str = study_disease_milestone_uid_description,
     new_order_input: study_disease_milestone.StudySelectionDiseaseMilestoneNewOrder = Body(
         description="New value to set for the order property of the selection"
@@ -432,7 +432,7 @@ def patch_reorder(
 
 
 @router.patch(
-    "/studies/{uid}/study-disease-milestones/{study_disease_milestone_uid}",
+    "/studies/{study_uid}/study-disease-milestones/{study_disease_milestone_uid}",
     dependencies=[rbac.STUDY_WRITE],
     summary="Edit a study disease_milestone",
     description="""
@@ -463,10 +463,10 @@ Possible errors:
         500: _generic_descriptions.ERROR_500,
     },
 )
-@decorators.validate_if_study_is_not_locked("uid")
+@decorators.validate_if_study_is_not_locked("study_uid")
 # pylint: disable=unused-argument
 def patch_update_disease_milestone(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     study_disease_milestone_uid: str = study_disease_milestone_uid_description,
     selection: study_disease_milestone.StudyDiseaseMilestoneEditInput = Body(
         description="Related parameters of the selection that shall be created."

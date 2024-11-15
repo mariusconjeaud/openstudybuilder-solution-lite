@@ -145,7 +145,7 @@ def get_distinct_values_for_header(
 
 
 @router.get(
-    "/{uid}",
+    "/{odm_study_event_uid}",
     dependencies=[rbac.LIBRARY_READ],
     summary="Get details on a specific ODM Study Event (in a specific version)",
     description="",
@@ -156,13 +156,13 @@ def get_distinct_values_for_header(
         500: _generic_descriptions.ERROR_500,
     },
 )
-def get_odm_study_event(uid: str = OdmStudyEventUID):
+def get_odm_study_event(odm_study_event_uid: str = OdmStudyEventUID):
     odm_study_event_service = OdmStudyEventService()
-    return odm_study_event_service.get_by_uid(uid=uid)
+    return odm_study_event_service.get_by_uid(uid=odm_study_event_uid)
 
 
 @router.get(
-    "/{uid}/relationships",
+    "/{odm_study_event_uid}/relationships",
     dependencies=[rbac.LIBRARY_READ],
     summary="Get UIDs of a specific ODM Study Event's relationships",
     description="",
@@ -173,13 +173,13 @@ def get_odm_study_event(uid: str = OdmStudyEventUID):
         500: _generic_descriptions.ERROR_500,
     },
 )
-def get_active_relationships(uid: str = OdmStudyEventUID):
+def get_active_relationships(odm_study_event_uid: str = OdmStudyEventUID):
     odm_study_event_service = OdmStudyEventService()
-    return odm_study_event_service.get_active_relationships(uid=uid)
+    return odm_study_event_service.get_active_relationships(uid=odm_study_event_uid)
 
 
 @router.get(
-    "/{uid}/versions",
+    "/{odm_study_event_uid}/versions",
     dependencies=[rbac.LIBRARY_READ],
     summary="List version history for ODM Study Event",
     description="""
@@ -201,14 +201,14 @@ Possible errors:
     responses={
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The ODM Study Event with the specified 'uid' wasn't found.",
+            "description": "Not Found - The ODM Study Event with the specified 'odm_study_event_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def get_odm_study_event_versions(uid: str = OdmStudyEventUID):
+def get_odm_study_event_versions(odm_study_event_uid: str = OdmStudyEventUID):
     odm_study_event_service = OdmStudyEventService()
-    return odm_study_event_service.get_version_history(uid=uid)
+    return odm_study_event_service.get_version_history(uid=odm_study_event_uid)
 
 
 @router.post(
@@ -237,7 +237,7 @@ def create_odm_study_event(
 
 
 @router.patch(
-    "/{uid}",
+    "/{odm_study_event_uid}",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Update ODM Study Event",
     description="",
@@ -254,23 +254,23 @@ def create_odm_study_event(
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The ODM Study Event with the specified 'uid' wasn't found.",
+            "description": "Not Found - The ODM Study Event with the specified 'odm_study_event_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def edit_odm_study_event(
-    uid: str = OdmStudyEventUID,
+    odm_study_event_uid: str = OdmStudyEventUID,
     odm_study_event_edit_input: OdmStudyEventPatchInput = Body(description=""),
 ):
     odm_study_event_service = OdmStudyEventService()
     return odm_study_event_service.edit_draft(
-        uid=uid, concept_edit_input=odm_study_event_edit_input
+        uid=odm_study_event_uid, concept_edit_input=odm_study_event_edit_input
     )
 
 
 @router.post(
-    "/{uid}/versions",
+    "/{odm_study_event_uid}/versions",
     dependencies=[rbac.LIBRARY_WRITE],
     summary=" Create a new version of ODM Study Event",
     description="""
@@ -300,18 +300,18 @@ Possible errors:
             "model": ErrorResponse,
             "description": "Not Found - Reasons include e.g.: \n"
             "- The ODM Study Event is not in final status.\n"
-            "- The ODM Study Event with the specified 'uid' could not be found.",
+            "- The ODM Study Event with the specified 'odm_study_event_uid' could not be found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def create_odm_study_event_version(uid: str = OdmStudyEventUID):
+def create_odm_study_event_version(odm_study_event_uid: str = OdmStudyEventUID):
     odm_study_event_service = OdmStudyEventService()
-    return odm_study_event_service.create_new_version(uid=uid)
+    return odm_study_event_service.create_new_version(uid=odm_study_event_uid)
 
 
 @router.post(
-    "/{uid}/approvals",
+    "/{odm_study_event_uid}/approvals",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Approve draft version of ODM Study Event",
     description="",
@@ -327,18 +327,18 @@ def create_odm_study_event_version(uid: str = OdmStudyEventUID):
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The ODM Study Event with the specified 'uid' wasn't found.",
+            "description": "Not Found - The ODM Study Event with the specified 'odm_study_event_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def approve_odm_study_event(uid: str = OdmStudyEventUID):
+def approve_odm_study_event(odm_study_event_uid: str = OdmStudyEventUID):
     odm_study_event_service = OdmStudyEventService()
-    return odm_study_event_service.approve(uid=uid)
+    return odm_study_event_service.approve(uid=odm_study_event_uid)
 
 
 @router.delete(
-    "/{uid}/activations",
+    "/{odm_study_event_uid}/activations",
     dependencies=[rbac.LIBRARY_WRITE],
     summary=" Inactivate final version of ODM Study Event",
     description="",
@@ -353,18 +353,18 @@ def approve_odm_study_event(uid: str = OdmStudyEventUID):
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The ODM Study Event with the specified 'uid' could not be found.",
+            "description": "Not Found - The ODM Study Event with the specified 'odm_study_event_uid' could not be found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def inactivate_odm_study_event(uid: str = OdmStudyEventUID):
+def inactivate_odm_study_event(odm_study_event_uid: str = OdmStudyEventUID):
     odm_study_event_service = OdmStudyEventService()
-    return odm_study_event_service.inactivate_final(uid=uid)
+    return odm_study_event_service.inactivate_final(uid=odm_study_event_uid)
 
 
 @router.post(
-    "/{uid}/activations",
+    "/{odm_study_event_uid}/activations",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Reactivate retired version of a ODM Study Event",
     description="",
@@ -379,18 +379,18 @@ def inactivate_odm_study_event(uid: str = OdmStudyEventUID):
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The ODM Study Event with the specified 'uid' could not be found.",
+            "description": "Not Found - The ODM Study Event with the specified 'odm_study_event_uid' could not be found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def reactivate_odm_study_event(uid: str = OdmStudyEventUID):
+def reactivate_odm_study_event(odm_study_event_uid: str = OdmStudyEventUID):
     odm_study_event_service = OdmStudyEventService()
-    return odm_study_event_service.reactivate_retired(uid=uid)
+    return odm_study_event_service.reactivate_retired(uid=odm_study_event_uid)
 
 
 @router.post(
-    "/{uid}/forms",
+    "/{odm_study_event_uid}/forms",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Adds forms to the ODM Study Event.",
     description="",
@@ -406,13 +406,13 @@ def reactivate_odm_study_event(uid: str = OdmStudyEventUID):
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The forms with the specified 'uid' wasn't found.",
+            "description": "Not Found - The forms with the specified 'odm_study_event_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def add_forms_to_odm_study_event(
-    uid: str = OdmStudyEventUID,
+    odm_study_event_uid: str = OdmStudyEventUID,
     override: bool = Query(
         False,
         description="If true, all existing form relationships will be replaced with the provided form relationships.",
@@ -423,14 +423,14 @@ def add_forms_to_odm_study_event(
 ):
     odm_study_event_service = OdmStudyEventService()
     return odm_study_event_service.add_forms(
-        uid=uid,
+        uid=odm_study_event_uid,
         odm_study_event_form_post_input=odm_study_event_form_post_input,
         override=override,
     )
 
 
 @router.delete(
-    "/{uid}",
+    "/{odm_study_event_uid}",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Delete draft version of ODM Study Event",
     description="",
@@ -449,11 +449,11 @@ def add_forms_to_odm_study_event(
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - An ODM Study Event with the specified 'uid' could not be found.",
+            "description": "Not Found - An ODM Study Event with the specified 'odm_study_event_uid' could not be found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def delete_odm_study_event(uid: str = OdmStudyEventUID):
+def delete_odm_study_event(odm_study_event_uid: str = OdmStudyEventUID):
     odm_study_event_service = OdmStudyEventService()
-    odm_study_event_service.soft_delete(uid=uid)
+    odm_study_event_service.soft_delete(uid=odm_study_event_uid)

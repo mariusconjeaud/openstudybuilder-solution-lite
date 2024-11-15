@@ -1,10 +1,10 @@
 ACTIVITY_INSTANCE_CLASS,ACTIVITY_ITEM_CLASS,DEFINITION,NCI_C_CODE,SPONSOR_CONCEPT_CODE,LEGACY_CDW_COLUMN,MANDATORY,ORDER,DATA_COLLECTION,SEMANTIC_ROLE,SEMANTIC_DATA_TYPE,CODELIST
-Observation,domain,SDTM domain,C66734,,,Yes,1,No,IDENTIFIER,TEXT,DOMAIN
-Observation,study_id,Study identifier,C83082,,,Yes,2,No,IDENTIFIER,TEXT,
-Observation,group_id,group identifier,C82529,,,No,3,Yes,IDENTIFIER,TEXT,
-Observation,link_id,Link ID,C117050,,,No,4,Yes,IDENTIFIER,TEXT,
-Observation,link_group,Link Group ID,C117049,,,No,5,Yes,IDENTIFIER,TEXT,
-Observation,associated_persons_id,Associated persons identifier,C117707,,,Yes,6,Yes,IDENTIFIER,TEXT,
+GeneralObservation,domain,SDTM domain,C66734,,,Yes,1,No,IDENTIFIER,TEXT,DOMAIN
+GeneralObservation,study_id,Study identifier,C83082,,,Yes,2,No,IDENTIFIER,TEXT,
+GeneralObservation,group_id,group identifier,C82529,,,No,3,Yes,IDENTIFIER,TEXT,
+GeneralObservation,link_id,Link ID,C117050,,,No,4,Yes,IDENTIFIER,TEXT,
+GeneralObservation,link_group,Link Group ID,C117049,,,No,5,Yes,IDENTIFIER,TEXT,
+GeneralObservation,associated_persons_id,Associated persons identifier,C117707,,,Yes,6,Yes,IDENTIFIER,TEXT,
 SubjectObservation,subject_id,"A sequence of characters used to identify, name, or characterize a trial or study subject.",C83083,,,Yes,1,Yes,IDENTIFIER,TEXT,
 SubjectObservation,unique_subject_id,A unique identifier for a subject in a study.,C69256,,,Yes,2,No,IDENTIFIER,TEXT,
 Comments,reference_id,Reference identifier,C82531,,,No,1,Yes,IDENTIFIER,TEXT,
@@ -49,42 +49,42 @@ Event,life_threatening,The serious event is life threatening.,C82508,,,No,26,Yes
 Event,toxicity,Toxicity,C27990,,,No,27,Yes,RECOQUAL,TEXT,
 Event,toxicity_grade,Records toxicity grade using a standard toxicity scale (such as the NCI CTCAE). Sponsor should specify which scale and version is used in the Sponsor Comments column of the Define.XML document.,C82528,,,No,28,Yes,RECOQUAL,TEXT,
 Event,medically_imp_serious_event,An important serious medical event,C82521,,,No,29,Yes,RECOQUAL,TEXT,NY
-Finding,reference_id,Reference identifier,C82531,,,No,1,Yes,IDENTIFIER,TEXT,
-Finding,test_code,Test code linkage to external or sponsor-defined controlled  terminology,C82503,,,Yes,2,Yes,TOPIC,TEXT,DDTESTCD;FATESTCD;QSTESTCD;RPTESTCD;RSTESTCD;SCTESTCD;VSTESTCD;ZATESTCD;BSTESTCD;CVTESTCD;DATESTCD;DOTESTCD;DUTESTCD;EGTESTCD;FTTESTCD;IETESTCD;ISTESTCD;LBTESTCD;MBTESTCD;MITESTCD;MKTESTCD;MOTESTCD;MSTESTCD;NVTESTCD;OETESTCD;PCTESTCD;PETESTCD;PFTESTCD;RETESTCD;SRTESTCD;SSTESTCD;TRTESTCD;TUTESTCD;URTESTCD;XATESTCD;XSTESTCD;ZITESTCD
-Finding,test_name,Test name linkage to external or sponsor-defined controlled  terminology,C82541,,,Yes,3,Yes,SYNOQUAL,TEXT,DDTEST;FATEST;QSTEST;RPTEST;RSTEST;VSTEST;ZATEST;BSTEST;CVTEST;DATEST;DOTEST;DUTEST;EGTEST;FTTEST;IETEST;ISTEST;LBTEST;MBTEST;MITEST;MKTEST;MOTEST;MSTEST;NVTEST;OETEST;PCTEST;PETEST;PFTEST;RETEST;SRTEST;SSTEST;TRTEST;TUTEST;URTEST;XATEST;XSTEST;ZITEST
-Finding,object_of_observation,Object of the observation,C82546,,,Yes,4,Yes,RECOQUAL,TEXT,
-Finding,repitition_number,Repitition number,,,,No,5,No,RECOQUAL,FLOAT,
-Finding,test_detail,"Measurement, Test or Examination Detail",C117062,,,No,6,Yes,RECOQUAL,TEXT,MIFTSDTL
-Finding,finding_category,Category of related records.,C25372,,,No,7,No,GROUQUAL,TEXT,QSCAT;RPCAT;CCCAT;VSCAT;EGCAT;IECAT;OECAT;PECAT;QSCAT;RPCAT;CCCAT;IECAT;VSCAT
-Finding,finding_subcategory,Sub-Category of related records.,C25692,,,No,8,No,GROUQUAL,TEXT,
-Finding,position,Position of subject,C71148,,,No,9,Yes,RECOQUAL,TEXT,POSITION
-Finding,normal_range_lower_limit,Lower Normal Limit,C82580,,,No,10,Yes,VARIQUAL,FLOAT,
-Finding,normal_range_upper_limit,Upper Normal Limit,C70933,,,No,11,Yes,VARIQUAL,FLOAT,
-Finding,normal_range_indicator,Reference Range Indicator,C82532,,,No,12,Yes,VARIQUAL,TEXT,NRIND
-Finding,location,Location,C25341,,,No,13,Yes,RECOQUAL,CTTERM,LOC
-Finding,laterality,Laterality,C25185,,,No,14,Yes,RECOQUAL,CTTERM,LAT
-Finding,directionality,Anatomical location further detailing directionality,C54215,,,No,15,Yes,RECOQUAL,TEXT,DIR
-Finding,portion,"Anatomical location further detailing distribution. For e.g. ENTIRE, SINGLE, SEGMENT.",C103166,,,No,16,Yes,RECOQUAL,TEXT,PORTOT
-Finding,finding_result_category,Used to categorize the result of a finding.,C82498,,,No,17,Yes,VARIQUAL,TEXT,MSRESCAT
-Finding,completion_status,The completion status indicates that a question was not answered.,C41202,,,No,18,Yes,RECOQUAL,TEXT,ND
-Finding,reason_not_done,Describes the reason data was not collected. Used in conjunction with completion_status  when value is NOT DONE.,C82556,,,No,19,Yes,RECOQUAL,TEXT,
-Finding,vendor_name,Name or identifier of the laboratory or vendor who provided the test results.,C82537,,,No,20,Yes,RECOQUAL,TEXT,
-Finding,loinc,LOINC code,C82502,,,No,21,Yes,SYNOQUAL,TEXT,
-Finding,specimen,Defines the type of specimen used for a measurement.,C70713,,,No,22,Yes,RECOQUAL,TEXT,SPECTYPE; GENSMP
-Finding,anatomical_region,"Defines the specific anatomical or biological region of a tissue, organ specimen or the region from which the specimen is obtained, as defined in the protocol",C170983,,,No,23,Yes,VARIQUAL,TEXT,
-Finding,specimen_condition,Defines the condition of the specimen,C70714,,,No,24,Yes,RECOQUAL,TEXT,SPECCOND
-Finding,method,Method of the test or examination,C82535,,,No,25,Yes,RECOQUAL,TEXT,METHOD; EGMETHOD
-Finding,analysis_method,Analysis method applied to obtain a summarized result. Analysis method describes the method of secondary processing applied to a complex observation result,C117039,,,No,26,Yes,RECOQUAL,TEXT,
-Finding,lead_to_collect_measurement,"The lead used for the measurement, examples, V1, V6, aVR, I, II, III.",C90013,,,No,27,Yes,RECOQUAL,TEXT,LOC
-Finding,fasting_status,"Indicator used to identify fasting status such as Y, N, U, or null if not relevant.",C93566,,,No,28,Yes,RECOQUAL,TEXT,NY
-Finding,evaluator,Role of the person who provided the evaluation.,C51824,,,No,29,Yes,RECOQUAL,TEXT,EVAL
-Finding,evaluator_id,Used to distinguish multiple evaluators with the same role recorded in evaluator.,C117043,,,No,30,Yes,VARIQUAL,TEXT,MEDEVAL
-Finding,collection_datetime,Date/time of collection,C82515,,,No,31,Yes,TIMING,DATETIME,
-Finding,end_datetime,End Date/Time of Observation,C82516,,,No,32,Yes,TIMING,DATETIME,
-Finding,time_point,Text description of time when a measurement or observation should be taken as defined in the protocol.,C82539,,,No,33,Yes,TIMING,TEXT,
-Finding,elapsed_time,"Planned Elapsed time in ISO 8601 format which is relative to a planned fixed reference. It is to be used when there are repetitive measurements. It is not a clock time or a date/time variable, but an interval.",C82572,,,No,34,Yes,RECOQUAL,TEXT,
-Finding,evaluation_interval,Evaluation interval of the finding,C82534,,,No,35,Yes,TIMING,TEXT,
-Finding,evaluation_interval_text,"Evaluation interval associated with an observation, where the interval is not able to be represented in ISO 8601 format",C117044,,,No,36,Yes,TIMING,TEXT,
+Findings,reference_id,Reference identifier,C82531,,,No,1,Yes,IDENTIFIER,TEXT,
+Findings,test_code,Test code linkage to external or sponsor-defined controlled  terminology,C82503,,,Yes,2,Yes,TOPIC,TEXT,DDTESTCD;FATESTCD;QSTESTCD;RPTESTCD;RSTESTCD;SCTESTCD;VSTESTCD;ZATESTCD;BSTESTCD;CVTESTCD;DATESTCD;DOTESTCD;DUTESTCD;EGTESTCD;FTTESTCD;IETESTCD;ISTESTCD;LBTESTCD;MBTESTCD;MITESTCD;MKTESTCD;MOTESTCD;MSTESTCD;NVTESTCD;OETESTCD;PCTESTCD;PETESTCD;PFTESTCD;RETESTCD;SRTESTCD;SSTESTCD;TRTESTCD;TUTESTCD;URTESTCD;XATESTCD;XSTESTCD;ZITESTCD
+Findings,test_name,Test name linkage to external or sponsor-defined controlled  terminology,C82541,,,Yes,3,Yes,SYNOQUAL,TEXT,DDTEST;FATEST;QSTEST;RPTEST;RSTEST;VSTEST;ZATEST;BSTEST;CVTEST;DATEST;DOTEST;DUTEST;EGTEST;FTTEST;IETEST;ISTEST;LBTEST;MBTEST;MITEST;MKTEST;MOTEST;MSTEST;NVTEST;OETEST;PCTEST;PETEST;PFTEST;RETEST;SRTEST;SSTEST;TRTEST;TUTEST;URTEST;XATEST;XSTEST;ZITEST
+Findings,object_of_observation,Object of the observation,C82546,,,Yes,4,Yes,RECOQUAL,TEXT,
+Findings,repitition_number,Repitition number,,,,No,5,No,RECOQUAL,FLOAT,
+Findings,test_detail,"Measurement, Test or Examination Detail",C117062,,,No,6,Yes,RECOQUAL,TEXT,MIFTSDTL
+Findings,finding_category,Category of related records.,C25372,,,No,7,No,GROUQUAL,TEXT,QSCAT;RPCAT;CCCAT;VSCAT;EGCAT;IECAT;OECAT;PECAT;QSCAT;RPCAT;CCCAT;IECAT;VSCAT
+Findings,finding_subcategory,Sub-Category of related records.,C25692,,,No,8,No,GROUQUAL,TEXT,
+Findings,position,Position of subject,C71148,,,No,9,Yes,RECOQUAL,TEXT,POSITION
+Findings,normal_range_lower_limit,Lower Normal Limit,C82580,,,No,10,Yes,VARIQUAL,FLOAT,
+Findings,normal_range_upper_limit,Upper Normal Limit,C70933,,,No,11,Yes,VARIQUAL,FLOAT,
+Findings,normal_range_indicator,Reference Range Indicator,C82532,,,No,12,Yes,VARIQUAL,TEXT,NRIND
+Findings,location,Location,C25341,,,No,13,Yes,RECOQUAL,CTTERM,LOC
+Findings,laterality,Laterality,C25185,,,No,14,Yes,RECOQUAL,CTTERM,LAT
+Findings,directionality,Anatomical location further detailing directionality,C54215,,,No,15,Yes,RECOQUAL,TEXT,DIR
+Findings,portion,"Anatomical location further detailing distribution. For e.g. ENTIRE, SINGLE, SEGMENT.",C103166,,,No,16,Yes,RECOQUAL,TEXT,PORTOT
+Findings,finding_result_category,Used to categorize the result of a finding.,C82498,,,No,17,Yes,VARIQUAL,TEXT,MSRESCAT
+Findings,completion_status,The completion status indicates that a question was not answered.,C41202,,,No,18,Yes,RECOQUAL,TEXT,ND
+Findings,reason_not_done,Describes the reason data was not collected. Used in conjunction with completion_status  when value is NOT DONE.,C82556,,,No,19,Yes,RECOQUAL,TEXT,
+Findings,vendor_name,Name or identifier of the laboratory or vendor who provided the test results.,C82537,,,No,20,Yes,RECOQUAL,TEXT,
+Findings,loinc,LOINC code,C82502,,,No,21,Yes,SYNOQUAL,TEXT,
+Findings,specimen,Defines the type of specimen used for a measurement.,C70713,,,No,22,Yes,RECOQUAL,TEXT,SPECTYPE; GENSMP
+Findings,anatomical_region,"Defines the specific anatomical or biological region of a tissue, organ specimen or the region from which the specimen is obtained, as defined in the protocol",C170983,,,No,23,Yes,VARIQUAL,TEXT,
+Findings,specimen_condition,Defines the condition of the specimen,C70714,,,No,24,Yes,RECOQUAL,TEXT,SPECCOND
+Findings,method,Method of the test or examination,C82535,,,No,25,Yes,RECOQUAL,TEXT,METHOD; EGMETHOD
+Findings,analysis_method,Analysis method applied to obtain a summarized result. Analysis method describes the method of secondary processing applied to a complex observation result,C117039,,,No,26,Yes,RECOQUAL,TEXT,
+Findings,lead_to_collect_measurement,"The lead used for the measurement, examples, V1, V6, aVR, I, II, III.",C90013,,,No,27,Yes,RECOQUAL,TEXT,LOC
+Findings,fasting_status,"Indicator used to identify fasting status such as Y, N, U, or null if not relevant.",C93566,,,No,28,Yes,RECOQUAL,TEXT,NY
+Findings,evaluator,Role of the person who provided the evaluation.,C51824,,,No,29,Yes,RECOQUAL,TEXT,EVAL
+Findings,evaluator_id,Used to distinguish multiple evaluators with the same role recorded in evaluator.,C117043,,,No,30,Yes,VARIQUAL,TEXT,MEDEVAL
+Findings,collection_datetime,Date/time of collection,C82515,,,No,31,Yes,TIMING,DATETIME,
+Findings,end_datetime,End Date/Time of Observation,C82516,,,No,32,Yes,TIMING,DATETIME,
+Findings,time_point,Text description of time when a measurement or observation should be taken as defined in the protocol.,C82539,,,No,33,Yes,TIMING,TEXT,
+Findings,elapsed_time,"Planned Elapsed time in ISO 8601 format which is relative to a planned fixed reference. It is to be used when there are repetitive measurements. It is not a clock time or a date/time variable, but an interval.",C82572,,,No,34,Yes,RECOQUAL,TEXT,
+Findings,evaluation_interval,Evaluation interval of the finding,C82534,,,No,35,Yes,TIMING,TEXT,
+Findings,evaluation_interval_text,"Evaluation interval associated with an observation, where the interval is not able to be represented in ISO 8601 format",C117044,,,No,36,Yes,TIMING,TEXT,
 CategoricFinding,original_result,Original result,C117221,,,Yes,1,Yes,RESUQUAL,TEXT,HEP_CQ; QUEST_RESPONSE; YESNO
 NumericFinding,original_result,Original result,C117221,,,Yes,1,Yes,RESUQUAL,FLOAT,
 NumericFinding,original_result_unit,Original result unit,C82586,,,Yes,2,Yes,VARIQUAL,TEXT,UNIT

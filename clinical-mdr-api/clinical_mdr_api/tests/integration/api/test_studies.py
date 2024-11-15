@@ -9,11 +9,14 @@ Tests for /studies endpoints
 # pytest fixture functions have other fixture functions as arguments,
 # which pylint interprets as unused arguments
 
+import copy
 import datetime
 import json
 import logging
 import random
 from string import ascii_lowercase
+from typing import Sequence
+from unittest import mock
 
 import pytest
 from fastapi.testclient import TestClient
@@ -33,6 +36,10 @@ from clinical_mdr_api.models.study_selections.study import (
     StudyPatchRequestJsonModel,
 )
 from clinical_mdr_api.models.study_selections.study_selection import EndpointUnitsInput
+from clinical_mdr_api.models.study_selections.study_standard_version import (
+    StudyStandardVersion,
+    StudyStandardVersionVersion,
+)
 from clinical_mdr_api.services.studies.study import StudyService
 from clinical_mdr_api.tests.integration.utils.api import (
     inject_and_clear_db,
@@ -318,6 +325,14 @@ def test_get_snapshot_history(api_client):
     )
     assert response.status_code == 201
 
+    # get all standard versions
+    response = api_client.get(
+        f"/studies/{study_with_history.uid}/study-standard-versions/",
+    )
+    res: Sequence[StudyStandardVersion] = response.json()
+    assert response.status_code == 200
+    assert res[0]["automatically_created"] is True
+
     # snapshot history after lock
     response = api_client.get(f"/studies/{study_with_history.uid}/snapshot-history")
     res = response.json()
@@ -340,6 +355,22 @@ def test_get_snapshot_history(api_client):
     # Unlock
     response = api_client.delete(f"/studies/{study_with_history.uid}/locks")
     assert response.status_code == 200
+
+    # get all standard versions
+    response = api_client.get(
+        f"/studies/{study_with_history.uid}/study-standard-versions/",
+    )
+    res: StudyStandardVersion = response.json()
+    assert response.status_code == 200
+    assert len(res) == 0
+
+    # get all history when was locked
+    response = api_client.get(
+        f"/studies/{study_with_history.uid}/study-standard-versions/audit-trail/",
+    )
+    res: Sequence[StudyStandardVersionVersion] = response.json()
+    assert response.status_code == 200
+    assert res[0]["automatically_created"] is True
 
     # snapshot history after unlock
     response = api_client.get(f"/studies/{study_with_history.uid}/snapshot-history")
@@ -510,6 +541,8 @@ def test_get_specific_version(api_client):
         json={"current_metadata": {"study_description": {"study_title": title_1}}},
     )
     assert response.status_code == 200
+
+    TestUtils.set_study_standard_version(study_uid=study.uid)
 
     # Lock
     response = api_client.post(
@@ -699,6 +732,8 @@ def test_get_protocol_title_for_specific_version(api_client):
     )
     assert response.status_code == 200
     res_old = response.json()
+
+    TestUtils.set_study_standard_version(study_uid=study.uid)
 
     # Lock
     response = api_client.post(
@@ -1260,6 +1295,8 @@ def test_cascade_of_study_parent_part(api_client):
             "investigational_device_exemption_ide_number_null_value_code": None,
         }
 
+    TestUtils.set_study_standard_version(study_uid=parent_study.uid)
+
     response = api_client.post(
         f"/studies/{parent_study.uid}/locks",
         json={"change_description": "Locked"},
@@ -1574,21 +1611,6 @@ def test_remove_study_subpart_from_parent_part(api_client):
         f"/studies/{new_study.uid}",
         json={
             "study_parent_part_uid": None,
-            "current_metadata": {"identification_metadata": {"study_acronym": None}},
-        },
-    )
-    assert response.status_code == 400
-    res = response.json()
-    assert res["type"] == "ValidationException"
-    assert (
-        res["message"]
-        == "Either study number or study acronym must be given in study metadata."
-    )
-
-    response = api_client.patch(
-        f"/studies/{new_study.uid}",
-        json={
-            "study_parent_part_uid": None,
             "current_metadata": {
                 "identification_metadata": {"study_acronym": "something"}
             },
@@ -1743,6 +1765,8 @@ def test_get_audit_trail_of_all_study_subparts_of_study(api_client):
         json={"current_metadata": {"study_description": {"study_title": "new title"}}},
     )
     assert response.status_code == 200
+
+    TestUtils.set_study_standard_version(study_uid="Study_000025")
 
     # Lock
     response = api_client.post(
@@ -2031,6 +2055,8 @@ def test_cannot_change_project_of_subpart(api_client):
 
 
 def test_cannot_lock_study_subpart(api_client):
+    TestUtils.set_study_standard_version(study_uid="Study_000011")
+
     response = api_client.post(
         "/studies/Study_000011/locks", json={"change_description": "Lock"}
     )
@@ -2079,6 +2105,8 @@ def test_cannot_add_study_subpart_to_a_locked_study_parent_part(api_client):
         json={"current_metadata": {"study_description": {"study_title": "a title"}}},
     )
     assert response.status_code == 200
+
+    TestUtils.set_study_standard_version(study_uid=_study.uid)
 
     response = api_client.post(
         f"/studies/{_study.uid}/locks", json={"change_description": "Lock"}
@@ -2167,7 +2195,8 @@ def test_study_metadata_version_selecting_ct_package(api_client):
 
     # get study with ctterm latest
     def payload_creation(
-        _study: StudyPatchRequestJsonModel, new_name_ctterm: ct_term.SimpleTermModel
+        _study: StudyPatchRequestJsonModel,
+        new_name_ctterm: ct_term.SimpleCTTermNameWithConflictFlag,
     ):
         return StudyPatchRequestJsonModel(
             current_metadata=StudyMetadataJsonModel(
@@ -2211,15 +2240,31 @@ def test_study_metadata_version_selecting_ct_package(api_client):
             )
         )
 
-    new_named_ctterm = ct_term.SimpleTermModel(
-        term_uid=ct_term_study_standard_test.term_uid, name=new_ctterm_name
-    )
-    old_named_ctterm = ct_term.SimpleTermModel(
+    new_named_ctterm = ct_term.SimpleCTTermNameWithConflictFlag(
         term_uid=ct_term_study_standard_test.term_uid,
-        name=ct_term_study_standard_test.sponsor_preferred_name,
+        sponsor_preferred_name=new_ctterm_name,
+        queried_effective_date=None,
+        date_conflict=False,
     )
+    old_named_ctterm = ct_term.SimpleCTTermNameWithConflictFlag(
+        term_uid=ct_term_study_standard_test.term_uid,
+        sponsor_preferred_name=ct_term_study_standard_test.sponsor_preferred_name,
+        queried_effective_date=None,
+        date_conflict=False,
+    )
+    new_named_ctterm_to_compare = copy.deepcopy(new_named_ctterm)
+    new_named_ctterm_to_compare.queried_effective_date = mock.ANY
+    new_named_study_payload_to_compare = payload_creation(
+        _study, new_named_ctterm_to_compare
+    )
+
+    old_named_ctterm_to_compare = copy.deepcopy(old_named_ctterm)
+    old_named_ctterm_to_compare.queried_effective_date = mock.ANY
+    old_named_study_payload_to_compare = payload_creation(
+        _study, old_named_ctterm_to_compare
+    )
+
     new_named_study_payload = payload_creation(_study, new_named_ctterm)
-    old_named_study_payload = payload_creation(_study, old_named_ctterm)
     response = api_client.patch(
         f"/studies/{_study.uid}", json=new_named_study_payload.dict()
     )
@@ -2227,31 +2272,18 @@ def test_study_metadata_version_selecting_ct_package(api_client):
     res = response.json()
     assert (
         res["current_metadata"]["identification_metadata"]
-        == new_named_study_payload.current_metadata.identification_metadata.dict()
+        == new_named_study_payload_to_compare.current_metadata.identification_metadata.dict()
     )
     assert (
-        new_named_study_payload.current_metadata.identification_metadata.dict()
-        != old_named_study_payload.current_metadata.identification_metadata.dict()
+        new_named_study_payload_to_compare.current_metadata.identification_metadata.dict()
+        != old_named_study_payload_to_compare.current_metadata.identification_metadata.dict()
     )
 
-    # get ct_packages
-    response = api_client.get(
-        "/ct/packages",
+    TestUtils.set_study_standard_version(
+        study_uid=_study.uid,
+        package_name="SDTM CT 2020-03-27",
+        effective_date=datetime.datetime(2020, 3, 27, tzinfo=datetime.timezone.utc),
     )
-    res = response.json()
-    assert response.status_code == 200
-    ct_package_uid = res[0]["uid"]
-
-    # create study standard version
-    response = api_client.post(
-        f"/studies/{_study.uid}/study-standard-versions",
-        json={
-            "ct_package_uid": ct_package_uid,
-        },
-    )
-    res = response.json()
-    assert response.status_code == 201
-    assert res["ct_package"]["uid"] == ct_package_uid
 
     # get study with previous ctterm
     response = api_client.get(
@@ -2261,11 +2293,11 @@ def test_study_metadata_version_selecting_ct_package(api_client):
     res = response.json()
     assert (
         res["current_metadata"]["identification_metadata"]
-        == old_named_study_payload.current_metadata.identification_metadata.dict()
+        == old_named_study_payload_to_compare.current_metadata.identification_metadata.dict()
     )
     assert (
-        old_named_study_payload.current_metadata.identification_metadata.dict()
-        != new_named_study_payload.current_metadata.identification_metadata.dict()
+        old_named_study_payload_to_compare.current_metadata.identification_metadata.dict()
+        != new_named_study_payload_to_compare.current_metadata.identification_metadata.dict()
     )
 
 
@@ -2699,3 +2731,36 @@ def test_verify_study_duration_fields(
         ]["uid"]
         == duration_unit.uid
     )
+
+
+def test_get_study_structure_overview(api_client):
+    response = api_client.get("/studies/structure-overview")
+    assert response.status_code == 200
+    res = response.json()
+    assert all(
+        i in res["items"][0]
+        for i in [
+            "uid",
+            "study_id",
+            "arms",
+            "pre_treatment_epochs",
+            "treatment_epochs",
+            "no_treatment_epochs",
+            "post_treatment_epochs",
+            "treatment_elements",
+            "no_treatment_elements",
+            "cohorts_in_study",
+        ]
+    )
+    assert len(res["items"]) == 10
+
+    response = api_client.get("/studies/structure-overview?page_size=5&page_number=2")
+    assert response.status_code == 200
+    res = response.json()
+    assert len(res["items"]) == 5
+
+    response = api_client.get("/studies/structure-overview?page_size=0")
+    assert response.status_code == 200
+    res = response.json()
+    assert len(res["items"]) == 64
+    print(res["items"])

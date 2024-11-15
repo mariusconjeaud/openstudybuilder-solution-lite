@@ -3,15 +3,9 @@ import re
 from typing import Any
 
 import neo4j
-from neomodel import (
-    AliasProperty,
-    StructuredRel,
-    match,
-    match_q,
-    properties,
-    relationship_manager,
-)
-from neomodel.core import db
+from neomodel import AliasProperty, StructuredRel, match_q, properties
+from neomodel.sync_ import match, relationship_manager
+from neomodel.sync_.core import db
 
 from clinical_mdr_api import exceptions
 

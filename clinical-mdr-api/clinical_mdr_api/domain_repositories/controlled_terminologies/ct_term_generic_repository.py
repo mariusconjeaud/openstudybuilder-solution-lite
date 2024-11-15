@@ -445,6 +445,7 @@ class CTTermGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType],
         """
         ctterm_name_element_ids = db.cypher_query(cypher_query, params=params)[0][0][0]
 
+        # !TODO rename parameter uid to element_ids to be consistent
         element_id_filter = {"uid": {"v": ctterm_name_element_ids, "op": "eq"}}
         term_ars, _ = self.get_all_optimized(
             status=status,

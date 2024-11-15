@@ -383,7 +383,7 @@ class CTTermAggregatedRepository:
             match_clause += " MATCH (codelist_root:CTCodelistRoot)-[rel_term:HAS_TERM|HAD_TERM]->(term_root) "
 
         if codelist_uid or codelist_name:
-            # Build spefic filtering for codelist
+            # Build specific filtering for codelist
             # This is done separately from library and package as we first need to match codelist_root
             (
                 codelist_filter_statements,

@@ -127,7 +127,7 @@ def get_distinct_values_for_header(
 
 
 @router.get(
-    "/{uid}",
+    "/{numeric_value_uid}",
     dependencies=[rbac.LIBRARY_READ],
     summary="Get details on a specific numeric value with unit",
     description="""
@@ -147,9 +147,9 @@ Possible errors:
         500: _generic_descriptions.ERROR_500,
     },
 )
-def get_numeric_value(uid: str = NumericValueUID):
+def get_numeric_value(numeric_value_uid: str = NumericValueUID):
     numeric_value_service = NumericValueWithUnitService()
-    return numeric_value_service.get_by_uid(uid=uid)
+    return numeric_value_service.get_by_uid(uid=numeric_value_uid)
 
 
 @router.post(

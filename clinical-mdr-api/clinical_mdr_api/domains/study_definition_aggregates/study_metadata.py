@@ -130,6 +130,7 @@ class StudyIdentificationMetadataVO:
         study_number_exists_callback: Callable[[str, str], bool] = (lambda x, y: False),
         null_value_exists_callback: Callable[[str], bool] = (lambda _: True),
         is_subpart: bool = False,
+        previous_is_subpart: bool = False,
         updatable_subpart: bool = False,
         previous_project_number: str | None = None,
         uid: str | None = None,
@@ -158,7 +159,12 @@ class StudyIdentificationMetadataVO:
             null_value_exists_callback=null_value_exists_callback
         )
 
-        if not is_subpart and self.study_number is None and self.study_acronym is None:
+        if (
+            not previous_is_subpart
+            and not is_subpart
+            and self.study_number is None
+            and self.study_acronym is None
+        ):
             raise exceptions.ValidationException(
                 "Either study number or study acronym must be given in study metadata."
             )

@@ -103,10 +103,25 @@ MDR_MIGRATION_INCLUDE_EXAMPLE_DESIGNS = (
     environ.get("MDR_MIGRATION_INCLUDE_EXAMPLE_DESIGNS", "False").lower() == "true"
 )
 
+MDR_MIGRATION_EXPORTED_DICTIONARIES = (
+    environ.get("MDR_MIGRATION_EXPORTED_DICTIONARIES", "True").lower() == "true"
+)
 DUMMY_STUDY_NUMBER = 9999
 
 EXAMPLE_DESIGNS_START = 9000
 EXAMPLE_DESIGNS_END = 9004
+
+PROJECTS = "Projects"
+CLINICAL_PROGRAMMES = "ClinicalProgrammes"
+BRANDS = "Brands"
+ACTIVITIES = "Activities"
+ACTIVITY_INSTANCES = "ActivityInstances"
+UNITS = "Units"
+COMPOUNDS = "Compounds"
+TEMPLATES = "Templates"
+STUDIES = "Studies"
+CONCEPT_VALUES = "ConceptValues"
+DICTIONARIES = "Dictionaries"
 
 
 IMPORT_DIR = os.path.dirname(IMPORT_PROJECTS)
@@ -2874,25 +2889,29 @@ class MockdataJson(BaseImporter):
             self.log.info("Skipping brands")
 
         # Dictionaries
-        snomed_json = os.path.join(self.import_dir, "dictionaries.SNOMED.json")
-        self.handle_dictionaries(snomed_json, "SNOMED")
-        unii_json = os.path.join(self.import_dir, "dictionaries.UNII.json")
-        self.handle_dictionaries(unii_json, "UNII")
-        medrt_json = os.path.join(self.import_dir, "dictionaries.MED-RT.json")
-        self.handle_dictionaries(medrt_json, "MED-RT")
-        ucum_json = os.path.join(self.import_dir, "dictionaries.UCUM.json")
-        self.handle_dictionaries(ucum_json, "UCUM")
+        if MDR_MIGRATION_EXPORTED_DICTIONARIES:
+            snomed_json = os.path.join(self.import_dir, "dictionaries.SNOMED.json")
+            self.handle_dictionaries(snomed_json, "SNOMED")
+            unii_json = os.path.join(self.import_dir, "dictionaries.UNII.json")
+            self.handle_dictionaries(unii_json, "UNII")
+            medrt_json = os.path.join(self.import_dir, "dictionaries.MED-RT.json")
+            self.handle_dictionaries(medrt_json, "MED-RT")
+            ucum_json = os.path.join(self.import_dir, "dictionaries.UCUM.json")
+            self.handle_dictionaries(ucum_json, "UCUM")
 
         # Unit definitions
-        units_ct_json = os.path.join(self.import_dir, "ct.terms.Unit.json")
-        self.handle_ct_extensions(units_ct_json, "Unit")
+        if MDR_MIGRATION_EXPORTED_UNITS:
+            units_ct_json = os.path.join(self.import_dir, "ct.terms.Unit.json")
+            self.handle_ct_extensions(units_ct_json, "Unit")
+        else:
+            self.log.info("Skipping sponsor defined units")
 
         # Unit definitions
         if MDR_MIGRATION_EXPORTED_UNITS:
             units_json = os.path.join(self.import_dir, "concepts.unit-definitions.json")
             self.handle_unit_definitions(units_json)
         else:
-            self.log.info("Skipping units")
+            self.log.info("Skipping unit definitions")
 
         # Value concepts
         if MDR_MIGRATION_EXPORTED_CONCEPT_VALUES:
@@ -2961,4 +2980,96 @@ def main():
 
 
 if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser(prog="run_import_mockdatajson.py")
+    parser.add_argument(
+        "-l",
+        "--limit",
+        nargs="*",
+        choices=[
+            PROJECTS,
+            CLINICAL_PROGRAMMES,
+            BRANDS,
+            ACTIVITIES,
+            ACTIVITY_INSTANCES,
+            UNITS,
+            COMPOUNDS,
+            TEMPLATES,
+            STUDIES,
+            CONCEPT_VALUES,
+            DICTIONARIES,
+        ],
+        help="Limit the import to the given data types",
+    )
+    parser.add_argument(
+        "-s",
+        "--study",
+        nargs="*",
+        help="Limit the import to the given study numbers",
+        type=int,
+    )
+    args = parser.parse_args()
+    print(args)
+    if args.limit:
+        if PROJECTS in args.limit:
+            MDR_MIGRATION_EXPORTED_PROJECTS = True
+        else:
+            MDR_MIGRATION_EXPORTED_PROJECTS = False
+
+        if CLINICAL_PROGRAMMES in args.limit:
+            MDR_MIGRATION_EXPORTED_PROGRAMMES = True
+        else:
+            MDR_MIGRATION_EXPORTED_PROGRAMMES = False
+
+        if BRANDS in args.limit:
+            MDR_MIGRATION_EXPORTED_BRANDS = True
+        else:
+            MDR_MIGRATION_EXPORTED_BRANDS = False
+
+        if ACTIVITIES in args.limit:
+            MDR_MIGRATION_EXPORTED_ACTIVITIES = True
+        else:
+            MDR_MIGRATION_EXPORTED_ACTIVITIES = False
+
+        if ACTIVITY_INSTANCES in args.limit:
+            MDR_MIGRATION_EXPORTED_ACTIVITY_INSTANCES = True
+        else:
+            MDR_MIGRATION_EXPORTED_ACTIVITY_INSTANCES = False
+
+        if UNITS in args.limit:
+            MDR_MIGRATION_EXPORTED_UNITS = True
+        else:
+            MDR_MIGRATION_EXPORTED_UNITS = False
+
+        if COMPOUNDS in args.limit:
+            MDR_MIGRATION_EXPORTED_COMPOUNDS = True
+        else:
+            MDR_MIGRATION_EXPORTED_COMPOUNDS = False
+
+        if TEMPLATES in args.limit:
+            MDR_MIGRATION_EXPORTED_TEMPLATES = True
+        else:
+            MDR_MIGRATION_EXPORTED_TEMPLATES = False
+
+        if STUDIES in args.limit:
+            MDR_MIGRATION_EXPORTED_STUDIES = True
+        else:
+            MDR_MIGRATION_EXPORTED_STUDIES = False
+
+        if CONCEPT_VALUES in args.limit:
+            MDR_MIGRATION_EXPORTED_CONCEPT_VALUES = True
+        else:
+            MDR_MIGRATION_EXPORTED_CONCEPT_VALUES = False
+
+        if DICTIONARIES in args.limit:
+            MDR_MIGRATION_EXPORTED_DICTIONARIES = True
+        else:
+            MDR_MIGRATION_EXPORTED_DICTIONARIES = False
+
+    if args.study:
+        INCLUDE_STUDY_NUMBERS = ",".join([str(study) for study in args.study])
+        MDR_MIGRATION_INCLUDE_DUMMY_STUDY = True
+        MDR_MIGRATION_INCLUDE_EXAMPLE_DESIGNS = True
+
     main()

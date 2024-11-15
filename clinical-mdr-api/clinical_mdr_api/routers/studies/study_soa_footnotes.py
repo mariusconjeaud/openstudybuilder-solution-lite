@@ -7,6 +7,8 @@ from clinical_mdr_api import config
 from clinical_mdr_api.models.error import ErrorResponse
 from clinical_mdr_api.models.study_selections.study_soa_footnote import (
     StudySoAFootnote,
+    StudySoAFootnoteBatchEditInput,
+    StudySoAFootnoteBatchOutput,
     StudySoAFootnoteCreateFootnoteInput,
     StudySoAFootnoteCreateInput,
     StudySoAFootnoteEditInput,
@@ -70,7 +72,7 @@ def get_all_study_soa_footnotes_from_all_studies(
 
 
 @router.get(
-    "/studies/{uid}/study-soa-footnotes",
+    "/studies/{study_uid}/study-soa-footnotes",
     dependencies=[rbac.STUDY_READ],
     summary="List all study soa footnotes currently defined for the study",
     response_model=CustomPage[StudySoAFootnote],
@@ -84,7 +86,7 @@ def get_all_study_soa_footnotes_from_all_studies(
     },
 )
 def get_all_study_soa_footnotes(
-    uid: str = utils.studyUID,
+    study_uid: str = utils.studyUID,
     sort_by: Json = Query(None, description=_generic_descriptions.SORT_BY),
     page_number: int
     | None = Query(1, ge=1, description=_generic_descriptions.PAGE_NUMBER),
@@ -108,7 +110,7 @@ def get_all_study_soa_footnotes(
 ) -> CustomPage[StudySoAFootnote]:
     service = StudySoAFootnoteService()
     all_footnotes = service.get_all_by_study_uid(
-        study_uid=uid,
+        study_uid=study_uid,
         page_number=page_number,
         page_size=page_size,
         total_count=total_count,
@@ -126,7 +128,7 @@ def get_all_study_soa_footnotes(
 
 
 @router.get(
-    "/studies/{uid}/study-soa-footnotes/headers",
+    "/studies/{study_uid}/study-soa-footnotes/headers",
     dependencies=[rbac.STUDY_READ],
     summary="Returns possible values from the database for a given header",
     description="Allowed parameters include : field name for which to get possible values, "
@@ -142,7 +144,7 @@ def get_all_study_soa_footnotes(
     },
 )
 def get_distinct_values_for_header(
-    uid: str = utils.studyUID,
+    study_uid: str = utils.studyUID,
     field_name: str = Query(..., description=_generic_descriptions.HEADER_FIELD_NAME),
     search_string: str
     | None = Query("", description=_generic_descriptions.HEADER_SEARCH_STRING),
@@ -159,7 +161,7 @@ def get_distinct_values_for_header(
 ):
     service = StudySoAFootnoteService()
     return service.get_distinct_values_for_header(
-        study_uid=uid,
+        study_uid=study_uid,
         field_name=field_name,
         search_string=search_string,
         filter_by=filters,
@@ -211,7 +213,7 @@ def get_distinct_values_for_header_top_level(
 
 
 @router.get(
-    "/studies/{uid}/study-soa-footnotes/{study_soa_footnote_uid}",
+    "/studies/{study_uid}/study-soa-footnotes/{study_soa_footnote_uid}",
     dependencies=[rbac.STUDY_READ],
     summary="List a specific study soa footnote defined for a study",
     response_model=StudySoAFootnote,
@@ -226,7 +228,7 @@ def get_distinct_values_for_header_top_level(
 )
 def get_study_soa_footnote(
     # pylint: disable=unused-argument
-    uid: str = utils.studyUID,
+    study_uid: str = utils.studyUID,
     study_soa_footnote_uid: str = utils.study_soa_footnote_uid,
     study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
 ) -> StudySoAFootnote:
@@ -237,7 +239,7 @@ def get_study_soa_footnote(
 
 
 @router.post(
-    "/studies/{uid}/study-soa-footnotes",
+    "/studies/{study_uid}/study-soa-footnotes",
     dependencies=[rbac.STUDY_WRITE],
     summary="Add a study soa footnote to a study",
     response_model=StudySoAFootnote,
@@ -245,14 +247,14 @@ def get_study_soa_footnote(
     responses={
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - Study, footnote or SoA item is not found with the passed 'uid'.",
+            "description": "Not Found - Study, footnote or SoA item is not found with the passed 'study_uid'.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-@decorators.validate_if_study_is_not_locked("uid")
+@decorators.validate_if_study_is_not_locked("study_uid")
 def post_new_soa_footnote(
-    uid: str = utils.studyUID,
+    study_uid: str = utils.studyUID,
     soa_footnote_input: StudySoAFootnoteCreateFootnoteInput
     | StudySoAFootnoteCreateInput = Body(
         description="Related parameters of the schedule that shall be created."
@@ -266,14 +268,14 @@ def post_new_soa_footnote(
 ) -> StudySoAFootnote:
     service = StudySoAFootnoteService()
     return service.create(
-        study_uid=uid,
+        study_uid=study_uid,
         footnote_input=soa_footnote_input,
         create_footnote=create_footnote,
     )
 
 
 @router.post(
-    "/studies/{uid}/study-soa-footnotes/batch-select",
+    "/studies/{study_uid}/study-soa-footnotes/batch-select",
     dependencies=[rbac.STUDY_WRITE],
     summary="Batch create Study SoA footnotes to a given Study",
     response_model=list[StudySoAFootnote],
@@ -281,24 +283,49 @@ def post_new_soa_footnote(
     responses={
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - Study, footnote or SoA item is not found with the passed 'uid'.",
+            "description": "Not Found - Study, footnote or SoA item is not found with the passed 'study_uid'.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-@decorators.validate_if_study_is_not_locked("uid")
+@decorators.validate_if_study_is_not_locked("study_uid")
 def post_new_soa_footnotes_batch_select(
-    uid: str = utils.studyUID,
+    study_uid: str = utils.studyUID,
     soa_footnote_input: list[StudySoAFootnoteCreateFootnoteInput] = Body(
         description="Related parameters of the footnote that shall be created."
     ),
 ) -> StudySoAFootnote:
     service = StudySoAFootnoteService()
-    return service.batch_create(study_uid=uid, footnote_input=soa_footnote_input)
+    return service.batch_create(study_uid=study_uid, footnote_input=soa_footnote_input)
 
 
 @router.patch(
-    "/studies/{uid}/study-soa-footnotes/{study_soa_footnote_uid}",
+    "/studies/{study_uid}/study-soa-footnotes/batch-edit",
+    dependencies=[rbac.STUDY_WRITE],
+    summary="Edit a batch of study soa footnotes",
+    response_model=list[StudySoAFootnoteBatchOutput],
+    status_code=207,
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
+)
+@decorators.validate_if_study_is_not_locked("study_uid")
+def batch_edit_study_soa_footnote(
+    study_uid: str = utils.studyUID,
+    edit_payloads: list[StudySoAFootnoteBatchEditInput] = Body(
+        description="List of Patch payloads to update StudySoAFootnotes"
+    ),
+):
+    service = StudySoAFootnoteService()
+    return service.batch_edit(
+        study_uid=study_uid,
+        edit_payloads=edit_payloads,
+    )
+
+
+@router.patch(
+    "/studies/{study_uid}/study-soa-footnotes/{study_soa_footnote_uid}",
     dependencies=[rbac.STUDY_WRITE],
     summary="Edit a study soa footnote",
     response_model=StudySoAFootnote,
@@ -314,9 +341,9 @@ def post_new_soa_footnotes_batch_select(
         500: _generic_descriptions.ERROR_500,
     },
 )
-@decorators.validate_if_study_is_not_locked("uid")
+@decorators.validate_if_study_is_not_locked("study_uid")
 def edit_study_soa_footnote(
-    uid: str = utils.studyUID,
+    study_uid: str = utils.studyUID,
     study_soa_footnote_uid: str = utils.study_soa_footnote_uid,
     soa_footnote_edit_input: StudySoAFootnoteEditInput = Body(
         description="Related parameters of the schedule that shall be edited."
@@ -324,14 +351,14 @@ def edit_study_soa_footnote(
 ):
     service = StudySoAFootnoteService()
     return service.edit(
-        study_uid=uid,
+        study_uid=study_uid,
         study_soa_footnote_uid=study_soa_footnote_uid,
         footnote_edit_input=soa_footnote_edit_input,
     )
 
 
 @router.delete(
-    "/studies/{uid}/study-soa-footnotes/{study_soa_footnote_uid}",
+    "/studies/{study_uid}/study-soa-footnotes/{study_soa_footnote_uid}",
     dependencies=[rbac.STUDY_WRITE],
     summary="Delete a study soa footnote",
     response_model=None,
@@ -347,18 +374,18 @@ def edit_study_soa_footnote(
         500: _generic_descriptions.ERROR_500,
     },
 )
-@decorators.validate_if_study_is_not_locked("uid")
+@decorators.validate_if_study_is_not_locked("study_uid")
 def delete_study_soa_footnote(
-    uid: str = utils.studyUID,
+    study_uid: str = utils.studyUID,
     study_soa_footnote_uid: str = utils.study_soa_footnote_uid,
 ):
     service = StudySoAFootnoteService()
-    service.delete(study_uid=uid, study_soa_footnote_uid=study_soa_footnote_uid)
+    service.delete(study_uid=study_uid, study_soa_footnote_uid=study_soa_footnote_uid)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.post(
-    "/studies/{uid}/study-soa-footnotes/preview",
+    "/studies/{study_uid}/study-soa-footnotes/preview",
     dependencies=[rbac.STUDY_WRITE],
     summary="Preview creating a study soa footnote selection based on the input data",
     response_model=StudySoAFootnote,
@@ -371,26 +398,26 @@ def delete_study_soa_footnote(
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - Study or soa footnote is not found with the passed 'uid'.",
+            "description": "Not Found - Study or soa footnote is not found with the passed 'study_uid'.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-@decorators.validate_if_study_is_not_locked("uid")
+@decorators.validate_if_study_is_not_locked("study_uid")
 def preview_new_soa_footnote(
-    uid: str = utils.studyUID,
+    study_uid: str = utils.studyUID,
     footnote_input: StudySoAFootnoteCreateFootnoteInput = Body(
         description="Related parameters of the selection that shall be previewed."
     ),
 ) -> StudySoAFootnote:
     service = StudySoAFootnoteService()
     return service.preview_soa_footnote(
-        study_uid=uid, footnote_create_input=footnote_input
+        study_uid=study_uid, footnote_create_input=footnote_input
     )
 
 
 @router.get(
-    "/studies/{uid}/study-soa-footnotes/{study_soa_footnote_uid}/audit-trail",
+    "/studies/{study_uid}/study-soa-footnotes/{study_soa_footnote_uid}/audit-trail",
     dependencies=[rbac.STUDY_READ],
     summary="List full audit trail related to definition of all study soa footnotes.",
     description="""
@@ -410,17 +437,17 @@ The following values should be returned for all study soa footnotes:
     },
 )
 def get_specific_soa_footnotes_audit_trail(
-    uid: str = utils.studyUID,
+    study_uid: str = utils.studyUID,
     study_soa_footnote_uid: str = utils.study_soa_footnote_uid,
 ) -> list[StudySoAFootnoteVersion]:
     service = StudySoAFootnoteService()
     return service.audit_trail_specific_soa_footnote(
-        study_uid=uid, study_soa_footnote_uid=study_soa_footnote_uid
+        study_uid=study_uid, study_soa_footnote_uid=study_soa_footnote_uid
     )
 
 
 @router.get(
-    "/studies/{uid}/study-soa-footnote/audit-trail",
+    "/studies/{study_uid}/study-soa-footnote/audit-trail",
     dependencies=[rbac.STUDY_READ],
     summary="List full audit trail related to definition of all study soa footnotes within a specific study",
     description="""
@@ -440,14 +467,14 @@ The following values should be returned for all study soa footnotes:
     },
 )
 def get_all_soa_footnotes_audit_trail(
-    uid: str = utils.studyUID,
+    study_uid: str = utils.studyUID,
 ) -> list[StudySoAFootnoteVersion]:
     service = StudySoAFootnoteService()
-    return service.audit_trail_all_soa_footnotes(study_uid=uid)
+    return service.audit_trail_all_soa_footnotes(study_uid=study_uid)
 
 
 @router.post(
-    "/studies/{uid}/study-soa-footnotes/{study_soa_footnote_uid}/accept-version",
+    "/studies/{study_uid}/study-soa-footnotes/{study_soa_footnote_uid}/accept-version",
     dependencies=[rbac.STUDY_WRITE],
     summary="accept StudySoAFootnote selection's footnote version",
     description="""
@@ -475,14 +502,14 @@ def get_all_soa_footnotes_audit_trail(
         500: _generic_descriptions.ERROR_500,
     },
 )
-@decorators.validate_if_study_is_not_locked("uid")
+@decorators.validate_if_study_is_not_locked("study_uid")
 def patch_footnote_accept_version(
-    uid: str = utils.studyUID,
+    study_uid: str = utils.studyUID,
     study_soa_footnote_uid: str = utils.study_soa_footnote_uid,
 ) -> StudySoAFootnote:
     service = StudySoAFootnoteService()
     return service.edit(
-        study_uid=uid,
+        study_uid=study_uid,
         study_soa_footnote_uid=study_soa_footnote_uid,
         footnote_edit_input=StudySoAFootnoteEditInput(
             footnote_uid=None, footnote_template_uid=None, referenced_items=None
@@ -492,7 +519,7 @@ def patch_footnote_accept_version(
 
 
 @router.post(
-    "/studies/{uid}/study-soa-footnotes/{study_soa_footnote_uid}/sync-latest-version",
+    "/studies/{study_uid}/study-soa-footnotes/{study_soa_footnote_uid}/sync-latest-version",
     dependencies=[rbac.STUDY_WRITE],
     summary="update to latest footnote version study selection",
     description="""
@@ -520,14 +547,14 @@ def patch_footnote_accept_version(
         500: _generic_descriptions.ERROR_500,
     },
 )
-@decorators.validate_if_study_is_not_locked("uid")
+@decorators.validate_if_study_is_not_locked("study_uid")
 def patch_footnote_sync_to_latest_footnote(
-    uid: str = utils.studyUID,
+    study_uid: str = utils.studyUID,
     study_soa_footnote_uid: str = utils.study_soa_footnote_uid,
 ) -> StudySoAFootnote:
     service = StudySoAFootnoteService()
     return service.edit(
-        study_uid=uid,
+        study_uid=study_uid,
         study_soa_footnote_uid=study_soa_footnote_uid,
         footnote_edit_input=StudySoAFootnoteEditInput(
             footnote_uid=None, footnote_template_uid=None, referenced_items=None

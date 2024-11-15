@@ -75,6 +75,7 @@ from clinical_mdr_api.models.concepts.pharmaceutical_product import (
 from clinical_mdr_api.models.controlled_terminologies.configuration import (
     CTConfigPostInput,
 )
+from clinical_mdr_api.models.feature_flag import FeatureFlag, FeatureFlagInput
 from clinical_mdr_api.models.notification import (
     Notification,
     NotificationInput,
@@ -173,6 +174,7 @@ from clinical_mdr_api.models.study_selections.study_soa_footnote import (
     StudySoAFootnoteCreateInput,
 )
 from clinical_mdr_api.models.study_selections.study_standard_version import (
+    StudyStandardVersionEditInput,
     StudyStandardVersionInput,
 )
 from clinical_mdr_api.models.study_selections.study_visit import StudyVisitCreateInput
@@ -326,6 +328,7 @@ from clinical_mdr_api.services.dictionaries.dictionary_codelist_generic_service 
 from clinical_mdr_api.services.dictionaries.dictionary_term_generic_service import (
     DictionaryTermGenericService as DictionaryTermService,
 )
+from clinical_mdr_api.services.feature_flags import FeatureFlagService
 from clinical_mdr_api.services.libraries import libraries as library_service
 from clinical_mdr_api.services.notifications import NotificationService
 from clinical_mdr_api.services.projects.project import ProjectService
@@ -494,7 +497,7 @@ DICTIONARY_CODELIST_LIBRARY = "UCUM"
 
 
 class TestUtils:
-    """Class containg methods that create all kinds of entities, e.g. library compounds"""
+    """Class containing methods that create all kinds of entities, e.g. library compounds"""
 
     sequential_study_number: int = 0
 
@@ -617,6 +620,17 @@ class TestUtils:
         user_initials: "TODO initials",
         version: "1.0"
     }} """
+
+    @classmethod
+    def create_feature_flag(
+        cls,
+        name: str = "Feature Flag Name",
+        enabled: bool = False,
+        description: str | None = "Feature Flag Description",
+    ) -> FeatureFlag:
+        service = FeatureFlagService()
+        payload = FeatureFlagInput(name=name, enabled=enabled, description=description)
+        return service.create_feature_flag(payload)
 
     @classmethod
     def create_notification(
@@ -3554,6 +3568,65 @@ class TestUtils:
                     study_description=StudyDescriptionJsonModel(study_title=study_title)
                 )
             ),
+        )
+
+    @classmethod
+    def set_study_standard_version(
+        cls,
+        study_uid: str,
+        package_name: str | None = None,
+        catalogue: str | None = None,
+        effective_date: datetime | None = None,
+        create_codelists_and_terms_for_package: bool = True,
+    ) -> None:
+        date_now = datetime.now().date()
+        if not catalogue:
+            catalogue = config.SDTM_CT_CATALOGUE_NAME
+        if not package_name:
+            package_name = f"{catalogue} {date_now}"
+        if not effective_date:
+            effective_date = effective_date = datetime(
+                date_now.year, date_now.month, date_now.day, tzinfo=timezone.utc
+            )
+
+        all_ct_packages = {
+            ct_package.name: ct_package.uid
+            for ct_package in CTPackageService().get_all_ct_packages(
+                catalogue_name=catalogue
+            )
+        }
+        if package_name not in all_ct_packages:
+            # Create CTPackage
+            standards_ct_package_uid = TestUtils.create_ct_package(
+                catalogue=catalogue,
+                name=package_name,
+                approve_elements=False,
+                effective_date=effective_date,
+                number_of_codelists=3 if create_codelists_and_terms_for_package else 0,
+            )
+        else:
+            standards_ct_package_uid = all_ct_packages[package_name]
+
+        # StudyStandardVersion must be created before locking
+        cls.create_study_standard_version(
+            study_uid=study_uid, ct_package_uid=standards_ct_package_uid
+        )
+
+    @classmethod
+    def edit_study_standard_version(
+        cls,
+        study_uid: str,
+        study_standard_version_uid: str,
+        ct_package_uid: str,
+    ) -> None:
+        service = StudyStandardVersionService()
+        payload = StudyStandardVersionEditInput(
+            ct_package_uid=ct_package_uid,
+        )
+        return service.edit(
+            study_uid=study_uid,
+            study_standard_version_uid=study_standard_version_uid,
+            study_standard_version_input=payload,
         )
 
     @classmethod

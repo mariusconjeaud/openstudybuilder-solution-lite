@@ -6,7 +6,8 @@
     @keydown.esc="cancel"
   >
     <v-card
-      :class="cardClasses"
+      :border="cardClasses"
+      class="pa-1"
       style="border-radius: 20px"
     >
     <v-card-title v-if="options.title" class="dialogText">
@@ -35,7 +36,7 @@
             <slot name="actions">
               <v-btn
                 v-if="options.redirect === null"
-                color="red"
+                :color="btnClasses"
                 rounded="xl"
                 data-cy="continue-popup"
                 elevation="2"
@@ -85,15 +86,16 @@ export default {
   },
   computed: {
     cardClasses() {
-      const result = { 'pa-1': true }
+      return this.btnClasses + ' lg opacity-100'
+    },  
+    btnClasses() {
       if (this.options.type === 'warning') {
-        return result
+        return 'warning'
       } else if (this.options.type === 'info') {
-        result['bg-info'] = true
+        return 'info'
       } else {
-        result['bg-green'] = true
+        return 'success'
       }
-      return result
     },
   },
   methods: {

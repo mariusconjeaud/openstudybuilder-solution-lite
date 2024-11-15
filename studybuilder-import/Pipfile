@@ -18,6 +18,7 @@ python_version = "3.11"
 [scripts]
 build-sbom = "pipelines/scripts/build-sbom.sh"
 import_all = "python -m run_import"
+import_feature_flags = "python -m importers.run_import_feature_flags"
 import_dummydata = "python -m importers.run_import_dummydata"
 config = "python -m importers.run_import_config"
 dictionaries = "python -m importers.run_import_dictionaries"

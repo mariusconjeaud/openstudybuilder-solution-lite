@@ -1,5 +1,5 @@
 """
-Tests for /studies/{uid}/study-visits endpoints
+Tests for /studies/{study_uid}/study-visits endpoints
 """
 
 # pylint: disable=unused-argument
@@ -72,6 +72,7 @@ def test_data():
 
     global study
     study = TestUtils.create_study()
+    TestUtils.set_study_standard_version(study_uid=study.uid)
     db.cypher_query(STARTUP_STUDY_LIST_CYPHER)
     db.cypher_query(STARTUP_CT_CATALOGUE_CYPHER)
     create_library_data()
@@ -113,13 +114,6 @@ def test_data():
         approve=True,
     )
 
-    cdisc_package_name = "SDTM CT 2020-03-27"
-    TestUtils.create_ct_package(
-        catalogue=catalogue_name,
-        name=cdisc_package_name,
-        approve_elements=False,
-        effective_date=datetime(2020, 3, 27, tzinfo=timezone.utc),
-    )
     # patch the date of the latest HAS_VERSION FINAL relationship so it can be detected by the selected study_standard_Version
     params = {
         "uids": [initial_ct_term_study_standard_test_uid],
@@ -457,7 +451,7 @@ def test_manually_defined_visit(api_client):
         == "Values 777.0 in field visit number and 7777 in field unique visit number are not defined in chronological order by study visit timing"
     )
 
-    # failed post on the uniquennes check
+    # failed post on the uniqueness check
     manually_defined_number = 11
     manually_defined_unique_number = 1100
     visit_timing = 110
@@ -995,7 +989,7 @@ def test_study_visit_timings(api_client):
     response = api_client.get(f"/studies/{study_for_i_visit.uid}/study-visits")
     assert response.status_code == 200
     visits = response.json()["items"]
-    # timinig -14
+    # timing -14
     assert visits[0]["study_day_number"] == -14
     assert visits[0]["study_duration_days_label"] == "-14 days"
     assert visits[0]["study_week_number"] == -2
@@ -1059,7 +1053,10 @@ def test_create_repeating_visit(api_client):
     res = response.json()
     assert response.status_code == 201
     assert res["repeating_frequency_uid"] == _term.term_uid
-    assert res["repeating_frequency_name"] == _term.sponsor_preferred_name
+    assert (
+        res["repeating_frequency"]["sponsor_preferred_name"]
+        == _term.sponsor_preferred_name
+    )
     assert res["visit_name"] == "Visit 1.n"
     assert res["visit_subname"] == "Visit 1.n"
     assert res["visit_short_name"] == "V1.n"
@@ -1069,7 +1066,10 @@ def test_create_repeating_visit(api_client):
     res = response.json()
     assert response.status_code == 200
     assert res["repeating_frequency_uid"] == _term.term_uid
-    assert res["repeating_frequency_name"] == _term.sponsor_preferred_name
+    assert (
+        res["repeating_frequency"]["sponsor_preferred_name"]
+        == _term.sponsor_preferred_name
+    )
     assert res["visit_name"] == "Visit 1.n"
     assert res["visit_subname"] == "Visit 1.n"
     assert res["visit_short_name"] == "V1.n"
@@ -1096,8 +1096,11 @@ def test_create_repeating_visit(api_client):
     )
     res = response.json()
     assert response.status_code == 201
-    assert res["repeating_frequency_uid"] == _term.term_uid
-    assert res["repeating_frequency_name"] == _term.sponsor_preferred_name
+    assert res["repeating_frequency"]["term_uid"] == _term.term_uid
+    assert (
+        res["repeating_frequency"]["sponsor_preferred_name"]
+        == _term.sponsor_preferred_name
+    )
     assert res["visit_name"] == "Visit 1.n"
     assert res["visit_number"] == 1.0
     assert res["visit_short_name"] == "V1.n"
@@ -1108,8 +1111,11 @@ def test_create_repeating_visit(api_client):
     response = api_client.get(f"/studies/{_study.uid}/study-visits/{res['uid']}")
     res = response.json()
     assert response.status_code == 200
-    assert res["repeating_frequency_uid"] == _term.term_uid
-    assert res["repeating_frequency_name"] == _term.sponsor_preferred_name
+    assert res["repeating_frequency"]["term_uid"] == _term.term_uid
+    assert (
+        res["repeating_frequency"]["sponsor_preferred_name"]
+        == _term.sponsor_preferred_name
+    )
     assert res["visit_name"] == "Visit 1.n"
     assert res["visit_number"] == 1.0
     assert res["visit_short_name"] == "V1.n"
@@ -1188,7 +1194,7 @@ def test_create_visit_0(api_client):
     )
     assert response.status_code == 204
 
-    # Verify that the orinigal visit was not re-ordered
+    # Verify that the original visit was not re-ordered
     response = api_client.get(f"/studies/{_study.uid}/study-visits/{study_visit1_uid}")
     res = response.json()
     assert response.status_code == 200
@@ -1499,7 +1505,7 @@ def test_visit_0_edited_chronologically(api_client):
     assert res["visit_short_name"] == "V2"
 
     # Scenario: User must be able to edit the study information visit with visit 0 to other visit type
-    # Given A study inforamtion visit with visit 0 is created
+    # Given A study information visit with visit 0 is created
     inputs = {
         "study_epoch_uid": study_epoch1.uid,
         "visit_type_uid": "VisitType_0000",
@@ -1580,7 +1586,8 @@ def test_study_visist_version_selecting_ct_package(api_client):
     )
     study_selection_breadcrumb = "study-visits"
     study_selection_ctterm_uid_input_key = "visit_type_uid"
-    study_selection_ctterm_name_key = "visit_type_name"
+    study_selection_ctterm_key = "visit_type"
+    study_selection_ctterm_name_key = "sponsor_preferred_name"
     study_for_ctterm_versioning = TestUtils.create_study()
 
     study_epoch1 = create_study_epoch(
@@ -1610,7 +1617,7 @@ def test_study_visist_version_selecting_ct_package(api_client):
     study_selection_uid_study_standard_test = res["uid"]
     assert res["order"] == 1
     assert (
-        res[study_selection_ctterm_name_key]
+        res[study_selection_ctterm_key][study_selection_ctterm_name_key]
         == initial_ct_term_study_standard_test.sponsor_preferred_name
     )
 
@@ -1637,26 +1644,16 @@ def test_study_visist_version_selecting_ct_package(api_client):
     )
     res = response.json()
     assert response.status_code == 200
-    assert res[study_selection_ctterm_name_key] == new_ctterm_name
-
-    # get ct_packages
-    response = api_client.get(
-        "/ct/packages",
+    assert (
+        res[study_selection_ctterm_key][study_selection_ctterm_name_key]
+        == new_ctterm_name
     )
-    res = response.json()
-    assert response.status_code == 200
-    ct_package_uid = res[0]["uid"]
 
-    # create study standard version
-    response = api_client.post(
-        f"/studies/{study_for_ctterm_versioning.uid}/study-standard-versions",
-        json={
-            "ct_package_uid": ct_package_uid,
-        },
+    TestUtils.set_study_standard_version(
+        study_uid=study_for_ctterm_versioning.uid,
+        package_name="SDTM CT 2020-03-27",
+        effective_date=datetime(2020, 3, 27, tzinfo=timezone.utc),
     )
-    res = response.json()
-    assert response.status_code == 201
-    assert res["ct_package"]["uid"] == ct_package_uid
 
     # get study selection with previous ctterm
     response = api_client.get(
@@ -1665,7 +1662,7 @@ def test_study_visist_version_selecting_ct_package(api_client):
     res = response.json()
     assert response.status_code == 200
     assert (
-        res[study_selection_ctterm_name_key]
+        res[study_selection_ctterm_key][study_selection_ctterm_name_key]
         == initial_ct_term_study_standard_test.sponsor_preferred_name
     )
 
@@ -1680,7 +1677,7 @@ def test_study_visist_version_selecting_ct_package(api_client):
     res = response.json()
     assert response.status_code == 200
     assert (
-        res[study_selection_ctterm_name_key]
+        res[study_selection_ctterm_key][study_selection_ctterm_name_key]
         == initial_ct_term_study_standard_test.sponsor_preferred_name
     )
 
@@ -1691,10 +1688,13 @@ def test_study_visist_version_selecting_ct_package(api_client):
     res = response.json()
     assert response.status_code == 200
     assert (
-        res[0][study_selection_ctterm_name_key]
+        res[0][study_selection_ctterm_key][study_selection_ctterm_name_key]
         == initial_ct_term_study_standard_test.sponsor_preferred_name
     )
-    assert res[1][study_selection_ctterm_name_key] == new_ctterm_name
+    assert (
+        res[1][study_selection_ctterm_key][study_selection_ctterm_name_key]
+        == new_ctterm_name
+    )
 
     # get all versions
     response = api_client.get(
@@ -1703,7 +1703,10 @@ def test_study_visist_version_selecting_ct_package(api_client):
     res = response.json()
     assert response.status_code == 200
     assert (
-        res[0][study_selection_ctterm_name_key]
+        res[0][study_selection_ctterm_key][study_selection_ctterm_name_key]
         == initial_ct_term_study_standard_test.sponsor_preferred_name
     )
-    assert res[1][study_selection_ctterm_name_key] == new_ctterm_name
+    assert (
+        res[1][study_selection_ctterm_key][study_selection_ctterm_name_key]
+        == new_ctterm_name
+    )

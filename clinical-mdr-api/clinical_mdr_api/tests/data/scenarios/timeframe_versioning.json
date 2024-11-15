@@ -72,7 +72,7 @@
                 "version": "0.1"
             },
             "save": {
-                "uid": "uid"
+                "timeframe_uid": "uid"
             }
         }
     },
@@ -82,7 +82,7 @@
             "headers": {},
             "method": "POST",
             "request": {},
-            "url": "/timeframes/{uid}/approvals"
+            "url": "/timeframes/{timeframe_uid}/approvals"
         },
         "response": {
             "code": 201,
@@ -126,7 +126,7 @@
             "headers": {},
             "method": "PATCH",
             "request": {},
-            "url": "/timeframes/{uid}/approvals"
+            "url": "/timeframes/{timeframe_uid}/approvals"
         },
         "response": {
             "code": 405,
@@ -144,7 +144,7 @@
             "headers": {},
             "method": "POST",
             "request": {},
-            "url": "/timeframes/{uid}/approvals"
+            "url": "/timeframes/{timeframe_uid}/approvals"
         },
         "response": {
             "code": 400,
@@ -167,7 +167,7 @@
             "headers": {},
             "method": "GET",
             "request": {},
-            "url": "/timeframes/{uid}/parameters"
+            "url": "/timeframes/{timeframe_uid}/parameters"
         },
         "response": {
             "code": 200,
@@ -184,7 +184,7 @@
             "headers": {},
             "method": "GET",
             "request": {},
-            "url": "/timeframes/{uid}/versions"
+            "url": "/timeframes/{timeframe_uid}/versions"
         },
         "response": {
             "code": 200,
@@ -294,7 +294,7 @@
                     }
                 ]
             },
-            "url": "/timeframes/{uid}"
+            "url": "/timeframes/{timeframe_uid}"
         },
         "response": {
             "code": 422,
@@ -326,7 +326,7 @@
                 "name": "test{test-uid}",
                 "parameter_terms": []
             },
-            "url": "/timeframes/{uid}"
+            "url": "/timeframes/{timeframe_uid}"
         },
         "response": {
             "code": 400,

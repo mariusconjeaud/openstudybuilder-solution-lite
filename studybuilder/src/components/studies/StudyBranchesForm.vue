@@ -280,6 +280,7 @@ export default {
           this.close()
         })
       }
+      this.$refs.form.working = false
     },
     async edit() {
       if (this.colorHash) {

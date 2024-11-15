@@ -26,8 +26,14 @@ from clinical_mdr_api.models.concepts.activities.activity import (
     ActivityRequestRejectInput,
     ActivityVersion,
 )
+from clinical_mdr_api.models.concepts.activities.activity_instance import (
+    ActivityInstanceEditInput,
+)
 from clinical_mdr_api.services._utils import is_library_editable, normalize_string
 from clinical_mdr_api.services.concepts import constants
+from clinical_mdr_api.services.concepts.activities.activity_instance_service import (
+    ActivityInstanceService,
+)
 from clinical_mdr_api.services.concepts.concept_generic_service import (
     ConceptGenericService,
     _AggregateRootType,
@@ -267,3 +273,43 @@ class ActivityService(ConceptGenericService[ActivityAR]):
                 }
             )
         return result
+
+    def cascade_edit_and_approve(self, item: ActivityAR):
+        _, _, _, prev_item = item.repository_closure_data
+        item_metadata = prev_item.item_metadata
+        last_final_version = f"{item_metadata.major_version}.0"
+
+        groupings = item.concept_vo.activity_groupings
+        instance_groupings = []
+        for grouping in groupings:
+            grp = {
+                "activity_uid": item.uid,
+                "activity_group_uid": grouping.activity_group_uid,
+                "activity_subgroup_uid": grouping.activity_subgroup_uid,
+            }
+            instance_groupings.append(grp)
+
+        overview = (
+            self._repos.activity_repository.get_linked_upgradable_activity_instances(
+                uid=item.uid, version=last_final_version
+            )
+        )
+        if overview is None:
+            return
+        instance_service = ActivityInstanceService()
+
+        for instance in overview.get("activity_instances", []):
+            if instance["version"]["status"] not in (
+                LibraryItemStatus.DRAFT.value,
+                LibraryItemStatus.FINAL.value,
+            ):
+                continue
+            if instance["version"]["status"] == LibraryItemStatus.FINAL.value:
+                instance_service.non_transactional_create_new_version(instance["uid"])
+            edit_input = ActivityInstanceEditInput(
+                change_description="Cascade edit", activity_groupings=instance_groupings
+            )
+            instance_service.non_transactional_edit(
+                uid=instance["uid"], concept_edit_input=edit_input
+            )
+            instance_service.non_transactional_approve(instance["uid"])

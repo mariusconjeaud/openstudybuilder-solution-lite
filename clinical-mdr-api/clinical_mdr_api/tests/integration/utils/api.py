@@ -7,7 +7,7 @@ from unittest import TestCase
 from urllib.parse import urljoin
 
 import neo4j.exceptions
-from neomodel.core import db
+from neomodel.sync_.core import db
 from requests.structures import CaseInsensitiveDict
 from starlette.testclient import TestClient
 
@@ -23,11 +23,14 @@ def inject_and_clear_db(db_name):
 
     from neomodel import config as neoconfig
 
-    full_dsn = f"{config.settings.neo4j_dsn}"
-    neoconfig.DATABASE_URL = full_dsn
-    db.set_connection(full_dsn)
-
     if db_name.strip() != "":
+        # The "neo4j" database should always exist, switch to it while creating a new database
+        if config.settings.neo4j_dsn.endswith("/neo4j"):
+            full_dsn = config.settings.neo4j_dsn
+        else:
+            full_dsn = f"{config.settings.neo4j_dsn}/neo4j"
+        neoconfig.DATABASE_URL = full_dsn
+        db.set_connection(full_dsn)
         db.cypher_query("CREATE OR REPLACE DATABASE $db", {"db": db_name})
 
     try_cnt = 1

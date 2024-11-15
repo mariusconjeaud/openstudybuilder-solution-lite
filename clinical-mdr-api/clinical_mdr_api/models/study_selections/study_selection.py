@@ -1799,6 +1799,7 @@ class SimpleStudyActivitySubGroup(BaseModel):
         None,
         nullable=True,
     )
+    order: int | None = Field(None)
 
 
 class SimpleStudyActivityGroup(BaseModel):
@@ -1814,12 +1815,14 @@ class SimpleStudyActivityGroup(BaseModel):
         None,
         nullable=True,
     )
+    order: int | None = Field(None)
 
 
 class SimpleStudySoAGroup(BaseModel):
     study_soa_group_uid: str = Field(...)
     soa_group_term_uid: str = Field(...)
     soa_group_name: str = Field(...)
+    order: int | None = Field(None)
 
 
 class StudySelectionActivityCore(StudySelection):
@@ -1909,16 +1912,19 @@ class StudySelectionActivityCore(StudySelection):
                 study_activity_subgroup_uid=study_selection_history.study_activity_subgroup_uid,
                 activity_subgroup_uid=study_selection_history.activity_subgroup_uid,
                 activity_subgroup_name=activity_subgroup_name,
+                order=study_selection_history.study_activity_subgroup_order,
             ),
             study_activity_group=SimpleStudyActivityGroup(
                 study_activity_group_uid=study_selection_history.study_activity_group_uid,
                 activity_group_uid=study_selection_history.activity_group_uid,
                 activity_group_name=activity_group_name,
+                order=study_selection_history.study_activity_group_order,
             ),
             study_soa_group=SimpleStudySoAGroup(
                 study_soa_group_uid=study_selection_history.study_soa_group_uid,
                 soa_group_term_uid=flowchart_group.term_uid,
                 soa_group_name=flowchart_group.sponsor_preferred_name,
+                order=study_selection_history.study_soa_group_order,
             ),
             order=study_selection_history.activity_order,
             show_activity_group_in_protocol_flowchart=study_selection_history.show_activity_group_in_protocol_flowchart,
@@ -2048,16 +2054,19 @@ class StudySelectionActivity(StudySelectionActivityCore):
                 study_activity_subgroup_uid=single_study_selection.study_activity_subgroup_uid,
                 activity_subgroup_uid=single_study_selection.activity_subgroup_uid,
                 activity_subgroup_name=activity_subgroup_name,
+                order=single_study_selection.study_activity_subgroup_order,
             ),
             study_activity_group=SimpleStudyActivityGroup(
                 study_activity_group_uid=single_study_selection.study_activity_group_uid,
                 activity_group_uid=single_study_selection.activity_group_uid,
                 activity_group_name=activity_group_name,
+                order=single_study_selection.study_activity_group_order,
             ),
             study_soa_group=SimpleStudySoAGroup(
                 study_soa_group_uid=single_study_selection.study_soa_group_uid,
                 soa_group_term_uid=flowchart_group.term_uid,
                 soa_group_name=flowchart_group.sponsor_preferred_name,
+                order=single_study_selection.study_soa_group_order,
             ),
             activity=selected_activity,
             latest_activity=latest_activity,
@@ -2111,6 +2120,8 @@ class StudyActivitySubGroup(BaseModel):
         title="study_activity_subgroup_uid",
         source="uid",
     )
+    study_activity_group_uid: str | None = Field(None)
+    order: int | None = Field(None)
 
     @classmethod
     def from_study_selection_activity_vo(
@@ -2124,7 +2135,9 @@ class StudyActivitySubGroup(BaseModel):
         return cls(
             study_activity_subgroup_uid=study_activity_subgroup_uid,
             show_activity_subgroup_in_protocol_flowchart=single_study_selection.show_activity_subgroup_in_protocol_flowchart,
+            study_activity_group_uid=single_study_selection.study_activity_group_uid,
             study_uid=study_uid,
+            order=single_study_selection.order,
         )
 
 
@@ -2143,11 +2156,14 @@ class StudyActivityGroup(BaseModel):
         title="study_uid",
         description=STUDY_UID_DESC,
     )
+    study_soa_group_uid: str | None = Field(None)
+    study_activity_subgroup_uids: list[str] | None = Field(None)
     study_activity_group_uid: str = Field(
         ...,
         title="study_activity_group_uid",
         source="uid",
     )
+    order: int | None = Field(None)
 
     @classmethod
     def from_study_selection_activity_vo(
@@ -2161,7 +2177,10 @@ class StudyActivityGroup(BaseModel):
         return cls(
             study_activity_group_uid=study_activity_group_uid,
             show_activity_group_in_protocol_flowchart=single_study_selection.show_activity_group_in_protocol_flowchart,
+            study_soa_group_uid=single_study_selection.study_soa_group_uid,
+            study_activity_subgroup_uids=single_study_selection.study_activity_subgroup_uids,
             study_uid=study_uid,
+            order=single_study_selection.order,
         )
 
 
@@ -2185,6 +2204,8 @@ class StudySoAGroup(BaseModel):
         title="study_soa_group_uid",
         source="uid",
     )
+    study_activity_group_uids: list[str] | None = Field(None)
+    order: int | None = Field(None)
 
     @classmethod
     def from_study_selection_activity_vo(
@@ -2199,6 +2220,8 @@ class StudySoAGroup(BaseModel):
             study_soa_group_uid=study_soa_group_uid,
             show_soa_group_in_protocol_flowchart=single_study_selection.show_soa_group_in_protocol_flowchart,
             study_uid=study_uid,
+            study_activity_group_uids=single_study_selection.study_activity_group_uids,
+            order=single_study_selection.order,
         )
 
 
@@ -2220,6 +2243,12 @@ class StudySelectionActivityInput(BaseModel):
     soa_group_term_uid: str | None = Field(
         title="soa_group_term_uid",
         description="flowchart CT term uid",
+    )
+    activity_group_uid: str | None = Field(
+        title="activity_group_uid",
+    )
+    activity_subgroup_uid: str | None = Field(
+        title="activity_subgroup_uid",
     )
 
 

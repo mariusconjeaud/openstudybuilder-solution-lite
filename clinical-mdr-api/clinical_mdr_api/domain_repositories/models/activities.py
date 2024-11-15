@@ -36,6 +36,9 @@ class ActivityValidGroup(ClinicalMdrNodeWithUID):
     has_group = RelationshipFrom(
         "ActivitySubGroupValue", "HAS_GROUP", model=ClinicalMdrRel, cardinality=One
     )
+    in_subgroup = RelationshipFrom(
+        "ActivityGrouping", "IN_SUBGROUP", model=ClinicalMdrRel, cardinality=One
+    )
 
 
 class ActivityGroupValue(ConceptValue):
@@ -205,6 +208,18 @@ class ActivityInstanceValue(ConceptValue):
     )
     has_version = RelationshipFrom(
         "ActivityInstanceRoot", "HAS_VERSION", model=VersionRelationship
+    )
+    has_latest_value = RelationshipFrom(
+        "ActivityInstanceRoot", "LATEST", model=ClinicalMdrRel
+    )
+    latest_draft = RelationshipFrom(
+        "ActivityInstanceRoot", "LATEST_DRAFT", model=ClinicalMdrRel
+    )
+    latest_final = RelationshipFrom(
+        "ActivityInstanceRoot", "LATEST_FINAL", model=ClinicalMdrRel
+    )
+    latest_retired = RelationshipFrom(
+        "ActivityInstanceRoot", "LATEST_RETIRED", model=ClinicalMdrRel
     )
 
 

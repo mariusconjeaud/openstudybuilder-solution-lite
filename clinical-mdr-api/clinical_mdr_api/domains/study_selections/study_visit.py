@@ -1,5 +1,4 @@
 import datetime
-from collections import namedtuple
 from dataclasses import dataclass
 from enum import Enum
 from math import ceil, floor
@@ -10,26 +9,21 @@ from clinical_mdr_api.config import GLOBAL_ANCHOR_VISIT_NAME
 from clinical_mdr_api.domains.study_definition_aggregates.study_metadata import (
     StudyStatus,
 )
+from clinical_mdr_api.models.controlled_terminologies.ct_term_name import CTTermName
 
-VisitTypeNamedTuple = namedtuple("VisitTypeNamedTuple", ["name", "value"])
+VisitTypeNamedTuple = CTTermName
 StudyVisitType: dict[str, VisitTypeNamedTuple] = {}
 
-VisitRepeatingFrequencyNamedTuple = namedtuple(
-    "VisitRepeatingFrequencyNamedTuple", ["name", "value"]
-)
+VisitRepeatingFrequencyNamedTuple = CTTermName
 StudyVisitRepeatingFrequency: dict[str, VisitRepeatingFrequencyNamedTuple] = {}
 
-VisitTimeReferenceNamedTuple = namedtuple(
-    "VisitTimeReferenceNamedTuple", ["name", "value"]
-)
+VisitTimeReferenceNamedTuple = CTTermName
 StudyVisitTimeReference: dict[str, VisitTimeReferenceNamedTuple] = {}
 
-VisitContactModeNamedTuple = namedtuple("VisitContactModeNamedTuple", ["name", "value"])
+VisitContactModeNamedTuple = CTTermName
 StudyVisitContactMode: dict[str, VisitContactModeNamedTuple] = {}
 
-VisitEpochAllocationNamedTuple = namedtuple(
-    "VisitEpochAllocationNamedTuple", ["name", "value"]
-)
+VisitEpochAllocationNamedTuple = CTTermName
 StudyVisitEpochAllocation: dict[str, VisitEpochAllocationNamedTuple] = {}
 
 
@@ -60,7 +54,7 @@ class TimeUnit:
 @dataclass
 class TimePoint:
     uid: str
-    visit_timereference: VisitTimeReferenceNamedTuple
+    visit_timereference: CTTermName
     time_unit_uid: str
     visit_value: int
 
@@ -87,8 +81,8 @@ class StudyVisitVO:
     description: str
     start_rule: str  # Free text
     end_rule: str  # Free text
-    visit_contact_mode: VisitContactModeNamedTuple  # CT Codelist Visit Contact Mode
-    visit_type: VisitTypeNamedTuple  # CT Codelist VISIT_TYPE -
+    visit_contact_mode: CTTermName  # CT Codelist Visit Contact Mode
+    visit_type: CTTermName  # CT Codelist VISIT_TYPE -
 
     status: StudyStatus
     start_date: datetime.datetime
@@ -100,7 +94,7 @@ class StudyVisitVO:
     visit_number: float
     visit_order: int
     show_visit: bool
-    epoch_allocation: VisitEpochAllocationNamedTuple | None = None
+    epoch_allocation: CTTermName | None = None
     timepoint: TimePoint | None = None
     study_day: NumericValue | None = None
     study_duration_days: NumericValue | None = None
@@ -133,7 +127,7 @@ class StudyVisitVO:
     vis_unique_number: int | None = None
     vis_short_name: str | None = None
 
-    repeating_frequency: VisitRepeatingFrequencyNamedTuple | None = None
+    repeating_frequency: CTTermName | None = None
 
     study_id: str | None = None
     study_id_prefix: str | None = None
@@ -156,11 +150,20 @@ class StudyVisitVO:
     def visit_short_name(self):
         if self.visit_class != VisitClass.MANUALLY_DEFINED_VISIT:
             visit_number = int(self.visit_number)
-            if "on site visit" in self.visit_contact_mode.value.lower():
+            if (
+                "on site visit"
+                in self.visit_contact_mode.sponsor_preferred_name.lower()
+            ):
                 visit_prefix = "V"
-            elif "phone contact" in self.visit_contact_mode.value.lower():
+            elif (
+                "phone contact"
+                in self.visit_contact_mode.sponsor_preferred_name.lower()
+            ):
                 visit_prefix = "P"
-            elif "virtual visit" in self.visit_contact_mode.value.lower():
+            elif (
+                "virtual visit"
+                in self.visit_contact_mode.sponsor_preferred_name.lower()
+            ):
                 visit_prefix = "O"
             else:
                 raise exceptions.ValidationException(
@@ -350,7 +353,7 @@ class StudyVisitVO:
                 return 0
             if self.anchor_visit is not None:
                 if (
-                    self.timepoint.visit_timereference.value.lower()
+                    self.timepoint.visit_timereference.sponsor_preferred_name.lower()
                     == GLOBAL_ANCHOR_VISIT_NAME.lower()
                 ):
                     return self.get_unified_duration()

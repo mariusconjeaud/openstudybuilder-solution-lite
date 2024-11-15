@@ -299,7 +299,7 @@ def get_distinct_values_for_header(
 
 
 @router.get(
-    "/{uid}",
+    "/{activity_instance_uid}",
     dependencies=[rbac.LIBRARY_READ],
     summary="Get details on a specific activity instance (in a specific version)",
     description="""
@@ -324,13 +324,13 @@ Possible errors:
         500: _generic_descriptions.ERROR_500,
     },
 )
-def get_activity(uid: str = ActivityInstanceUID):
+def get_activity(activity_instance_uid: str = ActivityInstanceUID):
     activity_instance_service = ActivityInstanceService()
-    return activity_instance_service.get_by_uid(uid=uid)
+    return activity_instance_service.get_by_uid(uid=activity_instance_uid)
 
 
 @router.get(
-    "/{uid}/overview",
+    "/{activity_instance_uid}/overview",
     dependencies=[rbac.LIBRARY_READ],
     summary="Get detailed overview a specific activity instance",
     description="""
@@ -375,7 +375,7 @@ Possible errors:
 # pylint: disable=unused-argument
 def get_activity_instance_overview(
     request: Request,  # request is actually required by the allow_exports decorator
-    uid: str = ActivityInstanceUID,
+    activity_instance_uid: str = ActivityInstanceUID,
     version: str
     | None = Query(
         None, description="Select specific version, omit to view latest version"
@@ -383,12 +383,12 @@ def get_activity_instance_overview(
 ):
     activity_instance_service = ActivityInstanceService()
     return activity_instance_service.get_activity_instance_overview(
-        activity_instance_uid=uid, version=version
+        activity_instance_uid=activity_instance_uid, version=version
     )
 
 
 @router.get(
-    "/{uid}/overview.cosmos",
+    "/{activity_instance_uid}/overview.cosmos",
     dependencies=[rbac.LIBRARY_READ],
     summary="Get a COSMoS compatible representation of a specific activity instance",
     description="""
@@ -416,18 +416,18 @@ Possible errors:
 # pylint: disable=unused-argument
 def get_cosmos_activity_instance_overview(
     request: Request,  # request is actually required by the allow_exports decorator
-    uid: str = ActivityInstanceUID,
+    activity_instance_uid: str = ActivityInstanceUID,
 ):
     activity_instance_service = ActivityInstanceService()
     return YAMLResponse(
         activity_instance_service.get_cosmos_activity_instance_overview(
-            activity_instance_uid=uid
+            activity_instance_uid=activity_instance_uid
         )
     )
 
 
 @router.get(
-    "/{uid}/versions",
+    "/{activity_instance_uid}/versions",
     dependencies=[rbac.LIBRARY_READ],
     summary="List version history for activity instance",
     description="""
@@ -449,14 +449,14 @@ Possible errors:
     responses={
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The activity isntance with the specified 'uid' wasn't found.",
+            "description": "Not Found - The activity isntance with the specified 'activity_instance_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def get_versions(uid: str = ActivityInstanceUID):
+def get_versions(activity_instance_uid: str = ActivityInstanceUID):
     activity_instance_service = ActivityInstanceService()
-    return activity_instance_service.get_version_history(uid=uid)
+    return activity_instance_service.get_version_history(uid=activity_instance_uid)
 
 
 @router.post(
@@ -508,7 +508,7 @@ def create(
 
 
 @router.patch(
-    "/{uid}",
+    "/{activity_instance_uid}",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Update activity instance",
     description="""
@@ -541,23 +541,23 @@ Possible errors:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The activity instance with the specified 'uid' wasn't found.",
+            "description": "Not Found - The activity instance with the specified 'activity_instance_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def edit(
-    uid: str = ActivityInstanceUID,
+    activity_instance_uid: str = ActivityInstanceUID,
     activity_instance_edit_input: ActivityInstanceEditInput = Body(description=""),
 ):
     activity_instance_service = ActivityInstanceService()
     return activity_instance_service.edit_draft(
-        uid=uid, concept_edit_input=activity_instance_edit_input
+        uid=activity_instance_uid, concept_edit_input=activity_instance_edit_input
     )
 
 
 @router.post(
-    "/{uid}/versions",
+    "/{activity_instance_uid}/versions",
     dependencies=[rbac.LIBRARY_WRITE],
     summary=" Create a new version of an activity instance",
     description="""
@@ -587,20 +587,20 @@ Possible errors:
             "model": ErrorResponse,
             "description": "Not Found - Reasons include e.g.: \n"
             "- The activity instance is not in final status.\n"
-            "- The activity instance with the specified 'uid' could not be found.",
+            "- The activity instance with the specified 'activity_instance_uid' could not be found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def create_new_version(
-    uid: str = ActivityInstanceUID,
+    activity_instance_uid: str = ActivityInstanceUID,
 ):
     activity_instance_service = ActivityInstanceService()
-    return activity_instance_service.create_new_version(uid=uid)
+    return activity_instance_service.create_new_version(uid=activity_instance_uid)
 
 
 @router.post(
-    "/{uid}/approvals",
+    "/{activity_instance_uid}/approvals",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Approve draft version of an activity instance",
     description="""
@@ -632,20 +632,20 @@ Possible errors:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The activity instance with the specified 'uid' wasn't found.",
+            "description": "Not Found - The activity instance with the specified 'activity_instance_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def approve(
-    uid: str = ActivityInstanceUID,
+    activity_instance_uid: str = ActivityInstanceUID,
 ):
     activity_instance_service = ActivityInstanceService()
-    return activity_instance_service.approve(uid=uid)
+    return activity_instance_service.approve(uid=activity_instance_uid)
 
 
 @router.delete(
-    "/{uid}/activations",
+    "/{activity_instance_uid}/activations",
     dependencies=[rbac.LIBRARY_WRITE],
     summary=" Inactivate final version of an activity instance",
     description="""
@@ -676,20 +676,20 @@ Possible errors:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The activity instance with the specified 'uid' could not be found.",
+            "description": "Not Found - The activity instance with the specified 'activity_instance_uid' could not be found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def inactivate(
-    uid: str = ActivityInstanceUID,
+    activity_instance_uid: str = ActivityInstanceUID,
 ):
     activity_instance_service = ActivityInstanceService()
-    return activity_instance_service.inactivate_final(uid=uid)
+    return activity_instance_service.inactivate_final(uid=activity_instance_uid)
 
 
 @router.post(
-    "/{uid}/activations",
+    "/{activity_instance_uid}/activations",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Reactivate retired version of an activity instance",
     description="""
@@ -720,20 +720,20 @@ Possible errors:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The activity instance with the specified 'uid' could not be found.",
+            "description": "Not Found - The activity instance with the specified 'activity_instance_uid' could not be found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def reactivate(
-    uid: str = ActivityInstanceUID,
+    activity_instance_uid: str = ActivityInstanceUID,
 ):
     activity_instance_service = ActivityInstanceService()
-    return activity_instance_service.reactivate_retired(uid=uid)
+    return activity_instance_service.reactivate_retired(uid=activity_instance_uid)
 
 
 @router.delete(
-    "/{uid}",
+    "/{activity_instance_uid}",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Delete draft version of an activity instance",
     description="""
@@ -766,14 +766,14 @@ Possible errors:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - An activity instance with the specified 'uid' could not be found.",
+            "description": "Not Found - An activity instance with the specified 'activity_instance_uid' could not be found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def delete_activity_instance(
-    uid: str = ActivityInstanceUID,
+    activity_instance_uid: str = ActivityInstanceUID,
 ):
     activity_instance_service = ActivityInstanceService()
-    activity_instance_service.soft_delete(uid=uid)
+    activity_instance_service.soft_delete(uid=activity_instance_uid)
     return Response(status_code=status.HTTP_204_NO_CONTENT)

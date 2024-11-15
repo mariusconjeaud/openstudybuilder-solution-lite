@@ -13,6 +13,8 @@ from clinical_mdr_api.domains.syntax_templates.footnote_template import (
     FootnoteTemplateAR,
 )
 from clinical_mdr_api.models import Footnote, FootnoteCreateInput, FootnoteTemplate
+from clinical_mdr_api.models.error import BatchErrorResponse
+from clinical_mdr_api.models.study_selections.study_selection import RESPONSE_CODE_FIELD
 from clinical_mdr_api.models.utils import BaseModel, get_latest_on_datetime_str
 
 
@@ -234,3 +236,12 @@ class StudySoAFootnoteHistory(StudySoAFootnote):
 
 class StudySoAFootnoteVersion(StudySoAFootnoteHistory):
     changes: dict
+
+
+class StudySoAFootnoteBatchEditInput(StudySoAFootnoteEditInput):
+    study_soa_footnote_uid: str
+
+
+class StudySoAFootnoteBatchOutput(BaseModel):
+    response_code: int = RESPONSE_CODE_FIELD
+    content: StudySoAFootnote | None | BatchErrorResponse

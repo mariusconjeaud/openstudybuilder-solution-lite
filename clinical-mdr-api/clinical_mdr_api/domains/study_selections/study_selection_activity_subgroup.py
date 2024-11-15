@@ -18,6 +18,8 @@ class StudySelectionActivitySubGroupVO(study_selection_base.StudySelectionBaseVO
     activity_subgroup_uid: str
     activity_subgroup_version: str | None
     show_activity_subgroup_in_protocol_flowchart: bool
+    order: int | None
+    study_activity_group_uid: str | None
     # Study selection Versioning
     start_date: datetime.datetime
     user_initials: str | None
@@ -30,6 +32,8 @@ class StudySelectionActivitySubGroupVO(study_selection_base.StudySelectionBaseVO
         activity_subgroup_uid: str,
         activity_subgroup_version: str,
         user_initials: str,
+        order: int | None = None,
+        study_activity_group_uid: str | None = None,
         show_activity_subgroup_in_protocol_flowchart: bool = True,
         study_selection_uid: str | None = None,
         start_date: datetime.datetime | None = None,
@@ -47,6 +51,8 @@ class StudySelectionActivitySubGroupVO(study_selection_base.StudySelectionBaseVO
             activity_subgroup_uid=normalize_string(activity_subgroup_uid),
             activity_subgroup_version=activity_subgroup_version,
             show_activity_subgroup_in_protocol_flowchart=show_activity_subgroup_in_protocol_flowchart,
+            order=order,
+            study_activity_group_uid=study_activity_group_uid,
             start_date=start_date,
             study_selection_uid=normalize_string(study_selection_uid),
             user_initials=normalize_string(user_initials),

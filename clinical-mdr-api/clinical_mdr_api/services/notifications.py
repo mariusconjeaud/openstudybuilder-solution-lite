@@ -1,10 +1,8 @@
 # pylint: disable=invalid-name
-import functools
 from datetime import datetime, timezone
 
 from neomodel import db
 
-from clinical_mdr_api import config, exceptions
 from clinical_mdr_api.domain_repositories.notification_repository import (
     NotificationRepository,
 )
@@ -63,20 +61,3 @@ class NotificationService:
     @db.transaction
     def delete_notification(self, sn: int) -> None:
         return self.repo.delete_notification(sn)
-
-
-def validate_serial_number_less_than_max_int_neo4j():
-    """Decorator ensures the provided Serial Number is not bigger than MAX_INT_NEO4J, else raises ValidationException."""
-
-    def decorator(func):
-        @functools.wraps(func)
-        def wrapper(*args, **kwargs):
-            if kwargs["sn"] > config.MAX_INT_NEO4J:
-                raise exceptions.ValidationException(
-                    f"Serial Number must not be greater than {config.MAX_INT_NEO4J}"
-                )
-            return func(*args, **kwargs)
-
-        return wrapper
-
-    return decorator

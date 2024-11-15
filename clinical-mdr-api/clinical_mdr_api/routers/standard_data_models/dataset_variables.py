@@ -161,7 +161,7 @@ def get_distinct_values_for_header(
 
 
 @router.get(
-    "/dataset-variables/{uid}",
+    "/dataset-variables/{dataset_variable_uid}",
     dependencies=[rbac.LIBRARY_READ],
     summary="Get details on a specific dataset variable",
     description="""
@@ -184,7 +184,7 @@ Possible errors:
     },
 )
 def get_dataset_variable(
-    uid: str = DatasetVariableUID,
+    dataset_variable_uid: str = DatasetVariableUID,
     data_model_ig_name: str = Query(
         ...,
         description="The name of the selected Data model IG, for instance 'SDTMIG'",
@@ -196,7 +196,7 @@ def get_dataset_variable(
 ):
     dataset_variable_service = DatasetVariableService()
     return dataset_variable_service.get_by_uid(
-        uid=uid,
+        uid=dataset_variable_uid,
         data_model_ig_name=data_model_ig_name,
         data_model_ig_version=data_model_ig_version,
     )

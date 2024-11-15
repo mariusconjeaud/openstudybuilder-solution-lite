@@ -23,7 +23,7 @@ from clinical_mdr_api.services.studies.study_visit import StudyVisitService
 
 
 @router.get(
-    "/studies/{uid}/study-visits",
+    "/studies/{study_uid}/study-visits",
     dependencies=[rbac.STUDY_READ],
     summary="List all study visits currently defined for the study",
     description=f"""
@@ -48,9 +48,7 @@ Possible errors:
 
 {_generic_descriptions.DATA_EXPORTS_HEADER}
 """,
-    response_model=CustomPage[
-        clinical_mdr_api.models.study_selections.study_visit.StudyVisit
-    ],
+    response_model=CustomPage[clinical_mdr_api.models.StudyVisit],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -62,37 +60,35 @@ Possible errors:
     {
         "defaults": [
             "study_id",
-            "study_epoch_name",
-            "visit_type_name",
+            "study_epoch.sponsor_preferred_name",
+            "visit_type.sponsor_preferred_name",
             "is_soa_milestone",
             "visit_class",
             "visit_subclass",
             "repeating_frequency_name",
             "visit_name",
             "anchor_visit_in_group",
-            "visit_subname",
             "is_global_anchor_visit",
-            "visit_contact_mode_name",
+            "visit_contact_mode.sponsor_preferred_name",
             "time_reference_name",
             "time_value",
             "visit_number",
             "unique_visit_number",
             "visit_short_name",
-            "study_duration_days_label",
-            "study_duration_weeks_label",
-            "visit_window_unit_name",
-            "min_visit_window_value",
-            "max_visit_window_value",
+            "study_day_label",
+            "study_week_label",
+            "visit_window",
+            "time_reference.sponsor_preferred_name",
+            "time_value",
             "consecutive_visit_group",
             "show_visit",
             "description",
-            "epoch_allocation_name",
+            "epoch_allocation_name.sponsor_preferred_name",
             "start_rule",
             "end_rule",
             "study_day_label",
             "study_week_label",
             "week_in_study_label",
-            "start_date",
             "user_initials",
             "order",
             "study_uid",
@@ -111,7 +107,7 @@ Possible errors:
 # pylint: disable=unused-argument
 def get_all(
     request: Request,  # request is actually required by the allow_exports decorator,
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     sort_by: Json = Query(None, description=_generic_descriptions.SORT_BY),
     page_number: int
     | None = Query(1, ge=1, description=_generic_descriptions.PAGE_NUMBER),
@@ -133,9 +129,11 @@ def get_all(
     | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
     study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
 ) -> CustomPage[clinical_mdr_api.models.StudyVisit]:
-    service = StudyVisitService(study_uid=uid, study_value_version=study_value_version)
+    service = StudyVisitService(
+        study_uid=study_uid, study_value_version=study_value_version
+    )
     results = service.get_all_visits(
-        study_uid=uid,
+        study_uid=study_uid,
         sort_by=sort_by,
         page_number=page_number,
         page_size=page_size,
@@ -150,7 +148,7 @@ def get_all(
 
 
 @router.get(
-    "/studies/{uid}/study-visits/headers",
+    "/studies/{study_uid}/study-visits/headers",
     dependencies=[rbac.STUDY_READ],
     summary="Returns possible values from the database for a given header",
     description="""Allowed parameters include : field name for which to get possible
@@ -166,7 +164,7 @@ def get_all(
     },
 )
 def get_distinct_values_for_header(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     field_name: str = Query(..., description=_generic_descriptions.HEADER_FIELD_NAME),
     search_string: str
     | None = Query("", description=_generic_descriptions.HEADER_SEARCH_STRING),
@@ -182,9 +180,9 @@ def get_distinct_values_for_header(
     study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
 ):
     return StudyVisitService(
-        study_uid=uid, study_value_version=study_value_version
+        study_uid=study_uid, study_value_version=study_value_version
     ).get_distinct_values_for_header(
-        study_uid=uid,
+        study_uid=study_uid,
         field_name=field_name,
         search_string=search_string,
         filter_by=filters,
@@ -195,7 +193,7 @@ def get_distinct_values_for_header(
 
 
 @router.get(
-    "/studies/{uid}/study-visits-references",
+    "/studies/{study_uid}/study-visits-references",
     dependencies=[rbac.STUDY_READ],
     summary="Returns all study visit references for study currently selected",
     response_model=list[
@@ -209,14 +207,14 @@ def get_distinct_values_for_header(
     },
 )
 def get_all_references(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
 ) -> list[clinical_mdr_api.models.study_selections.study_visit.StudyVisit]:
-    service = StudyVisitService(study_uid=uid)
-    return service.get_all_references(study_uid=uid)
+    service = StudyVisitService(study_uid=study_uid)
+    return service.get_all_references(study_uid=study_uid)
 
 
 @router.post(
-    "/studies/{uid}/study-visits",
+    "/studies/{study_uid}/study-visits",
     dependencies=[rbac.STUDY_WRITE],
     summary="Add a study visit to a study",
     description="""
@@ -282,24 +280,24 @@ Possible errors:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - Study or visit is not found with the passed 'uid'.",
+            "description": "Not Found - Study or visit is not found with the passed 'study_uid'.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-@decorators.validate_if_study_is_not_locked("uid")
+@decorators.validate_if_study_is_not_locked("study_uid")
 def post_new_visit_create(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     selection: clinical_mdr_api.models.study_selections.study_visit.StudyVisitCreateInput = Body(
         description="Related parameters of the visit that shall be created."
     ),
 ) -> clinical_mdr_api.models.study_selections.study_visit.StudyVisit:
-    service = StudyVisitService(study_uid=uid)
-    return service.create(study_uid=uid, study_visit_input=selection)
+    service = StudyVisitService(study_uid=study_uid)
+    return service.create(study_uid=study_uid, study_visit_input=selection)
 
 
 @router.post(
-    "/studies/{uid}/study-visits/preview",
+    "/studies/{study_uid}/study-visits/preview",
     dependencies=[rbac.STUDY_WRITE],
     summary="Preview a study visit",
     response_model=clinical_mdr_api.models.study_selections.study_visit.StudyVisit,
@@ -308,24 +306,24 @@ def post_new_visit_create(
     responses={
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - Study is not found with the passed 'uid'.",
+            "description": "Not Found - Study is not found with the passed 'study_uid'.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-@decorators.validate_if_study_is_not_locked("uid")
+@decorators.validate_if_study_is_not_locked("study_uid")
 def post_preview_visit(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     selection: clinical_mdr_api.models.study_selections.study_visit.StudyVisitCreateInput = Body(
         description="Related parameters of the visit that shall be created."
     ),
 ) -> clinical_mdr_api.models.study_selections.study_visit.StudyVisit:
-    service = StudyVisitService(study_uid=uid)
-    return service.preview(study_uid=uid, study_visit_input=selection)
+    service = StudyVisitService(study_uid=study_uid)
+    return service.preview(study_uid=study_uid, study_visit_input=selection)
 
 
 @router.get(
-    "/studies/{uid}/study-visits/allowed-time-references",
+    "/studies/{study_uid}/study-visits/allowed-time-references",
     dependencies=[rbac.STUDY_READ],
     summary="Returns all allowed time references for a study visit",
     response_model=list[
@@ -339,14 +337,14 @@ def post_preview_visit(
     },
 )
 def get_allowed_time_references_for_given_study(
-    uid: str = Path(description="The unique uid of the study"),
+    study_uid: str = Path(description="The unique uid of the study"),
 ) -> list[clinical_mdr_api.models.study_selections.study_visit.AllowedTimeReferences]:
-    service = StudyVisitService(study_uid=uid)
-    return service.get_allowed_time_references_for_study(study_uid=uid)
+    service = StudyVisitService(study_uid=study_uid)
+    return service.get_allowed_time_references_for_study(study_uid=study_uid)
 
 
 @router.patch(
-    "/studies/{uid}/study-visits/{study_visit_uid}",
+    "/studies/{study_uid}/study-visits/{study_visit_uid}",
     dependencies=[rbac.STUDY_WRITE],
     summary="Edit a study visit",
     description="""
@@ -374,22 +372,24 @@ Possible errors:
         500: _generic_descriptions.ERROR_500,
     },
 )
-@decorators.validate_if_study_is_not_locked("uid")
+@decorators.validate_if_study_is_not_locked("study_uid")
 def patch_update_visit(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     study_visit_uid: str = study_visit_uid_description,
     selection: clinical_mdr_api.models.study_selections.study_visit.StudyVisitEditInput = Body(
         description="Related parameters of the selection that shall be created."
     ),
 ) -> study_epoch.StudyEpoch:
-    service = StudyVisitService(study_uid=uid)
+    service = StudyVisitService(study_uid=study_uid)
     return service.edit(
-        study_uid=uid, study_visit_uid=study_visit_uid, study_visit_input=selection
+        study_uid=study_uid,
+        study_visit_uid=study_visit_uid,
+        study_visit_input=selection,
     )
 
 
 @router.delete(
-    "/studies/{uid}/study-visits/{study_visit_uid}",
+    "/studies/{study_uid}/study-visits/{study_visit_uid}",
     dependencies=[rbac.STUDY_WRITE],
     summary="Delete a study visit",
     description=""""
@@ -420,18 +420,18 @@ Possible errors:
         500: _generic_descriptions.ERROR_500,
     },
 )
-@decorators.validate_if_study_is_not_locked("uid")
+@decorators.validate_if_study_is_not_locked("study_uid")
 def delete_study_visit(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     study_visit_uid: str = study_visit_uid_description,
 ):
-    service = StudyVisitService(study_uid=uid)
-    service.delete(study_uid=uid, study_visit_uid=study_visit_uid)
+    service = StudyVisitService(study_uid=study_uid)
+    service.delete(study_uid=study_uid, study_visit_uid=study_visit_uid)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.get(
-    "/studies/{uid}/study-visits/{study_visit_uid}/audit-trail",
+    "/studies/{study_uid}/study-visits/{study_visit_uid}/audit-trail",
     dependencies=[rbac.STUDY_READ],
     summary="List audit trail related to definition of a specific study visit.",
     description="""
@@ -463,15 +463,15 @@ Possible errors:
 )
 # pylint: disable=unused-argument
 def get_study_visit_audit_trail(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     study_visit_uid: str = study_visit_uid_description,
 ) -> list[clinical_mdr_api.models.study_selections.study_visit.StudyVisitVersion]:
-    service = StudyVisitService(study_uid=uid)
-    return service.audit_trail(study_visit_uid, study_uid=uid)
+    service = StudyVisitService(study_uid=study_uid)
+    return service.audit_trail(study_visit_uid, study_uid=study_uid)
 
 
 @router.get(
-    "/studies/{uid}/study-visit/audit-trail",
+    "/studies/{study_uid}/study-visit/audit-trail",
     dependencies=[rbac.STUDY_READ],
     summary="List audit trail related to definition of all study visits within the specified study-uid.",
     description="""
@@ -502,14 +502,14 @@ Possible errors:
     },
 )
 def get_study_visits_all_audit_trail(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
 ) -> list[clinical_mdr_api.models.study_selections.study_visit.StudyVisitVersion]:
-    service = StudyVisitService(study_uid=uid)
-    return service.audit_trail_all_visits(study_uid=uid)
+    service = StudyVisitService(study_uid=study_uid)
+    return service.audit_trail_all_visits(study_uid=study_uid)
 
 
 @router.get(
-    "/studies/{uid}/study-visits/{study_visit_uid}",
+    "/studies/{study_uid}/study-visits/{study_visit_uid}",
     dependencies=[rbac.STUDY_READ],
     summary="List all definitions for a specific study visit",
     description="""
@@ -543,18 +543,22 @@ Possible errors:
 )
 # pylint: disable=unused-argument
 def get_study_visit(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     study_visit_uid: str = study_visit_uid_description,
     study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
 ) -> clinical_mdr_api.models.study_selections.study_visit.StudyVisit:
-    service = StudyVisitService(study_uid=uid, study_value_version=study_value_version)
+    service = StudyVisitService(
+        study_uid=study_uid, study_value_version=study_value_version
+    )
     return service.find_by_uid(
-        study_uid=uid, uid=study_visit_uid, study_value_version=study_value_version
+        study_uid=study_uid,
+        uid=study_visit_uid,
+        study_value_version=study_value_version,
     )
 
 
 @router.get(
-    "/studies/{uid}/get-amount-of-visits-in-epoch/{study_epoch_uid}",
+    "/studies/{study_uid}/get-amount-of-visits-in-epoch/{study_epoch_uid}",
     dependencies=[rbac.STUDY_READ],
     summary="Counts amount of visits in a specified study epoch",
     description="""
@@ -580,19 +584,19 @@ Possible errors:
     },
 )
 def get_amount_of_visits_in_given_epoch(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     study_epoch_uid: str = Path(..., description="The unique uid of the study epoch"),
 ) -> int:
-    service = StudyVisitService(study_uid=uid)
+    service = StudyVisitService(study_uid=study_uid)
     return service.get_amount_of_visits_in_given_epoch(
-        study_uid=uid, study_epoch_uid=study_epoch_uid
+        study_uid=study_uid, study_epoch_uid=study_epoch_uid
     )
 
 
 @router.get(
-    "/studies/{uid}/global-anchor-visit",
+    "/studies/{study_uid}/global-anchor-visit",
     dependencies=[rbac.STUDY_READ],
-    summary="List global anchor visit study visits for selected study referenced by 'uid' ",
+    summary="List global anchor visit study visits for selected study referenced by 'study_uid' ",
     description="""
 State before:
 - Study must exist.
@@ -616,16 +620,16 @@ Possible errors:
     },
 )
 def get_global_anchor_visit(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
 ) -> clinical_mdr_api.models.study_selections.study_visit.SimpleStudyVisit | None:
-    service = StudyVisitService(study_uid=uid)
-    return service.get_global_anchor_visit(study_uid=uid)
+    service = StudyVisitService(study_uid=study_uid)
+    return service.get_global_anchor_visit(study_uid=study_uid)
 
 
 @router.get(
-    "/studies/{uid}/anchor-visits-in-group-of-subvisits",
+    "/studies/{study_uid}/anchor-visits-in-group-of-subvisits",
     dependencies=[rbac.STUDY_READ],
-    summary="List all anchor visits for group of subvisits for selected study referenced by 'uid' ",
+    summary="List all anchor visits for group of subvisits for selected study referenced by 'study_uid' ",
     description="""
 State before:
 - Study must exist.
@@ -650,16 +654,16 @@ Possible errors:
     },
 )
 def get_anchor_visits_in_group_of_subvisits(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
 ) -> list[clinical_mdr_api.models.study_selections.study_visit.SimpleStudyVisit]:
-    service = StudyVisitService(study_uid=uid)
-    return service.get_anchor_visits_in_a_group_of_subvisits(study_uid=uid)
+    service = StudyVisitService(study_uid=study_uid)
+    return service.get_anchor_visits_in_a_group_of_subvisits(study_uid=study_uid)
 
 
 @router.get(
-    "/studies/{uid}/anchor-visits-for-special-visit",
+    "/studies/{study_uid}/anchor-visits-for-special-visit",
     dependencies=[rbac.STUDY_READ],
-    summary="List all visits that can be anchor visits for special visit for a selected study referenced by 'uid' ",
+    summary="List all visits that can be anchor visits for special visit for a selected study referenced by 'study_uid' ",
     description="""
 State before:
 - Study must exist.
@@ -684,16 +688,16 @@ Possible errors:
     },
 )
 def get_anchor_visits_for_special_visit(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
 ) -> list[clinical_mdr_api.models.study_selections.study_visit.SimpleStudyVisit]:
-    service = StudyVisitService(study_uid=uid)
-    return service.get_anchor_for_special_visit(study_uid=uid)
+    service = StudyVisitService(study_uid=study_uid)
+    return service.get_anchor_for_special_visit(study_uid=study_uid)
 
 
 @router.post(
-    "/studies/{uid}/consecutive-visit-groups",
+    "/studies/{study_uid}/consecutive-visit-groups",
     dependencies=[rbac.STUDY_WRITE],
-    summary="Assign consecutive visit groups for specific study visits for a selected study referenced by 'uid' ",
+    summary="Assign consecutive visit groups for specific study visits for a selected study referenced by 'study_uid' ",
     description="""
 State before:
 - Study must exist.
@@ -717,25 +721,25 @@ Possible errors:
         500: _generic_descriptions.ERROR_500,
     },
 )
-@decorators.validate_if_study_is_not_locked("uid")
+@decorators.validate_if_study_is_not_locked("study_uid")
 def assign_consecutive_visit_group_for_selected_study_visit(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     consecutive_visit_group_input: clinical_mdr_api.models.study_selections.study_visit.VisitConsecutiveGroupInput = Body(
         description="The properties needed to assign visits into consecutive visit group",
     ),
 ) -> list[clinical_mdr_api.models.study_selections.study_visit.StudyVisit]:
-    service = StudyVisitService(study_uid=uid)
+    service = StudyVisitService(study_uid=study_uid)
     return service.assign_visit_consecutive_group(
-        study_uid=uid,
+        study_uid=study_uid,
         visits_to_assign=consecutive_visit_group_input.visits_to_assign,
         overwrite_visit_from_template=consecutive_visit_group_input.overwrite_visit_from_template,
     )
 
 
 @router.delete(
-    "/studies/{uid}/consecutive-visit-groups/{consecutive_visit_group_name}",
+    "/studies/{study_uid}/consecutive-visit-groups/{consecutive_visit_group_name}",
     dependencies=[rbac.STUDY_WRITE],
-    summary="Remove consecutive visit group specified by consecutive-visit-group-name for a selected study referenced by 'uid' ",
+    summary="Remove consecutive visit group specified by consecutive-visit-group-name for a selected study referenced by 'study_uid' ",
     description="""
 State before:
 - Study must exist.
@@ -756,16 +760,16 @@ Possible errors:
         500: _generic_descriptions.ERROR_500,
     },
 )
-@decorators.validate_if_study_is_not_locked("uid")
+@decorators.validate_if_study_is_not_locked("study_uid")
 def remove_consecutive_group(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     consecutive_visit_group_name: str = Path(
         ...,
         description="The name of the consecutive-visit-group that is removed",
     ),
 ):
-    service = StudyVisitService(study_uid=uid)
+    service = StudyVisitService(study_uid=study_uid)
     service.remove_visit_consecutive_group(
-        study_uid=uid, consecutive_visit_group=consecutive_visit_group_name
+        study_uid=study_uid, consecutive_visit_group=consecutive_visit_group_name
     )
     return Response(status_code=status.HTTP_204_NO_CONTENT)

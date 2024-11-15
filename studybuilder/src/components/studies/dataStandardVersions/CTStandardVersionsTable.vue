@@ -8,7 +8,7 @@
         :title="$t('CTStandardVersionsForm.add_title')"
         icon="mdi-plus"
         data-cy="add-ct-standard-version"
-        :disabled="selectedStudyVersion !== null || items.length > 0"
+        :disabled="selectedStudyVersion !== null"
         @click.stop="showForm = true"
       />
       <v-btn
@@ -23,13 +23,30 @@
       />
     </v-card-title>
     <v-card-text>
-      <v-data-table :headers="headers" :items="items" :loading="loading" data-cy="data-table">
+      <v-data-table
+        :headers="headers"
+        :items="items"
+        :loading="loading"
+        data-cy="data-table"
+      >
         <template #[`item.actions`]="{ item }">
           <ActionsMenu :actions="actions" :item="item" />
         </template>
         <template #[`item.start_date`]="{ item }">
           {{ $filters.date(item.start_date) }}
         </template>
+        <template #[`item.automatically_created`]="{ item }">
+        <div v-if="editMode">
+          <v-checkbox
+            v-model="item.automatically_created"
+            :disabled="item.disabled && itemsDisabled"
+            @update:model-value="disableOthers(item)"
+          />
+        </div>
+        <div v-else>
+          {{ $filters.yesno(item.automatically_created) }}
+        </div>
+      </template>
         <template #bottom />
       </v-data-table>
     </v-card-text>
@@ -134,6 +151,10 @@ const headers = [
   {
     title: t('_global.description'),
     key: 'description',
+  },
+  {
+    title: t('CTStandardVersionsTable.automatically_created'),
+    key: 'automatically_created',
   },
   {
     title: t('_global.modified'),

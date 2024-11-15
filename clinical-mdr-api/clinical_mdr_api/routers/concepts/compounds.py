@@ -303,7 +303,7 @@ def get_distinct_values_for_header(
 
 
 @router.get(
-    "/compounds/{uid}",
+    "/compounds/{compound_uid}",
     dependencies=[rbac.LIBRARY_READ],
     summary="Get details on a specific compounds (in a specific version)",
     description="""
@@ -329,14 +329,14 @@ Possible errors:
     },
 )
 def get_compound(
-    uid: str = CompoundUID,
+    compound_uid: str = CompoundUID,
 ):
     compound_service = CompoundService()
-    return compound_service.get_by_uid(uid=uid)
+    return compound_service.get_by_uid(uid=compound_uid)
 
 
 @router.get(
-    "/compounds/{uid}/versions",
+    "/compounds/{compound_uid}/versions",
     dependencies=[rbac.LIBRARY_READ],
     summary="List version history for compounds",
     description="""
@@ -358,16 +358,16 @@ Possible errors:
     responses={
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The compound with the specified 'uid' wasn't found.",
+            "description": "Not Found - The compound with the specified 'compound_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def get_versions(
-    uid: str = CompoundUID,
+    compound_uid: str = CompoundUID,
 ):
     compound_service = CompoundService()
-    return compound_service.get_version_history(uid=uid)
+    return compound_service.get_version_history(uid=compound_uid)
 
 
 @router.post(
@@ -412,7 +412,7 @@ def create(compound_create_input: CompoundCreateInput = Body(description="")):
 
 
 @router.patch(
-    "/compounds/{uid}",
+    "/compounds/{compound_uid}",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Update compound",
     description="""
@@ -446,21 +446,23 @@ Possible errors:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The compound with the specified 'uid' wasn't found.",
+            "description": "Not Found - The compound with the specified 'compound_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def edit(
-    uid: str = CompoundUID,
+    compound_uid: str = CompoundUID,
     compound_edit_input: CompoundEditInput = Body(description=""),
 ):
     compound_service = CompoundService()
-    return compound_service.edit_draft(uid=uid, concept_edit_input=compound_edit_input)
+    return compound_service.edit_draft(
+        uid=compound_uid, concept_edit_input=compound_edit_input
+    )
 
 
 @router.post(
-    "/compounds/{uid}/approvals",
+    "/compounds/{compound_uid}/approvals",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Approve draft version of a compound",
     description="""
@@ -492,20 +494,20 @@ Possible errors:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The compound with the specified 'uid' wasn't found.",
+            "description": "Not Found - The compound with the specified 'compound_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def approve(
-    uid: str = CompoundUID,
+    compound_uid: str = CompoundUID,
 ):
     compound_service = CompoundService()
-    return compound_service.approve(uid=uid)
+    return compound_service.approve(uid=compound_uid)
 
 
 @router.post(
-    "/compounds/{uid}/versions",
+    "/compounds/{compound_uid}/versions",
     dependencies=[rbac.LIBRARY_WRITE],
     summary=" Create a new version of a compound",
     description="""
@@ -535,20 +537,20 @@ Possible errors:
             "model": ErrorResponse,
             "description": "Not Found - Reasons include e.g.: \n"
             "- The compound is not in final status.\n"
-            "- The compound with the specified 'uid' could not be found.",
+            "- The compound with the specified 'compound_uid' could not be found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def create_new_version(
-    uid: str = CompoundUID,
+    compound_uid: str = CompoundUID,
 ):
     compound_service = CompoundService()
-    return compound_service.create_new_version(uid=uid)
+    return compound_service.create_new_version(uid=compound_uid)
 
 
 @router.delete(
-    "/compounds/{uid}/activations",
+    "/compounds/{compound_uid}/activations",
     dependencies=[rbac.LIBRARY_WRITE],
     summary=" Inactivate final version of an compound",
     description="""
@@ -579,20 +581,20 @@ Possible errors:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The compound with the specified 'uid' could not be found.",
+            "description": "Not Found - The compound with the specified 'compound_uid' could not be found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def inactivate(
-    uid: str = CompoundUID,
+    compound_uid: str = CompoundUID,
 ):
     compound_service = CompoundService()
-    return compound_service.inactivate_final(uid=uid)
+    return compound_service.inactivate_final(uid=compound_uid)
 
 
 @router.post(
-    "/compounds/{uid}/activations",
+    "/compounds/{compound_uid}/activations",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Reactivate retired version of an compound",
     description="""
@@ -623,20 +625,20 @@ Possible errors:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The compound with the specified 'uid' could not be found.",
+            "description": "Not Found - The compound with the specified 'compound_uid' could not be found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def reactivate(
-    uid: str = CompoundUID,
+    compound_uid: str = CompoundUID,
 ):
     compound_service = CompoundService()
-    return compound_service.reactivate_retired(uid=uid)
+    return compound_service.reactivate_retired(uid=compound_uid)
 
 
 @router.delete(
-    "/compounds/{uid}",
+    "/compounds/{compound_uid}",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Delete draft version of an compound",
     description="""
@@ -667,13 +669,13 @@ Possible errors:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - An compound with the specified 'uid' could not be found.",
+            "description": "Not Found - An compound with the specified 'compound_uid' could not be found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def delete(
-    uid: str = CompoundUID,
+    compound_uid: str = CompoundUID,
 ):
     compound_service = CompoundService()
-    compound_service.soft_delete(uid=uid)
+    compound_service.soft_delete(uid=compound_uid)

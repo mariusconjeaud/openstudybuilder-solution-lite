@@ -246,12 +246,13 @@ class StudyCriteria(StudySelection):
     )
 
 
-class StudySelectionMetadata(ClinicalMdrNodeWithUID, AuditTrailMixin):
-    accepted_version = BooleanProperty()
-
-
-class StudySoAGroup(StudySelectionMetadata):
+class StudySoAGroup(StudySelection):
     show_soa_group_in_protocol_flowchart = BooleanProperty(default=False)
+    has_study_soa_group = RelationshipFrom(
+        ".study.StudyValue",
+        "HAS_STUDY_SOA_GROUP",
+        cardinality=ZeroOrMore,
+    )
     has_flowchart_group = RelationshipTo(
         CTTermRoot,
         "HAS_FLOWCHART_GROUP",
@@ -272,8 +273,13 @@ class StudySoAGroup(StudySelectionMetadata):
     )
 
 
-class StudyActivitySubGroup(StudySelectionMetadata):
+class StudyActivitySubGroup(StudySelection):
     show_activity_subgroup_in_protocol_flowchart = BooleanProperty(default=True)
+    has_study_activity_sub_group = RelationshipFrom(
+        ".study.StudyValue",
+        "HAS_STUDY_ACTIVITY_SUBGROUP",
+        cardinality=ZeroOrMore,
+    )
     study_activity_has_study_activity_subgroup = RelationshipFrom(
         "StudyActivity", "STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_SUBGROUP"
     )
@@ -288,8 +294,13 @@ class StudyActivitySubGroup(StudySelectionMetadata):
     )
 
 
-class StudyActivityGroup(StudySelectionMetadata):
+class StudyActivityGroup(StudySelection):
     show_activity_group_in_protocol_flowchart = BooleanProperty(default=True)
+    has_study_activity_group = RelationshipFrom(
+        ".study.StudyValue",
+        "HAS_STUDY_ACTIVITY_GROUP",
+        cardinality=ZeroOrMore,
+    )
     study_activity_has_study_activity_group = RelationshipFrom(
         "StudyActivity", "STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_GROUP"
     )

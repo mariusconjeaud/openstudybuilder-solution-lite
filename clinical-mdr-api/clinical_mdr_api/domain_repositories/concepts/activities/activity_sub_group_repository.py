@@ -18,6 +18,7 @@ from clinical_mdr_api.domains._utils import ObjectStatus
 from clinical_mdr_api.domains.concepts.activities.activity_sub_group import (
     ActivitySubGroupAR,
     ActivitySubGroupVO,
+    SimpleActivityGroupVO,
 )
 from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryItemMetadataVO,
@@ -46,7 +47,14 @@ class ActivitySubGroupRepository(ConceptGenericRepository[ActivitySubGroupAR]):
                 definition=input_dict.get("definition"),
                 abbreviation=input_dict.get("abbreviation"),
                 activity_groups=[
-                    activity_group["uid"]
+                    SimpleActivityGroupVO(
+                        activity_group_uid=activity_group.get("activity_group").get(
+                            "uid"
+                        ),
+                        activity_group_version=activity_group.get("activity_group").get(
+                            "version"
+                        ),
+                    )
                     for activity_group in input_dict.get("activity_groups")
                 ],
             ),
@@ -82,8 +90,14 @@ class ActivitySubGroupRepository(ConceptGenericRepository[ActivitySubGroupAR]):
                 name_sentence_case=value.name_sentence_case,
                 definition=value.definition,
                 abbreviation=value.abbreviation,
-                activity_groups=_kwargs["activity_subgroups_root"][
-                    "activity_groups_uids"
+                activity_groups=[
+                    SimpleActivityGroupVO(
+                        activity_group_uid=activity_group.get("uid"),
+                        activity_group_version=activity_group.get("version"),
+                    )
+                    for activity_group in _kwargs["activity_subgroups_root"][
+                        "activity_groups"
+                    ]
                 ],
             ),
             library=LibraryVO.from_input_values_2(
@@ -102,12 +116,20 @@ class ActivitySubGroupRepository(ConceptGenericRepository[ActivitySubGroupAR]):
         **_kwargs,
     ) -> ActivitySubGroupAR:
         activity_valid_groups = value.has_group.all()
-        activity_groups_uid = []
+        activity_groups = []
         for activity_valid_group in activity_valid_groups:
-            activity_group_uid = (
-                activity_valid_group.in_group.get().has_version.single().uid
+            activity_group_value = activity_valid_group.in_group.get()
+            activity_group_root = activity_group_value.has_version.single()
+            all_rels = activity_group_value.has_version.all_relationships(
+                activity_group_root
             )
-            activity_groups_uid.append(activity_group_uid)
+            latest = max(all_rels, key=lambda r: float(r.version))
+            activity_groups.append(
+                SimpleActivityGroupVO(
+                    activity_group_uid=activity_group_root.uid,
+                    activity_group_version=latest.version,
+                )
+            )
 
         return ActivitySubGroupAR.from_repository_values(
             uid=root.uid,
@@ -116,7 +138,7 @@ class ActivitySubGroupRepository(ConceptGenericRepository[ActivitySubGroupAR]):
                 name_sentence_case=value.name_sentence_case,
                 definition=value.definition,
                 abbreviation=value.abbreviation,
-                activity_groups=activity_groups_uid,
+                activity_groups=activity_groups,
             ),
             library=LibraryVO.from_input_values_2(
                 library_name=library.name,
@@ -132,8 +154,16 @@ class ActivitySubGroupRepository(ConceptGenericRepository[ActivitySubGroupAR]):
         # which is specified in the activity_generic_repository_impl
         return """
         WITH *,
-            apoc.coll.toSet([(concept_value)-[:HAS_GROUP]->(:ActivityValidGroup)-[:IN_GROUP]-(activity_group_value:ActivityGroupValue)
-            <-[:HAS_VERSION]-(activity_group_root:ActivityGroupRoot) | {uid:activity_group_root.uid, name:activity_group_value.name}]) AS activity_groups
+            [(concept_value)-[:HAS_GROUP]->(activity_valid_group:ActivityValidGroup) |
+            {
+                activity_group:head(apoc.coll.sortMulti([(activity_valid_group)-[:IN_GROUP]-(activity_group_value:ActivityGroupValue)
+                    <-[has_version:HAS_VERSION]-(activity_group_root:ActivityGroupRoot) | 
+                    {
+                     uid:activity_group_root.uid,
+                     name:activity_group_value.name,
+                     version:has_version.version
+                    }], ['has_version.version']))
+            }] AS activity_groups
         """
 
     def create_query_filter_statement(
@@ -187,7 +217,9 @@ class ActivitySubGroupRepository(ConceptGenericRepository[ActivitySubGroupAR]):
         value_node.save()
         for activity_group in ar.concept_vo.activity_groups:
             # find related ActivityGroup nodes
-            group_root = ActivityGroupRoot.nodes.get_or_none(uid=activity_group)
+            group_root = ActivityGroupRoot.nodes.get_or_none(
+                uid=activity_group.activity_group_uid
+            )
             group_value = group_root.has_latest_value.get_or_none()
 
             # Create ActivityValidGroup node
@@ -216,9 +248,12 @@ class ActivitySubGroupRepository(ConceptGenericRepository[ActivitySubGroupAR]):
                 activity_valid_group.in_group.get().has_version.single().uid
             )
             activity_groups_uid.append(activity_group_uid)
-        are_rels_changed = sorted(ar.concept_vo.activity_groups) != sorted(
-            activity_groups_uid
-        )
+        are_rels_changed = sorted(
+            [
+                activity_group.activity_group_uid
+                for activity_group in ar.concept_vo.activity_groups
+            ]
+        ) != sorted(activity_groups_uid)
 
         return are_concept_properties_changed or are_rels_changed
 

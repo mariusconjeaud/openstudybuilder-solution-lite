@@ -85,7 +85,6 @@ INDEXES = [
     ("StudyActivityGroup", "uid"),
     ("StudyActivitySubGroup", "uid"),
     ("StudyCompoundDosing", "uid"),
-    ("StudySelectionMetadata", "uid"),
     ("StudySoAGroup", "uid"),
     ("SyntaxIndexingInstanceRoot", "uid"),
     ("SyntaxIndexingTemplateRoot", "uid"),

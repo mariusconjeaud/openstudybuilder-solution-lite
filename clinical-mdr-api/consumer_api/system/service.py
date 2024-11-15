@@ -1,7 +1,7 @@
 import os
 import urllib.parse
 
-from neomodel.core import db
+from neomodel.sync_.core import db
 from pydantic import BaseModel, Field
 
 

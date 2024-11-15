@@ -199,9 +199,9 @@ def get_distinct_values_for_header(
 
 
 @router.get(
-    "/{uid}",
+    "/{unit_definition_uid}",
     dependencies=[rbac.LIBRARY_READ],
-    summary="Returns the latest/newest version of a specific Unit definition identified by 'uid'.",
+    summary="Returns the latest/newest version of a specific Unit definition identified by 'unit_definition_uid'.",
     description="""If multiple request query parameters are used, then they need to
     match all at the same time (they are combined with the AND operation).""",
     response_model=UnitDefinitionModel,
@@ -210,13 +210,13 @@ def get_distinct_values_for_header(
         404: {
             "model": ErrorResponse,
             "description": """Not Found - The unit definition with the specified
-            'uid' (and the specified date/time, version and/or status) wasn't found.""",
+            'unit_definition_uid' (and the specified date/time, version and/or status) wasn't found.""",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def get_by_uid(
-    uid: str = UnitDefinitionUID,
+    unit_definition_uid: str = UnitDefinitionUID,
     at_specified_date_time: datetime
     | None = Query(
         None,
@@ -245,7 +245,7 @@ def get_by_uid(
     service: Service = Depends(),
 ) -> UnitDefinitionModel:
     return service.get_by_uid(
-        uid,
+        unit_definition_uid,
         version=version,
         status=status,
         at_specified_datetime=at_specified_date_time,
@@ -253,9 +253,9 @@ def get_by_uid(
 
 
 @router.get(
-    "/{uid}/versions",
+    "/{unit_definition_uid}/versions",
     dependencies=[rbac.LIBRARY_READ],
-    summary="Returns the version history of a specific concept identified by 'uid'.",
+    summary="Returns the version history of a specific concept identified by 'unit_definition_uid'.",
     description=f"""
 The returned versions are ordered by `start_date` descending (newest entries first)
 
@@ -282,7 +282,7 @@ The returned versions are ordered by `start_date` descending (newest entries fir
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The concept with the specified 'uid' wasn't found.",
+            "description": "Not Found - The concept with the specified 'unit_definition_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
@@ -320,10 +320,10 @@ The returned versions are ordered by `start_date` descending (newest entries fir
 # pylint: disable=unused-argument
 def get_versions(
     request: Request,  # request is actually required by the allow_exports decorator
-    uid: str = UnitDefinitionUID,
+    unit_definition_uid: str = UnitDefinitionUID,
     service: Service = Depends(),
 ) -> list[UnitDefinitionModel]:
-    return service.get_versions(uid)
+    return service.get_versions(unit_definition_uid)
 
 
 @router.post(
@@ -367,9 +367,9 @@ def post(
 
 
 @router.patch(
-    "/{uid}",
+    "/{unit_definition_uid}",
     dependencies=[rbac.LIBRARY_WRITE],
-    summary="Updates the unit definition identified by 'uid'.",
+    summary="Updates the unit definition identified by 'unit_definition_uid'.",
     description="""This request is only valid if the unit definition
 * is in 'Draft' status and
 * belongs to a library that allows editing (the 'is_editable' property of the library needs to be true).
@@ -391,25 +391,25 @@ If the request succeeds:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The concept with the specified 'uid' could not be found.",
+            "description": "Not Found - The concept with the specified 'unit_definition_uid' could not be found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def patch(
-    uid: str = UnitDefinitionUID,
+    unit_definition_uid: str = UnitDefinitionUID,
     patch_input: UnitDefinitionPatchInput = Body(
         description="The new content of the concept including the change description.",
     ),
     service: Service = Depends(),
 ) -> UnitDefinitionModel:
-    return service.patch(uid, patch_input)
+    return service.patch(unit_definition_uid, patch_input)
 
 
 @router.post(
-    "/{uid}/versions",
+    "/{unit_definition_uid}/versions",
     dependencies=[rbac.LIBRARY_WRITE],
-    summary="Creates a new version of the unit definition identified by 'uid'.",
+    summary="Creates a new version of the unit definition identified by 'unit_definition_uid'.",
     description="""This request is only valid if the unit definition
 * is in 'Final' or 'Retired' status only (so no latest 'Draft' status exists) and
 * belongs to a library that allows editing (the 'is_editable' property of the library needs to be true).
@@ -432,21 +432,21 @@ If the request succeeds:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The  concept with the specified 'uid' could not be found.",
+            "description": "Not Found - The  concept with the specified 'unit_definition_uid' could not be found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def new_version(
-    uid: str = UnitDefinitionUID, service: Service = Depends()
+    unit_definition_uid: str = UnitDefinitionUID, service: Service = Depends()
 ) -> UnitDefinitionModel:
-    return service.new_version(uid)
+    return service.new_version(unit_definition_uid)
 
 
 @router.post(
-    "/{uid}/approvals",
+    "/{unit_definition_uid}/approvals",
     dependencies=[rbac.LIBRARY_WRITE],
-    summary="Approves the unit definition identified by 'uid'.",
+    summary="Approves the unit definition identified by 'unit_definition_uid'.",
     description="""This request is only valid if the unit definition
 * is in 'Draft' status and
 * belongs to a library that allows editing (the 'is_editable' property of the library needs to be true).
@@ -468,21 +468,21 @@ If the request succeeds:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The unit definition with the specified 'uid' could not be found.",
+            "description": "Not Found - The unit definition with the specified 'unit_definition_uid' could not be found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def approve(
-    uid: str = UnitDefinitionUID, service: Service = Depends()
+    unit_definition_uid: str = UnitDefinitionUID, service: Service = Depends()
 ) -> UnitDefinitionModel:
-    return service.approve(uid)
+    return service.approve(unit_definition_uid)
 
 
 @router.delete(
-    "/{uid}/activations",
+    "/{unit_definition_uid}/activations",
     dependencies=[rbac.LIBRARY_WRITE],
-    summary="Inactivates/deactivates the unit definition identified by 'uid'.",
+    summary="Inactivates/deactivates the unit definition identified by 'unit_definition_uid'.",
     description="""This request is only valid if the unit definition
 * is in 'Final' status only (so no latest 'Draft' status exists).
 
@@ -502,21 +502,21 @@ If the request succeeds:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The unit definition with the specified 'uid' could not be found.",
+            "description": "Not Found - The unit definition with the specified 'unit_definition_uid' could not be found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def inactivate(
-    uid: str = UnitDefinitionUID, service: Service = Depends()
+    unit_definition_uid: str = UnitDefinitionUID, service: Service = Depends()
 ) -> UnitDefinitionModel:
-    return service.inactivate(uid)
+    return service.inactivate(unit_definition_uid)
 
 
 @router.post(
-    "/{uid}/activations",
+    "/{unit_definition_uid}/activations",
     dependencies=[rbac.LIBRARY_WRITE],
-    summary="Reactivates the unit definition identified by 'uid'.",
+    summary="Reactivates the unit definition identified by 'unit_definition_uid'.",
     description="""This request is only valid if the unit definition
 * is in 'Retired' status only (so no latest 'Draft' status exists).
 
@@ -536,21 +536,21 @@ If the request succeeds:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The concept with the specified 'uid' could not be found.",
+            "description": "Not Found - The concept with the specified 'unit_definition_uid' could not be found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def reactivate(
-    uid: str = UnitDefinitionUID, service: Service = Depends()
+    unit_definition_uid: str = UnitDefinitionUID, service: Service = Depends()
 ) -> UnitDefinitionModel:
-    return service.reactivate(uid)
+    return service.reactivate(unit_definition_uid)
 
 
 @router.delete(
-    "/{uid}",
+    "/{unit_definition_uid}",
     dependencies=[rbac.LIBRARY_WRITE],
-    summary="Deletes the unit definition identified by 'uid'.",
+    summary="Deletes the unit definition identified by 'unit_definition_uid'.",
     description="""This request is only valid if \n
 * the unit definition is in 'Draft' status and
 * the unit definition has never been in 'Final' status and
@@ -573,6 +573,8 @@ def reactivate(
         500: _generic_descriptions.ERROR_500,
     },
 )
-def delete(uid: str = UnitDefinitionUID, service: Service = Depends()) -> None:
-    service.delete(uid)
+def delete(
+    unit_definition_uid: str = UnitDefinitionUID, service: Service = Depends()
+) -> None:
+    service.delete(unit_definition_uid)
     return Response(status_code=fast_api_status.HTTP_204_NO_CONTENT)

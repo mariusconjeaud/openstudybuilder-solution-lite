@@ -47,6 +47,7 @@ class OdmDescriptionService(OdmGenericService[OdmDescriptionAR]):
             ),
             library=library,
             generate_uid_callback=self.repository.generate_uid,
+            odm_object_exists_callback=self._repos.odm_description_repository.odm_object_exists,
         )
 
     def _edit_aggregate(
@@ -62,6 +63,7 @@ class OdmDescriptionService(OdmGenericService[OdmDescriptionAR]):
                 instruction=concept_edit_input.instruction,
                 sponsor_instruction=concept_edit_input.sponsor_instruction,
             ),
+            odm_object_exists_callback=self._repos.odm_description_repository.odm_object_exists,
         )
         return item
 

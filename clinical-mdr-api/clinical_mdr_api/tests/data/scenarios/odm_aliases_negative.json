@@ -37,7 +37,7 @@
         }
     },
     {
-        "name": "Test cannot create a new ODM Alias with existing name",
+        "name": "Test cannot create a new ODM Alias with same properties",
         "request": {
             "headers": {},
             "method": "POST",
@@ -55,7 +55,7 @@
                 "content-type": "application/json"
             },
             "result": {
-                "message": "ODM Alias with ['name: Variable'] already exists.",
+                "message": "ODM Alias already exists with UID (OdmAlias_000001) and data {'name': 'Variable', 'context': 'domain1'}",
                 "time": "2022-03-07T12: 14: 18.116363",
                 "path": "http://testserver/concepts/odms/aliases",
                 "method": "POST",

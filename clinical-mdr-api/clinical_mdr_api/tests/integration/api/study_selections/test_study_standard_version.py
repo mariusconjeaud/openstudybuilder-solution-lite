@@ -1,5 +1,5 @@
 """
-Tests for /studies/{uid}/study-standard-versions endpoints
+Tests for /studies/{study_uid}/study-standard-versions endpoints
 """
 
 # pylint: disable=unused-argument
@@ -34,6 +34,7 @@ standard_version_type_term: CTTerm
 standard_version_type_term2: CTTerm
 ct_package_uid: str
 ct_package_uid_2: str
+ct_package_uid_3: str
 
 
 @pytest.fixture(scope="module")
@@ -50,17 +51,26 @@ def test_data():
     inject_and_clear_db(db_name)
 
     global study
-    study = inject_base_data()
-
+    inject_base_data()
+    study = TestUtils.create_study()
     catalogue = "SDTM CT"
     cdisc_package_name = "SDTM CT 2020-03-27"
     cdisc_package_name_2 = "SDTM CT 2020-03-28"
+    catalogue_3 = "ADAM CT"
+    cdisc_package_name_3 = "ADAM CT 2020-03-27"
 
-    TestUtils.create_ct_package(
+    global ct_package_uid
+    global ct_package_uid_2
+    global ct_package_uid_3
+
+    ct_package_uid = TestUtils.create_ct_package(
         catalogue=catalogue, name=cdisc_package_name, approve_elements=False
     )
-    TestUtils.create_ct_package(
+    ct_package_uid_2 = TestUtils.create_ct_package(
         catalogue=catalogue, name=cdisc_package_name_2, approve_elements=False
+    )
+    ct_package_uid_3 = TestUtils.create_ct_package(
+        catalogue=catalogue_3, name=cdisc_package_name_3, approve_elements=False
     )
     yield
 
@@ -74,12 +84,12 @@ def test_study_standard_version_crud_operations(api_client):
     )
     res = response.json()
     assert response.status_code == 200
-    global ct_package_uid
-    global ct_package_uid_2
-    ct_package_uid = res[0]["uid"]
-    ct_package_uid_2 = res[1]["uid"]
+    assert ct_package_uid == res[2]["uid"]
+    assert ct_package_uid_2 == res[3]["uid"]
+    assert ct_package_uid_3 == res[0]["uid"]
     description = "My description"
     description2 = "Other description"
+    description3 = "ADAM description"
 
     global standard_version_uid
     response = api_client.post(
@@ -92,6 +102,7 @@ def test_study_standard_version_crud_operations(api_client):
     assert res["description"] == description
     standard_version_uid = res["uid"]
 
+    # CHECK THAT CANNOT CREATE A STUDY STANDARD VERSION FOR THE SAME CATALOGUE
     response = api_client.post(
         f"/studies/{study.uid}/study-standard-versions",
         json={"ct_package_uid": ct_package_uid_2, "description": description2},
@@ -100,8 +111,17 @@ def test_study_standard_version_crud_operations(api_client):
     assert response.status_code == 400
     assert (
         res["message"]
-        == f"Already exists a Standard Version {standard_version_uid} for the study: {study.uid}"
+        == "Already exists a Standard Version ('StudyStandardVersion_000002', 'SDTM CT 2020-03-27') for the catalogue: SDTM CT"
     )
+
+    response = api_client.post(
+        f"/studies/{study.uid}/study-standard-versions",
+        json={"ct_package_uid": ct_package_uid_3, "description": description3},
+    )
+    res = response.json()
+    assert response.status_code == 201
+    assert res["ct_package"]["uid"] == ct_package_uid_3
+    assert res["description"] == description3
 
     # get all standard versions
     response = api_client.get(
@@ -109,7 +129,7 @@ def test_study_standard_version_crud_operations(api_client):
     )
     res = response.json()
     assert response.status_code == 200
-    assert len(res) == 1
+    assert len(res) == 2
     assert res[0]["uid"] == standard_version_uid
     assert res[0]["description"] == description
 
@@ -246,6 +266,32 @@ def test_standard_version_modify_actions_on_locked_study(api_client):
         == f"Study with specified uid '{study.uid}' is locked."
     )
 
+    # Unlock
+    response = api_client.delete(f"/studies/{study.uid}/locks")
+    assert response.status_code == 200
+
+    # test delete
+    response = api_client.delete(
+        f"/studies/{study.uid}/study-standard-versions/{standard_version_uid}"
+    )
+    # assert response.status_code == 400
+
+    # Lock and check automatically creation
+    response = api_client.post(
+        f"/studies/{study.uid}/locks",
+        json={"change_description": "Lock 1"},
+    )
+    assert response.status_code == 201
+
+    # get all the study standard_versions, check the SDTM automatically created
+    response = api_client.get(
+        f"/studies/{study.uid}/study-standard-versions",
+    )
+    assert response.status_code == 200
+    res_old = response.json()
+    assert res_old[1]["automatically_created"] is True
+    assert "SDTM CT" in res_old[1]["ct_package"]["uid"]
+
 
 def test_get_standard_version_data_for_specific_study_version(api_client):
     # get the study standard_version for 1st locked: version 1, used for compare later
@@ -260,7 +306,7 @@ def test_get_standard_version_data_for_specific_study_version(api_client):
     assert response.status_code == 200
 
     response = api_client.patch(
-        f"/studies/{study.uid}/study-standard-versions/{standard_version_uid}",
+        f"/studies/{study.uid}/study-standard-versions/{res_old[0]['uid']}",
         json={
             "ct_package_uid": ct_package_uid_2,
         },
@@ -272,7 +318,7 @@ def test_get_standard_version_data_for_specific_study_version(api_client):
         f"/studies/{study.uid}/study-standard-versions",
     ).json()
     res_v1 = api_client.get(
-        f"/studies/{study.uid}/study-standard-versions?study_value_version=1",
+        f"/studies/{study.uid}/study-standard-versions?study_value_version=2",
     ).json()
     for i, _ in enumerate(res_old):
         res_old[i]["study_version"] = mock.ANY

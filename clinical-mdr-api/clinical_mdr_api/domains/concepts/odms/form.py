@@ -65,18 +65,25 @@ class OdmFormVO(ConceptVO):
 
     def validate(
         self,
-        concept_exists_by_callback: Callable[[str, str, bool], bool],
+        odm_object_exists_callback: Callable,
         find_term_callback: Callable[[str], CTTermAttributesAR | None],
         odm_description_exists_by_callback: Callable[[str, str, bool], bool],
         odm_alias_exists_by_callback: Callable[[str, str, bool], bool],
-        previous_name: str | None = None,
-        previous_oid: str | None = None,
     ) -> None:
-        self.duplication_check(
-            [("name", self.name, previous_name), ("OID", self.oid, previous_oid)],
-            concept_exists_by_callback,
-            "ODM Form",
-        )
+        data = {
+            "description_uids": self.description_uids,
+            "alias_uids": self.alias_uids,
+            "scope_uid": self.scope_uid,
+            "name": self.name,
+            "oid": self.oid,
+            "sdtm_version": self.sdtm_version,
+            "repeating": bool(self.repeating),
+        }
+        if uids := odm_object_exists_callback(**data):
+            raise BusinessLogicException(
+                f"ODM Form already exists with UID ({uids[0]}) and data {data}"
+            )
+
         self.check_concepts_exist(
             [
                 (
@@ -133,9 +140,7 @@ class OdmFormAR(OdmARBase):
         concept_vo: OdmFormVO,
         library: LibraryVO,
         generate_uid_callback: Callable[[], str | None] = (lambda: None),
-        concept_exists_by_callback: Callable[
-            [str, str, bool], bool
-        ] = lambda x, y, z: True,
+        odm_object_exists_callback: Callable = lambda _: True,
         find_term_callback: Callable[[str], CTTermAttributesAR | None] = lambda _: None,
         odm_description_exists_by_callback: Callable[
             [str, str, bool], bool
@@ -147,7 +152,7 @@ class OdmFormAR(OdmARBase):
         item_metadata = LibraryItemMetadataVO.get_initial_item_metadata(author=author)
 
         concept_vo.validate(
-            concept_exists_by_callback=concept_exists_by_callback,
+            odm_object_exists_callback=odm_object_exists_callback,
             find_term_callback=find_term_callback,
             odm_description_exists_by_callback=odm_description_exists_by_callback,
             odm_alias_exists_by_callback=odm_alias_exists_by_callback,
@@ -168,6 +173,7 @@ class OdmFormAR(OdmARBase):
         concept_exists_by_callback: Callable[
             [str, str, bool], bool
         ] = lambda x, y, z: True,
+        odm_object_exists_callback: Callable = lambda _: True,
         find_term_callback: Callable[[str], CTTermAttributesAR | None] = lambda _: None,
         odm_description_exists_by_callback: Callable[
             [str, str, bool], bool
@@ -180,12 +186,10 @@ class OdmFormAR(OdmARBase):
         Creates a new draft version for the object.
         """
         concept_vo.validate(
-            concept_exists_by_callback=concept_exists_by_callback,
+            odm_object_exists_callback=odm_object_exists_callback,
             find_term_callback=find_term_callback,
             odm_description_exists_by_callback=odm_description_exists_by_callback,
             odm_alias_exists_by_callback=odm_alias_exists_by_callback,
-            previous_name=self.name,
-            previous_oid=self._concept_vo.oid,
         )
 
         if self._concept_vo != concept_vo:

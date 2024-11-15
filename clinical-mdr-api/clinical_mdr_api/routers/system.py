@@ -5,9 +5,11 @@ from fastapi import APIRouter
 from fastapi.responses import FileResponse, PlainTextResponse
 
 from clinical_mdr_api import config, models
+from clinical_mdr_api.models.feature_flag import FeatureFlag
 from clinical_mdr_api.models.notification import Notification
 from clinical_mdr_api.routers import _generic_descriptions
 from clinical_mdr_api.services import system as service
+from clinical_mdr_api.services.feature_flags import FeatureFlagService
 from clinical_mdr_api.services.notifications import NotificationService
 
 # Mounted under "/system" path as a sub-application, endpoints do not require authentication.
@@ -66,6 +68,20 @@ def get_license_md() -> str:
     filename = "LICENSE.md"
     filepath = os.path.join(config.APP_ROOT_DIR, filename)
     return FileResponse(path=filepath, media_type="text/markdown", filename=filename)
+
+
+@router.get(
+    "/feature-flags",
+    summary="Returns all feature flags.",
+    response_model=list[FeatureFlag],
+    status_code=200,
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
+)
+def get_all_feature_flags() -> list[FeatureFlag]:
+    return FeatureFlagService().get_all_feature_flags()
 
 
 @router.get(

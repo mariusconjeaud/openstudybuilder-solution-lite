@@ -271,9 +271,9 @@ def retrieve_audit_trail(
 
 
 @router.get(
-    "/{uid}",
+    "/{activity_instruction_template_uid}",
     dependencies=[rbac.LIBRARY_READ],
-    summary="Returns the latest/newest version of a specific activity instruction template identified by 'uid'.",
+    summary="Returns the latest/newest version of a specific activity instruction template identified by 'activity_instruction_template_uid'.",
     description="""If multiple request query parameters are used, then they need to
     match all at the same time (they are combined with the AND operation).""",
     response_model=ActivityInstructionTemplateWithCount | None,
@@ -282,21 +282,21 @@ def retrieve_audit_trail(
         404: {
             "model": ErrorResponse,
             "description": """Not Found - The activity instruction template with the
-            specified 'uid' (and the specified date/time and/or status) wasn't found.""",
+            specified 'activity_instruction_template_uid' (and the specified date/time and/or status) wasn't found.""",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def get_activity_instruction_template(
-    uid: str = ActivityInstructionTemplateUID,
+    activity_instruction_template_uid: str = ActivityInstructionTemplateUID,
 ):
-    return Service().get_by_uid(uid=uid)
+    return Service().get_by_uid(uid=activity_instruction_template_uid)
 
 
 @router.get(
-    "/{uid}/versions",
+    "/{activity_instruction_template_uid}/versions",
     dependencies=[rbac.LIBRARY_READ],
-    summary="Returns the version history of a specific activity instruction template identified by 'uid'.",
+    summary="Returns the version history of a specific activity instruction template identified by 'activity_instruction_template_uid'.",
     description=f"""
 The returned versions are ordered by `start_date` descending (newest entries first).
 
@@ -345,7 +345,7 @@ The returned versions are ordered by `start_date` descending (newest entries fir
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The activity instruction template with the specified 'uid' wasn't found.",
+            "description": "Not Found - The activity instruction template with the specified 'activity_instruction_template_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
@@ -373,15 +373,15 @@ The returned versions are ordered by `start_date` descending (newest entries fir
 # pylint: disable=unused-argument
 def get_activity_instruction_template_versions(
     request: Request,  # request is actually required by the allow_exports decorator
-    uid: str = ActivityInstructionTemplateUID,
+    activity_instruction_template_uid: str = ActivityInstructionTemplateUID,
 ):
-    return Service().get_version_history(uid=uid)
+    return Service().get_version_history(uid=activity_instruction_template_uid)
 
 
 @router.get(
-    "/{uid}/versions/{version}",
+    "/{activity_instruction_template_uid}/versions/{version}",
     dependencies=[rbac.LIBRARY_READ],
-    summary="Returns a specific version of a specific activity instruction template identified by 'uid' and 'version'.",
+    summary="Returns a specific version of a specific activity instruction template identified by 'activity_instruction_template_uid' and 'version'.",
     description="**Multiple versions**:\n\n"
     "Technically, there can be multiple versions of the activity instruction template with the same version number. "
     "This is due to the fact, that the version number remains the same when inactivating or reactivating an activity instruction template "
@@ -392,13 +392,13 @@ def get_activity_instruction_template_versions(
     responses={
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The activity instruction template with the specified 'uid' and 'version' wasn't found.",
+            "description": "Not Found - The activity instruction template with the specified 'activity_instruction_template_uid' and 'version' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def get_activity_instruction_template_version(
-    uid: str = ActivityInstructionTemplateUID,
+    activity_instruction_template_uid: str = ActivityInstructionTemplateUID,
     version: str = Path(
         None,
         description="A specific version number of the activity instruction template. "
@@ -406,28 +406,32 @@ def get_activity_instruction_template_version(
         "E.g. '0.1', '0.2', '1.0', ...",
     ),
 ):
-    return Service().get_specific_version(uid=uid, version=version)
+    return Service().get_specific_version(
+        uid=activity_instruction_template_uid, version=version
+    )
 
 
 @router.get(
-    "/{uid}/releases",
+    "/{activity_instruction_template_uid}/releases",
     dependencies=[rbac.LIBRARY_READ],
-    summary="List all final versions of a template identified by 'uid', including number of studies using a specific version",
+    summary="List all final versions of a template identified by 'activity_instruction_template_uid', including number of studies using a specific version",
     description="",
     response_model=list[models.ActivityInstructionTemplate],
     status_code=200,
     responses={
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The activity instruction template with the specified 'uid' wasn't found.",
+            "description": "Not Found - The activity instruction template with the specified 'activity_instruction_template_uid' wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def get_activity_instruction_template_releases(
-    uid: str = ActivityInstructionTemplateUID,
+    activity_instruction_template_uid: str = ActivityInstructionTemplateUID,
 ):
-    return Service().get_releases(uid=uid, return_study_count=False)
+    return Service().get_releases(
+        uid=activity_instruction_template_uid, return_study_count=False
+    )
 
 
 @router.post(
@@ -473,9 +477,9 @@ def create_activity_instruction_template(
 
 
 @router.patch(
-    "/{uid}",
+    "/{activity_instruction_template_uid}",
     dependencies=[rbac.LIBRARY_WRITE_OR_STUDY_WRITE],
-    summary="Updates the activity instruction template identified by 'uid'.",
+    summary="Updates the activity instruction template identified by 'activity_instruction_template_uid'.",
     description="""This request is only valid if the activity instruction template
 * is in 'Draft' status and
 * belongs to a library that allows editing (the 'is_editable' property of the library needs to be true). 
@@ -503,24 +507,26 @@ Once the activity instruction template has been approved, only the surrounding t
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The activity instruction template with the specified 'uid' could not be found.",
+            "description": "Not Found - The activity instruction template with the specified 'activity_instruction_template_uid' could not be found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def edit(
-    uid: str = ActivityInstructionTemplateUID,
+    activity_instruction_template_uid: str = ActivityInstructionTemplateUID,
     activity_instruction_template: models.ActivityInstructionTemplateEditInput = Body(
         description="The new content of the activity instruction template including the change description.",
     ),
 ):
-    return Service().edit_draft(uid=uid, template=activity_instruction_template)
+    return Service().edit_draft(
+        uid=activity_instruction_template_uid, template=activity_instruction_template
+    )
 
 
 @router.patch(
-    "/{uid}/indexings",
+    "/{activity_instruction_template_uid}/indexings",
     dependencies=[rbac.LIBRARY_WRITE],
-    summary="Updates the indexings of the activity instruction template identified by 'uid'.",
+    summary="Updates the indexings of the activity instruction template identified by 'activity_instruction_template_uid'.",
     description="""This request is only valid if the template
     * belongs to a library that allows editing (the 'is_editable' property of the library needs to be true).
     
@@ -534,24 +540,26 @@ def edit(
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The template with the specified 'uid' could not be found.",
+            "description": "Not Found - The template with the specified 'activity_instruction_template_uid' could not be found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def patch_indexings(
-    uid: str = ActivityInstructionTemplateUID,
+    activity_instruction_template_uid: str = ActivityInstructionTemplateUID,
     indexings: models.ActivityInstructionTemplateEditIndexingsInput = Body(
         description="The lists of UIDs for the new indexings to be set, grouped by indexings to be updated.",
     ),
 ) -> models.ActivityInstructionTemplate:
-    return Service().patch_indexings(uid=uid, indexings=indexings)
+    return Service().patch_indexings(
+        uid=activity_instruction_template_uid, indexings=indexings
+    )
 
 
 @router.post(
-    "/{uid}/versions",
+    "/{activity_instruction_template_uid}/versions",
     dependencies=[rbac.LIBRARY_WRITE],
-    summary="Creates a new version of the activity instruction template identified by 'uid'.",
+    summary="Creates a new version of the activity instruction template identified by 'activity_instruction_template_uid'.",
     description="""This request is only valid if the activity instruction template
 * is in 'Final' or 'Retired' status only (so no latest 'Draft' status exists) and
 * belongs to a library that allows editing (the 'is_editable' property of the library needs to be true).
@@ -577,24 +585,26 @@ Only the surrounding text (excluding the parameters) can be changed.
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The activity instruction template with the specified 'uid' could not be found.",
+            "description": "Not Found - The activity instruction template with the specified 'activity_instruction_template_uid' could not be found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def create_new_version(
-    uid: str = ActivityInstructionTemplateUID,
+    activity_instruction_template_uid: str = ActivityInstructionTemplateUID,
     activity_instruction_template: models.ActivityInstructionTemplateEditInput = Body(
         description="The content of the activity instruction template for the new 'Draft' version including the change description.",
     ),
 ):
-    return Service().create_new_version(uid=uid, template=activity_instruction_template)
+    return Service().create_new_version(
+        uid=activity_instruction_template_uid, template=activity_instruction_template
+    )
 
 
 @router.post(
-    "/{uid}/approvals",
+    "/{activity_instruction_template_uid}/approvals",
     dependencies=[rbac.LIBRARY_WRITE_OR_STUDY_WRITE],
-    summary="Approves the activity instruction template identified by 'uid'.",
+    summary="Approves the activity instruction template identified by 'activity_instruction_template_uid'.",
     description="""This request is only valid if the activity instruction template
 * is in 'Draft' status and
 * belongs to a library that allows editing (the 'is_editable' property of the library needs to be true).
@@ -616,7 +626,7 @@ If the request succeeds:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The activity instruction template with the specified 'uid' could not be found.",
+            "description": "Not Found - The activity instruction template with the specified 'activity_instruction_template_uid' could not be found.",
         },
         409: {
             "model": ErrorResponse,
@@ -626,7 +636,7 @@ If the request succeeds:
     },
 )
 def approve(
-    uid: str = ActivityInstructionTemplateUID,
+    activity_instruction_template_uid: str = ActivityInstructionTemplateUID,
     cascade: bool = False,
 ):
     """
@@ -634,14 +644,14 @@ def approve(
     from this template and cascade is false
     """
     if not cascade:
-        return Service().approve(uid=uid)
-    return Service().approve_cascade(uid=uid)
+        return Service().approve(uid=activity_instruction_template_uid)
+    return Service().approve_cascade(uid=activity_instruction_template_uid)
 
 
 @router.delete(
-    "/{uid}/activations",
+    "/{activity_instruction_template_uid}/activations",
     dependencies=[rbac.LIBRARY_WRITE],
-    summary="Inactivates/deactivates the activity instruction template identified by 'uid' and its Pre-Instances.",
+    summary="Inactivates/deactivates the activity instruction template identified by 'activity_instruction_template_uid' and its Pre-Instances.",
     description="""This request is only valid if the activity instruction template
 * is in 'Final' status only (so no latest 'Draft' status exists).
 
@@ -661,21 +671,21 @@ If the request succeeds:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The activity instruction template with the specified 'uid' could not be found.",
+            "description": "Not Found - The activity instruction template with the specified 'activity_instruction_template_uid' could not be found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def inactivate(
-    uid: str = ActivityInstructionTemplateUID,
+    activity_instruction_template_uid: str = ActivityInstructionTemplateUID,
 ):
-    return Service().inactivate_final(uid=uid)
+    return Service().inactivate_final(uid=activity_instruction_template_uid)
 
 
 @router.post(
-    "/{uid}/activations",
+    "/{activity_instruction_template_uid}/activations",
     dependencies=[rbac.LIBRARY_WRITE],
-    summary="Reactivates the activity instruction template identified by 'uid' and its Pre-Instances.",
+    summary="Reactivates the activity instruction template identified by 'activity_instruction_template_uid' and its Pre-Instances.",
     description="""This request is only valid if the activity instruction template
 * is in 'Retired' status only (so no latest 'Draft' status exists).
 
@@ -695,21 +705,21 @@ If the request succeeds:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The activity instruction template with the specified 'uid' could not be found.",
+            "description": "Not Found - The activity instruction template with the specified 'activity_instruction_template_uid' could not be found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def reactivate(
-    uid: str = ActivityInstructionTemplateUID,
+    activity_instruction_template_uid: str = ActivityInstructionTemplateUID,
 ):
-    return Service().reactivate_retired(uid=uid)
+    return Service().reactivate_retired(uid=activity_instruction_template_uid)
 
 
 @router.delete(
-    "/{uid}",
+    "/{activity_instruction_template_uid}",
     dependencies=[rbac.LIBRARY_WRITE],
-    summary="Deletes the activity instruction template identified by 'uid'.",
+    summary="Deletes the activity instruction template identified by 'activity_instruction_template_uid'.",
     description="""This request is only valid if \n
 * the activity instruction template is in 'Draft' status and
 * the activity instruction template has never been in 'Final' status and
@@ -736,18 +746,18 @@ def reactivate(
     },
 )
 def delete_activity_instruction_template(
-    uid: str = ActivityInstructionTemplateUID,
+    activity_instruction_template_uid: str = ActivityInstructionTemplateUID,
 ):
-    Service().soft_delete(uid)
+    Service().soft_delete(activity_instruction_template_uid)
     return Response(status_code=fast_api_status.HTTP_204_NO_CONTENT)
 
 
 # TODO this endpoint potentially returns duplicated entries (intentionally, currently).
 #       however: check if that is ok with regards to the data volume we expect in the future. is paging needed?
 @router.get(
-    "/{uid}/parameters",
+    "/{activity_instruction_template_uid}/parameters",
     dependencies=[rbac.LIBRARY_READ],
-    summary="Returns all parameters used in the activity instruction template identified by 'uid'. Includes the available terms per parameter.",
+    summary="Returns all parameters used in the activity instruction template identified by 'activity_instruction_template_uid'. Includes the available terms per parameter.",
     description="""The returned parameters are ordered
 0. as they occur in the activity instruction template
 
@@ -765,11 +775,11 @@ In that case, the same parameter (with the same terms) is included multiple time
     },
 )
 def get_parameters(
-    uid: str = Path(
+    activity_instruction_template_uid: str = Path(
         None, description="The unique id of the activity instruction template."
     ),
 ):
-    return Service().get_parameters(uid=uid)
+    return Service().get_parameters(uid=activity_instruction_template_uid)
 
 
 @router.post(
@@ -777,7 +787,7 @@ def get_parameters(
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Validates the content of an activity instruction template without actually processing it.",
     description="""Be aware that - even if this request is accepted - there is no guarantee that
-a following request to e.g. *[POST] /activity-instruction-templates* or *[PATCH] /activity-instruction-templates/{uid}*
+a following request to e.g. *[POST] /activity-instruction-templates* or *[PATCH] /activity-instruction-templates/{activity_instruction_template_uid}*
 with the same content will succeed.
 
 """
@@ -806,7 +816,7 @@ def pre_validate(
 
 
 @router.post(
-    "/{uid}/pre-instances",
+    "/{activity_instruction_template_uid}/pre-instances",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Create a Pre-Instance",
     description="",
@@ -825,16 +835,16 @@ def pre_validate(
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The activity instruction template with the specified 'uid' could not be found.",
+            "description": "Not Found - The activity instruction template with the specified 'activity_instruction_template_uid' could not be found.",
         },
         500: {"model": ErrorResponse, "description": "Internal Server Error"},
     },
 )
 def create_pre_instance(
-    uid: str = ActivityInstructionTemplateUID,
+    activity_instruction_template_uid: str = ActivityInstructionTemplateUID,
     pre_instance: ActivityInstructionPreInstanceCreateInput = Body(description=""),
 ) -> models.ActivityInstructionTemplate:
     return ActivityInstructionPreInstanceService().create(
         template=pre_instance,
-        template_uid=uid,
+        template_uid=activity_instruction_template_uid,
     )

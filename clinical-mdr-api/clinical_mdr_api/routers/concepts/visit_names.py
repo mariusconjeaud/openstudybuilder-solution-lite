@@ -124,7 +124,7 @@ def get_distinct_values_for_header(
 
 
 @router.get(
-    "/{uid}",
+    "/{visit_name_uid}",
     dependencies=[rbac.LIBRARY_READ],
     summary="Get details on a specific visit name",
     description="""
@@ -144,9 +144,9 @@ Possible errors:
         500: _generic_descriptions.ERROR_500,
     },
 )
-def get_visit_name(uid: str = VisitNameUID):
+def get_visit_name(visit_name_uid: str = VisitNameUID):
     visit_name_service = VisitNameService()
-    return visit_name_service.get_by_uid(uid=uid)
+    return visit_name_service.get_by_uid(uid=visit_name_uid)
 
 
 @router.post(

@@ -1,5 +1,5 @@
 """
-Tests for /studies/{uid}/study-criteria endpoints
+Tests for /studies/{study_uid}/study-criteria endpoints
 """
 
 # pylint: disable=unused-argument
@@ -124,13 +124,6 @@ def test_data():
         library_name=library_name,
         effective_date=ct_term_start_date,
         approve=True,
-    )
-    cdisc_package_name = "SDTM CT 2020-03-27"
-    TestUtils.create_ct_package(
-        catalogue=catalogue_name,
-        name=cdisc_package_name,
-        approve_elements=False,
-        effective_date=datetime(2020, 3, 27, tzinfo=timezone.utc),
     )
     # patch the date of the latest HAS_VERSION FINAL relationship so it can be detected by the selected study_standard_Version
     params = {
@@ -293,6 +286,7 @@ CRITERIA_TYPE_IGNORED_FIELDS = {
     "root['criteria_type']['start_date']",
     "root['criteria_type']['end_date']",
     "root['criteria_type']['user_initials']",
+    "root['criteria_type']['queried_effective_date']",
 }
 CRITERIA_TEMPLATE_IGNORED_FIELDS = {
     "root['template']['start_date']",
@@ -1125,24 +1119,11 @@ def test_study_criteria_version_selecting_ct_package(api_client):
         == new_ctterm_name
     )
 
-    # get ct_packages
-    response = api_client.get(
-        "/ct/packages",
+    TestUtils.set_study_standard_version(
+        study_uid=study_for_ctterm_versioning.uid,
+        package_name="SDTM CT 2020-03-27",
+        effective_date=datetime(2020, 3, 27, tzinfo=timezone.utc),
     )
-    res = response.json()
-    assert response.status_code == 200
-    ct_package_uid = res[0]["uid"]
-
-    # create study standard version
-    response = api_client.post(
-        f"/studies/{study_for_ctterm_versioning.uid}/study-standard-versions",
-        json={
-            "ct_package_uid": ct_package_uid,
-        },
-    )
-    res = response.json()
-    assert response.status_code == 201
-    assert res["ct_package"]["uid"] == ct_package_uid
 
     # get study selection with previous ctterm
     response = api_client.get(

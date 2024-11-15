@@ -184,7 +184,7 @@ def test_get_comment_topics(
         for key in TOPIC_FIELDS_NOT_NULL:
             assert item[key] is not None
 
-    # Assert that results are sorted by 'topic_path' asecending
+    # Assert that results are sorted by 'topic_path' ascending
     result_vals = list(map(lambda x: x["topic_path"], res["items"]))
     result_vals_sorted_locally = result_vals.copy()
     result_vals_sorted_locally.sort()
@@ -315,7 +315,7 @@ def test_get_comment_threads(
         TestUtils.assert_timestamp_is_in_utc_zone(item["created_at"])
         TestUtils.assert_timestamp_is_newer_than(item["created_at"], 60)
 
-    # Assert that results are sorted by 'created_at' asecending
+    # Assert that results are sorted by 'created_at' ascending
     result_vals = list(map(lambda x: x["created_at"], res["items"]))
     result_vals_sorted_locally = result_vals.copy()
     result_vals_sorted_locally.sort()

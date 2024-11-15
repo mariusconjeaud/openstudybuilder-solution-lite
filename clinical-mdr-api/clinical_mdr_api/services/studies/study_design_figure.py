@@ -256,7 +256,7 @@ class StudyDesignFigureService:
                 study_value_version=study_value_version,
             )
             .items
-            if epoch.epoch_subtype_name != "Basic"
+            if epoch.epoch_subtype_ctterm.sponsor_preferred_name != "Basic"
         ]
 
     @trace_calls
@@ -318,7 +318,7 @@ class StudyDesignFigureService:
                 table[0][i].update(
                     klass="epoch",
                     id=epoch.uid,
-                    text=epoch.epoch_name,
+                    text=epoch.epoch_ctterm.sponsor_preferred_name,
                     colors=self._calculate_colors(
                         epoch.color_hash or EPOCH_COLOR_DEFAULT
                     ),
@@ -404,7 +404,7 @@ class StudyDesignFigureService:
         Updates the table matrix in place and returns the total width of the figure.
         First table row has the column widths, that all cells will have to obey.
         """
-        # number of columns, also numer of epochs is n_cols - 1
+        # number of columns, also number of epochs is n_cols - 1
         n_cols = len(table[0])
 
         # page sizes (less page & figure margin) in pixels
@@ -726,7 +726,7 @@ class StudyDesignFigureService:
                     prev_cell["width"] += (
                         cell["width"] + ELEMENT_MARGIN * 2 + EPOCH_MARGIN
                     )
-                    # remove id so draw_cell() will skipp it
+                    # remove id so draw_cell() will skip it
                     del cell["id"]
 
                 else:
@@ -751,7 +751,7 @@ class StudyDesignFigureService:
                     prev_cell["height"] += (
                         cell["height"] + ELEMENT_MARGIN * 2 + ARM_MARGIN
                     )
-                    # remove id so draw_cell() will skipp it
+                    # remove id so draw_cell() will skip it
                     del cell["id"]
 
                 else:
@@ -859,7 +859,7 @@ class StudyDesignFigureService:
                     "id": visit.visit_type_uid,
                     "klass": "visit-type",
                     "paddings": (0, 0),
-                    "text": visit.visit_type_name,
+                    "text": visit.visit_type.sponsor_preferred_name,
                     # inherit coordinates form epoch column
                     "width": col["width"],
                     "x": col["x"],
@@ -1007,14 +1007,16 @@ class StudyDesignFigureService:
             # look up epoch column
             col = table[0][idx]
 
-            width, height = self._get_text_size_px(visit.visit_type_name)
+            width, height = self._get_text_size_px(
+                visit.visit_type.sponsor_preferred_name
+            )
             x = col["x"]
 
             label = {
                 "id": visit.uid,
                 "klass": "visit-timing",
                 "paddings": (0, 0),
-                "text": visit.visit_type_name,
+                "text": visit.visit_type.sponsor_preferred_name,
                 "x": x,
                 "y": y,
                 "width": width,
@@ -1088,7 +1090,7 @@ class StudyDesignFigureService:
             for row in table[1:]:
                 for cell in row[1:]:
                     if not cell.get("id"):
-                        # skipp empty cells
+                        # skip empty cells
                         continue
                     self._draw_cell(cell, doc, styles)
 

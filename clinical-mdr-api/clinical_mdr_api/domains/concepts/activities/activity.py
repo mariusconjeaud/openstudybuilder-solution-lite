@@ -17,6 +17,8 @@ from clinical_mdr_api.exceptions import BusinessLogicException
 class ActivityGroupingVO:
     activity_subgroup_uid: str
     activity_group_uid: str
+    activity_subgroup_version: str | None = None
+    activity_group_version: str | None = None
 
 
 @dataclass(frozen=True)

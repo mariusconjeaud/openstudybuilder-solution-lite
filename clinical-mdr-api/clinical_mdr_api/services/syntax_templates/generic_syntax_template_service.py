@@ -1,7 +1,8 @@
 import abc
 from typing import TypeVar
 
-from neomodel import core, db
+from neomodel import db
+from neomodel.sync_ import core
 from pydantic import BaseModel
 
 from clinical_mdr_api import exceptions

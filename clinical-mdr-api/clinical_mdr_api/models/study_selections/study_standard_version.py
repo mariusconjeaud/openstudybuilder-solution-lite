@@ -92,6 +92,12 @@ class StudyStandardVersionOGM(BaseModel, StudyStandardVersionVO):
         description="Description of the study standard version",
         source="description",
     )
+    automatically_created: bool = Field(
+        False,
+        title="description",
+        description="Boolean to register the way the StudyStandardVersion was created, if true means that was automatically created when locking, so should be deleted when unlocking",
+        source="automatically_created",
+    )
 
 
 class StudyStandardVersionOGMVer(StudyStandardVersionOGM):
@@ -142,6 +148,11 @@ class StudyStandardVersion(BaseModel):
         title="description",
         description="Description of the study standard version",
     )
+    automatically_created: bool = Field(
+        False,
+        title="automatically created flag",
+        description="Boolean to register the way the StudyStandardVersion was created, if true means that was automatically created when locking, so should be deleted when unlocking",
+    )
     start_date: datetime = Field(
         ...,
         title="Modification date",
@@ -185,16 +196,9 @@ class StudyStandardVersion(BaseModel):
             start_date=study_standard_version_vo.start_date,
             end_date=study_standard_version_vo.end_date,
             study_status=study_standard_version_vo.study_status.name,
+            automatically_created=study_standard_version_vo.automatically_created,
         )
 
 
 class StudyStandardVersionVersion(StudyStandardVersion):
     changes: dict
-
-
-class StudySelectionStandardVersionNewOrder(BaseModel):
-    new_order: int = Field(
-        ...,
-        title="new_order",
-        description="new order of the selected standard versions",
-    )

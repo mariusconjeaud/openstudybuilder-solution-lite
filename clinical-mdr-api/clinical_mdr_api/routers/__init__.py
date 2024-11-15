@@ -121,6 +121,7 @@ from clinical_mdr_api.routers.dictionaries.dictionary_codelists import (
 from clinical_mdr_api.routers.dictionaries.dictionary_terms import (
     router as dictionary_terms_router,
 )
+from clinical_mdr_api.routers.feature_flags import router as feature_flags_router
 from clinical_mdr_api.routers.libraries.libraries import router as libraries_router
 from clinical_mdr_api.routers.libraries.time_points import router as time_points_router
 from clinical_mdr_api.routers.listings.listings import metadata_router
@@ -269,6 +270,7 @@ from clinical_mdr_api.routers.template_parameters import (
 )
 
 __all__ = [
+    "feature_flags_router",
     "notifications_router",
     "activities_router",
     "active_substances_router",

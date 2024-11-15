@@ -9,10 +9,12 @@ export default {
   getPackages(params) {
     return repository.get(`${resource}/packages`, { params })
   },
-  getSponsorPackages() {
+  getSponsorPackages(catalogueName) {
     const params = {
-      catalogue: 'SDTM CT',
       sponsor_only: true,
+    }
+    if (catalogueName) {
+      params.catalogue_name = catalogueName
     }
     return repository.get(`${resource}/packages`, { params })
   },

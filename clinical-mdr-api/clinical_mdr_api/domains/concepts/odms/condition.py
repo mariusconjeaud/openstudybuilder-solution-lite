@@ -45,21 +45,26 @@ class OdmConditionVO(ConceptVO):
 
     def validate(
         self,
-        concept_exists_by_callback: Callable[[str, str, bool], bool],
+        odm_object_exists_callback: Callable,
         find_odm_formal_expression_callback: Callable[
             [str], OdmFormalExpressionAR | None
         ],
         find_odm_description_callback: Callable[[str], OdmDescriptionAR | None],
         odm_alias_exists_by_callback: Callable[[str, str, bool], bool],
-        previous_name: str | None = None,
-        previous_oid: str | None = None,
         previous_formal_expression_uids: list[str] | None = None,
     ) -> None:
-        self.duplication_check(
-            [("name", self.name, previous_name), ("OID", self.oid, previous_oid)],
-            concept_exists_by_callback,
-            "ODM Condition",
-        )
+        data = {
+            "description_uids": self.description_uids,
+            "alias_uids": self.alias_uids,
+            "formal_expression_uids": self.formal_expression_uids,
+            "name": self.name,
+            "oid": self.oid,
+        }
+        if uids := odm_object_exists_callback(**data):
+            raise BusinessLogicException(
+                f"ODM Condition already exists with UID ({uids[0]}) and data {data}"
+            )
+
         self.check_concepts_exist(
             [
                 (
@@ -155,9 +160,7 @@ class OdmConditionAR(OdmARBase):
         concept_vo: OdmConditionVO,
         library: LibraryVO,
         generate_uid_callback: Callable[[], str | None] = (lambda: None),
-        concept_exists_by_callback: Callable[
-            [str, str, bool], bool
-        ] = lambda x, y, z: True,
+        odm_object_exists_callback: Callable = lambda _: True,
         find_odm_formal_expression_callback: Callable[
             [str], OdmFormalExpressionAR | None
         ] = lambda _: None,
@@ -171,7 +174,7 @@ class OdmConditionAR(OdmARBase):
         item_metadata = LibraryItemMetadataVO.get_initial_item_metadata(author=author)
 
         concept_vo.validate(
-            concept_exists_by_callback=concept_exists_by_callback,
+            odm_object_exists_callback=odm_object_exists_callback,
             find_odm_formal_expression_callback=find_odm_formal_expression_callback,
             find_odm_description_callback=find_odm_description_callback,
             odm_alias_exists_by_callback=odm_alias_exists_by_callback,
@@ -192,6 +195,7 @@ class OdmConditionAR(OdmARBase):
         concept_exists_by_callback: Callable[
             [str, str, bool], bool
         ] = lambda x, y, z: True,
+        odm_object_exists_callback: Callable = lambda _: True,
         find_odm_formal_expression_callback: Callable[
             [str], OdmFormalExpressionAR | None
         ] = lambda _: None,
@@ -206,12 +210,10 @@ class OdmConditionAR(OdmARBase):
         Creates a new draft version for the object.
         """
         concept_vo.validate(
-            concept_exists_by_callback=concept_exists_by_callback,
+            odm_object_exists_callback=odm_object_exists_callback,
             find_odm_formal_expression_callback=find_odm_formal_expression_callback,
             find_odm_description_callback=find_odm_description_callback,
             odm_alias_exists_by_callback=odm_alias_exists_by_callback,
-            previous_name=self.name,
-            previous_oid=self._concept_vo.oid,
             previous_formal_expression_uids=self._concept_vo.formal_expression_uids,
         )
 

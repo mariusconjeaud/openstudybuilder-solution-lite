@@ -508,39 +508,6 @@ class StudyVisitRepository:
 
         return se_nodes
 
-    def get_all_visit_versions(self, study_uid: str):
-        version_nodes = [
-            self._from_neomodel_to_history_vo(
-                study_visit_ogm_input=StudyVisitOGMVer.from_orm(se_node)
-            )
-            for se_node in to_relation_trees(
-                StudyVisit.nodes.fetch_relations(
-                    "study_epoch_has_study_visit__has_epoch",
-                    "has_visit_type",
-                    "has_visit_contact_mode",
-                    "has_visit_name__has_latest_value",
-                    "has_after__audit_trail",
-                    "study_epoch_has_study_visit__study_value",
-                )
-                .fetch_optional_relations(
-                    "has_repeating_frequency",
-                    "has_window_unit__has_latest_value",
-                    "has_timepoint__has_latest_value__has_unit_definition__has_latest_value",
-                    "has_timepoint__has_latest_value__has_time_reference",
-                    "has_timepoint__has_latest_value__has_value__has_latest_value",
-                    "has_study_day__has_latest_value",
-                    "has_study_duration_days__has_latest_value",
-                    "has_study_week__has_latest_value",
-                    "has_study_duration_weeks__has_latest_value",
-                    "has_week_in_study__has_latest_value",
-                    "has_epoch_allocation",
-                    "has_before",
-                )
-                .filter(has_after__audit_trail__uid=study_uid)
-            ).distinct()
-        ]
-        return version_nodes
-
     def manage_versioning_create(
         self, study_root: StudyRoot, study_visit: StudyVisitVO, new_item: StudyVisit
     ):
@@ -624,12 +591,12 @@ class StudyVisitRepository:
         if study_visit.uid is None:
             study_visit.uid = new_visit.uid
 
-        visit_type = CTTermRoot.nodes.get(uid=study_visit.visit_type.name)
+        visit_type = CTTermRoot.nodes.get(uid=study_visit.visit_type.term_uid)
         new_visit.has_visit_type.connect(visit_type)
 
         if study_visit.repeating_frequency:
             visit_repeating_frequency = CTTermRoot.nodes.get(
-                uid=study_visit.repeating_frequency.name
+                uid=study_visit.repeating_frequency.term_uid
             )
             new_visit.has_repeating_frequency.connect(visit_repeating_frequency)
 
@@ -671,12 +638,12 @@ class StudyVisitRepository:
         else:
             window_unit = None
         visit_contact_mode = CTTermRoot.nodes.get(
-            uid=study_visit.visit_contact_mode.name
+            uid=study_visit.visit_contact_mode.term_uid
         )
         new_visit.has_visit_contact_mode.connect(visit_contact_mode)
         if study_visit.epoch_allocation:
             epoch_allocation = CTTermRoot.nodes.get(
-                uid=study_visit.epoch_allocation.name
+                uid=study_visit.epoch_allocation.term_uid
             )
             new_visit.has_epoch_allocation.connect(epoch_allocation)
 

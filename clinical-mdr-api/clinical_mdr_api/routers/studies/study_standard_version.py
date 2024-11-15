@@ -24,7 +24,7 @@ study_standard_version_uid_description = Path(
 
 
 @router.get(
-    "/studies/{uid}/study-standard-versions",
+    "/studies/{study_uid}/study-standard-versions",
     dependencies=[rbac.STUDY_READ],
     summary="List all study standard_versions currently selected for the study.",
     description="""
@@ -73,17 +73,17 @@ Possible errors:
 # pylint: disable=unused-argument
 def get_all(
     request: Request,  # request is actually required by the allow_exports decorator
-    uid: str = Path(description="the study"),
+    study_uid: str = Path(description="the study"),
     study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
 ) -> Sequence[study_standard_version.StudyStandardVersion]:
     service = StudyStandardVersionService()
     return service.get_standard_versions_in_study(
-        study_uid=uid, study_value_version=study_value_version
+        study_uid=study_uid, study_value_version=study_value_version
     )
 
 
 @router.get(
-    "/studies/{uid}/study-standard-versions/audit-trail",
+    "/studies/{study_uid}/study-standard-versions/audit-trail",
     dependencies=[rbac.STUDY_READ],
     summary="List audit trail related to all study standard_versions within the specified study-uid",
     description="""
@@ -112,14 +112,14 @@ Possible errors:
     },
 )
 def get_study_standard_versions_all_audit_trail(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
 ) -> list[study_standard_version.StudyStandardVersionVersion]:
     service = StudyStandardVersionService()
-    return service.audit_trail_all_standard_versions(uid)
+    return service.audit_trail_all_standard_versions(study_uid)
 
 
 @router.get(
-    "/studies/{uid}/study-standard-versions/{study_standard_version_uid}",
+    "/studies/{study_uid}/study-standard-versions/{study_standard_version_uid}",
     dependencies=[rbac.STUDY_READ],
     summary="List all definitions for a specific study standard_version",
     description="""
@@ -154,20 +154,20 @@ Possible errors:
 )
 # pylint: disable=unused-argument
 def get_study_standard_version(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     study_standard_version_uid: str = study_standard_version_uid_description,
     study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
 ) -> study_standard_version.StudyStandardVersion:
     service = StudyStandardVersionService()
     return service.find_by_uid(
-        study_uid=uid,
+        study_uid=study_uid,
         study_standard_version_uid=study_standard_version_uid,
         study_value_version=study_value_version,
     )
 
 
 @router.get(
-    "/studies/{uid}/study-standard-versions/{study_standard_version_uid}/audit-trail",
+    "/studies/{study_uid}/study-standard-versions/{study_standard_version_uid}/audit-trail",
     dependencies=[rbac.STUDY_READ],
     summary="List audit trail related to definition of a specific study standard_version",
     description="""
@@ -196,17 +196,17 @@ Possible errors:
     },
 )
 def get_study_standard_version_audit_trail(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     study_standard_version_uid: str = study_standard_version_uid_description,
 ) -> list[study_standard_version.StudyStandardVersionVersion]:
     service = StudyStandardVersionService()
     return service.audit_trail(
-        study_uid=uid, study_standard_version_uid=study_standard_version_uid
+        study_uid=study_uid, study_standard_version_uid=study_standard_version_uid
     )
 
 
 @router.post(
-    "/studies/{uid}/study-standard-versions",
+    "/studies/{study_uid}/study-standard-versions",
     dependencies=[rbac.STUDY_WRITE],
     summary="Add a study standard version to a study",
     description="""
@@ -235,24 +235,24 @@ Possible errors:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - Study is not found with the passed 'uid'.",
+            "description": "Not Found - Study is not found with the passed 'study_uid'.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-@decorators.validate_if_study_is_not_locked("uid")
+@decorators.validate_if_study_is_not_locked("study_uid")
 def post_new_standard_version_create(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     selection: study_standard_version.StudyStandardVersionInput = Body(
         description="Related parameters of the selection that shall be created."
     ),
 ) -> study_standard_version.StudyStandardVersion:
     service = StudyStandardVersionService()
-    return service.create(study_uid=uid, study_standard_version_input=selection)
+    return service.create(study_uid=study_uid, study_standard_version_input=selection)
 
 
 @router.delete(
-    "/studies/{uid}/study-standard-versions/{study_standard_version_uid}",
+    "/studies/{study_uid}/study-standard-versions/{study_standard_version_uid}",
     dependencies=[rbac.STUDY_WRITE],
     summary="Delete a study standard_version.",
     description="""
@@ -283,20 +283,22 @@ Possible errors:
         500: _generic_descriptions.ERROR_500,
     },
 )
-@decorators.validate_if_study_is_not_locked("uid")
+@decorators.validate_if_study_is_not_locked("study_uid")
 # pylint: disable=unused-argument
 def delete_study_standard_version(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     study_standard_version_uid: str = study_standard_version_uid_description,
 ):
     service = StudyStandardVersionService()
 
-    service.delete(study_uid=uid, study_standard_version_uid=study_standard_version_uid)
+    service.delete(
+        study_uid=study_uid, study_standard_version_uid=study_standard_version_uid
+    )
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.patch(
-    "/studies/{uid}/study-standard-versions/{study_standard_version_uid}",
+    "/studies/{study_uid}/study-standard-versions/{study_standard_version_uid}",
     dependencies=[rbac.STUDY_WRITE],
     summary="Edit a study standard_version",
     description="""
@@ -327,10 +329,10 @@ Possible errors:
         500: _generic_descriptions.ERROR_500,
     },
 )
-@decorators.validate_if_study_is_not_locked("uid")
+@decorators.validate_if_study_is_not_locked("study_uid")
 # pylint: disable=unused-argument
 def patch_update_standard_version(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     study_standard_version_uid: str = study_standard_version_uid_description,
     selection: study_standard_version.StudyStandardVersionEditInput = Body(
         description="Related parameters of the selection that shall be created."
@@ -338,7 +340,7 @@ def patch_update_standard_version(
 ) -> study_standard_version.StudyStandardVersion:
     service = StudyStandardVersionService()
     return service.edit(
-        study_uid=uid,
+        study_uid=study_uid,
         study_standard_version_uid=study_standard_version_uid,
         study_standard_version_input=selection,
     )

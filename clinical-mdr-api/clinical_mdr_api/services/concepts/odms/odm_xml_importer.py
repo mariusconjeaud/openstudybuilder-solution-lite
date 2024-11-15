@@ -1,3 +1,4 @@
+import re
 from time import time
 from xml.dom import minicompat, minidom
 
@@ -16,6 +17,7 @@ from clinical_mdr_api.domains.concepts.utils import (
     VendorElementCompatibleType,
 )
 from clinical_mdr_api.domains.versioned_object_aggregate import (
+    LibraryItemStatus,
     LibraryVO,
     VersioningException,
 )
@@ -407,7 +409,7 @@ class OdmXmlImporterService:
                 ):
                     continue
 
-                if not self._vendor_element_attribtue_exists(
+                if not self._vendor_element_attribute_exists(
                     element_attribute.prefix, element_attribute.localName
                 ):
                     rs = self._create(
@@ -656,7 +658,7 @@ class OdmXmlImporterService:
                 return True
         return False
 
-    def _vendor_element_attribtue_exists(self, prefix, vendor_attribute_name):
+    def _vendor_element_attribute_exists(self, prefix, vendor_attribute_name):
         if (
             prefix == self.OSB_PREFIX
             and vendor_attribute_name in self.EXCLUDED_OSB_VENDOR_ATTRIBUTES
@@ -1032,15 +1034,25 @@ class OdmXmlImporterService:
 
         library_vo = self._get_library(concept_input)
 
-        concept_ar = self.odm_description_service._create_aggregate_root(
-            concept_input=concept_input, library=library_vo
-        )
-        self._repos.odm_description_repository.save(concept_ar)
-        self._approve(
-            self._repos.odm_description_repository,
-            self.odm_description_service,
-            concept_ar,
-        )
+        try:
+            concept_ar = self.odm_description_service._create_aggregate_root(
+                concept_input=concept_input, library=library_vo
+            )
+            self._repos.odm_description_repository.save(concept_ar)
+            self._approve(
+                self._repos.odm_description_repository,
+                self.odm_description_service,
+                concept_ar,
+            )
+        except exceptions.BusinessLogicException as e:
+            uid = re.search(r" already exists with UID \((.*)\) and data {", e.msg)
+            if uid:
+                concept_ar = self._repos.odm_description_repository.find_by_uid_2(
+                    uid=uid[1]
+                )
+            else:
+                raise exceptions.BusinessLogicException(e.msg)
+
         return self.odm_description_service._transform_aggregate_root_to_pydantic_model(
             concept_ar
         )
@@ -1453,10 +1465,21 @@ class OdmXmlImporterService:
     def _create(self, repository, service, save_to, concept_input):
         library_vo = self._get_library(concept_input)
 
-        concept_ar = service._create_aggregate_root(
-            concept_input=concept_input, library=library_vo
-        )
-        repository.save(concept_ar)
+        try:
+            concept_ar = service._create_aggregate_root(
+                concept_input=concept_input, library=library_vo
+            )
+            repository.save(concept_ar)
+        except exceptions.BusinessLogicException as e:
+            uid = re.search(r" already exists with UID \((.*)\) and data {", e.msg)
+            if uid:
+                concept_ar = repository.find_by_uid_2(uid=uid[1], for_update=True)
+                if concept_ar.item_metadata.status != LibraryItemStatus.DRAFT:
+                    concept_ar.create_new_version(author=user().id())
+                    repository.save(concept_ar)
+            else:
+                raise exceptions.BusinessLogicException(e.msg)
+
         item = service._transform_aggregate_root_to_pydantic_model(concept_ar)
         save_to.append(item)
         return item

@@ -5,6 +5,12 @@
     column-data-resource="studies"
     :items-length="total"
     item-value="uid"
+    :initial-sort-by="[
+      {
+        key: 'current_metadata.identification_metadata.subpart_id',
+        order: 'asc',
+      },
+    ]"
     :no-data-text="
       Boolean(studiesGeneralStore.selectedStudy.study_parent_part)
         ? $t('StudySubparts.nested_subparts_warning', {
@@ -215,9 +221,6 @@ function fetchStudySubparts(filters, options, filtersUpdated) {
     filters,
     filtersUpdated
   )
-  params.sort_by = JSON.stringify({
-    'current_metadata.identification_metadata.subpart_id': true,
-  })
   params.filters = JSON.stringify(params.filters)
   studies.get(params).then((resp) => {
     items.value = resp.data.items
@@ -280,7 +283,10 @@ async function fetchStudyHistory(options) {
   if (options) {
     const firstIndex = (options.page - 1) * options.itemsPerPage
     const lastIndex = options.page * options.itemsPerPage
-    return { items: resp.data.slice(firstIndex, lastIndex), total: resp.data.length }
+    return {
+      items: resp.data.slice(firstIndex, lastIndex),
+      total: resp.data.length,
+    }
   }
 }
 async function openSubpartHistory(subpart) {

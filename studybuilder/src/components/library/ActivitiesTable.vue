@@ -971,7 +971,11 @@ function deleteItem(item, source) {
 
 function approveItem(item, source) {
   source = source === undefined ? props.source : source
-  activitiesApi.approve(item.uid, source).then(() => {
+  const options = {}
+  if (source === 'activities') {
+    options.cascade_edit_and_approve = true
+  }
+  activitiesApi.approve(item.uid, source, options).then(() => {
     eventBusEmit('notification', {
       msg: t(`ActivitiesTable.approve_${props.source}_success`),
       type: 'success',

@@ -1,5 +1,5 @@
 import datetime
-from typing import TypeVar
+from typing import Sequence, TypeVar
 
 from neomodel import Q
 
@@ -78,6 +78,7 @@ class StudyStandardVersionRepository:
             StudyStandardVersionOGM.from_orm(standard_version_node)
             for standard_version_node in nodes
         ]
+        all_nodes = 0
         if total_count:
             len_query = StudyStandardVersion.nodes.filter(*q_filters)
             all_nodes = len(len_query)
@@ -102,11 +103,11 @@ class StudyStandardVersionRepository:
                 q_filters.append(Q(study_value__latest_value__uid=study_uid))
         return q_filters
 
-    def find_standard_version_in_study(
+    def find_standard_versions_in_study(
         self,
         study_uid: str,
         study_value_version: str | None = None,
-    ) -> _StandardsReturnType | None:
+    ) -> Sequence[StudyStandardVersionOGM] | None:
         if study_value_version:
             filters = {
                 "study_value__has_version|version": study_value_version,
@@ -191,10 +192,11 @@ class StudyStandardVersionRepository:
                     )
                     .fetch_optional_relations("has_before")
                     .filter(has_after__audit_trail__uid=study_uid)
+                    .order_by("has_after__audit_trail.date")
                 )
             ],
             key=lambda item: item.start_date,
-            reverse=True,
+            reverse=False,
         )
 
     def save(self, study_standard_version: StudyStandardVersionVO, delete_flag=False):
@@ -214,6 +216,7 @@ class StudyStandardVersionRepository:
     def _update(self, item: StudyStandardVersionVO, create: bool = False, delete=False):
         study_root: StudyRoot = StudyRoot.nodes.get(uid=item.study_uid)
         study_value: StudyValue = study_root.latest_value.get_or_none()
+        previous_item = None
         if study_value is None:
             raise exceptions.ValidationException("Study does not have draft version")
         if not create:
@@ -222,6 +225,7 @@ class StudyStandardVersionRepository:
             uid=item.uid,
             status=item.study_status.value,
             description=item.description,
+            automatically_created=item.automatically_created,
         )
         if item.uid is not None:
             new_study_standard_version.uid = item.uid

@@ -7,6 +7,7 @@ This document describes the architecture of th Clinical MDR API service componen
 OpenAPI specification of the Clinical MDR API is accessible at `/api/docs` path for each target environment, 
 for example https://openstudybuilder.northeurope.cloudapp.azure.com/api/docs.
 
+
 ## General Testing Approach
 
 We differentiate between those tests that need external components 

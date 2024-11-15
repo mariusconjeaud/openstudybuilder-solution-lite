@@ -9,48 +9,7 @@ from random import randint
 
 import requests
 
-from .utils.api_bindings import (
-    CODELIST_ARM_TYPE,
-    CODELIST_COMPOUND_DISPENSED_IN,
-    CODELIST_CONTROL_TYPE,
-    CODELIST_CRITERIA_CATEGORY,
-    CODELIST_CRITERIA_SUBCATEGORY,
-    CODELIST_CRITERIA_TYPE,
-    CODELIST_DELIVERY_DEVICE,
-    CODELIST_DOSAGE_FORM,
-    CODELIST_ELEMENT_SUBTYPE,
-    CODELIST_ELEMENT_TYPE,
-    CODELIST_ENDPOINT_CATEGORY,
-    CODELIST_ENDPOINT_LEVEL,
-    CODELIST_ENDPOINT_SUBLEVEL,
-    CODELIST_EPOCH_SUBTYPE,
-    CODELIST_FLOWCHART_GROUP,
-    CODELIST_FOOTNOTE_TYPE,
-    CODELIST_INTERVENTION_MODEL,
-    CODELIST_INTERVENTION_TYPE,
-    CODELIST_NAME_MAP,
-    CODELIST_NULL_FLAVOR,
-    CODELIST_OBJECTIVE_CATEGORY,
-    CODELIST_OBJECTIVE_LEVEL,
-    CODELIST_ROUTE_OF_ADMINISTRATION,
-    CODELIST_SDTM_DOMAIN_ABBREVIATION,
-    CODELIST_SEX_OF_PARTICIPANTS,
-    CODELIST_STUDY_TYPE,
-    CODELIST_TIMEPOINT_REFERENCE,
-    CODELIST_TRIAL_BLINDING_SCHEMA,
-    CODELIST_TRIAL_INDICATION_TYPE,
-    CODELIST_TRIAL_PHASE,
-    CODELIST_TRIAL_TYPE,
-    CODELIST_TYPE_OF_TREATMENT,
-    CODELIST_UNIT,
-    CODELIST_UNIT_DIMENSION,
-    CODELIST_UNIT_SUBSET,
-    CODELIST_VISIT_CONTACT_MODE,
-    CODELIST_VISIT_TYPE,
-    UNIT_SUBSET_AGE,
-    UNIT_SUBSET_DOSE,
-    UNIT_SUBSET_STUDY_TIME,
-)
+from .utils.api_bindings import CODELIST_NAME_MAP
 from .utils.importer import BaseImporter
 from .utils.path_join import path_join
 
@@ -920,7 +879,9 @@ class DummyData(BaseImporter):
             headers=self.api.api_headers,
         ).json()["items"]
 
-        visit_type_uids = sorted(self.get_term_uids_by_codelist("VisitType"), reverse=True)
+        visit_type_uids = sorted(
+            self.get_term_uids_by_codelist("VisitType"), reverse=True
+        )
 
         time_unit_uids = [
             unit["uid"]
@@ -1009,9 +970,7 @@ class DummyData(BaseImporter):
                     nbr=1,
                     study_uid=uid,
                     epoch_uid=epoch_uid,
-                    visit_type_uid=visit_type_uids[
-                        m % len(visit_type_uids)
-                    ],
+                    visit_type_uid=visit_type_uids[m % len(visit_type_uids)],
                     time_unit_uid=time_unit_uids[m % len(time_unit_uids)],
                     time_reference_uid=time_reference_uid,
                 )
@@ -1023,9 +982,7 @@ class DummyData(BaseImporter):
                         nbr=j,
                         study_uid=uid,
                         epoch_uid=epoch_uid,
-                        visit_type_uid=visit_type_uids[
-                            m % len(visit_type_uids)
-                        ],
+                        visit_type_uid=visit_type_uids[m % len(visit_type_uids)],
                         time_unit_uid=time_unit_uids[m % len(time_unit_uids)],
                         time_reference_uid=time_reference_uid
                         if j != 2
@@ -1043,9 +1000,7 @@ class DummyData(BaseImporter):
                         nbr=j,
                         study_uid=uid,
                         epoch_uid=epoch_uid,
-                        visit_type_uid=visit_type_uids[
-                            m % len(visit_type_uids)
-                        ],
+                        visit_type_uid=visit_type_uids[m % len(visit_type_uids)],
                         time_unit_uid=time_unit_uids[m % len(time_unit_uids)],
                         time_reference_uid=time_reference_uid,
                     )
@@ -1056,9 +1011,7 @@ class DummyData(BaseImporter):
                     nbr=43,
                     study_uid=uid,
                     epoch_uid=epoch_uid,
-                    visit_type_uid=visit_type_uids[
-                        m % len(visit_type_uids)
-                    ],
+                    visit_type_uid=visit_type_uids[m % len(visit_type_uids)],
                     time_unit_uid=time_unit_uids[m % len(time_unit_uids)],
                     time_reference_uid=time_reference_uid,
                 )

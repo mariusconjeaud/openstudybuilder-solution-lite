@@ -176,7 +176,7 @@ def get_distinct_objective_values_for_header(
 
 
 @router.get(
-    "/studies/{uid}/study-objectives",
+    "/studies/{study_uid}/study-objectives",
     dependencies=[rbac.STUDY_READ],
     summary="Returns all study objectives currently selected for study with provided uid",
     description=_generic_descriptions.DATA_EXPORTS_HEADER,
@@ -214,7 +214,7 @@ def get_distinct_objective_values_for_header(
 # pylint: disable=unused-argument
 def get_all_selected_objectives(
     request: Request,  # request is actually required by the allow_exports decorator
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     sort_by: Json = Query(None, description=_generic_descriptions.SORT_BY),
     no_brackets: bool = Query(
         False,
@@ -243,7 +243,7 @@ def get_all_selected_objectives(
 ) -> GenericFilteringReturn[models.StudySelectionObjective]:
     service = StudyObjectiveSelectionService()
     return service.get_all_selection(
-        study_uid=uid,
+        study_uid=study_uid,
         sort_by=sort_by,
         no_brackets=no_brackets,
         filter_by=filters,
@@ -256,7 +256,7 @@ def get_all_selected_objectives(
 
 
 @router.get(
-    "/studies/{uid}/study-objectives/headers",
+    "/studies/{study_uid}/study-objectives/headers",
     dependencies=[rbac.STUDY_READ],
     summary="Returns possible values from the database for a given header",
     description="""Allowed parameters include : field name for which to get possible
@@ -272,7 +272,7 @@ def get_all_selected_objectives(
     },
 )
 def get_distinct_values_for_header(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     project_name: str | None = PROJECT_NAME,
     project_number: str | None = PROJECT_NUMBER,
     field_name: str = Query(..., description=_generic_descriptions.HEADER_FIELD_NAME),
@@ -291,7 +291,7 @@ def get_distinct_values_for_header(
 ):
     service = StudyObjectiveSelectionService()
     return service.get_distinct_values_for_header(
-        study_uid=uid,
+        study_uid=study_uid,
         project_name=project_name,
         project_number=project_number,
         field_name=field_name,
@@ -304,7 +304,7 @@ def get_distinct_values_for_header(
 
 
 @router.get(
-    "/studies/{uid}/study-objectives/audit-trail",
+    "/studies/{study_uid}/study-objectives/audit-trail",
     dependencies=[rbac.STUDY_READ],
     summary="List full audit trail related to definition of all study objectives.",
     description="""
@@ -326,14 +326,14 @@ The following values should be return for all study objectives.
     },
 )
 def get_all_objectives_audit_trail(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
 ) -> list[models.StudySelectionObjectiveCore]:
     service = StudyObjectiveSelectionService()
-    return service.get_all_selection_audit_trail(study_uid=uid)
+    return service.get_all_selection_audit_trail(study_uid=study_uid)
 
 
 @router.get(
-    "/studies/{uid}/study-objectives/{study_objective_uid}",
+    "/studies/{study_uid}/study-objectives/{study_objective_uid}",
     dependencies=[rbac.STUDY_READ],
     summary="Returns specific study objective",
     response_model=models.StudySelectionObjective,
@@ -348,20 +348,20 @@ def get_all_objectives_audit_trail(
     },
 )
 def get_selected_objective(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     study_objective_uid: str = study_selection_uid,
     study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
 ) -> models.StudySelectionObjective:
     service = StudyObjectiveSelectionService()
     return service.get_specific_selection(
-        study_uid=uid,
+        study_uid=study_uid,
         study_selection_uid=study_objective_uid,
         study_value_version=study_value_version,
     )
 
 
 @router.get(
-    "/studies/{uid}/study-objectives/{study_objective_uid}/audit-trail",
+    "/studies/{study_uid}/study-objectives/{study_objective_uid}/audit-trail",
     dependencies=[rbac.STUDY_READ],
     summary="List audit trail related to definition of a specific study objective.",
     description="""
@@ -386,17 +386,17 @@ The following values should be return for selected study objective:
     },
 )
 def get_selected_objective_audit_trail(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     study_objective_uid: str = study_selection_uid,
 ) -> models.StudySelectionObjectiveCore:
     service = StudyObjectiveSelectionService()
     return service.get_specific_selection_audit_trail(
-        study_uid=uid, study_selection_uid=study_objective_uid
+        study_uid=study_uid, study_selection_uid=study_objective_uid
     )
 
 
 @router.post(
-    "/studies/{uid}/study-objectives",
+    "/studies/{study_uid}/study-objectives",
     dependencies=[rbac.STUDY_WRITE],
     summary="Creating a study objective selection based on the input data, including optionally creating a library objective",
     response_model=models.StudySelectionObjective,
@@ -409,14 +409,14 @@ def get_selected_objective_audit_trail(
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - Study or objective is not found with the passed 'uid'.",
+            "description": "Not Found - Study or objective is not found with the passed 'study_uid'.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-@decorators.validate_if_study_is_not_locked("uid")
+@decorators.validate_if_study_is_not_locked("study_uid")
 def post_new_objective_selection_create(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     selection: models.study_selections.study_selection.StudySelectionObjectiveCreateInput
     | models.study_selections.study_selection.StudySelectionObjectiveInput = Body(
         description="Parameters of the selection that shall be created."
@@ -432,13 +432,13 @@ def post_new_objective_selection_create(
 
     if create_objective:
         return service.make_selection_create_objective(
-            study_uid=uid, selection_create_input=selection
+            study_uid=study_uid, selection_create_input=selection
         )
-    return service.make_selection(study_uid=uid, selection_create_input=selection)
+    return service.make_selection(study_uid=study_uid, selection_create_input=selection)
 
 
 @router.post(
-    "/studies/{uid}/study-objectives/batch-select",
+    "/studies/{study_uid}/study-objectives/batch-select",
     dependencies=[rbac.STUDY_WRITE],
     summary="Select multiple objective templates as a batch. If the template has no parameters, will also create the instance.",
     description="""
@@ -476,14 +476,14 @@ def post_new_objective_selection_create(
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - Study or objective is not found with the passed 'uid'.",
+            "description": "Not Found - Study or objective is not found with the passed 'study_uid'.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-@decorators.validate_if_study_is_not_locked("uid")
+@decorators.validate_if_study_is_not_locked("study_uid")
 def post_batch_select_objective_template(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     selection: list[
         models.study_selections.study_selection.StudySelectionObjectiveTemplateSelectInput
     ] = Body(
@@ -492,12 +492,12 @@ def post_batch_select_objective_template(
 ) -> models.StudySelectionObjective:
     service = StudyObjectiveSelectionService()
     return service.batch_select_objective_template(
-        study_uid=uid, selection_create_input=selection
+        study_uid=study_uid, selection_create_input=selection
     )
 
 
 @router.post(
-    "/studies/{uid}/study-objectives/preview",
+    "/studies/{study_uid}/study-objectives/preview",
     dependencies=[rbac.STUDY_WRITE],
     summary="Preview creating a study objective selection based on the input data",
     response_model=models.StudySelectionObjective,
@@ -510,26 +510,26 @@ def post_batch_select_objective_template(
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - Study or objective is not found with the passed 'uid'.",
+            "description": "Not Found - Study or objective is not found with the passed 'study_uid'.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-@decorators.validate_if_study_is_not_locked("uid")
+@decorators.validate_if_study_is_not_locked("study_uid")
 def preview_new_objective_selection_create(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     selection: models.study_selections.study_selection.StudySelectionObjectiveCreateInput = Body(
         description="Related parameters of the selection that shall be previewed."
     ),
 ) -> models.StudySelectionObjective:
     service = StudyObjectiveSelectionService()
     return service.make_selection_preview_objective(
-        study_uid=uid, selection_create_input=selection
+        study_uid=study_uid, selection_create_input=selection
     )
 
 
 @router.delete(
-    "/studies/{uid}/study-objectives/{study_objective_uid}",
+    "/studies/{study_uid}/study-objectives/{study_objective_uid}",
     dependencies=[rbac.STUDY_WRITE],
     summary="Deletes a study objective",
     response_model=None,
@@ -543,18 +543,20 @@ def preview_new_objective_selection_create(
         500: _generic_descriptions.ERROR_500,
     },
 )
-@decorators.validate_if_study_is_not_locked("uid")
+@decorators.validate_if_study_is_not_locked("study_uid")
 def delete_selected_objective(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     study_objective_uid: str = study_selection_uid,
 ):
     service = StudyObjectiveSelectionService()
-    service.delete_selection(study_uid=uid, study_selection_uid=study_objective_uid)
+    service.delete_selection(
+        study_uid=study_uid, study_selection_uid=study_objective_uid
+    )
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.patch(
-    "/studies/{uid}/study-objectives/{study_objective_uid}/order",
+    "/studies/{study_uid}/study-objectives/{study_objective_uid}/order",
     dependencies=[rbac.STUDY_WRITE],
     summary="Change a order of a study objective",
     response_model=models.StudySelectionObjective,
@@ -568,9 +570,9 @@ def delete_selected_objective(
         500: _generic_descriptions.ERROR_500,
     },
 )
-@decorators.validate_if_study_is_not_locked("uid")
+@decorators.validate_if_study_is_not_locked("study_uid")
 def patch_new_objective_selection_order(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     study_objective_uid: str = study_selection_uid,
     new_order_input: models.StudySelectionObjectiveNewOrder = Body(
         description="Related parameters of the selection that shall be created."
@@ -578,14 +580,14 @@ def patch_new_objective_selection_order(
 ) -> models.StudySelectionObjective:
     service = StudyObjectiveSelectionService()
     return service.set_new_order(
-        study_uid=uid,
+        study_uid=study_uid,
         study_selection_uid=study_objective_uid,
         new_order=new_order_input.new_order,
     )
 
 
 @router.patch(
-    "/studies/{uid}/study-objectives/{study_objective_uid}",
+    "/studies/{study_uid}/study-objectives/{study_objective_uid}",
     dependencies=[rbac.STUDY_WRITE],
     summary="update the objective level of a study objective",
     response_model=models.StudySelectionObjective,
@@ -599,9 +601,9 @@ def patch_new_objective_selection_order(
         500: _generic_descriptions.ERROR_500,
     },
 )
-@decorators.validate_if_study_is_not_locked("uid")
+@decorators.validate_if_study_is_not_locked("study_uid")
 def patch_update_objective_selection(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     study_objective_uid: str = study_selection_uid,
     selection: models.StudySelectionObjectiveInput = Body(
         description="Related parameters of the selection that shall be created."
@@ -609,14 +611,14 @@ def patch_update_objective_selection(
 ) -> models.StudySelectionObjective:
     service = StudyObjectiveSelectionService()
     return service.patch_selection(
-        study_uid=uid,
+        study_uid=study_uid,
         study_selection_uid=study_objective_uid,
         selection_update_input=selection,
     )
 
 
 @router.post(
-    "/studies/{uid}/study-objectives/{study_objective_uid}/sync-latest-version",
+    "/studies/{study_uid}/study-objectives/{study_objective_uid}/sync-latest-version",
     dependencies=[rbac.STUDY_WRITE],
     summary="update to latest objective version study selection",
     response_model=models.StudySelectionObjective,
@@ -630,14 +632,14 @@ def patch_update_objective_selection(
         500: _generic_descriptions.ERROR_500,
     },
 )
-@decorators.validate_if_study_is_not_locked("uid")
+@decorators.validate_if_study_is_not_locked("study_uid")
 def sync_latest_version(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     study_objective_uid: str = study_selection_uid,
 ) -> models.StudySelectionObjective:
     service = StudyObjectiveSelectionService()
     return service.update_selection_to_latest_version(
-        study_uid=uid, study_selection_uid=study_objective_uid
+        study_uid=study_uid, study_selection_uid=study_objective_uid
     )
 
 
@@ -749,7 +751,7 @@ def get_distinct_endpoint_values_for_header(
 
 
 @router.get(
-    "/studies/{uid}/study-endpoints",
+    "/studies/{study_uid}/study-endpoints",
     dependencies=[rbac.STUDY_READ],
     summary="""List all study endpoints currently selected for study with provided uid""",
     description=f"""
@@ -805,7 +807,7 @@ State after:
 # pylint: disable=unused-argument
 def get_all_selected_endpoints(
     request: Request,  # request is actually required by the allow_exports decorator
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     no_brackets: bool = Query(
         False,
         description="Indicates whether brackets around Template Parameters in the Objective"
@@ -834,7 +836,7 @@ def get_all_selected_endpoints(
 ) -> GenericFilteringReturn[models.StudySelectionEndpoint]:
     service = StudyEndpointSelectionService()
     return service.get_all_selection(
-        study_uid=uid,
+        study_uid=study_uid,
         no_brackets=no_brackets,
         sort_by=sort_by,
         filter_by=filters,
@@ -847,7 +849,7 @@ def get_all_selected_endpoints(
 
 
 @router.get(
-    "/studies/{uid}/study-endpoints/headers",
+    "/studies/{study_uid}/study-endpoints/headers",
     dependencies=[rbac.STUDY_READ],
     summary="Returns possible values from the database for a given header",
     description="""Allowed parameters include : field name for which to get possible
@@ -863,7 +865,7 @@ def get_all_selected_endpoints(
     },
 )
 def get_distinct_study_endpoint_values_for_header(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     project_name: str | None = PROJECT_NAME,
     project_number: str | None = PROJECT_NUMBER,
     field_name: str = Query(..., description=_generic_descriptions.HEADER_FIELD_NAME),
@@ -882,7 +884,7 @@ def get_distinct_study_endpoint_values_for_header(
 ):
     service = StudyEndpointSelectionService()
     return service.get_distinct_values_for_header(
-        study_uid=uid,
+        study_uid=study_uid,
         project_name=project_name,
         project_number=project_number,
         field_name=field_name,
@@ -895,7 +897,7 @@ def get_distinct_study_endpoint_values_for_header(
 
 
 @router.get(
-    "/studies/{uid}/study-endpoints/audit-trail",
+    "/studies/{study_uid}/study-endpoints/audit-trail",
     dependencies=[rbac.STUDY_READ],
     summary="List full audit trail related to definition of all study endpoints.",
     description="""
@@ -929,14 +931,14 @@ Returned data:
     },
 )
 def get_all_endpoints_audit_trail(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
 ) -> list[models.StudySelectionEndpoint]:
     service = StudyEndpointSelectionService()
-    return service.get_all_selection_audit_trail(study_uid=uid)
+    return service.get_all_selection_audit_trail(study_uid=study_uid)
 
 
 @router.get(
-    "/studies/{uid}/study-endpoints/{study_endpoint_uid}",
+    "/studies/{study_uid}/study-endpoints/{study_endpoint_uid}",
     dependencies=[rbac.STUDY_READ],
     summary="Returns specific study endpoint",
     description="""
@@ -968,20 +970,20 @@ State after:
     },
 )
 def get_selected_endpoint(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     study_endpoint_uid: str = study_selection_uid,
     study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
 ) -> models.StudySelectionEndpoint:
     service = StudyEndpointSelectionService()
     return service.get_specific_selection(
-        study_uid=uid,
+        study_uid=study_uid,
         study_selection_uid=study_endpoint_uid,
         study_value_version=study_value_version,
     )
 
 
 @router.get(
-    "/studies/{uid}/study-endpoints/{study_endpoint_uid}/audit-trail",
+    "/studies/{study_uid}/study-endpoints/{study_endpoint_uid}/audit-trail",
     dependencies=[rbac.STUDY_READ],
     summary="List audit trail related to definition of a specific study coendpointsmpound.",
     description="""
@@ -1019,17 +1021,17 @@ Returned data:
     },
 )
 def get_selected_endpoint_audit_trail(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     study_endpoint_uid: str = study_selection_uid,
 ) -> models.StudySelectionEndpoint:
     service = StudyEndpointSelectionService()
     return service.get_specific_selection_audit_trail(
-        study_uid=uid, study_selection_uid=study_endpoint_uid
+        study_uid=study_uid, study_selection_uid=study_endpoint_uid
     )
 
 
 @router.post(
-    "/studies/{uid}/study-endpoints",
+    "/studies/{study_uid}/study-endpoints",
     dependencies=[rbac.STUDY_WRITE],
     summary="Creates a study endpoint selection based on the input data, including optionally creating library endpoint",
     response_model=models.StudySelectionEndpoint,
@@ -1042,14 +1044,14 @@ def get_selected_endpoint_audit_trail(
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - Study or endpoint is not found with the passed 'uid'.",
+            "description": "Not Found - Study or endpoint is not found with the passed 'study_uid'.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-@decorators.validate_if_study_is_not_locked("uid")
+@decorators.validate_if_study_is_not_locked("study_uid")
 def post_new_endpoint_selection_create(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     selection: models.study_selections.study_selection.StudySelectionEndpointCreateInput
     | models.study_selections.study_selection.StudySelectionEndpointInput = Body(
         description="Parameters of the selection that shall be created."
@@ -1064,13 +1066,13 @@ def post_new_endpoint_selection_create(
     service = StudyEndpointSelectionService()
     if create_endpoint:
         return service.make_selection_create_endpoint(
-            study_uid=uid, selection_create_input=selection
+            study_uid=study_uid, selection_create_input=selection
         )
-    return service.make_selection(study_uid=uid, selection_create_input=selection)
+    return service.make_selection(study_uid=study_uid, selection_create_input=selection)
 
 
 @router.post(
-    "/studies/{uid}/study-endpoints/batch-select",
+    "/studies/{study_uid}/study-endpoints/batch-select",
     dependencies=[rbac.STUDY_WRITE],
     summary="Select multiple endpoint templates as a batch. If the template has no parameters, will also create the instance.",
     description="""
@@ -1108,14 +1110,14 @@ def post_new_endpoint_selection_create(
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - Study or endpoint is not found with the passed 'uid'.",
+            "description": "Not Found - Study or endpoint is not found with the passed 'study_uid'.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-@decorators.validate_if_study_is_not_locked("uid")
+@decorators.validate_if_study_is_not_locked("study_uid")
 def post_batch_select_endpoint_template(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     selection: list[
         models.study_selections.study_selection.StudySelectionEndpointTemplateSelectInput
     ] = Body(
@@ -1124,12 +1126,12 @@ def post_batch_select_endpoint_template(
 ) -> models.StudySelectionEndpoint:
     service = StudyEndpointSelectionService()
     return service.batch_select_endpoint_template(
-        study_uid=uid, selection_create_input=selection
+        study_uid=study_uid, selection_create_input=selection
     )
 
 
 @router.post(
-    "/studies/{uid}/study-endpoints/preview",
+    "/studies/{study_uid}/study-endpoints/preview",
     dependencies=[rbac.STUDY_WRITE],
     summary="Preview creating a study endpoint selection based on the input data",
     response_model=models.StudySelectionEndpoint,
@@ -1142,26 +1144,26 @@ def post_batch_select_endpoint_template(
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - Study or endpoint is not found with the passed 'uid'.",
+            "description": "Not Found - Study or endpoint is not found with the passed 'study_uid'.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-@decorators.validate_if_study_is_not_locked("uid")
+@decorators.validate_if_study_is_not_locked("study_uid")
 def post_new_endpoint_selection_preview(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     selection: models.study_selections.study_selection.StudySelectionEndpointCreateInput = Body(
         description="Related parameters of the selection that shall be previewed."
     ),
 ) -> models.StudySelectionEndpoint:
     service = StudyEndpointSelectionService()
     return service.make_selection_preview_endpoint(
-        study_uid=uid, selection_create_input=selection
+        study_uid=study_uid, selection_create_input=selection
     )
 
 
 @router.delete(
-    "/studies/{uid}/study-endpoints/{study_endpoint_uid}",
+    "/studies/{study_uid}/study-endpoints/{study_endpoint_uid}",
     dependencies=[rbac.STUDY_WRITE],
     summary="Deletes a objective selection",
     description="""
@@ -1189,18 +1191,20 @@ State after:
         500: _generic_descriptions.ERROR_500,
     },
 )
-@decorators.validate_if_study_is_not_locked("uid")
+@decorators.validate_if_study_is_not_locked("study_uid")
 def delete_selected_endpoint(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     study_endpoint_uid: str = study_selection_uid,
 ):
     service = StudyEndpointSelectionService()
-    service.delete_selection(study_uid=uid, study_selection_uid=study_endpoint_uid)
+    service.delete_selection(
+        study_uid=study_uid, study_selection_uid=study_endpoint_uid
+    )
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.patch(
-    "/studies/{uid}/study-endpoints/{study_endpoint_uid}/order",
+    "/studies/{study_uid}/study-endpoints/{study_endpoint_uid}/order",
     dependencies=[rbac.STUDY_WRITE],
     summary="Change a order of a selection",
     description="""
@@ -1231,9 +1235,9 @@ State after:
         500: _generic_descriptions.ERROR_500,
     },
 )
-@decorators.validate_if_study_is_not_locked("uid")
+@decorators.validate_if_study_is_not_locked("study_uid")
 def patch_new_endpoint_selection_order(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     study_endpoint_uid: str = study_selection_uid,
     new_order_input: models.StudySelectionEndpointNewOrder = Body(
         description="Related parameters of the selection that shall be created."
@@ -1241,14 +1245,14 @@ def patch_new_endpoint_selection_order(
 ) -> models.StudySelectionEndpoint:
     service = StudyEndpointSelectionService()
     return service.set_new_order(
-        study_uid=uid,
+        study_uid=study_uid,
         study_selection_uid=study_endpoint_uid,
         new_order=new_order_input.new_order,
     )
 
 
 @router.patch(
-    "/studies/{uid}/study-endpoints/{study_endpoint_uid}",
+    "/studies/{study_uid}/study-endpoints/{study_endpoint_uid}",
     dependencies=[rbac.STUDY_WRITE],
     summary="update the study endpoint",
     description="""
@@ -1263,7 +1267,7 @@ State after:
 - Endpoint is added as study endpoint to the study.
  - This PATCH method can cover cover two parts:
     - Change the endpoint level for the currently selected study endpoint
-    - Replace the currently selected study endpoint based on the same functionality as POST `/studies/{uid}/study-endpoints`
+    - Replace the currently selected study endpoint based on the same functionality as POST `/studies/{study_uid}/study-endpoints`
  - Added new entry in the audit trail for the update of the study-endpoint.
 """,
     response_model=models.StudySelectionEndpoint,
@@ -1277,9 +1281,9 @@ State after:
         500: _generic_descriptions.ERROR_500,
     },
 )
-@decorators.validate_if_study_is_not_locked("uid")
+@decorators.validate_if_study_is_not_locked("study_uid")
 def patch_update_endpoint_selection(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     study_endpoint_uid: str = study_selection_uid,
     selection: models.StudySelectionEndpointInput = Body(
         description="Related parameters of the selection that shall be created."
@@ -1287,14 +1291,14 @@ def patch_update_endpoint_selection(
 ) -> models.StudySelectionEndpoint:
     service = StudyEndpointSelectionService()
     return service.patch_selection(
-        study_uid=uid,
+        study_uid=study_uid,
         study_selection_uid=study_endpoint_uid,
         selection_update_input=selection,
     )
 
 
 @router.get(
-    "/studies/{uid}/study-objectives.docx",
+    "/studies/{study_uid}/study-objectives.docx",
     dependencies=[rbac.STUDY_READ],
     summary="""Returns Study Objectives and Endpoints table in standard layout DOCX document""",
     responses={
@@ -1308,12 +1312,12 @@ def patch_update_endpoint_selection(
     },
 )
 def get_all_selected_objectives_and_endpoints_standard_docx(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
 ) -> StreamingResponse:
-    StudyService().check_if_study_exists(uid)
+    StudyService().check_if_study_exists(study_uid)
     docx = StudyObjectivesService().get_standard_docx(
-        study_uid=uid, study_value_version=study_value_version
+        study_uid=study_uid, study_value_version=study_value_version
     )
     stream = docx.get_document_stream()
     size = stream.seek(0, os.SEEK_END)
@@ -1322,14 +1326,14 @@ def get_all_selected_objectives_and_endpoints_standard_docx(
         stream,
         media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
         headers={
-            "Content-Disposition": f'attachment; filename="{uid} study-objectives.docx"',
+            "Content-Disposition": f'attachment; filename="{study_uid} study-objectives.docx"',
             "Content-Length": f"{size:d}",
         },
     )
 
 
 @router.get(
-    "/studies/{uid}/study-objectives.html",
+    "/studies/{study_uid}/study-objectives.html",
     dependencies=[rbac.STUDY_READ],
     summary="""Returns Study Objectives and Endpoints table in standard layout HTML document""",
     responses={
@@ -1339,11 +1343,11 @@ def get_all_selected_objectives_and_endpoints_standard_docx(
     },
 )
 def get_all_selected_objectives_and_endpoints_standard_html(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
 ) -> HTMLResponse:
-    StudyService().check_if_study_exists(uid)
+    StudyService().check_if_study_exists(study_uid)
     return HTMLResponse(
-        content=StudyObjectivesService().get_standard_html(study_uid=uid)
+        content=StudyObjectivesService().get_standard_html(study_uid=study_uid)
     )
 
 
@@ -1449,7 +1453,7 @@ def get_distinct_compound_values_for_header(
 
 
 @router.get(
-    "/studies/{uid}/study-compounds",
+    "/studies/{study_uid}/study-compounds",
     dependencies=[rbac.STUDY_READ],
     summary="List all study compounds currently selected for study with provided uid",
     description=f"""
@@ -1508,7 +1512,7 @@ State after:
 # pylint: disable=unused-argument
 def get_all_selected_compounds(
     request: Request,  # request is actually required by the allow_exports decorator
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
     filters: Json
     | None = Query(
@@ -1531,7 +1535,7 @@ def get_all_selected_compounds(
 ) -> GenericFilteringReturn[models.StudySelectionCompound]:
     service = StudyCompoundSelectionService()
     return service.get_all_selection(
-        study_uid=uid,
+        study_uid=study_uid,
         study_value_version=study_value_version,
         filter_by=filters,
         filter_operator=FilterOperator.from_str(operator),
@@ -1542,7 +1546,7 @@ def get_all_selected_compounds(
 
 
 @router.get(
-    "/studies/{uid}/study-compounds/headers",
+    "/studies/{study_uid}/study-compounds/headers",
     dependencies=[rbac.STUDY_READ],
     summary="Returns possible values from the database for a given header",
     description="""Allowed parameters include : field name for which to get possible
@@ -1558,7 +1562,7 @@ def get_all_selected_compounds(
     },
 )
 def get_distinct_compounds_values_for_header(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
     project_name: str | None = PROJECT_NAME,
     project_number: str | None = PROJECT_NUMBER,
@@ -1577,7 +1581,7 @@ def get_distinct_compounds_values_for_header(
 ):
     service = StudyCompoundSelectionService()
     return service.get_distinct_values_for_header(
-        study_uid=uid,
+        study_uid=study_uid,
         study_value_version=study_value_version,
         project_name=project_name,
         project_number=project_number,
@@ -1590,7 +1594,7 @@ def get_distinct_compounds_values_for_header(
 
 
 @router.get(
-    "/studies/{uid}/study-compounds/audit-trail",
+    "/studies/{study_uid}/study-compounds/audit-trail",
     dependencies=[rbac.STUDY_READ],
     summary="List full audit trail related to definition of all study compounds.",
     description="""
@@ -1624,14 +1628,14 @@ Returned data:
     },
 )
 def get_all_compounds_audit_trail(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
 ) -> list[models.StudySelectionCompound]:
     service = StudyCompoundSelectionService()
-    return service.get_all_selection_audit_trail(study_uid=uid)
+    return service.get_all_selection_audit_trail(study_uid=study_uid)
 
 
 @router.get(
-    "/studies/{uid}/study-compounds/{study_compound_uid}/audit-trail",
+    "/studies/{study_uid}/study-compounds/{study_compound_uid}/audit-trail",
     dependencies=[rbac.STUDY_READ],
     summary="List audit trail related to definition of a specific study compound.",
     description="""
@@ -1669,17 +1673,17 @@ Returned data:
     },
 )
 def get_selected_compound_audit_trail(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     study_compound_uid: str = study_selection_uid,
 ) -> models.StudySelectionCompound:
     service = StudyCompoundSelectionService()
     return service.get_specific_selection_audit_trail(
-        study_uid=uid, study_selection_uid=study_compound_uid
+        study_uid=study_uid, study_selection_uid=study_compound_uid
     )
 
 
 @router.get(
-    "/studies/{uid}/study-compounds/{study_compound_uid}",
+    "/studies/{study_uid}/study-compounds/{study_compound_uid}",
     dependencies=[rbac.STUDY_READ],
     summary="Returns specific study compound",
     description="""
@@ -1710,17 +1714,17 @@ State after:
     },
 )
 def get_selected_compound(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     study_compound_uid: str = study_selection_uid,
 ) -> models.StudySelectionCompound:
     service = StudyCompoundSelectionService()
     return service.get_specific_selection(
-        study_uid=uid, study_selection_uid=study_compound_uid
+        study_uid=study_uid, study_selection_uid=study_compound_uid
     )
 
 
 @router.post(
-    "/studies/{uid}/study-compounds",
+    "/studies/{study_uid}/study-compounds",
     dependencies=[rbac.STUDY_WRITE],
     summary="Add a study compound to a study based on selection of a compound concept in library, or a 'Reason for missing'.",
     description="""
@@ -1760,24 +1764,24 @@ State after:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - Study or objective is not found with the passed 'uid'.",
+            "description": "Not Found - Study or objective is not found with the passed 'study_uid'.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-@decorators.validate_if_study_is_not_locked("uid")
+@decorators.validate_if_study_is_not_locked("study_uid")
 def post_new_compound_selection(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     selection: models.StudySelectionCompoundCreateInput = Body(
         description="Related parameters of the selection that shall be created."
     ),
 ) -> models.StudySelectionCompound:
     service = StudyCompoundSelectionService()
-    return service.make_selection(study_uid=uid, selection_create_input=selection)
+    return service.make_selection(study_uid=study_uid, selection_create_input=selection)
 
 
 @router.delete(
-    "/studies/{uid}/study-compounds/{study_compound_uid}",
+    "/studies/{study_uid}/study-compounds/{study_compound_uid}",
     dependencies=[rbac.STUDY_WRITE],
     summary="Delete a study compound.",
     description="""
@@ -1804,18 +1808,20 @@ State after:
         500: _generic_descriptions.ERROR_500,
     },
 )
-@decorators.validate_if_study_is_not_locked("uid")
+@decorators.validate_if_study_is_not_locked("study_uid")
 def delete_selected_compound(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     study_compound_uid: str = study_selection_uid,
 ):
     service = StudyCompoundSelectionService()
-    service.delete_selection(study_uid=uid, study_selection_uid=study_compound_uid)
+    service.delete_selection(
+        study_uid=study_uid, study_selection_uid=study_compound_uid
+    )
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.patch(
-    "/studies/{uid}/study-compounds/{study_compound_uid}/order",
+    "/studies/{study_uid}/study-compounds/{study_compound_uid}/order",
     dependencies=[rbac.STUDY_WRITE],
     summary="Change display order of study compound",
     description="""
@@ -1842,9 +1848,9 @@ State after:
         500: _generic_descriptions.ERROR_500,
     },
 )
-@decorators.validate_if_study_is_not_locked("uid")
+@decorators.validate_if_study_is_not_locked("study_uid")
 def patch_new_compound_selection_order(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     study_compound_uid: str = study_selection_uid,
     new_order_input: models.StudySelectionCompoundNewOrder = Body(
         description="Related parameters of the selection that shall be created."
@@ -1852,14 +1858,14 @@ def patch_new_compound_selection_order(
 ) -> models.StudySelectionCompound:
     service = StudyCompoundSelectionService()
     return service.set_new_order(
-        study_uid=uid,
+        study_uid=study_uid,
         study_selection_uid=study_compound_uid,
         new_order=new_order_input.new_order,
     )
 
 
 @router.patch(
-    "/studies/{uid}/study-compounds/{study_compound_uid}",
+    "/studies/{study_uid}/study-compounds/{study_compound_uid}",
     dependencies=[rbac.STUDY_WRITE],
     summary="Edit or replace a study compound",
     description="""
@@ -1899,9 +1905,9 @@ State after:
         500: _generic_descriptions.ERROR_500,
     },
 )
-@decorators.validate_if_study_is_not_locked("uid")
+@decorators.validate_if_study_is_not_locked("study_uid")
 def patch_update_compound_selection(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     study_compound_uid: str = study_selection_uid,
     selection: models.StudySelectionCompoundEditInput = Body(
         description="Related parameters of the selection that shall be created."
@@ -1909,14 +1915,14 @@ def patch_update_compound_selection(
 ) -> models.StudySelectionCompound:
     service = StudyCompoundSelectionService()
     return service.patch_selection(
-        study_uid=uid,
+        study_uid=study_uid,
         study_selection_uid=study_compound_uid,
         selection_update_input=selection,
     )
 
 
 @router.post(
-    "/studies/{uid}/study-endpoints/{study_endpoint_uid}/sync-latest-endpoint-version",
+    "/studies/{study_uid}/study-endpoints/{study_endpoint_uid}/sync-latest-endpoint-version",
     dependencies=[rbac.STUDY_WRITE],
     summary="update to latest endpoint version study selection",
     description="""
@@ -1944,19 +1950,19 @@ State after:
         500: _generic_descriptions.ERROR_500,
     },
 )
-@decorators.validate_if_study_is_not_locked("uid")
+@decorators.validate_if_study_is_not_locked("study_uid")
 def sync_latest_endpoint_version(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     study_endpoint_uid: str = study_selection_uid,
 ) -> models.StudySelectionObjective:
     service = StudyEndpointSelectionService()
     return service.update_selection_to_latest_version_of_endpoint(
-        study_uid=uid, study_selection_uid=study_endpoint_uid
+        study_uid=study_uid, study_selection_uid=study_endpoint_uid
     )
 
 
 @router.post(
-    "/studies/{uid}/study-endpoints/{study_endpoint_uid}/sync-latest-timeframe-version",
+    "/studies/{study_uid}/study-endpoints/{study_endpoint_uid}/sync-latest-timeframe-version",
     dependencies=[rbac.STUDY_WRITE],
     summary="update to latest timeframe version study selection",
     description="""
@@ -1984,19 +1990,19 @@ def sync_latest_endpoint_version(
         500: _generic_descriptions.ERROR_500,
     },
 )
-@decorators.validate_if_study_is_not_locked("uid")
+@decorators.validate_if_study_is_not_locked("study_uid")
 def sync_latest_timeframe_version(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     study_endpoint_uid: str = study_selection_uid,
 ) -> models.StudySelectionObjective:
     service = StudyEndpointSelectionService()
     return service.update_selection_to_latest_version_of_timeframe(
-        study_uid=uid, study_selection_uid=study_endpoint_uid
+        study_uid=study_uid, study_selection_uid=study_endpoint_uid
     )
 
 
 @router.post(
-    "/studies/{uid}/study-endpoints/{study_endpoint_uid}/accept-version",
+    "/studies/{study_uid}/study-endpoints/{study_endpoint_uid}/accept-version",
     dependencies=[rbac.STUDY_WRITE],
     summary="update to latest timeframe version study selection",
     description="""
@@ -2024,19 +2030,19 @@ def sync_latest_timeframe_version(
         500: _generic_descriptions.ERROR_500,
     },
 )
-@decorators.validate_if_study_is_not_locked("uid")
+@decorators.validate_if_study_is_not_locked("study_uid")
 def patch_endpoint_accept_version(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     study_endpoint_uid: str = study_selection_uid,
 ) -> models.StudySelectionObjective:
     service = StudyEndpointSelectionService()
     return service.update_selection_accept_versions(
-        study_uid=uid, study_selection_uid=study_endpoint_uid
+        study_uid=study_uid, study_selection_uid=study_endpoint_uid
     )
 
 
 @router.post(
-    "/studies/{uid}/study-objectives/{study_objective_uid}/accept-version",
+    "/studies/{study_uid}/study-objectives/{study_objective_uid}/accept-version",
     dependencies=[rbac.STUDY_WRITE],
     summary="update to latest timeframe version study selection",
     description="""
@@ -2064,14 +2070,14 @@ def patch_endpoint_accept_version(
         500: _generic_descriptions.ERROR_500,
     },
 )
-@decorators.validate_if_study_is_not_locked("uid")
+@decorators.validate_if_study_is_not_locked("study_uid")
 def patch_objective_accept_version(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     study_objective_uid: str = study_selection_uid,
 ) -> models.StudySelectionObjective:
     service = StudyObjectiveSelectionService()
     return service.update_selection_accept_version(
-        study_uid=uid, study_selection_uid=study_objective_uid
+        study_uid=study_uid, study_selection_uid=study_objective_uid
     )
 
 
@@ -2183,7 +2189,7 @@ def get_distinct_criteria_values_for_header(
 
 
 @router.get(
-    "/studies/{uid}/study-criteria",
+    "/studies/{study_uid}/study-criteria",
     dependencies=[rbac.STUDY_READ],
     summary="Returns all study criteria currently selected for study with provided uid",
     description=f"""
@@ -2254,7 +2260,7 @@ List selected study with the following information:
 # pylint: disable=unused-argument
 def get_all_selected_criteria(
     request: Request,  # request is actually required by the allow_exports decorator
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     no_brackets: bool = Query(
         False,
         description="Indicates whether brackets around Template Parameters in the Criteria"
@@ -2283,7 +2289,7 @@ def get_all_selected_criteria(
 ) -> CustomPage[models.StudySelectionCriteria]:
     service = StudyCriteriaSelectionService()
     all_items = service.get_all_selection(
-        study_uid=uid,
+        study_uid=study_uid,
         no_brackets=no_brackets,
         page_number=page_number,
         page_size=page_size,
@@ -2303,7 +2309,7 @@ def get_all_selected_criteria(
 
 
 @router.get(
-    "/studies/{uid}/study-criteria/headers",
+    "/studies/{study_uid}/study-criteria/headers",
     dependencies=[rbac.STUDY_READ],
     summary="Returns possible values from the database for a given header",
     description="""Allowed parameters include : field name for which to get possible
@@ -2331,12 +2337,12 @@ def get_distinct_study_criteria_values_for_header(
     operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
     result_count: int
     | None = Query(10, description=_generic_descriptions.HEADER_RESULT_COUNT),
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
 ):
     service = StudyCriteriaSelectionService()
     return service.get_distinct_values_for_header(
-        study_uid=uid,
+        study_uid=study_uid,
         field_name=field_name,
         search_string=search_string,
         filter_by=filters,
@@ -2347,7 +2353,7 @@ def get_distinct_study_criteria_values_for_header(
 
 
 @router.get(
-    "/studies/{uid}/study-criteria/audit-trail",
+    "/studies/{study_uid}/study-criteria/audit-trail",
     dependencies=[rbac.STUDY_READ],
     summary="List full audit trail related to definition of all study criteria.",
     description="""
@@ -2388,7 +2394,7 @@ def get_distinct_study_criteria_values_for_header(
     },
 )
 def get_all_criteria_audit_trail(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     criteria_type_uid: str
     | None = Query(
         None,
@@ -2397,12 +2403,12 @@ def get_all_criteria_audit_trail(
 ) -> list[models.StudySelectionCriteriaCore]:
     service = StudyCriteriaSelectionService()
     return service.get_all_selection_audit_trail(
-        study_uid=uid, criteria_type_uid=criteria_type_uid
+        study_uid=study_uid, criteria_type_uid=criteria_type_uid
     )
 
 
 @router.get(
-    "/studies/{uid}/study-criteria/{study_criteria_uid}",
+    "/studies/{study_uid}/study-criteria/{study_criteria_uid}",
     dependencies=[rbac.STUDY_READ],
     summary="Returns specific study criteria",
     description="""
@@ -2451,20 +2457,20 @@ def get_all_criteria_audit_trail(
     },
 )
 def get_selected_criteria(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     study_criteria_uid: str = study_selection_uid,
     study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
 ) -> models.StudySelectionCriteria:
     service = StudyCriteriaSelectionService()
     return service.get_specific_selection(
-        study_uid=uid,
+        study_uid=study_uid,
         study_selection_uid=study_criteria_uid,
         study_value_version=study_value_version,
     )
 
 
 @router.get(
-    "/studies/{uid}/study-criteria/{study_criteria_uid}/audit-trail",
+    "/studies/{study_uid}/study-criteria/{study_criteria_uid}/audit-trail",
     dependencies=[rbac.STUDY_READ],
     summary="List audit trail related to definition of a specific study criteria.",
     description="""
@@ -2508,17 +2514,17 @@ def get_selected_criteria(
     },
 )
 def get_selected_criteria_audit_trail(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     study_criteria_uid: str = study_selection_uid,
 ) -> models.StudySelectionCriteriaCore:
     service = StudyCriteriaSelectionService()
     return service.get_specific_selection_audit_trail(
-        study_uid=uid, study_selection_uid=study_criteria_uid
+        study_uid=study_uid, study_selection_uid=study_criteria_uid
     )
 
 
 @router.post(
-    "/studies/{uid}/study-criteria",
+    "/studies/{study_uid}/study-criteria",
     dependencies=[rbac.STUDY_WRITE],
     summary="Creating a study criteria selection based on the input data including creating new criteria",
     description="""
@@ -2560,14 +2566,14 @@ def get_selected_criteria_audit_trail(
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - Study or criteria is not found with the passed 'uid'.",
+            "description": "Not Found - Study or criteria is not found with the passed 'study_uid'.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-@decorators.validate_if_study_is_not_locked("uid")
+@decorators.validate_if_study_is_not_locked("study_uid")
 def post_new_criteria_selection_create(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     selection: models.study_selections.study_selection.StudySelectionCriteriaCreateInput
     | models.study_selections.study_selection.StudySelectionCriteriaInput = Body(
         description="Parameters of the selection that shall be created."
@@ -2583,13 +2589,13 @@ def post_new_criteria_selection_create(
 
     if create_criteria:
         return service.make_selection_create_criteria(
-            study_uid=uid, selection_create_input=selection
+            study_uid=study_uid, selection_create_input=selection
         )
-    return service.make_selection(study_uid=uid, selection_create_input=selection)
+    return service.make_selection(study_uid=study_uid, selection_create_input=selection)
 
 
 @router.post(
-    "/studies/{uid}/study-criteria/preview",
+    "/studies/{study_uid}/study-criteria/preview",
     dependencies=[rbac.STUDY_WRITE],
     summary="Previews creating a study criteria selection based on the input data including creating new criteria",
     response_model=models.StudySelectionCriteria,
@@ -2602,26 +2608,26 @@ def post_new_criteria_selection_create(
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - Study or criteria is not found with the passed 'uid'.",
+            "description": "Not Found - Study or criteria is not found with the passed 'study_uid'.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-@decorators.validate_if_study_is_not_locked("uid")
+@decorators.validate_if_study_is_not_locked("study_uid")
 def preview_new_criteria_selection_create(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     selection: models.study_selections.study_selection.StudySelectionCriteriaCreateInput = Body(
         description="Related parameters of the selection that shall be previewed."
     ),
 ) -> models.StudySelectionCriteria:
     service = StudyCriteriaSelectionService()
     return service.make_selection_preview_criteria(
-        study_uid=uid, selection_create_input=selection
+        study_uid=study_uid, selection_create_input=selection
     )
 
 
 @router.post(
-    "/studies/{uid}/study-criteria/batch-select",
+    "/studies/{study_uid}/study-criteria/batch-select",
     dependencies=[rbac.STUDY_WRITE],
     summary="Select multiple criteria templates as a batch. If the template has no parameters, will also create the instance.",
     description="""
@@ -2659,14 +2665,14 @@ def preview_new_criteria_selection_create(
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - Study or criteria is not found with the passed 'uid'.",
+            "description": "Not Found - Study or criteria is not found with the passed 'study_uid'.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-@decorators.validate_if_study_is_not_locked("uid")
+@decorators.validate_if_study_is_not_locked("study_uid")
 def post_batch_select_criteria_template(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     selection: list[
         models.study_selections.study_selection.StudySelectionCriteriaTemplateSelectInput
     ] = Body(
@@ -2675,12 +2681,12 @@ def post_batch_select_criteria_template(
 ) -> models.StudySelectionCriteria:
     service = StudyCriteriaSelectionService()
     return service.batch_select_criteria_template(
-        study_uid=uid, selection_create_input=selection
+        study_uid=study_uid, selection_create_input=selection
     )
 
 
 @router.patch(
-    "/studies/{uid}/study-criteria/{study_criteria_uid}",
+    "/studies/{study_uid}/study-criteria/{study_criteria_uid}",
     dependencies=[rbac.STUDY_WRITE],
     summary="Update the study criteria template selection",
     description="""
@@ -2713,14 +2719,14 @@ def post_batch_select_criteria_template(
     responses={
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - Study or study criteria is not found with the passed 'uid'.",
+            "description": "Not Found - Study or study criteria is not found with the passed 'study_uid'.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-@decorators.validate_if_study_is_not_locked("uid")
+@decorators.validate_if_study_is_not_locked("study_uid")
 def patch_update_criteria_selection(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     study_criteria_uid: str = study_selection_uid,
     criteria_data: models.CriteriaUpdateWithCriteriaKeyInput = Body(
         description="Data necessary to create the criteria instance from the template",
@@ -2728,14 +2734,14 @@ def patch_update_criteria_selection(
 ) -> models.StudySelectionCriteria:
     service = StudyCriteriaSelectionService()
     return service.patch_selection(
-        study_uid=uid,
+        study_uid=study_uid,
         study_criteria_uid=study_criteria_uid,
         criteria_data=criteria_data,
     )
 
 
 @router.delete(
-    "/studies/{uid}/study-criteria/{study_criteria_uid}",
+    "/studies/{study_uid}/study-criteria/{study_criteria_uid}",
     dependencies=[rbac.STUDY_WRITE],
     summary="Deletes a study criteria",
     description="""
@@ -2768,18 +2774,20 @@ def patch_update_criteria_selection(
         500: _generic_descriptions.ERROR_500,
     },
 )
-@decorators.validate_if_study_is_not_locked("uid")
+@decorators.validate_if_study_is_not_locked("study_uid")
 def delete_selected_criteria(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     study_criteria_uid: str = study_selection_uid,
 ):
     service = StudyCriteriaSelectionService()
-    service.delete_selection(study_uid=uid, study_selection_uid=study_criteria_uid)
+    service.delete_selection(
+        study_uid=study_uid, study_selection_uid=study_criteria_uid
+    )
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.patch(
-    "/studies/{uid}/study-criteria/{study_criteria_uid}/order",
+    "/studies/{study_uid}/study-criteria/{study_criteria_uid}/order",
     dependencies=[rbac.STUDY_WRITE],
     summary="Change the order of a study criteria",
     response_model=models.StudySelectionCriteria,
@@ -2793,9 +2801,9 @@ def delete_selected_criteria(
         500: _generic_descriptions.ERROR_500,
     },
 )
-@decorators.validate_if_study_is_not_locked("uid")
+@decorators.validate_if_study_is_not_locked("study_uid")
 def patch_new_criteria_selection_order(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     study_criteria_uid: str = study_selection_uid,
     new_order_input: models.StudySelectionCriteriaNewOrder = Body(
         description="New value to set for the order property of the selection"
@@ -2803,14 +2811,14 @@ def patch_new_criteria_selection_order(
 ) -> models.StudySelectionCriteria:
     service = StudyCriteriaSelectionService()
     return service.set_new_order(
-        study_uid=uid,
+        study_uid=study_uid,
         study_selection_uid=study_criteria_uid,
         new_order=new_order_input.new_order,
     )
 
 
 @router.patch(
-    "/studies/{uid}/study-criteria/{study_criteria_uid}/key-criteria",
+    "/studies/{study_uid}/study-criteria/{study_criteria_uid}/key-criteria",
     dependencies=[rbac.STUDY_WRITE],
     summary="Change the key-criteria property of a study criteria",
     response_model=models.StudySelectionCriteria,
@@ -2824,9 +2832,9 @@ def patch_new_criteria_selection_order(
         500: _generic_descriptions.ERROR_500,
     },
 )
-@decorators.validate_if_study_is_not_locked("uid")
+@decorators.validate_if_study_is_not_locked("study_uid")
 def patch_criteria_selection_key_criteria_property(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     study_criteria_uid: str = study_selection_uid,
     key_criteria_input: models.StudySelectionCriteriaKeyCriteria = Body(
         description="New value to set for the key-criteria property of the selection",
@@ -2834,14 +2842,14 @@ def patch_criteria_selection_key_criteria_property(
 ) -> models.StudySelectionCriteria:
     service = StudyCriteriaSelectionService()
     return service.set_key_criteria(
-        study_uid=uid,
+        study_uid=study_uid,
         study_selection_uid=study_criteria_uid,
         key_criteria=key_criteria_input.key_criteria,
     )
 
 
 @router.post(
-    "/studies/{uid}/study-criteria/{study_criteria_uid}/sync-latest-version",
+    "/studies/{study_uid}/study-criteria/{study_criteria_uid}/sync-latest-version",
     dependencies=[rbac.STUDY_WRITE],
     summary="update to latest criteria version study selection",
     response_model=models.StudySelectionCriteria,
@@ -2855,19 +2863,19 @@ def patch_criteria_selection_key_criteria_property(
         500: _generic_descriptions.ERROR_500,
     },
 )
-@decorators.validate_if_study_is_not_locked("uid")
+@decorators.validate_if_study_is_not_locked("study_uid")
 def sync_criteria_latest_version(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     study_criteria_uid: str = study_selection_uid,
 ) -> models.StudySelectionCriteria:
     service = StudyCriteriaSelectionService()
     return service.update_selection_to_latest_version(
-        study_uid=uid, study_selection_uid=study_criteria_uid
+        study_uid=study_uid, study_selection_uid=study_criteria_uid
     )
 
 
 @router.post(
-    "/studies/{uid}/study-criteria/{study_criteria_uid}/accept-version",
+    "/studies/{study_uid}/study-criteria/{study_criteria_uid}/accept-version",
     dependencies=[rbac.STUDY_WRITE],
     summary="accept current version of study criteria",
     description="""
@@ -2885,14 +2893,14 @@ def sync_criteria_latest_version(
         500: _generic_descriptions.ERROR_500,
     },
 )
-@decorators.validate_if_study_is_not_locked("uid")
+@decorators.validate_if_study_is_not_locked("study_uid")
 def patch_criteria_accept_version(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     study_criteria_uid: str = study_selection_uid,
 ) -> models.StudySelectionCriteria:
     service = StudyCriteriaSelectionService()
     return service.update_selection_accept_version(
-        study_uid=uid, study_selection_uid=study_criteria_uid
+        study_uid=study_uid, study_selection_uid=study_criteria_uid
     )
 
 
@@ -2983,7 +2991,7 @@ def get_all_selected_activity_instances_for_all_studies(
 
 
 @router.get(
-    "/studies/{uid}/study-activity-instances",
+    "/studies/{study_uid}/study-activity-instances",
     dependencies=[rbac.STUDY_READ],
     summary="Returns all study activity instances currently selected",
     description=_generic_descriptions.DATA_EXPORTS_HEADER,
@@ -3077,12 +3085,12 @@ def get_all_selected_activity_instances(
     operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
     total_count: bool
     | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
 ) -> CustomPage[models.StudySelectionActivityInstance]:
     service = StudyActivityInstanceSelectionService()
     all_items = service.get_all_selection(
-        study_uid=uid,
+        study_uid=study_uid,
         activity_names=activity_names,
         activity_subgroup_names=activity_subgroup_names,
         activity_group_names=activity_group_names,
@@ -3104,7 +3112,7 @@ def get_all_selected_activity_instances(
 
 
 @router.get(
-    "/studies/{uid}/study-activity-instances/headers",
+    "/studies/{study_uid}/study-activity-instances/headers",
     dependencies=[rbac.STUDY_READ],
     summary="Returns possible values from the database for a given header",
     description="""Allowed parameters include : field name for which to get possible
@@ -3132,12 +3140,12 @@ def get_distinct_study_activity_instances_values_for_header(
     operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
     result_count: int
     | None = Query(10, description=_generic_descriptions.HEADER_RESULT_COUNT),
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
 ):
     service = StudyActivityInstanceSelectionService()
     return service.get_distinct_values_for_header(
-        study_uid=uid,
+        study_uid=study_uid,
         field_name=field_name,
         search_string=search_string,
         filter_by=filters,
@@ -3148,7 +3156,7 @@ def get_distinct_study_activity_instances_values_for_header(
 
 
 @router.delete(
-    "/studies/{uid}/study-activity-instances/{study_activity_instance_uid}",
+    "/studies/{study_uid}/study-activity-instances/{study_activity_instance_uid}",
     dependencies=[rbac.STUDY_WRITE],
     summary="Delete a study activity instance",
     response_model=None,
@@ -3162,20 +3170,20 @@ def get_distinct_study_activity_instances_values_for_header(
         500: _generic_descriptions.ERROR_500,
     },
 )
-@decorators.validate_if_study_is_not_locked("uid")
+@decorators.validate_if_study_is_not_locked("study_uid")
 def delete_study_activity_instance(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     study_activity_instance_uid: str = study_selection_uid,
 ):
     service = StudyActivityInstanceSelectionService()
     service.delete_selection(
-        study_uid=uid, study_selection_uid=study_activity_instance_uid
+        study_uid=study_uid, study_selection_uid=study_activity_instance_uid
     )
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.post(
-    "/studies/{uid}/study-activity-instances",
+    "/studies/{study_uid}/study-activity-instances",
     dependencies=[rbac.STUDY_WRITE],
     summary="Creating a study activity instance selection based on the input data",
     response_model=models.StudySelectionActivityInstance,
@@ -3188,24 +3196,24 @@ def delete_study_activity_instance(
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - Study or activity is not found with the passed 'uid'.",
+            "description": "Not Found - Study or activity is not found with the passed 'study_uid'.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-@decorators.validate_if_study_is_not_locked("uid")
+@decorators.validate_if_study_is_not_locked("study_uid")
 def post_new_activity_instance_selection(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     selection: models.StudySelectionActivityInstanceCreateInput = Body(
         description="Related parameters of the selection that shall be created."
     ),
 ) -> models.StudySelectionActivityInstance:
     service = StudyActivityInstanceSelectionService()
-    return service.make_selection(study_uid=uid, selection_create_input=selection)
+    return service.make_selection(study_uid=study_uid, selection_create_input=selection)
 
 
 @router.patch(
-    "/studies/{uid}/study-activity-instances/{study_activity_instance_uid}",
+    "/studies/{study_uid}/study-activity-instances/{study_activity_instance_uid}",
     dependencies=[rbac.STUDY_WRITE],
     summary="Edit a study activity instance",
     description="""
@@ -3225,9 +3233,9 @@ State after:
         500: _generic_descriptions.ERROR_500,
     },
 )
-@decorators.validate_if_study_is_not_locked("uid")
+@decorators.validate_if_study_is_not_locked("study_uid")
 def patch_update_study_activity_instance(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     study_activity_instance_uid: str = study_selection_uid,
     selection: models.StudySelectionActivityInstanceEditInput = Body(
         description="Related parameters of the selection that shall be updated."
@@ -3235,14 +3243,14 @@ def patch_update_study_activity_instance(
 ) -> models.StudySelectionActivity:
     service = StudyActivityInstanceSelectionService()
     return service.patch_selection(
-        study_uid=uid,
+        study_uid=study_uid,
         study_selection_uid=study_activity_instance_uid,
         selection_update_input=selection,
     )
 
 
 @router.get(
-    "/studies/{uid}/study-activity-instances/audit-trail",
+    "/studies/{study_uid}/study-activity-instances/audit-trail",
     dependencies=[rbac.STUDY_READ],
     summary="List full audit trail related to all StudyActivityInstances in scope of a single Study.",
     description="""
@@ -3264,14 +3272,14 @@ The following values should be returned for all study activity instances:
     },
 )
 def get_all_study_activity_instance_audit_trail(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
 ) -> list[models.StudySelectionActivityInstance]:
     service = StudyActivityInstanceSelectionService()
-    return service.get_all_selection_audit_trail(study_uid=uid)
+    return service.get_all_selection_audit_trail(study_uid=study_uid)
 
 
 @router.get(
-    "/studies/{uid}/study-activity-instances/{study_activity_instance_uid}",
+    "/studies/{study_uid}/study-activity-instances/{study_activity_instance_uid}",
     dependencies=[rbac.STUDY_READ],
     summary="Returns specific study activity instance",
     response_model=models.StudySelectionActivityInstance,
@@ -3286,20 +3294,20 @@ def get_all_study_activity_instance_audit_trail(
     },
 )
 def get_selected_activity_instance(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     study_activity_instance_uid: str = study_selection_uid,
     study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
 ) -> models.StudySelectionActivity:
     service = StudyActivityInstanceSelectionService()
     return service.get_specific_selection(
-        study_uid=uid,
+        study_uid=study_uid,
         study_selection_uid=study_activity_instance_uid,
         study_value_version=study_value_version,
     )
 
 
 @router.get(
-    "/studies/{uid}/study-activity-instances/{study_activity_instance_uid}/audit-trail",
+    "/studies/{study_uid}/study-activity-instances/{study_activity_instance_uid}/audit-trail",
     dependencies=[rbac.STUDY_READ],
     summary="List audit trail related to a specific StudyActivityInstance.",
     response_model=list[models.StudySelectionActivityInstance],
@@ -3314,17 +3322,17 @@ def get_selected_activity_instance(
     },
 )
 def get_specific_study_activity_instance_audit_trail(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     study_activity_instance_uid: str = study_selection_uid,
 ) -> models.StudySelectionActivityInstance:
     service = StudyActivityInstanceSelectionService()
     return service.get_specific_selection_audit_trail(
-        study_uid=uid, study_selection_uid=study_activity_instance_uid
+        study_uid=study_uid, study_selection_uid=study_activity_instance_uid
     )
 
 
 @router.post(
-    "/studies/{uid}/study-activity-instances/{study_activity_instance_uid}/sync-latest-version",
+    "/studies/{study_uid}/study-activity-instances/{study_activity_instance_uid}/sync-latest-version",
     dependencies=[rbac.STUDY_WRITE],
     summary="update to latest activity instance version study selection",
     description="""
@@ -3353,14 +3361,14 @@ def get_specific_study_activity_instance_audit_trail(
         500: _generic_descriptions.ERROR_500,
     },
 )
-@decorators.validate_if_study_is_not_locked("uid")
+@decorators.validate_if_study_is_not_locked("study_uid")
 def patch_study_activity_instance_sync_to_latest_activity_instance(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     study_activity_instance_uid: str = study_selection_uid,
 ) -> models.StudySelectionActivityInstance:
     service = StudyActivityInstanceSelectionService()
     return service.update_selection_to_latest_version(
-        study_uid=uid, study_selection_uid=study_activity_instance_uid
+        study_uid=study_uid, study_selection_uid=study_activity_instance_uid
     )
 
 
@@ -3444,7 +3452,7 @@ def get_all_selected_activities_for_all_studies(
 
 
 @router.get(
-    "/studies/{uid}/study-activities",
+    "/studies/{study_uid}/study-activities",
     dependencies=[rbac.STUDY_READ],
     summary="Returns all study activities currently selected",
     description=_generic_descriptions.DATA_EXPORTS_HEADER,
@@ -3521,12 +3529,12 @@ def get_all_selected_activities(
     operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
     total_count: bool
     | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
 ) -> CustomPage[models.StudySelectionActivity]:
     service = StudyActivitySelectionService()
     all_items = service.get_all_selection(
-        study_uid=uid,
+        study_uid=study_uid,
         activity_names=activity_names,
         activity_subgroup_names=activity_subgroup_names,
         activity_group_names=activity_group_names,
@@ -3547,7 +3555,7 @@ def get_all_selected_activities(
 
 
 @router.get(
-    "/studies/{uid}/study-activities/headers",
+    "/studies/{study_uid}/study-activities/headers",
     dependencies=[rbac.STUDY_READ],
     summary="Returns possible values from the database for a given header",
     description="""Allowed parameters include : field name for which to get possible
@@ -3575,12 +3583,12 @@ def get_distinct_activity_values_for_header(
     operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
     result_count: int
     | None = Query(10, description=_generic_descriptions.HEADER_RESULT_COUNT),
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
 ):
     service = StudyActivitySelectionService()
     return service.get_distinct_values_for_header(
-        study_uid=uid,
+        study_uid=study_uid,
         field_name=field_name,
         search_string=search_string,
         filter_by=filters,
@@ -3591,7 +3599,7 @@ def get_distinct_activity_values_for_header(
 
 
 @router.get(
-    "/studies/{uid}/study-activities/audit-trail",
+    "/studies/{study_uid}/study-activities/audit-trail",
     dependencies=[rbac.STUDY_READ],
     summary="List full audit trail related to definition of all study activities.",
     description="""
@@ -3611,14 +3619,14 @@ The following values should be returned for all study activities:
     },
 )
 def get_all_activity_audit_trail(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
 ) -> list[models.StudySelectionActivityCore]:
     service = StudyActivitySelectionService()
-    return service.get_all_selection_audit_trail(study_uid=uid)
+    return service.get_all_selection_audit_trail(study_uid=study_uid)
 
 
 @router.get(
-    "/studies/{uid}/study-activities/{study_activity_uid}",
+    "/studies/{study_uid}/study-activities/{study_activity_uid}",
     dependencies=[rbac.STUDY_READ],
     summary="Returns specific study activity",
     response_model=models.StudySelectionActivity,
@@ -3633,20 +3641,20 @@ def get_all_activity_audit_trail(
     },
 )
 def get_selected_activity(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     study_activity_uid: str = study_selection_uid,
     study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
 ) -> models.StudySelectionActivity:
     service = StudyActivitySelectionService()
     return service.get_specific_selection(
-        study_uid=uid,
+        study_uid=study_uid,
         study_selection_uid=study_activity_uid,
         study_value_version=study_value_version,
     )
 
 
 @router.get(
-    "/studies/{uid}/study-activities/{study_activity_uid}/audit-trail",
+    "/studies/{study_uid}/study-activities/{study_activity_uid}/audit-trail",
     dependencies=[rbac.STUDY_READ],
     summary="List audit trail related to definition of a specific study activity.",
     response_model=list[models.StudySelectionActivityCore],
@@ -3661,17 +3669,17 @@ def get_selected_activity(
     },
 )
 def get_selected_activity_audit_trail(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     study_activity_uid: str = study_selection_uid,
 ) -> models.StudySelectionActivityCore:
     service = StudyActivitySelectionService()
     return service.get_specific_selection_audit_trail(
-        study_uid=uid, study_selection_uid=study_activity_uid
+        study_uid=study_uid, study_selection_uid=study_activity_uid
     )
 
 
 @router.post(
-    "/studies/{uid}/study-activities",
+    "/studies/{study_uid}/study-activities",
     dependencies=[rbac.STUDY_WRITE],
     summary="Creating a study activity selection based on the input data",
     response_model=models.StudySelectionActivity,
@@ -3684,24 +3692,24 @@ def get_selected_activity_audit_trail(
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - Study or activity is not found with the passed 'uid'.",
+            "description": "Not Found - Study or activity is not found with the passed 'study_uid'.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-@decorators.validate_if_study_is_not_locked("uid")
+@decorators.validate_if_study_is_not_locked("study_uid")
 def post_new_activity_selection_create(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     selection: models.StudySelectionActivityCreateInput = Body(
         description="Related parameters of the selection that shall be created."
     ),
 ) -> models.StudySelectionActivity:
     service = StudyActivitySelectionService()
-    return service.make_selection(study_uid=uid, selection_create_input=selection)
+    return service.make_selection(study_uid=study_uid, selection_create_input=selection)
 
 
 @router.patch(
-    "/studies/{uid}/study-activities/{study_activity_uid}",
+    "/studies/{study_uid}/study-activities/{study_activity_uid}",
     dependencies=[rbac.STUDY_WRITE],
     summary="Edit a study activity",
     description="""
@@ -3721,9 +3729,9 @@ State after:
         500: _generic_descriptions.ERROR_500,
     },
 )
-@decorators.validate_if_study_is_not_locked("uid")
+@decorators.validate_if_study_is_not_locked("study_uid")
 def patch_update_activity_selection(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     study_activity_uid: str = study_selection_uid,
     selection: models.StudySelectionActivityInput = Body(
         description="Related parameters of the selection that shall be updated."
@@ -3731,14 +3739,113 @@ def patch_update_activity_selection(
 ) -> models.StudySelectionActivity:
     service = StudyActivitySelectionService()
     return service.patch_selection(
-        study_uid=uid,
+        study_uid=study_uid,
         study_selection_uid=study_activity_uid,
         selection_update_input=selection,
     )
 
 
+@router.post(
+    "/studies/{study_uid}/study-activities/{study_activity_uid}/sync-latest-version",
+    dependencies=[rbac.STUDY_WRITE],
+    summary="Update to latest activity version study selection",
+    description="""
+    State before:
+     - Study must exist
+     - StudyActivity selection must exist
+     - Activity selected for study activity selection 
+     is not the latest available final version of the activity.
+
+    Business logic:
+     - Update specified activity study-selection to latest activity
+
+    State after:
+     - Study exists
+     - Study activity selection exists
+     - Activity version selected for study activity selection is changed.
+     - Added new entry in the audit trail for the update of the study-activity.""",
+    response_model=models.StudySelectionActivity,
+    response_model_exclude_unset=True,
+    status_code=201,
+    responses={
+        404: {
+            "model": ErrorResponse,
+            "description": "Not Found - There exist no selection between the study and study activity",
+        },
+        500: _generic_descriptions.ERROR_500,
+    },
+)
+@decorators.validate_if_study_is_not_locked("study_uid")
+def patch_study_activity_sync_to_latest_activity(
+    study_uid: str = studyUID,
+    study_activity_uid: str = study_selection_uid,
+) -> models.StudySelectionActivity:
+    service = StudyActivitySelectionService()
+    return service.update_selection_to_latest_version(
+        study_uid=study_uid, study_selection_uid=study_activity_uid
+    )
+
+
+@router.get(
+    "/studies/{study_uid}/study-activity-subgroups",
+    dependencies=[rbac.STUDY_READ],
+    summary="Returns all study activity subgroups currently selected",
+    description=_generic_descriptions.DATA_EXPORTS_HEADER,
+    response_model=CustomPage[models.StudyActivitySubGroup],
+    response_model_exclude_unset=True,
+    status_code=200,
+    responses={
+        404: {
+            "model": ErrorResponse,
+            "description": "Not Found - there is no study with the given uid.",
+        },
+        500: _generic_descriptions.ERROR_500,
+    },
+)
+def get_all_selected_activity_subgroups(
+    sort_by: Json = Query(None, description=_generic_descriptions.SORT_BY),
+    page_number: int
+    | None = Query(1, ge=1, description=_generic_descriptions.PAGE_NUMBER),
+    page_size: int
+    | None = Query(
+        config.DEFAULT_PAGE_SIZE,
+        ge=0,
+        le=config.MAX_PAGE_SIZE,
+        description=_generic_descriptions.PAGE_SIZE,
+    ),
+    filters: Json
+    | None = Query(
+        None,
+        description=_generic_descriptions.FILTERS,
+        example=_generic_descriptions.FILTERS_EXAMPLE,
+    ),
+    operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
+    total_count: bool
+    | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
+    study_uid: str = studyUID,
+    study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
+) -> CustomPage[models.StudyActivitySubGroup]:
+    service = StudyActivitySubGroupService()
+    all_items = service.get_all_selection(
+        study_uid=study_uid,
+        page_number=page_number,
+        page_size=page_size,
+        total_count=total_count,
+        filter_by=filters,
+        filter_operator=FilterOperator.from_str(operator),
+        sort_by=sort_by,
+        study_value_version=study_value_version,
+    )
+    return CustomPage.create(
+        items=all_items.items,
+        total=all_items.total,
+        page=page_number,
+        size=page_size,
+    )
+
+
 @router.patch(
-    "/studies/{uid}/study-activity-subgroups/{study_activity_subgroup_uid}",
+    "/studies/{study_uid}/study-activity-subgroups/{study_activity_subgroup_uid}",
     dependencies=[rbac.STUDY_WRITE],
     summary="Edit a study activity subgroup protocol visibility flag",
     description="""
@@ -3758,9 +3865,9 @@ State after:
         500: _generic_descriptions.ERROR_500,
     },
 )
-@decorators.validate_if_study_is_not_locked("uid")
+@decorators.validate_if_study_is_not_locked("study_uid")
 def patch_update_activity_subgroup_selection(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     study_activity_subgroup_uid: str = study_selection_uid,
     selection: models.StudyActivitySubGroupEditInput = Body(
         description="Related parameters of the selection that shall be updated."
@@ -3768,14 +3875,72 @@ def patch_update_activity_subgroup_selection(
 ) -> models.StudyActivitySubGroup:
     service = StudyActivitySubGroupService()
     return service.patch_selection(
-        study_uid=uid,
+        study_uid=study_uid,
         study_selection_uid=study_activity_subgroup_uid,
         selection_update_input=selection,
     )
 
 
+@router.get(
+    "/studies/{study_uid}/study-activity-groups",
+    dependencies=[rbac.STUDY_READ],
+    summary="Returns all study activity groups currently selected",
+    description=_generic_descriptions.DATA_EXPORTS_HEADER,
+    response_model=CustomPage[models.StudyActivityGroup],
+    response_model_exclude_unset=True,
+    status_code=200,
+    responses={
+        404: {
+            "model": ErrorResponse,
+            "description": "Not Found - there is no study with the given uid.",
+        },
+        500: _generic_descriptions.ERROR_500,
+    },
+)
+def get_all_selected_activity_groups(
+    sort_by: Json = Query(None, description=_generic_descriptions.SORT_BY),
+    page_number: int
+    | None = Query(1, ge=1, description=_generic_descriptions.PAGE_NUMBER),
+    page_size: int
+    | None = Query(
+        config.DEFAULT_PAGE_SIZE,
+        ge=0,
+        le=config.MAX_PAGE_SIZE,
+        description=_generic_descriptions.PAGE_SIZE,
+    ),
+    filters: Json
+    | None = Query(
+        None,
+        description=_generic_descriptions.FILTERS,
+        example=_generic_descriptions.FILTERS_EXAMPLE,
+    ),
+    operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
+    total_count: bool
+    | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
+    study_uid: str = studyUID,
+    study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
+) -> CustomPage[models.StudyActivityGroup]:
+    service = StudyActivityGroupService()
+    all_items = service.get_all_selection(
+        study_uid=study_uid,
+        page_number=page_number,
+        page_size=page_size,
+        total_count=total_count,
+        filter_by=filters,
+        filter_operator=FilterOperator.from_str(operator),
+        sort_by=sort_by,
+        study_value_version=study_value_version,
+    )
+    return CustomPage.create(
+        items=all_items.items,
+        total=all_items.total,
+        page=page_number,
+        size=page_size,
+    )
+
+
 @router.patch(
-    "/studies/{uid}/study-activity-groups/{study_activity_group_uid}",
+    "/studies/{study_uid}/study-activity-groups/{study_activity_group_uid}",
     dependencies=[rbac.STUDY_WRITE],
     summary="Edit a study activity group protocol visibility flag",
     description="""
@@ -3795,9 +3960,9 @@ State after:
         500: _generic_descriptions.ERROR_500,
     },
 )
-@decorators.validate_if_study_is_not_locked("uid")
+@decorators.validate_if_study_is_not_locked("study_uid")
 def patch_update_activity_group_selection(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     study_activity_group_uid: str = study_selection_uid,
     selection: models.StudyActivityGroupEditInput = Body(
         description="Related parameters of the selection that shall be updated."
@@ -3805,14 +3970,72 @@ def patch_update_activity_group_selection(
 ) -> models.StudyActivityGroup:
     service = StudyActivityGroupService()
     return service.patch_selection(
-        study_uid=uid,
+        study_uid=study_uid,
         study_selection_uid=study_activity_group_uid,
         selection_update_input=selection,
     )
 
 
+@router.get(
+    "/studies/{study_uid}/study-soa-groups",
+    dependencies=[rbac.STUDY_READ],
+    summary="Returns all study soa groups currently selected",
+    description=_generic_descriptions.DATA_EXPORTS_HEADER,
+    response_model=CustomPage[models.StudySoAGroup],
+    response_model_exclude_unset=True,
+    status_code=200,
+    responses={
+        404: {
+            "model": ErrorResponse,
+            "description": "Not Found - there is no study with the given uid.",
+        },
+        500: _generic_descriptions.ERROR_500,
+    },
+)
+def get_all_selected_soa_groups(
+    sort_by: Json = Query(None, description=_generic_descriptions.SORT_BY),
+    page_number: int
+    | None = Query(1, ge=1, description=_generic_descriptions.PAGE_NUMBER),
+    page_size: int
+    | None = Query(
+        config.DEFAULT_PAGE_SIZE,
+        ge=0,
+        le=config.MAX_PAGE_SIZE,
+        description=_generic_descriptions.PAGE_SIZE,
+    ),
+    filters: Json
+    | None = Query(
+        None,
+        description=_generic_descriptions.FILTERS,
+        example=_generic_descriptions.FILTERS_EXAMPLE,
+    ),
+    operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
+    total_count: bool
+    | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
+    study_uid: str = studyUID,
+    study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
+) -> CustomPage[models.StudySoAGroup]:
+    service = StudySoAGroupService()
+    all_items = service.get_all_selection(
+        study_uid=study_uid,
+        page_number=page_number,
+        page_size=page_size,
+        total_count=total_count,
+        filter_by=filters,
+        filter_operator=FilterOperator.from_str(operator),
+        sort_by=sort_by,
+        study_value_version=study_value_version,
+    )
+    return CustomPage.create(
+        items=all_items.items,
+        total=all_items.total,
+        page=page_number,
+        size=page_size,
+    )
+
+
 @router.patch(
-    "/studies/{uid}/study-soa-groups/{study_soa_group_uid}",
+    "/studies/{study_uid}/study-soa-groups/{study_soa_group_uid}",
     dependencies=[rbac.STUDY_WRITE],
     summary="Edit a study soa group protocol visibility flag",
     description="""
@@ -3832,9 +4055,9 @@ State after:
         500: _generic_descriptions.ERROR_500,
     },
 )
-@decorators.validate_if_study_is_not_locked("uid")
+@decorators.validate_if_study_is_not_locked("study_uid")
 def patch_update_soa_group_selection(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     study_soa_group_uid: str = study_selection_uid,
     selection: models.StudySoAGroupEditInput = Body(
         description="Related parameters of the selection that shall be updated."
@@ -3842,14 +4065,14 @@ def patch_update_soa_group_selection(
 ) -> models.StudyActivityGroup:
     service = StudySoAGroupService()
     return service.patch_selection(
-        study_uid=uid,
+        study_uid=study_uid,
         study_selection_uid=study_soa_group_uid,
         selection_update_input=selection,
     )
 
 
 @router.patch(
-    "/studies/{uid}/study-activity-requests/{study_activity_request_uid}",
+    "/studies/{study_uid}/study-activity-requests/{study_activity_request_uid}",
     dependencies=[rbac.STUDY_WRITE],
     summary="Edit a study activity request",
     description="""
@@ -3869,9 +4092,9 @@ State after:
         500: _generic_descriptions.ERROR_500,
     },
 )
-@decorators.validate_if_study_is_not_locked("uid")
+@decorators.validate_if_study_is_not_locked("study_uid")
 def patch_update_activity_selection_request(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     study_activity_request_uid: str = study_selection_uid,
     selection: models.StudySelectionActivityRequestEditInput = Body(
         description="Related parameters of the selection that shall be updated."
@@ -3879,14 +4102,14 @@ def patch_update_activity_selection_request(
 ) -> models.StudySelectionActivity:
     service = StudyActivitySelectionService()
     return service.patch_selection(
-        study_uid=uid,
+        study_uid=study_uid,
         study_selection_uid=study_activity_request_uid,
         selection_update_input=selection,
     )
 
 
 @router.patch(
-    "/studies/{uid}/study-activities/{study_activity_uid}/activity-requests-approvals",
+    "/studies/{study_uid}/study-activities/{study_activity_uid}/activity-requests-approvals",
     dependencies=[rbac.STUDY_WRITE],
     summary="Update Study Activity with the Sponsor Activity that replaced Activity Request",
     description="""
@@ -3906,20 +4129,20 @@ State after:
         500: _generic_descriptions.ERROR_500,
     },
 )
-@decorators.validate_if_study_is_not_locked("uid")
+@decorators.validate_if_study_is_not_locked("study_uid")
 def update_activity_request_with_sponsor_activity(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     study_activity_uid: str = study_selection_uid,
 ) -> models.StudySelectionActivity:
     service = StudyActivitySelectionService()
     return service.update_activity_request_with_sponsor_activity(
-        study_uid=uid,
+        study_uid=study_uid,
         study_selection_uid=study_activity_uid,
     )
 
 
 @router.delete(
-    "/studies/{uid}/study-activities/{study_activity_uid}",
+    "/studies/{study_uid}/study-activities/{study_activity_uid}",
     dependencies=[rbac.STUDY_WRITE],
     summary="Delete a study activity",
     response_model=None,
@@ -3933,18 +4156,20 @@ def update_activity_request_with_sponsor_activity(
         500: _generic_descriptions.ERROR_500,
     },
 )
-@decorators.validate_if_study_is_not_locked("uid")
+@decorators.validate_if_study_is_not_locked("study_uid")
 def delete_selected_activity(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     study_activity_uid: str = study_selection_uid,
 ):
     service = StudyActivitySelectionService()
-    service.delete_selection(study_uid=uid, study_selection_uid=study_activity_uid)
+    service.delete_selection(
+        study_uid=study_uid, study_selection_uid=study_activity_uid
+    )
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.post(
-    "/studies/{uid}/study-activities/batch",
+    "/studies/{study_uid}/study-activities/batch",
     dependencies=[rbac.STUDY_WRITE],
     summary="Batch create and/or edit of study activities",
     response_model=list[models.StudySelectionActivityBatchOutput],
@@ -3954,17 +4179,17 @@ def delete_selected_activity(
         500: _generic_descriptions.ERROR_500,
     },
 )
-@decorators.validate_if_study_is_not_locked("uid")
+@decorators.validate_if_study_is_not_locked("study_uid")
 def activity_selection_batch_operations(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     operations: list[models.StudySelectionActivityBatchInput] = Body(description=""),
 ) -> list[models.StudySelectionActivityBatchOutput]:
     service = StudyActivitySelectionService()
-    return service.handle_batch_operations(uid, operations)
+    return service.handle_batch_operations(study_uid, operations)
 
 
 @router.patch(
-    "/studies/{uid}/study-activities/{study_activity_uid}/order",
+    "/studies/{study_uid}/study-activities/{study_activity_uid}/order",
     dependencies=[rbac.STUDY_WRITE],
     summary="Change the order of a study activity",
     response_model=models.StudySelectionActivity,
@@ -3978,9 +4203,9 @@ def activity_selection_batch_operations(
         500: _generic_descriptions.ERROR_500,
     },
 )
-@decorators.validate_if_study_is_not_locked("uid")
+@decorators.validate_if_study_is_not_locked("study_uid")
 def patch_new_activity_selection_order(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     study_activity_uid: str = study_selection_uid,
     new_order_input: models.StudySelectionActivityNewOrder = Body(
         description="New value to set for the order property of the selection"
@@ -3988,7 +4213,7 @@ def patch_new_activity_selection_order(
 ) -> models.StudySelectionActivity:
     service = StudyActivitySelectionService()
     return service.set_new_order(
-        study_uid=uid,
+        study_uid=study_uid,
         study_selection_uid=study_activity_uid,
         new_order=new_order_input.new_order,
     )
@@ -3998,7 +4223,7 @@ def patch_new_activity_selection_order(
 
 
 @router.get(
-    "/studies/{uid}/study-arms",
+    "/studies/{study_uid}/study-arms",
     dependencies=[rbac.STUDY_READ],
     summary="""List all study arms currently selected for study with provided uid""",
     description=f"""
@@ -4073,12 +4298,12 @@ def get_all_selected_arms(
     operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
     total_count: bool
     | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
 ) -> CustomPage[models.StudySelectionArmWithConnectedBranchArms]:
     service = StudyArmSelectionService()
     all_items = service.get_all_selection(
-        study_uid=uid,
+        study_uid=study_uid,
         page_number=page_number,
         page_size=page_size,
         total_count=total_count,
@@ -4097,7 +4322,7 @@ def get_all_selected_arms(
 
 
 @router.get(
-    "/studies/{uid}/study-arms/headers",
+    "/studies/{study_uid}/study-arms/headers",
     dependencies=[rbac.STUDY_READ],
     summary="Returns possible values from the database for a given header",
     description="""Allowed parameters include : field name for which to get possible
@@ -4125,11 +4350,11 @@ def get_distinct_arm_values_for_header(
     operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
     result_count: int
     | None = Query(10, description=_generic_descriptions.HEADER_RESULT_COUNT),
-    uid: str = studyUID,
+    study_uid: str = studyUID,
 ):
     service = StudyArmSelectionService()
     return service.get_distinct_values_for_header(
-        study_uid=uid,
+        study_uid=study_uid,
         field_name=field_name,
         search_string=search_string,
         filter_by=filters,
@@ -4193,7 +4418,7 @@ def get_all_selected_arms_for_all_studies(
 
 
 @router.patch(
-    "/studies/{uid}/study-arms/{study_arm_uid}",
+    "/studies/{study_uid}/study-arms/{study_arm_uid}",
     dependencies=[rbac.STUDY_WRITE],
     summary="Edit a study arm",
     description="""
@@ -4215,9 +4440,9 @@ State after:
         500: _generic_descriptions.ERROR_500,
     },
 )
-@decorators.validate_if_study_is_not_locked("uid")
+@decorators.validate_if_study_is_not_locked("study_uid")
 def patch_update_arm_selection(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     study_arm_uid: str = study_selection_uid,
     selection: models.StudySelectionArmInput = Body(
         description="Related parameters of the selection that shall be updated."
@@ -4225,14 +4450,14 @@ def patch_update_arm_selection(
 ) -> models.StudySelectionArmWithConnectedBranchArms:
     service = StudyArmSelectionService()
     return service.patch_selection(
-        study_uid=uid,
+        study_uid=study_uid,
         study_selection_uid=study_arm_uid,
         selection_update_input=selection,
     )
 
 
 @router.post(
-    "/studies/{uid}/study-arms",
+    "/studies/{study_uid}/study-arms",
     dependencies=[rbac.STUDY_WRITE],
     summary="Creating a study arm selection based on the input data",
     response_model=models.StudySelectionArm,
@@ -4245,24 +4470,24 @@ def patch_update_arm_selection(
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - Study or arm is not found with the passed 'uid'.",
+            "description": "Not Found - Study or arm is not found with the passed 'study_uid'.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-@decorators.validate_if_study_is_not_locked("uid")
+@decorators.validate_if_study_is_not_locked("study_uid")
 def post_new_arm_selection_create(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     selection: models.study_selections.study_selection.StudySelectionArmCreateInput = Body(
         description="Related parameters of the selection that shall be created."
     ),
 ) -> models.StudySelectionArm:
     service = StudyArmSelectionService()
-    return service.make_selection(study_uid=uid, selection_create_input=selection)
+    return service.make_selection(study_uid=study_uid, selection_create_input=selection)
 
 
 @router.get(
-    "/studies/{uid}/study-arms/{study_arm_uid}/audit-trail",
+    "/studies/{study_uid}/study-arms/{study_arm_uid}/audit-trail",
     dependencies=[rbac.STUDY_READ],
     summary="List audit trail related to definition of a specific study arm.",
     response_model=list[models.StudySelectionArmVersion],
@@ -4277,17 +4502,17 @@ def post_new_arm_selection_create(
     },
 )
 def get_selected_arm_audit_trail(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     study_arm_uid: str = study_selection_uid,
 ) -> list[models.StudySelectionArmVersion]:
     service = StudyArmSelectionService()
     return service.get_specific_selection_audit_trail(
-        study_uid=uid, study_selection_uid=study_arm_uid
+        study_uid=study_uid, study_selection_uid=study_arm_uid
     )
 
 
 @router.get(
-    "/studies/{uid}/study-arms/audit-trail",
+    "/studies/{study_uid}/study-arms/audit-trail",
     dependencies=[rbac.STUDY_READ],
     summary="List audit trail related to definition of all study arms.",
     response_model=list[models.StudySelectionArmVersion],
@@ -4299,14 +4524,14 @@ def get_selected_arm_audit_trail(
     },
 )
 def get_all_arm_audit_trail(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
 ) -> list[models.StudySelectionArmVersion]:
     service = StudyArmSelectionService()
-    return service.get_all_selection_audit_trail(study_uid=uid)
+    return service.get_all_selection_audit_trail(study_uid=study_uid)
 
 
 @router.get(
-    "/studies/{uid}/study-arms/{study_arm_uid}",
+    "/studies/{study_uid}/study-arms/{study_arm_uid}",
     dependencies=[rbac.STUDY_READ],
     summary="Returns specific study arm",
     response_model=models.StudySelectionArmWithConnectedBranchArms,
@@ -4321,20 +4546,20 @@ def get_all_arm_audit_trail(
     },
 )
 def get_selected_arm(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     study_arm_uid: str = study_selection_uid,
     study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
 ) -> models.StudySelectionArmWithConnectedBranchArms:
     service = StudyArmSelectionService()
     return service.get_specific_selection(
-        study_uid=uid,
+        study_uid=study_uid,
         study_selection_uid=study_arm_uid,
         study_value_version=study_value_version,
     )
 
 
 @router.patch(
-    "/studies/{uid}/study-arms/{study_arm_uid}/order",
+    "/studies/{study_uid}/study-arms/{study_arm_uid}/order",
     dependencies=[rbac.STUDY_WRITE],
     summary="Change the order of a study arm",
     response_model=models.StudySelectionArmWithConnectedBranchArms,
@@ -4348,9 +4573,9 @@ def get_selected_arm(
         500: _generic_descriptions.ERROR_500,
     },
 )
-@decorators.validate_if_study_is_not_locked("uid")
+@decorators.validate_if_study_is_not_locked("study_uid")
 def patch_new_arm_selection_order(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     study_arm_uid: str = study_selection_uid,
     new_order_input: models.StudySelectionArmNewOrder = Body(
         description="New value to set for the order property of the selection"
@@ -4358,14 +4583,14 @@ def patch_new_arm_selection_order(
 ) -> models.StudySelectionArmWithConnectedBranchArms:
     service = StudyArmSelectionService()
     return service.set_new_order(
-        study_uid=uid,
+        study_uid=study_uid,
         study_selection_uid=study_arm_uid,
         new_order=new_order_input.new_order,
     )
 
 
 @router.delete(
-    "/studies/{uid}/study-arms/{study_arm_uid}",
+    "/studies/{study_uid}/study-arms/{study_arm_uid}",
     dependencies=[rbac.STUDY_WRITE],
     summary="Delete a study arm",
     response_model=None,
@@ -4379,13 +4604,13 @@ def patch_new_arm_selection_order(
         500: _generic_descriptions.ERROR_500,
     },
 )
-@decorators.validate_if_study_is_not_locked("uid")
+@decorators.validate_if_study_is_not_locked("study_uid")
 def delete_selected_arm(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     study_arm_uid: str = study_selection_uid,
 ):
     service = StudyArmSelectionService()
-    service.delete_selection(study_uid=uid, study_selection_uid=study_arm_uid)
+    service.delete_selection(study_uid=study_uid, study_selection_uid=study_arm_uid)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
@@ -4393,7 +4618,7 @@ def delete_selected_arm(
 
 
 @router.post(
-    "/studies/{uid}/study-elements",
+    "/studies/{study_uid}/study-elements",
     dependencies=[rbac.STUDY_WRITE],
     summary="Creating a study element selection based on the input data",
     response_model=models.StudySelectionElement,
@@ -4406,24 +4631,24 @@ def delete_selected_arm(
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - Study or element is not found with the passed 'uid'.",
+            "description": "Not Found - Study or element is not found with the passed 'study_uid'.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-@decorators.validate_if_study_is_not_locked("uid")
+@decorators.validate_if_study_is_not_locked("study_uid")
 def post_new_element_selection_create(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     selection: models.study_selections.study_selection.StudySelectionElementCreateInput = Body(
         description="Related parameters of the selection that shall be created."
     ),
 ) -> models.StudySelectionElement:
     service = StudyElementSelectionService()
-    return service.make_selection(study_uid=uid, selection_create_input=selection)
+    return service.make_selection(study_uid=study_uid, selection_create_input=selection)
 
 
 @router.get(
-    "/studies/{uid}/study-elements",
+    "/studies/{study_uid}/study-elements",
     dependencies=[rbac.STUDY_READ],
     summary="""List all study elements currently selected for study with provided uid""",
     description=f"""
@@ -4473,7 +4698,7 @@ Possible errors:
 # pylint: disable=unused-argument
 def get_all_selected_elements(
     request: Request,  # request is actually required by the allow_exports decorator
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     sort_by: Json = Query(None, description=_generic_descriptions.SORT_BY),
     page_number: int
     | None = Query(1, ge=1, description=_generic_descriptions.PAGE_NUMBER),
@@ -4497,7 +4722,7 @@ def get_all_selected_elements(
 ) -> CustomPage[models.StudySelectionElement]:
     service = StudyElementSelectionService()
     all_items = service.get_all_selection(
-        study_uid=uid,
+        study_uid=study_uid,
         page_number=page_number,
         page_size=page_size,
         total_count=total_count,
@@ -4516,7 +4741,7 @@ def get_all_selected_elements(
 
 
 @router.get(
-    "/studies/{uid}/study-elements/headers",
+    "/studies/{study_uid}/study-elements/headers",
     dependencies=[rbac.STUDY_READ],
     summary="Returns possible values from the database for a given header",
     description="""Allowed parameters include : field name for which to get possible
@@ -4544,12 +4769,12 @@ def get_distinct_element_values_for_header(
     operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
     result_count: int
     | None = Query(10, description=_generic_descriptions.HEADER_RESULT_COUNT),
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
 ):
     service = StudyElementSelectionService()
     return service.get_distinct_values_for_header(
-        study_uid=uid,
+        study_uid=study_uid,
         field_name=field_name,
         search_string=search_string,
         filter_by=filters,
@@ -4560,7 +4785,7 @@ def get_distinct_element_values_for_header(
 
 
 @router.get(
-    "/studies/{uid}/study-elements/{study_element_uid}",
+    "/studies/{study_uid}/study-elements/{study_element_uid}",
     dependencies=[rbac.STUDY_READ],
     summary="Returns specific study element",
     response_model=models.StudySelectionElement,
@@ -4575,20 +4800,20 @@ def get_distinct_element_values_for_header(
     },
 )
 def get_selected_element(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     study_element_uid: str = study_selection_uid,
     study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
 ) -> models.StudySelectionElement:
     service = StudyElementSelectionService()
     return service.get_specific_selection(
-        study_uid=uid,
+        study_uid=study_uid,
         study_selection_uid=study_element_uid,
         study_value_version=study_value_version,
     )
 
 
 @router.patch(
-    "/studies/{uid}/study-elements/{study_element_uid}",
+    "/studies/{study_uid}/study-elements/{study_element_uid}",
     dependencies=[rbac.STUDY_WRITE],
     summary="Edit a study element",
     description="""
@@ -4608,9 +4833,9 @@ def get_selected_element(
         500: _generic_descriptions.ERROR_500,
     },
 )
-@decorators.validate_if_study_is_not_locked("uid")
+@decorators.validate_if_study_is_not_locked("study_uid")
 def patch_update_element_selection(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     study_element_uid: str = study_selection_uid,
     selection: models.StudySelectionElementInput = Body(
         description="Related parameters of the selection that shall be updated."
@@ -4618,14 +4843,14 @@ def patch_update_element_selection(
 ) -> models.StudySelectionElement:
     service = StudyElementSelectionService()
     return service.patch_selection(
-        study_uid=uid,
+        study_uid=study_uid,
         study_selection_uid=study_element_uid,
         selection_update_input=selection,
     )
 
 
 @router.get(
-    "/studies/{uid}/study-elements/{study_element_uid}/audit-trail",
+    "/studies/{study_uid}/study-elements/{study_element_uid}/audit-trail",
     dependencies=[rbac.STUDY_READ],
     summary="List audit trail related to definition of a specific study element.",
     response_model=list[models.StudySelectionElementVersion],
@@ -4640,17 +4865,17 @@ def patch_update_element_selection(
     },
 )
 def get_selected_element_audit_trail(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     study_element_uid: str = study_selection_uid,
 ) -> list[models.StudySelectionElementVersion]:
     service = StudyElementSelectionService()
     return service.get_specific_selection_audit_trail(
-        study_uid=uid, study_selection_uid=study_element_uid
+        study_uid=study_uid, study_selection_uid=study_element_uid
     )
 
 
 @router.get(
-    "/studies/{uid}/study-element/audit-trail",
+    "/studies/{study_uid}/study-element/audit-trail",
     dependencies=[rbac.STUDY_READ],
     summary="List audit trail related to definition of all study element.",
     response_model=list[models.StudySelectionElementVersion],
@@ -4662,14 +4887,14 @@ def get_selected_element_audit_trail(
     },
 )
 def get_all_element_audit_trail(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
 ) -> list[models.StudySelectionElementVersion]:
     service = StudyElementSelectionService()
-    return service.get_all_selection_audit_trail(study_uid=uid)
+    return service.get_all_selection_audit_trail(study_uid=study_uid)
 
 
 @router.delete(
-    "/studies/{uid}/study-elements/{study_element_uid}",
+    "/studies/{study_uid}/study-elements/{study_element_uid}",
     dependencies=[rbac.STUDY_WRITE],
     summary="Delete a study element",
     response_model=None,
@@ -4683,13 +4908,13 @@ def get_all_element_audit_trail(
         500: _generic_descriptions.ERROR_500,
     },
 )
-@decorators.validate_if_study_is_not_locked("uid")
+@decorators.validate_if_study_is_not_locked("study_uid")
 def delete_selected_element(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     study_element_uid: str = study_selection_uid,
 ):
     service = StudyElementSelectionService()
-    service.delete_selection(study_uid=uid, study_selection_uid=study_element_uid)
+    service.delete_selection(study_uid=study_uid, study_selection_uid=study_element_uid)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
@@ -4711,7 +4936,7 @@ def get_all_configs() -> list[models.StudyElementTypes]:
 
 
 @router.patch(
-    "/studies/{uid}/study-elements/{study_element_uid}/order",
+    "/studies/{study_uid}/study-elements/{study_element_uid}/order",
     dependencies=[rbac.STUDY_WRITE],
     summary="Change the order of a study element",
     response_model=models.StudySelectionElement,
@@ -4725,9 +4950,9 @@ def get_all_configs() -> list[models.StudyElementTypes]:
         500: _generic_descriptions.ERROR_500,
     },
 )
-@decorators.validate_if_study_is_not_locked("uid")
+@decorators.validate_if_study_is_not_locked("study_uid")
 def patch_new_element_selection_order(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     study_element_uid: str = study_selection_uid,
     new_order_input: models.StudySelectionElementNewOrder = Body(
         description="New value to set for the order property of the selection"
@@ -4735,7 +4960,7 @@ def patch_new_element_selection_order(
 ) -> models.StudySelectionElement:
     service = StudyElementSelectionService()
     return service.set_new_order(
-        study_uid=uid,
+        study_uid=study_uid,
         study_selection_uid=study_element_uid,
         new_order=new_order_input.new_order,
     )
@@ -4745,7 +4970,7 @@ def patch_new_element_selection_order(
 
 
 @router.post(
-    "/studies/{uid}/study-branch-arms",
+    "/studies/{study_uid}/study-branch-arms",
     dependencies=[rbac.STUDY_WRITE],
     summary="Creating a study branch arm selection based on the input data",
     response_model=models.StudySelectionBranchArm,
@@ -4758,24 +4983,24 @@ def patch_new_element_selection_order(
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - Study or branch arm is not found with the passed 'uid'.",
+            "description": "Not Found - Study or branch arm is not found with the passed 'study_uid'.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-@decorators.validate_if_study_is_not_locked("uid")
+@decorators.validate_if_study_is_not_locked("study_uid")
 def post_new_branch_arm_selection_create(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     selection: models.study_selections.study_selection.StudySelectionBranchArmCreateInput = Body(
         description="Related parameters of the selection that shall be created."
     ),
 ) -> models.StudySelectionBranchArm:
     service = StudyBranchArmSelectionService()
-    return service.make_selection(study_uid=uid, selection_create_input=selection)
+    return service.make_selection(study_uid=study_uid, selection_create_input=selection)
 
 
 @router.get(
-    "/studies/{uid}/study-branch-arms",
+    "/studies/{study_uid}/study-branch-arms",
     dependencies=[rbac.STUDY_READ],
     summary="""List all study branch arms currently selected for study with provided uid""",
     description=f"""
@@ -4832,17 +5057,17 @@ Possible errors:
 # pylint: disable=unused-argument
 def get_all_selected_branch_arms(
     request: Request,  # request is actually required by the allow_exports decorator
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
 ) -> list[models.StudySelectionBranchArm]:
     service = StudyBranchArmSelectionService()
     return service.get_all_selection(
-        study_uid=uid, study_value_version=study_value_version
+        study_uid=study_uid, study_value_version=study_value_version
     )
 
 
 @router.get(
-    "/studies/{uid}/study-branch-arms/{study_branch_arm_uid}",
+    "/studies/{study_uid}/study-branch-arms/{study_branch_arm_uid}",
     dependencies=[rbac.STUDY_READ],
     summary="Returns specific study branch arm",
     response_model=models.StudySelectionBranchArm,
@@ -4857,20 +5082,20 @@ def get_all_selected_branch_arms(
     },
 )
 def get_selected_branch_arm(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     study_branch_arm_uid: str = study_selection_uid,
     study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
 ) -> models.StudySelectionBranchArm:
     service = StudyBranchArmSelectionService()
     return service.get_specific_selection(
-        study_uid=uid,
+        study_uid=study_uid,
         study_selection_uid=study_branch_arm_uid,
         study_value_version=study_value_version,
     )
 
 
 @router.patch(
-    "/studies/{uid}/study-branch-arms/{study_branch_arm_uid}",
+    "/studies/{study_uid}/study-branch-arms/{study_branch_arm_uid}",
     dependencies=[rbac.STUDY_WRITE],
     summary="Edit a study branch arm",
     description="""
@@ -4890,9 +5115,9 @@ def get_selected_branch_arm(
         500: _generic_descriptions.ERROR_500,
     },
 )
-@decorators.validate_if_study_is_not_locked("uid")
+@decorators.validate_if_study_is_not_locked("study_uid")
 def patch_update_branch_arm_selection(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     study_branch_arm_uid: str = study_selection_uid,
     selection: models.StudySelectionBranchArmEditInput = Body(
         description="Related parameters of the selection that shall be updated."
@@ -4901,13 +5126,13 @@ def patch_update_branch_arm_selection(
     service = StudyBranchArmSelectionService()
     selection.branch_arm_uid = study_branch_arm_uid
     return service.patch_selection(
-        study_uid=uid,
+        study_uid=study_uid,
         selection_update_input=selection,
     )
 
 
 @router.get(
-    "/studies/{uid}/study-branch-arms/{study_branch_arm_uid}/audit-trail",
+    "/studies/{study_uid}/study-branch-arms/{study_branch_arm_uid}/audit-trail",
     dependencies=[rbac.STUDY_READ],
     summary="List audit trail related to definition of a specific study branch-arm.",
     response_model=list[models.StudySelectionBranchArmVersion],
@@ -4922,17 +5147,17 @@ def patch_update_branch_arm_selection(
     },
 )
 def get_selected_branch_arm_audit_trail(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     study_branch_arm_uid: str = study_selection_uid,
 ) -> list[models.StudySelectionBranchArmVersion]:
     service = StudyBranchArmSelectionService()
     return service.get_specific_selection_audit_trail(
-        study_uid=uid, study_selection_uid=study_branch_arm_uid
+        study_uid=study_uid, study_selection_uid=study_branch_arm_uid
     )
 
 
 @router.get(
-    "/studies/{uid}/study-branch-arm/audit-trail",
+    "/studies/{study_uid}/study-branch-arm/audit-trail",
     dependencies=[rbac.STUDY_READ],
     summary="List audit trail related to definition of all study branch-arm.",
     response_model=list[models.StudySelectionBranchArmVersion],
@@ -4944,14 +5169,14 @@ def get_selected_branch_arm_audit_trail(
     },
 )
 def get_all_branch_arm_audit_trail(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
 ) -> list[models.StudySelectionBranchArmVersion]:
     service = StudyBranchArmSelectionService()
-    return service.get_all_selection_audit_trail(study_uid=uid)
+    return service.get_all_selection_audit_trail(study_uid=study_uid)
 
 
 @router.delete(
-    "/studies/{uid}/study-branch-arms/{study_branch_arm_uid}",
+    "/studies/{study_uid}/study-branch-arms/{study_branch_arm_uid}",
     dependencies=[rbac.STUDY_WRITE],
     summary="Delete a study branch arm",
     response_model=None,
@@ -4965,18 +5190,20 @@ def get_all_branch_arm_audit_trail(
         500: _generic_descriptions.ERROR_500,
     },
 )
-@decorators.validate_if_study_is_not_locked("uid")
+@decorators.validate_if_study_is_not_locked("study_uid")
 def delete_selected_branch_arm(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     study_branch_arm_uid: str = study_selection_uid,
 ):
     service = StudyBranchArmSelectionService()
-    service.delete_selection(study_uid=uid, study_selection_uid=study_branch_arm_uid)
+    service.delete_selection(
+        study_uid=study_uid, study_selection_uid=study_branch_arm_uid
+    )
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.patch(
-    "/studies/{uid}/study-branch-arms/{study_branch_arm_uid}/order",
+    "/studies/{study_uid}/study-branch-arms/{study_branch_arm_uid}/order",
     dependencies=[rbac.STUDY_WRITE],
     summary="Change the order of a study branch arm",
     response_model=models.StudySelectionBranchArm,
@@ -4990,9 +5217,9 @@ def delete_selected_branch_arm(
         500: _generic_descriptions.ERROR_500,
     },
 )
-@decorators.validate_if_study_is_not_locked("uid")
+@decorators.validate_if_study_is_not_locked("study_uid")
 def patch_new_branch_arm_selection_order(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     study_branch_arm_uid: str = study_selection_uid,
     new_order_input: models.StudySelectionBranchArmNewOrder = Body(
         description="New value to set for the order property of the selection"
@@ -5000,14 +5227,14 @@ def patch_new_branch_arm_selection_order(
 ) -> models.StudySelectionBranchArm:
     service = StudyBranchArmSelectionService()
     return service.set_new_order(
-        study_uid=uid,
+        study_uid=study_uid,
         study_selection_uid=study_branch_arm_uid,
         new_order=new_order_input.new_order,
     )
 
 
 @router.get(
-    "/studies/{uid}/study-branch-arms/arm/{arm_uid}",
+    "/studies/{study_uid}/study-branch-arms/arm/{arm_uid}",
     dependencies=[rbac.STUDY_READ],
     summary="""List all study branch arms currently selected for study with provided uid""",
     description="""
@@ -5036,13 +5263,15 @@ def patch_new_branch_arm_selection_order(
     },
 )
 def get_all_selected_branch_arms_within_arm(
-    uid: str,
+    study_uid: str,
     arm_uid: str,
     study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
 ) -> list[models.StudySelectionBranchArm]:
     service = StudyBranchArmSelectionService()
     return service.get_all_selection_within_arm(
-        study_uid=uid, study_arm_uid=arm_uid, study_value_version=study_value_version
+        study_uid=study_uid,
+        study_arm_uid=arm_uid,
+        study_value_version=study_value_version,
     )
 
 
@@ -5050,7 +5279,7 @@ def get_all_selected_branch_arms_within_arm(
 
 
 @router.post(
-    "/studies/{uid}/study-cohorts",
+    "/studies/{study_uid}/study-cohorts",
     dependencies=[rbac.STUDY_WRITE],
     summary="Creating a study cohort selection based on the input data",
     response_model=models.StudySelectionCohort,
@@ -5063,24 +5292,24 @@ def get_all_selected_branch_arms_within_arm(
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - Study or cohort is not found with the passed 'uid'.",
+            "description": "Not Found - Study or cohort is not found with the passed 'study_uid'.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-@decorators.validate_if_study_is_not_locked("uid")
+@decorators.validate_if_study_is_not_locked("study_uid")
 def post_new_cohort_selection_create(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     selection: models.StudySelectionCohortCreateInput = Body(
         description="Related parameters of the selection that shall be created."
     ),
 ) -> models.StudySelectionCohort:
     service = StudyCohortSelectionService()
-    return service.make_selection(study_uid=uid, selection_create_input=selection)
+    return service.make_selection(study_uid=study_uid, selection_create_input=selection)
 
 
 @router.get(
-    "/studies/{uid}/study-cohorts",
+    "/studies/{study_uid}/study-cohorts",
     dependencies=[rbac.STUDY_READ],
     summary="""List all study cohorts currently selected for study with provided uid""",
     description=f"""
@@ -5162,7 +5391,7 @@ def get_all_selected_cohorts(
         None,
         description="The unique id of the study arm for which specified study cohorts should be returned",
     ),
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
 ) -> CustomPage[models.StudySelectionCohort]:
     service = StudyCohortSelectionService()
@@ -5174,7 +5403,7 @@ def get_all_selected_cohorts(
         filter_by=filters,
         filter_operator=FilterOperator.from_str(operator),
         sort_by=sort_by,
-        study_uid=uid,
+        study_uid=study_uid,
         arm_uid=arm_uid,
         study_value_version=study_value_version,
     )
@@ -5187,7 +5416,7 @@ def get_all_selected_cohorts(
 
 
 @router.get(
-    "/studies/{uid}/study-cohorts/{study_cohort_uid}",
+    "/studies/{study_uid}/study-cohorts/{study_cohort_uid}",
     dependencies=[rbac.STUDY_READ],
     summary="Returns specific study cohort",
     response_model=models.StudySelectionCohort,
@@ -5202,20 +5431,20 @@ def get_all_selected_cohorts(
     },
 )
 def get_selected_cohort(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     study_cohort_uid: str = study_selection_uid,
     study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
 ) -> models.StudySelectionCohort:
     service = StudyCohortSelectionService()
     return service.get_specific_selection(
-        study_uid=uid,
+        study_uid=study_uid,
         study_selection_uid=study_cohort_uid,
         study_value_version=study_value_version,
     )
 
 
 @router.patch(
-    "/studies/{uid}/study-cohorts/{study_cohort_uid}",
+    "/studies/{study_uid}/study-cohorts/{study_cohort_uid}",
     dependencies=[rbac.STUDY_WRITE],
     summary="Edit a study cohort",
     description="""
@@ -5235,9 +5464,9 @@ def get_selected_cohort(
         500: _generic_descriptions.ERROR_500,
     },
 )
-@decorators.validate_if_study_is_not_locked("uid")
+@decorators.validate_if_study_is_not_locked("study_uid")
 def patch_update_cohort_selection(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     study_cohort_uid: str = study_selection_uid,
     selection: models.StudySelectionCohortEditInput = Body(
         description="Related parameters of the selection that shall be updated."
@@ -5245,14 +5474,14 @@ def patch_update_cohort_selection(
 ) -> models.StudySelectionCohort:
     service = StudyCohortSelectionService()
     return service.patch_selection(
-        study_uid=uid,
+        study_uid=study_uid,
         study_selection_uid=study_cohort_uid,
         selection_update_input=selection,
     )
 
 
 @router.get(
-    "/studies/{uid}/study-cohorts/{study_cohort_uid}/audit-trail",
+    "/studies/{study_uid}/study-cohorts/{study_cohort_uid}/audit-trail",
     dependencies=[rbac.STUDY_READ],
     summary="List audit trail related to definition of a specific study study-cohorts.",
     response_model=list[models.StudySelectionCohortVersion],
@@ -5267,17 +5496,17 @@ def patch_update_cohort_selection(
     },
 )
 def get_selected_cohort_audit_trail(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     study_cohort_uid: str = study_selection_uid,
 ) -> list[models.StudySelectionCohortVersion]:
     service = StudyCohortSelectionService()
     return service.get_specific_selection_audit_trail(
-        study_uid=uid, study_selection_uid=study_cohort_uid
+        study_uid=study_uid, study_selection_uid=study_cohort_uid
     )
 
 
 @router.get(
-    "/studies/{uid}/study-cohort/audit-trail",
+    "/studies/{study_uid}/study-cohort/audit-trail",
     dependencies=[rbac.STUDY_READ],
     summary="List audit trail related to definition of all study study-cohort.",
     response_model=list[models.StudySelectionCohortVersion],
@@ -5289,14 +5518,14 @@ def get_selected_cohort_audit_trail(
     },
 )
 def get_all_cohort_audit_trail(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
 ) -> list[models.StudySelectionCohortVersion]:
     service = StudyCohortSelectionService()
-    return service.get_all_selection_audit_trail(study_uid=uid)
+    return service.get_all_selection_audit_trail(study_uid=study_uid)
 
 
 @router.delete(
-    "/studies/{uid}/study-cohorts/{study_cohort_uid}",
+    "/studies/{study_uid}/study-cohorts/{study_cohort_uid}",
     dependencies=[rbac.STUDY_WRITE],
     summary="Delete a study cohort",
     response_model=None,
@@ -5310,18 +5539,18 @@ def get_all_cohort_audit_trail(
         500: _generic_descriptions.ERROR_500,
     },
 )
-@decorators.validate_if_study_is_not_locked("uid")
+@decorators.validate_if_study_is_not_locked("study_uid")
 def delete_selected_cohort(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     study_cohort_uid: str = study_selection_uid,
 ):
     service = StudyCohortSelectionService()
-    service.delete_selection(study_uid=uid, study_selection_uid=study_cohort_uid)
+    service.delete_selection(study_uid=study_uid, study_selection_uid=study_cohort_uid)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.patch(
-    "/studies/{uid}/study-cohorts/{study_cohort_uid}/order",
+    "/studies/{study_uid}/study-cohorts/{study_cohort_uid}/order",
     dependencies=[rbac.STUDY_WRITE],
     summary="Change the order of a study cohort",
     response_model=models.StudySelectionCohort,
@@ -5335,9 +5564,9 @@ def delete_selected_cohort(
         500: _generic_descriptions.ERROR_500,
     },
 )
-@decorators.validate_if_study_is_not_locked("uid")
+@decorators.validate_if_study_is_not_locked("study_uid")
 def patch_new_cohort_selection_order(
-    uid: str = studyUID,
+    study_uid: str = studyUID,
     study_cohort_uid: str = study_selection_uid,
     new_order_input: models.StudySelectionCohortNewOrder = Body(
         description="New value to set for the order property of the selection"
@@ -5345,7 +5574,7 @@ def patch_new_cohort_selection_order(
 ) -> models.StudySelectionCohort:
     service = StudyCohortSelectionService()
     return service.set_new_order(
-        study_uid=uid,
+        study_uid=study_uid,
         study_selection_uid=study_cohort_uid,
         new_order=new_order_input.new_order,
     )

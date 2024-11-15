@@ -18,7 +18,7 @@ from clinical_mdr_api.tests.utils.checks import assert_response_status_code
 
 log = logging.getLogger(__name__)
 
-# Skipp all tests in this module if OAuth is not enabled
+# Skip all tests in this module if OAuth is not enabled
 pytestmark = if_oauth_enabled
 
 KNOWN_ROLES = {

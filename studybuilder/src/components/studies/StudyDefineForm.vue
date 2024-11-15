@@ -45,7 +45,7 @@
               data-cy="study-phase-classification"
               :label="$t('StudyDefineForm.trialphase')"
               :items="studiesGeneralStore.trialPhases"
-              item-title="sponsor_preferred_name_sentence_case"
+              item-title="sponsor_preferred_name"
               item-value="term_uid"
               return-object
               density="compact"
@@ -54,7 +54,7 @@
           </v-col>
         </v-row>
         <v-row>
-          <v-col cols="5">
+          <v-col cols="6">
             <YesNoField
               v-model="form.is_extension_trial"
               data-cy="extension-study"
@@ -62,7 +62,7 @@
               :label="$t('StudyDefineForm.extensiontrial')"
             />
           </v-col>
-          <v-col cols="5">
+          <v-col cols="6">
             <YesNoField
               v-model="form.is_adaptive_design"
               data-cy="adaptive-design"
@@ -206,23 +206,6 @@ export default {
   methods: {
     initForm(data) {
       this.form = { ...data }
-      // The API does not return the exact same properties when data
-      // is coming from study metadata. It includes a 'name' property
-      // while we use 'sponsor_preferred_name' in lists (data is
-      // coming from codelist names)
-      if (this.form.study_type_code) {
-        this.form.study_type_code.sponsor_preferred_name =
-          this.form.study_type_code.name
-      }
-      if (this.form.trial_type_codes) {
-        for (let code of this.form.trial_type_codes) {
-          code.sponsor_preferred_name = code.name
-        }
-      }
-      if (this.form.trial_phase_code) {
-        this.form.trial_phase_code.sponsor_preferred_name_sentence_case =
-          this.form.trial_phase_code.name
-      }
       if (!this.form.confirmed_response_minimum_duration) {
         this.form.confirmed_response_minimum_duration = {}
       }

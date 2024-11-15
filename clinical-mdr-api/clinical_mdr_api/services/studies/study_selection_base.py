@@ -630,15 +630,23 @@ class StudySelectionMixin:
         self, study_uid, study_value_version: str = None
     ) -> datetime | None:
         repos = self._repos
-        study_standard_version = (
-            repos.study_standard_version_repository.find_standard_version_in_study(
+        study_standard_versions = (
+            repos.study_standard_version_repository.find_standard_versions_in_study(
                 study_uid=study_uid, study_value_version=study_value_version
             )
         )
+        study_standard_versions_sdtm = [
+            study_standard_version
+            for study_standard_version in study_standard_versions
+            if "SDTM CT" in study_standard_version.ct_package_uid
+        ]
+        study_standard_version_sdtm = (
+            study_standard_versions_sdtm[0] if study_standard_versions_sdtm else None
+        )
         terms_at_specific_datetime = None
-        if study_standard_version:
+        if study_standard_version_sdtm:
             terms_at_specific_date = repos.ct_package_repository.find_by_uid(
-                study_standard_version[0].ct_package_uid
+                study_standard_version_sdtm.ct_package_uid
             ).effective_date
             terms_at_specific_datetime = datetime(
                 terms_at_specific_date.year,

@@ -93,7 +93,7 @@ All in all, you should be able to start the API by performing these steps:
 
 
 
-## Usefull shortcuts (i.e. scripts defined in Pipfile)
+## Useful shortcuts (i.e. scripts defined in Pipfile)
 - `pipenv run format` - Formats all Python code using [Black](https://black.readthedocs.io/en/stable/) and [isort](https://pycqa.github.io/isort/)
 - `pipenv run testunit` - Runs all tests defined in the `clinical_mdr_api/tests/unit` folder and generates test and coverage reports
 - `pipenv run testint` - Runs all tests defined in the `clinical_mdr_api/tests/integration` folder and generates test and coverage reports
@@ -168,7 +168,7 @@ E.g.:
 
 E.g.
 - GET `/concepts/unit-definitions`
-- GET `/studies/{uid}/study-disease-milestones/{study_disease_milestone_uid}`
+- GET `/studies/{study_uid}/study-disease-milestones/{study_disease_milestone_uid}`
 
 
 ### Query Parameters

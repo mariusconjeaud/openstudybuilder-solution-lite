@@ -70,17 +70,20 @@
             "study_activity_subgroup": {
                "study_activity_subgroup_uid": "StudyActivitySubGroup_000001",
                "activity_subgroup_uid": "activity_subgroup_root1",
-               "activity_subgroup_name": "name1"
+               "activity_subgroup_name": "name1",
+               "order": null
             },
             "study_activity_group": {
                "study_activity_group_uid": "StudyActivityGroup_000001",
                "activity_group_uid": "activity_group_root1",
-               "activity_group_name": "name1"
+               "activity_group_name": "name1",
+               "order": null
             },
             "study_soa_group": {
                "study_soa_group_uid": "StudySoAGroup_000001",
                "soa_group_term_uid": "term_efficacy_uid",
-               "soa_group_name": "EFFICACY"
+               "soa_group_name": "EFFICACY",
+               "order": null
             },
             "show_activity_group_in_protocol_flowchart": true,
             "show_activity_subgroup_in_protocol_flowchart": true,
@@ -158,17 +161,20 @@
                   "study_activity_subgroup": {
                      "study_activity_subgroup_uid": "StudyActivitySubGroup_000001",
                      "activity_subgroup_uid": "activity_subgroup_root1",
-                     "activity_subgroup_name": "name1"
+                     "activity_subgroup_name": "name1",
+                     "order": null
                   },
                   "study_activity_group": {
                      "study_activity_group_uid": "StudyActivityGroup_000001",
                      "activity_group_uid": "activity_group_root1",
-                     "activity_group_name": "name1"
+                     "activity_group_name": "name1",
+                     "order": null
                   },
                   "study_soa_group": {
                      "study_soa_group_uid": "StudySoAGroup_000001",
                      "soa_group_term_uid": "term_efficacy_uid",
-                     "soa_group_name": "EFFICACY"
+                     "soa_group_name": "EFFICACY",
+                     "order": null
                   },
                   "show_activity_group_in_protocol_flowchart": true,
                   "show_activity_subgroup_in_protocol_flowchart": true,
@@ -251,17 +257,20 @@
                   "study_activity_subgroup": {
                      "study_activity_subgroup_uid": "StudyActivitySubGroup_000001",
                      "activity_subgroup_uid": "activity_subgroup_root1",
-                     "activity_subgroup_name": "name1"
+                     "activity_subgroup_name": "name1",
+                     "order": null
                   },
                   "study_activity_group": {
                      "study_activity_group_uid": "StudyActivityGroup_000001",
                      "activity_group_uid": "activity_group_root1",
-                     "activity_group_name": "name1"
+                     "activity_group_name": "name1",
+                     "order": null
                   },
                   "study_soa_group": {
                      "study_soa_group_uid": "StudySoAGroup_000001",
                      "soa_group_term_uid": "term_efficacy_uid",
-                     "soa_group_name": "EFFICACY"
+                     "soa_group_name": "EFFICACY",
+                     "order": null
                   },
                   "show_activity_group_in_protocol_flowchart": true,
                   "show_activity_subgroup_in_protocol_flowchart": true,
@@ -341,17 +350,20 @@
                   "study_activity_subgroup": {
                      "study_activity_subgroup_uid": "StudyActivitySubGroup_000001",
                      "activity_subgroup_uid": "activity_subgroup_root1",
-                     "activity_subgroup_name": "name1"
+                     "activity_subgroup_name": "name1",
+                     "order": null
                   },
                   "study_activity_group": {
                      "study_activity_group_uid": "StudyActivityGroup_000001",
                      "activity_group_uid": "activity_group_root1",
-                     "activity_group_name": "name1"
+                     "activity_group_name": "name1",
+                     "order": null
                   },
                   "study_soa_group": {
                      "study_soa_group_uid": "StudySoAGroup_000001",
                      "soa_group_term_uid": "term_efficacy_uid",
-                     "soa_group_name": "EFFICACY"
+                     "soa_group_name": "EFFICACY",
+                     "order": null
                   },
                   "show_activity_group_in_protocol_flowchart": true,
                   "show_activity_subgroup_in_protocol_flowchart": true,
@@ -431,17 +443,20 @@
                   "study_activity_subgroup": {
                      "study_activity_subgroup_uid": "StudyActivitySubGroup_000001",
                      "activity_subgroup_uid": "activity_subgroup_root1",
-                     "activity_subgroup_name": "name1"
+                     "activity_subgroup_name": "name1",
+                     "order": null
                   },
                   "study_activity_group": {
                      "study_activity_group_uid": "StudyActivityGroup_000001",
                      "activity_group_uid": "activity_group_root1",
-                     "activity_group_name": "name1"
+                     "activity_group_name": "name1",
+                     "order": null
                   },
                   "study_soa_group": {
                      "study_soa_group_uid": "StudySoAGroup_000001",
                      "soa_group_term_uid": "term_efficacy_uid",
-                     "soa_group_name": "EFFICACY"
+                     "soa_group_name": "EFFICACY",
+                     "order": null
                   },
                   "show_activity_group_in_protocol_flowchart": true,
                   "show_activity_subgroup_in_protocol_flowchart": true,
@@ -521,17 +536,20 @@
                   "study_activity_subgroup": {
                      "study_activity_subgroup_uid": "StudyActivitySubGroup_000001",
                      "activity_subgroup_uid": "activity_subgroup_root1",
-                     "activity_subgroup_name": "name1"
+                     "activity_subgroup_name": "name1",
+                     "order": null
                   },
                   "study_activity_group": {
                      "study_activity_group_uid": "StudyActivityGroup_000001",
                      "activity_group_uid": "activity_group_root1",
-                     "activity_group_name": "name1"
+                     "activity_group_name": "name1",
+                     "order": null
                   },
                   "study_soa_group": {
                      "study_soa_group_uid": "StudySoAGroup_000001",
                      "soa_group_term_uid": "term_efficacy_uid",
-                     "soa_group_name": "EFFICACY"
+                     "soa_group_name": "EFFICACY",
+                     "order": null
                   },
                   "show_activity_group_in_protocol_flowchart": true,
                   "show_activity_subgroup_in_protocol_flowchart": true,
@@ -608,17 +626,20 @@
             "study_activity_subgroup": {
                "study_activity_subgroup_uid": "StudyActivitySubGroup_000001",
                "activity_subgroup_uid": "activity_subgroup_root1",
-               "activity_subgroup_name": "name1"
+               "activity_subgroup_name": "name1",
+               "order": null
             },
             "study_activity_group": {
                "study_activity_group_uid": "StudyActivityGroup_000001",
                "activity_group_uid": "activity_group_root1",
-               "activity_group_name": "name1"
+               "activity_group_name": "name1",
+               "order": null
             },
             "study_soa_group": {
                "study_soa_group_uid": "StudySoAGroup_000001",
                "soa_group_term_uid": "term_efficacy_uid",
-               "soa_group_name": "EFFICACY"
+               "soa_group_name": "EFFICACY",
+               "order": null
             },
             "show_activity_group_in_protocol_flowchart": true,
             "show_activity_subgroup_in_protocol_flowchart": true,
@@ -691,17 +712,20 @@
                "study_activity_subgroup": {
                   "study_activity_subgroup_uid": "StudyActivitySubGroup_000001",
                   "activity_subgroup_uid": "activity_subgroup_root1",
-                  "activity_subgroup_name": "name1"
+                  "activity_subgroup_name": "name1",
+                  "order": null
                },
                "study_activity_group": {
                   "study_activity_group_uid": "StudyActivityGroup_000001",
                   "activity_group_uid": "activity_group_root1",
-                  "activity_group_name": "name1"
+                  "activity_group_name": "name1",
+                  "order": null
                },
                "study_soa_group": {
                   "study_soa_group_uid": "StudySoAGroup_000001",
                   "soa_group_term_uid": "term_efficacy_uid",
-                  "soa_group_name": "EFFICACY"
+                  "soa_group_name": "EFFICACY",
+                  "order": null
                },
                "activity": {
                   "uid": "activity_root1",
@@ -757,17 +781,20 @@
                "study_activity_subgroup": {
                   "study_activity_subgroup_uid": "StudyActivitySubGroup_000001",
                   "activity_subgroup_uid": "activity_subgroup_root1",
-                  "activity_subgroup_name": "name1"
+                  "activity_subgroup_name": "name1",
+                  "order": null
                },
                "study_activity_group": {
                   "study_activity_group_uid": "StudyActivityGroup_000001",
                   "activity_group_uid": "activity_group_root1",
-                  "activity_group_name": "name1"
+                  "activity_group_name": "name1",
+                  "order": null
                },
                "study_soa_group": {
                   "study_soa_group_uid": "StudySoAGroup_000001",
                   "soa_group_term_uid": "term_efficacy_uid",
-                  "soa_group_name": "EFFICACY"
+                  "soa_group_name": "EFFICACY",
+                  "order": null
                },
                "activity": {
                   "uid": "activity_root1",
@@ -846,17 +873,20 @@
             "study_activity_subgroup": {
                "study_activity_subgroup_uid": "StudyActivitySubGroup_000002",
                "activity_subgroup_uid": "activity_subgroup_root3",
-               "activity_subgroup_name": "name3"
+               "activity_subgroup_name": "name3",
+               "order": null
             },
             "study_activity_group": {
                "study_activity_group_uid": "StudyActivityGroup_000002",
                "activity_group_uid": "activity_group_root3",
-               "activity_group_name": "name3"
+               "activity_group_name": "name3",
+               "order": null
             },
             "study_soa_group": {
                "study_soa_group_uid": "StudySoAGroup_000001",
                "soa_group_term_uid": "term_efficacy_uid",
-               "soa_group_name": "EFFICACY"
+               "soa_group_name": "EFFICACY",
+               "order": null
             },
             "show_activity_group_in_protocol_flowchart": true,
             "show_activity_subgroup_in_protocol_flowchart": true,
@@ -929,17 +959,20 @@
             "study_activity_subgroup": {
                "study_activity_subgroup_uid": "StudyActivitySubGroup_000001",
                "activity_subgroup_uid": "activity_subgroup_root1",
-               "activity_subgroup_name": "name1"
+               "activity_subgroup_name": "name1",
+               "order": null
             },
             "study_activity_group": {
                "study_activity_group_uid": "StudyActivityGroup_000001",
                "activity_group_uid": "activity_group_root1",
-               "activity_group_name": "name1"
+               "activity_group_name": "name1",
+               "order": null
             },
             "study_soa_group": {
                "study_soa_group_uid": "StudySoAGroup_000001",
                "soa_group_term_uid": "term_efficacy_uid",
-               "soa_group_name": "EFFICACY"
+               "soa_group_name": "EFFICACY",
+               "order": null
             },
             "show_activity_group_in_protocol_flowchart": true,
             "show_activity_subgroup_in_protocol_flowchart": true,
@@ -1014,17 +1047,20 @@
             "study_activity_subgroup": {
                "study_activity_subgroup_uid": "StudyActivitySubGroup_000001",
                "activity_subgroup_uid": "activity_subgroup_root1",
-               "activity_subgroup_name": "name1"
+               "activity_subgroup_name": "name1",
+               "order": null
             },
             "study_activity_group": {
                "study_activity_group_uid": "StudyActivityGroup_000001",
                "activity_group_uid": "activity_group_root1",
-               "activity_group_name": "name1"
+               "activity_group_name": "name1",
+               "order": null
             },
             "study_soa_group": {
                "study_soa_group_uid": "StudySoAGroup_000001",
                "soa_group_term_uid": "term_efficacy_uid",
-               "soa_group_name": "EFFICACY"
+               "soa_group_name": "EFFICACY",
+               "order": null
             },
             "show_activity_group_in_protocol_flowchart": true,
             "show_activity_subgroup_in_protocol_flowchart": true,

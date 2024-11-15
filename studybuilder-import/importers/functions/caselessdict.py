@@ -11,21 +11,21 @@ class CaselessDict(dict):
     def __contains__(self, key):
         if key is None:
             return False
-        elif not isinstance(key, str):
+        if not isinstance(key, str):
             raise ValueError(f"Key must be a string, type {type(key)} is not allowed.")
         return dict.__contains__(self, key.lower())
 
     def __getitem__(self, key):
         if key is None:
             return None
-        elif not isinstance(key, str):
+        if not isinstance(key, str):
             raise ValueError(f"Key must be a string, type {type(key)} is not allowed.")
         return dict.__getitem__(self, key.lower())
 
     def __setitem__(self, key, value):
         if key is None:
             return None
-        elif not isinstance(key, str):
+        if not isinstance(key, str):
             raise ValueError(f"Key must be a string, type {type(key)} is not allowed.")
         return dict.__setitem__(self, key.lower(), value)
 

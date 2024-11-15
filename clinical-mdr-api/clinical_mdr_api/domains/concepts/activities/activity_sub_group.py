@@ -11,12 +11,18 @@ from clinical_mdr_api.exceptions import BusinessLogicException
 
 
 @dataclass(frozen=True)
+class SimpleActivityGroupVO:
+    activity_group_uid: str
+    activity_group_version: str | None = None
+
+
+@dataclass(frozen=True)
 class ActivitySubGroupVO(ConceptVO):
     """
     The ActivitySubGroupVO acts as the value object for a single ActivitySubGroup aggregate
     """
 
-    activity_groups: list[str]
+    activity_groups: list[SimpleActivityGroupVO]
 
     @classmethod
     def from_repository_values(
@@ -25,7 +31,7 @@ class ActivitySubGroupVO(ConceptVO):
         name_sentence_case: str | None,
         definition: str | None,
         abbreviation: str | None,
-        activity_groups: list[str],
+        activity_groups: list[SimpleActivityGroupVO],
     ) -> Self:
         activity_subgroup_vo = cls(
             name=name,
@@ -51,10 +57,10 @@ class ActivitySubGroupVO(ConceptVO):
             "Activity Subgroup",
         )
         for activity_group in self.activity_groups:
-            if not activity_group_exists(activity_group):
+            if not activity_group_exists(activity_group.activity_group_uid):
                 raise BusinessLogicException(
                     "Activity Subgroup tried to connect to non-existent or non-final concepts "
-                    f"""[('Concept Name: Activity Group', "uids: {{'{activity_group}'}}")]."""
+                    f"""[('Concept Name: Activity Group', "uids: {{'{activity_group.activity_group_uid}'}}")]."""
                 )
 
 

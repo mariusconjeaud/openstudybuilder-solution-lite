@@ -33,7 +33,7 @@
     },
     "response": {
       "save": {
-        "uid": "uid"
+        "configuration_uid": "uid"
       },
       "code": 201,
       "headers": {
@@ -97,7 +97,7 @@
       "headers": {},
       "method": "DELETE",
       "request": {},
-      "url": "/configurations/{uid}"
+      "url": "/configurations/{configuration_uid}"
     },
     "response": {
       "code": 204,
@@ -139,7 +139,7 @@
     },
     "response": {
       "save": {
-        "uid": "uid",
+        "configuration_uid": "uid",
         "start_date_ofV0_1": "start_date"
       },
       "code": 201,
@@ -172,7 +172,7 @@
       "headers": {},
       "method": "DELETE",
       "request": {},
-      "url": "/configurations/{uid}/activations"
+      "url": "/configurations/{configuration_uid}/activations"
     },
     "response": {
       "code": 400,
@@ -192,7 +192,7 @@
       "headers": {},
       "method": "POST",
       "request": {},
-      "url": "/configurations/{uid}/activations"
+      "url": "/configurations/{configuration_uid}/activations"
     },
     "response": {
       "code": 400,
@@ -212,7 +212,7 @@
       "headers": {},
       "method": "POST",
       "request": {},
-      "url": "/configurations/{uid}/versions"
+      "url": "/configurations/{configuration_uid}/versions"
     },
     "response": {
       "code": 400,
@@ -264,7 +264,7 @@
       "headers": {},
       "method": "GET",
       "request": {},
-      "url": "/configurations/{uid}"
+      "url": "/configurations/{configuration_uid}"
     },
     "response": {
       "code": 200,
@@ -294,7 +294,7 @@
       "headers": {},
       "method": "GET",
       "request": {},
-      "url": "/configurations/{uid}?status=Draft"
+      "url": "/configurations/{configuration_uid}?status=Draft"
     },
     "response": {
       "code": 200,
@@ -324,7 +324,7 @@
       "headers": {},
       "method": "GET",
       "request": {},
-      "url": "/configurations/{uid}?version=0.1"
+      "url": "/configurations/{configuration_uid}?version=0.1"
     },
     "response": {
       "code": 200,
@@ -354,7 +354,7 @@
       "headers": {},
       "method": "GET",
       "request": {},
-      "url": "/configurations/{uid}?at_specified_date={start_date_ofV0_1}"
+      "url": "/configurations/{configuration_uid}?at_specified_date={start_date_ofV0_1}"
     },
     "response": {
       "code": 200,
@@ -384,7 +384,7 @@
       "headers": {},
       "method": "GET",
       "request": {},
-      "url": "/configurations/{uid}?status=Final"
+      "url": "/configurations/{configuration_uid}?status=Final"
     },
     "response": {
       "code": 404,
@@ -404,7 +404,7 @@
       "headers": {},
       "method": "GET",
       "request": {},
-      "url": "/configurations/{uid}?version=0.2"
+      "url": "/configurations/{configuration_uid}?version=0.2"
     },
     "response": {
       "code": 404,
@@ -424,7 +424,7 @@
       "headers": {},
       "method": "GET",
       "request": {},
-      "url": "/configurations/{uid}?status=Retired"
+      "url": "/configurations/{configuration_uid}?status=Retired"
     },
     "response": {
       "code": 404,
@@ -450,7 +450,7 @@
         "study_field_name_api": "unit1",
         "is_dictionary_term": false
       },
-      "url": "/configurations/{uid}"
+      "url": "/configurations/{configuration_uid}"
     },
     "response": {
       "save": {
@@ -515,7 +515,7 @@
       "headers": {},
       "method": "GET",
       "request": {},
-      "url": "/configurations/{uid}"
+      "url": "/configurations/{configuration_uid}"
     },
     "response": {
       "code": 200,
@@ -545,7 +545,7 @@
       "headers": {},
       "method": "GET",
       "request": {},
-      "url": "/configurations/{uid}?status=Draft"
+      "url": "/configurations/{configuration_uid}?status=Draft"
     },
     "response": {
       "code": 200,
@@ -575,7 +575,7 @@
       "headers": {},
       "method": "GET",
       "request": {},
-      "url": "/configurations/{uid}?version=0.2"
+      "url": "/configurations/{configuration_uid}?version=0.2"
     },
     "response": {
       "code": 200,
@@ -605,7 +605,7 @@
       "headers": {},
       "method": "GET",
       "request": {},
-      "url": "/configurations/{uid}?at_specified_date={start_date_ofV0_2}"
+      "url": "/configurations/{configuration_uid}?at_specified_date={start_date_ofV0_2}"
     },
     "response": {
       "code": 200,
@@ -635,7 +635,7 @@
       "headers": {},
       "method": "GET",
       "request": {},
-      "url": "/configurations/{uid}?version=0.1"
+      "url": "/configurations/{configuration_uid}?version=0.1"
     },
     "response": {
       "code": 200,
@@ -665,7 +665,7 @@
       "headers": {},
       "method": "GET",
       "request": {},
-      "url": "/configurations/{uid}?status=Final"
+      "url": "/configurations/{configuration_uid}?status=Final"
     },
     "response": {
       "code": 404,
@@ -685,7 +685,7 @@
       "headers": {},
       "method": "GET",
       "request": {},
-      "url": "/configurations/{uid}?status=Retired"
+      "url": "/configurations/{configuration_uid}?status=Retired"
     },
     "response": {
       "code": 404,
@@ -707,7 +707,7 @@
       },
       "method": "POST",
       "request": {},
-      "url": "/configurations/{uid}/approvals"
+      "url": "/configurations/{configuration_uid}/approvals"
     },
     "response": {
       "code": 201,
@@ -769,7 +769,7 @@
       "headers": {},
       "method": "GET",
       "request": {},
-      "url": "/configurations/{uid}"
+      "url": "/configurations/{configuration_uid}"
     },
     "response": {
       "code": 200,
@@ -799,7 +799,7 @@
       "headers": {},
       "method": "GET",
       "request": {},
-      "url": "/configurations/{uid}?status=Final"
+      "url": "/configurations/{configuration_uid}?status=Final"
     },
     "response": {
       "code": 200,
@@ -829,7 +829,7 @@
       "headers": {},
       "method": "GET",
       "request": {},
-      "url": "/configurations/{uid}?version=1.0"
+      "url": "/configurations/{configuration_uid}?version=1.0"
     },
     "response": {
       "code": 200,
@@ -859,7 +859,7 @@
       "headers": {},
       "method": "POST",
       "request": {},
-      "url": "/configurations/{uid}/approvals"
+      "url": "/configurations/{configuration_uid}/approvals"
     },
     "response": {
       "code": 400,
@@ -879,7 +879,7 @@
       "headers": {},
       "method": "POST",
       "request": {},
-      "url": "/configurations/{uid}/activations"
+      "url": "/configurations/{configuration_uid}/activations"
     },
     "response": {
       "code": 400,
@@ -907,7 +907,7 @@
         "study_field_name_api": "unit1",
         "is_dictionary_term": false
       },
-      "url": "/configurations/{uid}"
+      "url": "/configurations/{configuration_uid}"
     },
     "response": {
       "code": 400,
@@ -927,7 +927,7 @@
       "headers": {},
       "method": "DELETE",
       "request": {},
-      "url": "/configurations/{uid}"
+      "url": "/configurations/{configuration_uid}"
     },
     "response": {
       "code": 400,
@@ -947,7 +947,7 @@
       "headers": {},
       "method": "DELETE",
       "request": {},
-      "url": "/configurations/{uid}/activations"
+      "url": "/configurations/{configuration_uid}/activations"
     },
     "response": {
       "code": 200,
@@ -977,7 +977,7 @@
       "headers": {},
       "method": "DELETE",
       "request": {},
-      "url": "/configurations/{uid}/activations"
+      "url": "/configurations/{configuration_uid}/activations"
     },
     "response": {
       "code": 400,
@@ -997,7 +997,7 @@
       "headers": {},
       "method": "POST",
       "request": {},
-      "url": "/configurations/{uid}/versions"
+      "url": "/configurations/{configuration_uid}/versions"
     },
     "response": {
       "code": 400,
@@ -1017,7 +1017,7 @@
       "headers": {},
       "method": "POST",
       "request": {},
-      "url": "/configurations/{uid}/approvals"
+      "url": "/configurations/{configuration_uid}/approvals"
     },
     "response": {
       "code": 400,
@@ -1045,7 +1045,7 @@
         "study_field_name_api": "unit1",
         "is_dictionary_term": false
       },
-      "url": "/configurations/{uid}"
+      "url": "/configurations/{configuration_uid}"
     },
     "response": {
       "code": 400,
@@ -1065,7 +1065,7 @@
       "headers": {},
       "method": "DELETE",
       "request": {},
-      "url": "/configurations/{uid}"
+      "url": "/configurations/{configuration_uid}"
     },
     "response": {
       "code": 400,
@@ -1087,7 +1087,7 @@
       },
       "method": "POST",
       "request": {},
-      "url": "/configurations/{uid}/activations"
+      "url": "/configurations/{configuration_uid}/activations"
     },
     "response": {
       "code": 200,
@@ -1117,7 +1117,7 @@
       "headers": {},
       "method": "POST",
       "request": {},
-      "url": "/configurations/{uid}/approvals"
+      "url": "/configurations/{configuration_uid}/approvals"
     },
     "response": {
       "code": 400,
@@ -1137,7 +1137,7 @@
       "headers": {},
       "method": "POST",
       "request": {},
-      "url": "/configurations/{uid}/activations"
+      "url": "/configurations/{configuration_uid}/activations"
     },
     "response": {
       "code": 400,
@@ -1165,7 +1165,7 @@
         "study_field_name_api": "unit1",
         "is_dictionary_term": false
       },
-      "url": "/configurations/{uid}"
+      "url": "/configurations/{configuration_uid}"
     },
     "response": {
       "code": 400,
@@ -1185,7 +1185,7 @@
       "headers": {},
       "method": "DELETE",
       "request": {},
-      "url": "/configurations/{uid}"
+      "url": "/configurations/{configuration_uid}"
     },
     "response": {
       "code": 400,
@@ -1207,7 +1207,7 @@
       },
       "method": "POST",
       "request": {},
-      "url": "/configurations/{uid}/versions"
+      "url": "/configurations/{configuration_uid}/versions"
     },
     "response": {
       "code": 201,
@@ -1237,7 +1237,7 @@
       "headers": {},
       "method": "DELETE",
       "request": {},
-      "url": "/configurations/{uid}/activations"
+      "url": "/configurations/{configuration_uid}/activations"
     },
     "response": {
       "code": 400,
@@ -1257,7 +1257,7 @@
       "headers": {},
       "method": "POST",
       "request": {},
-      "url": "/configurations/{uid}/activations"
+      "url": "/configurations/{configuration_uid}/activations"
     },
     "response": {
       "code": 400,
@@ -1277,7 +1277,7 @@
       "headers": {},
       "method": "POST",
       "request": {},
-      "url": "/configurations/{uid}/versions"
+      "url": "/configurations/{configuration_uid}/versions"
     },
     "response": {
       "code": 400,
@@ -1297,7 +1297,7 @@
       "headers": {},
       "method": "DELETE",
       "request": {},
-      "url": "/configurations/{uid}"
+      "url": "/configurations/{configuration_uid}"
     },
     "response": {
       "code": 400,
@@ -1323,7 +1323,7 @@
         "study_field_name_api": "unit1",
         "is_dictionary_term": false
       },
-      "url": "/configurations/{uid}"
+      "url": "/configurations/{configuration_uid}"
     },
     "response": {
       "code": 200,
@@ -1353,7 +1353,7 @@
       "headers": {},
       "method": "GET",
       "request": {},
-      "url": "/configurations/{uid}"
+      "url": "/configurations/{configuration_uid}"
     },
     "response": {
       "code": 200,
@@ -1383,7 +1383,7 @@
       "headers": {},
       "method": "GET",
       "request": {},
-      "url": "/configurations/{uid}?status=Final"
+      "url": "/configurations/{configuration_uid}?status=Final"
     },
     "response": {
       "code": 200,
@@ -1413,7 +1413,7 @@
       "headers": {},
       "method": "GET",
       "request": {},
-      "url": "/configurations/{uid}/versions"
+      "url": "/configurations/{configuration_uid}/versions"
     },
     "response": {
       "code": 200,

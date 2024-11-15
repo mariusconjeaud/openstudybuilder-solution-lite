@@ -12,7 +12,7 @@ import httpx
 import neo4j.exceptions
 import openpyxl
 from fastapi.testclient import TestClient
-from neomodel.core import db
+from neomodel.sync_.core import db
 
 from consumer_api.shared import config
 

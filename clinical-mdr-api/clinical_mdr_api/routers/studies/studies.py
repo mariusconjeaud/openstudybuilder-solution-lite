@@ -27,6 +27,7 @@ from clinical_mdr_api.models.study_selections.study import (
     StudyProtocolTitle,
     StudySoaPreferences,
     StudySoaPreferencesInput,
+    StudyStructureOverview,
     StudySubpartAuditTrail,
     StudySubpartCreateInput,
     StudySubpartReorderingInput,
@@ -199,6 +200,83 @@ def get_all(
 
 
 @router.get(
+    "/structure-overview",
+    dependencies=[rbac.STUDY_READ],
+    summary="Returns an overview of study structure of all studies.",
+    description=f"""
+Allowed parameters include : filter on fields, sort by field name with sort direction, pagination
+
+{_generic_descriptions.DATA_EXPORTS_HEADER}
+""",
+    response_model=CustomPage[StudyStructureOverview],
+    response_model_exclude_unset=True,
+    status_code=200,
+    responses={
+        404: _generic_descriptions.ERROR_404,
+        500: _generic_descriptions.ERROR_500,
+    },
+)
+@decorators.allow_exports(
+    {
+        "defaults": [
+            "uid",
+            "study_id",
+            "arms",
+            "pre_treatment_epochs",
+            "treatment_epochs",
+            "no_treatment_epochs",
+            "post_treatment_epochs",
+            "treatment_elements",
+            "no_treatment_elements",
+            "cohorts_in_study",
+        ],
+        "formats": [
+            "text/csv",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "text/xml",
+            "application/json",
+        ],
+    }
+)
+# pylint: disable=unused-argument
+def get_study_structure_overview(
+    request: Request,  # request is actually required by the allow_exports decorator
+    sort_by: Json = Query(None, description=_generic_descriptions.SORT_BY),
+    page_number: int
+    | None = Query(1, ge=1, description=_generic_descriptions.PAGE_NUMBER),
+    page_size: int
+    | None = Query(
+        config.DEFAULT_PAGE_SIZE,
+        ge=0,
+        le=config.MAX_PAGE_SIZE,
+        description=_generic_descriptions.PAGE_SIZE,
+    ),
+    filters: Json
+    | None = Query(
+        None,
+        description=_generic_descriptions.FILTERS,
+        example=_generic_descriptions.FILTERS_EXAMPLE,
+    ),
+    operator: str | None = Query("and", description=_generic_descriptions.OPERATOR),
+    total_count: bool
+    | None = Query(False, description=_generic_descriptions.TOTAL_COUNT),
+) -> CustomPage[StudyStructureOverview]:
+    study_service = StudyService()
+    results = study_service.get_study_structure_overview(
+        page_number=page_number,
+        page_size=page_size,
+        total_count=total_count,
+        filter_by=filters,
+        filter_operator=FilterOperator.from_str(operator),
+        sort_by=sort_by,
+    )
+
+    return CustomPage.create(
+        items=results.items, total=results.total, page=page_number, size=page_size
+    )
+
+
+@router.get(
     "/headers",
     dependencies=[rbac.STUDY_READ],
     summary="Returns possibles values from the database for a given header",
@@ -239,7 +317,7 @@ def get_distinct_values_for_header(
 
 
 @router.post(
-    "/{uid}/locks",
+    "/{study_uid}/locks",
     dependencies=[rbac.STUDY_WRITE],
     summary="Locks a Study with specified uid",
     description="The Study is locked, which means that the LATEST_LOCKED relationship in the database is created."
@@ -255,25 +333,25 @@ def get_distinct_values_for_header(
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The study with the specified 'uid'.",
+            "description": "Not Found - The study with the specified 'study_uid'.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def lock(
-    uid: str = StudyUID,
+    study_uid: str = StudyUID,
     lock_description: StatusChangeDescription = Body(
         description="The description of the locked version."
     ),
 ):
     study_service = StudyService()
     return study_service.lock(
-        uid=uid, change_description=lock_description.change_description
+        uid=study_uid, change_description=lock_description.change_description
     )
 
 
 @router.delete(
-    "/{uid}/locks",
+    "/{study_uid}/locks",
     dependencies=[rbac.STUDY_WRITE],
     summary="Unlocks a Study with specified uid",
     description="The Study is unlocked, which means that the new DRAFT version of a Study is created"
@@ -287,20 +365,20 @@ def lock(
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The study with the specified 'uid'.",
+            "description": "Not Found - The study with the specified 'study_uid'.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def unlock(
-    uid: str = StudyUID,
+    study_uid: str = StudyUID,
 ):
     study_service = StudyService()
-    return study_service.unlock(uid=uid)
+    return study_service.unlock(uid=study_uid)
 
 
 @router.post(
-    "/{uid}/release",
+    "/{study_uid}/release",
     dependencies=[rbac.STUDY_WRITE],
     summary="Releases a Study with specified uid",
     description="The Study is released, which means that 'snapshot' of the Study is created in the database"
@@ -315,25 +393,25 @@ def unlock(
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The study with the specified 'uid'.",
+            "description": "Not Found - The study with the specified 'study_uid'.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def release(
-    uid: str = StudyUID,
+    study_uid: str = StudyUID,
     release_description: StatusChangeDescription = Body(
         description="The description of the release version."
     ),
 ):
     study_service = StudyService()
     return study_service.release(
-        uid=uid, change_description=release_description.change_description
+        uid=study_uid, change_description=release_description.change_description
     )
 
 
 @router.delete(
-    "/{uid}",
+    "/{study_uid}",
     dependencies=[rbac.STUDY_WRITE],
     summary="Deletes a Study",
     description="""
@@ -360,21 +438,21 @@ Possible errors:
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The study with the specified 'uid'.",
+            "description": "Not Found - The study with the specified 'study_uid'.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-def delete_activity(uid: str = StudyUID):
+def delete_activity(study_uid: str = StudyUID):
     study_service = StudyService()
-    study_service.soft_delete(uid=uid)
+    study_service.soft_delete(uid=study_uid)
     return Response(status_code=response_status.HTTP_204_NO_CONTENT)
 
 
 @router.get(
-    "/{uid}",
+    "/{study_uid}",
     dependencies=[rbac.STUDY_READ],
-    summary="Returns the current state of a specific study definition identified by 'uid'.",
+    summary="Returns the current state of a specific study definition identified by 'study_uid'.",
     description="If multiple request query parameters are used, then they need to match all at the same time"
     " (they are combined with the AND operation).",
     response_model=Study,
@@ -383,14 +461,14 @@ def delete_activity(uid: str = StudyUID):
     responses={
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The study with the specified 'uid'"
+            "description": "Not Found - The study with the specified 'study_uid'"
             " (and the specified date/time and/or status) wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def get(
-    uid: str = StudyUID,
+    study_uid: str = StudyUID,
     include_sections: list[StudyComponentEnum]
     | None = Query(None, description=study_section_description("include")),
     exclude_sections: list[StudyComponentEnum]
@@ -405,7 +483,7 @@ def get(
 ):
     study_service = StudyService()
     study_definition = study_service.get_by_uid(
-        uid=uid,
+        uid=study_uid,
         include_sections=include_sections,
         exclude_sections=exclude_sections,
         at_specified_date_time=None,
@@ -416,40 +494,40 @@ def get(
 
 
 @router.get(
-    "/{uid}/pharma-cm",
+    "/{study_uid}/pharma-cm",
     dependencies=[rbac.STUDY_READ],
-    summary="Returns the pharma-cm represention of study identified by 'uid'.",
+    summary="Returns the pharma-cm represention of study identified by 'study_uid'.",
     response_model=StudyPharmaCM,
     response_model_exclude_unset=True,
     status_code=200,
     responses={
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The study with the specified 'uid'"
+            "description": "Not Found - The study with the specified 'study_uid'"
             " (and the specified date/time and/or status) wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def get_pharma_cm_representation(
-    uid: str = StudyUID,
+    study_uid: str = StudyUID,
     study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
 ):
     StudyService().check_if_study_uid_and_version_exists(
-        study_uid=uid, study_value_version=study_value_version
+        study_uid=study_uid, study_value_version=study_value_version
     )
     study_pharma_service = StudyPharmaCMService()
     study_pharma = study_pharma_service.get_pharma_cm_representation(
-        study_uid=uid,
+        study_uid=study_uid,
         study_value_version=study_value_version,
     )
     return study_pharma
 
 
 @router.get(
-    "/{uid}/pharma-cm.xml",
+    "/{study_uid}/pharma-cm.xml",
     dependencies=[rbac.STUDY_READ],
-    summary="Returns the pharma-cm represention of study identified by 'uid' in the xml format.",
+    summary="Returns the pharma-cm represention of study identified by 'study_uid' in the xml format.",
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -459,15 +537,15 @@ def get_pharma_cm_representation(
     },
 )
 def get_pharma_cm_xml_representation(
-    uid: str = StudyUID,
+    study_uid: str = StudyUID,
     study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
 ) -> StreamingResponse:
     StudyService().check_if_study_uid_and_version_exists(
-        study_uid=uid, study_value_version=study_value_version
+        study_uid=study_uid, study_value_version=study_value_version
     )
     study_pharma_service = StudyPharmaCMService()
     study_pharma = study_pharma_service.get_pharma_cm_representation(
-        study_uid=uid,
+        study_uid=study_uid,
         study_value_version=study_value_version,
     )
     export_dict = {
@@ -481,9 +559,9 @@ def get_pharma_cm_xml_representation(
 
 
 @router.patch(
-    "/{uid}",
+    "/{study_uid}",
     dependencies=[rbac.STUDY_WRITE],
-    summary="Request to change some aspects (parts) of a specific study definition identified by 'uid'.",
+    summary="Request to change some aspects (parts) of a specific study definition identified by 'study_uid'.",
     description="The request to change (some aspect) of the state of current aggregate. "
     "There are some special cases and considerations:\n"
     "* patching study_status in current_metadata.version_metadata is considered as the request for"
@@ -506,32 +584,32 @@ def get_pharma_cm_xml_representation(
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The study with the specified 'uid'.",
+            "description": "Not Found - The study with the specified 'study_uid'.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def patch(
-    uid: str = StudyUID,
+    study_uid: str = StudyUID,
     dry: bool = Query(
         False,
         description="If specified the operation does full validation and returns either 200 or 403 but"
         "nothing is persisted.",
     ),
     study_patch_request: StudyPatchRequestJsonModel = Body(
-        description="The request with the structure similar to the GET /{uid} response. Carrying only those"
+        description="The request with the structure similar to the GET /{study_uid} response. Carrying only those"
         "fields requested to change.",
     ),
 ) -> Study:
     study_service = StudyService()
     if study_patch_request is None:
         raise exceptions.ValidationException("No data to patch was provided.")
-    response = study_service.patch(uid, dry, study_patch_request)
+    response = study_service.patch(study_uid, dry, study_patch_request)
     return response
 
 
 @router.get(
-    "/{uid}/snapshot-history",
+    "/{study_uid}/snapshot-history",
     dependencies=[rbac.STUDY_READ],
     summary="Returns the history of study snapshot definitions",
     description="It returns the history of changes made to the specified Study Definition Snapshot."
@@ -542,14 +620,14 @@ def patch(
     responses={
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The study with the specified 'uid'"
+            "description": "Not Found - The study with the specified 'study_uid'"
             " (and the specified date/time and/or status) wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def get_snapshot_history(
-    uid: str = StudyUID,  # ,
+    study_uid: str = StudyUID,  # ,
     sort_by: Json = Query(None, description=_generic_descriptions.SORT_BY),
     page_number: int
     | None = Query(1, ge=1, description=_generic_descriptions.PAGE_NUMBER),
@@ -572,7 +650,7 @@ def get_snapshot_history(
 ):
     study_service = StudyService()
     snapshot_history = study_service.get_study_snapshot_history(
-        study_uid=uid,
+        study_uid=study_uid,
         page_number=page_number,
         page_size=page_size,
         filter_by=filters,
@@ -589,9 +667,9 @@ def get_snapshot_history(
 
 
 @router.get(
-    "/{uid}/fields-audit-trail",
+    "/{study_uid}/fields-audit-trail",
     dependencies=[rbac.STUDY_READ],
-    summary="Returns the audit trail for the fields of a specific study definition identified by 'uid'.",
+    summary="Returns the audit trail for the fields of a specific study definition identified by 'study_uid'.",
     description="Actions on the study are grouped by date of edit."
     "Optionally select which subset of fields should be reflected in the audit trail.",
     response_model=list[StudyFieldAuditTrailEntry],
@@ -599,14 +677,14 @@ def get_snapshot_history(
     responses={
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The study with the specified 'uid'"
+            "description": "Not Found - The study with the specified 'study_uid'"
             " wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def get_fields_audit_trail(
-    uid: str = StudyUID,  # ,
+    study_uid: str = StudyUID,  # ,
     include_sections: list[StudyComponentEnum]
     | None = Query(
         None, description=study_fields_audit_trail_section_description("include")
@@ -618,35 +696,37 @@ def get_fields_audit_trail(
 ):
     study_service = StudyService()
     study_fields_audit_trail = study_service.get_fields_audit_trail_by_uid(
-        uid=uid, include_sections=include_sections, exclude_sections=exclude_sections
+        uid=study_uid,
+        include_sections=include_sections,
+        exclude_sections=exclude_sections,
     )
     return study_fields_audit_trail
 
 
 @router.get(
-    "/{uid}/audit-trail",
+    "/{study_uid}/audit-trail",
     dependencies=[rbac.STUDY_READ],
-    summary="Returns the audit trail for the subparts of a specific study definition identified by 'uid'.",
+    summary="Returns the audit trail for the subparts of a specific study definition identified by 'study_uid'.",
     description="Actions on the study are grouped by date of edit. Optionally select which subset of fields should be reflected in the audit trail.",
     response_model=list[StudySubpartAuditTrail],
     status_code=200,
     responses={
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The study with the specified 'uid'"
+            "description": "Not Found - The study with the specified 'study_uid'"
             " wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def get_study_subpart_audit_trail(
-    uid: str = StudyUID,
+    study_uid: str = StudyUID,
     is_subpart: bool = False,
     study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
 ):
     study_service = StudyService()
     return study_service.get_subpart_audit_trail_by_uid(
-        uid=uid, is_subpart=is_subpart, study_value_version=study_value_version
+        uid=study_uid, is_subpart=is_subpart, study_value_version=study_value_version
     )
 
 
@@ -682,7 +762,7 @@ def create(
 
 
 @router.get(
-    "/{uid}/protocol-title",
+    "/{study_uid}/protocol-title",
     dependencies=[rbac.STUDY_READ],
     summary="Retrieve all information related to Protocol Title",
     description="""
@@ -691,7 +771,7 @@ State before:
 
 Business logic:
  - Retrieve Study title, Universal Trial Number, EudraCT number, IND number, Study phase fields
- - Retrieve all names of study compounds associated to {uid} and where type of treatment is equal to Investigational Product
+ - Retrieve all names of study compounds associated to {study_uid} and where type of treatment is equal to Investigational Product
 
 State after:
  - No change
@@ -701,24 +781,24 @@ State after:
     responses={
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The study with the specified 'uid'"
+            "description": "Not Found - The study with the specified 'study_uid'"
             " wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def get_protocol_title(
-    uid: str = StudyUID,
+    study_uid: str = StudyUID,
     study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
 ):
     study_service = StudyService()
     return study_service.get_protocol_title(
-        uid=uid, study_value_version=study_value_version
+        uid=study_uid, study_value_version=study_value_version
     )
 
 
 @router.get(
-    "/{uid}/copy-component",
+    "/{study_uid}/copy-component",
     dependencies=[rbac.STUDY_READ],
     summary="Creates a project of a specific component copy from another study",
     description="""
@@ -731,21 +811,21 @@ Business logic:
  - if overwrite is set to true, then all the properties from the reference_study_uid Study are copied over to the target Study.
 
 State after:
- - The specific form is copied or projected into a study referenced by uid 'uid'.
+ - The specific form is copied or projected into a study referenced by uid 'study_uid'.
 """,
     response_model=Study,
     status_code=200,
     responses={
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The study with the specified 'uid'"
+            "description": "Not Found - The study with the specified 'study_uid'"
             " wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def copy_simple_form_from_another_study(
-    uid: str = StudyUID,
+    study_uid: str = StudyUID,
     reference_study_uid: str = Query(
         ..., description="The uid of the study to copy component from"
     ),
@@ -760,7 +840,7 @@ def copy_simple_form_from_another_study(
 ):
     study_service = StudyService()
     return study_service.copy_component_from_another_study(
-        uid=uid,
+        uid=study_uid,
         reference_study_uid=reference_study_uid,
         component_to_copy=component_to_copy,
         overwrite=overwrite,
@@ -768,7 +848,7 @@ def copy_simple_form_from_another_study(
 
 
 @router.get(
-    "/{uid}/time-units",
+    "/{study_uid}/time-units",
     dependencies=[rbac.STUDY_READ],
     summary="Gets a study preferred time unit",
     response_model=StudyPreferredTimeUnit,
@@ -776,14 +856,14 @@ def copy_simple_form_from_another_study(
     responses={
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The study or unit definition with the specified 'uid'"
+            "description": "Not Found - The study or unit definition with the specified 'study_uid'"
             " wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def get_preferred_time_unit(
-    uid: str = StudyUID,
+    study_uid: str = StudyUID,
     for_protocol_soa: bool = Query(
         False,
         description="Whether the preferred time unit is associated with Protocol SoA or not.",
@@ -792,14 +872,14 @@ def get_preferred_time_unit(
 ):
     study_service = StudyService()
     return study_service.get_study_preferred_time_unit(
-        study_uid=uid,
+        study_uid=study_uid,
         for_protocol_soa=for_protocol_soa,
         study_value_version=study_value_version,
     )
 
 
 @router.patch(
-    "/{uid}/time-units",
+    "/{study_uid}/time-units",
     dependencies=[rbac.STUDY_WRITE],
     summary="Edits a study preferred time unit",
     response_model=StudyPreferredTimeUnit,
@@ -807,14 +887,14 @@ def get_preferred_time_unit(
     responses={
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The study or unit definition with the specified 'uid'"
+            "description": "Not Found - The study or unit definition with the specified 'study_uid'"
             " wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def patch_preferred_time_unit(
-    uid: str = StudyUID,
+    study_uid: str = StudyUID,
     preferred_time_unit_input: StudyPreferredTimeUnitInput = Body(
         ..., description="Data needed to create a study preferred time unit"
     ),
@@ -825,14 +905,14 @@ def patch_preferred_time_unit(
 ):
     study_service = StudyService()
     return study_service.patch_study_preferred_time_unit(
-        study_uid=uid,
+        study_uid=study_uid,
         unit_definition_uid=preferred_time_unit_input.unit_definition_uid,
         for_protocol_soa=for_protocol_soa,
     )
 
 
 @router.patch(
-    "/{uid}/order",
+    "/{study_uid}/order",
     dependencies=[rbac.STUDY_WRITE],
     summary="Reorder Study Subparts within a Study Parent Part",
     description="",
@@ -841,14 +921,14 @@ def patch_preferred_time_unit(
     responses={
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - The study with the specified 'uid'"
+            "description": "Not Found - The study with the specified 'study_uid'"
             " wasn't found.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def reorder_study_subparts(
-    uid: str = StudyUID,
+    study_uid: str = StudyUID,
     study_subpart_reordering_input: StudySubpartReorderingInput
     | None = Body(
         None,
@@ -858,13 +938,13 @@ def reorder_study_subparts(
 ):
     study_service = StudyService()
     return study_service.reorder_study_subparts(
-        study_parent_part_uid=uid,
+        study_parent_part_uid=study_uid,
         study_subpart_reordering_input=study_subpart_reordering_input,
     )
 
 
 @router.get(
-    "/{uid}/soa-preferences",
+    "/{study_uid}/soa-preferences",
     dependencies=[rbac.STUDY_READ],
     summary="Get study SoA preferences",
     response_model_by_alias=False,
@@ -873,24 +953,24 @@ def reorder_study_subparts(
     responses={
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - study with the specified 'uid' does not exist or has no SoA preferences set",
+            "description": "Not Found - study with the specified 'study_uid' does not exist or has no SoA preferences set",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def get_soa_preferences(
-    uid: str = StudyUID,
+    study_uid: str = StudyUID,
     study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
 ) -> StudySoaPreferences:
     study_service = StudyService()
     return study_service.get_study_soa_preferences(
-        study_uid=uid,
+        study_uid=study_uid,
         study_value_version=study_value_version,
     )
 
 
 @router.patch(
-    "/{uid}/soa-preferences",
+    "/{study_uid}/soa-preferences",
     dependencies=[rbac.STUDY_WRITE],
     summary="Update study SoA preferences",
     response_model=StudySoaPreferences,
@@ -899,19 +979,19 @@ def get_soa_preferences(
     responses={
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - study with the specified 'uid' does not exist",
+            "description": "Not Found - study with the specified 'study_uid' does not exist",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
 def patch_soa_preferences(
-    uid: str = StudyUID,
+    study_uid: str = StudyUID,
     soa_preferences: StudySoaPreferencesInput = Body(
         ..., description="SoA preferences data"
     ),
 ):
     study_service = StudyService()
     return study_service.patch_study_soa_preferences(
-        study_uid=uid,
+        study_uid=study_uid,
         soa_preferences=soa_preferences,
     )

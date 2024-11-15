@@ -2196,15 +2196,7 @@
                 "change_description": "repeating changed to Yes",
                 "scope": null,
                 "descriptions": [
-                    {
-                        "uid": "odm_description3",
-                        "name": "name3",
-                        "language": "ENG",
-                        "description": "description3",
-                        "instruction": "instruction3",
-                        "sponsor_instruction": "sponsor_instruction3",
-                        "change_description": "nothing changed"
-                    },
+                    "odm_description3",
                     {
                         "name": "string3",
                         "library_name": "Sponsor",

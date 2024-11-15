@@ -3,7 +3,7 @@
     <v-data-table
       id="itemGroups"
       v-model:expanded="expanded"
-      :sort-by="{ key: 'order_number', order: 'asc' }"
+      :initial-sort-by="[{ key: 'order_number', order: 'asc' }]"
       :headers="columns"
       :items="itemGroups"
       item-value="name"

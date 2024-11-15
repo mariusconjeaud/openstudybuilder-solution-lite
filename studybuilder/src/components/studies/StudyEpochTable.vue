@@ -25,15 +25,23 @@
           <span>&nbsp;</span>
         </v-chip>
       </template>
-      <template #[`item.epoch_name`]="{ item }">
+      <template #[`item.epoch_ctterm.sponsor_preferred_name`]="{ item }">
         <router-link
           :to="{
             name: 'StudyEpochOverview',
             params: { study_id: selectedStudy.uid, id: item.uid },
           }"
         >
-          {{ item.epoch_name }}
+          <CTTermDisplay :term="item.epoch_ctterm" />
         </router-link>
+      </template>
+      <template #[`item.epoch_type_ctterm.sponsor_preferred_name`]="{ item }">
+        <CTTermDisplay :term="item.epoch_type_ctterm" />
+      </template>
+      <template
+        #[`item.epoch_subtype_ctterm.sponsor_preferred_name`]="{ item }"
+      >
+        <CTTermDisplay :term="item.epoch_subtype_ctterm" />
       </template>
       <template #[`item.actions`]="{ item }">
         <ActionsMenu :actions="actions" :item="item" />
@@ -92,6 +100,7 @@ import StudyEpochForm from './StudyEpochForm.vue'
 import epochs from '@/api/studyEpochs'
 import filteringParameters from '@/utils/filteringParameters'
 import HistoryTable from '@/components/tools/HistoryTable.vue'
+import CTTermDisplay from '@/components/tools/CTTermDisplay.vue'
 import { useAccessGuard } from '@/composables/accessGuard'
 import { useStudiesGeneralStore } from '@/stores/studies-general'
 import { useEpochsStore } from '@/stores/studies-epochs'
@@ -102,6 +111,7 @@ import SelectionOrderUpdateForm from '@/components/studies/SelectionOrderUpdateF
 export default {
   components: {
     ActionsMenu,
+    CTTermDisplay,
     NNTable,
     StudyEpochForm,
     HistoryTable,
@@ -162,11 +172,17 @@ export default {
       headers: [
         { title: '', key: 'actions', width: '1%' },
         { title: this.$t('StudyEpochTable.number'), key: 'order', width: '5%' },
-        { title: this.$t('StudyEpochTable.name'), key: 'epoch_name' },
-        { title: this.$t('StudyEpochTable.type'), key: 'epoch_type_name' },
+        {
+          title: this.$t('StudyEpochTable.name'),
+          key: 'epoch_ctterm.sponsor_preferred_name',
+        },
+        {
+          title: this.$t('StudyEpochTable.type'),
+          key: 'epoch_type_ctterm.sponsor_preferred_name',
+        },
         {
           title: this.$t('StudyEpochTable.sub_type'),
-          key: 'epoch_subtype_name',
+          key: 'epoch_subtype_ctterm.sponsor_preferred_name',
         },
         { title: this.$t('StudyEpochTable.start_rule'), key: 'start_rule' },
         { title: this.$t('StudyEpochTable.end_rule'), key: 'end_rule' },

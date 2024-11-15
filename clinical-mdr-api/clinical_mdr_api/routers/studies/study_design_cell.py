@@ -10,7 +10,7 @@ from clinical_mdr_api.services.studies.study_design_cell import StudyDesignCellS
 
 
 @router.get(
-    "/studies/{uid}/study-design-cells",
+    "/studies/{study_uid}/study-design-cells",
     dependencies=[rbac.STUDY_READ],
     summary="List all study design cells currently defined for the study",
     response_model=list[models.StudyDesignCell],
@@ -25,18 +25,18 @@ from clinical_mdr_api.services.studies.study_design_cell import StudyDesignCellS
     },
 )
 def get_all_design_cells(
-    uid: str = utils.studyUID,
+    study_uid: str = utils.studyUID,
     study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
 ) -> list[models.StudyDesignCell]:
     service = StudyDesignCellService()
     cells = service.get_all_design_cells(
-        study_uid=uid, study_value_version=study_value_version
+        study_uid=study_uid, study_value_version=study_value_version
     )
     return cells
 
 
 @router.post(
-    "/studies/{uid}/study-design-cells",
+    "/studies/{study_uid}/study-design-cells",
     dependencies=[rbac.STUDY_WRITE],
     summary="Add a study design cell to a study",
     response_model=models.StudyDesignCell,
@@ -49,24 +49,24 @@ def get_all_design_cells(
         },
         404: {
             "model": ErrorResponse,
-            "description": "Not Found - Study, study arm or study epoch is not found with the passed 'uid'.",
+            "description": "Not Found - Study, study arm or study epoch is not found with the passed 'study_uid'.",
         },
         500: _generic_descriptions.ERROR_500,
     },
 )
-@decorators.validate_if_study_is_not_locked("uid")
+@decorators.validate_if_study_is_not_locked("study_uid")
 def post_new_design_cell_create(
-    uid: str = utils.studyUID,
+    study_uid: str = utils.studyUID,
     selection: models.StudyDesignCellCreateInput = Body(
         description="Related parameters of the design cell that shall be created."
     ),
 ) -> models.StudyDesignCell:
     service = StudyDesignCellService()
-    return service.create(study_uid=uid, design_cell_input=selection)
+    return service.create(study_uid=study_uid, design_cell_input=selection)
 
 
 @router.patch(
-    "/studies/{uid}/study-design-cells/{study_design_cell_uid}",
+    "/studies/{study_uid}/study-design-cells/{study_design_cell_uid}",
     dependencies=[rbac.STUDY_WRITE],
     summary="Update a study design cell",
     description="""
@@ -104,10 +104,10 @@ def post_new_design_cell_create(
         500: _generic_descriptions.ERROR_500,
     },
 )
-@decorators.validate_if_study_is_not_locked("uid")
+@decorators.validate_if_study_is_not_locked("study_uid")
 #  pylint: disable=unused-argument
 def edit_design_cell(
-    uid: str = utils.studyUID,
+    study_uid: str = utils.studyUID,
     study_design_cell_uid: str = utils.study_design_cell_uid,
     selection: models.StudyDesignCellEditInput = Body(
         description="Related parameters of the selection that shall be updated."
@@ -115,14 +115,14 @@ def edit_design_cell(
 ) -> models.StudySelectionActivity:
     service = StudyDesignCellService()
     service.patch(
-        study_uid=uid,
+        study_uid=study_uid,
         design_cell_update_input=selection,
     )
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.delete(
-    "/studies/{uid}/study-design-cells/{study_design_cell_uid}",
+    "/studies/{study_uid}/study-design-cells/{study_design_cell_uid}",
     dependencies=[rbac.STUDY_WRITE],
     summary="Delete a study design cell",
     response_model=None,
@@ -136,18 +136,18 @@ def edit_design_cell(
         500: _generic_descriptions.ERROR_500,
     },
 )
-@decorators.validate_if_study_is_not_locked("uid")
+@decorators.validate_if_study_is_not_locked("study_uid")
 def delete_design_cell(
-    uid: str = utils.studyUID,
+    study_uid: str = utils.studyUID,
     study_design_cell_uid: str = utils.study_design_cell_uid,
 ):
     service = StudyDesignCellService()
-    service.delete(study_uid=uid, design_cell_uid=study_design_cell_uid)
+    service.delete(study_uid=study_uid, design_cell_uid=study_design_cell_uid)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.get(
-    "/studies/{uid}/study-design-cells/audit-trail/",
+    "/studies/{study_uid}/study-design-cells/audit-trail/",
     dependencies=[rbac.STUDY_READ],
     summary="List full audit trail related to definition of all study design cells.",
     description="""
@@ -167,14 +167,14 @@ The following values should be returned for all study design cells:
     },
 )
 def get_all_design_cells_audit_trail(
-    uid: str = utils.studyUID,
+    study_uid: str = utils.studyUID,
 ) -> list[models.StudyDesignCellVersion]:
     service = StudyDesignCellService()
-    return service.get_all_design_cells_audit_trail(study_uid=uid)
+    return service.get_all_design_cells_audit_trail(study_uid=study_uid)
 
 
 @router.get(
-    "/studies/{uid}/study-design-cells/{study_design_cell_uid}/audit-trail/",
+    "/studies/{study_uid}/study-design-cells/{study_design_cell_uid}/audit-trail/",
     dependencies=[rbac.STUDY_READ],
     summary="List audit trail related to definition of a specific study design cell.",
     response_model=list[models.StudyDesignCellVersion],
@@ -189,17 +189,17 @@ def get_all_design_cells_audit_trail(
     },
 )
 def get_specific_schedule_audit_trail(
-    uid: str = utils.studyUID,
+    study_uid: str = utils.studyUID,
     study_design_cell_uid: str = utils.study_design_cell_uid,
 ) -> models.StudyDesignCellVersion:
     service = StudyDesignCellService()
     return service.get_specific_selection_audit_trail(
-        study_uid=uid, design_cell_uid=study_design_cell_uid
+        study_uid=study_uid, design_cell_uid=study_design_cell_uid
     )
 
 
 @router.post(
-    "/studies/{uid}/study-design-cells/batch",
+    "/studies/{study_uid}/study-design-cells/batch",
     dependencies=[rbac.STUDY_WRITE],
     summary="Batch operations (create, delete) for study design cells",
     response_model=list[models.StudyDesignCellBatchOutput],
@@ -209,19 +209,19 @@ def get_specific_schedule_audit_trail(
         500: _generic_descriptions.ERROR_500,
     },
 )
-@decorators.validate_if_study_is_not_locked("uid")
+@decorators.validate_if_study_is_not_locked("study_uid")
 def design_cell_batch_operations(
-    uid: str = utils.studyUID,
+    study_uid: str = utils.studyUID,
     operations: list[models.StudyDesignCellBatchInput] = Body(
         description="List of operations to perform"
     ),
 ) -> list[models.StudyDesignCellBatchOutput]:
     service = StudyDesignCellService()
-    return service.handle_batch_operations(uid, operations)
+    return service.handle_batch_operations(study_uid, operations)
 
 
 @router.get(
-    "/studies/{uid}/study-design-cells/arm/{arm_uid}",
+    "/studies/{study_uid}/study-design-cells/arm/{arm_uid}",
     dependencies=[rbac.STUDY_READ],
     summary="""List all study design-cells currently selected for study with provided uid that are connected to an StudyArm with arm_uid""",
     description="""
@@ -250,19 +250,21 @@ def design_cell_batch_operations(
         500: _generic_descriptions.ERROR_500,
     },
 )
-def get_all_selected_desing_cells_connected_arm(
-    uid: str,
+def get_all_selected_design_cells_connected_arm(
+    study_uid: str,
     arm_uid: str,
     study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
 ) -> list[models.StudyDesignCell]:
     service = StudyDesignCellService()
     return service.get_all_selection_within_arm(
-        study_uid=uid, study_arm_uid=arm_uid, study_value_version=study_value_version
+        study_uid=study_uid,
+        study_arm_uid=arm_uid,
+        study_value_version=study_value_version,
     )
 
 
 @router.get(
-    "/studies/{uid}/study-design-cells/branch-arm/{branch_arm_uid}",
+    "/studies/{study_uid}/study-design-cells/branch-arm/{branch_arm_uid}",
     dependencies=[rbac.STUDY_READ],
     summary="""List all study design-cells currently selected for study with provided
     uid that are connected to an StudyBranchArm with branch_arm_uid""",
@@ -295,23 +297,23 @@ def get_all_selected_desing_cells_connected_arm(
         500: _generic_descriptions.ERROR_500,
     },
 )
-def get_all_selected_desing_cells_connected_branch_arm(
-    uid: str,
+def get_all_selected_design_cells_connected_branch_arm(
+    study_uid: str,
     branch_arm_uid: str,
     study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
 ) -> list[models.StudyDesignCell]:
     service = StudyDesignCellService()
     return service.get_all_selection_within_branch_arm(
-        study_uid=uid,
+        study_uid=study_uid,
         study_branch_arm_uid=branch_arm_uid,
         study_value_version=study_value_version,
     )
 
 
 @router.get(
-    "/studies/{uid}/study-design-cells/study-epochs/{epoch_uid}",
+    "/studies/{study_uid}/study-design-cells/study-epochs/{study_epoch_uid}",
     dependencies=[rbac.STUDY_READ],
-    summary="""List all study design-cells currently selected for study with provided uid that are connected to an StudyEpoch with epoch_uid""",
+    summary="""List all study design-cells currently selected for study with provided uid that are connected to an StudyEpoch with study_epoch_uid""",
     description="""
     State before:
     - Study must exist.
@@ -338,14 +340,14 @@ def get_all_selected_desing_cells_connected_branch_arm(
         500: _generic_descriptions.ERROR_500,
     },
 )
-def get_all_selected_desing_cells_connected_epoch(
-    uid: str,
-    epoch_uid: str,
+def get_all_selected_design_cells_connected_epoch(
+    study_uid: str,
+    study_epoch_uid: str,
     study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
 ) -> list[models.StudyDesignCell]:
     service = StudyDesignCellService()
     return service.get_all_selection_within_epoch(
-        study_uid=uid,
-        study_epoch_uid=epoch_uid,
+        study_uid=study_uid,
+        study_epoch_uid=study_epoch_uid,
         study_value_version=study_value_version,
     )

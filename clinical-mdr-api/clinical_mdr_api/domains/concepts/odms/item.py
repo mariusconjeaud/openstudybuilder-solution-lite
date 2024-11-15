@@ -88,7 +88,7 @@ class OdmItemVO(ConceptVO):
 
     def validate(
         self,
-        concept_exists_by_callback: Callable[[str, str, bool], bool],
+        odm_object_exists_callback: Callable,
         odm_description_exists_by_callback: Callable[[str, str, bool], bool],
         odm_alias_exists_by_callback: Callable[[str, str, bool], bool],
         unit_definition_exists_by_callback: Callable[[str, str, bool], bool],
@@ -96,14 +96,29 @@ class OdmItemVO(ConceptVO):
         find_all_terms_callback: Callable[
             [str], GenericFilteringReturn[CTTermNameAR] | None
         ],
-        previous_name: str | None = None,
-        previous_oid: str | None = None,
     ) -> None:
-        self.duplication_check(
-            [("name", self.name, previous_name), ("OID", self.oid, previous_oid)],
-            concept_exists_by_callback,
-            "ODM Item",
-        )
+        data = {
+            "description_uids": self.description_uids,
+            "alias_uids": self.alias_uids,
+            "unit_definition_uids": self.unit_definition_uids,
+            "codelist_uid": self.codelist_uid,
+            "term_uids": self.term_uids,
+            "name": self.name,
+            "oid": self.oid,
+            "datatype": self.datatype,
+            "prompt": self.prompt,
+            "length": self.length,
+            "significant_digits": self.significant_digits,
+            "sas_field_name": self.sas_field_name,
+            "sds_var_name": self.sds_var_name,
+            "origin": self.origin,
+            "comment": self.comment,
+        }
+        if uids := odm_object_exists_callback(**data):
+            raise BusinessLogicException(
+                f"ODM Item already exists with UID ({uids[0]}) and data {data}"
+            )
+
         self.check_concepts_exist(
             [
                 (
@@ -185,9 +200,7 @@ class OdmItemAR(OdmARBase):
         concept_vo: OdmItemVO,
         library: LibraryVO,
         generate_uid_callback: Callable[[], str | None] = (lambda: None),
-        concept_exists_by_callback: Callable[
-            [str, str, bool], bool
-        ] = lambda x, y, z: True,
+        odm_object_exists_callback: Callable = lambda _: True,
         odm_description_exists_by_callback: Callable[
             [str, str, bool], bool
         ] = lambda x, y, z: True,
@@ -207,7 +220,7 @@ class OdmItemAR(OdmARBase):
         item_metadata = LibraryItemMetadataVO.get_initial_item_metadata(author=author)
 
         concept_vo.validate(
-            concept_exists_by_callback=concept_exists_by_callback,
+            odm_object_exists_callback=odm_object_exists_callback,
             odm_description_exists_by_callback=odm_description_exists_by_callback,
             odm_alias_exists_by_callback=odm_alias_exists_by_callback,
             unit_definition_exists_by_callback=unit_definition_exists_by_callback,
@@ -230,6 +243,7 @@ class OdmItemAR(OdmARBase):
         concept_exists_by_callback: Callable[
             [str, str, bool], bool
         ] = lambda x, y, z: True,
+        odm_object_exists_callback: Callable = lambda _: True,
         odm_description_exists_by_callback: Callable[
             [str, str, bool], bool
         ] = lambda x, y, z: True,
@@ -250,14 +264,12 @@ class OdmItemAR(OdmARBase):
         Creates a new draft version for the object.
         """
         concept_vo.validate(
-            concept_exists_by_callback=concept_exists_by_callback,
+            odm_object_exists_callback=odm_object_exists_callback,
             odm_description_exists_by_callback=odm_description_exists_by_callback,
             odm_alias_exists_by_callback=odm_alias_exists_by_callback,
             unit_definition_exists_by_callback=unit_definition_exists_by_callback,
             find_codelist_attribute_callback=find_codelist_attribute_callback,
             find_all_terms_callback=find_all_terms_callback,
-            previous_name=self.name,
-            previous_oid=self._concept_vo.oid,
         )
 
         if self._concept_vo != concept_vo:

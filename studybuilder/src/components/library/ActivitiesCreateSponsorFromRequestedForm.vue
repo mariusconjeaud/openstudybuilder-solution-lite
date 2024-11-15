@@ -93,7 +93,7 @@
         <v-row>
           <v-col>
             <v-autocomplete
-              v-model="form.activity_groupings[0].activity_group_uid"
+              v-model="group"
               :label="$t('ActivityForms.activity_group')"
               data-cy="sponsorform-activity-group-dropdown"
               :items="groups"
@@ -102,6 +102,7 @@
               density="compact"
               clearable
               :rules="[formRules.required]"
+              return-object
               @update:model-value="filterSubGroups"
             />
             <v-autocomplete
@@ -192,7 +193,9 @@
               {{ $t('ActivityFormsRequested.requested_activity') }}
             </div>
             <v-text-field
-              v-if="activity.activity_group"
+              v-if="
+                activity.activity_groupings[0].activity_group_uid ? true : false
+              "
               v-model="activity.activity_groupings[0].activity_group_name"
               :label="$t('ActivityForms.activity_group')"
               data-cy="confirmation-request-group-field"
@@ -201,7 +204,7 @@
             />
             <v-text-field
               v-if="
-                activity.activity_groupings[0].activity_group_uid ? false : true
+                activity.activity_groupings[0].activity_group_uid ? true : false
               "
               v-model="activity.activity_groupings[0].activity_subgroup_name"
               :label="$t('ActivityForms.activity_subgroup')"
@@ -222,10 +225,8 @@
               {{ $t('ActivityFormsRequested.new_sponsor_concept') }}
             </div>
             <v-text-field
-              v-if="
-                activity.activity_groupings[0].activity_group_uid ? false : true
-              "
-              v-model="form.activity_groupings[0].activity_group_name"
+              v-if="group"
+              v-model="group.name"
               :label="$t('ActivityForms.activity_group')"
               data-cy="confirmation-sponsor-group-field"
               density="compact"
@@ -300,6 +301,7 @@ export default {
       activity: { activity_groupings: [] },
       form: { activity_groupings: [{}] },
       subgroup: {},
+      group: {},
       steps: [
         {
           name: 'request',
@@ -345,9 +347,9 @@ export default {
   },
   watch: {
     editedActivity: {
-      handler(value) {
+      async handler(value) {
         if (value) {
-          activities.getObject('activities', value.uid).then((resp) => {
+          await activities.getObject('activities', value.uid).then((resp) => {
             this.initForm(resp.data)
           })
         }
@@ -357,7 +359,6 @@ export default {
   },
   mounted() {
     this.getActivities()
-    this.getGroups()
   },
   methods: {
     initForm(editedActivity) {
@@ -370,13 +371,6 @@ export default {
           this.activity.activity_groupings.length
         ) {
           this.form.activity_groupings.push(this.activity.activity_groupings[0])
-          if (this.subGroups.length > 0) {
-            this.subgroup = this.subGroups.find(
-              (sg) =>
-                sg.uid ===
-                this.activity.activity_groupings[0].activity_subgroup_uid
-            )
-          }
         } else {
           this.activity.activity_groupings.push({})
           this.form.activity_groupings.push({})
@@ -384,15 +378,17 @@ export default {
       } else {
         this.activity = { activity_groupings: [{}] }
       }
+      this.getGroups()
     },
     filterSubGroups() {
-      if (!this.form.activity_groupings[0].activity_group_uid) {
+      this.subgroup = null
+      if (!this.group.uid) {
         this.filteredSubGroups = []
       }
       this.filteredSubGroups = this.subGroups.filter(
         (el) =>
           el.activity_groups.find(
-            (o) => o.uid === this.form.activity_groupings[0].activity_group_uid
+            (o) => o.uid === this.group.uid
           ) !== undefined
       )
     },
@@ -411,6 +407,8 @@ export default {
       this.form.activity_request_uid = this.editedActivity.uid
       this.form.activity_subgroup = this.subgroup.uid
       this.form.activity_groupings[0].activity_subgroup_uid = this.subgroup.uid
+      this.form.activity_group = this.group.uid
+      this.form.activity_groupings[0].activity_group_uid = this.group.uid
       activities.createFromActivityRequest(this.form).then(
         () => {
           this.eventBusEmit('warning', {
@@ -434,18 +432,31 @@ export default {
     cancelRejectForm() {
       this.showRejectForm = false
     },
-    getGroups() {
-      activities.get({ page_size: 0 }, 'activity-groups').then((resp) => {
+    async getGroups() {
+      await activities.get({ page_size: 0 }, 'activity-groups').then((resp) => {
         this.groups = resp.data.items
       })
-      activities.get({ page_size: 0 }, 'activity-sub-groups').then((resp) => {
+      await activities.get({ page_size: 0 }, 'activity-sub-groups').then((resp) => {
         this.subGroups = resp.data.items
-        this.filterSubGroups()
         this.subgroup = this.subGroups.find(
           (sg) =>
             sg.uid === this.activity.activity_groupings[0].activity_subgroup_uid
         )
       })
+      if (this.subGroups.length > 0) {
+        this.group = this.groups.find(
+          (sg) =>
+            sg.uid ===
+            this.activity.activity_groupings[0].activity_group_uid
+        )
+
+        this.filterSubGroups()
+        this.subgroup = this.subGroups.find(
+          (sg) =>
+            sg.uid ===
+            this.activity.activity_groupings[0].activity_subgroup_uid
+        )
+      }
     },
     getActivities() {
       const params = {

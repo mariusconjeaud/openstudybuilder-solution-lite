@@ -73,7 +73,7 @@ def get_programmes(
 
 
 @router.get(
-    "/{uid}",
+    "/{clinical_programme_uid}",
     dependencies=[rbac.LIBRARY_READ],
     summary="Get a clinical programme.",
     response_model=models.ClinicalProgramme,
@@ -83,9 +83,9 @@ def get_programmes(
         500: _generic_descriptions.ERROR_500,
     },
 )
-def get(uid: str = ClinicalProgrammeUID) -> models.ClinicalProgramme:
+def get(clinical_programme_uid: str = ClinicalProgrammeUID) -> models.ClinicalProgramme:
     service = ClinicalProgrammeService()
-    return service.get_clinical_programme_by_uid(uid)
+    return service.get_clinical_programme_by_uid(clinical_programme_uid)
 
 
 @router.post(
@@ -112,7 +112,7 @@ def create(
 
 
 @router.patch(
-    "/{uid}",
+    "/{clinical_programme_uid}",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Edit a clinical programme.",
     response_model=models.ClinicalProgramme,
@@ -128,15 +128,15 @@ def create(
     },
 )
 def edit(
-    uid: str = ClinicalProgrammeUID,
+    clinical_programme_uid: str = ClinicalProgrammeUID,
     clinical_programme_edit_input: models.ClinicalProgrammeInput = Body(description=""),
 ) -> models.ClinicalProgramme:
     service = ClinicalProgrammeService()
-    return service.edit(uid, clinical_programme_edit_input)
+    return service.edit(clinical_programme_uid, clinical_programme_edit_input)
 
 
 @router.delete(
-    "/{uid}",
+    "/{clinical_programme_uid}",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Delete a clinical programme.",
     status_code=204,
@@ -149,6 +149,6 @@ def edit(
         500: _generic_descriptions.ERROR_500,
     },
 )
-def delete(uid: str = ClinicalProgrammeUID):
+def delete(clinical_programme_uid: str = ClinicalProgrammeUID):
     service = ClinicalProgrammeService()
-    return service.delete(uid)
+    return service.delete(clinical_programme_uid)

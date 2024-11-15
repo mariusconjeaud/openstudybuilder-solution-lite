@@ -1,5 +1,5 @@
 """
-Tests for /studies/{uid}/study-compound-dosings endpoints
+Tests for /studies/{study_uid}/study-compound-dosings endpoints
 """
 
 # pylint: disable=unused-argument
@@ -178,6 +178,9 @@ def test_data():
 
     # Create study
     study = TestUtils.create_study()
+    TestUtils.set_study_standard_version(
+        study_uid=study.uid,
+    )
     BASE_URL = BASE_URL.replace("{study_uid}", study.uid)
 
     # Create study compounds

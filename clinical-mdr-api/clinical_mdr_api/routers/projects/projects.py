@@ -119,7 +119,7 @@ def get_distinct_adam_listing_values_for_header(
 
 
 @router.get(
-    "/{uid}",
+    "/{project_uid}",
     dependencies=[rbac.LIBRARY_READ],
     summary="Get a project.",
     response_model=models.Project,
@@ -129,9 +129,9 @@ def get_distinct_adam_listing_values_for_header(
         500: _generic_descriptions.ERROR_500,
     },
 )
-def get(uid: str = ProjectUID) -> models.Project:
+def get(project_uid: str = ProjectUID) -> models.Project:
     service = ProjectService()
-    return service.get_project_by_uid(uid)
+    return service.get_project_by_uid(project_uid)
 
 
 @router.post(
@@ -160,7 +160,7 @@ def create(
 
 
 @router.patch(
-    "/{uid}",
+    "/{project_uid}",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Edit a project.",
     response_model=models.Project,
@@ -176,15 +176,15 @@ def create(
     },
 )
 def edit(
-    uid: str = ProjectUID,
+    project_uid: str = ProjectUID,
     project_edit_input: models.ProjectEditInput = Body(description=""),
 ) -> models.Project:
     service = ProjectService()
-    return service.edit(uid, project_edit_input)
+    return service.edit(project_uid, project_edit_input)
 
 
 @router.delete(
-    "/{uid}",
+    "/{project_uid}",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Delete a project.",
     status_code=204,
@@ -197,6 +197,6 @@ def edit(
         500: _generic_descriptions.ERROR_500,
     },
 )
-def delete(uid: str = ProjectUID):
+def delete(project_uid: str = ProjectUID):
     service = ProjectService()
-    return service.delete(uid)
+    return service.delete(project_uid)

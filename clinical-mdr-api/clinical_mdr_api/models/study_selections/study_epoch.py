@@ -3,6 +3,7 @@ from typing import Any
 
 from pydantic import Field
 
+from clinical_mdr_api.models.controlled_terminologies.ct_term_name import CTTermName
 from clinical_mdr_api.models.utils import BaseModel
 
 
@@ -180,6 +181,18 @@ class StudyEpochOGMVer(StudyEpochOGM):
 
 
 class StudyEpoch(StudyEpochCreateInput):
+    epoch_name: str = Field(
+        ..., title="Study epoch name", description="Name of the epoch based on CT term"
+    )
+    epoch_subtype_name: str = Field(
+        ...,
+        title="Study Epoch subtype name",
+        description="Name of the epoch sub type based on CT term",
+    )
+    epoch_type_name: str = Field(..., title="Type", description="Study Epoch type name")
+    epoch_subtype: str | None = Field(
+        None, title="Epoch Sub Type", description="Study Epoch sub type"
+    )
     uid: str = Field(
         ...,
         title="Uid",
@@ -190,16 +203,17 @@ class StudyEpoch(StudyEpochCreateInput):
         title="study version or date information",
         description="Study version number, if specified, otherwise None.",
     )
-    epoch_name: str = Field(
-        ..., title="Study epoch name", description="Name of the epoch based on CT term"
+    epoch_ctterm: CTTermName = Field(
+        ..., title="Study epoch Term", description="Epoch  CT term"
     )
-    epoch_subtype_name: str = Field(
+    epoch_subtype_ctterm: CTTermName = Field(
         ...,
-        title="Study Epoch subtype name",
-        description="Name of the epoch sub type based on CT term",
+        title="Study Epoch subtype Term",
+        description="epoch sub type CT term",
     )
-    epoch_type: str = Field(..., title="Type", description="Study Epoch type uid")
-    epoch_type_name: str = Field(..., title="Type", description="Study Epoch type name")
+    epoch_type_ctterm: CTTermName = Field(
+        ..., title="Type", description="Study Epoch type CTTermName"
+    )
     start_day: int | None = Field(
         None, title="Start Day", description="Study Epoch start day"
     )

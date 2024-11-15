@@ -1,5 +1,5 @@
 """
-Tests for /studies/{uid}/study-disease-milestones endpoints
+Tests for /studies/{study_uid}/study-disease-milestones endpoints
 """
 
 # pylint: disable=unused-argument
@@ -51,6 +51,7 @@ def test_data():
     global disease_milestone_type_term2
     global study
     study = TestUtils.create_study()
+    TestUtils.set_study_standard_version(study_uid=study.uid)
 
     type_codelist = TestUtils.create_ct_codelist(
         name="Disease Milestone Type",

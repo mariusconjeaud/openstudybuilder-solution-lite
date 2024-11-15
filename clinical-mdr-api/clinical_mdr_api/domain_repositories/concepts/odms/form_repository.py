@@ -215,6 +215,7 @@ class FormRepository(OdmGenericRepository[OdmFormAR]):
             are_concept_properties_changed
             or are_rels_changed
             or ar.concept_vo.oid != value.oid
+            or ar.concept_vo.sdtm_version != value.sdtm_version
             or ar.concept_vo.repeating != value.repeating
         )
 

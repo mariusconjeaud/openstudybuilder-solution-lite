@@ -6,7 +6,7 @@
     :max-width="maxWidth"
     @keydown.esc="cancel"
   >
-    <v-card data-cy="form-body" elevation="0">
+    <v-card data-cy="form-body" elevation="0" rounded="xl">
       <v-card-title class="d-flex align-center">
         <span class="dialog-title">{{ title }}</span>
         <HelpButtonWithPanels
@@ -37,10 +37,10 @@
         </div>
         <v-btn
           data-cy="cancel-button"
-          class="secondary-btn"
           :disabled="actionDisabled"
           variant="outlined"
-          elevation="2"
+          rounded
+          elevation="0"
           width="120px"
           @click="cancel"
         >
@@ -53,11 +53,11 @@
           variant="flat"
           :loading="working"
           :disabled="actionDisabled"
-          elevation="2"
-          width="120px"
+          elevation="0"
+          rounded
           @click="submit"
         >
-          {{ $t('_global.save') }}
+          {{ actionButtonLabel }}
         </v-btn>
       </v-card-actions>
     </v-card>
@@ -75,6 +75,10 @@ export default {
     HelpButtonWithPanels,
   },
   props: {
+    actionLabel: {
+      type: String,
+      default: null,
+    },
     title: {
       type: String,
       default: '',
@@ -112,6 +116,11 @@ export default {
       actionDisabled: false,
       working: false,
     }
+  },
+  computed: {
+    actionButtonLabel() {
+      return this.actionLabel ? this.actionLabel : this.$t('_global.save')
+    },
   },
   watch: {
     open() {

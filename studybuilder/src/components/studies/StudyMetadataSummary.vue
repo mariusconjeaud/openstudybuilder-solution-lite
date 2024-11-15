@@ -53,7 +53,32 @@
         item-value="name"
         :items-per-page="15"
         :items-per-page-options="itemsPerPageOptions"
-      />
+      >
+        <template #[`item.values`]="{ item }">
+          <CTTermDisplay
+            v-if="getParamDisplayType(item.key) === 'term'"
+            :term="metadata[item.key]"
+          />
+          <template v-else-if="getParamDisplayType(item.key) === 'terms'">
+            <template
+              v-for="(term, index) in metadata[item.key]"
+              :key="`${item.key}-${term.term_uid}`"
+            >
+              <CTTermDisplay :term="term" />
+              <span v-if="index !== metadata[item.key].length - 1">, </span>
+            </template>
+          </template>
+          <span v-else>
+            {{ item.values }}
+          </span>
+        </template>
+        <template #[`item.reason_for_missing`]="{ item }">
+          <CTTermDisplay
+            v-if="metadata[item.null_value_key]"
+            :term="metadata[item.null_value_key]"
+          />
+        </template>
+      </v-data-table>
       <slot
         name="form"
         :open-handler="showForm"
@@ -101,6 +126,7 @@
 <script>
 import CopyFromStudyForm from '@/components/tools/CopyFromStudyForm.vue'
 import HistoryTable from '@/components/tools/HistoryTable.vue'
+import CTTermDisplay from '@/components/tools/CTTermDisplay.vue'
 import study from '@/api/study'
 import tablesConstants from '@/constants/tables'
 import { useAccessGuard } from '@/composables/accessGuard'
@@ -109,6 +135,7 @@ import { useStudiesGeneralStore } from '@/stores/studies-general'
 export default {
   components: {
     HistoryTable,
+    CTTermDisplay,
     CopyFromStudyForm,
   },
   props: {
@@ -250,6 +277,11 @@ export default {
     closeHistory() {
       this.showHistory = false
     },
+    getParamDisplayType(name) {
+      const param = this.params.find((p) => p.name === name)
+      console.log(param)
+      return param.valuesDisplay
+    },
     buildTableParams(fields) {
       const result = []
       fields.forEach((field) => {
@@ -278,15 +310,17 @@ export default {
           values = this.$t('StudyDefineForm.none')
         }
         result.push({
+          key: field.name,
           name: field.label,
           values:
             values !== undefined &&
             values !== null &&
             field.valuesDisplay &&
+            !['term', 'terms'].includes(field.valuesDisplay) &&
             field.name !== 'sex_of_participants_code'
               ? this[`${field.valuesDisplay}Display`](values)
               : values,
-          reason_for_missing: this.naDisplay(this.metadata[nullValueName]),
+          null_value_key: nullValueName,
         })
       })
       return result
@@ -297,20 +331,9 @@ export default {
     durationDisplay(value) {
       return `${value.duration_value} ${value.duration_unit_code.name}`
     },
-    termDisplay(value) {
-      if (!value) {
-        return ''
-      }
-      return value.name
-    },
-    termsDisplay(value) {
+    dictionaryTermsDisplay(value) {
       const result = value.map((item) => item.name)
       return result.join(', ')
-    },
-    naDisplay(value) {
-      if (value) {
-        return value.name
-      }
     },
   },
 }

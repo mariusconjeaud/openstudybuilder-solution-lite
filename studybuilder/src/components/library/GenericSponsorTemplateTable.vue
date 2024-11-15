@@ -10,7 +10,7 @@
       :export-data-url="urlPrefix"
       :export-data-url-params="exportDataUrlParams"
       :items-length="total"
-      :sort-by="[{ key: 'start_date' }]"
+      :initial-sort-by="[{ key: 'start_date' }]"
       sort-desc
       :column-data-resource="urlPrefix"
       :column-data-parameters="extendedColumnDataParameters"

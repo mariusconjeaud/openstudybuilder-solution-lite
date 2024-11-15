@@ -632,40 +632,6 @@
     }
   },
   {
-    "name": " LOCK STUDY Test to have multiple study value relationships attached",
-    "request": {
-      "headers": {},
-      "method": "POST",
-      "request": {
-        "change_description": "Lock 1"
-      },
-      "url": "/studies/{study_uid}/locks"
-    },
-    "response": {
-      "code": 201,
-      "headers": {
-        "content-length": "389",
-        "content-type": "application/json"
-      }
-    }
-  },
-  {
-    "name": " UNLOCK STUDY Test to have multiple study value relationships attached",
-    "request": {
-      "headers": {},
-      "method": "DELETE",
-      "request": {},
-      "url": "/studies/{study_uid}/locks"
-    },
-    "response": {
-      "code": 200,
-      "headers": {
-        "content-length": "389",
-        "content-type": "application/json"
-      }
-    }
-  },
-  {
     "name": "Test patch study (change study identifiers)",
     "request": {
       "headers": {},
@@ -688,6 +654,7 @@
       "result": {
         "uid": "{study_uid}",
         "possible_actions": [
+          "delete",
           "lock",
           "release"
         ],
@@ -738,7 +705,7 @@
             "version_author": "unknown-user",
             "version_description": null
           },
-          "study_description": null
+         "study_description": null
         }
       }
     }
@@ -1516,14 +1483,18 @@
             "study_type_code": null,
             "study_type_null_value_code": {
               "term_uid": "A good reason",
-              "name": "NullValue1"
+              "sponsor_preferred_name": "NullValue1",
+              "queried_effective_date": null, 
+              "date_conflict": false
             },
             "trial_type_codes": [],
             "trial_type_null_value_code": null,
             "trial_phase_code": null,
             "trial_phase_null_value_code": {
               "term_uid": "A bad reason",
-              "name": "NullValue2"
+              "sponsor_preferred_name": "NullValue2",
+              "queried_effective_date": null, 
+              "date_conflict": false
             },
             "is_extension_trial": true,
             "is_extension_trial_null_value_code": null,
@@ -1615,7 +1586,9 @@
           "study_intervention": {
             "intervention_type_code": {
               "term_uid": "C127589",
-              "name": "Pulmonic Valve Regurgitant Jet Width"
+              "sponsor_preferred_name": "Pulmonic Valve Regurgitant Jet Width",
+              "queried_effective_date": null,
+              "date_conflict":false
             },
             "intervention_type_null_value_code": null,
             "add_on_to_existing_treatments": null,
@@ -1641,15 +1614,21 @@
             "trial_intent_types_codes": [
               {
                 "term_uid": "C49654",
-                "name": null
+                "sponsor_preferred_name": null,
+                "queried_effective_date": null,
+                "date_conflict":false
               },
               {
                 "term_uid": "C49655",
-                "name": null
+                "sponsor_preferred_name": null,
+                "queried_effective_date": null,
+                "date_conflict":false
               },
               {
                 "term_uid": "C49657",
-                "name": null
+                "sponsor_preferred_name": null,
+                "queried_effective_date": null,
+                "date_conflict":false
               }
             ],
             "trial_intent_types_null_value_code": null

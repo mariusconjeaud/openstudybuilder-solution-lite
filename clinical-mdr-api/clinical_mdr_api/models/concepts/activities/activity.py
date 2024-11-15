@@ -14,6 +14,7 @@ from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryItemStatus,
     ObjectAction,
 )
+from clinical_mdr_api.exceptions import ValidationException
 from clinical_mdr_api.models.concepts.concept import Concept, ConceptInput
 from clinical_mdr_api.models.libraries.library import Library
 from clinical_mdr_api.models.utils import BaseModel
@@ -22,11 +23,13 @@ from clinical_mdr_api.models.utils import BaseModel
 class ActivityHierarchySimpleModel(BaseModel):
     @classmethod
     def from_activity_uid(
-        cls, uid: str, find_activity_by_uid: Callable[[str], ConceptARBase | None]
+        cls,
+        uid: str,
+        find_activity_by_uid: Callable[[str], ConceptARBase | None],
+        version: str | None = None,
     ) -> Self | None:
         if uid is not None:
-            activity = find_activity_by_uid(uid)
-
+            activity = find_activity_by_uid(uid, version=version)
             if activity is not None:
                 simple_activity_model = cls(uid=uid, name=activity.concept_vo.name)
             else:
@@ -126,10 +129,12 @@ class Activity(ActivityBase):
             activity_group = ActivityHierarchySimpleModel.from_activity_uid(
                 uid=activity_grouping.activity_group_uid,
                 find_activity_by_uid=find_activity_group_by_uid,
+                version=activity_grouping.activity_group_version,
             )
             activity_subgroup = ActivityHierarchySimpleModel.from_activity_uid(
                 uid=activity_grouping.activity_subgroup_uid,
                 find_activity_by_uid=find_activity_subgroup_by_uid,
+                version=activity_grouping.activity_subgroup_version,
             )
             activity_groupings.append(
                 ActivityGroupingHierarchySimpleModel(
@@ -188,15 +193,28 @@ class Activity(ActivityBase):
         activity_group_ars: list[ActivitySubGroupAR],
     ) -> Self:
         activity_groupings = []
-        for activity_group_ar, activity_subgroup_ar in zip(
-            activity_group_ars, activity_subgroup_ars
-        ):
-            activity_group = ActivityHierarchySimpleModel.from_activity_ar_object(
-                activity_ar=activity_group_ar,
-            )
-            activity_subgroup = ActivityHierarchySimpleModel.from_activity_ar_object(
-                activity_ar=activity_subgroup_ar,
-            )
+        for activity_grouping in activity_ar.concept_vo.activity_groupings:
+            activity_subgroup, activity_group = None, None
+            for activity_subgroup_ar in activity_subgroup_ars:
+                if activity_subgroup_ar.uid == activity_grouping.activity_subgroup_uid:
+                    activity_subgroup = (
+                        ActivityHierarchySimpleModel.from_activity_ar_object(
+                            activity_ar=activity_subgroup_ar,
+                        )
+                    )
+                    break
+            for activity_group_ar in activity_group_ars:
+                if activity_group_ar.uid == activity_grouping.activity_group_uid:
+                    activity_group = (
+                        ActivityHierarchySimpleModel.from_activity_ar_object(
+                            activity_ar=activity_group_ar,
+                        )
+                    )
+                    break
+            if not activity_group or not activity_subgroup:
+                raise ValidationException(
+                    "Either ActivityGroup or ActivitySubGroup can't be find in fetched groupings"
+                )
             activity_groupings.append(
                 ActivityGroupingHierarchySimpleModel(
                     activity_group_uid=activity_group.uid,

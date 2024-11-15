@@ -862,28 +862,15 @@
                 "oid": "oid1",
                 "change_description": "name changed",
                 "formal_expressions": [
-                    {
-                        "uid": "odm_formal_expression1",
-                        "context": "context1",
-                        "expression": "expression1",
-                        "change_description": "nothing changed"
-                    },
+                    "odm_formal_expression1",
                     {
                         "library_name": "Sponsor",
-                        "context": "context2",
-                        "expression": "expression2"
+                        "context": "context3",
+                        "expression": "expression3"
                     }
                 ],
                 "descriptions": [
-                    {
-                        "uid": "odm_description3",
-                        "name": "name3",
-                        "language": "ENG",
-                        "description": "description3",
-                        "instruction": "instruction3",
-                        "sponsor_instruction": "sponsor_instruction3",
-                        "change_description": "nothing changed"
-                    },
+                    "odm_description3",
                     {
                         "name": "string3",
                         "library_name": "Sponsor",
@@ -921,12 +908,12 @@
                         "uid": "odm_formal_expression1",
                         "context": "context1",
                         "expression": "expression1",
-                        "version": "0.2"
+                        "version": "0.1"
                     },
                     {
                         "uid": "OdmFormalExpression_000002",
-                        "context": "context2",
-                        "expression": "expression2",
+                        "context": "context3",
+                        "expression": "expression3",
                         "version": "0.1"
                     }
                 ],

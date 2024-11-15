@@ -42,6 +42,7 @@
             column-data-resource="ct/terms"
             :loading="loading"
             show-select
+            :codelist-uid="codelistUid"
             @filter="scheduleFilterTerms"
           />
         </v-col>

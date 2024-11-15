@@ -25,7 +25,7 @@ class SVGResponse(Response):
 
 
 @router.get(
-    "/{uid}/design.svg",
+    "/{study_uid}/design.svg",
     dependencies=[rbac.STUDY_READ],
     summary="Builds and returns a Study Design visualization image in SVG format",
     status_code=200,
@@ -37,17 +37,19 @@ class SVGResponse(Response):
 )
 def get_study_flowchart_html(
     response: Response,
-    uid: str = StudyUID,
+    study_uid: str = StudyUID,
     debug: bool
     | None = Query(
         default=False, description="Draw some lines for debugging the image layout"
     ),
     study_value_version: str | None = _generic_descriptions.STUDY_VALUE_VERSION_QUERY,
 ) -> SVGResponse:
-    StudyService().check_if_study_exists(uid)
-    response.headers["Content-Disposition"] = f'inline; filename="{uid} design.svg"'
+    StudyService().check_if_study_exists(study_uid)
+    response.headers[
+        "Content-Disposition"
+    ] = f'inline; filename="{study_uid} design.svg"'
     return SVGResponse(
         StudyDesignFigureService(debug=debug).get_svg_document(
-            uid, study_value_version=study_value_version
+            study_uid, study_value_version=study_value_version
         )
     )
