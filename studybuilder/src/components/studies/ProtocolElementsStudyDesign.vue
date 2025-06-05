@@ -17,7 +17,11 @@
       </v-btn>
     </div>
   </div>
-  <div id="studyDesign" class="mt-4" v-html="studyDesignSVG" />
+  <div
+    id="studyDesign"
+    class="mt-4"
+    v-html="sanitizeHTMLHandler(studyDesignSVG)"
+  />
 </template>
 
 <script>
@@ -25,6 +29,7 @@ import study from '@/api/study'
 import exportLoader from '@/utils/exportLoader'
 import { useStudiesGeneralStore } from '@/stores/studies-general'
 import { computed } from 'vue'
+import { sanitizeHTML } from '@/utils/sanitize'
 
 export default {
   props: {
@@ -60,6 +65,9 @@ export default {
     this.updateSvg()
   },
   methods: {
+    sanitizeHTMLHandler(html) {
+      return sanitizeHTML(html)
+    },
     updateSvg() {
       this.loadingMessage = this.$t('StudyProtocolElementsView.loading')
       study

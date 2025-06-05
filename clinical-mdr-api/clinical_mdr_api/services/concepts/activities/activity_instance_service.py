@@ -145,18 +145,6 @@ class ActivityInstanceService(ConceptGenericService[ActivityInstanceAR]):
             get_dimension_names_by_unit_definition_uids=self._repos.unit_definition_repository.get_dimension_names_by_unit_definition_uids,
         )
 
-    def non_transactional_edit(
-        self,
-        uid: str,
-        concept_edit_input: ActivityInstanceEditInput,
-    ) -> ActivityInstance:
-        item = self._find_by_uid_or_raise_not_found(uid=uid, for_update=True)
-        edited_item = self._edit_aggregate(
-            item=item, concept_edit_input=concept_edit_input
-        )
-        self.repository.save(edited_item)
-        return self._transform_aggregate_root_to_pydantic_model(edited_item)
-
     def _edit_aggregate(
         self, item: ActivityInstanceAR, concept_edit_input: ActivityInstanceEditInput
     ) -> ActivityInstanceAR:

@@ -1178,6 +1178,16 @@ ALL_ROUTES_METHODS_ROLES = (
     ("/concepts/activities/activity-instances/versions", "GET", {"Library.Read"}),
     ("/concepts/activities/activity-instances/headers", "GET", {"Library.Read"}),
     (
+        "/concepts/activities/activities/{activity_uid}/versions/{version}/groupings",
+        "GET",
+        {"Library.Read"},
+    ),
+    (
+        "/concepts/activities/activities/{activity_uid}/versions/{version}/instances",
+        "GET",
+        {"Library.Read"},
+    ),
+    (
         "/concepts/activities/activity-instances/{activity_instance_uid}",
         "GET",
         {"Library.Read"},
@@ -1500,7 +1510,7 @@ ALL_ROUTES_METHODS_ROLES = (
         "PATCH",
         {"Library.Write"},
     ),
-    ("/concepts/activities/activities/{activity_uid}", "PATCH", {"Library.Write"}),
+    ("/concepts/activities/activities/{activity_uid}", "PUT", {"Library.Write"}),
     (
         "/concepts/activities/activities/{activity_uid}/versions",
         "POST",
@@ -1538,7 +1548,7 @@ ALL_ROUTES_METHODS_ROLES = (
     ("/concepts/activities/activity-sub-groups", "POST", {"Library.Write"}),
     (
         "/concepts/activities/activity-sub-groups/{activity_subgroup_uid}",
-        "PATCH",
+        "PUT",
         {"Library.Write"},
     ),
     (
@@ -1592,7 +1602,7 @@ ALL_ROUTES_METHODS_ROLES = (
     ("/concepts/activities/activity-groups", "POST", {"Library.Write"}),
     (
         "/concepts/activities/activity-groups/{activity_group_uid}",
-        "PATCH",
+        "PUT",
         {"Library.Write"},
     ),
     (
@@ -1627,6 +1637,16 @@ ALL_ROUTES_METHODS_ROLES = (
     ),
     (
         "/concepts/activities/activity-groups/{activity_group_uid}/overview.cosmos",
+        "GET",
+        {"Library.Read"},
+    ),
+    (
+        "/concepts/activities/activity-groups/{activity_group_uid}/details",
+        "GET",
+        {"Library.Read"},
+    ),
+    (
+        "/concepts/activities/activity-groups/{activity_group_uid}/subgroups",
         "GET",
         {"Library.Read"},
     ),
@@ -2500,12 +2520,12 @@ ALL_ROUTES_METHODS_ROLES = (
         {"Library.Write", "Study.Write", "Library.Read", "Study.Read"},
     ),
     (
-        "/ddf/v3/studyDefinitions/{study_uid}",
+        "/usdm/v3/studyDefinitions/{study_uid}",
         "GET",
         {"Study.Read"},
     ),
     (
-        "/ddf/v3/studyDefinitions/{study_uid}/m11",
+        "/usdm/v3/studyDefinitions/{study_uid}/m11",
         "GET",
         {"Study.Read"},
     ),

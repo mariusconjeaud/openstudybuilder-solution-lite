@@ -337,8 +337,8 @@ def test_update_subgroup_to_new_group(api_client):
     )
     assert_response_status_code(response, 201)
 
-    # Patch the group
-    response = api_client.patch(
+    # Update the group
+    response = api_client.put(
         f"/concepts/activities/activity-groups/{group.uid}",
         json={
             "name": edited_group_name,
@@ -372,11 +372,15 @@ def test_update_subgroup_to_new_group(api_client):
     )
     assert_response_status_code(response, 201)
 
-    # Patch the subgroup, no changes
-    response = api_client.patch(
+    # Update the subgroup, no changes
+    response = api_client.put(
         f"/concepts/activities/activity-sub-groups/{subgroup.uid}",
         json={
-            "change_description": "patch subgroup",
+            "name": subgroup.name,
+            "name_sentence_case": subgroup.name_sentence_case,
+            "library_name": subgroup.library_name,
+            "activity_groups": [group.uid],
+            "change_description": "Update subgroup",
         },
     )
     assert_response_status_code(response, 200)

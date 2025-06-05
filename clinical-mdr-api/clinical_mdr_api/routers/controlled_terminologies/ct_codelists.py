@@ -40,7 +40,6 @@ TermUID = Path(description="The unique id of the Codelist Term")
   * CTCodelistNameRoot
   * CTCodelistNameValue
 """,
-    response_model=CTCodelist,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -61,7 +60,7 @@ def create(
             description="Properties to create CTCodelistAttributes and CTCodelistName.",
         ),
     ],
-):
+) -> CTCodelist:
     ct_codelist_service = CTCodelistService()
     return ct_codelist_service.create(codelist_input)
 
@@ -71,7 +70,6 @@ def create(
     dependencies=[rbac.LIBRARY_READ],
     summary="Returns all codelists names and attributes.",
     description=_generic_descriptions.DATA_EXPORTS_HEADER,
-    response_model=CustomPage[CTCodelistNameAndAttributes],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -173,7 +171,7 @@ def get_codelists(
             },
         ),
     ] = None,
-):
+) -> CustomPage[CTCodelistNameAndAttributes]:
     ct_codelist_service = CTCodelistService()
     results = ct_codelist_service.get_all_codelists(
         catalogue_name=catalogue_name,
@@ -197,7 +195,6 @@ def get_codelists(
     "/codelists/{codelist_uid}/sub-codelists",
     dependencies=[rbac.LIBRARY_READ],
     summary="Returns all sub codelists names and attributes that only have the provided terms.",
-    response_model=CustomPage[CTCodelistNameAndAttributes],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -236,7 +233,7 @@ def get_sub_codelists_that_have_given_terms(
     total_count: Annotated[
         bool | None, Query(description=_generic_descriptions.TOTAL_COUNT)
     ] = False,
-):
+) -> CustomPage[CTCodelistNameAndAttributes]:
     ct_codelist_service = CTCodelistService()
     results = ct_codelist_service.get_sub_codelists_that_have_given_terms(
         codelist_uid=codelist_uid,
@@ -258,7 +255,6 @@ def get_sub_codelists_that_have_given_terms(
     summary="Returns possibles values from the database for a given header",
     description="""Allowed parameters include : field name for which to get possible
     values, search string to provide filtering for the field name, additional filters to apply on other fields""",
-    response_model=list[Any],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -308,7 +304,7 @@ def get_distinct_values_for_header(
     page_size: Annotated[
         int | None, Query(description=_generic_descriptions.HEADER_PAGE_SIZE)
     ] = config.DEFAULT_HEADER_PAGE_SIZE,
-):
+) -> list[Any]:
     ct_codelist_service = CTCodelistService()
     return ct_codelist_service.get_distinct_values_for_header(
         catalogue_name=catalogue_name,
@@ -327,7 +323,6 @@ def get_distinct_values_for_header(
     "/codelists/{codelist_uid}/terms",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Adds new CTTerm to CTCodelist.",
-    response_model=CTCodelist,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -351,7 +346,7 @@ def add_term(
     term_input: Annotated[
         CTCodelistTermInput, Body(description="UID of the CTTermRoot node.")
     ],
-):
+) -> CTCodelist:
     ct_codelist_service = CTCodelistService()
     return ct_codelist_service.add_term(
         codelist_uid=codelist_uid, term_uid=term_input.term_uid, order=term_input.order
@@ -362,7 +357,6 @@ def add_term(
     "/codelists/{codelist_uid}/terms/{term_uid}",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Removes given CTTerm from CTCodelist.",
-    response_model=CTCodelist,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -385,6 +379,6 @@ def add_term(
 def remove_term(
     codelist_uid: Annotated[str, CTCodelistUID],
     term_uid: Annotated[str, TermUID],
-):
+) -> CTCodelist:
     ct_codelist_service = CTCodelistService()
     return ct_codelist_service.remove_term(codelist_uid=codelist_uid, term_uid=term_uid)

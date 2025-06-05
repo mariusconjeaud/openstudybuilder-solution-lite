@@ -5,9 +5,10 @@ from copy import copy
 from types import NoneType, UnionType
 from typing import Annotated, Any, Callable, Generic, Iterable, Self, TypeVar
 
+import nh3
 from annotated_types import MinLen
 from pydantic import BaseModel as PydanticBaseModel
-from pydantic import ConfigDict, Field, ValidationInfo, field_validator, model_validator
+from pydantic import ConfigDict, Field, ValidationInfo, field_validator
 from pydantic.fields import PydanticUndefined
 from starlette.responses import Response
 
@@ -17,6 +18,27 @@ from clinical_mdr_api.domains.concepts.unit_definitions.unit_definition import (
 from clinical_mdr_api.services.user_info import UserInfoService
 from common.config import STUDY_TIME_UNIT_SUBSET
 from common.utils import get_field_type, get_sub_fields
+
+ALLOWED_HTML_TAGS = {
+    "abbr",  # abbreviation
+    "acronym",  # acronym
+    "b",  # bold
+    "blockquote",  # block quote
+    "br",  # line break
+    "code",  # code-styled text
+    "em",  # emphasis
+    "i",  # italic
+    "li",  # list item
+    "ol",  # ordered list
+    "p",  # paragraph
+    "strong",  # strong emphasis
+    "sub",  # subscript
+    "sup",  # superscript
+    "u",  # underline
+    "ul",  # unordered list
+}
+
+ALLOWED_HTML_ATTRIBUTES = {}
 
 EXCLUDE_PROPERTY_ATTRIBUTES_FROM_SCHEMA = {
     "remove_from_wildcard",
@@ -220,50 +242,54 @@ class BaseModel(PydanticBaseModel):
 
 
 class InputModel(BaseModel):
-    @model_validator(mode="before")
-    @classmethod
-    def strip_whitespace(cls, data: Any):
-        def strip_value(value):
-            if isinstance(value, str):
-                return value.strip()
-            if isinstance(value, list):
-                return [strip_value(elm) for elm in value]
-            if isinstance(value, dict):
-                return {k: strip_value(v) for k, v in value.items()}
-            return value
-
-        if isinstance(data, dict):
-            return {key: strip_value(value) for key, value in data.items()}
-        if isinstance(data, str):
-            return data.strip()
-        if isinstance(data, list):
-            return [strip_value(value) for value in data]
-        return data
 
     @field_validator("*", mode="before")
     @classmethod
-    def empty_string_to_none(cls, value: Any, validation_info: ValidationInfo):
+    def _string_validator(cls, value: Any, validation_info: ValidationInfo):
         """
-        A field validator that converts empty strings to `None` for fields that:
+        Field validator sanitizes HTML, strips prefix-tailing whitespace, and conditionally returns `None` for empty strings.
+
+        Empty strings replaced to `None` for fields that:
         - Are annotated with `str` and `None`.
         - Have `min_length` constraint set.
 
-        This validator is applied to all fields (`*`) in "before" mode, meaning it processes the value before other validations are applied.
+        This validator is applied to all fields (`*`) in "before" mode, to process the value before other validations.
 
         Args:
             value (Any): The value of the field being validated.
             validation_info (ValidationInfo): Information about the field being validated, including its name and metadata.
 
         Returns:
-            Any: The original value if it is not an empty string, or `None` if the value is an empty string and the field meets the specified conditions.
+            Any: sanitized value, or `None` if the value is an empty string, and the field meets the specified conditions.
         """
-        if info := cls.model_fields.get(validation_info.field_name):
-            if (
-                isinstance(info.annotation, UnionType)
-                and NoneType in info.annotation.__args__
-                and any(isinstance(i, MinLen) for i in getattr(info, "metadata", []))
-            ) and value == "":
-                return None
+
+        field_info = None
+
+        # Clear HTML
+        if (
+            (field_info := cls.model_fields.get(validation_info.field_name))
+            and field_info.json_schema_extra
+            and field_info.json_schema_extra.get("format", "").lower() == "html"
+        ):
+            if isinstance(value, str):
+                value = sanitize_html(value)
+
+            elif isinstance(value, list):
+                value = [sanitize_html(v) if isinstance(v, str) else v for v in value]
+
+        # Strip whipespace from strings, items of lists and values of dicts
+        value = strip_whitespace(value)
+
+        # Empty strings to none
+        if (
+            field_info
+            and isinstance(field_info.annotation, UnionType)
+            and NoneType in field_info.annotation.__args__
+            and any(isinstance(i, MinLen) for i in getattr(field_info, "metadata", []))
+            and value == ""
+        ):
+            value = None
+
         return value
 
 
@@ -274,6 +300,10 @@ class PatchInputModel(InputModel): ...
 
 
 class BatchInputModel(InputModel): ...
+
+
+class EditInputModel(BaseModel):
+    change_description: Annotated[str, Field(min_length=1)]
 
 
 T = TypeVar("T")
@@ -290,7 +320,7 @@ class CustomPage(BaseModel, Generic[T]):
         size (int): The maximum number of items per page.
     """
 
-    items: list[T]
+    items: Annotated[list[T], Field()]
     total: Annotated[int, Field(ge=0)]
     page: Annotated[int, Field(ge=0)]
     size: Annotated[int, Field(ge=0)]
@@ -309,7 +339,7 @@ class GenericFilteringReturn(BaseModel, Generic[T]):
         total (int): The total number of items that match the query.
     """
 
-    items: list[T]
+    items: Annotated[list[T], Field()]
     total: Annotated[int, Field(ge=0)]
 
     @classmethod
@@ -331,3 +361,25 @@ class PrettyJSONResponse(Response):
             indent=4,
             separators=(", ", ": "),
         ).encode("utf-8")
+
+
+def strip_whitespace(value: Any) -> Any:
+    """Calls str.strip() to strip whitespace off str value or recursively on items of list, set, tuple or values of dict"""
+
+    if isinstance(value, str):
+        return value.strip()
+
+    if isinstance(value, (list, set, tuple)):
+        return [strip_whitespace(elm) for elm in value]
+
+    if isinstance(value, dict):
+        return {k: strip_whitespace(v) for k, v in value.items()}
+
+    return value
+
+
+def sanitize_html(string: str) -> str:
+    """Remove malicious HTML tags and attributes from a string."""
+    return nh3.clean(
+        string, tags=ALLOWED_HTML_TAGS, attributes=ALLOWED_HTML_ATTRIBUTES
+    ).strip()

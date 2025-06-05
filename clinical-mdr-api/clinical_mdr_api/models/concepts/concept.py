@@ -37,20 +37,20 @@ class NoLibraryConceptModelNoName(BaseModel, ABC):
             json_schema_extra={"source": "latest_version|end_date", "nullable": True},
         ),
     ] = None
-    status: str
-    version: str
+    status: Annotated[str, Field()]
+    version: Annotated[str, Field()]
     author_username: Annotated[
         str | None,
         Field(
             json_schema_extra={"nullable": True},
         ),
     ] = None
-    change_description: str
-    uid: str
+    change_description: Annotated[str, Field()]
+    uid: Annotated[str, Field()]
 
 
 class NoLibraryConceptModel(NoLibraryConceptModelNoName):
-    name: str
+    name: Annotated[str, Field()]
 
 
 class NoLibraryConceptPostInput(PostInputModel, ABC):
@@ -58,7 +58,7 @@ class NoLibraryConceptPostInput(PostInputModel, ABC):
 
 
 class ConceptModel(NoLibraryConceptModel):
-    library_name: str
+    library_name: Annotated[str, Field()]
 
 
 class ConceptPostInput(NoLibraryConceptPostInput):
@@ -120,7 +120,7 @@ class VersionProperties(BaseModel):
 class Concept(VersionProperties):
     model_config = ConfigDict(from_attributes=True)
 
-    uid: str
+    uid: Annotated[str, Field()]
     name: Annotated[
         str,
         Field(
@@ -189,15 +189,15 @@ class ExtendedConceptPatchInput(PatchInputModel):
 
 
 class SimpleConcept(Concept):
-    template_parameter: bool
+    template_parameter: Annotated[bool, Field()]
 
 
 class SimpleConceptPostInput(ExtendedConceptPostInput):
-    template_parameter: bool | None = False
+    template_parameter: Annotated[bool | None, Field()] = False
 
 
 class SimpleConceptPatchInput(ExtendedConceptPatchInput):
-    template_parameter: bool | None = False
+    template_parameter: Annotated[bool | None, Field()] = False
 
 
 class TextValue(SimpleConcept):
@@ -228,8 +228,8 @@ class VisitNamePostInput(TextValuePostInput):
 
 
 class NumericValue(SimpleConcept):
-    name: str
-    value: float
+    name: Annotated[str, Field()]
+    value: Annotated[float, Field()]
 
     @classmethod
     def from_concept_ar(cls, numeric_value: NumericValueAR) -> Self:
@@ -246,12 +246,12 @@ class NumericValue(SimpleConcept):
 
 
 class NumericValuePostInput(SimpleConceptPostInput):
-    value: float
+    value: Annotated[float, Field()]
 
 
 class NumericValueWithUnit(NumericValue):
-    unit_definition_uid: str
-    unit_label: str
+    unit_definition_uid: Annotated[str, Field()]
+    unit_label: Annotated[str, Field()]
 
     @classmethod
     def from_concept_ar(
@@ -281,10 +281,10 @@ class NumericValueWithUnitPostInput(NumericValuePostInput):
 
 
 class SimpleNumericValueWithUnit(BaseModel):
-    uid: str
-    value: float
-    unit_definition_uid: str
-    unit_label: str
+    uid: Annotated[str, Field()]
+    value: Annotated[float, Field()]
+    unit_definition_uid: Annotated[str, Field()]
+    unit_label: Annotated[str, Field()]
 
     @classmethod
     def from_concept_uid(
@@ -313,7 +313,7 @@ class SimpleNumericValueWithUnit(BaseModel):
 
 
 class LagTime(NumericValueWithUnit):
-    sdtm_domain_uid: str
+    sdtm_domain_uid: Annotated[str, Field()]
 
     @classmethod
     def from_concept_ar(
@@ -344,12 +344,12 @@ class LagTimePostInput(NumericValueWithUnitPostInput):
 
 
 class SimpleLagTime(BaseModel):
-    uid: str
-    value: float
-    unit_definition_uid: str
-    unit_label: str
-    sdtm_domain_uid: str
-    sdtm_domain_label: str
+    uid: Annotated[str, Field()]
+    value: Annotated[float, Field()]
+    unit_definition_uid: Annotated[str, Field()]
+    unit_label: Annotated[str, Field()]
+    sdtm_domain_uid: Annotated[str, Field()]
+    sdtm_domain_label: Annotated[str, Field()]
 
     @classmethod
     def from_concept_uid(
@@ -385,9 +385,9 @@ class SimpleLagTime(BaseModel):
 
 
 class TimePoint(SimpleConcept):
-    numeric_value_uid: str
-    unit_definition_uid: str
-    time_reference_uid: str
+    numeric_value_uid: Annotated[str, Field()]
+    unit_definition_uid: Annotated[str, Field()]
+    time_reference_uid: Annotated[str, Field()]
 
     @classmethod
     def from_concept_ar(cls, time_point: TimePointAR) -> Self:

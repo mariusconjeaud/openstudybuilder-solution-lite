@@ -2,7 +2,7 @@
 
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Body, Path, Query, Response, status
+from fastapi import APIRouter, Body, Path, Query
 from pydantic.types import Json
 from starlette.requests import Request
 
@@ -49,7 +49,6 @@ Possible errors:
 
 {_generic_descriptions.DATA_EXPORTS_HEADER}
 """,
-    response_model=CustomPage[ActivityInstance],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -146,7 +145,7 @@ def get_activities(
     total_count: Annotated[
         bool | None, Query(description=_generic_descriptions.TOTAL_COUNT)
     ] = False,
-):
+) -> CustomPage[ActivityInstance]:
     activity_instance_service = ActivityInstanceService()
     results = activity_instance_service.get_all_concepts(
         library=library_name,
@@ -186,7 +185,6 @@ Possible errors:
 
 {_generic_descriptions.DATA_EXPORTS_HEADER}
 """,
-    response_model=CustomPage[ActivityInstance],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -267,7 +265,7 @@ def get_activity_instances_versions(
     total_count: Annotated[
         bool | None, Query(description=_generic_descriptions.TOTAL_COUNT)
     ] = False,
-):
+) -> CustomPage[ActivityInstance]:
     activity_instance_service = ActivityInstanceService()
     results = activity_instance_service.get_all_concept_versions(
         library=library_name,
@@ -291,7 +289,6 @@ def get_activity_instances_versions(
     summary="Returns possibles values from the database for a given header",
     description="Allowed parameters include : field name for which to get possible values, "
     "search string to provide filtering for the field name, additional filters to apply on other fields",
-    response_model=list[Any],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -322,7 +319,7 @@ def get_distinct_values_for_header(
     page_size: Annotated[
         int | None, Query(description=_generic_descriptions.HEADER_PAGE_SIZE)
     ] = config.DEFAULT_HEADER_PAGE_SIZE,
-):
+) -> list[Any]:
     activity_instance_service = ActivityInstanceService()
     return activity_instance_service.get_distinct_values_for_header(
         library=library_name,
@@ -353,14 +350,15 @@ State after:
 Possible errors:
  - Invalid uid, at_specified_date_time, status or version.
  """,
-    response_model=ActivityInstance,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
         404: _generic_descriptions.ERROR_404,
     },
 )
-def get_activity(activity_instance_uid: Annotated[str, ActivityInstanceUID]):
+def get_activity(
+    activity_instance_uid: Annotated[str, ActivityInstanceUID],
+) -> ActivityInstance:
     activity_instance_service = ActivityInstanceService()
     return activity_instance_service.get_by_uid(uid=activity_instance_uid)
 
@@ -387,7 +385,6 @@ State after:
 Possible errors:
  - Invalid uid.
  """,
-    response_model=ActivityInstanceOverview,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -416,7 +413,7 @@ def get_activity_instance_overview(
         str | None,
         Query(description="Select specific version, omit to view latest version"),
     ] = None,
-):
+) -> ActivityInstanceOverview:
     activity_instance_service = ActivityInstanceService()
     return activity_instance_service.get_activity_instance_overview(
         activity_instance_uid=activity_instance_uid, version=version
@@ -480,7 +477,6 @@ State after:
 Possible errors:
  - Invalid uid.
     """,
-    response_model=list[ActivityInstance],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -490,7 +486,9 @@ Possible errors:
         },
     },
 )
-def get_versions(activity_instance_uid: Annotated[str, ActivityInstanceUID]):
+def get_versions(
+    activity_instance_uid: Annotated[str, ActivityInstanceUID],
+) -> list[ActivityInstance]:
     activity_instance_service = ActivityInstanceService()
     return activity_instance_service.get_version_history(uid=activity_instance_uid)
 
@@ -518,7 +516,6 @@ State after:
 Possible errors:
  - Invalid library or control terminology uid's specified.
 """,
-    response_model=ActivityInstance,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -536,7 +533,7 @@ Possible errors:
 )
 def create(
     activity_instance_create_input: Annotated[ActivityInstanceCreateInput, Body()],
-):
+) -> ActivityInstance:
     activity_instance_service = ActivityInstanceService()
     return activity_instance_service.create(
         concept_input=activity_instance_create_input
@@ -566,7 +563,6 @@ State after:
 Possible errors:
  - Invalid library or control terminology uid's specified.
 """,
-    response_model=ActivityInstance,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -589,7 +585,7 @@ def preview(
             description="Related parameters of the objective that shall be previewed."
         ),
     ],
-):
+) -> ActivityInstance:
     activity_instance_service = ActivityInstanceService()
     return activity_instance_service.create(
         concept_input=activity_instance_create_input, preview=True
@@ -617,7 +613,6 @@ Possible errors:
  - Invalid uid.
 
 """,
-    response_model=ActivityInstance,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -638,10 +633,12 @@ Possible errors:
 def edit(
     activity_instance_uid: Annotated[str, ActivityInstanceUID],
     activity_instance_edit_input: Annotated[ActivityInstanceEditInput, Body()],
-):
+) -> ActivityInstance:
     activity_instance_service = ActivityInstanceService()
     return activity_instance_service.edit_draft(
-        uid=activity_instance_uid, concept_edit_input=activity_instance_edit_input
+        uid=activity_instance_uid,
+        concept_edit_input=activity_instance_edit_input,
+        patch_mode=False,
     )
 
 
@@ -663,7 +660,6 @@ State after:
 Possible errors:
  - Invalid uid or status not Final.
 """,
-    response_model=ActivityInstance,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -683,7 +679,7 @@ Possible errors:
 )
 def create_new_version(
     activity_instance_uid: Annotated[str, ActivityInstanceUID],
-):
+) -> ActivityInstance:
     activity_instance_service = ActivityInstanceService()
     return activity_instance_service.create_new_version(uid=activity_instance_uid)
 
@@ -709,7 +705,6 @@ State after:
 Possible errors:
  - Invalid uid or status not Draft.
     """,
-    response_model=ActivityInstance,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -728,7 +723,7 @@ Possible errors:
 )
 def approve(
     activity_instance_uid: Annotated[str, ActivityInstanceUID],
-):
+) -> ActivityInstance:
     activity_instance_service = ActivityInstanceService()
     return activity_instance_service.approve(uid=activity_instance_uid)
 
@@ -754,7 +749,6 @@ State after:
 Possible errors:
  - Invalid uid or status not Final.
     """,
-    response_model=ActivityInstance,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -772,7 +766,7 @@ Possible errors:
 )
 def inactivate(
     activity_instance_uid: Annotated[str, ActivityInstanceUID],
-):
+) -> ActivityInstance:
     activity_instance_service = ActivityInstanceService()
     return activity_instance_service.inactivate_final(uid=activity_instance_uid)
 
@@ -798,7 +792,6 @@ State after:
 Possible errors:
  - Invalid uid or status not Retired.
     """,
-    response_model=ActivityInstance,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -816,7 +809,7 @@ Possible errors:
 )
 def reactivate(
     activity_instance_uid: Annotated[str, ActivityInstanceUID],
-):
+) -> ActivityInstance:
     activity_instance_service = ActivityInstanceService()
     return activity_instance_service.reactivate_retired(uid=activity_instance_uid)
 
@@ -840,7 +833,6 @@ State after:
 Possible errors:
  - Invalid uid or status not Draft or exist in version 1.0 or above (previously been approved) or not in an editable library.
     """,
-    response_model=None,
     status_code=204,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -865,4 +857,3 @@ def delete_activity_instance(
 ):
     activity_instance_service = ActivityInstanceService()
     activity_instance_service.soft_delete(uid=activity_instance_uid)
-    return Response(status_code=status.HTTP_204_NO_CONTENT)

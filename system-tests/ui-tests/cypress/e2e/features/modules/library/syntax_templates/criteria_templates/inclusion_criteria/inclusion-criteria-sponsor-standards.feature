@@ -1,18 +1,17 @@
 @REQ_ID:1070684
-Feature: Library - Inclusion Criteria - Parent Templates
+Feature: Library - Syntax Templates - Criteria - Inclusion - Parent
 
   As a user, I want to manage every Inclusion Criteria template under the Syntax template Library
   Background: User must be logged in
     Given The user is logged in
 
-  Scenario: User must be able to navigate to the Inclusion Criteria template under the Syntax template Library
+  Scenario: [Navigation] User must be able to navigate to the Inclusion Criteria template under the Syntax template Library
     Given The '/library' page is opened
     When The 'Criteria' submenu is clicked in the 'Syntax Templates' section
     And The 'Inclusion' tab is selected
     Then The current URL is 'library/criteria_templates/Inclusion/parent'
 
-
-  Scenario: User must be able to see the columns list on the main page as below
+  Scenario: [Table][Columns][Names] User must be able to see the table with correct columns
     Given The 'library/criteria_templates/Inclusion/parent' page is opened
     Then A table is visible with following headers
       | headers         |
@@ -23,118 +22,131 @@ Feature: Library - Inclusion Criteria - Parent Templates
       | Status          |
       | Version         |
 
-  Scenario: User must be able to select visibility of columns in the table 
+  Scenario: [Table][Columns][Visiblity] User must be able to select visibility of columns in the table 
     Given The '/library/criteria_templates/Inclusion/parent' page is opened
     When The first column is selected from Select Columns option for table with actions
     Then The table contain only selected column and actions column
 
-  Scenario: User must be able to add a new Inclusion Criteria template in parent standards tab
+  Scenario: [Create][Positive case] User must be able to create Inclusion Criteria template
     Given The 'library/criteria_templates/Inclusion/parent' page is opened
     When The new criteria is added in the library
-    Then The new Criteria is visible in the Criteria Templates Table
+    Then The Criteria is visible in the Criteria Templates Table
+    And The item has status 'Draft' and version '0.1'
 
-
-  Scenario: User must be able to add a new Inclusion Criteria template with NA indexes in parent standards tab
+  Scenario: [Create][N/A indexes] User must be able to create Inclusion Criteria template with NA indexes
     Given The 'library/criteria_templates/Inclusion/parent' page is opened
     When The new Criteria is added in the library with not applicable for indexes
-    Then The new Criteria is visible with Not Applicable indexes in the Criteria Templates Table
+    Then The Criteria is visible in the Criteria Templates Table
+    And The item has status 'Draft' and version '0.1'
 
-  Scenario: User must be able to edit draft version of the Inclusion Criteria template
+  Scenario: [Actions][Edit][0.1 version] User must be able to edit initial version of the Inclusion Criteria template
     Given The 'library/criteria_templates/Inclusion/parent' page is opened
     And The new criteria is added in the library
     When The 'Edit' option is clicked from the three dot menu list
     And The criteria metadata is updated
-    Then The updated Criteria is visible within the table
+    Then The Criteria is visible in the Criteria Templates Table
+    And The item has status 'Draft' and version '0.2'
 
-
-  Scenario: User must not be able to create a new Inclusion Criteria template without Template Text populated
+  Scenario: [Create][Mandatory fields] User must not be able to create Inclusion Criteria template without: Template Text
     Given The 'library/criteria_templates/Inclusion/parent' page is opened
     When The new Criteria template is added without template text
     Then The validation appears for Template name
     And The form is not closed
 
-  Scenario: User must not be able to create a new Inclusion Criteria template without Indication or Disorder populated
+  Scenario: [Create][Mandatory fields] User must not be able to create Inclusion Criteria template without: Indication or Disorder, Criterion Category, Criterion Sub-Category
     Given The 'library/criteria_templates/Inclusion/parent' page is opened
     When The new Criteria template is added without mandatory data
     Then The validation appears for Indication or Disorder, Criterion Category, Criterion Sub-Category
     And The form is not closed
 
-  Scenario: User must be able to verify valid syntax when adding a new Inclusion Criteria template
+  Scenario: [Create][Syntax validation] User must be able to verify syntax when creating Inclusion Criteria template
     Given The 'library/criteria_templates/Inclusion/parent' page is opened
     When The new template name is prepared with a parameters
     And The syntax is verified
     Then The pop up displays "This syntax is valid"
 
-  Scenario: User must be able to hide parameter from the Inclusion Criteria template
+  Scenario: [Create][Hide parameters] User must be able to hide parameter of the Inclusion Criteria template
     Given The 'library/criteria_templates/Inclusion/parent' page is opened
     When The new template name is prepared with a parameters
     And The user hides the parameter in the next step
     Then The parameter is not visible in the text representation
 
-  Scenario: User must be able to select parameter for the Inclusion Criteria template
+  Scenario: [Create][Select parameters] User must be able to select parameter of the Inclusion Criteria template
     Given The 'library/criteria_templates/Inclusion/parent' page is opened
     When The new template name is prepared with a parameters
     And The user picks the parameter from the dropdown list
     Then The parameter value is visible in the text representation
 
-  Scenario: User must be able to delete the drafted version of Inclusion Criteria template in version below 1.0
-    Given The 'library/criteria_templates/Inclusion/parent' page is opened
-    And The new criteria is added in the library
+  Scenario: [Actions][Delete] User must be able to delete the Draft Inclusion Criteria template in version below 1.0
+    Given [API] 'Inclusion' Criteria in status Draft exists
+    And The 'library/criteria_templates/Inclusion/parent' page is opened
+    And Criteria in searched for
     When The 'Delete' option is clicked from the three dot menu list
     Then The pop up displays "Template deleted"
     And The criteria is no longer available
 
-  Scenario: User must be able to approve the drafted version of Inclusion Criteria template
-    Given The 'library/criteria_templates/Inclusion/parent' page is opened
-    And The new criteria is added in the library
+  Scenario: [Actions][Approve] User must be able to approve the Draft Inclusion Criteria template
+    Given [API] 'Inclusion' Criteria in status Draft exists
+    And The 'library/criteria_templates/Inclusion/parent' page is opened
+    And Criteria in searched for
     When The 'Approve' option is clicked from the three dot menu list
     Then The pop up displays 'Template is now in Final state'
-    And The status of the criteria template displayed as Final with a version rounded up to full number
+    And The item has status 'Final' and version '1.0'
 
-  Scenario: User must be able to edit indexing for final version of the templates
-    Given The 'library/criteria_templates/Inclusion/parent' page is opened
-    And The criteria template exists with a status as 'Final'
+  Scenario: [Actions][Edit indexing] User must be able to edit indexing of Final Inclusion Criteria template
+    Given [API] 'Inclusion' Criteria in status Draft exists
+    And [API] Criteria is approved
+    And The 'library/criteria_templates/Inclusion/parent' page is opened
+    And Criteria in searched for
     When The 'Edit indexing' option is clicked from the three dot menu list
     And The indexing is updated for the Criteria Template
     And The 'Edit indexing' option is clicked from the three dot menu list
     Then The indexes in criteria template are updated
 
-  Scenario: User must not be able to save the edited version of the draft Inclusion Criteria template without filled in mandatory field 'Change description'
-    Given The 'library/criteria_templates/Inclusion/parent' page is opened
-    And The new criteria is added in the library
+  Scenario: [Actions][Edit][Mandatory fields] User must not be able to save changes to Inclusion Criteria template without: Change description
+    Given [API] 'Inclusion' Criteria in status Draft exists
+    And The 'library/criteria_templates/Inclusion/parent' page is opened
+    And Criteria in searched for
     When The 'Edit' option is clicked from the three dot menu list
-    And The created criteria template is edited without change description provided
+    And The template is edited witout providing mandatory change description
     Then The validation appears for criteria change description field
     And The form is not closed
 
-  Scenario: User must be able to add a new version for the Inclusion Criteria template with a status as 'Final'
-    Given The 'library/criteria_templates/Inclusion/parent' page is opened
-    And The criteria template exists with a status as 'Final'
+  Scenario: [Actions][New version] User must be able to add a new version of the Final Inclusion Criteria template
+    Given [API] 'Inclusion' Criteria in status Draft exists
+    And [API] Criteria is approved
+    And The 'library/criteria_templates/Inclusion/parent' page is opened
+    And Criteria in searched for
     When The 'New version' option is clicked from the three dot menu list
     Then The pop up displays 'New version created'
-    And The criteria template is updated to draft with version incremented by 0.1
+    And The item has status 'Draft' and version '1.1'
 
-  Scenario: User must be able to inactivate the Inclusion Criteria template with a status as 'Final'
-    Given The 'library/criteria_templates/Inclusion/parent' page is opened
-    And The Final criteria template exist
-    And The criteria template exists with a status as 'Final'
+  Scenario: [Actions][Inactivate] User must be able to inactivate the Final Inclusion Criteria template
+    Given [API] 'Inclusion' Criteria in status Draft exists
+    And [API] Criteria is approved
+    And The 'library/criteria_templates/Inclusion/parent' page is opened
+    And Criteria in searched for
     When The 'Inactivate' option is clicked from the three dot menu list
     Then The pop up displays 'Template inactivated'
-    And The template is displayed with a status as Retired with the same version as before
+    And The item has status 'Retired' and version '1.0'
 
-  Scenario: User must be able to reactivate the Inclusion Criteria template with a status as 'Retired'
-    Given The 'library/criteria_templates/Inclusion/parent' page is opened
-    And The Retired criteria template exist
-    And The criteria template exists with a status as 'Retired'
+  Scenario: [Actions][Reactivate] User must be able to reactivate the Retired Inclusion Criteria template
+    Given [API] 'Inclusion' Criteria in status Draft exists
+    And [API] Criteria is approved
+    And [API] Criteria is inactivated
+    And The 'library/criteria_templates/Inclusion/parent' page is opened
+    And Criteria in searched for
     When The 'Reactivate' option is clicked from the three dot menu list
     Then The pop up displays 'Template is now in Final state'
-    And The criteria template is displayed with a status as Final with the same version as before
-
+    And The item has status 'Final' and version '1.0'
 
   @manual_test
   Scenario: User must be able to view the history for the Inclusion Criteria template with a status as 'Retired'
-    Given The 'library/criteria_templates/Inclusion/parent' page is opened
-    Given The criteria template exists with a status as 'Retired'
+    Given [API] 'Inclusion' Criteria in status Draft exists
+    And [API] Criteria is approved
+    And [API] Criteria is inactivated
+    And The 'library/criteria_templates/Inclusion/parent' page is opened
+    And Criteria in searched for
     When The 'Reactivate' option is clicked from the three dot menu list
     Then The 'History for template' window is displayed with the following column list with values
       | Column | Header                 |
@@ -150,7 +162,7 @@ Feature: Library - Inclusion Criteria - Parent Templates
       | 10     | From                   |
       | 11     | To                     |
 
-  Scenario Outline: User must be able to filter the table by text fields
+  Scenario Outline: [Table][Filtering] User must be able to filter the table by text fields
     Given The 'library/criteria_templates/Inclusion/parent' page is opened
     When The user filters field '<name>'
     Then The table is filtered correctly
@@ -159,4 +171,4 @@ Feature: Library - Inclusion Criteria - Parent Templates
       | name                   |
       | Indication or disorder |
       | Criterion category     |
-      #| Criterion sub-category |
+      | Criterion sub-category |

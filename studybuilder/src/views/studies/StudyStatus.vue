@@ -8,7 +8,7 @@
         </div>
         <div
           class="my-2"
-          v-html="$t('_help.StudyStatus.core_attributes_body')"
+          v-html="sanitizeHTML($t('_help.StudyStatus.core_attributes_body'))"
         />
         <div class="text-h6">
           {{ $t('_help.StudyStatus.study_status') }}
@@ -16,9 +16,9 @@
         <div class="my-2">
           {{ $t('_help.StudyStatus.content_line_1') }}
           <ul>
-            <li v-html="$t('_help.StudyStatus.content_line_2')" />
-            <li v-html="$t('_help.StudyStatus.content_line_3')" />
-            <li v-html="$t('_help.StudyStatus.content_line_4')" />
+            <li v-html="sanitizeHTML($t('_help.StudyStatus.content_line_2'))" />
+            <li v-html="sanitizeHTML($t('_help.StudyStatus.content_line_3'))" />
+            <li v-html="sanitizeHTML($t('_help.StudyStatus.content_line_4'))" />
           </ul>
           <p class="mt-2">
             {{ $t('_help.StudyStatus.content_line_5') }}
@@ -27,21 +27,33 @@
         </div>
         <ul>
           <li>
-            <span v-html="$t('_help.StudyStatus.content_line_7')" />
+            <span
+              v-html="sanitizeHTML($t('_help.StudyStatus.content_line_7'))"
+            />
             <ul>
-              <li v-html="$t('_help.StudyStatus.content_line_8')" />
+              <li
+                v-html="sanitizeHTML($t('_help.StudyStatus.content_line_8'))"
+              />
             </ul>
           </li>
           <li>
-            <span v-html="$t('_help.StudyStatus.content_line_9')" />
+            <span
+              v-html="sanitizeHTML($t('_help.StudyStatus.content_line_9'))"
+            />
             <ul>
-              <li v-html="$t('_help.StudyStatus.content_line_10')" />
+              <li
+                v-html="sanitizeHTML($t('_help.StudyStatus.content_line_10'))"
+              />
             </ul>
           </li>
           <li>
-            <span v-html="$t('_help.StudyStatus.content_line_11')" />
+            <span
+              v-html="sanitizeHTML($t('_help.StudyStatus.content_line_11'))"
+            />
             <ul>
-              <li v-html="$t('_help.StudyStatus.content_line_12')" />
+              <li
+                v-html="sanitizeHTML($t('_help.StudyStatus.content_line_12'))"
+              />
             </ul>
           </li>
         </ul>
@@ -93,6 +105,7 @@ import StudyStatusTable from '@/components/studies/StudyStatusTable.vue'
 import StudySubpartsTable from '@/components/studies/StudySubpartsTable.vue'
 import UnderConstruction from '@/components/layout/UnderConstruction.vue'
 import { useStudiesGeneralStore } from '@/stores/studies-general'
+import { sanitizeHTML } from '@/utils/sanitize'
 
 const studiesGeneralStore = useStudiesGeneralStore()
 const { t } = useI18n()

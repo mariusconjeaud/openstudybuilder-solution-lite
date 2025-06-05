@@ -828,13 +828,15 @@ def test_update_activity_to_new_grouping(api_client):
     )
     assert_response_status_code(response, 201)
 
-    # Patch the subgroup
-    response = api_client.patch(
+    # Update the subgroup
+    response = api_client.put(
         f"/concepts/activities/activity-sub-groups/{subgroup.uid}",
         json={
             "name": edited_subgroup_name,
             "name_sentence_case": edited_subgroup_name,
-            "change_description": "patch group",
+            "activity_groups": [group.uid],
+            "library_name": subgroup.library_name,
+            "change_description": "update group",
         },
     )
     assert_response_status_code(response, 200)
@@ -870,11 +872,17 @@ def test_update_activity_to_new_grouping(api_client):
     )
     assert_response_status_code(response, 201)
 
-    # Patch the activity, no changes
-    response = api_client.patch(
+    # Update the activity, no change but groupings should be updated to latest version
+    response = api_client.put(
         f"/concepts/activities/activities/{activity.uid}",
         json={
-            "change_description": "patch activity",
+            "name": activity.name,
+            "name_sentence_case": activity.name_sentence_case,
+            "activity_groupings": [
+                {"activity_group_uid": group.uid, "activity_subgroup_uid": subgroup.uid}
+            ],
+            "library_name": activity.library_name,
+            "change_description": "update activity",
         },
     )
     assert_response_status_code(response, 200)
@@ -906,28 +914,32 @@ def test_update_activity_to_new_grouping(api_client):
 
 def test_update_activity(api_client):
     # Create a new version of an activity
+    activity = activities_all[2]
     response = api_client.post(
-        f"/concepts/activities/activities/{activities_all[2].uid}/versions"
+        f"/concepts/activities/activities/{activity.uid}/versions"
     )
     assert_response_status_code(response, 201)
 
-    response = api_client.patch(
-        f"/concepts/activities/activities/{activities_all[2].uid}",
+    response = api_client.put(
+        f"/concepts/activities/activities/{activity.uid}",
         json={
+            "name": activity.name,
+            "name_sentence_case": activity.name_sentence_case,
             "synonyms": ["new name", "CCC"],
             "activity_groupings": [
-                activities_all[2].activity_groupings[0].dict(),
+                activity.activity_groupings[0].dict(),
                 ActivityGrouping(
                     activity_group_uid=different_activity_group.uid,
                     activity_subgroup_uid=different_activity_subgroup.uid,
                 ).dict(),
             ],
+            "change_description": "Updated synonyms and groupings",
         },
     )
     assert_response_status_code(response, 200)
     res = response.json()
 
-    assert res["uid"] == activities_all[2].uid
+    assert res["uid"] == activity.uid
     assert res["name"] == "name-CCC"
     assert res["name_sentence_case"] == "name-CCC"
     assert res["synonyms"] == ["new name", "CCC"]
@@ -995,10 +1007,14 @@ def test_cannot_update_activity_with_non_unique_synonyms(api_client):
         name="test2", synonyms=["XYZ2", "non_unique2"]
     )
 
-    response = api_client.patch(
-        f"/concepts/activities/activities/{activities_all[0].uid}",
+    activity = activities_all[0]
+    response = api_client.put(
+        f"/concepts/activities/activities/{activity.uid}",
         json={
+            "name": activity.name,
+            "name_sentence_case": activity.name_sentence_case,
             "synonyms": ["non_unique1", "non_unique2"],
+            "change_description": "Updated synonyms",
         },
     )
     assert_response_status_code(response, 409)

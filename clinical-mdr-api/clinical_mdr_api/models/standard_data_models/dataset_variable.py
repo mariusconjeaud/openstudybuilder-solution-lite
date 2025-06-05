@@ -69,7 +69,7 @@ class DatasetVariable(BaseModel):
     described_value_domain: Annotated[
         str | None, Field(json_schema_extra={"nullable": True})
     ] = None
-    value_list: Annotated[list[str], Field()] = []
+    value_list: list[str] = Field(default_factory=list)
     dataset: Annotated[SimpleDataset, Field()]
     data_model_ig_names: Annotated[
         list[str],

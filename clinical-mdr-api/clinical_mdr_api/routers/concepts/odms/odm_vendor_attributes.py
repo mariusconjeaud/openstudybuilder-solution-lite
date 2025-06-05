@@ -29,7 +29,6 @@ OdmVendorAttributeUID = Path(description="The unique id of the ODM Vendor Attrib
     "",
     dependencies=[rbac.LIBRARY_READ],
     summary="Return every variable related to the selected status and version of the ODM Vendor Attributes",
-    response_model=CustomPage[OdmVendorAttribute],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -65,7 +64,7 @@ def get_all_odm_vendor_attributes(
     total_count: Annotated[
         bool | None, Query(description=_generic_descriptions.TOTAL_COUNT)
     ] = False,
-):
+) -> CustomPage[OdmVendorAttribute]:
     odm_vendor_attribute_service = OdmVendorAttributeService()
     results = odm_vendor_attribute_service.get_all_concepts(
         library=library_name,
@@ -87,7 +86,6 @@ def get_all_odm_vendor_attributes(
     summary="Returns possible values from the database for a given header",
     description="""Allowed parameters include : field name for which to get possible
     values, search string to provide filtering for the field name, additional filters to apply on other fields""",
-    response_model=list[Any],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -118,7 +116,7 @@ def get_distinct_values_for_header(
     page_size: Annotated[
         int | None, Query(description=_generic_descriptions.HEADER_PAGE_SIZE)
     ] = config.DEFAULT_HEADER_PAGE_SIZE,
-):
+) -> list[Any]:
     odm_vendor_attribute_service = OdmVendorAttributeService()
     return odm_vendor_attribute_service.get_distinct_values_for_header(
         library=library_name,
@@ -134,7 +132,6 @@ def get_distinct_values_for_header(
     "/{odm_vendor_attribute_uid}",
     dependencies=[rbac.LIBRARY_READ],
     summary="Get details on a specific ODM Vendor Attribute (in a specific version)",
-    response_model=OdmVendorAttribute,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -142,8 +139,8 @@ def get_distinct_values_for_header(
     },
 )
 def get_odm_vendor_attribute(
-    odm_vendor_attribute_uid: Annotated[str, OdmVendorAttributeUID]
-):
+    odm_vendor_attribute_uid: Annotated[str, OdmVendorAttributeUID],
+) -> OdmVendorAttribute:
     odm_vendor_attribute_service = OdmVendorAttributeService()
     return odm_vendor_attribute_service.get_by_uid(uid=odm_vendor_attribute_uid)
 
@@ -152,7 +149,6 @@ def get_odm_vendor_attribute(
     "/{odm_vendor_attribute_uid}/relationships",
     dependencies=[rbac.LIBRARY_READ],
     summary="Get UIDs of a specific ODM Vendor Attribute's relationships",
-    response_model=dict,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -160,8 +156,8 @@ def get_odm_vendor_attribute(
     },
 )
 def get_active_relationships(
-    odm_vendor_attribute_uid: Annotated[str, OdmVendorAttributeUID]
-):
+    odm_vendor_attribute_uid: Annotated[str, OdmVendorAttributeUID],
+) -> dict:
     odm_vendor_attribute_service = OdmVendorAttributeService()
     return odm_vendor_attribute_service.get_active_relationships(
         uid=odm_vendor_attribute_uid
@@ -186,7 +182,6 @@ State after:
 Possible errors:
  - Invalid uid.
     """,
-    response_model=list[OdmVendorAttribute],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -198,7 +193,7 @@ Possible errors:
 )
 def get_odm_vendor_attribute_versions(
     odm_vendor_attribute_uid: Annotated[str, OdmVendorAttributeUID],
-):
+) -> list[OdmVendorAttribute]:
     odm_vendor_attribute_service = OdmVendorAttributeService()
     return odm_vendor_attribute_service.get_version_history(
         uid=odm_vendor_attribute_uid
@@ -209,7 +204,6 @@ def get_odm_vendor_attribute_versions(
     "",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Creates a new Vendor Attribute in 'Draft' status with version 0.1",
-    response_model=OdmVendorAttribute,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -226,7 +220,7 @@ def get_odm_vendor_attribute_versions(
 )
 def create_odm_vendor_attribute(
     odm_vendor_attribute_create_input: Annotated[OdmVendorAttributePostInput, Body()],
-):
+) -> OdmVendorAttribute:
     odm_vendor_attribute_service = OdmVendorAttributeService()
     return odm_vendor_attribute_service.create(
         concept_input=odm_vendor_attribute_create_input
@@ -237,7 +231,6 @@ def create_odm_vendor_attribute(
     "/{odm_vendor_attribute_uid}",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Update ODM Vendor Attribute",
-    response_model=OdmVendorAttribute,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -258,7 +251,7 @@ def create_odm_vendor_attribute(
 def edit_odm_vendor_attribute(
     odm_vendor_attribute_uid: Annotated[str, OdmVendorAttributeUID],
     odm_vendor_attribute_edit_input: Annotated[OdmVendorAttributePatchInput, Body()],
-):
+) -> OdmVendorAttribute:
     odm_vendor_attribute_service = OdmVendorAttributeService()
     return odm_vendor_attribute_service.edit_draft(
         uid=odm_vendor_attribute_uid, concept_edit_input=odm_vendor_attribute_edit_input
@@ -283,7 +276,6 @@ State after:
 Possible errors:
  - Invalid uid or status not Final.
 """,
-    response_model=OdmVendorAttribute,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -303,7 +295,7 @@ Possible errors:
 )
 def create_odm_vendor_attribute_version(
     odm_vendor_attribute_uid: Annotated[str, OdmVendorAttributeUID],
-):
+) -> OdmVendorAttribute:
     odm_vendor_attribute_service = OdmVendorAttributeService()
     return odm_vendor_attribute_service.create_new_version(uid=odm_vendor_attribute_uid)
 
@@ -312,7 +304,6 @@ def create_odm_vendor_attribute_version(
     "/{odm_vendor_attribute_uid}/approvals",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Approve draft version of ODM Vendor Attribute",
-    response_model=OdmVendorAttribute,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -330,8 +321,8 @@ def create_odm_vendor_attribute_version(
     },
 )
 def approve_odm_vendor_attribute(
-    odm_vendor_attribute_uid: Annotated[str, OdmVendorAttributeUID]
-):
+    odm_vendor_attribute_uid: Annotated[str, OdmVendorAttributeUID],
+) -> OdmVendorAttribute:
     odm_vendor_attribute_service = OdmVendorAttributeService()
     return odm_vendor_attribute_service.approve(uid=odm_vendor_attribute_uid)
 
@@ -340,7 +331,6 @@ def approve_odm_vendor_attribute(
     "/{odm_vendor_attribute_uid}/activations",
     dependencies=[rbac.LIBRARY_WRITE],
     summary=" Inactivate final version of ODM Vendor Attribute",
-    response_model=OdmVendorAttribute,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -358,7 +348,7 @@ def approve_odm_vendor_attribute(
 )
 def inactivate_odm_vendor_attribute(
     odm_vendor_attribute_uid: Annotated[str, OdmVendorAttributeUID],
-):
+) -> OdmVendorAttribute:
     odm_vendor_attribute_service = OdmVendorAttributeService()
     return odm_vendor_attribute_service.inactivate_final(uid=odm_vendor_attribute_uid)
 
@@ -367,7 +357,6 @@ def inactivate_odm_vendor_attribute(
     "/{odm_vendor_attribute_uid}/activations",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Reactivate retired version of a ODM Vendor Attribute",
-    response_model=OdmVendorAttribute,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -385,7 +374,7 @@ def inactivate_odm_vendor_attribute(
 )
 def reactivate_odm_vendor_attribute(
     odm_vendor_attribute_uid: Annotated[str, OdmVendorAttributeUID],
-):
+) -> OdmVendorAttribute:
     odm_vendor_attribute_service = OdmVendorAttributeService()
     return odm_vendor_attribute_service.reactivate_retired(uid=odm_vendor_attribute_uid)
 
@@ -394,7 +383,6 @@ def reactivate_odm_vendor_attribute(
     "/{odm_vendor_attribute_uid}",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Delete draft version of ODM Vendor Attribute",
-    response_model=None,
     status_code=204,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -415,7 +403,7 @@ def reactivate_odm_vendor_attribute(
     },
 )
 def delete_odm_vendor_attribute(
-    odm_vendor_attribute_uid: Annotated[str, OdmVendorAttributeUID]
+    odm_vendor_attribute_uid: Annotated[str, OdmVendorAttributeUID],
 ):
     odm_vendor_attribute_service = OdmVendorAttributeService()
     odm_vendor_attribute_service.soft_delete(uid=odm_vendor_attribute_uid)

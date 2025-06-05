@@ -81,7 +81,6 @@ class OdmXmlExporterService:
         pdf: bool | None,
         stylesheet: str | None,
         mapper_file: UploadFile | None,
-        unit_definition_service,
     ):
         """
         Initializes a new instance of the `OdmXmlGenerator` class.
@@ -99,12 +98,7 @@ class OdmXmlExporterService:
         Returns:
             None
         """
-        self.odm_data_extractor = OdmDataExtractor(
-            target_uid,
-            target_type,
-            status.name,
-            unit_definition_service,
-        )
+        self.odm_data_extractor = OdmDataExtractor(target_uid, target_type, status.name)
         self.mapper_file = mapper_file
         self.allowed_namespaces = allowed_namespaces
         self.used_vendor_namespaces = {}

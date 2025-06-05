@@ -3,7 +3,7 @@ import json
 import logging
 import time
 from functools import wraps
-from typing import Annotated, Mapping
+from typing import Mapping
 
 import neomodel
 import opencensus.trace
@@ -24,37 +24,29 @@ REQUEST_METRICS_HEADER_NAME = "X-Metrics"
 class RequestMetrics(BaseModel):
     """Per-request metrics"""
 
-    cypher_count: Annotated[
-        int, Field(alias="cypher.count", title="Number of Cypher queries executed")
-    ] = 0
-    cypher_times: Annotated[
-        float,
-        Field(
-            alias="cypher.times",
-            title="Cumulative walltime (in seconds) of Cypher queries",
-        ),
-    ] = 0
-    cypher_slowest_time: Annotated[
-        float,
-        Field(
-            alias="cypher.slowest.time",
-            title="Walltime (in seconds) of the slowest Cypher query",
-        ),
-    ] = 0
-    cypher_slowest_query: Annotated[
-        str | None,
-        Field(
-            alias="cypher.slowest.query",
-            title="The slowest Cypher query (by walltime, truncated to 1000 chars) ",
-        ),
-    ] = None
-    cypher_slowest_query_params: Annotated[
-        dict | None,
-        Field(
-            alias="cypher.slowest.query.params",
-            title="Parameters of the slowest Cypher query",
-        ),
-    ] = None
+    cypher_count: int = Field(
+        0, alias="cypher.count", title="Number of Cypher queries executed"
+    )
+    cypher_times: float = Field(
+        0,
+        alias="cypher.times",
+        title="Cumulative walltime (in seconds) of Cypher queries",
+    )
+    cypher_slowest_time: float = Field(
+        0,
+        alias="cypher.slowest.time",
+        title="Walltime (in seconds) of the slowest Cypher query",
+    )
+    cypher_slowest_query: str | None = Field(
+        None,
+        alias="cypher.slowest.query",
+        title="The slowest Cypher query (by walltime, truncated to 1000 chars) ",
+    )
+    cypher_slowest_query_params: dict | None = Field(
+        None,
+        alias="cypher.slowest.query.params",
+        title="Parameters of the slowest Cypher query",
+    )
 
 
 def init_request_metrics():

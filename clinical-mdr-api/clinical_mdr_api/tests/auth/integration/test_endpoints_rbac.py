@@ -382,9 +382,9 @@ def _schema_default_value(schema, name=None):
     typ = schema.get("type")
 
     if typ == "string":
-        frmt = schema.get("format")
+        frmt = schema.get("format", "").lower()
 
-        if frmt is None:
+        if not frmt or frmt == "html":
             if name in PARAMETER_DEFAULTS:
                 return PARAMETER_DEFAULTS[name]
             return typ

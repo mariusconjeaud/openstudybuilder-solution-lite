@@ -26,6 +26,9 @@
     :history-data-fetcher="fetchStudyHistory"
     :history-title="$t('StudySubparts.subparts_history_title')"
     :history-external-headers="historyHeaders"
+    :export-data-url="exportDataUrl"
+    export-object-label="StudySubparts"
+    :export-data-url-params="exportDataUrlParams"
     :disable-filtering="sortMode"
     :hide-default-body="sortMode && items.length > 0"
     @filter="fetchStudySubparts"
@@ -239,6 +242,20 @@ const studySubpartHistoryTitle = computed(() => {
     })
   }
   return ''
+})
+
+const exportDataUrl = computed(() => {
+  return `studies`
+})
+
+const exportDataUrlParams = computed(() => {
+  return {
+    filters: {
+      'study_parent_part.uid': {
+        v: [studiesGeneralStore.selectedStudy.uid],
+      },
+    },
+  }
 })
 
 function fetchStudySubparts(filters, options, filtersUpdated) {

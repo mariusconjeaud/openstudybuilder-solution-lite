@@ -355,7 +355,7 @@ class ActivityInstanceRepository(ConceptGenericRepository[ActivityInstanceAR]):
                                 oid=odm_item["oid"],
                                 name=odm_item["name"],
                             )
-                            for odm_item in activity_item.get("odm_items")
+                            for odm_item in activity_item.get("odm_items", [])
                         ],
                     )
                     for activity_item in input_dict.get("activity_items", [])
@@ -567,7 +567,7 @@ class ActivityInstanceRepository(ConceptGenericRepository[ActivityInstanceAR]):
                         name=term["name"],
                     )
                 )
-            for odm_item in activity_item["odm_items"]:
+            for odm_item in activity_item.get("odm_items", []):
                 odm_items.append(
                     CompactOdmItem(
                         uid=odm_item["uid"], oid=odm_item["oid"], name=odm_item["name"]
@@ -589,16 +589,19 @@ class ActivityInstanceRepository(ConceptGenericRepository[ActivityInstanceAR]):
         ]:
             activity_groupings.append(
                 ActivityInstanceGroupingVO(
-                    activity_group_uid=activity_grouping.get("activity_group").get(
+                    activity_group_uid=activity_grouping["activity_group"].get("uid"),
+                    activity_group_name=activity_grouping["activity_group"].get("name"),
+                    activity_group_version=f"{activity_grouping['activity_group'].get('major_version')}.{activity_grouping['activity_group'].get('minor_version')}",
+                    activity_subgroup_uid=activity_grouping["activity_subgroup"].get(
                         "uid"
                     ),
-                    activity_group_version=f"{activity_grouping.get('activity_group').get('major_version')}.{activity_grouping.get('activity_group').get('minor_version')}",
-                    activity_subgroup_uid=activity_grouping.get(
-                        "activity_subgroup"
-                    ).get("uid"),
-                    activity_subgroup_version=f"{activity_grouping.get('activity_subgroup').get('major_version')}.{activity_grouping.get('activity_subgroup').get('minor_version')}",
-                    activity_uid=activity_grouping.get("activity").get("uid"),
-                    activity_version=f"{activity_grouping.get('activity').get('major_version')}.{activity_grouping.get('activity').get('minor_version')}",
+                    activity_subgroup_name=activity_grouping["activity_subgroup"].get(
+                        "name"
+                    ),
+                    activity_subgroup_version=f"{activity_grouping['activity_subgroup'].get('major_version')}.{activity_grouping['activity_subgroup'].get('minor_version')}",
+                    activity_uid=activity_grouping["activity"].get("uid"),
+                    activity_name=activity_grouping["activity"].get("name"),
+                    activity_version=f"{activity_grouping['activity'].get('major_version')}.{activity_grouping['activity'].get('minor_version')}",
                 )
             )
         return self.aggregate_class.from_repository_values(
@@ -685,24 +688,27 @@ class ActivityInstanceRepository(ConceptGenericRepository[ActivityInstanceAR]):
             apoc.coll.toSet([(concept_value)-[:HAS_ACTIVITY]->(activity_grouping:ActivityGrouping)-[:IN_SUBGROUP]->(activity_valid_group:ActivityValidGroup)
             <-[:HAS_GROUP]-(activity_subgroup_value)<-[:HAS_VERSION]-(activity_subgroup_root:ActivitySubGroupRoot)
              | {
-                activity: head(apoc.coll.sortMulti([(activity_grouping)<-[:HAS_GROUPING]-(:ActivityValue)<-[has_version:HAS_VERSION]-
+                activity: head(apoc.coll.sortMulti([(activity_grouping)<-[:HAS_GROUPING]-(activity_value:ActivityValue)<-[has_version:HAS_VERSION]-
                     (activity_root:ActivityRoot) | 
                     {
-                        uid:activity_root.uid,
+                        uid: activity_root.uid,
+                        name: activity_value.name,
                         major_version: toInteger(split(has_version.version,'.')[0]),
                         minor_version: toInteger(split(has_version.version,'.')[1])
                     }], ['major_version', 'minor_version'])),
-                activity_subgroup: head(apoc.coll.sortMulti([(activity_valid_group)<-[:HAS_GROUP]-(:ActivitySubGroupValue)<-[has_version:HAS_VERSION]-
+                activity_subgroup: head(apoc.coll.sortMulti([(activity_valid_group)<-[:HAS_GROUP]-(activity_subgroup_value:ActivitySubGroupValue)<-[has_version:HAS_VERSION]-
                     (activity_subgroup_root:ActivitySubGroupRoot) | 
                     {
-                        uid:activity_subgroup_root.uid,
+                        uid: activity_subgroup_root.uid,
+                        name: activity_subgroup_value.name,
                         major_version: toInteger(split(has_version.version,'.')[0]),
                         minor_version: toInteger(split(has_version.version,'.')[1])
                     }], ['major_version', 'minor_version'])), 
-                activity_group: head(apoc.coll.sortMulti([(activity_valid_group)-[:IN_GROUP]-(:ActivityGroupValue)<-[has_version:HAS_VERSION]-
+                activity_group: head(apoc.coll.sortMulti([(activity_valid_group)-[:IN_GROUP]-(activity_group_value:ActivityGroupValue)<-[has_version:HAS_VERSION]-
                     (activity_group_root:ActivityGroupRoot) | 
                     {
-                        uid:activity_group_root.uid,
+                        uid: activity_group_root.uid,
+                        name: activity_group_value.name,
                         major_version: toInteger(split(has_version.version,'.')[0]),
                         minor_version: toInteger(split(has_version.version,'.')[1])
                     }], ['major_version', 'minor_version']))

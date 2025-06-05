@@ -48,7 +48,6 @@ Possible errors:
  
 {_generic_descriptions.DATA_EXPORTS_HEADER}
 """,
-    response_model=CustomPage[Compound],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -107,7 +106,7 @@ def get_compounds(
     total_count: Annotated[
         bool | None, Query(description=_generic_descriptions.TOTAL_COUNT)
     ] = False,
-):
+) -> CustomPage[Compound]:
     compound_service = CompoundService()
     results = compound_service.get_all_concepts(
         library=library_name,
@@ -143,7 +142,6 @@ Possible errors:
 
 {_generic_descriptions.DATA_EXPORTS_HEADER}
 """,
-    response_model=CustomPage[Compound],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -198,7 +196,7 @@ def get_compounds_versions(
     total_count: Annotated[
         bool | None, Query(description=_generic_descriptions.TOTAL_COUNT)
     ] = False,
-):
+) -> CustomPage[Compound]:
     service = CompoundService()
     results = service.get_all_concept_versions(
         library=library_name,
@@ -230,7 +228,6 @@ State after:
 
 Possible errors:
  - Invalid library name specified.""",
-    response_model=CustomPage[SimpleCompound],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -266,7 +263,7 @@ def get_compounds_simple(
     total_count: Annotated[
         bool | None, Query(description=_generic_descriptions.TOTAL_COUNT)
     ] = False,
-):
+) -> CustomPage[SimpleCompound]:
     compound_service = CompoundSimpleService()
     results = compound_service.get_all_concepts(
         library=library_name,
@@ -288,7 +285,6 @@ def get_compounds_simple(
     summary="Returns possible values from the database for a given header",
     description="Allowed parameters include : field name for which to get possible values, "
     "search string to provide filtering for the field name, additional filters to apply on other fields",
-    response_model=list[Any],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -319,7 +315,7 @@ def get_distinct_values_for_header(
     page_size: Annotated[
         int | None, Query(description=_generic_descriptions.HEADER_PAGE_SIZE)
     ] = config.DEFAULT_HEADER_PAGE_SIZE,
-):
+) -> list[Any]:
     compound_service = CompoundService()
     return compound_service.get_distinct_values_for_header(
         library=library_name,
@@ -350,7 +346,6 @@ State after:
 Possible errors:
  - Invalid uid, at_specified_date_time, status or version.
  """,
-    response_model=Compound,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -359,7 +354,7 @@ Possible errors:
 )
 def get_compound(
     compound_uid: Annotated[str, CompoundUID],
-):
+) -> Compound:
     compound_service = CompoundService()
     return compound_service.get_by_uid(uid=compound_uid)
 
@@ -382,7 +377,6 @@ State after:
 Possible errors:
  - Invalid uid.
     """,
-    response_model=list[Compound],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -394,7 +388,7 @@ Possible errors:
 )
 def get_versions(
     compound_uid: Annotated[str, CompoundUID],
-):
+) -> list[Compound]:
     compound_service = CompoundService()
     return compound_service.get_version_history(uid=compound_uid)
 
@@ -422,7 +416,6 @@ State after:
 Possible errors:
  - Invalid library or control terminology uid's specified.
 """,
-    response_model=Compound,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -435,7 +428,7 @@ Possible errors:
         },
     },
 )
-def create(compound_create_input: Annotated[CompoundCreateInput, Body()]):
+def create(compound_create_input: Annotated[CompoundCreateInput, Body()]) -> Compound:
     compound_service = CompoundService()
     return compound_service.create(concept_input=compound_create_input)
 
@@ -462,7 +455,6 @@ Possible errors:
  - Invalid uid.
 
 """,
-    response_model=Compound,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -483,7 +475,7 @@ Possible errors:
 def edit(
     compound_uid: Annotated[str, CompoundUID],
     compound_edit_input: Annotated[CompoundEditInput, Body()],
-):
+) -> Compound:
     compound_service = CompoundService()
     return compound_service.edit_draft(
         uid=compound_uid, concept_edit_input=compound_edit_input
@@ -511,7 +503,6 @@ State after:
 Possible errors:
  - Invalid uid or status not Draft.
     """,
-    response_model=Compound,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -530,7 +521,7 @@ Possible errors:
 )
 def approve(
     compound_uid: Annotated[str, CompoundUID],
-):
+) -> Compound:
     compound_service = CompoundService()
     return compound_service.approve(uid=compound_uid)
 
@@ -553,7 +544,6 @@ State after:
 Possible errors:
  - Invalid uid or status not Final.
 """,
-    response_model=Compound,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -573,7 +563,7 @@ Possible errors:
 )
 def create_new_version(
     compound_uid: Annotated[str, CompoundUID],
-):
+) -> Compound:
     compound_service = CompoundService()
     return compound_service.create_new_version(uid=compound_uid)
 
@@ -599,7 +589,6 @@ State after:
 Possible errors:
  - Invalid uid or status not Final.
     """,
-    response_model=Compound,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -617,7 +606,7 @@ Possible errors:
 )
 def inactivate(
     compound_uid: Annotated[str, CompoundUID],
-):
+) -> Compound:
     compound_service = CompoundService()
     return compound_service.inactivate_final(uid=compound_uid)
 
@@ -643,7 +632,6 @@ State after:
 Possible errors:
  - Invalid uid or status not Retired.
     """,
-    response_model=Compound,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -661,7 +649,7 @@ Possible errors:
 )
 def reactivate(
     compound_uid: Annotated[str, CompoundUID],
-):
+) -> Compound:
     compound_service = CompoundService()
     return compound_service.reactivate_retired(uid=compound_uid)
 
@@ -685,7 +673,6 @@ State after:
 Possible errors:
  - Invalid uid or status not Draft or exist in version 1.0 or above (previously been approved) or not in an editable library.
     """,
-    response_model=None,
     status_code=204,
     responses={
         403: _generic_descriptions.ERROR_403,

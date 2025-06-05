@@ -567,7 +567,12 @@ class DummyData(BaseImporter):
                         },
                     )
                     if new_version_response.ok:
-                        self.simple_post_and_approve(obj, method="PATCH", obj_uid=uid)
+                        obj_type = obj["path"].split("/")[-1]
+                        if obj_type in ["activities", "activity-groups", "activity-sub-groups"]:
+                            method = "PUT"
+                        else:
+                            method = "PATCH"
+                        self.simple_post_and_approve(obj, method=method, obj_uid=uid)
 
                 return uid
 

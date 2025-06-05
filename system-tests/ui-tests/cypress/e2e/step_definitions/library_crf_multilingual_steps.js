@@ -58,11 +58,11 @@ When('The new CRF Item is created with description providied', () => {
     proceedAndSave()
 })
 
-Then('The CRF Form description is saved within the system', () => checkIfExists(formName))
+Then('The CRF Form description is saved within the system', () => cy.searchAndCheckPresence(formName, true))
 
-Then('The CRF Item Group description is saved within the system', () => checkIfExists(itemGroupName))
+Then('The CRF Item Group description is saved within the system', () => cy.searchAndCheckPresence(itemGroupName, true))
 
-Then('The CRF Item description is saved within the system', () => checkIfExists(itemName))
+Then('The CRF Item description is saved within the system', () => cy.searchAndCheckPresence(itemName, true))
 
 function proceedAndSave() {
     cy.clickFormActionButton('continue')
@@ -90,9 +90,4 @@ function setMultilingualOptionInSettings(turnOn) {
         turnOn ? cy.wrap(radioButton).check( {force: true} ) : cy.wrap(radioButton).uncheck( {force: true} ) 
     })
     cy.clickButton('save-settings-button')
-}
-
-function checkIfExists(name) {
-    cy.fillInput('search-field', name)
-    cy.tableContains(name)
 }

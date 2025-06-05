@@ -1,242 +1,47 @@
 <template>
-  <div>
+  <div class="activity-overview-container">
     <BaseActivityOverview
       ref="overview"
       :transform-func="transformItem"
       :navigate-to-version="changeVersion"
       :history-headers="historyHeaders"
       v-bind="$attrs"
+      @refresh="refreshData"
     >
-      <template #htmlContent="{ itemOverview, item }">
-        <v-row>
-          <v-col cols="2" class="font-weight-bold">
-            {{ $t('_global.name') }}
-          </v-col>
-          <v-col cols="10">
-            {{ itemOverview.activity.name }}
-          </v-col>
-        </v-row>
-        <v-row>
-          <v-col cols="2" class="font-weight-bold">
-            {{ $t('_global.sentence_case_name') }}
-          </v-col>
-          <v-col cols="10">
-            {{ itemOverview.activity.name_sentence_case }}
-          </v-col>
-        </v-row>
-        <v-row>
-          <v-col cols="2" class="font-weight-bold">
-            {{ $t('_global.version') }}
-          </v-col>
-          <v-col cols="2">
-            <v-select
-              :items="allVersions(itemOverview)"
-              :value="itemOverview.activity.version"
-              @update:model-value="
-                (value) => changeVersion(itemOverview.activity, value)
-              "
-            ></v-select>
-          </v-col>
-          <v-col cols="2" class="font-weight-bold">
-            {{ $t('_global.status') }}
-          </v-col>
-          <v-col cols="2">
-            <StatusChip v-if="item" :status="itemOverview.activity.status" />
-          </v-col>
-        </v-row>
-        <v-row>
-          <v-col cols="2" class="font-weight-bold">
-            {{ $t('_global.start_date') }}
-          </v-col>
-          <v-col cols="2">
-            {{
-              itemOverview.activity.start_date
-                ? $filters.date(itemOverview.activity.start_date)
-                : $t('_global.date_null')
-            }}
-          </v-col>
-          <v-col cols="2" class="font-weight-bold">
-            {{ $t('_global.end_date') }}
-          </v-col>
-          <v-col cols="2">
-            {{
-              itemOverview.activity.end_date
-                ? $filters.date(itemOverview.activity.end_date)
-                : $t('_global.date_null')
-            }}
-          </v-col>
-        </v-row>
-        <v-row>
-          <v-col cols="2" class="font-weight-bold">
-            {{ $t('_global.definition') }}
-          </v-col>
-          <v-col cols="10">
-            {{ itemOverview.activity.definition }}
-          </v-col>
-        </v-row>
-        <v-row>
-          <v-col cols="2" class="font-weight-bold">
-            {{ $t('_global.abbreviation') }}
-          </v-col>
-          <v-col cols="10">
-            {{ itemOverview.activity.abbreviation }}
-          </v-col>
-          <v-col cols="2" class="font-weight-bold">
-            {{ $t('_global.library') }}
-          </v-col>
-          <v-col cols="10">
-            {{ itemOverview.activity.library_name }}
-          </v-col>
-        </v-row>
-        <v-row>
-          <v-col cols="2" class="font-weight-bold">
-            {{ $t('ActivityForms.nci_concept_id') }}
-          </v-col>
-          <v-col cols="10">
-            <NCIConceptLink
-              :concept-id="itemOverview.activity.nci_concept_id"
+      <template #htmlContent="{ itemOverview }">
+        <!-- Activity Summary -->
+        <ActivitySummary
+          v-if="itemOverview && itemOverview.activity"
+          :activity="itemOverview.activity"
+          :all-versions="allVersions(itemOverview)"
+          class="activity-summary"
+          @version-change="(value) => manualChangeVersion(value)"
+        />
+
+        <!-- Activity Groupings section -->
+        <ActivityGroupings
+          :item-data="itemOverview"
+          :activity-id="$route.params.id"
+          :version="$route.params.version"
+          @refresh="refreshData"
+        />
+
+        <v-row
+          v-if="itemOverview && itemOverview.activity"
+          class="activity-section"
+        >
+          <v-col cols="12" class="px-0">
+            <div class="section-header mb-1">
+              <h3 class="text-h6 font-weight-bold text-primary">
+                {{ $t('ActivityOverview.instances') }}
+              </h3>
+            </div>
+
+            <ActivityInstancesTable
+              :activity-groupings="itemOverview.activity_groupings || []"
+              :activity-id="$route.params.id"
+              :version="$route.params.version"
             />
-          </v-col>
-        </v-row>
-        <v-row>
-          <v-col cols="2" class="font-weight-bold">
-            {{ $t('ActivityForms.nci_concept_name') }}
-          </v-col>
-          <v-col cols="10">
-            {{ itemOverview.activity.nci_concept_name }}
-          </v-col>
-        </v-row>
-        <v-row>
-          <v-col cols="2" class="font-weight-bold">
-            {{ $t('ActivityForms.synonyms') }}
-          </v-col>
-          <v-col cols="10">
-            <v-chip
-              v-for="synonym in itemOverview.activity.synonyms"
-              :key="synonym"
-            >
-              {{ synonym }}
-            </v-chip>
-          </v-col>
-        </v-row>
-        <v-row>
-          <v-col cols="2" class="font-weight-bold">
-            {{ $t('ActivityOverview.is_data_collected') }}
-          </v-col>
-          <v-col cols="10">
-            {{ $filters.yesno(itemOverview.activity.is_data_collected) }}
-          </v-col>
-        </v-row>
-        <v-row>
-          <v-col cols="2" class="font-weight-bold">
-            {{ $t('ActivityOverview.activity_groupings') }}
-          </v-col>
-          <v-col cols="10">
-            <v-table>
-              <thead>
-                <tr class="text-left">
-                  <th scope="col">
-                    {{ $t('ActivityOverview.activity_group') }}
-                  </th>
-                  <th scope="col">
-                    {{ $t('ActivityOverview.activity_subgroup') }}
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr
-                  v-for="(grouping, index) in itemOverview.activity_groupings"
-                  :key="`grouping-${index}`"
-                >
-                  <td>
-                    <router-link
-                      :to="{
-                        name: 'GroupOverview',
-                        params: {
-                          id: grouping.activity_group.uid,
-                        },
-                      }"
-                    >
-                      {{ grouping.activity_group.name }}
-                    </router-link>
-                  </td>
-                  <td>
-                    <router-link
-                      :to="{
-                        name: 'SubgroupOverview',
-                        params: {
-                          id: grouping.activity_subgroup.uid,
-                        },
-                      }"
-                    >
-                      {{ grouping.activity_subgroup.name }}
-                    </router-link>
-                  </td>
-                </tr>
-              </tbody>
-            </v-table>
-          </v-col>
-        </v-row>
-        <v-row>
-          <v-col cols="2" class="font-weight-bold">
-            {{ $t('ActivityOverview.instances') }}
-          </v-col>
-          <v-col cols="10">
-            <v-table>
-              <thead>
-                <tr class="text-left">
-                  <th scope="col">
-                    {{ $t('_global.name') }}
-                  </th>
-                  <th scope="col">
-                    {{ $t('_global.definition') }}
-                  </th>
-                  <th scope="col">
-                    {{ $t('_global.version') }}
-                  </th>
-                  <th scope="col">
-                    {{ $t('_global.status') }}
-                  </th>
-                  <th scope="col">
-                    {{ $t('ActivityOverview.class') }}
-                  </th>
-                  <th scope="col">
-                    {{ $t('ActivityOverview.topic_code') }}
-                  </th>
-                  <th scope="col">
-                    {{ $t('ActivityOverview.adam_code') }}
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr
-                  v-for="(
-                    activityItem, index
-                  ) in itemOverview.activity_instances"
-                  :key="`item-${index}`"
-                >
-                  <td>
-                    <router-link
-                      :to="{
-                        name: 'ActivityInstanceOverview',
-                        params: {
-                          id: activityItem.uid,
-                          version: activityItem.version,
-                        },
-                      }"
-                    >
-                      {{ activityItem.name }}
-                    </router-link>
-                  </td>
-                  <td>{{ activityItem.definition }}</td>
-                  <td>{{ activityItem.version }}</td>
-                  <td>{{ activityItem.status }}</td>
-                  <td>{{ activityItem.activity_instance_class.name }}</td>
-                  <td>{{ activityItem.topic_code }}</td>
-                  <td>{{ activityItem.adam_param_code }}</td>
-                </tr>
-              </tbody>
-            </v-table>
           </v-col>
         </v-row>
       </template>
@@ -252,21 +57,40 @@ import { onMounted, ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/stores/app'
-import BaseActivityOverview from './BaseActivityOverview.vue'
-import StatusChip from '@/components/tools/StatusChip.vue'
-import NCIConceptLink from '@/components/tools/NCIConceptLink.vue'
-import { defineAsyncComponent } from 'vue'
+import BaseActivityOverview from '@/components/library/BaseActivityOverview.vue'
+import ActivitySummary from '@/components/library/ActivitySummary.vue'
+import ActivityGroupings from '@/components/library/ActivityGroupings.vue'
+import ActivityInstancesTable from '@/components/library/ActivityInstancesTable.vue'
+import activities from '@/api/activities'
 
 const { t } = useI18n()
-const router = useRouter()
-const route = useRoute()
 const appStore = useAppStore()
-const overview = ref()
+const route = useRoute()
+const router = useRouter()
+
+const overview = ref(null)
+const versionDetail = ref(null)
+const paginationTotal = ref(0)
+const tableOptions = ref({
+  page: 1,
+  itemsPerPage: 10,
+  sortBy: [],
+  sortDesc: [],
+})
+
+import { defineAsyncComponent } from 'vue'
 
 const emit = defineEmits(['refresh'])
 const ActivitiesForm = defineAsyncComponent(
   () => import('@/components/library/ActivitiesForm.vue')
 )
+
+function refreshData() {
+  // Refresh the base activity overview
+  if (overview.value) {
+    overview.value.refreshData()
+  }
+}
 
 const historyHeaders = [
   { title: t('_global.library'), key: 'library_name' },
@@ -308,19 +132,87 @@ const historyHeaders = [
 ]
 
 function allVersions(item) {
-  return [...item.all_versions].sort().reverse()
+  if (!item || !item.all_versions) return []
+  return [...item.all_versions]
 }
 
+async function fetchVersionDetail(activityUid, version, options = {}) {
+  try {
+    const params = {
+      page_number: options.page || tableOptions.value.page,
+      page_size: options.itemsPerPage || tableOptions.value.itemsPerPage,
+      total_count: true,
+    }
+
+    // If explicitly called with a version, use getVersionDetail
+    if (version) {
+      const response = await activities.getVersionDetail(
+        activityUid,
+        version,
+        params
+      )
+      versionDetail.value = response.data
+      paginationTotal.value = response.data.total || 0
+    }
+    // If no version is provided but the overview has loaded
+    else if (overview.value?.itemOverview?.activity?.version) {
+      // Get the current version from overview
+      const currentVersion = overview.value.itemOverview.activity.version
+
+      // Use that version to fetch the details
+      const response = await activities.getVersionDetail(
+        activityUid,
+        currentVersion,
+        params
+      )
+      versionDetail.value = response.data
+      paginationTotal.value = response.data.total || 0
+    }
+  } catch (error) {
+    console.error('Error fetching version detail:', error)
+    versionDetail.value = null
+    paginationTotal.value = 0
+  }
+}
+
+// Special function for the ActivitySummary component
+function manualChangeVersion(version) {
+  // Use route.params.id directly which contains the current activity's ID
+  if (!route.params.id) {
+    console.error('Cannot change version: route.params.id is missing')
+    return
+  }
+
+  // Fetch version detail data
+  fetchVersionDetail(route.params.id, version)
+
+  // Clone the approach from the original but use route.params.id
+  const activityWithId = {
+    uid: route.params.id,
+  }
+
+  changeVersion(activityWithId, version)
+}
+
+// Original changeVersion function, unchanged from the original
 async function changeVersion(activity, version) {
-  await router.push({
-    name: 'ActivityOverview',
-    params: { id: activity.uid, version },
-  })
-  emit('refresh')
+  if (!activity || !activity.uid) return
+
+  try {
+    await router.push({
+      name: 'ActivityOverview',
+      params: { id: activity.uid, version },
+    })
+    emit('refresh')
+  } catch (error) {
+    console.error('Error navigating to new version:', error)
+  }
 }
 
 function transformItem(item) {
-  if (item.activity_groupings.length > 0) {
+  if (!item) return
+
+  if (item.activity_groupings && item.activity_groupings.length > 0) {
     const groups = []
     const subgroups = []
     for (const grouping of item.activity_groupings) {
@@ -359,11 +251,10 @@ onMounted(() => {
     true
   )
 
-  const activityName =
-    overview.value?.itemOverview?.activity?.name || t('_global.loading')
+  const activityName = overview.value?.itemOverview?.activity?.name || ''
 
   appStore.addBreadcrumbsLevel(
-    activityName,
+    activityName || 'Activity',
     {
       name: 'ActivityOverview',
       params: { id: route.params.id },
@@ -373,3 +264,108 @@ onMounted(() => {
   )
 })
 </script>
+
+<style scoped>
+.activity-overview-container {
+  width: 100%;
+  background-color: transparent;
+}
+
+/* Activity section styling */
+.activity-section {
+  margin: 0 !important;
+  width: 100%;
+}
+
+/* Adjusts the spacing for section headers */
+.section-header {
+  margin-top: 16px;
+  margin-bottom: 8px;
+  padding-left: 0;
+}
+
+/* Ensures tables have a clean design */
+:deep(.table-container) {
+  width: 100%;
+  margin-bottom: 24px;
+  border-radius: 4px;
+  background-color: transparent;
+  box-shadow: none;
+  overflow: hidden;
+}
+
+/* Remove card styling from tables */
+:deep(.table-container .v-card) {
+  width: 100% !important;
+  margin: 0 !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  background-color: transparent !important;
+}
+
+/* Consistent padding for card title */
+:deep(.table-container .v-card__title) {
+  padding-left: 16px;
+  padding-right: 16px;
+}
+
+/* Ensure that tables take full width */
+:deep(.activity-section .v-data-table),
+:deep(.activity-section .v-table),
+:deep(.activity-section table) {
+  width: 100% !important;
+  table-layout: fixed !important;
+}
+
+/* Set column widths based on header definitions */
+:deep(.activity-section th),
+:deep(.activity-section td) {
+  width: var(--width, 33%) !important;
+}
+
+/* Cell padding consistency */
+:deep(.table-container .v-data-table__td),
+:deep(.table-container .v-data-table__th) {
+  padding: 12px 16px !important;
+}
+
+/* Ensure card content takes full width */
+:deep(.activity-section .v-card-text) {
+  width: 100% !important;
+  padding: 0 !important;
+}
+
+/* Fix table wrapper to auto-height */
+:deep(.v-table__wrapper) {
+  height: auto !important;
+}
+
+/* Table styling overrides that penetrate component boundaries */
+.activity-overview-container :deep(.v-table),
+.activities-row :deep(.v-table) {
+  background: transparent !important;
+}
+
+.activity-overview-container :deep(.v-data-table__td),
+.activities-row :deep(.v-data-table__td) {
+  background-color: white !important;
+}
+
+.activity-overview-container :deep(.v-data-table__th),
+.activities-row :deep(.v-data-table__th) {
+  background-color: rgb(var(--v-theme-nnTrueBlue)) !important;
+}
+
+.activity-overview-container :deep(.v-data-table__tbody tr),
+.activities-row :deep(.v-data-table__tbody tr) {
+  background-color: white !important;
+}
+
+.activity-overview-container :deep(.v-card),
+.activity-overview-container :deep(.v-sheet),
+.activities-row :deep(.v-card),
+.activities-row :deep(.v-sheet) {
+  background-color: transparent !important;
+  box-shadow: none !important;
+}
+</style>

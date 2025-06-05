@@ -1,40 +1,40 @@
 @REQ_ID:1074255
-Feature: Studies - Study Population
+Feature: Studies - Define Study - Study Population
 
     Background: User is logged in and study has been selected
         Given The user is logged in
         And A test study is selected
 
-    Scenario: Opening the page
+    Scenario: [Navigation] Opening the page
         Given The '/studies' page is opened
         When The 'Study Population' submenu is clicked in the 'Define Study' section
         Then The current URL is '/studies/Study_000001/population'
 
-    Scenario: User must be able to see the page table with correct columns
+    Scenario: [Table][Columns][Names][Data] User must be able to see the page table with correct columns
         Given The '/studies/Study_000001/population' page is opened
         Then A table is visible with following headers
             | headers                      |
             | Study population information |
             | Selected values              |
             | Reason for missing           |
-        And The following rows are available in first column
-            | values                              |
-            | Therapeutic area                    |
-            | Study disease, condition or indicat |
-            | Stable disease minimum duration     |
-            | Healthy subject indicator           |
-            | Diagnosis group                     |
-            | Relapse criteria                    |
-            | Total number of subjects            |
-            | Rare disease indicator              |
-            | Sex of study participants           |
-            | Planned minimum age of study partic |
-            | Planned maximum age of study partic |
-            | Paediatric study indicator          |
-            | Paediatric investigation plan indic |
-            | Paediatric post-market study indica |
+        And The table display following predefined data
+            | row | column                        | value                               |
+            | 0   | Study population information  | Therapeutic area                    |
+            | 1   | Study population information  | Study disease, condition or indicat |
+            | 2   | Study population information  | Stable disease minimum duration     |
+            | 3   | Study population information  | Healthy subject indicator           |
+            | 4   | Study population information  | Diagnosis group                     |
+            | 5   | Study population information  | Relapse criteria                    |
+            | 6   | Study population information  | Total number of subjects            |
+            | 7   | Study population information  | Rare disease indicator              |
+            | 8   | Study population information  | Sex of study participants           |
+            | 9   | Study population information  | Planned minimum age of study partic |
+            | 10  | Study population information  | Planned maximum age of study partic |
+            | 11  | Study population information  | Paediatric study indicator          |
+            | 12  | Study population information  | Paediatric investigation plan indic |
+            | 13  | Study population information  | Paediatric post-market study indica |
 
-    Scenario: User must be able to edit the Study Population
+    Scenario: [Actions][Edit] User must be able to edit the Study Population
         Given The '/studies/Study_000001/population' page is opened
         When The population is edited
         Then The population data is reflected in the table
@@ -48,6 +48,7 @@ Feature: Studies - Study Population
     @manual_test
     Scenario: User must be able to read change history of selected element
         Given The '/studies/Study_000001/population' page is opened
+        And The 'Show history' option is clicked from the three dot menu list
         When The user clicks on History for particular element
         Then The user is presented with history of changes for that element
         And The history contains timestamps and usernames

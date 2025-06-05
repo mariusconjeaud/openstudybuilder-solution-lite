@@ -1,6 +1,6 @@
-from typing import Any, Callable, Iterable, Self
+from typing import Annotated, Any, Callable, Iterable, Self
 
-from pydantic import ConfigDict
+from pydantic import ConfigDict, Field
 
 from clinical_mdr_api.domains.concepts.unit_definitions.unit_definition import (
     UnitDefinitionAR,
@@ -19,8 +19,8 @@ class DurationJsonModel(BaseModel):
         title="Duration", description="Duration model to store ISO8601 duration."
     )
 
-    duration_value: int | None = None
-    duration_unit_code: UnitDefinitionSimpleModel | None = None
+    duration_value: Annotated[int | None, Field()] = None
+    duration_unit_code: Annotated[UnitDefinitionSimpleModel | None, Field()] = None
 
     @classmethod
     def from_duration_object(

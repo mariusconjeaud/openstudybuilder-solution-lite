@@ -34,6 +34,9 @@ from mdr_standards_import.scripts.utils import (
 
 CDISC_IMPORT_DATABASE = environ.get("NEO4J_CDISC_IMPORT_DATABASE", "cdisc")
 
+print(f"============================================")
+print(f"=====The database name is '{CDISC_IMPORT_DATABASE}'=")
+
 
 def wrapper_import_cdisc_data_models_into_cdisc_db(
     author_id: str, json_data_directory: str = ""

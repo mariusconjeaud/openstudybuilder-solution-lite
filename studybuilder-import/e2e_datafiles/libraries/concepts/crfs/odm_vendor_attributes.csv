@@ -1,2 +1,12 @@
 name,compatible_types,data_type,value_regex
 displayAsTable,FormDef|ItemGroupDef|ItemDef,string,^(Yes|No)$
+instruction,FormDef|ItemGroupDef|ItemDef|ItemGroupRef|ItemRef,string,
+sdv,FormDef|ItemGroupDef|ItemDef,string,
+locked,ItemGroupRef|ItemRef,string,
+version,FormDef|ItemGroupDef|ItemDef|Codelist|CodelistItem|MeasurementUnit,string,
+name,CodelistItem,string,
+OID,CodelistItem,string,
+sponsorInstruction,ItemDef,string,
+mandatory,CodelistItem,string,
+DomainColor,ItemGroupDef,string,
+allowMultipleChoice,Codelist,string,

@@ -46,7 +46,6 @@ Possible errors:
  
 {_generic_descriptions.DATA_EXPORTS_HEADER}
 """,
-    response_model=CustomPage[MedicinalProduct],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -109,7 +108,7 @@ def get_medicinal_products(
     total_count: Annotated[
         bool | None, Query(description=_generic_descriptions.TOTAL_COUNT)
     ] = False,
-):
+) -> CustomPage[MedicinalProduct]:
     medicinal_product_service = MedicinalProductService()
     results = medicinal_product_service.get_all_concepts(
         library=library_name,
@@ -145,7 +144,6 @@ Possible errors:
 
 {_generic_descriptions.DATA_EXPORTS_HEADER}
 """,
-    response_model=CustomPage[MedicinalProduct],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -206,7 +204,7 @@ def get_medicinal_products_versions(
     total_count: Annotated[
         bool | None, Query(description=_generic_descriptions.TOTAL_COUNT)
     ] = False,
-):
+) -> CustomPage[MedicinalProduct]:
     service = MedicinalProductService()
     results = service.get_all_concept_versions(
         library=library_name,
@@ -228,7 +226,6 @@ def get_medicinal_products_versions(
     summary="Returns possible values from the database for a given header",
     description="Allowed parameters include : field name for which to get possible values, "
     "search string to provide filtering for the field name, additional filters to apply on other fields",
-    response_model=list[Any],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -259,7 +256,7 @@ def get_distinct_values_for_header(
     page_size: Annotated[
         int | None, Query(description=_generic_descriptions.HEADER_PAGE_SIZE)
     ] = config.DEFAULT_HEADER_PAGE_SIZE,
-):
+) -> list[Any]:
     medicinal_product_service = MedicinalProductService()
     return medicinal_product_service.get_distinct_values_for_header(
         library=library_name,
@@ -279,7 +276,6 @@ def get_distinct_values_for_header(
 Possible errors:
  - Invalid uid, at_specified_date_time, status or version.
  """,
-    response_model=MedicinalProduct,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -288,7 +284,7 @@ Possible errors:
 )
 def get_activity(
     medicinal_product_uid: Annotated[str, MedicinalProductUID],
-):
+) -> MedicinalProduct:
     medicinal_product_service = MedicinalProductService()
     return medicinal_product_service.get_by_uid(uid=medicinal_product_uid)
 
@@ -311,7 +307,6 @@ State after:
 Possible errors:
  - Invalid uid.
     """,
-    response_model=list[MedicinalProduct],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -323,7 +318,7 @@ Possible errors:
 )
 def get_versions(
     medicinal_product_uid: Annotated[str, MedicinalProductUID],
-):
+) -> list[MedicinalProduct]:
     medicinal_product_service = MedicinalProductService()
     return medicinal_product_service.get_version_history(uid=medicinal_product_uid)
 
@@ -352,7 +347,6 @@ State after:
 Possible errors:
  - Invalid library or control terminology uid's specified.
 """,
-    response_model=MedicinalProduct,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -369,7 +363,7 @@ Possible errors:
 )
 def create(
     medicinal_product_create_input: Annotated[MedicinalProductCreateInput, Body()],
-):
+) -> MedicinalProduct:
     medicinal_product_service = MedicinalProductService()
     return medicinal_product_service.create(
         concept_input=medicinal_product_create_input
@@ -398,7 +392,6 @@ Possible errors:
  - Invalid uid.
 
 """,
-    response_model=MedicinalProduct,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -419,7 +412,7 @@ Possible errors:
 def edit(
     medicinal_product_uid: Annotated[str, MedicinalProductUID],
     medicinal_product_edit_input: Annotated[MedicinalProductEditInput, Body()],
-):
+) -> MedicinalProduct:
     medicinal_product_service = MedicinalProductService()
     return medicinal_product_service.edit_draft(
         uid=medicinal_product_uid, concept_edit_input=medicinal_product_edit_input
@@ -447,7 +440,6 @@ State after:
 Possible errors:
  - Invalid uid or status not Draft.
     """,
-    response_model=MedicinalProduct,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -466,7 +458,7 @@ Possible errors:
 )
 def approve(
     medicinal_product_uid: Annotated[str, MedicinalProductUID],
-):
+) -> MedicinalProduct:
     medicinal_product_service = MedicinalProductService()
     return medicinal_product_service.approve(uid=medicinal_product_uid)
 
@@ -489,7 +481,6 @@ State after:
 Possible errors:
  - Invalid uid or status not Final.
 """,
-    response_model=MedicinalProduct,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -509,7 +500,7 @@ Possible errors:
 )
 def create_new_version(
     medicinal_product_uid: Annotated[str, MedicinalProductUID],
-):
+) -> MedicinalProduct:
     medicinal_product_service = MedicinalProductService()
     return medicinal_product_service.create_new_version(uid=medicinal_product_uid)
 
@@ -535,7 +526,6 @@ State after:
 Possible errors:
  - Invalid uid or status not Final.
     """,
-    response_model=MedicinalProduct,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -553,7 +543,7 @@ Possible errors:
 )
 def inactivate(
     medicinal_product_uid: Annotated[str, MedicinalProductUID],
-):
+) -> MedicinalProduct:
     medicinal_product_service = MedicinalProductService()
     return medicinal_product_service.inactivate_final(uid=medicinal_product_uid)
 
@@ -579,7 +569,6 @@ State after:
 Possible errors:
  - Invalid uid or status not Retired.
     """,
-    response_model=MedicinalProduct,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -597,7 +586,7 @@ Possible errors:
 )
 def reactivate(
     medicinal_product_uid: Annotated[str, MedicinalProductUID],
-):
+) -> MedicinalProduct:
     medicinal_product_service = MedicinalProductService()
     return medicinal_product_service.reactivate_retired(uid=medicinal_product_uid)
 
@@ -621,7 +610,6 @@ State after:
 Possible errors:
  - Invalid uid or status not Draft or exist in version 1.0 or above (previously been approved) or not in an editable library.
     """,
-    response_model=None,
     status_code=204,
     responses={
         403: _generic_descriptions.ERROR_403,

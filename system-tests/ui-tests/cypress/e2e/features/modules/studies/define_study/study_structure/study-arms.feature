@@ -1,5 +1,5 @@
 @REQ_ID:1074254
-Feature: Studies - Study Arms
+Feature: Studies - Define Study - Study Structure - Study Arms
 
     As a system user,
     I want the system to ensure [Scenario],
@@ -9,13 +9,13 @@ Feature: Studies - Study Arms
         Given The user is logged in
         And A test study is selected
 
-    Scenario: User must be able to navigate to Study Arms page using side menu
+    Scenario: [Navigation] User must be able to navigate to Study Arms page using side menu
         Given The '/studies' page is opened
         When The 'Study Structure' submenu is clicked in the 'Define Study' section
         And The 'Study Arms' tab is selected
         Then The current URL is 'studies/Study_000001/study_structure/arms'
 
-    Scenario: User must be able to see the Study Arms table with options listed in this scenario
+    Scenario: [Table][Options] User must be able to see the Study Arms table with following options
         Given The '/studies/Study_000001/study_structure/arms' page is opened
         Then A table is visible with following options
             | options                                                         |
@@ -25,7 +25,8 @@ Feature: Studies - Study Arms
             | Show version history                                            |
             | Add select boxes to table to allow selection of rows for export |
 
-        # And The search field is available in the table - disabled for MVP
+    Scenario: [Table][Columns][Names] User must be able to see the Study Arms table with following columns
+        Given The '/studies/Study_000001/study_structure/arms' page is opened
         And A table is visible with following headers
             | headers             |
             | #                   |
@@ -41,20 +42,27 @@ Feature: Studies - Study Arms
             | Modified            |
             | Modified by         |
 
-    Scenario: User must be able to use column selection option
+    Scenario: [Online help] User must be able to read online help for the page
+        Given The '/studies/Study_000001/study_structure/arms' page is opened
+        And The online help button is clicked
+        Then The online help panel shows 'Study Arms' panel with content "Specification of the planned investigational treatment arms. An arm is a planned 'path' of interventions through the trial, e.g. arm AB is treatment A followed by treatment B."
+
+    Scenario: [Table][Columns][Visibility] User must be able to use column selection option
         Given The '/studies/Study_000001/study_structure/arms' page is opened
         When The first column is selected from Select Columns option for table with actions
         Then The table contain only selected column and actions column
     
-    Scenario: User must be able to add a new Study Arm
+    Scenario: [Create][Positive case] User must be able to add a new Study Arm
         Given The '/studies/Study_000001/study_structure/arms' page is opened
         When The new study arm form is filled and saved
         Then The new study arm is visible within the study arms table
 
-   Scenario: User must be able to edit an existing Study Arm
+   Scenario: [Actions][Edit] User must be able to edit an existing Study Arm
         Given The '/studies/Study_000001/study_structure/arms' page is opened
-        And The Study Arm exists within the study
-        When The arm data is edited and saved
+        And The Study Arm is found
+        When The 'Edit' option is clicked from the three dot menu list
+        And The arm data is edited and saved
+        And The Study Arm is found
         Then The study arm with updated values is visible within the study arms table
 
     # Scenario: Arm code default value must be populated from Randomisation Group
@@ -63,7 +71,7 @@ Feature: Studies - Study Arms
     #     And no value is specified for the field Arm Code
     #     Then The Arm code field is populated with value from Randomisation group field
 
-    Scenario Outline: User must not be able to provide value other than positive integer for Number of subjects
+    Scenario Outline: [Create][Mandatory fields] User must not be able to provide value other than positive integer for Number of subjects
         Given The '/studies/Study_000001/study_structure/arms' page is opened
         And The value '<number>' is entered for the field Number of subjects in the Study Arms form
         Then The validation appears under the field in the Study Arms form
@@ -74,7 +82,7 @@ Feature: Studies - Study Arms
             | 0      |
             | -10    |
 
-    Scenario: User must not be able to create a Study Arm without Arm Name and Arm Short Name provided in the Study Arms form
+    Scenario: [Create][Mandatory fields] User must not be able to create a Study Arm without Arm Name and Arm Short Name provided in the Study Arms form
         Given The '/studies/Study_000001/study_structure/arms' page is opened
         When The Arm name field is not populated
         And The Arm short name field is not populated
@@ -82,21 +90,21 @@ Feature: Studies - Study Arms
         Then The required field validation appears for the '2' empty fields
         And The form is not closed
 
-    Scenario: User must not be able to create two Arms within one study using the same Arm name
+    Scenario: [Create][Uniqueness check][Name] User must not be able to create two Arms within one study using the same Arm name
         Given The '/studies/Study_000001/study_structure/arms' page is opened
         When The Study Arm is created with given name
         And Another Study Arm is created with the same arm name
         Then The system displays the message "Value 'Test Arm Name' in field Arm name is not unique for the study"
         And The form is not closed
 
-    Scenario: User must not be able to create two Arms within one study using the same Arm short name
+    Scenario: [Create][Uniqueness check][Short Name] User must not be able to create two Arms within one study using the same Arm short name
         Given The '/studies/Study_000001/study_structure/arms' page is opened
         When The Study Arm is created with given short name
         And Another Study Arm is created with the same arm short name
         Then The system displays the message "Value 'Test Short Name' in field Arm short name is not unique for the study"
         And The form is not closed
 
-    Scenario: User must not be able to create two Arms within one study using the same Arm randomisation group
+    Scenario: [Create][Uniqueness check][Randomisation group] User must not be able to create two Arms within one study using the same Arm randomisation group
         Given The '/studies/Study_000001/study_structure/arms' page is opened
         When The Study Arm is created with given randomisation group
         And Another Study Arm is created with the same randomisation group
@@ -114,28 +122,28 @@ Feature: Studies - Study Arms
     #         | arm-short-name | 20     |
     # | arm-randomisation-group | 20     |  Comments from Mikkel: This requirement is under disucssion, will be updated later.
 
-    Scenario: User must not be able to use text longer than 20 characters for the Study Arm Arm Code field in the Study Arms form
+    Scenario: [Create][Mandatory fields] User must not be able to use text longer than 20 characters for the Study Arm Arm Code field in the Study Arms form
         Given The '/studies/Study_000001/study_structure/arms' page is opened
         When In the Study Arms form randomistaion group is provided
         And The study arm code is updated to exceed 20 characters
         Then The message 'This field must not exceed 20 characters' is displayed
 
-    Scenario: User must be able to export the data in CSV format
+    Scenario: [Export][CSV] User must be able to export the data in CSV format
         Given The '/studies/Study_000001/study_structure/arms' page is opened
         And The user exports the data in 'CSV' format
         Then The study specific 'StudyArms' file is downloaded in 'csv' format
 
-    Scenario: User must be able to export the data in JSON format
+    Scenario: [Export][Json] User must be able to export the data in JSON format
         Given The '/studies/Study_000001/study_structure/arms' page is opened
         And The user exports the data in 'JSON' format
         Then The study specific 'StudyArms' file is downloaded in 'json' format
 
-    Scenario: User must be able to export the data in XML format
+    Scenario: [Export][Xml] User must be able to export the data in XML format
         Given The '/studies/Study_000001/study_structure/arms' page is opened
         And The user exports the data in 'XML' format
         Then The study specific 'StudyArms' file is downloaded in 'xml' format
 
-    Scenario: User must be able to export the data in EXCEL format
+    Scenario: [Export][Excel] User must be able to export the data in EXCEL format
         Given The '/studies/Study_000001/study_structure/arms' page is opened
         And The user exports the data in 'EXCEL' format
         Then The study specific 'StudyArms' file is downloaded in 'xlsx' format
@@ -144,7 +152,8 @@ Feature: Studies - Study Arms
     Scenario: User must be presented with the warning message when deleting Study Arm
         Given The '/studies/Study_000001/study_structure/arms' page is opened
         And The study arm related to study branch arm and study design cell exists
-        When The delete button is clicked for the study arm related to those elements
+        And The Study Arm is found
+        When The 'Delete' option is clicked from the three dot menu list
         Then The warning message appears 'Removing this Study Arm will remove all related Study Cells and Branches'
 
     @manual_test
@@ -165,6 +174,7 @@ Feature: Studies - Study Arms
     @manual_test
     Scenario: User must be able to read change history of selected element
         Given The '/studies/Study_000001/study_structure/arms' page is opened
+        And The 'Show history' option is clicked from the three dot menu list
         When The user clicks on History for particular element
         Then The user is presented with history of changes for that element
         And The history contains timestamps and usernames

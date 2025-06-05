@@ -297,7 +297,8 @@ def drop_indexes_and_constraints(session):
         print(drop_statement)
         session.run(drop_statement)
 
-    for index in session.run("SHOW ALL INDEXES YIELD name"):
-        drop_statement = "DROP INDEX " + index[0]
-        print(drop_statement)
-        session.run(drop_statement)
+    for index in session.run("SHOW ALL INDEXES YIELD name, type"):
+        if index[1] != "LOOKUP":
+            drop_statement = "DROP INDEX " + index[0]
+            print(drop_statement)
+            session.run(drop_statement)

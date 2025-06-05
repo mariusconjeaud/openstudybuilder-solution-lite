@@ -393,7 +393,7 @@ class SponsorModelDatasetVariable(SponsorModelBase):
 
 
 class SponsorModelDatasetVariableInput(InputModel):
-    target_data_model_catalogue: str | None = "SDTMIG"
+    target_data_model_catalogue: Annotated[str | None, Field()] = "SDTMIG"
     dataset_uid: Annotated[
         str,
         Field(
@@ -416,7 +416,7 @@ class SponsorModelDatasetVariableInput(InputModel):
             min_length=1,
         ),
     ]
-    is_basic_std: bool | None = None
+    is_basic_std: Annotated[bool | None, Field()] = None
     implemented_parent_dataset_class: Annotated[
         str | None,
         Field(
@@ -431,38 +431,38 @@ class SponsorModelDatasetVariableInput(InputModel):
             json_schema_extra={"nullable": True},
         ),
     ]
-    label: str | None = None
-    order: int | None = None
-    variable_type: str | None = None
-    length: int | None = None
-    display_format: str | None = None
-    xml_datatype: str | None = None
-    xml_codelist: str | None = None
-    xml_codelist_multi: list[str] | None = None
-    core: str | None = None
-    origin: str | None = None
-    origin_type: str | None = None
-    origin_source: str | None = None
-    role: str | None = None
-    term: str | None = None
-    algorithm: str | None = None
-    qualifiers: list[str] | None = None
-    is_cdisc_std: bool | None = True
-    comment: str | None = None
-    ig_comment: str | None = None
-    class_table: str | None = None
-    class_column: str | None = None
-    map_var_flag: str | None = None
-    fixed_mapping: str | None = None
-    include_in_raw: bool | None = None
-    nn_internal: bool | None = None
-    value_lvl_where_cols: str | None = None
-    value_lvl_label_col: str | None = None
-    value_lvl_collect_ct_val: str | None = None
-    value_lvl_ct_codelist_id_col: str | None = None
-    enrich_build_order: int | None = None
-    enrich_rule: str | None = None
-    xml_codelist_values: bool | None = None
+    label: Annotated[str | None, Field()] = None
+    order: Annotated[int | None, Field()] = None
+    variable_type: Annotated[str | None, Field()] = None
+    length: Annotated[int | None, Field()] = None
+    display_format: Annotated[str | None, Field()] = None
+    xml_datatype: Annotated[str | None, Field()] = None
+    xml_codelist: Annotated[str | None, Field()] = None
+    xml_codelist_multi: Annotated[list[str] | None, Field()] = None
+    core: Annotated[str | None, Field()] = None
+    origin: Annotated[str | None, Field()] = None
+    origin_type: Annotated[str | None, Field()] = None
+    origin_source: Annotated[str | None, Field()] = None
+    role: Annotated[str | None, Field()] = None
+    term: Annotated[str | None, Field()] = None
+    algorithm: Annotated[str | None, Field()] = None
+    qualifiers: Annotated[list[str] | None, Field()] = None
+    is_cdisc_std: Annotated[bool | None, Field()] = True
+    comment: Annotated[str | None, Field()] = None
+    ig_comment: Annotated[str | None, Field()] = None
+    class_table: Annotated[str | None, Field()] = None
+    class_column: Annotated[str | None, Field()] = None
+    map_var_flag: Annotated[str | None, Field()] = None
+    fixed_mapping: Annotated[str | None, Field()] = None
+    include_in_raw: Annotated[bool | None, Field()] = None
+    nn_internal: Annotated[bool | None, Field()] = None
+    value_lvl_where_cols: Annotated[str | None, Field()] = None
+    value_lvl_label_col: Annotated[str | None, Field()] = None
+    value_lvl_collect_ct_val: Annotated[str | None, Field()] = None
+    value_lvl_ct_codelist_id_col: Annotated[str | None, Field()] = None
+    enrich_build_order: Annotated[int | None, Field()] = None
+    enrich_rule: Annotated[str | None, Field()] = None
+    xml_codelist_values: Annotated[bool | None, Field()] = None
     library_name: Annotated[
         str | None, Field(description="Defaults to CDISC", min_length=1)
     ] = "CDISC"

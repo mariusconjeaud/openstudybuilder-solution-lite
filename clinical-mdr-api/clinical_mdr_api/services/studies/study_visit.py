@@ -913,15 +913,6 @@ class StudyVisitService(StudySelectionMixin):
                                 f"Visit with Study Day '{ordered_visits[index+2].study_day_number}' from Epoch with order "
                                 f"'{ordered_visits[index+2].epoch.order}' '{ordered_visits[index+2].epoch.epoch.sponsor_preferred_name}'",
                             )
-                    elif (
-                        visit_vo.visit_class == VisitClass.SPECIAL_VISIT
-                        and visit.visit_class == VisitClass.SPECIAL_VISIT
-                        and visit_vo.epoch_uid == visit.epoch_uid
-                        and visit.uid != visit_vo.uid
-                    ):
-                        raise exceptions.AlreadyExistsException(
-                            msg=f"There already exists a Special Visit with UID '{visit.uid}' in the following epoch {visit.epoch_connector.epoch.sponsor_preferred_name}"
-                        )
                 self._validate_derived_properties(
                     visit_vo=visit_vo, ordered_visits=ordered_visits
                 )
@@ -929,7 +920,8 @@ class StudyVisitService(StudySelectionMixin):
                 ordered_visits = timeline.ordered_study_visits
                 for index, visit in enumerate(ordered_visits):
                     if (
-                        visit_vo.visit_class != VisitClass.SPECIAL_VISIT
+                        VisitClass.SPECIAL_VISIT
+                        not in (visit_vo.visit_class, visit.visit_class)
                         and visit.get_absolute_duration()
                         == visit_vo.get_absolute_duration()
                         and visit.uid != visit_vo.uid
@@ -1422,7 +1414,20 @@ class StudyVisitService(StudySelectionMixin):
 
     @db.transaction
     def delete(self, study_uid: str, study_visit_uid: str):
-        study_visit = self.repo.find_by_uid(study_uid=study_uid, uid=study_visit_uid)
+        study_visits = self.repo.find_all_visits_by_study_uid(study_uid)
+        timeline = TimelineAR(study_uid=study_uid, _visits=study_visits)
+        ordered_visits = timeline.ordered_study_visits
+        study_visit = None
+        for visit in ordered_visits:
+            if visit.uid == study_visit_uid:
+                study_visit = visit
+                break
+        else:
+            ValidationException.raise_if(
+                study_visit is None,
+                msg=f"StudyVisit with UID '{study_visit_uid}' doesn't exist in Study '{study_uid}'",
+            )
+
         BusinessLogicException.raise_if(
             study_visit.status != StudyStatus.DRAFT,
             msg="Cannot delete visits non DRAFT status",
@@ -1454,12 +1459,9 @@ class StudyVisitService(StudySelectionMixin):
             )
 
         study_visit.delete()
-
-        self.repo.save(study_visit)
-
-        study_visits = self.repo.find_all_visits_by_study_uid(study_uid)
-        timeline = TimelineAR(study_uid=study_uid, _visits=study_visits)
+        timeline.remove_visit(study_visit)
         ordered_visits = timeline.ordered_study_visits
+        self.repo.save(study_visit)
 
         # we want to synchronize numbers if we have more than one visit
         if len(ordered_visits) > 0:

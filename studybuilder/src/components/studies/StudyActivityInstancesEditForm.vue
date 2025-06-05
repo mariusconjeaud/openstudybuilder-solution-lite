@@ -35,7 +35,7 @@
           @filter="getAvailableInstances()"
         >
           <template #[`item.details`]="{ item }">
-            <div v-html="item.details" />
+            <div v-html="sanitizeHTML(item.details)" />
           </template>
           <template #[`item.state`]="{ item }">
             <div :class="'px-1 ' + getActivityStateBackground(item)">
@@ -58,6 +58,7 @@ import statuses from '@/constants/statuses'
 import activities from '@/api/activities'
 import _isEmpty from 'lodash/isEmpty'
 import study from '@/api/study'
+import { escapeHTML, sanitizeHTML } from '@/utils/sanitize'
 
 const eventBusEmit = inject('eventBusEmit')
 const { t } = useI18n()
@@ -148,17 +149,26 @@ async function getAvailableInstances() {
   }
 }
 function transformInstances(instances) {
-  for (let instance of instances) {
-    instance.details = `Class: ${instance.activity_instance_class.name} <br> Topic code: ${instance.topic_code} <br> ADaM param: ${instance.adam_param_code}`
-    for (let item of instance.activity_items) {
-      if (item.ct_terms.length > 0) {
-        instance.details += `<br> ${item.activity_item_class.name}: ${item.ct_terms.map((term) => term.name)}`
-      } else {
-        instance.details += `<br> ${item.activity_item_class.name}: ${item.unit_definitions.map((unit) => unit.name)}`
-      }
+  return instances.map((instance) => {
+    const lines = [
+      `Class: ${escapeHTML(instance.activity_instance_class.name)}`,
+      `Topic code: ${escapeHTML(instance.topic_code)}`,
+      `ADaM param: ${escapeHTML(instance.adam_param_code)}`,
+    ]
+
+    for (const item of instance.activity_items) {
+      const label = escapeHTML(item.activity_item_class.name)
+      const values =
+        item.ct_terms.length > 0
+          ? item.ct_terms.map((term) => escapeHTML(term.name))
+          : item.unit_definitions.map((unit) => escapeHTML(unit.name))
+
+      lines.push(`${label}: ${values.join(', ')}`)
     }
-  }
-  return instances
+
+    instance.details = lines.join('<br> ')
+    return instance
+  })
 }
 function getActivityStateBackground(activity) {
   if (activity.is_required_for_activity) {

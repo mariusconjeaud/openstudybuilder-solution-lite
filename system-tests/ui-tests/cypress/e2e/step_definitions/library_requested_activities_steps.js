@@ -13,13 +13,12 @@ When('The activity request form is filled with data', () => addActivity(false))
 When('The requested activity edition form is filled with data', () => editActivity(false))
 
 Then('The newly added activity request is visible in the the table', () => {  
-    cy.searchAndCheckResults(activityName)
+    cy.searchAndCheckPresence(activityName, true)
     cy.checkRowByIndex(0, 'Activity', activityName)
     cy.checkRowByIndex(0, 'Sentence case name', activityName.toLowerCase())
     cy.checkRowByIndex(0, 'Abbreviation', abbreviation)
     cy.checkRowByIndex(0, 'Definition', definition)
     cy.checkRowByIndex(0, 'Rationale for activity request', rationaleforrequest)
-    cy.checkStatusAndVersion('Draft', '0.1')
 })
 
 When('The Activity group, Activity name, Sentence case name and Rationale for activity request fields are not filled with data', () => {
@@ -66,18 +65,18 @@ When('The value for Sentence case name independent of case is not identical to t
 
 When('The activity request is edited', () => editActivity())
 
-Then('The requested activity is no longer available', () => cy.confirmItemNotAvailable(apiRequestedActivityName))
+Then('The requested activity is no longer available', () => cy.searchAndCheckPresence(apiRequestedActivityName, false))
 
 Then('The requested activity is not created', () => {
     cy.waitForTable()
-    cy.confirmItemNotAvailable(activityName)
+    cy.searchAndCheckPresence(activityName, false)
 })
 
-Then('The requested activity is not edited', () => cy.confirmItemNotAvailable(activityName))
+Then('The requested activity is not edited', () => cy.searchAndCheckPresence(activityName, false))
 
-Then('One activity request is found after performing full name search', () => cy.searchAndCheckResults(apiRequestedActivityName))
+Then('One activity request is found after performing full name search', () => cy.searchAndCheckPresence(apiRequestedActivityName, true))
 
-Then('Requested activity is found', () => cy.searchFor(apiRequestedActivityName, false))
+Then('Requested activity is found', () => cy.searchAndCheckPresence(apiRequestedActivityName, true))
 
 When('[API] Requested activity in status Draft exists', () => createRequestedActivityViaApi())
 

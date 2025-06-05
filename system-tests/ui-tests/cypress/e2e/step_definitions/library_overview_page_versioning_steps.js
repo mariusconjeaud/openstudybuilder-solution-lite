@@ -33,6 +33,25 @@ When('I make changes to the group, enter a reason for change and save', () => ed
 
 When('I make changes to the subgroup, enter a reason for change and save', () => edit('subgroup', subgroupName))
 
+Then('I verify that the activity version is {string} and status is {string}', (version, status) => {
+    cy.get('.version-select .v-select__selection-text').should('have.text', version)
+    cy.contains('.summary-label', 'Status').siblings('.summary-value').should('have.text', status)
+})
+
+Then('I verify that there is an instance linked with status {string} and version {string}', (status, version) => {
+    cy.reload()
+    cy.contains('.activity-section .section-header', 'Activity instances').parentsUntil('.activity-section').within(section => {
+        cy.wrap(section).contains('table tbody tr', instanceName).find('.mdi-chevron-right').click()
+        cy.wrap(section).contains('table tbody tr', version).should('contain', status)        
+    })
+})
+
+Then('I verify that linked Activity Instances table is empty', () => {
+    cy.contains('.activity-section .section-header', 'Activity instances').parentsUntil('.activity-section').within(section => {
+        cy.wrap(section).get('table tbody tr td').should('have.text', 'No activity instances found for this activity.')
+    })
+})
+
 Then('I verify that the version is {string} and status is {string}', (version, status) => {
     cy.contains('.v-col', 'Version').next().find('input').should('have.value', version)
     cy.contains('.v-col', 'Status').next().should('have.text', status)
@@ -46,8 +65,6 @@ When('I select the earlier version 2.0 from the version dropdown list', () => {
 
 Then('I verify that no {string} is linked', (type) => checkIfTableEmpty(type))
 
-Then('I verify that there is an instance with status {string} and version {string}', (status, version) => checkInstanceStatusAndVersion(status, version))
-
 Then('I verify that there is an activity with status {string} and version {string}', (status, version) => checkActivitytatusAndVersion(status, version))
 
 Then('I verify that there are activities with status {string} and version {string}', (status, version) => checkActivitiesStatusAndVersion(status, version))
@@ -57,7 +74,7 @@ Then('I verify that there is a group with status {string} and version {string}',
 Then('I verify that there is a subgroup with status {string} and version {string}', (status, version) => checkSubgroupStatusAndVersion(status, version))
 
 function goToOverviewPageAndVerify(name) {
-    cy.searchFor(name)
+    cy.searchAndCheckPresence(name, true)
     cy.get('table tbody tr td').contains(name).click()
     cy.get('.d-flex.page-title').should('contain.text', name);
     cy.get('button[role="tab"][value="html"]').contains('Overview');

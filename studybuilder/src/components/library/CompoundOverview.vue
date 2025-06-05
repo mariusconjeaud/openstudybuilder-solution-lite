@@ -71,7 +71,9 @@
           {{ $t('_global.definition') }}
         </v-col>
         <v-col cols="10">
-          <div v-html="getHtmlLineBreaks(compound.definition)" />
+          <div
+            v-html="sanitizeHTMLHandler(getHtmlLineBreaks(compound.definition))"
+          />
         </v-col>
       </v-row>
       <v-row>
@@ -279,6 +281,7 @@
 
 <script>
 import compoundAliases from '@/api/concepts/compoundAliases'
+import { escapeHTML, sanitizeHTML } from '@/utils/sanitize'
 
 export default {
   props: {
@@ -306,7 +309,10 @@ export default {
   },
   methods: {
     getHtmlLineBreaks(value) {
-      return value ? value.replaceAll('\n', '<br />') : ''
+      return value ? escapeHTML(value).replaceAll('\n', '<br />') : ''
+    },
+    sanitizeHTMLHandler(html) {
+      return sanitizeHTML(html)
     },
   },
 }

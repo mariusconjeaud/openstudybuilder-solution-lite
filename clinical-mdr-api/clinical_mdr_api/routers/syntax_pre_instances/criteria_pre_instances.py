@@ -1,7 +1,6 @@
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Body, Path, Query, Request, Response
-from fastapi import status as fast_api_status
+from fastapi import APIRouter, Body, Path, Query, Request
 from pydantic.types import Json
 
 from clinical_mdr_api.domains.versioned_object_aggregate import LibraryItemStatus
@@ -34,7 +33,6 @@ Service = CriteriaPreInstanceService
     dependencies=[rbac.LIBRARY_READ],
     summary="Returns all Syntax Pre-Instances in their latest/newest version.",
     description="Allowed parameters include : filter on fields, sort by field name with sort direction, pagination",
-    response_model=CustomPage[CriteriaPreInstance],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -106,7 +104,7 @@ def criteria_pre_instances(
     total_count: Annotated[
         bool | None, Query(description=_generic_descriptions.TOTAL_COUNT)
     ] = False,
-):
+) -> CustomPage[CriteriaPreInstance]:
     results = CriteriaPreInstanceService().get_all(
         status=status,
         return_study_count=True,
@@ -129,7 +127,6 @@ def criteria_pre_instances(
     summary="Returns possible values from the database for a given header",
     description="""Allowed parameters include : field name for which to get possible
     values, search string to provide filtering for the field name, additional filters to apply on other fields""",
-    response_model=list[Any],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -168,7 +165,7 @@ def get_distinct_values_for_header(
     page_size: Annotated[
         int | None, Query(description=_generic_descriptions.HEADER_PAGE_SIZE)
     ] = config.DEFAULT_HEADER_PAGE_SIZE,
-):
+) -> list[Any]:
     return Service().get_distinct_values_for_header(
         status=status,
         field_name=field_name,
@@ -182,7 +179,6 @@ def get_distinct_values_for_header(
 @router.get(
     "/audit-trail",
     dependencies=[rbac.LIBRARY_READ],
-    response_model=CustomPage[CriteriaPreInstance],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -214,7 +210,7 @@ def retrieve_audit_trail(
     total_count: Annotated[
         bool | None, Query(description=_generic_descriptions.TOTAL_COUNT)
     ] = False,
-):
+) -> CustomPage[CriteriaPreInstance]:
     results = Service().get_all(
         page_number=page_number,
         page_size=page_size,
@@ -235,7 +231,6 @@ def retrieve_audit_trail(
     summary="Returns the latest/newest version of a specific criteria pre-instance identified by 'criteria_pre_instance_uid'.",
     description="""If multiple request query parameters are used, then they need to
     match all at the same time (they are combined with the AND operation).""",
-    response_model=CriteriaPreInstance | None,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -247,7 +242,7 @@ def retrieve_audit_trail(
 )
 def get(
     criteria_pre_instance_uid: Annotated[str, CriteriaPreInstanceUID],
-):
+) -> CriteriaPreInstance:
     return CriteriaPreInstanceService().get_by_uid(uid=criteria_pre_instance_uid)
 
 
@@ -264,7 +259,6 @@ If the request succeeds:
 * The status will remain in 'Draft'.
 * The link to the criteria will remain as is.
 """,
-    response_model=CriteriaPreInstance,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -292,7 +286,7 @@ def edit(
             description="The new parameter terms for the Criteria Pre-Instance, its indexings and the change description.",
         ),
     ] = None,
-):
+) -> CriteriaPreInstance:
     return Service().edit_draft(
         uid=criteria_pre_instance_uid, template=criteria_pre_instance
     )
@@ -307,7 +301,6 @@ def edit(
     
     This is version independent : it won't trigger a status or a version change.
     """,
-    response_model=CriteriaPreInstance,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -341,7 +334,6 @@ The returned versions are ordered by `start_date` descending (newest entries fir
 
 {_generic_descriptions.DATA_EXPORTS_HEADER}
 """,
-    response_model=list[CriteriaPreInstanceVersion],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -400,7 +392,7 @@ The returned versions are ordered by `start_date` descending (newest entries fir
 def get_versions(
     request: Request,  # request is actually required by the allow_exports decorator
     criteria_pre_instance_uid: Annotated[str, CriteriaPreInstanceUID],
-):
+) -> list[CriteriaPreInstanceVersion]:
     return Service().get_version_history(criteria_pre_instance_uid)
 
 
@@ -420,7 +412,6 @@ If the request succeeds:
 Parameters in the 'name' property cannot be changed with this request.
 Only the surrounding text (excluding the parameters) can be changed.
 """,
-    response_model=CriteriaPreInstance,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -440,7 +431,7 @@ Only the surrounding text (excluding the parameters) can be changed.
 )
 def create_new_version(
     criteria_pre_instance_uid: Annotated[str, CriteriaPreInstanceUID],
-):
+) -> CriteriaPreInstance:
     return Service().create_new_version(uid=criteria_pre_instance_uid)
 
 
@@ -456,7 +447,6 @@ If the request succeeds:
 * The 'change_description' property will be set automatically. 
 * The 'version' property will remain the same as before.
     """,
-    response_model=CriteriaPreInstance,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -474,7 +464,7 @@ If the request succeeds:
 )
 def inactivate(
     criteria_pre_instance_uid: Annotated[str, CriteriaPreInstanceUID],
-):
+) -> CriteriaPreInstance:
     return CriteriaPreInstanceService().inactivate_final(criteria_pre_instance_uid)
 
 
@@ -490,7 +480,6 @@ If the request succeeds:
 * The 'change_description' property will be set automatically. 
 * The 'version' property will remain the same as before.
     """,
-    response_model=CriteriaPreInstance,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -508,7 +497,7 @@ If the request succeeds:
 )
 def reactivate(
     criteria_pre_instance_uid: Annotated[str, CriteriaPreInstanceUID],
-):
+) -> CriteriaPreInstance:
     return CriteriaPreInstanceService().reactivate_retired(criteria_pre_instance_uid)
 
 
@@ -520,7 +509,6 @@ def reactivate(
 * the Criteria Pre-Instance is in 'Draft' status and
 * the Criteria Pre-Instance has never been in 'Final' status and
 * the Criteria Pre-Instance belongs to a library that allows deleting (the 'is_editable' property of the library needs to be true).""",
-    response_model=None,
     status_code=204,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -543,7 +531,6 @@ def delete(
     criteria_pre_instance_uid: Annotated[str, CriteriaPreInstanceUID],
 ):
     Service().soft_delete(criteria_pre_instance_uid)
-    return Response(status_code=fast_api_status.HTTP_204_NO_CONTENT)
 
 
 @router.post(
@@ -559,7 +546,6 @@ If the request succeeds:
 * The 'change_description' property will be set automatically.
 * The 'version' property will be increased automatically to the next major version.
     """,
-    response_model=CriteriaPreInstance,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -578,5 +564,5 @@ If the request succeeds:
 )
 def approve(
     criteria_pre_instance_uid: Annotated[str, CriteriaPreInstanceUID],
-):
+) -> CriteriaPreInstance:
     return Service().approve(criteria_pre_instance_uid)

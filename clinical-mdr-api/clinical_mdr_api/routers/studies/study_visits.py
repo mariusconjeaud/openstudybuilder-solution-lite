@@ -2,11 +2,8 @@ from typing import Annotated, Any
 
 from fastapi import Body, Path, Query
 from pydantic.types import Json
-from starlette import status
 from starlette.requests import Request
-from starlette.responses import Response
 
-from clinical_mdr_api.models.study_selections.study_epoch import StudyEpoch
 from clinical_mdr_api.models.study_selections.study_visit import (
     AllowedTimeReferences,
     SimpleStudyVisit,
@@ -56,7 +53,6 @@ Possible errors:
 
 {_generic_descriptions.DATA_EXPORTS_HEADER}
 """,
-    response_model=CustomPage[StudyVisit],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -84,7 +80,6 @@ Possible errors:
             "visit_short_name",
             "study_day_label",
             "study_week_label",
-            "visit_window",
             "time_reference.sponsor_preferred_name",
             "time_value",
             "consecutive_visit_group",
@@ -104,6 +99,9 @@ Possible errors:
             "study_version",
             "uid",
             "study_epoch_uid",
+            "min_visit_window_value",
+            "max_visit_window_value",
+            "visit_window_unit_name",
         ],
         "formats": [
             "text/csv",
@@ -172,7 +170,6 @@ def get_all(
     summary="Returns possible values from the database for a given header",
     description="""Allowed parameters include : field name for which to get possible
     values, search string to provide filtering for the field name, additional filters to apply on other fields""",
-    response_model=list[Any],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -206,7 +203,7 @@ def get_distinct_values_for_header(
     study_value_version: Annotated[
         str | None, _generic_descriptions.STUDY_VALUE_VERSION_QUERY
     ] = None,
-):
+) -> list[Any]:
     return StudyVisitService(
         study_uid=study_uid, study_value_version=study_value_version
     ).get_distinct_values_for_header(
@@ -224,7 +221,6 @@ def get_distinct_values_for_header(
     "/studies/{study_uid}/study-visits-references",
     dependencies=[rbac.STUDY_READ],
     summary="Returns all study visit references for study currently selected",
-    response_model=list[StudyVisit],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -296,7 +292,6 @@ Possible errors:
  - Invalid study-uid.
  - Invalid timepointuid, visitnameuid, ... etc.
     """,
-    response_model=StudyVisit,
     response_model_exclude_unset=True,
     status_code=201,
     responses={
@@ -327,7 +322,6 @@ def post_new_visit_create(
     "/studies/{study_uid}/study-visits/preview",
     dependencies=[rbac.STUDY_WRITE],
     summary="Preview a study visit",
-    response_model=StudyVisit,
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -354,7 +348,6 @@ def post_preview_visit(
     "/studies/{study_uid}/study-visits/allowed-time-references",
     dependencies=[rbac.STUDY_READ],
     summary="Returns all allowed time references for a study visit",
-    response_model=list[AllowedTimeReferences],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -387,7 +380,6 @@ State after:
 Possible errors:
  - Invalid study-uid or study_visit_uid_description .
     """,
-    response_model=StudyVisit,
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -406,7 +398,7 @@ def patch_update_visit(
         StudyVisitEditInput,
         Body(description="Related parameters of the selection that shall be created."),
     ],
-) -> StudyEpoch:
+) -> StudyVisit:
     service = StudyVisitService(study_uid=study_uid)
     return service.edit(
         study_uid=study_uid,
@@ -436,7 +428,6 @@ State after:
 Possible errors:
  - Invalid study-uid or study_visit_uid.
     """,
-    response_model=None,
     status_code=204,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -454,7 +445,6 @@ def delete_study_visit(
 ):
     service = StudyVisitService(study_uid=study_uid)
     service.delete(study_uid=study_uid, study_visit_uid=study_visit_uid)
-    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.get(
@@ -475,7 +465,6 @@ State after:
 Possible errors:
  - Invalid study-uid.
      """,
-    response_model=list[StudyVisitVersion],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -513,7 +502,6 @@ State after:
 Possible errors:
  - Invalid study-uid.
      """,
-    response_model=list[StudyVisitVersion],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -553,7 +541,6 @@ State after:
 Possible errors:
  - Invalid study-uid or study_visit_uid.
     """,
-    response_model=StudyVisit,
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -564,7 +551,6 @@ Possible errors:
         },
     },
 )
-# pylint: disable=unused-argument
 def get_study_visit(
     study_uid: Annotated[str, studyUID],
     study_visit_uid: Annotated[str, study_visit_uid_description],
@@ -600,7 +586,6 @@ Possible errors:
  - Invalid study_uid.
  - Invalid study_epoch_uid.
     """,
-    response_model=int,
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -637,7 +622,6 @@ State after:
 Possible errors:
  - Invalid study-uid.
     """,
-    response_model=SimpleStudyVisit | None,
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -669,7 +653,6 @@ State after:
 Possible errors:
  - Invalid study-uid.
     """,
-    response_model=list[SimpleStudyVisit],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -702,7 +685,6 @@ State after:
 Possible errors:
  - Invalid study-uid.
     """,
-    response_model=list[SimpleStudyVisit],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -739,7 +721,6 @@ State after:
 Possible errors:
  - Invalid study-uid.
     """,
-    response_model=list[StudyVisit],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -782,7 +763,6 @@ State after:
 Possible errors:
  - Invalid study-uid.
     """,
-    response_model=None,
     status_code=204,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -800,4 +780,3 @@ def remove_consecutive_group(
     service.remove_visit_consecutive_group(
         study_uid=study_uid, consecutive_visit_group=consecutive_visit_group_name
     )
-    return Response(status_code=status.HTTP_204_NO_CONTENT)

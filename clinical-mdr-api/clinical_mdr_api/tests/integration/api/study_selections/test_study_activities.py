@@ -478,7 +478,6 @@ def test_update_library_items_of_relationship_to_value_nodes(api_client):
     StudyActivities connected to value nodes:
     - ActivityValue
     """
-
     response = api_client.get(
         f"/studies/{study.uid}/study-activities/{study_activity_uid}",
     )
@@ -491,6 +490,7 @@ def test_update_library_items_of_relationship_to_value_nodes(api_client):
     library_activity_grouping_group_uid = res["activity"]["activity_groupings"][0][
         "activity_group_uid"
     ]
+    initial_activity_groupings = res["activity"]["activity_groupings"]
     initial_activity_name = res["activity"]["name"]
 
     text_value_2_name = "2ndname"
@@ -501,13 +501,14 @@ def test_update_library_items_of_relationship_to_value_nodes(api_client):
     res = response.json()
     assert_response_status_code(response, 201)
 
-    response = api_client.patch(
+    response = api_client.put(
         f"/concepts/activities/activities/{library_activity_uid}",
         json={
             "change_description": "Change to have a new version of the activity so we can be sure that the study activity won't have any update",
             "name": text_value_2_name,
             "name_sentence_case": text_value_2_name,
             "guidance_text": "don't know",
+            "activity_groupings": initial_activity_groupings,
         },
     )
     res = response.json()
@@ -519,13 +520,15 @@ def test_update_library_items_of_relationship_to_value_nodes(api_client):
     res = response.json()
     assert_response_status_code(response, 201)
 
-    response = api_client.patch(
+    response = api_client.put(
         f"/concepts/activities/activity-sub-groups/{library_activity_grouping_subgroup_uid}",
         json={
             "change_description": "Change to have a new version of the activity so we can be sure that the study activity won't have any update",
             "name": text_value_2_name,
             "name_sentence_case": text_value_2_name,
             "guidance_text": "don't know",
+            "library_name": "Sponsor",
+            "activity_groups": [library_activity_grouping_group_uid],
         },
     )
     res = response.json()
@@ -575,13 +578,14 @@ def test_update_library_items_of_relationship_to_value_nodes(api_client):
     )
     res = response.json()
     assert_response_status_code(response, 201)
-    response = api_client.patch(
+    response = api_client.put(
         f"/concepts/activities/activities/{library_activity_uid}",
         json={
             "change_description": "returning the name to the initial one to continue with tests",
             "name": text_value_2_name,
             "name_sentence_case": text_value_2_name,
             "guidance_text": "don't know",
+            "activity_groupings": initial_activity_groupings,
         },
     )
     res = response.json()
@@ -598,13 +602,15 @@ def test_update_library_items_of_relationship_to_value_nodes(api_client):
     )
     res = response.json()
     assert_response_status_code(response, 201)
-    response = api_client.patch(
+    response = api_client.put(
         f"/concepts/activities/activity-sub-groups/{library_activity_grouping_subgroup_uid}",
         json={
             "change_description": "returning the name to the initial one to continue with tests",
             "name": text_value_2_name,
             "name_sentence_case": text_value_2_name,
             "guidance_text": "don't know",
+            "library_name": "Sponsor",
+            "activity_groups": [library_activity_grouping_group_uid],
         },
     )
     res = response.json()
@@ -967,16 +973,17 @@ def test_versioning_on_activity_activity_instruction_activity_schedule_as_group(
     )
     assert_response_status_code(response, 207)
 
-    before_visits = api_client.get(
+    # get data of prior version for comparation
+    expected_visits = api_client.get(
         f"/studies/{study_for_versioning.uid}/study-visits"
     ).json()
-    before_activities = api_client.get(
+    expected_activities = api_client.get(
         f"/studies/{study_for_versioning.uid}/study-activities"
     ).json()
-    before_activity_schedules = api_client.get(
+    expected_activity_schedules = api_client.get(
         f"/studies/{study_for_versioning.uid}/study-activity-schedules"
     ).json()
-    before_activity_instructions = api_client.get(
+    expected_activity_instructions = api_client.get(
         f"/studies/{study_for_versioning.uid}/study-activity-instructions"
     ).json()
 
@@ -1067,51 +1074,50 @@ def test_versioning_on_activity_activity_instruction_activity_schedule_as_group(
     res = response.json()
     assert len(res) == 0
 
-    # get all
-    for i, _ in enumerate(before_visits["items"]):
-        before_visits["items"][i]["study_version"] = mock.ANY
-        for j in before_visits["items"][i]:
-            if isinstance(before_visits["items"][i][j], dict):
-                before_visits["items"][i][j]["queried_effective_date"] = mock.ANY
-    assert (
-        before_visits
-        == api_client.get(
-            f"/studies/{study_for_versioning.uid}/study-visits?study_value_version=1"
-        ).json()
-    )
-    for i, _ in enumerate(before_activities["items"]):
-        before_activities["items"][i]["study_version"] = mock.ANY
-        for j in before_visits["items"][i]:
-            if isinstance(before_visits["items"][i][j], dict):
-                before_visits["items"][i][j]["queried_effective_date"] = mock.ANY
-    assert (
-        before_activities
-        == api_client.get(
-            f"/studies/{study_for_versioning.uid}/study-activities?study_value_version=1"
-        ).json()
-    )
-    for i, _ in enumerate(before_activity_schedules):
-        before_activity_schedules[i]["study_version"] = mock.ANY
-        for j in before_visits["items"][i]:
-            if isinstance(before_visits["items"][i][j], dict):
-                before_visits["items"][i][j]["queried_effective_date"] = mock.ANY
-    assert (
-        before_activity_schedules
-        == api_client.get(
-            f"/studies/{study_for_versioning.uid}/study-activity-schedules?study_value_version=1"
-        ).json()
-    )
-    for i, _ in enumerate(before_activity_instructions):
-        before_activity_instructions[i]["study_version"] = mock.ANY
-        for j in before_visits["items"][i]:
-            if isinstance(before_visits["items"][i][j], dict):
-                before_visits["items"][i][j]["queried_effective_date"] = mock.ANY
-    assert (
-        before_activity_instructions
-        == api_client.get(
-            f"/studies/{study_for_versioning.uid}/study-activity-instructions?study_value_version=1"
-        ).json()
-    )
+    # CHECK if data of locked study version was not changed
+    # compare study visits of locked study version
+    for i, _ in enumerate(expected_visits["items"]):
+        expected_visits["items"][i]["study_version"] = mock.ANY
+        for j in expected_visits["items"][i]:
+            if isinstance(expected_visits["items"][i][j], dict):
+                expected_visits["items"][i][j]["queried_effective_date"] = mock.ANY
+    current_visits = api_client.get(
+        f"/studies/{study_for_versioning.uid}/study-visits?study_value_version=1"
+    ).json()
+    assert current_visits == expected_visits
+
+    # compare study activities of locked study version
+    for i, _ in enumerate(expected_activities["items"]):
+        expected_activities["items"][i]["study_version"] = mock.ANY
+        for j in expected_visits["items"][i]:
+            if isinstance(expected_visits["items"][i][j], dict):
+                expected_visits["items"][i][j]["queried_effective_date"] = mock.ANY
+    current_activities = api_client.get(
+        f"/studies/{study_for_versioning.uid}/study-activities?study_value_version=1"
+    ).json()
+    assert current_activities == expected_activities
+
+    # compare study activity schedules of locked study version
+    for i, _ in enumerate(expected_activity_schedules):
+        expected_activity_schedules[i]["study_version"] = mock.ANY
+        for j in expected_visits["items"][i]:
+            if isinstance(expected_visits["items"][i][j], dict):
+                expected_visits["items"][i][j]["queried_effective_date"] = mock.ANY
+    current_activity_schedules = api_client.get(
+        f"/studies/{study_for_versioning.uid}/study-activity-schedules?study_value_version=1"
+    ).json()
+    assert current_activity_schedules == expected_activity_schedules
+
+    # compare study activity instructions of locked study version
+    for i, _ in enumerate(expected_activity_instructions):
+        expected_activity_instructions[i]["study_version"] = mock.ANY
+        for j in expected_visits["items"][i]:
+            if isinstance(expected_visits["items"][i][j], dict):
+                expected_visits["items"][i][j]["queried_effective_date"] = mock.ANY
+    current_activity_instructions = api_client.get(
+        f"/studies/{study_for_versioning.uid}/study-activity-instructions?study_value_version=1"
+    ).json()
+    assert current_activity_instructions == expected_activity_instructions
 
 
 def test_reusing_study_activity_group_study_activity_subgroup_study_soa_group(
@@ -2614,13 +2620,15 @@ def test_sync_study_activity_to_latest_version_of_activity(api_client):
     )
     assert_response_status_code(response, 201)
 
-    # patch library activity
+    # update library activity
     activity_name_after_change = "Activity V2"
-    response = api_client.patch(
+    response = api_client.put(
         f"/concepts/activities/activities/{activity_to_change.uid}",
         json={
             "name": activity_name_after_change,
             "name_sentence_case": activity_name_after_change.lower(),
+            "library_name": activity_to_change.library_name,
+            "change_description": "Updated name",
         },
     )
     assert_response_status_code(response, 200)

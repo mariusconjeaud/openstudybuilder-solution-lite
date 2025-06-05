@@ -1,6 +1,6 @@
 from collections import defaultdict
 from datetime import datetime
-from typing import Callable
+from typing import Callable, Iterable, Mapping
 
 from fastapi import status
 from neomodel import db
@@ -12,7 +12,9 @@ from clinical_mdr_api.domain_repositories.study_selections.study_activity_instan
     SelectionHistory,
     StudySelectionActivityInstanceRepository,
 )
-from clinical_mdr_api.domains.concepts.activities.activity import ActivityAR
+from clinical_mdr_api.domains.concepts.activities.activity_instance import (
+    ActivityInstanceAR,
+)
 from clinical_mdr_api.domains.study_selections.study_selection_activity_instance import (
     StudySelectionActivityInstanceAR,
     StudySelectionActivityInstanceVO,
@@ -25,7 +27,6 @@ from clinical_mdr_api.models.concepts.activities.activity import (
 from clinical_mdr_api.models.concepts.activities.activity_instance import (
     ActivityInstance,
 )
-from clinical_mdr_api.models.controlled_terminologies.ct_term_name import CTTermName
 from clinical_mdr_api.models.error import BatchErrorResponse
 from clinical_mdr_api.models.study_selections.study_selection import (
     StudySelectionActivityInstance,
@@ -34,7 +35,6 @@ from clinical_mdr_api.models.study_selections.study_selection import (
     StudySelectionActivityInstanceCreateInput,
     StudySelectionActivityInstanceEditInput,
 )
-from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.services._meta_repository import MetaRepository
 from clinical_mdr_api.services._utils import (
     ensure_transaction,
@@ -47,6 +47,7 @@ from clinical_mdr_api.services.studies.study_activity_selection_base import (
     StudyActivitySelectionBaseService,
 )
 from common import exceptions
+from common.auth.user import user
 
 
 class StudyActivityInstanceSelectionService(StudyActivitySelectionBaseService):
@@ -96,22 +97,22 @@ class StudyActivityInstanceSelectionService(StudyActivitySelectionBaseService):
         specific_selection: StudySelectionActivityInstanceVO,
         terms_at_specific_datetime: datetime | None = None,
         accepted_version: bool = False,
-        activity_for_study_activity_instances: (
-            list[ActivityForStudyActivity] | None
+        activity_versions_by_uid: (
+            Mapping[str, Iterable[ActivityForStudyActivity]] | None
         ) = None,
-        activity_instances_for_study_activity_instances: (
-            list[ActivityInstance] | None
+        activity_instance_versions_by_uid: (
+            Mapping[str, Iterable[ActivityInstance]] | None
         ) = None,
     ) -> StudySelectionActivityInstance:
         return StudySelectionActivityInstance.from_study_selection_activity_instance_vo_and_order(
             study_uid=study_uid,
-            specific_selection=specific_selection,
+            study_selection=specific_selection,
             get_activity_by_uid_callback=self._transform_latest_activity_model,
             get_activity_by_uid_version_callback=self._transform_activity_model,
             get_activity_instance_by_uid_callback=self._transform_latest_activity_instance_model,
             get_activity_instance_by_uid_version_callback=self._transform_activity_instance_model,
-            activity_for_study_activity_instances=activity_for_study_activity_instances,
-            activity_instances_for_study_activity_instances=activity_instances_for_study_activity_instances,
+            activity_versions_by_uid=activity_versions_by_uid,
+            activity_instance_versions_by_uid=activity_instance_versions_by_uid,
         )
 
     def _transform_all_to_response_model(
@@ -119,194 +120,67 @@ class StudyActivityInstanceSelectionService(StudyActivitySelectionBaseService):
         study_selection: StudySelectionActivityInstanceAR,
         study_value_version: str | None = None,
     ) -> list[StudySelectionActivityInstance]:
-        result = []
-
-        # ACTIVITIES
-        activities = []
-        activities = self._get_objects(
-            study_selection=study_selection, att_name="activity_uid"
+        activity_versions_by_uid: dict[str, list[ActivityForStudyActivity]] = (
+            defaultdict(list)
         )
 
-        activity_groups_uids = set()
-        activity_subgroups_uids = set()
-        for activity in activities:
-            for activity_grouping in activity.concept_vo.activity_groupings:
-                activity_subgroups_uids.add(activity_grouping.activity_subgroup_uid)
-                activity_groups_uids.add(activity_grouping.activity_group_uid)
-
-        activity_subgroups = [
-            ActivityHierarchySimpleModel.from_activity_ar_object(
-                activity_ar=activity_subgroup,
-            )
-            for activity_subgroup in (
-                self._repos.activity_subgroup_repository.get_all_optimized(
-                    filter_by={"uid": {"v": activity_subgroups_uids, "op": "eq"}},
-                    filter_operator=FilterOperator.OR,
-                )[0]
-                if activity_subgroups_uids
-                else []
-            )
-        ]
-
-        activity_groups = [
-            ActivityHierarchySimpleModel.from_activity_ar_object(
-                activity_ar=activity_group,
-            )
-            for activity_group in (
-                self._repos.activity_group_repository.get_all_optimized(
-                    filter_by={"uid": {"v": activity_groups_uids, "op": "eq"}},
-                    filter_operator=FilterOperator.OR,
-                )[0]
-                if activity_groups_uids
-                else []
-            )
-        ]
-
-        activity_for_study_activities: list[ActivityForStudyActivity] = []
-        for activity in activities:
-            activity_grouping_uids = set()
-            for activity_grouping in activity.concept_vo.activity_groupings:
-                activity_grouping_uids.add(activity_grouping.activity_subgroup_uid)
-                activity_grouping_uids.add(activity_grouping.activity_group_uid)
-            activity_for_study_activities.append(
+        for activity in self._get_linked_activities(
+            study_selection.study_objects_selection
+        ):
+            activity_versions_by_uid[activity.uid].append(
                 ActivityForStudyActivity.from_activity_ar_objects(
                     activity,
-                    activity_subgroup_ars=[
-                        activity_subgroup
-                        for activity_subgroup in activity_subgroups
-                        if activity_subgroup.uid in activity_grouping_uids
-                    ],
-                    activity_group_ars=[
-                        activity_group
-                        for activity_group in activity_groups
-                        if activity_group.uid in activity_grouping_uids
+                    activity_instance_ars=[
+                        ActivityHierarchySimpleModel(**item)
+                        for item in activity.concept_vo.activity_instances
                     ],
                 )
             )
 
-        # ACTIVITY INSTANCES
-        activity_instances = []
-        activity_instances = self._get_objects(
-            study_selection=study_selection, att_name="activity_instance_uid"
+        activity_instance_versions_by_uid: dict[str, list[ActivityInstance]] = (
+            defaultdict(list)
         )
 
-        activity_instance_subgroups_uids = set()
-        activity_instance_groups_uids = set()
-        for activity_instance in activity_instances:
-            for (
-                activity_instance_grouping
-            ) in activity_instance.concept_vo.activity_groupings:
-                activity_instance_subgroups_uids.add(
-                    activity_instance_grouping.activity_subgroup_uid
-                )
-                activity_instance_groups_uids.add(
-                    activity_instance_grouping.activity_group_uid
-                )
-
-        activity_instance_grouping_activity_subgroups = [
-            ActivityHierarchySimpleModel.from_activity_ar_object(
-                activity_ar=activity_instance_subgroup,
-            )
-            for activity_instance_subgroup in (
-                self._repos.activity_subgroup_repository.get_all_optimized(
-                    filter_by={
-                        "uid": {"v": activity_instance_subgroups_uids, "op": "eq"}
-                    },
-                    filter_operator=FilterOperator.OR,
-                )[0]
-                if activity_instance_subgroups_uids
-                else []
-            )
-        ]
-
-        activity_instance_grouping_activity_groups = [
-            ActivityHierarchySimpleModel.from_activity_ar_object(
-                activity_ar=activity_instance_group,
-            )
-            for activity_instance_group in (
-                self._repos.activity_group_repository.get_all_optimized(
-                    filter_by={"uid": {"v": activity_instance_groups_uids, "op": "eq"}},
-                    filter_operator=FilterOperator.OR,
-                )[0]
-                if activity_instance_groups_uids
-                else []
-            )
-        ]
-
-        activity_instances_for_study_activity_instances = []
-        for activity_instance in activity_instances:
-            activity_instance_grouping_uids = set()
-            for (
-                activity_instance_grouping
-            ) in activity_instance.concept_vo.activity_groupings:
-                activity_instance_grouping_uids.add(
-                    activity_instance_grouping.activity_subgroup_uid
-                )
-                activity_instance_grouping_uids.add(
-                    activity_instance_grouping.activity_group_uid
-                )
-                activity_instance_grouping_uids.add(
-                    activity_instance_grouping.activity_uid
-                )
-            activity_instances_for_study_activity_instances.append(
+        for activity_instance in self._get_linked_activity_instances(
+            study_selection.study_objects_selection
+        ):
+            activity_instance_versions_by_uid[activity_instance.uid].append(
                 ActivityInstance.from_activity_instance_ar_objects(
-                    activity_instance_ar=activity_instance,
-                    activity_ars=[
-                        activity_instance_grouping_activity
-                        for activity_instance_grouping_activity in activity_for_study_activities
-                        if activity_instance_grouping_activity.uid
-                        in activity_instance_grouping_uids
-                    ],
-                    activity_instance_subgroup_ars=[
-                        activity_instance_grouping_activity_subgroup
-                        for activity_instance_grouping_activity_subgroup in activity_instance_grouping_activity_subgroups
-                        if activity_instance_grouping_activity_subgroup.uid
-                        in activity_instance_grouping_uids
-                    ],
-                    activity_instance_group_ars=[
-                        activity_instance_grouping_activity_group
-                        for activity_instance_grouping_activity_group in activity_instance_grouping_activity_groups
-                        if activity_instance_grouping_activity_group.uid
-                        in activity_instance_grouping_uids
-                    ],
+                    activity_instance_ar=activity_instance
                 )
             )
-        for specific_selection in study_selection.study_objects_selection:
-            result.append(
-                self._transform_from_vo_to_response_model(
-                    study_uid=study_selection.study_uid,
-                    specific_selection=specific_selection,
-                    activity_for_study_activity_instances=activity_for_study_activities,
-                    activity_instances_for_study_activity_instances=activity_instances_for_study_activity_instances,
-                )
-            )
-        return result
 
-    def _get_objects(
-        self, study_selection: StudySelectionActivityInstanceAR, att_name: str
-    ) -> CTTermName | ActivityAR | None:
-        if att_name == "activity_uid":
-            version_specific_uids = defaultdict(set)
-            for selection in study_selection.study_objects_selection:
-                version_specific_uids[getattr(selection, att_name)].add(
-                    selection.activity_version
+        return [
+            self._transform_from_vo_to_response_model(
+                study_uid=specific_selection.study_uid,
+                specific_selection=specific_selection,
+                activity_versions_by_uid=activity_versions_by_uid,
+                activity_instance_versions_by_uid=activity_instance_versions_by_uid,
+            )
+            for order, specific_selection in enumerate(
+                study_selection.study_objects_selection, start=1
+            )
+        ]
+
+    def _get_linked_activity_instances(
+        self,
+        selection_vos: Iterable[StudySelectionActivityInstanceVO],
+    ) -> list[ActivityInstanceAR]:
+        version_specific_uids = defaultdict(set)
+
+        for selection_vo in selection_vos:
+            if selection_vo.activity_instance_uid:
+                version_specific_uids[selection_vo.activity_instance_uid].add(
+                    selection_vo.activity_instance_version
                 )
-                version_specific_uids[getattr(selection, att_name)].add("LATEST")
-            return self._repos.activity_repository.get_all_optimized(
-                version_specific_uids=version_specific_uids
-            )[0]
-        if att_name == "activity_instance_uid":
-            version_specific_uids = defaultdict(set)
-            for selection in study_selection.study_objects_selection:
-                if selection.activity_instance_uid:
-                    version_specific_uids[getattr(selection, att_name)].add(
-                        selection.activity_instance_version
-                    )
-                    version_specific_uids[getattr(selection, att_name)].add("LATEST")
-            return self._repos.activity_instance_repository.get_all_optimized(
-                version_specific_uids=version_specific_uids
-            )[0]
-        return None
+                version_specific_uids[selection_vo.activity_instance_uid].add("LATEST")
+
+        if not version_specific_uids:
+            return []
+
+        return self._repos.activity_instance_repository.get_all_optimized(
+            version_specific_uids=version_specific_uids
+        )[0]
 
     def _transform_history_to_response_model(
         self, study_selection_history: list[SelectionHistory], study_uid: str
@@ -509,7 +383,8 @@ class StudyActivityInstanceSelectionService(StudyActivitySelectionBaseService):
         return StudySelectionActivityInstanceVO.from_input_values(
             study_uid=current_object.study_uid,
             study_selection_uid=current_object.study_selection_uid,
-            author_id=self.author,
+            author_id=user().id(),
+            author_username=user().username,
             activity_instance_uid=(
                 activity_instance_ar.uid if activity_instance_ar else None
             ),

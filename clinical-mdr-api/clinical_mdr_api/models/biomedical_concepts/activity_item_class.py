@@ -314,20 +314,20 @@ class ActivityItemClass(VersionProperties):
 
 class ActivityInstanceClassRelInput(InputModel):
     uid: Annotated[str | None, Field(min_length=1)] = None
-    is_adam_param_specific_enabled: bool
-    mandatory: bool
+    is_adam_param_specific_enabled: Annotated[bool, Field()]
+    mandatory: Annotated[bool, Field()]
 
 
 class ActivityItemClassCreateInput(PostInputModel):
-    name: str
+    name: Annotated[str, Field()]
     definition: Annotated[str | None, Field(min_length=1)] = None
     nci_concept_id: Annotated[str | None, Field(min_length=1)] = None
     order: Annotated[int, Field(gt=0, lt=config.MAX_INT_NEO4J)]
-    activity_instance_classes: list[ActivityInstanceClassRelInput]
-    role_uid: str
-    data_type_uid: str
-    library_name: str
-    codelist_uids: list[str] = []
+    activity_instance_classes: Annotated[list[ActivityInstanceClassRelInput], Field()]
+    role_uid: Annotated[str, Field()]
+    data_type_uid: Annotated[str, Field()]
+    library_name: Annotated[str, Field()]
+    codelist_uids: list[str] = Field(default_factory=list)
 
 
 class ActivityItemClassEditInput(PatchInputModel):
@@ -335,16 +335,18 @@ class ActivityItemClassEditInput(PatchInputModel):
     definition: Annotated[str | None, Field(min_length=1)] = None
     nci_concept_id: Annotated[str | None, Field(min_length=1)] = None
     order: Annotated[int | None, Field(gt=0, lt=config.MAX_INT_NEO4J)] = None
-    activity_instance_classes: list[ActivityInstanceClassRelInput] = []
+    activity_instance_classes: list[ActivityInstanceClassRelInput] = Field(
+        default_factory=list
+    )
     library_name: Annotated[str | None, Field(min_length=1)] = None
     change_description: Annotated[str | None, Field(min_length=1)] = None
     role_uid: Annotated[str | None, Field(min_length=1)] = None
     data_type_uid: Annotated[str | None, Field(min_length=1)] = None
-    codelist_uids: list[str] = []
+    codelist_uids: list[str] = Field(default_factory=list)
 
 
 class ActivityItemClassMappingInput(PatchInputModel):
-    variable_class_uids: list[str] = []
+    variable_class_uids: list[str] = Field(default_factory=list)
 
 
 class ActivityItemClassVersion(ActivityItemClass):
@@ -352,4 +354,4 @@ class ActivityItemClassVersion(ActivityItemClass):
     Class for storing ActivityItemClass and calculation of differences
     """
 
-    changes: Annotated[list[str], Field(description=CHANGES_FIELD_DESC)] = []
+    changes: list[str] = Field(description=CHANGES_FIELD_DESC, default_factory=list)

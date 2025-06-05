@@ -3,11 +3,11 @@ const { Given, When, Then } = require('@badeball/cypress-cucumber-preprocessor')
 let defaultEndpointName, apiEndpointName, endpointSequenceNumber
 let indicationSelected, categorySelected, subCategorySelected
 
-When('The endpoint template is found', () => cy.searchFor(apiEndpointName))
+When('The endpoint template is found', () => cy.searchAndCheckPresence(apiEndpointName, true))
 
-When('The endpoint template is not created', () => cy.confirmItemNotAvailable(defaultEndpointName))
+When('The endpoint template is not created', () => cy.searchAndCheckPresence(defaultEndpointName, false))
 
-When('The endpoint template is not updated', () => cy.confirmItemNotAvailable(defaultEndpointName))
+When('The endpoint template is not updated', () => cy.searchAndCheckPresence(defaultEndpointName, false))
 
 Then('The endpoint template name is displayed in the table', () => cy.checkRowByIndex(0, 'Parent template', defaultEndpointName))
 
@@ -76,7 +76,7 @@ Then('The validation appears for Endpoint Category field', () => cy.checkIfValid
 
 Then('The validation appears for Endpoint Subcategory field', () => cy.checkIfValidationAppears('template-endpoint-sub-category'))
 
-Then('The endpoint is no longer available', () => cy.confirmItemNotAvailable(apiEndpointName))
+Then('The endpoint is no longer available', () => cy.searchAndCheckPresence(apiEndpointName, false))
 
 When('The indexing is updated for the Endpoint Template', () => {
   changeIndexes(false)
@@ -149,7 +149,7 @@ function saveAndSearch(name, action = 'add') {
   let message = action === 'add' ? 'Endpoint template added' : action
   cy.clickFormActionButton('save')
   cy.checkSnackbarMessage(message)
-  cy.searchFor(name)
+  cy.searchAndCheckPresence(name, true)
 }
 
 function changeIndexes(clear) {

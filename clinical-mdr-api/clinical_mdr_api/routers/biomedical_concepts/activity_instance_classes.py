@@ -2,7 +2,7 @@
 
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Body, Path, Query, Response, status
+from fastapi import APIRouter, Body, Path, Query
 from pydantic.types import Json
 from starlette.requests import Request
 
@@ -47,7 +47,6 @@ Possible errors:
 
 {_generic_descriptions.DATA_EXPORTS_HEADER}
 """,
-    response_model=CustomPage[ActivityInstanceClass],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -96,7 +95,7 @@ def get_activity_instance_classes(
     total_count: Annotated[
         bool | None, Query(description=_generic_descriptions.TOTAL_COUNT)
     ] = False,
-):
+) -> CustomPage[ActivityInstanceClass]:
     activity_instance_class_service = ActivityInstanceClassService()
     results = activity_instance_class_service.get_all_items(
         sort_by=sort_by,
@@ -117,7 +116,6 @@ def get_activity_instance_classes(
     summary="Returns possible values from the database for a given header",
     description="Allowed parameters include : field name for which to get possible values, "
     "search string to provide filtering for the field name, additional filters to apply on other fields",
-    response_model=list[Any],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -147,7 +145,7 @@ def get_distinct_values_for_header(
     page_size: Annotated[
         int | None, Query(description=_generic_descriptions.HEADER_PAGE_SIZE)
     ] = config.DEFAULT_HEADER_PAGE_SIZE,
-):
+) -> list[Any]:
     activity_instance_class_service = ActivityInstanceClassService()
     return activity_instance_class_service.get_distinct_values_for_header(
         field_name=field_name,
@@ -172,7 +170,6 @@ State after:
 Possible errors:
  - ActivityInstanceClass not found
  """,
-    response_model=ActivityInstanceClass,
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -182,7 +179,7 @@ Possible errors:
 )
 def get_activity(
     activity_instance_class_uid: Annotated[str, ActivityInstanceClassUID],
-):
+) -> ActivityInstanceClass:
     activity_instance_class_service = ActivityInstanceClassService()
     return activity_instance_class_service.get_by_uid(uid=activity_instance_class_uid)
 
@@ -205,7 +202,6 @@ State after:
 Possible errors:
  - Invalid uid.
     """,
-    response_model=list[ActivityInstanceClass],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -218,7 +214,7 @@ Possible errors:
 )
 def get_versions(
     activity_instance_class_uid: Annotated[str, ActivityInstanceClassUID],
-):
+) -> list[ActivityInstanceClass]:
     activity_instance_class_service = ActivityInstanceClassService()
     return activity_instance_class_service.get_version_history(
         uid=activity_instance_class_uid
@@ -247,7 +243,6 @@ State after:
 Possible errors:
  - Invalid library or control terminology uid's specified.
 """,
-    response_model=ActivityInstanceClass,
     response_model_exclude_unset=True,
     status_code=201,
     responses={
@@ -263,7 +258,7 @@ Possible errors:
 )
 def create(
     activity_instance_class_input: Annotated[ActivityInstanceClassInput, Body()],
-):
+) -> ActivityInstanceClass:
     activity_instance_class_service = ActivityInstanceClassService()
     return activity_instance_class_service.create(
         item_input=activity_instance_class_input
@@ -291,7 +286,6 @@ Possible errors:
  - Invalid uid.
 
 """,
-    response_model=ActivityInstanceClass,
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -313,7 +307,7 @@ Possible errors:
 def edit(
     activity_instance_class_uid: Annotated[str, ActivityInstanceClassUID],
     activity_instance_class_input: Annotated[ActivityInstanceClassInput, Body()],
-):
+) -> ActivityInstanceClass:
     activity_instance_class_service = ActivityInstanceClassService()
     return activity_instance_class_service.edit_draft(
         uid=activity_instance_class_uid, item_edit_input=activity_instance_class_input
@@ -338,7 +332,6 @@ State after:
 Possible errors:
  - Invalid uid or status not Final.
 """,
-    response_model=ActivityInstanceClass,
     response_model_exclude_unset=True,
     status_code=201,
     responses={
@@ -359,7 +352,7 @@ Possible errors:
 )
 def new_version(
     activity_instance_class_uid: Annotated[str, ActivityInstanceClassUID],
-):
+) -> ActivityInstanceClass:
     activity_instance_class_service = ActivityInstanceClassService()
     return activity_instance_class_service.create_new_version(
         uid=activity_instance_class_uid
@@ -387,7 +380,6 @@ State after:
 Possible errors:
  - Invalid uid or status not Draft.
     """,
-    response_model=ActivityInstanceClass,
     response_model_exclude_unset=True,
     status_code=201,
     responses={
@@ -405,7 +397,9 @@ Possible errors:
         },
     },
 )
-def approve(activity_instance_class_uid: Annotated[str, ActivityInstanceClassUID]):
+def approve(
+    activity_instance_class_uid: Annotated[str, ActivityInstanceClassUID],
+) -> ActivityInstanceClass:
     activity_instance_class_service = ActivityInstanceClassService()
     return activity_instance_class_service.approve(uid=activity_instance_class_uid)
 
@@ -431,7 +425,6 @@ State after:
 Possible errors:
  - Invalid uid or status not Final.
     """,
-    response_model=ActivityInstanceClass,
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -450,7 +443,7 @@ Possible errors:
 )
 def inactivate(
     activity_instance_class_uid: Annotated[str, ActivityInstanceClassUID],
-):
+) -> ActivityInstanceClass:
     activity_instance_class_service = ActivityInstanceClassService()
     return activity_instance_class_service.inactivate_final(
         uid=activity_instance_class_uid
@@ -478,7 +471,6 @@ State after:
 Possible errors:
  - Invalid uid or status not Retired.
     """,
-    response_model=ActivityInstanceClass,
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -497,7 +489,7 @@ Possible errors:
 )
 def reactivate(
     activity_instance_class_uid: Annotated[str, ActivityInstanceClassUID],
-):
+) -> ActivityInstanceClass:
     activity_instance_class_service = ActivityInstanceClassService()
     return activity_instance_class_service.reactivate_retired(
         uid=activity_instance_class_uid
@@ -523,7 +515,6 @@ State after:
 Possible errors:
  - Invalid uid or status not Draft or exist in version 1.0 or above (previously been approved) or not in an editable library.
     """,
-    response_model=None,
     status_code=204,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -548,4 +539,3 @@ def delete_activity_instance_class(
 ):
     activity_instance_class_service = ActivityInstanceClassService()
     activity_instance_class_service.soft_delete(uid=activity_instance_class_uid)
-    return Response(status_code=status.HTTP_204_NO_CONTENT)

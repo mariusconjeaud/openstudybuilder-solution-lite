@@ -342,13 +342,14 @@ async function updateVersion(item) {
   }
   const message =
     t('StudyObjectivesTable.update_version_alert') +
-    '</br>' +
+    '\n' +
     t('StudyObjectivesTable.previous_version') +
-    item.objective.name +
-    ' ' +
+    '\n' +
+    item.objective.name_plain +
+    '\n' +
     t('StudyObjectivesTable.new_version') +
-    ' ' +
-    item.latest_objective.name
+    '\n' +
+    item.latest_objective.name_plain
 
   if (await confirm.value.open(message, options)) {
     const args = {

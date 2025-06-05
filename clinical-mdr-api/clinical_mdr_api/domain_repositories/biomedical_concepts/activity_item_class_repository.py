@@ -96,6 +96,8 @@ class ActivityItemClassRepository(
                     ),
                     distinct=True,
                 ),
+                Collect(NodeNameResolver("related_codelist"), distinct=True),
+                Collect(RelationNameResolver("related_codelist"), distinct=True),
                 Collect(
                     NodeNameResolver("related_codelist__has_attributes_root"),
                     distinct=True,

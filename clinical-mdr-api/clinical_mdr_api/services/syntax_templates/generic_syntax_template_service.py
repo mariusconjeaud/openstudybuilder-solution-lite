@@ -19,6 +19,7 @@ from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryItemStatus,
     LibraryVO,
 )
+from clinical_mdr_api.repositories._utils import ComparisonOperator
 from clinical_mdr_api.services._utils import (
     fill_missing_values_in_base_model_from_reference_base_model,
     is_library_editable,
@@ -69,8 +70,14 @@ class GenericSyntaxTemplateService(GenericSyntaxService[_AggregateRootType], abc
             # Transaction that is performing initial save
             with db.transaction:
                 filter_by = {
-                    "name": {"v": [template.name]},
-                    "library.name": {"v": [template.library_name]},
+                    "name": {
+                        "v": [template.name],
+                        "op": ComparisonOperator.EQUALS.value,
+                    },
+                    "library.name": {
+                        "v": [template.library_name],
+                        "op": ComparisonOperator.EQUALS.value,
+                    },
                 }
                 if type_uid := getattr(template, "type_uid", None):
                     filter_by |= {"type.term_uid": {"v": [type_uid]}}

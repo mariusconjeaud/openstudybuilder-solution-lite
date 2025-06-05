@@ -1,5 +1,5 @@
 @REQ_ID:1074260 @pending_implementation
-Feature: Studies - Study Activity Instances
+Feature: Studies - Define Study - Study Data Specifications - Study Activity Instances
 
     As a system user,
     I want the system to ensure [Scenario],

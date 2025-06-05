@@ -30,8 +30,10 @@ class FootnoteTemplateWithType(FootnoteTemplateNameUidLibrary):
 
 
 class Footnote(BaseModel):
-    uid: str
-    name: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = None
+    uid: Annotated[str, Field()]
+    name: Annotated[
+        str | None, Field(json_schema_extra={"nullable": True, "format": "html"})
+    ] = None
     name_plain: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = (
         None
     )
@@ -63,7 +65,7 @@ class Footnote(BaseModel):
             },
         ),
     ] = None
-    template: FootnoteTemplateWithType | None = None
+    template: Annotated[FootnoteTemplateWithType | None, Field()] = None
     parameter_terms: Annotated[
         list[MultiTemplateParameterTerm] | None,
         Field(
@@ -71,7 +73,7 @@ class Footnote(BaseModel):
             json_schema_extra={"nullable": True},
         ),
     ] = None
-    library: Library | None = None
+    library: Annotated[Library | None, Field()] = None
     study_count: Annotated[
         int, Field(description="Count of studies referencing footnote")
     ] = 0
@@ -126,7 +128,7 @@ class Footnote(BaseModel):
 
 
 class FootnoteWithType(Footnote):
-    template: FootnoteTemplateWithType | None
+    template: Annotated[FootnoteTemplateWithType | None, Field()]
 
     @classmethod
     def from_footnote_ar(
@@ -191,12 +193,7 @@ class FootnoteVersion(FootnoteWithType):
     Class for storing Footnote and calculation of differences
     """
 
-    changes: Annotated[
-        list[str],
-        Field(
-            description=CHANGES_FIELD_DESC,
-        ),
-    ] = []
+    changes: list[str] = Field(description=CHANGES_FIELD_DESC, default_factory=list)
 
 
 class FootnoteEditInput(PatchInputModel):

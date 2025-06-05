@@ -64,13 +64,13 @@ def test_post_new_activity_group_name_already_exists(api_client):
     assert res["message"] == "Activity Group with Name 'name1' already exists."
 
 
-def test_patch_activity_group_name_already_exists(api_client):
+def test_update_activity_group_name_already_exists(api_client):
     data = {
         "name": "name1",
         "name_sentence_case": "name1",
         "change_description": "Test change",
     }
-    response = api_client.patch(
+    response = api_client.put(
         "/concepts/activities/activity-groups/activity_group_root2", json=data
     )
 

@@ -42,7 +42,7 @@
                 {{ getItemLabel(item) }}
               </v-expansion-panel-title>
               <v-expansion-panel-text>
-                <div v-html="getItemHelp(item)" />
+                <div v-html="sanitizeHTML(getItemHelp(item))" />
               </v-expansion-panel-text>
             </v-expansion-panel>
           </v-expansion-panels>
@@ -55,6 +55,7 @@
 <script setup>
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { sanitizeHTML } from '@/utils/sanitize'
 
 const props = defineProps({
   items: {

@@ -446,7 +446,7 @@ class CTTermGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType],
 
     def find_by_uids(
         self,
-        term_uids: list,
+        term_uids: list[str],
         status: LibraryItemStatus | None = None,
         at_specific_date: datetime | None = None,
         include_retired_versions: bool = False,

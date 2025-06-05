@@ -40,7 +40,6 @@ State after:
 
 {_generic_descriptions.DATA_EXPORTS_HEADER}
 """,
-    response_model=CustomPage[DatasetVariable],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -106,7 +105,7 @@ def get_dataset_variables(
     total_count: Annotated[
         bool | None, Query(description=_generic_descriptions.TOTAL_COUNT)
     ] = False,
-):
+) -> CustomPage[DatasetVariable]:
     dataset_variable_service = DatasetVariableService()
     results = dataset_variable_service.get_all_items(
         sort_by=sort_by,
@@ -130,7 +129,6 @@ def get_dataset_variables(
     summary="Returns possible values from the database for a given header",
     description="Allowed parameters include : field name for which to get possible values, "
     "search string to provide filtering for the field name, additional filters to apply on other fields",
-    response_model=list[Any],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -172,7 +170,7 @@ def get_distinct_values_for_header(
     page_size: Annotated[
         int | None, Query(description=_generic_descriptions.HEADER_PAGE_SIZE)
     ] = config.DEFAULT_HEADER_PAGE_SIZE,
-):
+) -> list[Any]:
     dataset_variable_service = DatasetVariableService()
     return dataset_variable_service.get_distinct_values_for_header(
         data_model_ig_name=data_model_ig_name,
@@ -201,7 +199,6 @@ State after:
 Possible errors:
  - Invalid uid.
  """,
-    response_model=DatasetVariable,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -222,7 +219,7 @@ def get_dataset_variable(
             description="The version of the selected Data model IG, for instance '1.4'",
         ),
     ],
-):
+) -> DatasetVariable:
     dataset_variable_service = DatasetVariableService()
     return dataset_variable_service.get_by_uid(
         uid=dataset_variable_uid,

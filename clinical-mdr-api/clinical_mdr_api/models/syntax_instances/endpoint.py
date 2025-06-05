@@ -20,8 +20,10 @@ from clinical_mdr_api.models.utils import BaseModel, PatchInputModel, PostInputM
 
 
 class Endpoint(BaseModel):
-    uid: str
-    name: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = None
+    uid: Annotated[str, Field()]
+    name: Annotated[
+        str | None, Field(json_schema_extra={"nullable": True, "format": "html"})
+    ] = None
     name_plain: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = (
         None
     )
@@ -51,7 +53,7 @@ class Endpoint(BaseModel):
         ),
     ] = None
 
-    template: EndpointTemplateNameUidLibrary | None = None
+    template: Annotated[EndpointTemplateNameUidLibrary | None, Field()] = None
     parameter_terms: Annotated[
         list[MultiTemplateParameterTerm] | None,
         Field(
@@ -115,12 +117,7 @@ class Endpoint(BaseModel):
 
 
 class EndpointVersion(Endpoint):
-    changes: Annotated[
-        list[str],
-        Field(
-            description=CHANGES_FIELD_DESC,
-        ),
-    ] = []
+    changes: list[str] = Field(description=CHANGES_FIELD_DESC, default_factory=list)
 
 
 class EndpointEditInput(PatchInputModel):

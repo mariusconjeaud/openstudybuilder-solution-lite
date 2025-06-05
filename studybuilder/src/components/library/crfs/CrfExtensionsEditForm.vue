@@ -13,13 +13,15 @@
           :headers="headers"
           item-value="uid"
           :items-length="total"
-          :items="elements"
+          :items="tableElements"
           table-height="auto"
           hide-default-switches
+          hide-search-field
           light
           disable-filtering
           hide-export-button
           :modifiable-table="false"
+          @filter="paginateResults"
         >
           <template #item="{ item, internalItem, toggleExpand, isExpanded }">
             <tr :class="item.type ? '' : 'elementBackground'">
@@ -39,13 +41,8 @@
                     class="mr-n2"
                     @click="toggleExpand(internalItem)"
                   />
-                  <v-btn
-                    v-else
-                    icon
-                    variant="text" 
-                    class="mr-n2"
-                  />
-                  <ActionsMenu :actions="actions" :item="item"/>
+                  <v-btn v-else icon variant="text" class="mr-n2" />
+                  <ActionsMenu :actions="actions" :item="item" />
                   <div class="mt-3 ml-4">
                     {{
                       item.type
@@ -255,6 +252,7 @@ export default {
       elementToEdit: {},
       parentType: '',
       parentUid: '',
+      tableElements: [],
     }
   },
   computed: {
@@ -274,6 +272,11 @@ export default {
     this.getNamespaceData()
   },
   methods: {
+    paginateResults(filters, options) {
+      const firstIndex = (options.page - 1) * options.itemsPerPage
+      const lastIndex = options.page * options.itemsPerPage
+      this.tableElements = this.elements.slice(firstIndex, lastIndex)
+    },
     approve(item) {
       const type =
         item.type === 'attr' ? 'vendor-attributes' : 'vendor-elements'
@@ -396,6 +399,7 @@ export default {
           return el != null
         })
         this.elements = [...this.elements, ...this.attributes]
+        this.total = this.elements.length
       }
     },
   },

@@ -13,7 +13,6 @@ from usdm_model import Encounter as USDMEncounter
 from usdm_model import Endpoint as USDMEndpoint
 from usdm_model import Indication as USDMIndication
 from usdm_model import Objective as USDMObjective
-from usdm_model import Organization as USDMOrganization
 from usdm_model import Procedure as USDMProcedure
 from usdm_model import Quantity as USDMQuantity
 from usdm_model import Range as USDMRange
@@ -48,6 +47,7 @@ DDF_STUDY_POPULATION_DURATION_UNIT_DAYS = "C25301"
 DDF_STUDY_POPULATION_DURATION_UNIT_WEEKS = "C29844"
 DDF_STUDY_POPULATION_DURATION_UNIT_MONTHS = "C29846"
 DDF_STUDY_POPULATION_DURATION_UNIT_YEARS = "C29848"
+DDF_STUDY_POPULATION_ENROLLMENT_NUMBER_UNIT = "C44278"
 DDF_STUDY_PROTOCOL_STATUS_DRAFT = "C85255"
 DDF_STUDY_PROTOCOL_STATUS_FINAL = "C25508"
 DDF_STUDY_POPULATION_SEX_BOTH = "C49636"
@@ -198,6 +198,11 @@ class USDMMapper:
     def get_ddf_study_population_duration_unit_years(self):
         return self.get_ct_package_term_as_usdm_code(
             DDF_STUDY_POPULATION_DURATION_UNIT_YEARS
+        )
+
+    def get_ddf_study_population_enrollment_number_unit(self):
+        return self.get_ct_package_term_as_usdm_code(
+            DDF_STUDY_POPULATION_ENROLLMENT_NUMBER_UNIT
         )
 
     def get_ddf_study_protocol_status_draft(self):
@@ -541,23 +546,35 @@ class USDMMapper:
         osb_identification_metadata = getattr(
             getattr(study, "current_metadata", None), "identification_metadata", None
         )
-        osb_study_id = getattr(osb_identification_metadata, "study_id", "")
+        osb_registry_identifiers = getattr(
+            osb_identification_metadata, "registry_identifiers", []
+        )
 
-        organization = USDMOrganization(
-            id=self._id_manager.get_id(USDMOrganization.__name__),
-            name="NOVO NORDISK",
-            identifier="NOVO NORDISK",
-            identifierScheme="OpenStudyBuilder",
-            label="Novo Nordisk A/S is a Danish multinational pharmaceutical company headquartered in Bagsværd with "
-            "production facilities in nine countries and affiliates or offices in five countries.",
-            type=self.get_void_usdm_code(),
-        )
-        study_identifier = USDMStudyIdentifier(
-            id=self._id_manager.get_id(USDMStudyIdentifier.__name__),
-            scopeId=organization.id,
-            text=osb_study_id,
-        )
-        return [study_identifier]
+        selected_registry_identifiers = [
+            "civ_id_sin_number",
+            "ct_gov_id",
+            "eudamed_srn_number",
+            "eudract_id",
+            "eu_trial_number",
+            "investigational_device_exemption_ide_number",
+            "investigational_new_drug_application_number_ind",
+            "japanese_trial_registry_id_japic",
+            "japanese_trial_registry_number_jrct",
+            "national_clinical_trial_number",
+            "national_medical_products_administration_nmpa_number",
+            "universal_trial_number_utn",
+        ]
+
+        return [
+            USDMStudyIdentifier(
+                id=self._id_manager.get_id(USDMStudyIdentifier.__name__),
+                text=osb_curr_id,
+                scopeId=selected_id,
+                instanceType="StudyIdentifier",
+            )
+            for selected_id in selected_registry_identifiers
+            if (osb_curr_id := getattr(osb_registry_identifiers, selected_id, None))
+        ]
 
     def _get_study_indications(self, study: OSBStudy):
         osb_study_population = getattr(
@@ -601,12 +618,6 @@ class USDMMapper:
                 osb_study_intervention.intervention_model_code.term_uid
             )
             usdm_study_intervention_codes.append(intervention_model_code)
-
-        if osb_study_intervention.intervention_type_code is not None:
-            intervention_type_code = self.get_ct_package_term_as_usdm_code(
-                osb_study_intervention.intervention_type_code.term_uid
-            )
-            usdm_study_intervention_codes.append(intervention_type_code)
 
         if osb_study_intervention.control_type_code is not None:
             intervention_control_type_code = self.get_ct_package_term_as_usdm_code(
@@ -652,8 +663,14 @@ class USDMMapper:
                 ),
                 codes=usdm_study_intervention_codes,
                 role=self.get_void_usdm_code(),
-                type=self.get_void_usdm_code(),
-                productDesignation=self.get_void_usdm_code(),
+                type=(
+                    self.get_ct_package_term_as_usdm_code(
+                        osb_study_intervention.intervention_type_code.term_uid
+                    )
+                    if osb_study_intervention.intervention_type_code is not None
+                    else self.get_void_usdm_code()
+                ),
+                instanceType="StudyIntervention",
             )
         ]
 
@@ -814,22 +831,27 @@ class USDMMapper:
                     isApproximate=False,
                     instanceType="Range",
                 )
-        planned_enrollment_number = None
+        planned_enrollment_number_quantity = None
         if osb_study_population.number_of_expected_subjects is not None:
-            planned_enrollment_number = USDMRange(
-                id=self._id_manager.get_id(USDMRange.__name__),
-                minValue=osb_study_population.number_of_expected_subjects,
-                maxValue=osb_study_population.number_of_expected_subjects,
-                unit=self.get_void_usdm_code(),
-                isApproximate=False,
-                instanceType="Range",
+            planned_enrollment_number_quantity = USDMQuantity(
+                id=self._id_manager.get_id(USDMQuantity.__name__),
+                value=osb_study_population.number_of_expected_subjects,
+                unit=USDMAliasCode(
+                    id=self._id_manager.get_id(USDMAliasCode.__name__),
+                    standardCode=(
+                        self.get_ddf_study_population_enrollment_number_unit()
+                        or self.get_void_usdm_code()
+                    ),
+                    instanceType="AliasCode",
+                ),
+                instanceType="Quantity",
             )
 
         population = USDMStudyDesignPopulation(
             id=self._id_manager.get_id(USDMStudyDesignPopulation.__name__),
             name="Study Design Population",
             plannedSex=[planned_sex_usdm_code],
-            plannedEnrollmentNumber=planned_enrollment_number,
+            plannedEnrollmentNumberQuantity=planned_enrollment_number_quantity,
             plannedAge=planned_age,
             includesHealthySubjects=(
                 osb_study_population.healthy_subject_indicator

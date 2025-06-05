@@ -5,7 +5,7 @@ Feature: Administration - System Announcement
   Background: User is logged in
     Given The user is logged in with all.in profile
 
-  Scenario: User must be able to choose type of announcement
+  Scenario: [Announcement][Type] User must be able to choose type of announcement
     Given The '/administration/announcements' page is opened
     And the administration annoucement page is initialized
     And the user chooses the type of announcement as Informative
@@ -15,7 +15,7 @@ Feature: Administration - System Announcement
     When the user chooses the type of announcement as Error
     Then the preview box at the bottom should change color to red
 
-  Scenario: User must be able to fill in announcement details
+  Scenario: [Announcement][Create] User must be able to fill in announcement details
     Given The '/administration/announcements' page is opened
     And Toggle on announcement and verify visibility
     When the user fills in the announcement title
@@ -25,7 +25,7 @@ Feature: Administration - System Announcement
     And presses CTRL-R to reload the page
     Then the announcement box should be shown
 
-  Scenario: User must be able to remove the notification
+  Scenario: [Announcement][Delete] User must be able to remove the notification
     Given The '/administration/announcements' page is opened
     And Toggle on announcement and verify visibility
     When The homepage is opened
@@ -38,7 +38,7 @@ Feature: Administration - System Announcement
     When presses CTRL-R to reload the page
     Then the announcement box should be shown
 
-  Scenario: Toggle off announcement and verify visibility
+  Scenario: [Announcement][Visibility] Toggle off announcement and verify visibility
     Given The '/administration/announcements' page is opened
     When the user toggles Show announcement off
     And the user presses SAVE CHANGES

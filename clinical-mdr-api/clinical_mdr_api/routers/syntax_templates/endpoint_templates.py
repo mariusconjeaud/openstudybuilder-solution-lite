@@ -1,7 +1,6 @@
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Body, Path, Query, Request, Response
-from fastapi import status as fast_api_status
+from fastapi import APIRouter, Body, Path, Query, Request
 from pydantic.types import Json
 
 from clinical_mdr_api.domains.versioned_object_aggregate import LibraryItemStatus
@@ -71,7 +70,6 @@ Allowed parameters include : filter on fields, sort by field name with sort dire
 
 {_generic_descriptions.DATA_EXPORTS_HEADER}
 """,
-    response_model=CustomPage[EndpointTemplate],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -173,7 +171,7 @@ def get_endpoint_templates(
     total_count: Annotated[
         bool | None, Query(description=_generic_descriptions.TOTAL_COUNT)
     ] = False,
-):
+) -> CustomPage[EndpointTemplate]:
     results = Service().get_all(
         status=status,
         return_study_count=True,
@@ -196,7 +194,6 @@ def get_endpoint_templates(
     summary="Returns possible values from the database for a given header",
     description="""Allowed parameters include : field name for which to get possible
     values, search string to provide filtering for the field name, additional filters to apply on other fields""",
-    response_model=list[Any],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -237,7 +234,7 @@ def get_distinct_values_for_header(
     page_size: Annotated[
         int | None, Query(description=_generic_descriptions.HEADER_PAGE_SIZE)
     ] = config.DEFAULT_HEADER_PAGE_SIZE,
-):
+) -> list[Any]:
     return Service().get_distinct_values_for_header(
         status=status,
         field_name=field_name,
@@ -251,7 +248,6 @@ def get_distinct_values_for_header(
 @router.get(
     "/audit-trail",
     dependencies=[rbac.LIBRARY_READ],
-    response_model=CustomPage[EndpointTemplate],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -283,7 +279,7 @@ def retrieve_audit_trail(
     total_count: Annotated[
         bool | None, Query(description=_generic_descriptions.TOTAL_COUNT)
     ] = False,
-):
+) -> CustomPage[EndpointTemplate]:
     results = Service().get_all(
         page_number=page_number,
         page_size=page_size,
@@ -304,7 +300,6 @@ def retrieve_audit_trail(
     summary="Returns the latest/newest version of a specific endpoint template identified by 'endpoint_template_uid'.",
     description="""If multiple request query parameters are used, then they need to
     match all at the same time (they are combined with the AND operation).""",
-    response_model=EndpointTemplateWithCount | None,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -314,7 +309,9 @@ def retrieve_audit_trail(
         },
     },
 )
-def get_endpoint_template(endpoint_template_uid: Annotated[str, EndpointTemplateUID]):
+def get_endpoint_template(
+    endpoint_template_uid: Annotated[str, EndpointTemplateUID],
+) -> EndpointTemplateWithCount:
     return Service().get_by_uid(uid=endpoint_template_uid)
 
 
@@ -327,7 +324,6 @@ The returned versions are ordered by `start_date` descending (newest entries fir
 
 {_generic_descriptions.DATA_EXPORTS_HEADER}
 """,
-    response_model=list[EndpointTemplateVersion],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -399,7 +395,7 @@ The returned versions are ordered by `start_date` descending (newest entries fir
 def get_endpoint_template_versions(
     request: Request,  # request is actually required by the allow_exports decorator
     endpoint_template_uid: Annotated[str, EndpointTemplateUID],
-):
+) -> list[EndpointTemplateVersion]:
     return Service().get_version_history(uid=endpoint_template_uid)
 
 
@@ -412,7 +408,6 @@ def get_endpoint_template_versions(
     "This is due to the fact, that the version number remains the same when inactivating or reactivating an activity instruction template "
     "(switching between 'Final' and 'Retired' status). \n\n"
     "In that case the latest/newest representation is returned.",
-    response_model=EndpointTemplate,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -432,7 +427,7 @@ def get_endpoint_template_version(
             "E.g. '0.1', '0.2', '1.0', ...",
         ),
     ],
-):
+) -> EndpointTemplate:
     return Service().get_specific_version(uid=endpoint_template_uid, version=version)
 
 
@@ -440,7 +435,6 @@ def get_endpoint_template_version(
     "/{endpoint_template_uid}/releases",
     dependencies=[rbac.LIBRARY_READ],
     summary="List all final versions of a template identified by 'endpoint_template_uid', including number of studies using a specific version",
-    response_model=list[EndpointTemplate],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -451,8 +445,8 @@ def get_endpoint_template_version(
     },
 )
 def get_endpoint_template_releases(
-    endpoint_template_uid: Annotated[str, EndpointTemplateUID]
-):
+    endpoint_template_uid: Annotated[str, EndpointTemplateUID],
+) -> list[EndpointTemplate]:
     return Service().get_releases(uid=endpoint_template_uid, return_study_count=False)
 
 
@@ -471,7 +465,6 @@ If the request succeeds:
 
 """
     + PARAMETERS_NOTE,
-    response_model=EndpointTemplate,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -496,7 +489,7 @@ def create_endpoint_template(
         EndpointTemplateCreateInput,
         Body(description="The endpoint template that shall be created."),
     ],
-):
+) -> EndpointTemplate:
     return Service().create(endpoint_template)
 
 
@@ -517,7 +510,6 @@ Once the endpoint template has been approved, only the surrounding text (excludi
 
 """
     + PARAMETERS_NOTE,
-    response_model=EndpointTemplate,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -544,7 +536,7 @@ def edit(
             description="The new content of the endpoint template including the change description.",
         ),
     ],
-):
+) -> EndpointTemplate:
     return Service().edit_draft(uid=endpoint_template_uid, template=endpoint_template)
 
 
@@ -557,7 +549,6 @@ def edit(
     
     This is version independent : it won't trigger a status or a version change.
     """,
-    response_model=EndpointTemplate,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -598,7 +589,6 @@ If the request succeeds:
 Parameters in the 'name' property cannot be changed with this request.
 Only the surrounding text (excluding the parameters) can be changed.
 """,
-    response_model=EndpointTemplate,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -624,7 +614,7 @@ def create_new_version(
             description="The content of the endpoint template for the new 'Draft' version including the change description.",
         ),
     ],
-):
+) -> EndpointTemplate:
     return Service().create_new_version(
         uid=endpoint_template_uid, template=endpoint_template
     )
@@ -643,7 +633,6 @@ If the request succeeds:
 * The 'change_description' property will be set automatically.
 * The 'version' property will be increased automatically to the next major version.
     """,
-    response_model=EndpointTemplate,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -667,7 +656,7 @@ If the request succeeds:
 def approve(
     endpoint_template_uid: Annotated[str, EndpointTemplateUID],
     cascade: bool = False,
-):
+) -> EndpointTemplate:
     """
     Approves endpoint template. Fails with 409 if there is some endpoints created
     from this template and cascade is false
@@ -689,7 +678,6 @@ If the request succeeds:
 * The 'change_description' property will be set automatically. 
 * The 'version' property will remain the same as before.
     """,
-    response_model=EndpointTemplate,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -705,7 +693,9 @@ If the request succeeds:
         },
     },
 )
-def inactivate(endpoint_template_uid: Annotated[str, EndpointTemplateUID]):
+def inactivate(
+    endpoint_template_uid: Annotated[str, EndpointTemplateUID],
+) -> EndpointTemplate:
     return Service().inactivate_final(uid=endpoint_template_uid)
 
 
@@ -721,7 +711,6 @@ If the request succeeds:
 * The 'change_description' property will be set automatically. 
 * The 'version' property will remain the same as before.
     """,
-    response_model=EndpointTemplate,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -737,7 +726,9 @@ If the request succeeds:
         },
     },
 )
-def reactivate(endpoint_template_uid: Annotated[str, EndpointTemplateUID]):
+def reactivate(
+    endpoint_template_uid: Annotated[str, EndpointTemplateUID],
+) -> EndpointTemplate:
     return Service().reactivate_retired(uid=endpoint_template_uid)
 
 
@@ -750,7 +741,6 @@ def reactivate(endpoint_template_uid: Annotated[str, EndpointTemplateUID]):
 * the endpoint template has never been in 'Final' status and
 * the endpoint template has no references to any endpoints and
 * the endpoint template belongs to a library that allows deleting (the 'is_editable' property of the library needs to be true).""",
-    response_model=None,
     status_code=204,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -771,10 +761,9 @@ def reactivate(endpoint_template_uid: Annotated[str, EndpointTemplateUID]):
     },
 )
 def delete_endpoint_template(
-    endpoint_template_uid: Annotated[str, EndpointTemplateUID]
+    endpoint_template_uid: Annotated[str, EndpointTemplateUID],
 ):
     Service().soft_delete(endpoint_template_uid)
-    return Response(status_code=fast_api_status.HTTP_204_NO_CONTENT)
 
 
 # TODO this endpoint potentially returns duplicated entries (by intention, currently).
@@ -792,14 +781,15 @@ Per parameter, the parameter.terms are ordered by
 Note that parameters may be used multiple times in templates.
 In that case, the same parameter (with the same terms) is included multiple times in the response.
     """,
-    response_model=list[TemplateParameter],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
         404: _generic_descriptions.ERROR_404,
     },
 )
-def get_parameters(endpoint_template_uid: Annotated[str, EndpointTemplateUID]):
+def get_parameters(
+    endpoint_template_uid: Annotated[str, EndpointTemplateUID],
+) -> list[TemplateParameter]:
     return Service().get_parameters(uid=endpoint_template_uid)
 
 
@@ -842,7 +832,6 @@ def pre_validate(
     "/{endpoint_template_uid}/pre-instances",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Create a Pre-Instance",
-    response_model=EndpointPreInstance,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -865,7 +854,7 @@ def pre_validate(
 def create_pre_instance(
     endpoint_template_uid: Annotated[str, EndpointTemplateUID],
     pre_instance: Annotated[EndpointPreInstanceCreateInput, Body()],
-) -> EndpointTemplate:
+) -> EndpointPreInstance:
     return EndpointPreInstanceService().create(
         template=pre_instance,
         template_uid=endpoint_template_uid,

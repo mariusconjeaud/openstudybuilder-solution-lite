@@ -2,8 +2,8 @@
   "openapi": "3.0.2",
   "info": {
     "title": "StudyBuilder Consumer API",
-    "description": "\n## NOTICE\n\nThis license information is applicable to the swagger documentation of the clinical-mdr-api, that is the openapi.json.\n\n## License Terms (MIT)\n\nCopyright (C) 2022 Novo Nordisk A/S, Danish company registration no. 24256790\n\nPermission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the \"Software\"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.\n\n## Licenses and Acknowledgements for Incorporated Software\n\nThis component contains software licensed under different licenses when compiled, please refer to the third-party-licenses.md file for further information and full license texts.\n\n## Authentication\n\nSupports OAuth2 [Authorization Code Flow](https://datatracker.ietf.org/doc/html/rfc6749#section-4.1),\nat paths described in the OpenID Connect Discovery metadata document (whose URL is defined by the `OAUTH_METADATA_URL` environment variable).\n\nMicrosoft Identity Platform documentation can be read \n([here](https://docs.microsoft.com/en-us/azure/active-directory/develop/v2-oauth2-auth-code-flow)).\n\n## System information:\n\nSystem information is provided by a separate [System Information](./system/docs) sub-app which doesn't require authentication.\n",
-    "version": "0.1.54"
+    "description": "\n## NOTICE\n\nThis license information is applicable to the swagger documentation of the clinical-mdr-api, that is the openapi.json.\n\n## License Terms (MIT)\n\nCopyright (C) 2022 Novo Nordisk A/S, Danish company registration no. 24256790\n\nPermission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the \"Software\"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.\n\n## Licenses and Acknowledgements for Incorporated Software\n\nThis component contains software licensed under different licenses when compiled, please refer to the third-party-licenses.md file for further information and full license texts.\n\n## Authentication\n\nSupports OAuth2 [Authorization Code Flow](https://datatracker.ietf.org/doc/html/rfc6749#section-4.1),\nat paths described in the OpenID Connect Discovery metadata document (whose URL is defined by the `OAUTH_METADATA_URL` environment variable).\n\nMicrosoft Identity Platform documentation can be read \n([here](https://docs.microsoft.com/en-us/azure/active-directory/develop/v2-oauth2-auth-code-flow)).\n\n## System information\n\nSystem information is provided by a separate [System Information](./system/docs) sub-app which doesn't require authentication.\n",
+    "version": "0.1.64"
   },
   "paths": {
     "/v1/studies": {
@@ -12,8 +12,16 @@
           "V1"
         ],
         "summary": "Get Studies",
-        "description": "Get a paginated list of studies",
+        "description": "Returns a paginated list of studies, sorted by the specified sort criteria and order.\n\nEach returned study contains a full list of corresponding study versions, sorted by version start date in descending order.\n\nReturned `version_number` value can be used in other endpoints to retrieve study entities (e.g. visits, activities, etc.)\nassociated with a specific study version.",
         "operationId": "get_studies_v1_studies_get",
+        "security": [
+          {
+            "OAuth2AuthorizationCodeBearer": []
+          },
+          {
+            "BearerJwtAuth": []
+          }
+        ],
         "parameters": [
           {
             "name": "sort_by",
@@ -62,10 +70,10 @@
             "required": false,
             "schema": {
               "type": "string",
-              "description": "Filter by study ID (case-insensitive partial match)",
+              "description": "Filter by study ID (case-insensitive partial match), for example `NN1234-5678`.",
               "title": "Id"
             },
-            "description": "Filter by study ID (case-insensitive partial match)"
+            "description": "Filter by study ID (case-insensitive partial match), for example `NN1234-5678`."
           }
         ],
         "responses": {
@@ -108,8 +116,16 @@
           "V1"
         ],
         "summary": "Get Study Visits",
-        "description": "Get a paginated list of study visits",
+        "description": "Returns a paginated list of study visits, sorted by the specified sort criteria and order.\n\nIf `study_version_number` query parameter is provided, study visits\nassociated with the specified study version will be returned.\nOtherwise, visits for the latest study version will be returned.",
         "operationId": "get_study_visits_v1_studies__uid__study_visits_get",
+        "security": [
+          {
+            "OAuth2AuthorizationCodeBearer": []
+          },
+          {
+            "BearerJwtAuth": []
+          }
+        ],
         "parameters": [
           {
             "name": "uid",
@@ -179,7 +195,8 @@
               "description": "Study Version Number",
               "title": "Study Version Number"
             },
-            "description": "Study Version Number"
+            "description": "Study Version Number",
+            "example": "2.1"
           }
         ],
         "responses": {
@@ -188,13 +205,23 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PaginatedResponse_StudyVisit_"
+                  "$ref": "#/components/schemas/PaginatedResponseWithStudyVersion_StudyVisit_"
                 }
               }
             }
           },
           "400": {
             "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Item not found",
             "content": {
               "application/json": {
                 "schema": {
@@ -222,8 +249,16 @@
           "V1"
         ],
         "summary": "Get Study Activities",
-        "description": "Get a paginated list of study activities",
+        "description": "Returns a paginated list of study activities, sorted by the specified sort criteria and order.\n\nIf `study_version_number` query parameter is provided, study activities\nassociated with the specified study version will be returned.\nOtherwise, activities for the latest study version will be returned.",
         "operationId": "get_study_activities_v1_studies__uid__study_activities_get",
+        "security": [
+          {
+            "OAuth2AuthorizationCodeBearer": []
+          },
+          {
+            "BearerJwtAuth": []
+          }
+        ],
         "parameters": [
           {
             "name": "uid",
@@ -293,7 +328,8 @@
               "description": "Study Version Number",
               "title": "Study Version Number"
             },
-            "description": "Study Version Number"
+            "description": "Study Version Number",
+            "example": "2.1"
           }
         ],
         "responses": {
@@ -302,13 +338,23 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PaginatedResponse_StudyActivity_"
+                  "$ref": "#/components/schemas/PaginatedResponseWithStudyVersion_StudyActivity_"
                 }
               }
             }
           },
           "400": {
             "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Item not found",
             "content": {
               "application/json": {
                 "schema": {
@@ -336,8 +382,16 @@
           "V1"
         ],
         "summary": "Get Study Detailed Soa",
-        "description": "Get a paginated list of detailed SoA items",
+        "description": "Returns a paginated list of detailed SoA items representing a point in the activities/visits matrix.\nSoA items are sorted by the specified sort criteria and order.\n\nIf `study_version_number` query parameter is provided, detailed SoA\nassociated with the specified study version will be returned.\nOtherwise, detailed SoA items for the latest study version will be returned.",
         "operationId": "get_study_detailed_soa_v1_studies__uid__detailed_soa_get",
+        "security": [
+          {
+            "OAuth2AuthorizationCodeBearer": []
+          },
+          {
+            "BearerJwtAuth": []
+          }
+        ],
         "parameters": [
           {
             "name": "uid",
@@ -407,7 +461,8 @@
               "description": "Study Version Number",
               "title": "Study Version Number"
             },
-            "description": "Study Version Number"
+            "description": "Study Version Number",
+            "example": "2.1"
           }
         ],
         "responses": {
@@ -416,13 +471,23 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PaginatedResponse_StudyDetailedSoA_"
+                  "$ref": "#/components/schemas/PaginatedResponseWithStudyVersion_StudyDetailedSoA_"
                 }
               }
             }
           },
           "400": {
             "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Item not found",
             "content": {
               "application/json": {
                 "schema": {
@@ -450,8 +515,16 @@
           "V1"
         ],
         "summary": "Get Study Operational Soa",
-        "description": "Get a paginated list of operational SoA items representing a point in the activities/visits matrix",
+        "description": "Returns a paginated list of operational SoA items representing a point in the activities/visits matrix.\nSoA items are sorted by the specified sort criteria and order.\n\nIf `study_version_number` query parameter is provided, operational SoA\nassociated with the specified study version will be returned.\nOtherwise, operational SoA items for the latest study version will be returned.",
         "operationId": "get_study_operational_soa_v1_studies__uid__operational_soa_get",
+        "security": [
+          {
+            "OAuth2AuthorizationCodeBearer": []
+          },
+          {
+            "BearerJwtAuth": []
+          }
+        ],
         "parameters": [
           {
             "name": "uid",
@@ -521,7 +594,8 @@
               "description": "Study Version Number",
               "title": "Study Version Number"
             },
-            "description": "Study Version Number"
+            "description": "Study Version Number",
+            "example": "2.1"
           }
         ],
         "responses": {
@@ -530,13 +604,23 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PaginatedResponse_StudyOperationalSoA_"
+                  "$ref": "#/components/schemas/PaginatedResponseWithStudyVersion_StudyOperationalSoA_"
                 }
               }
             }
           },
           "400": {
             "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Item not found",
             "content": {
               "application/json": {
                 "schema": {
@@ -613,7 +697,7 @@
         "type": "object",
         "title": "HTTPValidationError"
       },
-      "PaginatedResponse_StudyActivity_": {
+      "PaginatedResponseWithStudyVersion_StudyActivity_": {
         "properties": {
           "self": {
             "type": "string",
@@ -637,6 +721,17 @@
             "type": "array",
             "title": "Items",
             "description": "List of items"
+          },
+          "study_version": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StudyVersionSimple"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Study version information"
           }
         },
         "type": "object",
@@ -646,9 +741,9 @@
           "next",
           "items"
         ],
-        "title": "PaginatedResponse[StudyActivity]"
+        "title": "PaginatedResponseWithStudyVersion[StudyActivity]"
       },
-      "PaginatedResponse_StudyDetailedSoA_": {
+      "PaginatedResponseWithStudyVersion_StudyDetailedSoA_": {
         "properties": {
           "self": {
             "type": "string",
@@ -672,6 +767,17 @@
             "type": "array",
             "title": "Items",
             "description": "List of items"
+          },
+          "study_version": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StudyVersionSimple"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Study version information"
           }
         },
         "type": "object",
@@ -681,9 +787,9 @@
           "next",
           "items"
         ],
-        "title": "PaginatedResponse[StudyDetailedSoA]"
+        "title": "PaginatedResponseWithStudyVersion[StudyDetailedSoA]"
       },
-      "PaginatedResponse_StudyOperationalSoA_": {
+      "PaginatedResponseWithStudyVersion_StudyOperationalSoA_": {
         "properties": {
           "self": {
             "type": "string",
@@ -707,6 +813,17 @@
             "type": "array",
             "title": "Items",
             "description": "List of items"
+          },
+          "study_version": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StudyVersionSimple"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Study version information"
           }
         },
         "type": "object",
@@ -716,9 +833,9 @@
           "next",
           "items"
         ],
-        "title": "PaginatedResponse[StudyOperationalSoA]"
+        "title": "PaginatedResponseWithStudyVersion[StudyOperationalSoA]"
       },
-      "PaginatedResponse_StudyVisit_": {
+      "PaginatedResponseWithStudyVersion_StudyVisit_": {
         "properties": {
           "self": {
             "type": "string",
@@ -742,6 +859,17 @@
             "type": "array",
             "title": "Items",
             "description": "List of items"
+          },
+          "study_version": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StudyVersionSimple"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Study version information"
           }
         },
         "type": "object",
@@ -751,7 +879,7 @@
           "next",
           "items"
         ],
-        "title": "PaginatedResponse[StudyVisit]"
+        "title": "PaginatedResponseWithStudyVersion[StudyVisit]"
       },
       "PaginatedResponse_Study_": {
         "properties": {
@@ -808,7 +936,7 @@
       "SortByStudyDetailedSoA": {
         "type": "string",
         "enum": [
-          "visit_name",
+          "visit_short_name",
           "epoch_name",
           "activity_name",
           "activity_group_name",
@@ -821,7 +949,8 @@
         "type": "string",
         "enum": [
           "activity_name",
-          "visit_uid"
+          "visit_uid",
+          "visit_short_name"
         ],
         "title": "SortByStudyOperationalSoA"
       },
@@ -910,25 +1039,36 @@
             "title": "Study Uid",
             "description": "Study UID"
           },
-          "study_version_number": {
-            "type": "string",
-            "title": "Study Version Number",
-            "description": "Study Version Number"
-          },
           "uid": {
             "type": "string",
             "title": "Uid",
             "description": "Study Activity UID"
           },
           "study_activity_subgroup": {
-            "type": "object",
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Study Activity Subgroup",
-            "description": "Study Activity Subgroup"
+            "description": "Study Activity Subgroup",
+            "nullable": true
           },
           "study_activity_group": {
-            "type": "object",
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Study Activity Group",
-            "description": "Study Activity Group"
+            "description": "Study Activity Group",
+            "nullable": true
           },
           "soa_group": {
             "type": "object",
@@ -954,7 +1094,6 @@
         "type": "object",
         "required": [
           "study_uid",
-          "study_version_number",
           "uid",
           "study_activity_subgroup",
           "study_activity_group",
@@ -972,15 +1111,10 @@
             "title": "Study Uid",
             "description": "Study UID"
           },
-          "study_version_number": {
+          "visit_short_name": {
             "type": "string",
-            "title": "Study Version Number",
-            "description": "Study Version Number"
-          },
-          "visit_name": {
-            "type": "string",
-            "title": "Visit Name",
-            "description": "Study Visit Name"
+            "title": "Visit Short Name",
+            "description": "Study Visit Short Name"
           },
           "epoch_name": {
             "type": "string",
@@ -993,14 +1127,30 @@
             "description": "Activity Name"
           },
           "activity_subgroup_name": {
-            "type": "string",
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Activity Subgroup Name",
-            "description": "Activity Subgroup Name"
+            "description": "Activity Subgroup Name",
+            "nullable": true
           },
           "activity_group_name": {
-            "type": "string",
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Activity Group Name",
-            "description": "Activity Group Name"
+            "description": "Activity Group Name",
+            "nullable": true
           },
           "soa_group_name": {
             "type": "string",
@@ -1016,8 +1166,7 @@
         "type": "object",
         "required": [
           "study_uid",
-          "study_version_number",
-          "visit_name",
+          "visit_short_name",
           "epoch_name",
           "activity_name",
           "activity_subgroup_name",
@@ -1053,19 +1202,6 @@
             ],
             "title": "Study Id",
             "description": "Study ID",
-            "nullable": true
-          },
-          "study_version_number": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Study Version Number",
-            "description": "Study Version Number",
             "nullable": true
           },
           "activity_name": {
@@ -1255,7 +1391,6 @@
         "required": [
           "study_uid",
           "study_id",
-          "study_version_number",
           "activity_name",
           "activity_uid",
           "activity_group_name",
@@ -1302,18 +1437,10 @@
             "nullable": true
           },
           "version_started_at": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "type": "string",
+            "format": "date-time",
             "title": "Version Started At",
-            "description": "Study Version Start Time",
-            "nullable": true
+            "description": "Study Version Start Time"
           },
           "version_ended_at": {
             "anyOf": [
@@ -1357,7 +1484,72 @@
           }
         },
         "type": "object",
+        "required": [
+          "version_started_at"
+        ],
         "title": "StudyVersion"
+      },
+      "StudyVersionSimple": {
+        "properties": {
+          "version_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Version Status",
+            "description": "Study Status",
+            "nullable": true
+          },
+          "version_number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Version Number",
+            "description": "Study Version Number",
+            "nullable": true
+          },
+          "version_started_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Version Started At",
+            "description": "Study Version Start Time"
+          },
+          "version_ended_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Version Ended At",
+            "description": "Study Version End Time",
+            "nullable": true
+          },
+          "retrieved_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Retrieved At",
+            "description": "Study Version Retrieved Time"
+          }
+        },
+        "type": "object",
+        "required": [
+          "version_started_at",
+          "retrieved_at"
+        ],
+        "title": "StudyVersionSimple"
       },
       "StudyVisit": {
         "properties": {
@@ -1365,11 +1557,6 @@
             "type": "string",
             "title": "Study Uid",
             "description": "Study UID"
-          },
-          "study_version_number": {
-            "type": "string",
-            "title": "Study Version Number",
-            "description": "Study Version Number"
           },
           "uid": {
             "type": "string",
@@ -1382,7 +1569,7 @@
             "description": "Study Visit Name"
           },
           "visit_order": {
-            "type": "integer",
+            "type": "number",
             "title": "Visit Order",
             "description": "Study Visit Order"
           },
@@ -1542,7 +1729,6 @@
         "type": "object",
         "required": [
           "study_uid",
-          "study_version_number",
           "uid",
           "visit_name",
           "visit_order",
@@ -1588,6 +1774,28 @@
           "type"
         ],
         "title": "ValidationError"
+      }
+    },
+    "securitySchemes": {
+      "OAuth2AuthorizationCodeBearer": {
+        "type": "oauth2",
+        "flows": {
+          "authorizationCode": {
+            "scopes": {
+              "api://None/API.call": "Make calls to the API"
+            },
+            "authorizationUrl": "",
+            "tokenUrl": ""
+          }
+        }
+      },
+      "BearerJwtAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "in": "header",
+        "name": "Authorization",
+        "description": "Access token that will be sent as `Authorization: Bearer {token}` header in all requests"
       }
     }
   },

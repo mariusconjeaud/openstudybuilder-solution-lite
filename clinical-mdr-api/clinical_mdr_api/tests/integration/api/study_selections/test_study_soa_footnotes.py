@@ -358,6 +358,7 @@ STUDY_FOOTNOTE_FIELDS_ALL = [
     "study_version",
     "accepted_version",
     "latest_footnote",
+    "author_username",
 ]
 
 STUDY_FOOTNOTE_FIELDS_NOT_NULL = [
@@ -1096,17 +1097,29 @@ def test_modify_actions_on_locked_study(api_client):
     res = response.json()
     assert_response_status_code(response, 200)
     assert res["referenced_items"] == [
-        {"item_name": None, "item_type": "StudyVisit", "item_uid": "StudyVisit_000001"},
-        {"item_name": None, "item_type": "StudyEpoch", "item_uid": "StudyEpoch_000002"},
+        {
+            "item_name": None,
+            "item_type": "StudyVisit",
+            "item_uid": "StudyVisit_000001",
+            "visible_in_protocol_soa": None,
+        },
+        {
+            "item_name": None,
+            "item_type": "StudyEpoch",
+            "item_uid": "StudyEpoch_000002",
+            "visible_in_protocol_soa": None,
+        },
         {
             "item_name": None,
             "item_type": "StudyActivity",
             "item_uid": "StudyActivity_000001",
+            "visible_in_protocol_soa": None,
         },
         {
             "item_name": None,
             "item_type": "StudyActivitySchedule",
             "item_uid": weight_sas.study_activity_schedule_uid,
+            "visible_in_protocol_soa": None,
         },
     ]
 
@@ -1116,6 +1129,32 @@ def test_modify_actions_on_locked_study(api_client):
     res = response.json()
     assert_response_status_code(response, 200)
     before_unlock = res
+    assert res["referenced_items"] == [
+        {
+            "item_name": "Epoch Subtype1",
+            "item_type": "StudyEpoch",
+            "item_uid": "StudyEpoch_000002",
+            "visible_in_protocol_soa": True,
+        },
+        {
+            "item_name": "Randomized",
+            "item_type": "StudyActivity",
+            "item_uid": "StudyActivity_000001",
+            "visible_in_protocol_soa": False,
+        },
+        {
+            "item_name": "V1",
+            "item_type": "StudyVisit",
+            "item_uid": "StudyVisit_000001",
+            "visible_in_protocol_soa": True,
+        },
+        {
+            "item_name": "Weight V2",
+            "item_type": "StudyActivitySchedule",
+            "item_uid": weight_sas.study_activity_schedule_uid,
+            "visible_in_protocol_soa": False,
+        },
+    ]
 
     response = api_client.get(
         f"/studies/{study.uid}/study-visits/StudyVisit_000001",
@@ -1185,7 +1224,12 @@ def test_modify_actions_on_locked_study(api_client):
     res = response.json()
     assert_response_status_code(response, 200)
     assert res["referenced_items"] == [
-        {"item_name": None, "item_type": "StudyVisit", "item_uid": "StudyVisit_000002"},
+        {
+            "item_name": None,
+            "item_type": "StudyVisit",
+            "item_uid": "StudyVisit_000002",
+            "visible_in_protocol_soa": mock.ANY,
+        },
     ]
 
     response = api_client.delete(
@@ -1198,10 +1242,17 @@ def test_modify_actions_on_locked_study(api_client):
     )
     assert_response_status_code(response, 204)
 
+    # deleting a study activity
     response = api_client.delete(
         f"/studies/{study.uid}/study-activities/StudyActivity_000001",
     )
     assert_response_status_code(response, 204)
+    # also update the expected results removing the footnote link to the deleted study activity
+    before_unlock["referenced_items"][:] = [
+        ref
+        for ref in before_unlock["referenced_items"]
+        if ref["item_uid"] != "StudyActivity_000001"
+    ]
 
     response = api_client.delete(
         f"/studies/{study.uid}/study-activity-schedules/{weight_sas.study_activity_schedule_uid}",
@@ -1234,7 +1285,6 @@ def test_modify_actions_on_locked_study(api_client):
     header_items = [
         "Epoch Subtype",
         "V1",
-        "Randomized",
         "Epoch Subtype1",
         "Weight V2",
         "Body Measurements",
@@ -1283,7 +1333,12 @@ def test_modify_actions_on_locked_study(api_client):
     res = response.json()
     assert_response_status_code(response, 200)
     assert res["items"][2]["referenced_items"] == [
-        {"item_name": "V1", "item_type": "StudyVisit", "item_uid": "StudyVisit_000002"},
+        {
+            "item_name": "V1",
+            "item_type": "StudyVisit",
+            "item_uid": "StudyVisit_000002",
+            "visible_in_protocol_soa": mock.ANY,
+        },
     ]
 
     # get specific study soa footnote
@@ -1293,7 +1348,12 @@ def test_modify_actions_on_locked_study(api_client):
     res = response.json()
     assert_response_status_code(response, 200)
     assert res["referenced_items"] == [
-        {"item_name": "V1", "item_type": "StudyVisit", "item_uid": "StudyVisit_000002"},
+        {
+            "item_name": "V1",
+            "item_type": "StudyVisit",
+            "item_uid": "StudyVisit_000002",
+            "visible_in_protocol_soa": mock.ANY,
+        },
     ]
 
     # get study soa footnote headers
@@ -1531,7 +1591,7 @@ def test_update_footnote_library_items_of_relationship_to_value_nodes(api_client
         )
 
         footnote["referenced_items"] = [
-            {**item, "item_uid": mock.ANY}
+            {**item, "item_uid": mock.ANY, "visible_in_protocol_soa": mock.ANY}
             for item in footnote["referenced_items"]
             if item["item_type"] not in {"StudyActivityGroup"}
         ]

@@ -56,6 +56,11 @@ const NNCustomLightTheme = {
     nnFadedBlue200: '#DEE1EB',
     nnGoldenSun200: '#FAEECC',
     nnGraniteGrey1: '#f4f5f6',
+    tableParentExpanded: '#C2D8F4',
+    tableChildRow: '#E6EFFB',
+    nnTableRowExpanded: '#C2D8F4',
+    nnTableRowChild: '#E6EFFB',
+    nnActionBlue: '#005BD2',
   },
 }
 

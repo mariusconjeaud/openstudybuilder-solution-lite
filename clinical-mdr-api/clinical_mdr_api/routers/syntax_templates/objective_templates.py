@@ -2,8 +2,7 @@
 
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Body, Path, Query, Request, Response
-from fastapi import status as fast_api_status
+from fastapi import APIRouter, Body, Path, Query, Request
 from pydantic.types import Json
 
 from clinical_mdr_api.domains.versioned_object_aggregate import LibraryItemStatus
@@ -70,7 +69,6 @@ Allowed parameters include : filter on fields, sort by field name with sort dire
 
 {_generic_descriptions.DATA_EXPORTS_HEADER}
 """,
-    response_model=CustomPage[ObjectiveTemplate],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -182,7 +180,6 @@ def get_objective_templates(
     summary="Returns possible values from the database for a given header",
     description="""Allowed parameters include : field name for which to get possible
     values, search string to provide filtering for the field name, additional filters to apply on other fields""",
-    response_model=list[Any],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -223,7 +220,7 @@ def get_distinct_values_for_header(
     page_size: Annotated[
         int | None, Query(description=_generic_descriptions.HEADER_PAGE_SIZE)
     ] = config.DEFAULT_HEADER_PAGE_SIZE,
-):
+) -> list[Any]:
     return Service().get_distinct_values_for_header(
         status=status,
         field_name=field_name,
@@ -237,7 +234,6 @@ def get_distinct_values_for_header(
 @router.get(
     "/audit-trail",
     dependencies=[rbac.LIBRARY_READ],
-    response_model=CustomPage[ObjectiveTemplate],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -269,7 +265,7 @@ def retrieve_audit_trail(
     total_count: Annotated[
         bool | None, Query(description=_generic_descriptions.TOTAL_COUNT)
     ] = False,
-):
+) -> CustomPage[ObjectiveTemplate]:
     results = Service().get_all(
         page_number=page_number,
         page_size=page_size,
@@ -290,7 +286,6 @@ def retrieve_audit_trail(
     summary="Returns the latest/newest version of a specific objective template identified by 'objective_template_uid'.",
     description="""If multiple request query parameters are used, then they need to
     match all at the same time (they are combined with the AND operation).""",
-    response_model=ObjectiveTemplateWithCount,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -302,7 +297,7 @@ def retrieve_audit_trail(
 )
 def get_objective_template(
     objective_template_uid: Annotated[str, ObjectiveTemplateUID],
-) -> ObjectiveTemplate:
+) -> ObjectiveTemplateWithCount:
     return Service().get_by_uid(uid=objective_template_uid)
 
 
@@ -315,7 +310,6 @@ The returned versions are ordered by `start_date` descending (newest entries fir
 
 {_generic_descriptions.DATA_EXPORTS_HEADER}
 """,
-    response_model=list[ObjectiveTemplateVersion],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -365,7 +359,7 @@ The returned versions are ordered by `start_date` descending (newest entries fir
 def get_objective_template_versions(
     request: Request,  # request is actually required by the allow_exports decorator
     objective_template_uid: Annotated[str, ObjectiveTemplateUID],
-):
+) -> list[ObjectiveTemplateVersion]:
     return Service().get_version_history(uid=objective_template_uid)
 
 
@@ -378,7 +372,6 @@ def get_objective_template_versions(
     "This is due to the fact, that the version number remains the same when inactivating or reactivating an objective template "
     "(switching between 'Final' and 'Retired' status). \n\n"
     "In that case the latest/newest representation is returned.",
-    response_model=ObjectiveTemplate,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -398,7 +391,7 @@ def get_objective_template_version(
             "E.g. '0.1', '0.2', '1.0', ...",
         ),
     ],
-):
+) -> ObjectiveTemplate:
     return Service().get_specific_version(uid=objective_template_uid, version=version)
 
 
@@ -406,7 +399,6 @@ def get_objective_template_version(
     "/{objective_template_uid}/releases",
     dependencies=[rbac.LIBRARY_READ],
     summary="List all final versions of a template identified by 'objective_template_uid', including number of studies using a specific version",
-    response_model=list[ObjectiveTemplate],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -417,8 +409,8 @@ def get_objective_template_version(
     },
 )
 def get_objective_template_releases(
-    objective_template_uid: Annotated[str, ObjectiveTemplateUID]
-):
+    objective_template_uid: Annotated[str, ObjectiveTemplateUID],
+) -> list[ObjectiveTemplate]:
     return Service().get_releases(uid=objective_template_uid, return_study_count=False)
 
 
@@ -437,7 +429,6 @@ If the request succeeds:
 
 """
     + PARAMETERS_NOTE,
-    response_model=ObjectiveTemplate,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -483,7 +474,6 @@ Once the objective template has been approved, only the surrounding text (exclud
 
 """
     + PARAMETERS_NOTE,
-    response_model=ObjectiveTemplate,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -523,7 +513,6 @@ def edit(
     
     This is version independent : it won't trigger a status or a version change.
     """,
-    response_model=ObjectiveTemplate,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -564,7 +553,6 @@ If the request succeeds:
 Parameters in the 'name' property cannot be changed with this request.
 Only the surrounding text (excluding the parameters) can be changed.
 """,
-    response_model=ObjectiveTemplate,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -609,7 +597,6 @@ If the request succeeds:
 * The 'change_description' property will be set automatically.
 * The 'version' property will be increased automatically to the next major version.
     """,
-    response_model=ObjectiveTemplate,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -633,7 +620,7 @@ If the request succeeds:
 def approve(
     objective_template_uid: Annotated[str, ObjectiveTemplateUID],
     cascade: bool = False,
-):
+) -> ObjectiveTemplate:
     """
     Approves objective template. Fails with 409 if there is some objectives created
     from this template and cascade is false
@@ -655,7 +642,6 @@ If the request succeeds:
 * The 'change_description' property will be set automatically. 
 * The 'version' property will remain the same as before.
     """,
-    response_model=ObjectiveTemplate,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -689,7 +675,6 @@ If the request succeeds:
 * The 'change_description' property will be set automatically. 
 * The 'version' property will remain the same as before.
     """,
-    response_model=ObjectiveTemplate,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -720,7 +705,6 @@ def reactivate(
 * the objective template has never been in 'Final' status and
 * the objective template has no references to any objectives and
 * the objective template belongs to a library that allows deleting (the 'is_editable' property of the library needs to be true).""",
-    response_model=None,
     status_code=204,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -742,10 +726,9 @@ def reactivate(
 )
 def delete_objective_template(
     objective_template_uid: Annotated[str, ObjectiveTemplateUID],
-) -> Response:
+):
     # service.soft_delete(uid)
     Service().soft_delete(objective_template_uid)
-    return Response(status_code=fast_api_status.HTTP_204_NO_CONTENT)
 
 
 # TODO this endpoint potentially returns duplicated entries (by intention, currently).
@@ -763,7 +746,6 @@ Per parameter, the parameter.terms are ordered by
 Note that parameters may be used multiple times in templates.
 In that case, the same parameter (with the same terms) is included multiple times in the response.
     """,
-    response_model=list[TemplateParameter],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -778,7 +760,7 @@ def get_parameters(
             description="Optionally, the uid of the study to subset the parameters to (e.g. for StudyEndpoints parameters)",
         ),
     ] = None,
-):
+) -> list[TemplateParameter]:
     return Service().get_parameters(
         uid=objective_template_uid, study_uid=study_uid, include_study_endpoints=True
     )
@@ -816,7 +798,6 @@ def pre_validate(
         ),
     ],
 ):
-    # service.validate(objective_template)
     Service().validate_template_syntax(objective_template.name)
 
 
@@ -824,7 +805,6 @@ def pre_validate(
     "/{objective_template_uid}/pre-instances",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Create a Pre-Instance",
-    response_model=ObjectivePreInstance,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -847,7 +827,7 @@ def pre_validate(
 def create_pre_instance(
     objective_template_uid: Annotated[str, ObjectiveTemplateUID],
     pre_instance: Annotated[ObjectivePreInstanceCreateInput, Body()],
-) -> ObjectiveTemplate:
+) -> ObjectivePreInstance:
     return ObjectivePreInstanceService().create(
         template=pre_instance,
         template_uid=objective_template_uid,

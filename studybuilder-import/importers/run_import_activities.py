@@ -1566,6 +1566,7 @@ class Activities(BaseImporter):
             "ct_term_uids": set(),
             "unit_definition_uids": set(),
             "is_adam_param_specific": False,
+            "odm_item_uids": [],
         }
         if len(unit_uids) > 0 and len(term_uids) > 0:
             self.log.warning(

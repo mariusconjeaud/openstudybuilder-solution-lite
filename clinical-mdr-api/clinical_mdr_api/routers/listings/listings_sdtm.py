@@ -29,7 +29,6 @@ router = APIRouter()
     "/studies/{study_uid}/sdtm/tv",
     dependencies=[rbac.STUDY_READ],
     summary="SDTM TV domain listing",
-    response_model=CustomPage[StudyVisitListing],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -97,7 +96,7 @@ def get_tv(
     study_value_version: Annotated[
         str | None, _generic_descriptions.STUDY_VALUE_VERSION_QUERY
     ] = None,
-):
+) -> CustomPage[StudyVisitListing]:
     service = ListingsService()
     all_items = service.list_tv(
         study_uid=study_uid,
@@ -122,7 +121,6 @@ def get_tv(
     "/studies/{study_uid}/sdtm/ta",
     dependencies=[rbac.STUDY_READ],
     summary="SDTM TA domain listing",
-    response_model=CustomPage[StudyArmListing],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -191,7 +189,7 @@ def get_ta(
     study_value_version: Annotated[
         str | None, _generic_descriptions.STUDY_VALUE_VERSION_QUERY
     ] = None,
-):
+) -> CustomPage[StudyArmListing]:
     service = ListingsService()
     all_items = service.list_ta(
         study_uid=study_uid,
@@ -216,7 +214,6 @@ def get_ta(
     "/studies/{study_uid}/sdtm/ti",
     dependencies=[rbac.STUDY_READ],
     summary="SDTM TI domain listing",
-    response_model=CustomPage[StudyCriterionListing],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -283,7 +280,7 @@ def get_ti(
     study_value_version: Annotated[
         str | None, _generic_descriptions.STUDY_VALUE_VERSION_QUERY
     ] = None,
-):
+) -> CustomPage[StudyCriterionListing]:
     service = ListingsService()
     all_items = service.list_ti(
         study_uid=study_uid,
@@ -308,7 +305,6 @@ def get_ti(
     "/studies/{study_uid}/sdtm/ts",
     dependencies=[rbac.STUDY_READ],
     summary="SDTM TS domain listing",
-    response_model=CustomPage[StudySummaryListing],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -376,7 +372,7 @@ def get_ts(
     study_value_version: Annotated[
         str | None, _generic_descriptions.STUDY_VALUE_VERSION_QUERY
     ] = None,
-):
+) -> CustomPage[StudySummaryListing]:
     service = ListingsService()
     all_items = service.list_ts(
         study_uid=study_uid,
@@ -401,7 +397,6 @@ def get_ts(
     "/studies/{study_uid}/sdtm/te",
     dependencies=[rbac.STUDY_READ],
     summary="SDTM TE domain listing",
-    response_model=CustomPage[StudyElementListing],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -467,7 +462,7 @@ def get_te(
     study_value_version: Annotated[
         str | None, _generic_descriptions.STUDY_VALUE_VERSION_QUERY
     ] = None,
-):
+) -> CustomPage[StudyElementListing]:
     service = ListingsService()
     all_items = service.list_te(
         study_uid=study_uid,
@@ -492,7 +487,6 @@ def get_te(
     "/studies/{study_uid}/sdtm/tdm",
     dependencies=[rbac.STUDY_READ],
     summary="SDTM TDM domain listing",
-    response_model=CustomPage[StudyDiseaseMilestoneListing],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -556,7 +550,7 @@ def get_tdm(
     study_value_version: Annotated[
         str | None, _generic_descriptions.STUDY_VALUE_VERSION_QUERY
     ] = None,
-):
+) -> CustomPage[StudyDiseaseMilestoneListing]:
     service = ListingsService()
     all_items = service.list_tdm(
         study_uid=study_uid,

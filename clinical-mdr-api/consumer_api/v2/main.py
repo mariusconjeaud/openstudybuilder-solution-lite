@@ -25,7 +25,6 @@
 # @router.get(
 #     "/studies",
 #     dependencies=[rbac.STUDY_READ],
-#     response_model=PaginatedResponse[models.Study],
 # )
 # async def get_studies(
 #     request: Request,
@@ -36,7 +35,7 @@
 #         le=config.MAX_PAGE_SIZE,
 #     )] = config.DEFAULT_PAGE_SIZE,
 #     page_number: Annotated[int, Query(ge=1)] = 1,
-# ):
+# ) -> PaginatedResponse[models.Study]:
 #     """Get a list of studies"""
 #     studies = DB.get_studies(
 #         sort_by=sort_by,

@@ -11,7 +11,12 @@ from clinical_mdr_api.models.controlled_terminologies.ct_term import (
     SimpleCTTermNameWithConflictFlag,
 )
 from common import exceptions
-from common.config import GLOBAL_ANCHOR_VISIT_NAME
+from common.config import (
+    GLOBAL_ANCHOR_VISIT_NAME,
+    SPECIAL_VISIT_LETTERS,
+    SPECIAL_VISIT_MAX_NUMBER,
+    STUDY_VISIT_TYPE_EARLY_DISCONTINUATION_VISIT,
+)
 
 VisitTypeNamedTuple = SimpleCTTermNameWithConflictFlag
 StudyVisitType: dict[str, VisitTypeNamedTuple] = {}
@@ -117,6 +122,7 @@ class StudyVisitVO:
 
     visit_name_sc: TextValue | None = None
 
+    special_visit_number: int | None = None
     subvisit_number: int | None = None
     subvisit_anchor: Self | None = None
     time_unit_object: TimeUnit | None = None
@@ -178,7 +184,7 @@ class StudyVisitVO:
             ):
                 visit_prefix = "O"
             else:
-                raise exceptions.ValidationException(
+                raise exceptions.BusinessLogicException(
                     msg="Unrecognized visit contact mode passed."
                 )
             visit_short_name = f"{visit_prefix}{visit_number}"
@@ -197,7 +203,26 @@ class StudyVisitVO:
             if self.visit_subclass == VisitSubclass.ANCHOR_VISIT_IN_GROUP_OF_SUBV:
                 return visit_short_name + "D1"
             if self.visit_class == VisitClass.SPECIAL_VISIT:
-                return visit_short_name + "A"
+                if (
+                    self.visit_type.sponsor_preferred_name
+                    == STUDY_VISIT_TYPE_EARLY_DISCONTINUATION_VISIT
+                ):
+                    exceptions.BusinessLogicException.raise_if(
+                        self.special_visit_number is None
+                        or self.special_visit_number > 3,
+                        msg=f"There can be maximum 3 special visits in an epoch and current special visit is set to be {self.subvisit_number}",
+                    )
+                    chosen_letter = SPECIAL_VISIT_LETTERS[-3:][
+                        self.special_visit_number - 1
+                    ]
+                else:
+                    exceptions.BusinessLogicException.raise_if(
+                        self.special_visit_number is None
+                        or self.special_visit_number > SPECIAL_VISIT_MAX_NUMBER,
+                        msg=f"There can be maximum {SPECIAL_VISIT_MAX_NUMBER} special visits in an epoch and current special visit is set to be {self.subvisit_number}",
+                    )
+                    chosen_letter = SPECIAL_VISIT_LETTERS[self.special_visit_number - 1]
+                return visit_short_name + chosen_letter
             if self.visit_class in (VisitClass.NON_VISIT, VisitClass.UNSCHEDULED_VISIT):
                 return visit_number
             return visit_short_name

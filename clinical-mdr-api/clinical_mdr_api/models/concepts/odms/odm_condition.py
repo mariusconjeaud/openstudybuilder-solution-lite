@@ -28,11 +28,11 @@ from clinical_mdr_api.models.concepts.odms.odm_formal_expression import (
 
 
 class OdmCondition(ConceptModel):
-    oid: str | None
-    formal_expressions: list[OdmFormalExpressionSimpleModel]
-    descriptions: list[OdmDescriptionSimpleModel]
-    aliases: list[OdmAliasSimpleModel]
-    possible_actions: list[str]
+    oid: Annotated[str | None, Field()]
+    formal_expressions: Annotated[list[OdmFormalExpressionSimpleModel], Field()]
+    descriptions: Annotated[list[OdmDescriptionSimpleModel], Field()]
+    aliases: Annotated[list[OdmAliasSimpleModel], Field()]
+    possible_actions: Annotated[list[str], Field()]
 
     @classmethod
     def from_odm_condition_ar(
@@ -93,18 +93,21 @@ class OdmCondition(ConceptModel):
 
 class OdmConditionPostInput(ConceptPostInput):
     oid: Annotated[str | None, Field(min_length=1)] = None
-    formal_expressions: list[OdmFormalExpressionPostInput | str]
-    descriptions: list[OdmDescriptionPostInput | str]
-    alias_uids: list[str]
+    formal_expressions: Annotated[list[OdmFormalExpressionPostInput | str], Field()]
+    descriptions: Annotated[list[OdmDescriptionPostInput | str], Field()]
+    alias_uids: Annotated[list[str], Field()]
 
 
 class OdmConditionPatchInput(ConceptPatchInput):
     oid: Annotated[str | None, Field(min_length=1)]
-    formal_expressions: list[
-        OdmFormalExpressionBatchPatchInput | OdmFormalExpressionPostInput | str
+    formal_expressions: Annotated[
+        list[OdmFormalExpressionBatchPatchInput | OdmFormalExpressionPostInput | str],
+        Field(),
     ]
-    descriptions: list[OdmDescriptionBatchPatchInput | OdmDescriptionPostInput | str]
-    alias_uids: list[str]
+    descriptions: Annotated[
+        list[OdmDescriptionBatchPatchInput | OdmDescriptionPostInput | str], Field()
+    ]
+    alias_uids: Annotated[list[str], Field()]
 
 
 class OdmConditionVersion(OdmCondition):
@@ -112,9 +115,4 @@ class OdmConditionVersion(OdmCondition):
     Class for storing OdmCondition and calculation of differences
     """
 
-    changes: Annotated[
-        list[str],
-        Field(
-            description=CHANGES_FIELD_DESC,
-        ),
-    ] = []
+    changes: list[str] = Field(description=CHANGES_FIELD_DESC, default_factory=list)

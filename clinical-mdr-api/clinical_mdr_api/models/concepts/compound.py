@@ -82,20 +82,15 @@ class SimpleCompound(BaseModel):
 
 
 class CompoundCreateInput(ExtendedConceptPostInput):
-    is_sponsor_compound: bool = True
+    is_sponsor_compound: Annotated[bool, Field()] = True
     external_id: Annotated[str | None, Field(min_length=1)] = None
 
 
 class CompoundEditInput(ExtendedConceptPatchInput):
-    is_sponsor_compound: bool | None = None
+    is_sponsor_compound: Annotated[bool | None, Field()] = None
     external_id: Annotated[str | None, Field(min_length=1)] = None
     change_description: Annotated[str, Field(min_length=1)]
 
 
 class CompoundVersion(Compound):
-    changes: Annotated[
-        list[str],
-        Field(
-            description=CHANGES_FIELD_DESC,
-        ),
-    ] = []
+    changes: list[str] = Field(description=CHANGES_FIELD_DESC, default_factory=list)

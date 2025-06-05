@@ -26,7 +26,6 @@ ClinicalProgrammeUID = Path(description="The unique id of the clinical programme
     "",
     dependencies=[rbac.LIBRARY_READ],
     summary="Returns all clinical programmes.",
-    response_model=GenericFilteringReturn[ClinicalProgramme],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -92,7 +91,6 @@ def get_programmes(
     summary="Returns possible values from the database for a given header",
     description="""Allowed parameters include : field name for which to get possible
     values, search string to provide filtering for the field name, additional filters to apply on other fields""",
-    response_model=list[Any],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -119,7 +117,7 @@ def get_distinct_values_for_header(
     page_size: Annotated[
         int | None, Query(description=_generic_descriptions.HEADER_PAGE_SIZE)
     ] = config.DEFAULT_HEADER_PAGE_SIZE,
-):
+) -> list[Any]:
     service = ClinicalProgrammeService()
     return service.get_clinical_programme_headers(
         field_name=field_name,
@@ -134,7 +132,6 @@ def get_distinct_values_for_header(
     "/{clinical_programme_uid}",
     dependencies=[rbac.LIBRARY_READ],
     summary="Get a clinical programme.",
-    response_model=ClinicalProgramme,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -142,7 +139,7 @@ def get_distinct_values_for_header(
     },
 )
 def get(
-    clinical_programme_uid: Annotated[str, ClinicalProgrammeUID]
+    clinical_programme_uid: Annotated[str, ClinicalProgrammeUID],
 ) -> ClinicalProgramme:
     service = ClinicalProgrammeService()
     return service.get_clinical_programme_by_uid(clinical_programme_uid)
@@ -152,7 +149,6 @@ def get(
     "",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Creates a new clinical programme.",
-    response_model=ClinicalProgramme,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -178,7 +174,6 @@ def create(
     "/{clinical_programme_uid}",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Edit a clinical programme.",
-    response_model=ClinicalProgramme,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,

@@ -15,9 +15,9 @@ class NotificationType(Enum):
 
 
 class Notification(BaseModel):
-    sn: int
-    title: str
-    notification_type: str
+    sn: Annotated[int, Field()]
+    title: Annotated[str, Field()]
+    notification_type: Annotated[str, Field()]
     description: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = (
         None
     )
@@ -34,11 +34,13 @@ class Notification(BaseModel):
 
 class NotificationPostInput(PostInputModel):
     title: Annotated[str, Field(min_length=1)]
-    notification_type: NotificationType = NotificationType.INFORMATION
+    notification_type: Annotated[NotificationType, Field()] = (
+        NotificationType.INFORMATION
+    )
     description: Annotated[str | None, Field(min_length=1)] = None
-    started_at: datetime | None = None
-    ended_at: datetime | None = None
-    published: bool = False
+    started_at: Annotated[datetime | None, Field()] = None
+    ended_at: Annotated[datetime | None, Field()] = None
+    published: Annotated[bool, Field()] = False
 
     _date_validator = field_validator("started_at", "ended_at")(transform_to_utc)
 
@@ -53,11 +55,13 @@ class NotificationPostInput(PostInputModel):
 
 class NotificationPatchInput(PatchInputModel):
     title: Annotated[str, Field(min_length=1)]
-    notification_type: NotificationType = NotificationType.INFORMATION
+    notification_type: Annotated[NotificationType, Field()] = (
+        NotificationType.INFORMATION
+    )
     description: Annotated[str | None, Field(min_length=1)] = None
-    started_at: datetime | None = None
-    ended_at: datetime | None = None
-    published: bool = False
+    started_at: Annotated[datetime | None, Field()] = None
+    ended_at: Annotated[datetime | None, Field()] = None
+    published: Annotated[bool, Field()] = False
 
     _date_validator = field_validator("started_at", "ended_at")(transform_to_utc)
 

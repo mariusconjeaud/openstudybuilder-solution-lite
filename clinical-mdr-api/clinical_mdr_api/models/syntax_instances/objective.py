@@ -20,8 +20,10 @@ from clinical_mdr_api.models.utils import BaseModel, PatchInputModel, PostInputM
 
 
 class Objective(BaseModel):
-    uid: str
-    name: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = None
+    uid: Annotated[str, Field()]
+    name: Annotated[
+        str | None, Field(json_schema_extra={"nullable": True, "format": "html"})
+    ] = None
     name_plain: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = (
         None
     )
@@ -40,23 +42,19 @@ class Objective(BaseModel):
     author_username: Annotated[
         str | None, Field(json_schema_extra={"nullable": True})
     ] = None
-    possible_actions: Annotated[
-        list[str],
-        Field(
-            description=(
-                "Holds those actions that can be performed on the objective. "
-                "Actions are: 'approve', 'edit', 'inactivate', 'reactivate' and 'delete'."
-            )
+    possible_actions: list[str] = Field(
+        description=(
+            "Holds those actions that can be performed on the objective. "
+            "Actions are: 'approve', 'edit', 'inactivate', 'reactivate' and 'delete'."
         ),
-    ] = []
+        default_factory=list,
+    )
 
-    template: ObjectiveTemplateNameUidLibrary | None = None
-    parameter_terms: Annotated[
-        list[MultiTemplateParameterTerm],
-        Field(
-            description="Holds the parameter terms that are used within the objective. The terms are ordered as they occur in the objective name.",
-        ),
-    ] = []
+    template: Annotated[ObjectiveTemplateNameUidLibrary | None, Field()] = None
+    parameter_terms: list[MultiTemplateParameterTerm] = Field(
+        description="Holds the parameter terms that are used within the objective. The terms are ordered as they occur in the objective name.",
+        default_factory=list,
+    )
     library: Annotated[Library | None, Field(json_schema_extra={"nullable": True})] = (
         None
     )
@@ -116,12 +114,7 @@ class ObjectiveVersion(Objective):
     Class for storing Objectives and calculation of differences
     """
 
-    changes: Annotated[
-        list[str],
-        Field(
-            description=CHANGES_FIELD_DESC,
-        ),
-    ] = []
+    changes: list[str] = Field(description=CHANGES_FIELD_DESC, default_factory=list)
 
 
 class ObjectiveEditInput(PatchInputModel):

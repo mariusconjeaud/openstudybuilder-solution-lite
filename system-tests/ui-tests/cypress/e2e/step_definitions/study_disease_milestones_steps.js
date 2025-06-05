@@ -19,8 +19,6 @@ Given('The test Study Disease Milestones exists', () => {
 
 When('The Study Disease Milestones is edited', () => {
     cy.waitForTableData()
-    cy.tableRowActions(0, 'Edit')
-    cy.wait(1500)
     cy.checkbox('repetition-indicator')
     cy.clickButton('save-button')
     cy.checkSnackbarMessage('Disease milestone updated')
@@ -45,11 +43,6 @@ When('New Disease Milestone Type is created with the same Disease Milestone Type
     cy.clickButton('create-disease-milestone')
     cy.selectAutoComplete('disease-milestone-type', 'Diagnosis of diabetes')
     cy.clickButton('save-button')
-})
-
-When('The delete action is clicked for the test Study Disease Milestones', () => {
-    cy.waitForTableData()
-    cy.tableRowActions(0, 'Delete')
 })
 
 Then('The test Study Disease Milestones is no longer available', () => {

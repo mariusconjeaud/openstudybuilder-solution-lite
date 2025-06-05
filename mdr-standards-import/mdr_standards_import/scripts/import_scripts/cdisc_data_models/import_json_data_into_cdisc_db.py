@@ -1,11 +1,11 @@
 import json, time, traceback
+from os import listdir, path, environ
 from mdr_standards_import.scripts.entities.cdisc_data_models.data_model_import import (
     DataModelImport,
     DataModelType,
 )
 from mdr_standards_import.scripts.entities.cdisc_data_models.version import Version
 
-from os import listdir, path
 
 from mdr_standards_import.scripts.repositories.repository import (
     await_indexes,
@@ -15,6 +15,8 @@ from mdr_standards_import.scripts.repositories.repository import (
 )
 from mdr_standards_import.scripts.exceptions.version_exists import VersionExists
 from mdr_standards_import.scripts.utils import get_classes_directory_name
+
+NEO4J_MDR_DATABASE = environ.get("NEO4J_MDR_DATABASE", "neo4j")
 
 
 def print_summary(tx, import_id, start_time):
@@ -86,10 +88,14 @@ def import_data_model_json_data_into_cdisc_db(
             author_id=author_id,
         )
 
-        with cdisc_import_neo4j_driver.session(database="system") as session:
-            session.run(
-                "CREATE DATABASE $database IF NOT EXISTS", database=cdisc_import_db_name
-            )
+        # If using a staging database, it might not exist yet
+        # so we need to create it first
+        if cdisc_import_db_name != NEO4J_MDR_DATABASE:
+            with cdisc_import_neo4j_driver.session(database="system") as session:
+                session.run(
+                    "CREATE DATABASE $database IF NOT EXISTS",
+                    database=cdisc_import_db_name,
+                )
 
         with cdisc_import_neo4j_driver.session(
             database=cdisc_import_db_name

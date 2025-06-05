@@ -1,5 +1,6 @@
 import datetime
-from typing import Annotated, Callable, Self
+from dataclasses import asdict
+from typing import Annotated, Callable, Iterable, Self
 
 from pydantic import ConfigDict, Field, ValidationInfo, field_validator
 
@@ -17,19 +18,18 @@ from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryItemStatus,
     ObjectAction,
 )
-from clinical_mdr_api.models.concepts.concept import (
-    Concept,
-    ExtendedConceptPatchInput,
-    ExtendedConceptPostInput,
-)
+from clinical_mdr_api.models.concepts.concept import Concept, ExtendedConceptPostInput
 from clinical_mdr_api.models.libraries.library import Library
-from clinical_mdr_api.models.utils import BaseModel, InputModel, PatchInputModel
-from common.exceptions import ValidationException
+from clinical_mdr_api.models.utils import (
+    BaseModel,
+    EditInputModel,
+    InputModel,
+    PatchInputModel,
+)
 from common.utils import convert_to_datetime
 
 
 class ActivityHierarchySimpleModel(BaseModel):
-
     uid: Annotated[str, Field()]
     name: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = None
 
@@ -52,12 +52,10 @@ class ActivityHierarchySimpleModel(BaseModel):
 
     @classmethod
     def from_activity_ar_object(
-        cls, activity_ar: ActivityGroupAR | ActivitySubGroupAR
+        cls,
+        activity_ar: ActivityGroupAR | ActivitySubGroupAR | ActivityInstanceAR | Self,
     ) -> Self:
         return cls(uid=activity_ar.uid, name=activity_ar.name)
-
-    uid: Annotated[str, Field()]
-    name: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = None
 
 
 class ActivityGroupingHierarchySimpleModel(BaseModel):
@@ -212,52 +210,20 @@ class Activity(ActivityBase):
     def from_activity_ar_objects(
         cls,
         activity_ar: ActivityAR,
-        activity_subgroup_ars: list[ActivitySubGroupAR],
-        activity_group_ars: list[ActivitySubGroupAR],
-        activity_instance_ars: list[ActivityInstanceAR] | None = None,
+        activity_instance_ars: Iterable[
+            ActivityInstanceAR | ActivityHierarchySimpleModel
+        ] = tuple(),
     ) -> Self:
-        if activity_instance_ars is None:
-            activity_instance_ars = []
+        activity_groupings = [
+            ActivityGroupingHierarchySimpleModel(**asdict(ar))
+            for ar in activity_ar.concept_vo.activity_groupings
+        ]
 
-        activity_instances = []
-        for activity_instance_ar in activity_instance_ars:
-            activity_instances.append(
-                ActivityHierarchySimpleModel.from_activity_ar_object(
-                    activity_ar=activity_instance_ar
-                )
-            )
+        activity_instances = [
+            ActivityHierarchySimpleModel.from_activity_ar_object(activity_ar=ar)
+            for ar in activity_instance_ars
+        ]
 
-        activity_groupings = []
-        for activity_grouping in activity_ar.concept_vo.activity_groupings:
-            activity_subgroup, activity_group = None, None
-            for activity_subgroup_ar in activity_subgroup_ars:
-                if activity_subgroup_ar.uid == activity_grouping.activity_subgroup_uid:
-                    activity_subgroup = (
-                        ActivityHierarchySimpleModel.from_activity_ar_object(
-                            activity_ar=activity_subgroup_ar,
-                        )
-                    )
-                    break
-            for activity_group_ar in activity_group_ars:
-                if activity_group_ar.uid == activity_grouping.activity_group_uid:
-                    activity_group = (
-                        ActivityHierarchySimpleModel.from_activity_ar_object(
-                            activity_ar=activity_group_ar,
-                        )
-                    )
-                    break
-            ValidationException.raise_if(
-                not activity_group or not activity_subgroup,
-                msg="Either ActivityGroup or ActivitySubGroup can't be find in fetched groupings",
-            )
-            activity_groupings.append(
-                ActivityGroupingHierarchySimpleModel(
-                    activity_group_uid=activity_group.uid,
-                    activity_group_name=activity_group.name,
-                    activity_subgroup_uid=activity_subgroup.uid,
-                    activity_subgroup_name=activity_subgroup.name,
-                )
-            )
         return cls(
             uid=activity_ar.uid,
             nci_concept_id=activity_ar.concept_vo.nci_concept_id,
@@ -308,10 +274,10 @@ class Activity(ActivityBase):
             is_used_by_legacy_instances=activity_ar.concept_vo.is_used_by_legacy_instances,
         )
 
-    activity_groupings: Annotated[
-        list[ActivityGroupingHierarchySimpleModel], Field()
-    ] = []
-    activity_instances: list[ActivityHierarchySimpleModel] = []
+    activity_groupings: list[ActivityGroupingHierarchySimpleModel] = Field(
+        default_factory=list
+    )
+    activity_instances: list[ActivityHierarchySimpleModel] = Field(default_factory=list)
     synonyms: Annotated[
         list[str], Field(json_schema_extra={"remove_from_wildcard": True})
     ]
@@ -399,31 +365,31 @@ class ActivityForStudyActivity(Activity):
 
 
 class ActivityGrouping(InputModel):
-    activity_group_uid: str
-    activity_subgroup_uid: str
+    activity_group_uid: Annotated[str, Field()]
+    activity_subgroup_uid: Annotated[str, Field()]
 
 
 class ActivityPostInput(ExtendedConceptPostInput):
+    name: Annotated[
+        str,
+        Field(
+            description="The name or the actual value. E.g. 'Systolic Blood Pressure', 'Body Temperature', 'Metformin', ...",
+            min_length=1,
+        ),
+    ]
+    name_sentence_case: Annotated[str, Field(min_length=1)]
     nci_concept_id: Annotated[str | None, Field(min_length=1)] = None
     nci_concept_name: Annotated[str | None, Field(min_length=1)] = None
-    activity_groupings: list[ActivityGrouping] | None = None
-    synonyms: list[str] | None = None
+    activity_groupings: Annotated[list[ActivityGrouping] | None, Field()] = None
+    synonyms: Annotated[list[str] | None, Field()] = None
     request_rationale: Annotated[str | None, Field(min_length=1)] = None
-    is_request_final: bool = False
-    is_data_collected: bool = False
-    is_multiple_selection_allowed: bool = True
+    is_request_final: Annotated[bool, Field()] = False
+    is_data_collected: Annotated[bool, Field()] = False
+    is_multiple_selection_allowed: Annotated[bool, Field()] = True
 
 
-class ActivityEditInput(ExtendedConceptPatchInput):
-    nci_concept_id: Annotated[str | None, Field(min_length=1)] = None
-    nci_concept_name: Annotated[str | None, Field(min_length=1)] = None
-    activity_groupings: list[ActivityGrouping] | None = None
-    synonyms: list[str] | None = None
-    request_rationale: Annotated[str | None, Field(min_length=1)] = None
-    is_request_final: bool = False
-    is_data_collected: bool = False
-    is_multiple_selection_allowed: bool = True
-    change_description: Annotated[str | None, Field(min_length=1)] = None
+class ActivityEditInput(ActivityPostInput, EditInputModel):
+    pass
 
 
 class ActivityCreateInput(ActivityPostInput):
@@ -444,12 +410,72 @@ class ActivityVersion(Activity):
     Class for storing Activity and calculation of differences
     """
 
-    changes: Annotated[
-        list[str],
-        Field(
-            description=CHANGES_FIELD_DESC,
-        ),
-    ] = []
+    changes: list[str] = Field(description=CHANGES_FIELD_DESC, default_factory=list)
+
+
+class ActivityVersionDetailGroup(BaseModel):
+    uid: Annotated[str, Field()]
+    name: Annotated[str, Field()]
+    version: Annotated[str, Field()]
+    status: Annotated[str, Field()]
+
+
+class ActivityVersionDetailSubgroup(BaseModel):
+    uid: Annotated[str, Field()]
+    name: Annotated[str, Field()]
+    version: Annotated[str, Field()]
+    status: Annotated[str, Field()]
+
+
+class ActivityVersionDetailGrouping(BaseModel):
+    valid_group_uid: Annotated[str, Field()]
+    group: Annotated[ActivityVersionDetailGroup, Field()]
+    subgroup: Annotated[ActivityVersionDetailSubgroup, Field()]
+    activity_instances: list[ActivityHierarchySimpleModel] = Field(default_factory=list)
+
+
+class ActivityVersionDetail(BaseModel):
+    """
+    Model representing detailed information about a specific version of an activity.
+    """
+
+    activity_uid: Annotated[str, Field()]
+    activity_version: Annotated[str, Field()]
+    activity_groupings: Annotated[list[ActivityVersionDetailGrouping], Field()]
+    activity_instances: Annotated[list[ActivityHierarchySimpleModel], Field()]
+
+    @classmethod
+    def from_repository_input(cls, data: dict) -> Self:
+        return cls(
+            activity_uid=data["activity_uid"],
+            activity_version=data["activity_version"],
+            activity_groupings=[
+                ActivityVersionDetailGrouping(
+                    valid_group_uid=grouping["valid_group_uid"],
+                    subgroup=ActivityVersionDetailSubgroup(
+                        uid=grouping["subgroup"]["uid"],
+                        name=grouping["subgroup"]["name"],
+                        version=grouping["subgroup"]["version"],
+                        status=grouping["subgroup"]["status"],
+                    ),
+                    group=ActivityVersionDetailGroup(
+                        uid=grouping["group"]["uid"],
+                        name=grouping["group"]["name"],
+                        version=grouping["group"]["version"],
+                        status=grouping["group"]["status"],
+                    ),
+                    activity_instances=[
+                        ActivityHierarchySimpleModel(**instance)
+                        for instance in grouping.get("activity_instances", [])
+                    ],
+                )
+                for grouping in data["activity_groupings"]
+            ],
+            activity_instances=[
+                ActivityHierarchySimpleModel(**instance)
+                for instance in data["activity_instances"]
+            ],
+        )
 
 
 class SimpleActivity(BaseModel):
@@ -514,8 +540,8 @@ class SimpleActivityGroup(BaseModel):
 
 
 class SimpleActivityGrouping(BaseModel):
-    activity_group: SimpleActivityGroup
-    activity_subgroup: SimpleActivitySubGroup
+    activity_group: Annotated[SimpleActivityGroup, Field()]
+    activity_subgroup: Annotated[SimpleActivitySubGroup, Field()]
 
 
 class SimpleActivityInstanceClass(BaseModel):
@@ -523,7 +549,7 @@ class SimpleActivityInstanceClass(BaseModel):
 
 
 class SimpleActivityInstance(BaseModel):
-    uid: str
+    uid: Annotated[str, Field()]
     nci_concept_id: Annotated[
         str | None, Field(json_schema_extra={"nullable": True})
     ] = None
@@ -573,7 +599,6 @@ class ActivityOverview(BaseModel):
 
     @classmethod
     def from_repository_input(cls, overview: dict):
-
         return cls(
             activity=SimpleActivity(
                 uid=overview.get("activity_value").get("uid"),

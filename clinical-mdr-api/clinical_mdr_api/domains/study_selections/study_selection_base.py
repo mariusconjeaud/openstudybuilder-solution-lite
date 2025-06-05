@@ -50,7 +50,7 @@ class StudySelectionBaseAR:
         return self._study_uid
 
     @property
-    def study_objects_selection(self) -> tuple[Type[StudySelectionBaseVO]]:
+    def study_objects_selection(self) -> tuple[StudySelectionBaseVO, ...]:
         return self._study_objects_selection
 
     @study_objects_selection.setter

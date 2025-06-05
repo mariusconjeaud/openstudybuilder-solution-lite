@@ -73,17 +73,14 @@ class ActivitySubGroupService(ConceptGenericService[ActivitySubGroupAR]):
         item: ActivitySubGroupAR,
         concept_edit_input: ActivitySubGroupEditInput,
     ) -> ActivitySubGroupAR:
-        if "activity_groups" in concept_edit_input.model_fields_set:
-            activity_groups = (
-                [
-                    SimpleActivityGroupVO(activity_group_uid=activity_group)
-                    for activity_group in concept_edit_input.activity_groups
-                ]
-                if concept_edit_input.activity_groups
-                else []
-            )
-        else:
-            activity_groups = item.concept_vo.activity_groups
+        activity_groups = (
+            [
+                SimpleActivityGroupVO(activity_group_uid=activity_group)
+                for activity_group in concept_edit_input.activity_groups
+            ]
+            if concept_edit_input.activity_groups
+            else []
+        )
         item.edit_draft(
             author_id=self.author_id,
             change_description=concept_edit_input.change_description,

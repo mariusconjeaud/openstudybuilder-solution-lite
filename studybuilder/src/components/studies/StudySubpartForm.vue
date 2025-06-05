@@ -271,6 +271,10 @@ export default {
       ],
       selectedHeaders: [
         {
+          title: this.$t('StudySubparts.study_id'),
+          key: 'current_metadata.identification_metadata.study_id',
+        },
+        {
           title: this.$t('StudyTable.acronym'),
           key: 'current_metadata.identification_metadata.study_acronym',
         },
@@ -317,9 +321,9 @@ export default {
     selectStudy(study) {
       this.selectedSubstudy = study
       this.form.description =
-        study.current_metadata.identification_metadata.description
+        study.current_metadata.identification_metadata?.description
       this.form.study_acronym =
-        study.current_metadata.identification_metadata.study_acronym
+        study.current_metadata.identification_metadata?.study_acronym
     },
     fetchAvailableStudies(filters, options, filtersUpdated) {
       if (filters) {
@@ -327,10 +331,6 @@ export default {
         filtersObj.study_subpart_uids = { v: [] }
         filtersObj.study_parent_part = { v: [] }
         filtersObj.uid = { v: [this.selectedStudy.uid], op: 'ne' }
-        filtersObj['current_metadata.identification_metadata.study_acronym'] = {
-          v: [null],
-          op: 'ne',
-        }
         filtersObj['current_metadata.identification_metadata.project_number'] =
           {
             v: [

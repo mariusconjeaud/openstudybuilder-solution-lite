@@ -1,6 +1,6 @@
 @REQ_ID:2866939
 @pending_development
-Feature: Studies - Study Controlled Terminology Standard Versions
+Feature: Studies - Manage Studies - Data Standard Versions - Controlled Terminology
 
     Background: User must be logged in
         Given The user is logged in
@@ -36,12 +36,14 @@ Feature: Studies - Study Controlled Terminology Standard Versions
 
     Scenario: User must be able to edit the Study Controlled Terminology Versions
         Given The '/studies/Study_000001/data_standard_versions/controlled_terminology' page is opened
+        When The 'Edit' option is clicked from the three dot menu list
         When The Controlled Terminology Version is edited
         Then The edited Controlled Terminology Version data is reflected in the table
 
     Scenario: User must be able to delete a Study Controlled Terminology Versions
         Given The '/studies/Study_000001/data_standard_versions/controlled_terminology' page is opened
-        When A Controlled Terminology Version is deleted
+        When The 'Delete' option is clicked from the three dot menu list
+        And Action is confirmed by clicking continue
         Then The Controlled Terminology Version data is removed from the table
 
     Scenario: User must be able to read change history of Study Controlled Terminology Versions
@@ -51,6 +53,7 @@ Feature: Studies - Study Controlled Terminology Standard Versions
 
     Scenario: User must be able to read change history of selected Study Controlled Terminology Version
         Given The '/studies/Study_000001/data_standard_versions/controlled_terminology' page is opened
+        And The 'Show history' option is clicked from the three dot menu list
         When The user clicks on History for particular element
         Then The user is presented with history of changes for that element
         And The history contains timestamps and usernames

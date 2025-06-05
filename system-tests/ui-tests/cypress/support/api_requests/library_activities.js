@@ -1,4 +1,5 @@
-let activity_uid, activityInstance_uid, class_uid, group_uid, subgroup_uid, requestedActivity_uid
+export let group_uid, subgroup_uid, activity_uid
+let activityInstance_uid, class_uid, requestedActivity_uid
 const activityInstanceClassUrl = '/activity-instance-classes'
 const baseUrl = '/concepts/activities'
 const activityUrl = `${baseUrl}/activities`

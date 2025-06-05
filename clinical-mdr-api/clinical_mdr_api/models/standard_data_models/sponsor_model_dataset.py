@@ -244,7 +244,7 @@ class SponsorModelDataset(SponsorModelBase):
 
 
 class SponsorModelDatasetInput(InputModel):
-    target_data_model_catalogue: str | None = "SDTMIG"
+    target_data_model_catalogue: Annotated[str | None, Field()] = "SDTMIG"
     dataset_uid: Annotated[str, Field(min_length=1)]
     sponsor_model_name: Annotated[
         str,
@@ -260,7 +260,7 @@ class SponsorModelDatasetInput(InputModel):
             min_length=1,
         ),
     ]
-    is_basic_std: bool | None = None
+    is_basic_std: Annotated[bool | None, Field()] = None
     implemented_dataset_class: Annotated[
         str | None,
         Field(
@@ -268,30 +268,30 @@ class SponsorModelDatasetInput(InputModel):
             json_schema_extra={"nullable": True},
         ),
     ]
-    xml_path: str | None = None
-    xml_title: str | None = None
-    structure: str | None = None
-    purpose: str | None = None
-    keys: list[str] | None = None
-    sort_keys: list[str] | None = None
-    is_cdisc_std: bool | None = True
+    xml_path: Annotated[str | None, Field()] = None
+    xml_title: Annotated[str | None, Field()] = None
+    structure: Annotated[str | None, Field()] = None
+    purpose: Annotated[str | None, Field()] = None
+    keys: Annotated[list[str] | None, Field()] = None
+    sort_keys: Annotated[list[str] | None, Field()] = None
+    is_cdisc_std: Annotated[bool | None, Field()] = True
     source_ig: Annotated[
         str | None,
         Field(
             description="Source Implementation Guide, e.g. SDTMIG 3.3 or TAUG-DIABETES 1.0",
         ),
     ] = None
-    standard_ref: str | None = None
-    comment: str | None = None
-    ig_comment: str | None = None
-    map_domain_flag: bool | None = None
-    suppl_qual_flag: bool | None = None
-    include_in_raw: bool | None = None
-    gen_raw_seqno_flag: bool | None = None
-    enrich_build_order: int | None = None
-    label: str | None = None
-    state: str | None = None
-    extended_domain: str | None = None
+    standard_ref: Annotated[str | None, Field()] = None
+    comment: Annotated[str | None, Field()] = None
+    ig_comment: Annotated[str | None, Field()] = None
+    map_domain_flag: Annotated[bool | None, Field()] = None
+    suppl_qual_flag: Annotated[bool | None, Field()] = None
+    include_in_raw: Annotated[bool | None, Field()] = None
+    gen_raw_seqno_flag: Annotated[bool | None, Field()] = None
+    enrich_build_order: Annotated[int | None, Field()] = None
+    label: Annotated[str | None, Field()] = None
+    state: Annotated[str | None, Field()] = None
+    extended_domain: Annotated[str | None, Field()] = None
     library_name: Annotated[
         str | None, Field(description="Defaults to CDISC", min_length=1)
     ] = "CDISC"

@@ -1,8 +1,7 @@
 from typing import Annotated, Any
 
 from dict2xml import DataSorter, dict2xml
-from fastapi import APIRouter, Body, Path, Query, Response
-from fastapi import status as response_status
+from fastapi import APIRouter, Body, Path, Query
 from fastapi.responses import StreamingResponse
 from pydantic.types import Json
 from starlette.requests import Request
@@ -62,7 +61,6 @@ Allowed parameters include : filter on fields, sort by field name with sort dire
 
 {_generic_descriptions.DATA_EXPORTS_HEADER}
 """,
-    response_model=CustomPage[CompactStudy],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -228,7 +226,6 @@ Allowed parameters include : filter on fields, sort by field name with sort dire
 
 {_generic_descriptions.DATA_EXPORTS_HEADER}
 """,
-    response_model=CustomPage[StudyStructureOverview],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -308,7 +305,6 @@ def get_study_structure_overview(
     summary="Returns possibles values from the database for a given header",
     description="""Allowed parameters include : field name for which to get possible
     values, search string to provide filtering for the field name, additional filters to apply on other fields""",
-    response_model=list[Any],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -338,7 +334,7 @@ def get_study_structure_overview_header(
     page_size: Annotated[
         int | None, Query(description=_generic_descriptions.HEADER_PAGE_SIZE)
     ] = config.DEFAULT_HEADER_PAGE_SIZE,
-):
+) -> list[Any]:
     study_service = StudyService()
     return study_service.get_study_structure_overview_header(
         field_name=field_name,
@@ -355,7 +351,6 @@ def get_study_structure_overview_header(
     summary="Returns possibles values from the database for a given header",
     description="""Allowed parameters include : field name for which to get possible
     values, search string to provide filtering for the field name, additional filters to apply on other fields""",
-    response_model=list[Any],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -385,7 +380,7 @@ def get_distinct_values_for_header(
     page_size: Annotated[
         int | None, Query(description=_generic_descriptions.HEADER_PAGE_SIZE)
     ] = config.DEFAULT_HEADER_PAGE_SIZE,
-):
+) -> list[Any]:
     study_service = StudyService()
     return study_service.get_distinct_values_for_header(
         field_name=field_name,
@@ -404,7 +399,6 @@ def get_distinct_values_for_header(
     "The first locked version obtains number '1' and each next locked version "
     "is incremented number of the last locked version. "
     "The Study exists in the LOCKED state after successful lock",
-    response_model=Study,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -424,7 +418,7 @@ def lock(
         StatusChangeDescription,
         Body(description="The description of the locked version."),
     ],
-):
+) -> Study:
     study_service = StudyService()
     return study_service.lock(
         uid=study_uid, change_description=lock_description.change_description
@@ -437,7 +431,6 @@ def lock(
     summary="Unlocks a Study with specified uid",
     description="The Study is unlocked, which means that the new DRAFT version of a Study is created"
     " and the Study exists in the DRAFT state.",
-    response_model=Study,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -453,7 +446,7 @@ def lock(
 )
 def unlock(
     study_uid: Annotated[str, StudyUID],
-):
+) -> Study:
     study_service = StudyService()
     return study_service.unlock(uid=study_uid)
 
@@ -465,7 +458,6 @@ def unlock(
     description="The Study is released, which means that 'snapshot' of the Study is created in the database"
     "and the LATEST_RELEASED relationship is created that points to the created snapshot."
     "What's more the new LATEST_DRAFT node is created that describes the new Draft Study after releasing.",
-    response_model=Study,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -485,7 +477,7 @@ def release(
         StatusChangeDescription,
         Body(description="The description of the release version."),
     ],
-):
+) -> Study:
     study_service = StudyService()
     return study_service.release(
         uid=study_uid, change_description=release_description.change_description
@@ -510,7 +502,6 @@ State after:
 Possible errors:
  - Invalid uid or status not Draft or Study was previously locked.
     """,
-    response_model=None,
     status_code=204,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -528,7 +519,6 @@ Possible errors:
 def delete_activity(study_uid: Annotated[str, StudyUID]):
     study_service = StudyService()
     study_service.soft_delete(uid=study_uid)
-    return Response(status_code=response_status.HTTP_204_NO_CONTENT)
 
 
 @router.get(
@@ -537,7 +527,6 @@ def delete_activity(study_uid: Annotated[str, StudyUID]):
     summary="Returns the current state of a specific study definition identified by 'study_uid'.",
     description="If multiple request query parameters are used, then they need to match all at the same time"
     " (they are combined with the AND operation).",
-    response_model=Study,
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -569,7 +558,7 @@ def get(
     study_value_version: Annotated[
         str | None, _generic_descriptions.STUDY_VALUE_VERSION_QUERY
     ] = None,
-):
+) -> Study:
     study_service = StudyService()
     study_definition = study_service.get_by_uid(
         uid=study_uid,
@@ -586,7 +575,6 @@ def get(
     "/{study_uid}/structure-statistics",
     dependencies=[rbac.STUDY_READ],
     summary="Returns various statistics about the structure of the study identified by 'study_uid'.",
-    response_model=StudyStructureStatistics,
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -599,7 +587,7 @@ def get(
 )
 def get_structure_statistics(
     study_uid: Annotated[str, StudyUID],
-):
+) -> StudyStructureStatistics:
     study_service = StudyService()
     return study_service.get_study_structure_statistics(study_uid)
 
@@ -608,7 +596,6 @@ def get_structure_statistics(
     "/{study_uid}/pharma-cm",
     dependencies=[rbac.STUDY_READ],
     summary="Returns the pharma-cm represention of study identified by 'study_uid'.",
-    response_model=StudyPharmaCM,
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -625,7 +612,7 @@ def get_pharma_cm_representation(
     study_value_version: Annotated[
         str | None, _generic_descriptions.STUDY_VALUE_VERSION_QUERY
     ] = None,
-):
+) -> StudyPharmaCM:
     StudyService().check_if_study_uid_and_version_exists(
         study_uid=study_uid, study_value_version=study_value_version
     )
@@ -695,7 +682,6 @@ def get_pharma_cm_xml_representation(
     "* the method may be invoked with dry=true query param. if that's the case it wokrs the same"
     "  except that any change made to the resource are not persisted (however all validations are"
     "  performed.\n",
-    response_model=Study,
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -744,7 +730,6 @@ def patch(
     summary="Returns the history of study snapshot definitions",
     description="It returns the history of changes made to the specified Study Definition Snapshot."
     "The returned history should reflect HAS_VERSION relationships in the database between StudyRoot and StudyValue nodes",
-    response_model=CustomPage[CompactStudy],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -785,7 +770,7 @@ def get_snapshot_history(
     total_count: Annotated[
         bool | None, Query(description=_generic_descriptions.TOTAL_COUNT)
     ] = False,
-):
+) -> CustomPage[CompactStudy]:
     study_service = StudyService()
     snapshot_history = study_service.get_study_snapshot_history(
         study_uid=study_uid,
@@ -810,7 +795,6 @@ def get_snapshot_history(
     summary="Returns the audit trail for the fields of a specific study definition identified by 'study_uid'.",
     description="Actions on the study are grouped by date of edit."
     "Optionally select which subset of fields should be reflected in the audit trail.",
-    response_model=list[StudyFieldAuditTrailEntry],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -831,7 +815,7 @@ def get_fields_audit_trail(
         list[StudyComponentEnum] | None,
         Query(description=study_fields_audit_trail_section_description("exclude")),
     ] = None,
-):
+) -> list[StudyFieldAuditTrailEntry]:
     study_service = StudyService()
     study_fields_audit_trail = study_service.get_fields_audit_trail_by_uid(
         uid=study_uid,
@@ -846,7 +830,6 @@ def get_fields_audit_trail(
     dependencies=[rbac.STUDY_READ],
     summary="Returns the audit trail for the subparts of a specific study definition identified by 'study_uid'.",
     description="Actions on the study are grouped by date of edit. Optionally select which subset of fields should be reflected in the audit trail.",
-    response_model=list[StudySubpartAuditTrail],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -863,7 +846,7 @@ def get_study_subpart_audit_trail(
     study_value_version: Annotated[
         str | None, _generic_descriptions.STUDY_VALUE_VERSION_QUERY
     ] = None,
-):
+) -> list[StudySubpartAuditTrail]:
     study_service = StudyService()
     return study_service.get_subpart_audit_trail_by_uid(
         uid=study_uid, is_subpart=is_subpart, study_value_version=study_value_version
@@ -878,7 +861,6 @@ def get_study_subpart_audit_trail(
 If the request succeeds new DRAFT Study Definition will be with initial identification data as provided in 
 request body with new unique uid generated and returned in response body.
         """,
-    response_model=Study,
     response_model_exclude_unset=True,
     status_code=201,
     responses={
@@ -909,7 +891,6 @@ def create(
 Creates a new DRAFT Study Definition by cloning an existing study. 
 The client can specify which parts of the study should be copied using the request body.
 """,
-    response_model=Study,
     response_model_exclude_unset=True,
     status_code=201,
     responses={
@@ -948,7 +929,6 @@ Business logic:
 State after:
  - No change
 """,
-    response_model=StudyProtocolTitle,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -964,7 +944,7 @@ def get_protocol_title(
     study_value_version: Annotated[
         str | None, _generic_descriptions.STUDY_VALUE_VERSION_QUERY
     ] = None,
-):
+) -> StudyProtocolTitle:
     study_service = StudyService()
     return study_service.get_protocol_title(
         uid=study_uid, study_value_version=study_value_version
@@ -987,7 +967,6 @@ Business logic:
 State after:
  - The specific form is copied or projected into a study referenced by uid 'study_uid'.
 """,
-    response_model=Study,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -1014,7 +993,7 @@ def copy_simple_form_from_another_study(
             "or return a projection",
         ),
     ] = False,
-):
+) -> Study:
     study_service = StudyService()
     return study_service.copy_component_from_another_study(
         uid=study_uid,
@@ -1028,7 +1007,6 @@ def copy_simple_form_from_another_study(
     "/{study_uid}/time-units",
     dependencies=[rbac.STUDY_READ],
     summary="Gets a study preferred time unit",
-    response_model=StudyPreferredTimeUnit,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -1050,7 +1028,7 @@ def get_preferred_time_unit(
     study_value_version: Annotated[
         str | None, _generic_descriptions.STUDY_VALUE_VERSION_QUERY
     ] = None,
-):
+) -> StudyPreferredTimeUnit:
     study_service = StudyService()
     return study_service.get_study_preferred_time_unit(
         study_uid=study_uid,
@@ -1063,7 +1041,6 @@ def get_preferred_time_unit(
     "/{study_uid}/time-units",
     dependencies=[rbac.STUDY_WRITE],
     summary="Edits a study preferred time unit",
-    response_model=StudyPreferredTimeUnit,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -1086,7 +1063,7 @@ def patch_preferred_time_unit(
             description="Whether the preferred time unit is associated with Protocol Soa or not.",
         ),
     ] = False,
-):
+) -> StudyPreferredTimeUnit:
     study_service = StudyService()
     return study_service.patch_study_preferred_time_unit(
         study_uid=study_uid,
@@ -1099,7 +1076,6 @@ def patch_preferred_time_unit(
     "/{study_uid}/order",
     dependencies=[rbac.STUDY_WRITE],
     summary="Reorder Study Subparts within a Study Parent Part",
-    response_model=list[Study],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -1119,7 +1095,7 @@ def reorder_study_subparts(
             "If provided, the specified Study Subpart will be reordered; otherwise, any gaps in the order will be filled.",
         ),
     ] = None,
-):
+) -> list[Study]:
     study_service = StudyService()
     return study_service.reorder_study_subparts(
         study_parent_part_uid=study_uid,
@@ -1132,7 +1108,6 @@ def reorder_study_subparts(
     dependencies=[rbac.STUDY_READ],
     summary="Get study SoA preferences",
     response_model_by_alias=False,
-    response_model=StudySoaPreferences,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -1159,7 +1134,6 @@ def get_soa_preferences(
     "/{study_uid}/soa-preferences",
     dependencies=[rbac.STUDY_WRITE],
     summary="Update study SoA preferences",
-    response_model=StudySoaPreferences,
     response_model_by_alias=False,
     status_code=200,
     responses={
@@ -1175,7 +1149,7 @@ def patch_soa_preferences(
     soa_preferences: Annotated[
         StudySoaPreferencesInput, Body(description="SoA preferences data")
     ],
-):
+) -> StudySoaPreferences:
     study_service = StudyService()
     return study_service.patch_study_soa_preferences(
         study_uid=study_uid,

@@ -2,7 +2,7 @@ import { apiActivityName } from "./api_library_steps";
 const { Given, When, Then } = require("@badeball/cypress-cucumber-preprocessor");
 
 let activityInstance, apiActivitInstanceyName, apiTopicCode
-let nciconceptid = "NCI-ID", nciname = 'NCI-name', definition = "DEF", adamcode = "Adam-code", topicCode = `Topic${Date.now()}`
+let nciconceptid = "NCI-ID", nciname = 'NCI-name', adamcode = "Adam-code", topicCode = `Topic${Date.now()}`
 
 When('The Add Activity Instance button is clicked', () => startActivityCreation())
 
@@ -19,7 +19,6 @@ When('Second activity instance data is created with the same topic code', () => 
 
 Then('The newly added Activity Instance item is added in the table by default', () => {
     cy.checkRowByIndex(0, 'Activity Instance', activityInstance)
-    cy.checkRowByIndex(0,'Definition', definition)
     cy.checkRowByIndex(0, 'NCI Concept ID', nciconceptid)
     cy.checkRowByIndex(0, 'Topic code', topicCode)
     cy.checkRowByIndex(0, 'ADaM parameter code', adamcode)
@@ -27,7 +26,6 @@ Then('The newly added Activity Instance item is added in the table by default', 
     cy.checkRowByIndex(0, 'Default selected for activity', "No")
     cy.checkRowByIndex(0, 'Data sharing', "No")
     cy.checkRowByIndex(0, 'Legacy usage', "No")
-    cy.checkStatusAndVersion('Draft', '0.1')
 })
 
 When('Activity selection is not made', () => cy.clickFormActionButton('continue'))
@@ -96,19 +94,19 @@ When('The activity instance is edited', () => {
 
 When('The activity instance edition form is filled with data', () => editActivityInstance())
 
-Then('The activity instance is no longer available', () => cy.confirmItemNotAvailable(apiActivitInstanceyName))
+Then('The activity instance is no longer available', () => cy.searchAndCheckPresence(apiActivitInstanceyName, false))
 
-Then('The activity instance is not created', () => cy.confirmItemNotAvailable(activityInstance))
+Then('The activity instance is not created', () => cy.searchAndCheckPresence(activityInstance, false))
 
-Then('The activity instance is not edited', () => cy.confirmItemNotAvailable(activityInstance))
+Then('The activity instance is not edited', () => cy.searchAndCheckPresence(activityInstance, false))
 
-Then('One activity instance is found after performing full name search', () => cy.searchAndCheckResults(apiActivitInstanceyName))
+Then('One activity instance is found after performing full name search', () => cy.searchAndCheckPresence(apiActivitInstanceyName, true))
 
-Then('Activity Instance is found', () => cy.searchFor(apiActivitInstanceyName, false))
+Then('Activity Instance is found', () => cy.searchAndCheckPresence(apiActivitInstanceyName, true))
 
 Then('Activity instance cannot be saved', () => cy.get('.v-overlay .v-window').should('be.visible'))
 
-When('[API] Activity Instance in status Final with Final group, subgroub and activity linked exists', () => {
+When('[API] Activity Instance in status Final with Final group, subgroup and activity linked exists', () => {
     if (!apiActivitInstanceyName) createAndApproveActivityInstanceViaApi()
     cy.getActivityInstanceNameByUid().then(name => apiActivitInstanceyName = name)
 })
@@ -136,7 +134,7 @@ function addInstanceMandatoryData(code = topicCode, customAction = '') {
     startActivityCreation()
     fillInstanceGroupAndClassData(customAction)
     cy.fillInput('instanceform-instancename-field', activityInstance)
-    cy.fillInput('instanceform-definition-field', definition)
+    cy.fillInput('instanceform-definition-field', 'DEF')
     cy.fillInput('instanceform-topiccode-field', code) 
 }
 
@@ -144,8 +142,7 @@ function addInstanceAndConfirmCreation(optionalData = false, customAction = '') 
     optionalData ? addInstanceAllData() : addInstanceMandatoryData(`Topic${Date.now()}`, customAction)
     saveActivityInstance('created')
     cy.wait(2500)
-    cy.searchAndCheckResults(activityInstance)
-    cy.checkStatusAndVersion('Draft', '0.1')
+    cy.searchAndCheckPresence(activityInstance, true)
 }
 
 function startActivityCreation() {

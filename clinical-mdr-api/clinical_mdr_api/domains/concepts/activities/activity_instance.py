@@ -31,6 +31,7 @@ from common.exceptions import (
 class ActivityInstanceGroupingVO(ActivityGroupingVO):
     activity_uid: str | None = None
     activity_version: str | None = None
+    activity_name: str | None = None
 
 
 @dataclass(frozen=True)

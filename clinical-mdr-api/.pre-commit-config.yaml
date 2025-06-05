@@ -9,27 +9,6 @@ repos:
       - id: isort
   - repo: local
     hooks:
-    - id: absolute-import-paths
-      name: absolute-import-paths
-      entry: ./.git-hooks/absolute-import-paths.sh
-      language: system
-      require_serial: true
-  - repo: local
-    hooks:
-    - id: no-unnecessary-importing-from-typing
-      name: no-unnecessary-importing-from-typing
-      entry: ./.git-hooks/no-unnecessary-importing-from-typing.sh
-      language: system
-      require_serial: true
-  - repo: local
-    hooks:
-    - id: no-field-as-default-value
-      name: no-field-as-default-value
-      entry: ./.git-hooks/no-field-as-default-value.sh
-      language: system
-      require_serial: true
-  - repo: local
-    hooks:
     - id: check-openapi-changes
       name: check-openapi-changes
       entry: ./.git-hooks/check-openapi-changes.sh

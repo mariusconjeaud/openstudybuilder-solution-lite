@@ -30,7 +30,7 @@
         </v-card-title>
         <v-card-text>
           <slot>
-            <div v-html="props.helpText" />
+            <div v-html="sanitizeHTML(props.helpText)" />
           </slot>
         </v-card-text>
       </v-card>
@@ -40,6 +40,7 @@
 
 <script setup>
 import { ref } from 'vue'
+import { sanitizeHTML } from '@/utils/sanitize'
 
 const props = defineProps({
   pageTitle: {

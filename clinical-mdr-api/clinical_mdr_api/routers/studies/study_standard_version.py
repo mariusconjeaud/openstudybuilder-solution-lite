@@ -1,6 +1,6 @@
-from typing import Annotated, Sequence
+from typing import Annotated
 
-from fastapi import Body, Path, Request, Response, status
+from fastapi import Body, Path, Request
 
 from clinical_mdr_api.models.study_selections import study_standard_version
 from clinical_mdr_api.routers import _generic_descriptions, decorators
@@ -46,7 +46,6 @@ Possible errors:
  - Invalid study-uid.
 
 """,
-    response_model=Sequence[study_standard_version.StudyStandardVersion],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -77,7 +76,7 @@ def get_all(
     study_value_version: Annotated[
         str | None, _generic_descriptions.STUDY_VALUE_VERSION_QUERY
     ] = None,
-) -> Sequence[study_standard_version.StudyStandardVersion]:
+) -> list[study_standard_version.StudyStandardVersion]:
     service = StudyStandardVersionService()
     return service.get_standard_versions_in_study(
         study_uid=study_uid, study_value_version=study_value_version
@@ -102,7 +101,6 @@ State after:
 Possible errors:
  - Invalid study-uid.
      """,
-    response_model=list[study_standard_version.StudyStandardVersionVersion],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -143,7 +141,6 @@ State after:
 Possible errors:
  - Invalid study-uid or study_standard_version Uid.
     """,
-    response_model=study_standard_version.StudyStandardVersion,
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -188,7 +185,6 @@ State after:
 Possible errors:
  - Invalid study-uid.
      """,
-    response_model=list[study_standard_version.StudyStandardVersionVersion],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -229,7 +225,6 @@ Possible errors:
  - Invalid study-uid or CTPackage
  - The study contains already a Selected Study Standard Version
     """,
-    response_model=study_standard_version.StudyStandardVersion,
     response_model_exclude_unset=True,
     status_code=201,
     responses={
@@ -277,7 +272,6 @@ State after:
 Possible errors:
 - Invalid study-uid or study_standard_version_uid.
     """,
-    response_model=None,
     status_code=204,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -299,7 +293,6 @@ def delete_study_standard_version(
     service.delete(
         study_uid=study_uid, study_standard_version_uid=study_standard_version_uid
     )
-    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.patch(
@@ -323,7 +316,6 @@ State after:
 Possible errors:
  - Invalid study-uid or study_standard_version_uid .
     """,
-    response_model=study_standard_version.StudyStandardVersion,
     response_model_exclude_unset=True,
     status_code=200,
     responses={

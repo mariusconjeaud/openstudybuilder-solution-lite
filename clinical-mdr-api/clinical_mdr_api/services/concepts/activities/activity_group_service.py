@@ -16,6 +16,7 @@ from clinical_mdr_api.models.concepts.activities.activity_group import (
     ActivityGroupVersion,
     SimpleSubGroup,
 )
+from clinical_mdr_api.models.utils import GenericFilteringReturn
 from clinical_mdr_api.services.concepts import constants
 from clinical_mdr_api.services.concepts.concept_generic_service import (
     ConceptGenericService,
@@ -65,19 +66,31 @@ class ActivityGroupService(ConceptGenericService[ActivityGroupAR]):
         )
         return item
 
-    def get_group_overview(
+    def get_group_details(
         self, group_uid: str, version: str | None = None
-    ) -> ActivityGroupOverview:
+    ) -> ActivityGroupDetail:
+        """
+        Get just the activity group details without subgroups.
+
+        Args:
+            group_uid: The UID of the activity group
+            version: Optional specific version, or None for latest
+
+        Returns:
+            ActivityGroupDetail object with the group information
+        """
         group = self.get_by_uid(group_uid, version=version)
-        all_versions = [
-            version.version for version in self.get_version_history(group_uid)
-        ]
 
         # Convert dates to ISO format strings if they exist
         start_date = group.start_date.isoformat() if group.start_date else None
         end_date = group.end_date.isoformat() if group.end_date else None
 
-        group_detail = ActivityGroupDetail(
+        # Get all versions for this group
+        all_versions = [
+            version.version for version in self.get_version_history(group_uid)
+        ]
+
+        return ActivityGroupDetail(
             name=group.name,
             name_sentence_case=group.name_sentence_case,
             library_name=group.library_name,
@@ -90,31 +103,97 @@ class ActivityGroupService(ConceptGenericService[ActivityGroupAR]):
             author_username=group.author_username,
             definition=group.definition,
             abbreviation=group.abbreviation,
+            all_versions=all_versions,
         )
 
-        # Fetch subgroups linked to this specific group version
-        subgroups = []
-        version_to_use = version if version else group.version
+    def get_group_subgroups(
+        self,
+        group_uid: str,
+        version: str | None = None,
+        page_number: int = 1,
+        page_size: int = 10,
+        total_count: bool = False,
+    ) -> GenericFilteringReturn[SimpleSubGroup]:
+        """
+        Get just the activity subgroups linked to a specific activity group version.
 
-        # Get subgroups linked to this specific activity group version
-        linked_subgroups = (
+        Args:
+            group_uid: The UID of the activity group
+            version: Optional specific version, or None for latest
+            page_number: The page number for pagination (starting from 1)
+            page_size: The number of items per page
+            total_count: Whether to calculate the total count
+
+        Returns:
+            GenericFilteringReturn containing SimpleSubGroup objects linked to the activity group
+        """
+        # If no specific version provided, get the latest one
+        if not version:
+            group = self.get_by_uid(group_uid)
+            version_to_use = group.version
+        else:
+            version_to_use = version
+
+        # Calculate pagination parameters for the database query
+        # If page_size is 0, we don't apply limits (return all items)
+        skip = (page_number - 1) * page_size if page_size > 0 else 0
+        limit = page_size if page_size > 0 else None
+
+        # Get subgroups linked to this specific activity group version with pagination in the database
+        result = (
             self._repos.activity_group_repository.get_linked_activity_subgroup_uids(
-                group_uid=group_uid, version=version_to_use
+                group_uid=group_uid,
+                version=version_to_use,
+                skip=skip,
+                limit=limit,
+                count_total=total_count,
             )
         )
 
-        if linked_subgroups:
-            # Direct conversion from the repository result to SimpleSubGroup objects
-            subgroups = [
-                SimpleSubGroup(
-                    uid=subgroup["uid"],
-                    name=subgroup["name"],
-                    version=subgroup["version"],
-                    status=subgroup["status"],
-                    definition=subgroup["definition"],
-                )
-                for subgroup in linked_subgroups
-            ]
+        # Extract data from the repository response
+        linked_subgroups = result.get("subgroups", [])
+        total = result.get("total", 0) if total_count else 0
+
+        if not linked_subgroups:
+            return GenericFilteringReturn(items=[], total=0)
+
+        # Direct conversion from the repository result to SimpleSubGroup objects
+        items = [
+            SimpleSubGroup(
+                uid=subgroup["uid"],
+                name=subgroup["name"],
+                version=subgroup["version"],
+                status=subgroup["status"],
+                definition=subgroup["definition"],
+            )
+            for subgroup in linked_subgroups
+        ]
+
+        return GenericFilteringReturn(items=items, total=total)
+
+    def get_group_overview(
+        self, group_uid: str, version: str | None = None
+    ) -> ActivityGroupOverview:
+        """
+        Get a complete overview of an activity group including details, subgroups, and version history.
+
+        Args:
+            group_uid: The UID of the activity group
+            version: Optional specific version, or None for latest
+
+        Returns:
+            ActivityGroupOverview object with complete group information
+        """
+        # Get the group details
+        group_detail = self.get_group_details(group_uid, version)
+
+        subgroups_result = self.get_group_subgroups(group_uid, version, page_size=0)
+        subgroups = subgroups_result.items
+
+        # Get all versions
+        all_versions = [
+            version.version for version in self.get_version_history(group_uid)
+        ]
 
         return ActivityGroupOverview(
             group=group_detail, subgroups=subgroups, all_versions=all_versions

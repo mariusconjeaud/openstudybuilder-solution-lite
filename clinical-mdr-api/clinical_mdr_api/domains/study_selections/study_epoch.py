@@ -18,6 +18,7 @@ from common.config import (
     FIXED_WEEK_PERIOD,
     NON_VISIT_NUMBER,
     PREVIOUS_VISIT_NAME,
+    STUDY_VISIT_TYPE_EARLY_DISCONTINUATION_VISIT,
     STUDY_VISIT_TYPE_INFORMATION_VISIT,
     UNSCHEDULED_VISIT_NUMBER,
     VISIT_0_NUMBER,
@@ -246,6 +247,8 @@ class TimelineAR:
 
         subvisit_sets = {}
         amount_of_subvisits_for_visit = {}
+        # early_discontinuation_visits_for_visit_anchor = {}
+        special_visits_for_visit_anchor = {}
         special_visit_anchors = {}
         for visit in self._visits:
             if visit.visit_subclass == VisitSubclass.ANCHOR_VISIT_IN_GROUP_OF_SUBV:
@@ -276,6 +279,10 @@ class TimelineAR:
             key=lambda x: (
                 x.get_absolute_duration() is None,
                 x.get_absolute_duration(),
+                # SpecialVisits anchored to same StudyVisit have the same timing, in scope of the same anchor visit
+                # the early discontinuation visits should be ordered in the end of special visit set
+                x.visit_type.sponsor_preferred_name
+                == STUDY_VISIT_TYPE_EARLY_DISCONTINUATION_VISIT,
             ),
         )
         last_visit_num = 1
@@ -305,7 +312,10 @@ class TimelineAR:
                     visit.subvisit_anchor.visit_order,
                     visit.subvisit_anchor.visit_number,
                 )
-                visit.set_subvisit_number(1)
+                special_visits_for_visit_anchor.setdefault(
+                    visit.visit_sublabel_reference, []
+                ).append(visit)
+
             elif (
                 visit.visit_subclass
                 != VisitSubclass.ADDITIONAL_SUBVISIT_IN_A_GROUP_OF_SUBV
@@ -364,6 +374,38 @@ class TimelineAR:
                 else:
                     visit.set_subvisit_number(num)
                     visits.append(Subvisit(visit, num))
+            elif visit.visit_class == VisitClass.SPECIAL_VISIT:
+                special_visits_for_same_anchor_list: list = (
+                    special_visits_for_visit_anchor[visit.visit_sublabel_reference]
+                )
+                # Subvisit number should be derived for special visits pointed to the same anchor visit
+                # no matter what type of special visit it is (early_discontinuation or other special visit)
+                subvisit_index = special_visits_for_same_anchor_list.index(visit)
+                if (
+                    visit.visit_type.sponsor_preferred_name
+                    == STUDY_VISIT_TYPE_EARLY_DISCONTINUATION_VISIT
+                ):
+                    special_visits_of_same_type: list = [
+                        special_visit
+                        for special_visit in special_visits_for_same_anchor_list
+                        if special_visit.visit_type.sponsor_preferred_name
+                        == STUDY_VISIT_TYPE_EARLY_DISCONTINUATION_VISIT
+                    ]
+                else:
+                    special_visits_of_same_type: list = [
+                        special_visit
+                        for special_visit in special_visits_for_same_anchor_list
+                        if special_visit.visit_type.sponsor_preferred_name
+                        != STUDY_VISIT_TYPE_EARLY_DISCONTINUATION_VISIT
+                    ]
+
+                # Special visit number should be derived for special visits pointed to the same anchor visit
+                # but of the same special visit type, e.g. early discontinuation visits should get their own counter
+                # and other speciail visits should get the other counter
+                visit.special_visit_number = (
+                    special_visits_of_same_type.index(visit) + 1
+                )
+                visit.set_subvisit_number(subvisit_index + 1)
 
             # derive timing properties in the end when all subvisits are set
             # for the Visit that is currently being created timepoint will be filled but study_day will be empty as it's

@@ -87,7 +87,7 @@ class CommentThread(BaseModel):
     status_modified_by: Annotated[
         str | None, Field(json_schema_extra={"nullable": True})
     ] = None
-    replies: Annotated[list[CommentReply], Field()] = []
+    replies: list[CommentReply] = Field(default_factory=list)
 
     @classmethod
     def from_uid(

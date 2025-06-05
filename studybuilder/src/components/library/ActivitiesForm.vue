@@ -50,6 +50,7 @@
                     :rules="[formRules.required]"
                     density="compact"
                     clearable
+                    @update:model-value="clearSubgroup(index)"
                   />
                 </div>
                 <div data-cy="activityform-activity-subgroup-class">
@@ -321,6 +322,10 @@ async function cancel() {
     }
   }
   close()
+}
+
+function clearSubgroup(index) {
+  form.value.activity_groupings[index].activity_subgroup_uid = null
 }
 
 async function close() {

@@ -55,6 +55,7 @@ class StudySelectionActivityInstanceVO(study_selection_base.StudySelectionBaseVO
         study_uid: str,
         author_id: str,
         study_activity_uid: str,
+        author_username: str | None = None,
         activity_uid: str | None = None,
         activity_name: str | None = None,
         activity_version: str | None = None,
@@ -95,7 +96,11 @@ class StudySelectionActivityInstanceVO(study_selection_base.StudySelectionBaseVO
             start_date=start_date,
             study_selection_uid=normalize_string(study_selection_uid),
             author_id=normalize_string(author_id),
-            author_username=UserInfoService.get_author_username_from_id(author_id),
+            author_username=(
+                UserInfoService.get_author_username_from_id(author_id)
+                if author_username is None
+                else author_username
+            ),
             accepted_version=accepted_version,
             study_activity_subgroup_uid=study_activity_subgroup_uid,
             activity_subgroup_uid=activity_subgroup_uid,

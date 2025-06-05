@@ -9,10 +9,12 @@ from mdr_standards_import.scripts.entities.cdisc_data_models.data_model_type imp
 from typing import Optional
 
 CDISC_DIR = environ.get("CDISC_DATA_DIR", "cdisc_data/packages")
+NEO4J_PROTOCOL = environ.get("NEO4J_PROTOCOL", "neo4j")
 
 
 def get_cdisc_neo4j_driver():
-    uri = "neo4j://{}:{}".format(
+    uri = "{}://{}:{}".format(
+        NEO4J_PROTOCOL,
         environ.get("NEO4J_CDISC_IMPORT_HOST"),
         environ.get("NEO4J_CDISC_IMPORT_BOLT_PORT"),
     )
@@ -26,8 +28,10 @@ def get_cdisc_neo4j_driver():
 
 
 def get_mdr_neo4j_driver():
-    uri = "neo4j://{}:{}".format(
-        environ.get("NEO4J_MDR_HOST"), environ.get("NEO4J_MDR_BOLT_PORT")
+    uri = "{}://{}:{}".format(
+        NEO4J_PROTOCOL,
+        environ.get("NEO4J_MDR_HOST"),
+        environ.get("NEO4J_MDR_BOLT_PORT"),
     )
     return GraphDatabase.driver(
         uri,
@@ -38,9 +42,7 @@ def get_mdr_neo4j_driver():
     )
 
 
-def get_author_id(
-    parameter_index: int, default_author_id: str = "CDISC_IMPORT"
-):
+def get_author_id(parameter_index: int, default_author_id: str = "CDISC_IMPORT"):
     try:
         return str(sys.argv[parameter_index])
     except IndexError:
@@ -158,14 +160,20 @@ def get_classes_directory_name(data_model_type: str):
         "classes" if data_model_type == DataModelType.FOUNDATIONAL.value else "datasets"
     )
 
+
 def get_classes_csv_filename(data_model_type: str):
     return (
-        "dataset_class.csv" if data_model_type == DataModelType.FOUNDATIONAL else "dataset.csv"
+        "dataset_class.csv"
+        if data_model_type == DataModelType.FOUNDATIONAL
+        else "dataset.csv"
     )
+
 
 def get_variables_csv_filename(data_model_type: str):
     return (
-        "variable_class.csv" if data_model_type == DataModelType.FOUNDATIONAL else "variable.csv"
+        "variable_class.csv"
+        if data_model_type == DataModelType.FOUNDATIONAL
+        else "variable.csv"
     )
 
 

@@ -298,7 +298,7 @@ class StudySelectionMixin:
 
     def _find_terms_by_uids(
         self,
-        term_uids: list,
+        term_uids: list[str],
         status: LibraryItemStatus | None = LibraryItemStatus.FINAL,
         at_specific_date: datetime | None = None,
         return_simple_object: bool = False,

@@ -15,8 +15,8 @@ from clinical_mdr_api.models.utils import BaseModel, BatchInputModel
 
 
 class OdmAlias(ConceptModel):
-    context: str
-    possible_actions: list[str]
+    context: Annotated[str, Field()]
+    possible_actions: Annotated[list[str], Field()]
 
     @classmethod
     def from_odm_alias_ar(cls, odm_alias_ar: OdmAliasAR) -> Self:
@@ -84,14 +84,14 @@ class OdmAliasBatchInput(BatchInputModel):
         str,
         Field(description="HTTP method corresponding to operation type", min_length=1),
     ]
-    content: OdmAliasBatchPatchInput | OdmAliasPostInput
+    content: Annotated[OdmAliasBatchPatchInput | OdmAliasPostInput, Field()]
 
 
 class OdmAliasBatchOutput(BaseModel):
     response_code: Annotated[
         int, Field(description="The HTTP response code related to input operation")
     ]
-    content: OdmAlias | None | BatchErrorResponse
+    content: Annotated[OdmAlias | None | BatchErrorResponse, Field()]
 
 
 class OdmAliasVersion(OdmAlias):
@@ -99,9 +99,4 @@ class OdmAliasVersion(OdmAlias):
     Class for storing OdmAlias and calculation of differences
     """
 
-    changes: Annotated[
-        list[str],
-        Field(
-            description=CHANGES_FIELD_DESC,
-        ),
-    ] = []
+    changes: list[str] = Field(description=CHANGES_FIELD_DESC, default_factory=list)

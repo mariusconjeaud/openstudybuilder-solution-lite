@@ -15,12 +15,11 @@ When('The activity group container is filled with data and saved', () => {
 When('The test activity group container is filled with data', () => fillGroupData())
 
 Then('The newly added activity group is visible in the the table', () => {
-    cy.searchAndCheckResults(activitygroup)
+    cy.searchAndCheckPresence(activitygroup, true)
     cy.checkRowByIndex(0, 'Activity group', activitygroup)
     cy.checkRowByIndex(0,'Sentence case name', activitygroup.toLowerCase())
     cy.checkRowByIndex(0, 'Abbreviation', abbreviation)
     cy.checkRowByIndex(0, 'Definition', definition)
-    cy.checkStatusAndVersion('Draft', '0.1')
 })
 
 When('The Group name and Sentence case name and Definition fields are not filled with data', () => {
@@ -60,13 +59,13 @@ When('The activity group is edited', () => {
 
 When('The activity group edition form is filled with data', () => editGroup())
 
-Then('The activity group is no longer available', () => cy.confirmItemNotAvailable(apiActivityGroupName))
+Then('The activity group is no longer available', () => cy.searchAndCheckPresence(apiActivityGroupName, false))
 
-Then('The activity group is not created', () => cy.confirmItemNotAvailable(activitygroup))
+Then('The activity group is not created', () => cy.searchAndCheckPresence(activitygroup, false))
 
-Then('The activity group is not edited', () => cy.confirmItemNotAvailable(activitygroup))
+Then('The activity group is not edited', () => cy.searchAndCheckPresence(activitygroup, false))
 
-Then('One activity group is found after performing full name search', () => cy.searchAndCheckResults(apiActivityGroupName))
+Then('One activity group is found after performing full name search', () => cy.searchAndCheckPresence(apiActivityGroupName, true))
 
 When('[API] Activity group in status Draft exists', () => createGroupViaApi())
 
@@ -82,7 +81,7 @@ Given('[API] First activity group for search test is created', () => createGroup
 
 Given('[API] Second activity group for search test is created', () => cy.createGroup(`SearchTest${Date.now()}`))
 
-When('Activity group is found', () => cy.searchFor(apiActivityGroupName))
+When('Activity group is found', () => cy.searchAndCheckPresence(apiActivityGroupName, true))
 
 function fillGroupData(clickAddButton = true) {
     activitygroup = `Group${Date.now()}`
@@ -97,7 +96,7 @@ function saveGroup(action = 'created') {
     cy.clickButton('save-button')
     cy.get('.v-snackbar__content').contains(`Group ${action}`).should('be.visible');
     cy.wait('@getData', {timeout: 20000})
-    cy.searchFor(activitygroup)
+    cy.searchAndCheckPresence(activitygroup, true)
 }
 
 function editGroup() {

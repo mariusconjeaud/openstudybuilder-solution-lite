@@ -29,7 +29,7 @@ from clinical_mdr_api.models.utils import PatchInputModel, PostInputModel
 
 
 class MedicinalProduct(VersionProperties):
-    uid: str
+    uid: Annotated[str, Field()]
     name: Annotated[str, Field()]
     name_sentence_case: Annotated[
         str | None, Field(json_schema_extra={"nullable": True})
@@ -37,11 +37,13 @@ class MedicinalProduct(VersionProperties):
     external_id: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = (
         None
     )
-    library_name: str
-    compound: SimpleCompound
-    pharmaceutical_products: list[SimplePharmaceuticalProduct] = []
+    library_name: Annotated[str, Field()]
+    compound: Annotated[SimpleCompound, Field()]
+    pharmaceutical_products: list[SimplePharmaceuticalProduct] = Field(
+        default_factory=list
+    )
 
-    dose_values: list[SimpleNumericValueWithUnit] = []
+    dose_values: list[SimpleNumericValueWithUnit] = Field(default_factory=list)
     dose_frequency: Annotated[
         SimpleTermModel | None, Field(json_schema_extra={"nullable": True})
     ] = None
@@ -134,12 +136,12 @@ class MedicinalProductCreateInput(PostInputModel):
     name: Annotated[str, Field(min_length=1)]
     name_sentence_case: Annotated[str | None, Field(min_length=1)] = None
     library_name: Annotated[str, Field(min_length=1)]
-    dose_value_uids: list[str] = []
+    dose_value_uids: list[str] = Field(default_factory=list)
     dose_frequency_uid: Annotated[str | None, Field(min_length=1)] = None
     delivery_device_uid: Annotated[str | None, Field(min_length=1)] = None
     dispenser_uid: Annotated[str | None, Field(min_length=1)] = None
     compound_uid: Annotated[str, Field(min_length=1)]
-    pharmaceutical_product_uids: list[str] = []
+    pharmaceutical_product_uids: list[str] = Field(default_factory=list)
 
 
 class MedicinalProductEditInput(PatchInputModel):
@@ -147,19 +149,14 @@ class MedicinalProductEditInput(PatchInputModel):
     name: Annotated[str | None, Field(min_length=1)] = None
     name_sentence_case: Annotated[str | None, Field(min_length=1)] = None
     library_name: Annotated[str | None, Field(min_length=1)] = None
-    dose_value_uids: list[str] | None = None
+    dose_value_uids: Annotated[list[str] | None, Field()] = None
     dose_frequency_uid: Annotated[str | None, Field(min_length=1)] = None
     delivery_device_uid: Annotated[str | None, Field(min_length=1)] = None
     dispenser_uid: Annotated[str | None, Field(min_length=1)] = None
     compound_uid: Annotated[str | None, Field(min_length=1)] = None
-    pharmaceutical_product_uids: list[str] | None = None
+    pharmaceutical_product_uids: Annotated[list[str] | None, Field()] = None
     change_description: Annotated[str, Field(min_length=1)]
 
 
 class MedicinalProductVersion(MedicinalProduct):
-    changes: Annotated[
-        list[str],
-        Field(
-            description=CHANGES_FIELD_DESC,
-        ),
-    ] = []
+    changes: list[str] = Field(description=CHANGES_FIELD_DESC, default_factory=list)

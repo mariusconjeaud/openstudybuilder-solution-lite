@@ -19,11 +19,11 @@ from clinical_mdr_api.models.concepts.odms.odm_common_models import (
 
 
 class OdmVendorNamespace(ConceptModel):
-    prefix: str | None
-    url: str | None
-    vendor_elements: list[OdmVendorElementSimpleModel]
-    vendor_attributes: list[OdmVendorAttributeSimpleModel]
-    possible_actions: list[str]
+    prefix: Annotated[str | None, Field()]
+    url: Annotated[str | None, Field()]
+    vendor_elements: Annotated[list[OdmVendorElementSimpleModel], Field()]
+    vendor_attributes: Annotated[list[OdmVendorAttributeSimpleModel], Field()]
+    possible_actions: Annotated[list[str], Field()]
 
     @classmethod
     def from_odm_vendor_namespace_ar(
@@ -92,9 +92,4 @@ class OdmVendorNamespaceVersion(OdmVendorNamespace):
     Class for storing OdmVendorNamespace and calculation of differences
     """
 
-    changes: Annotated[
-        list[str],
-        Field(
-            description=CHANGES_FIELD_DESC,
-        ),
-    ] = []
+    changes: list[str] = Field(description=CHANGES_FIELD_DESC, default_factory=list)

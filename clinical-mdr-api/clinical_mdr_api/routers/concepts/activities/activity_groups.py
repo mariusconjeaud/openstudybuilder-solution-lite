@@ -2,15 +2,17 @@
 
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Body, Path, Query, Response, status
+from fastapi import APIRouter, Body, Path, Query
 from pydantic.types import Json
 from starlette.requests import Request
 
 from clinical_mdr_api.models.concepts.activities.activity_group import (
     ActivityGroup,
     ActivityGroupCreateInput,
+    ActivityGroupDetail,
     ActivityGroupEditInput,
     ActivityGroupOverview,
+    SimpleSubGroup,
 )
 from clinical_mdr_api.models.utils import CustomPage
 from clinical_mdr_api.repositories._utils import FilterOperator
@@ -48,7 +50,6 @@ Possible errors:
 
 {_generic_descriptions.DATA_EXPORTS_HEADER}
 """,
-    response_model=CustomPage[ActivityGroup],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -68,7 +69,7 @@ Possible errors:
 )
 # pylint: disable=unused-argument
 def get_activity_groups(
-    _request: Request,
+    request: Request,
     library_name: Annotated[str | None, Query()] = None,
     sort_by: Annotated[
         Json | None, Query(description=_generic_descriptions.SORT_BY)
@@ -97,7 +98,7 @@ def get_activity_groups(
     total_count: Annotated[
         bool | None, Query(description=_generic_descriptions.TOTAL_COUNT)
     ] = False,
-):
+) -> CustomPage[ActivityGroup]:
     activity_group_service = ActivityGroupService()
     results = activity_group_service.get_all_concepts(
         library=library_name,
@@ -133,7 +134,6 @@ Possible errors:
 
 {_generic_descriptions.DATA_EXPORTS_HEADER}
 """,
-    response_model=CustomPage[ActivityGroup],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -179,7 +179,7 @@ def get_activity_groups_versions(
     total_count: Annotated[
         bool | None, Query(description=_generic_descriptions.TOTAL_COUNT)
     ] = False,
-):
+) -> CustomPage[ActivityGroup]:
     activity_group_service = ActivityGroupService()
     results = activity_group_service.get_all_concept_versions(
         library=library_name,
@@ -201,7 +201,6 @@ def get_activity_groups_versions(
     summary="Returns possible values from the database for a given header",
     description="Allowed parameters include : field name for which to get possible values, "
     "search string to provide filtering for the field name, additional filters to apply on other fields",
-    response_model=list[Any],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -246,7 +245,7 @@ def get_distinct_values_for_header(
     page_size: Annotated[
         int | None, Query(description=_generic_descriptions.HEADER_PAGE_SIZE)
     ] = config.DEFAULT_HEADER_PAGE_SIZE,
-):
+) -> list[Any]:
     activity_group_service = ActivityGroupService()
     return activity_group_service.get_distinct_values_for_header(
         library=library_name,
@@ -279,14 +278,13 @@ State after:
 Possible errors:
  - Invalid uid, at_specified_date_time, status or version.
  """,
-    response_model=ActivityGroup,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
         404: _generic_descriptions.ERROR_404,
     },
 )
-def get_activity(activity_group_uid: Annotated[str, ActivityGroupUID]):
+def get_activity(activity_group_uid: Annotated[str, ActivityGroupUID]) -> ActivityGroup:
     activity_group_service = ActivityGroupService()
     return activity_group_service.get_by_uid(uid=activity_group_uid)
 
@@ -309,7 +307,6 @@ State after:
 Possible errors:
  - Invalid uid.
     """,
-    response_model=list[ActivityGroup],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -319,9 +316,132 @@ Possible errors:
         },
     },
 )
-def get_versions(activity_group_uid: Annotated[str, ActivityGroupUID]):
+def get_versions(
+    activity_group_uid: Annotated[str, ActivityGroupUID],
+) -> list[ActivityGroup]:
     activity_group_service = ActivityGroupService()
     return activity_group_service.get_version_history(uid=activity_group_uid)
+
+
+@router.get(
+    "/activity-groups/{activity_group_uid}/details",
+    dependencies=[rbac.LIBRARY_READ],
+    summary="Get only the details of a specific activity group",
+    description="""
+Returns only the activity group details without linked subgroups:
+- Activity group metadata (name, library, dates, status, etc.)
+- Definition information
+
+State before:
+- UID must exist
+
+State after:
+- No change
+
+Possible errors:
+- Invalid uid
+    """,
+    status_code=200,
+    responses={
+        404: _generic_descriptions.ERROR_404,
+    },
+)
+def get_activity_group_details(
+    activity_group_uid: Annotated[str, ActivityGroupUID],
+    version: Annotated[
+        str | None,
+        Query(description="Select specific version, omit to view latest version"),
+    ] = None,
+) -> ActivityGroupDetail:
+    if version == "":
+        version = None
+
+    service = ActivityGroupService()
+    return service.get_group_details(group_uid=activity_group_uid, version=version)
+
+
+@router.get(
+    "/activity-groups/{activity_group_uid}/subgroups",
+    dependencies=[rbac.LIBRARY_READ],
+    summary="Get only the subgroups linked to a specific activity group",
+    description=f"""
+Returns only the activity subgroups linked to a specific activity group:
+- List of subgroups with their uid, name, version, and status
+- Results are paginated based on provided parameters
+- Setting page_size=0 will return all items without pagination
+
+State before:
+- UID must exist
+
+State after:
+- No change
+
+Possible errors:
+- Invalid uid
+{_generic_descriptions.DATA_EXPORTS_HEADER}
+    """,
+    status_code=200,
+    responses={
+        404: _generic_descriptions.ERROR_404,
+    },
+)
+@decorators.allow_exports(
+    {
+        "defaults": [
+            "uid",
+            "name",
+            "version",
+            "status",
+            "definition",
+        ],
+        "formats": [
+            "text/csv",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "text/xml",
+            "application/json",
+        ],
+    }
+)
+# pylint: disable=unused-argument
+def get_activity_group_subgroups(
+    request: Request,  # request is actually required by the allow_exports decorator
+    activity_group_uid: Annotated[str, ActivityGroupUID],
+    version: Annotated[
+        str | None,
+        Query(description="Select specific version, omit to view latest version"),
+    ] = None,
+    page_number: Annotated[
+        int | None, Query(ge=1, description=_generic_descriptions.PAGE_NUMBER)
+    ] = config.DEFAULT_PAGE_NUMBER,
+    page_size: Annotated[
+        int | None,
+        Query(
+            ge=0,
+            le=config.MAX_PAGE_SIZE,
+            description=_generic_descriptions.PAGE_SIZE,
+        ),
+    ] = config.DEFAULT_PAGE_SIZE,
+    total_count: Annotated[
+        bool | None, Query(description=_generic_descriptions.TOTAL_COUNT)
+    ] = False,
+) -> CustomPage[SimpleSubGroup]:
+    if version == "":
+        version = None
+
+    service = ActivityGroupService()
+    # Get paginated results from service layer
+    results = service.get_group_subgroups(
+        group_uid=activity_group_uid,
+        version=version,
+        page_number=page_number,
+        page_size=page_size,
+        total_count=total_count,
+    )
+
+    # Convert GenericFilteringReturn to CustomPage for API response
+    return CustomPage.create(
+        items=results.items, total=results.total, page=page_number, size=page_size
+    )
 
 
 @router.get(
@@ -343,7 +463,6 @@ State after:
 Possible errors:
 - Invalid uid
     """,
-    response_model=ActivityGroupOverview,
     status_code=200,
     responses={
         404: _generic_descriptions.ERROR_404,
@@ -363,7 +482,7 @@ def get_activity_group_overview(
         str | None,
         Query(description="Select specific version, omit to view latest version"),
     ] = None,
-):
+) -> ActivityGroupOverview:
     if version == "":
         version = None
 
@@ -431,7 +550,6 @@ State after:
 Possible errors:
  - Invalid library or control terminology uid's specified.
 """,
-    response_model=ActivityGroup,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -447,12 +565,12 @@ Possible errors:
 )
 def create(
     activity_create_input: Annotated[ActivityGroupCreateInput, Body()],
-):
+) -> ActivityGroup:
     activity_group_service = ActivityGroupService()
     return activity_group_service.create(concept_input=activity_create_input)
 
 
-@router.patch(
+@router.put(
     "/activity-groups/{activity_group_uid}",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Update activity group",
@@ -474,7 +592,6 @@ Possible errors:
  - Invalid uid.
 
 """,
-    response_model=ActivityGroup,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -495,10 +612,10 @@ Possible errors:
 def edit(
     activity_group_uid: Annotated[str, ActivityGroupUID],
     activity_edit_input: Annotated[ActivityGroupEditInput, Body()],
-):
+) -> ActivityGroup:
     activity_group_service = ActivityGroupService()
     return activity_group_service.edit_draft(
-        uid=activity_group_uid, concept_edit_input=activity_edit_input
+        uid=activity_group_uid, concept_edit_input=activity_edit_input, patch_mode=False
     )
 
 
@@ -520,7 +637,6 @@ State after:
 Possible errors:
  - Invalid uid or status not Final.
 """,
-    response_model=ActivityGroup,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -538,7 +654,9 @@ Possible errors:
         },
     },
 )
-def create_new_version(activity_group_uid: Annotated[str, ActivityGroupUID]):
+def create_new_version(
+    activity_group_uid: Annotated[str, ActivityGroupUID],
+) -> ActivityGroup:
     activity_group_service = ActivityGroupService()
     return activity_group_service.create_new_version(uid=activity_group_uid)
 
@@ -564,7 +682,6 @@ State after:
 Possible errors:
  - Invalid uid or status not Draft.
     """,
-    response_model=ActivityGroup,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -581,7 +698,7 @@ Possible errors:
         },
     },
 )
-def approve(activity_group_uid: Annotated[str, ActivityGroupUID]):
+def approve(activity_group_uid: Annotated[str, ActivityGroupUID]) -> ActivityGroup:
     activity_group_service = ActivityGroupService()
     return activity_group_service.approve(uid=activity_group_uid)
 
@@ -607,7 +724,6 @@ State after:
 Possible errors:
  - Invalid uid or status not Final.
     """,
-    response_model=ActivityGroup,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -623,7 +739,7 @@ Possible errors:
         },
     },
 )
-def inactivate(activity_group_uid: Annotated[str, ActivityGroupUID]):
+def inactivate(activity_group_uid: Annotated[str, ActivityGroupUID]) -> ActivityGroup:
     activity_group_service = ActivityGroupService()
     return activity_group_service.inactivate_final(uid=activity_group_uid)
 
@@ -649,7 +765,6 @@ State after:
 Possible errors:
  - Invalid uid or status not Retired.
     """,
-    response_model=ActivityGroup,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -665,7 +780,7 @@ Possible errors:
         },
     },
 )
-def reactivate(activity_group_uid: Annotated[str, ActivityGroupUID]):
+def reactivate(activity_group_uid: Annotated[str, ActivityGroupUID]) -> ActivityGroup:
     activity_group_service = ActivityGroupService()
     return activity_group_service.reactivate_retired(uid=activity_group_uid)
 
@@ -689,7 +804,6 @@ State after:
 Possible errors:
  - Invalid uid or status not Draft or exist in version 1.0 or above (previously been approved) or not in an editable library.
     """,
-    response_model=None,
     status_code=204,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -712,4 +826,3 @@ Possible errors:
 def delete_activity_group(activity_group_uid: Annotated[str, ActivityGroupUID]):
     activity_group_service = ActivityGroupService()
     activity_group_service.soft_delete(uid=activity_group_uid)
-    return Response(status_code=status.HTTP_204_NO_CONTENT)

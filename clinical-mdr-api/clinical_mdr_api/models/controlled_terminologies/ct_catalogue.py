@@ -19,14 +19,14 @@ class CTCatalogue(BaseModel):
 
 
 class CTCatalogueChanges(BaseModel):
-    start_datetime: datetime
-    end_datetime: datetime
-    new_codelists: list[CodelistChangeItem]
-    deleted_codelists: list[CodelistChangeItem]
-    updated_codelists: list[CodelistChangeItem]
-    new_terms: list[TermChangeItem]
-    deleted_terms: list[TermChangeItem]
-    updated_terms: list[TermChangeItem]
+    start_datetime: Annotated[datetime, Field()]
+    end_datetime: Annotated[datetime, Field()]
+    new_codelists: Annotated[list[CodelistChangeItem], Field()]
+    deleted_codelists: Annotated[list[CodelistChangeItem], Field()]
+    updated_codelists: Annotated[list[CodelistChangeItem], Field()]
+    new_terms: Annotated[list[TermChangeItem], Field()]
+    deleted_terms: Annotated[list[TermChangeItem], Field()]
+    updated_terms: Annotated[list[TermChangeItem], Field()]
 
     @classmethod
     def from_repository_output(

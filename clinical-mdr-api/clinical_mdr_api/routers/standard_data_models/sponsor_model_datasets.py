@@ -41,7 +41,6 @@ State after:
 
 Possible errors:
 """,
-    response_model=CustomPage[SponsorModelDataset],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -88,7 +87,7 @@ def get_sponsor_model_datasets(
     total_count: Annotated[
         bool | None, Query(description=_generic_descriptions.TOTAL_COUNT)
     ] = False,
-):
+) -> CustomPage[SponsorModelDataset]:
     sponsor_model_dataset_service = SponsorModelDatasetService()
     results = sponsor_model_dataset_service.get_all_items(
         sort_by=sort_by,
@@ -109,7 +108,6 @@ def get_sponsor_model_datasets(
     summary="Returns possible values from the database for a given header",
     description="Allowed parameters include : field name for which to get possible values, "
     "search string to provide filtering for the field name, additional filters to apply on other fields",
-    response_model=list[Any],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -139,7 +137,7 @@ def get_distinct_values_for_header(
     page_size: Annotated[
         int | None, Query(description=_generic_descriptions.HEADER_PAGE_SIZE)
     ] = config.DEFAULT_HEADER_PAGE_SIZE,
-):
+) -> list[Any]:
     sponsor_model_dataset_service = SponsorModelDatasetService()
     return sponsor_model_dataset_service.get_distinct_values_for_header(
         field_name=field_name,
@@ -167,7 +165,6 @@ def get_distinct_values_for_header(
     Possible errors:
     - Missing Sponsor Model version.
     """,
-    response_model=SponsorModelDataset,
     response_model_exclude_unset=True,
     status_code=201,
     responses={
@@ -182,7 +179,6 @@ def get_distinct_values_for_header(
         },
     },
 )
-# pylint: disable=unused-argument
 def create(
     sponsor_model: Annotated[
         SponsorModelDatasetInput,

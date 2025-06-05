@@ -73,12 +73,10 @@ class MultiTemplateParameterTerm(BaseModel):
             json_schema_extra={"nullable": True},
         ),
     ]
-    terms: Annotated[
-        list[IndexedTemplateParameterTerm],
-        Field(
-            description="A list of indexed template parameter terms that are used at this position in the template.",
-        ),
-    ] = []
+    terms: list[IndexedTemplateParameterTerm] = Field(
+        description="A list of indexed template parameter terms that are used at this position in the template.",
+        default_factory=list,
+    )
 
 
 class TemplateParameterComplexValue(MultiTemplateParameterTerm):
@@ -96,4 +94,4 @@ class TemplateParameterComplexValue(MultiTemplateParameterTerm):
     }
     """
 
-    format_string: str | None
+    format_string: Annotated[str | None, Field()]

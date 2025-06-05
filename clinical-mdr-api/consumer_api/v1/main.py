@@ -8,7 +8,10 @@ from fastapi import APIRouter, Path, Query, Request
 from common import config
 from common.auth import rbac
 from common.models.error import ErrorResponse
-from consumer_api.shared.responses import PaginatedResponse
+from consumer_api.shared.responses import (
+    PaginatedResponse,
+    PaginatedResponseWithStudyVersion,
+)
 from consumer_api.v1 import db as DB
 from consumer_api.v1 import models
 
@@ -19,7 +22,6 @@ router = APIRouter()
 @router.get(
     "/studies",
     dependencies=[rbac.STUDY_READ],
-    response_model=PaginatedResponse[models.Study],
     status_code=200,
     responses={
         400: {
@@ -37,10 +39,20 @@ async def get_studies(
     ] = config.DEFAULT_PAGE_SIZE,
     page_number: Annotated[int, Query(ge=1)] = 1,
     id: Annotated[
-        str, Query(description="Filter by study ID (case-insensitive partial match)")
+        str,
+        Query(
+            description="Filter by study ID (case-insensitive partial match), for example `NN1234-5678`."
+        ),
     ] = None,
-):
-    """Get a paginated list of studies"""
+) -> PaginatedResponse[models.Study]:
+    """
+    Returns a paginated list of studies, sorted by the specified sort criteria and order.
+
+    Each returned study contains a full list of corresponding study versions, sorted by version start date in descending order.
+
+    Returned `version_number` value can be used in other endpoints to retrieve study entities (e.g. visits, activities, etc.)
+    associated with a specific study version.
+    """
     studies = DB.get_studies(
         sort_by=sort_by,
         sort_order=sort_order,
@@ -64,12 +76,15 @@ async def get_studies(
 @router.get(
     "/studies/{uid}/study-visits",
     dependencies=[rbac.STUDY_READ],
-    response_model=PaginatedResponse[models.StudyVisit],
     status_code=200,
     responses={
         400: {
             "model": ErrorResponse,
             "description": "Invalid request",
+        },
+        404: {
+            "model": ErrorResponse,
+            "description": "Item not found",
         },
     },
 )
@@ -83,10 +98,21 @@ async def get_study_visits(
     ] = config.PAGE_SIZE_100,
     page_number: Annotated[int, Query(ge=1)] = 1,
     study_version_number: Annotated[
-        str | None, Query(description="Study Version Number")
+        str | None, Query(description="Study Version Number", example="2.1")
     ] = None,
-):
-    """Get a paginated list of study visits"""
+) -> PaginatedResponseWithStudyVersion[models.StudyVisit]:
+    """
+    Returns a paginated list of study visits, sorted by the specified sort criteria and order.
+
+    If `study_version_number` query parameter is provided, study visits
+    associated with the specified study version will be returned.
+    Otherwise, visits for the latest study version will be returned.
+    """
+    study_version = DB.get_study_version(
+        study_uid=uid,
+        study_version_number=study_version_number,
+    )
+
     study_visits = DB.get_study_visits(
         study_uid=uid,
         sort_by=sort_by,
@@ -96,8 +122,9 @@ async def get_study_visits(
         study_version_number=study_version_number,
     )
 
-    return PaginatedResponse.from_input(
+    return PaginatedResponseWithStudyVersion.from_input(
         request=request,
+        study_version=study_version,
         sort_by=sort_by.value,
         sort_order=sort_order.value,
         page_size=page_size,
@@ -113,12 +140,15 @@ async def get_study_visits(
 @router.get(
     "/studies/{uid}/study-activities",
     dependencies=[rbac.STUDY_READ],
-    response_model=PaginatedResponse[models.StudyActivity],
     status_code=200,
     responses={
         400: {
             "model": ErrorResponse,
             "description": "Invalid request",
+        },
+        404: {
+            "model": ErrorResponse,
+            "description": "Item not found",
         },
     },
 )
@@ -132,10 +162,21 @@ async def get_study_activities(
     ] = config.PAGE_SIZE_100,
     page_number: Annotated[int, Query(ge=1)] = 1,
     study_version_number: Annotated[
-        str | None, Query(description="Study Version Number")
+        str | None, Query(description="Study Version Number", example="2.1")
     ] = None,
-):
-    """Get a paginated list of study activities"""
+) -> PaginatedResponseWithStudyVersion[models.StudyActivity]:
+    """
+    Returns a paginated list of study activities, sorted by the specified sort criteria and order.
+
+    If `study_version_number` query parameter is provided, study activities
+    associated with the specified study version will be returned.
+    Otherwise, activities for the latest study version will be returned.
+    """
+    study_version = DB.get_study_version(
+        study_uid=uid,
+        study_version_number=study_version_number,
+    )
+
     study_activities = DB.get_study_activities(
         study_uid=uid,
         sort_by=sort_by,
@@ -145,8 +186,9 @@ async def get_study_activities(
         study_version_number=study_version_number,
     )
 
-    return PaginatedResponse.from_input(
+    return PaginatedResponseWithStudyVersion.from_input(
         request=request,
+        study_version=study_version,
         sort_by=sort_by.value,
         sort_order=sort_order.value,
         page_size=page_size,
@@ -163,12 +205,15 @@ async def get_study_activities(
 @router.get(
     "/studies/{uid}/detailed-soa",
     dependencies=[rbac.STUDY_READ],
-    response_model=PaginatedResponse[models.StudyDetailedSoA],
     status_code=200,
     responses={
         400: {
             "model": ErrorResponse,
             "description": "Invalid request",
+        },
+        404: {
+            "model": ErrorResponse,
+            "description": "Item not found",
         },
     },
 )
@@ -182,10 +227,22 @@ async def get_study_detailed_soa(
     ] = config.PAGE_SIZE_100,
     page_number: Annotated[int, Query(ge=1)] = 1,
     study_version_number: Annotated[
-        str | None, Query(description="Study Version Number")
+        str | None, Query(description="Study Version Number", example="2.1")
     ] = None,
-):
-    """Get a paginated list of detailed SoA items"""
+) -> PaginatedResponseWithStudyVersion[models.StudyDetailedSoA]:
+    """
+    Returns a paginated list of detailed SoA items representing a point in the activities/visits matrix.
+    SoA items are sorted by the specified sort criteria and order.
+
+    If `study_version_number` query parameter is provided, detailed SoA
+    associated with the specified study version will be returned.
+    Otherwise, detailed SoA items for the latest study version will be returned.
+    """
+    study_version = DB.get_study_version(
+        study_uid=uid,
+        study_version_number=study_version_number,
+    )
+
     study_detailed_soas = DB.get_study_detailed_soa(
         study_uid=uid,
         sort_by=sort_by,
@@ -195,8 +252,9 @@ async def get_study_detailed_soa(
         study_version_number=study_version_number,
     )
 
-    return PaginatedResponse.from_input(
+    return PaginatedResponseWithStudyVersion.from_input(
         request=request,
+        study_version=study_version,
         sort_by=sort_by.value,
         sort_order=sort_order.value,
         page_size=page_size,
@@ -213,12 +271,15 @@ async def get_study_detailed_soa(
 @router.get(
     "/studies/{uid}/operational-soa",
     dependencies=[rbac.STUDY_READ],
-    response_model=PaginatedResponse[models.StudyOperationalSoA],
     status_code=200,
     responses={
         400: {
             "model": ErrorResponse,
             "description": "Invalid request",
+        },
+        404: {
+            "model": ErrorResponse,
+            "description": "Item not found",
         },
     },
 )
@@ -232,10 +293,22 @@ async def get_study_operational_soa(
     ] = config.PAGE_SIZE_100,
     page_number: Annotated[int, Query(ge=1)] = 1,
     study_version_number: Annotated[
-        str | None, Query(description="Study Version Number")
+        str | None, Query(description="Study Version Number", example="2.1")
     ] = None,
-):
-    """Get a paginated list of operational SoA items representing a point in the activities/visits matrix"""
+) -> PaginatedResponseWithStudyVersion[models.StudyOperationalSoA]:
+    """
+    Returns a paginated list of operational SoA items representing a point in the activities/visits matrix.
+    SoA items are sorted by the specified sort criteria and order.
+
+    If `study_version_number` query parameter is provided, operational SoA
+    associated with the specified study version will be returned.
+    Otherwise, operational SoA items for the latest study version will be returned.
+    """
+    study_version = DB.get_study_version(
+        study_uid=uid,
+        study_version_number=study_version_number,
+    )
+
     study_operational_soas = DB.get_study_operational_soa(
         study_uid=uid,
         sort_by=sort_by,
@@ -245,8 +318,9 @@ async def get_study_operational_soa(
         study_version_number=study_version_number,
     )
 
-    return PaginatedResponse.from_input(
+    return PaginatedResponseWithStudyVersion.from_input(
         request=request,
+        study_version=study_version,
         sort_by=sort_by.value,
         sort_order=sort_order.value,
         page_size=page_size,

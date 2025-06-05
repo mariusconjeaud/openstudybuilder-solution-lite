@@ -1,7 +1,15 @@
 <template>
-  <v-chip :color="color" :variant="variant">
+  <v-btn
+    :color="color"
+    :variant="variant"
+    readonly
+    tabindex="-1"
+    size="small"
+    class="text-none"
+    style="pointer-events: none; cursor: default"
+  >
     {{ status }}
-  </v-chip>
+  </v-btn>
 </template>
 
 <script setup>
@@ -15,7 +23,7 @@ const props = defineProps({
   },
   outlined: {
     type: Boolean,
-    default: true,
+    default: false,
   },
 })
 
@@ -37,7 +45,8 @@ const color = computed(() => {
   }
   return 'secondary'
 })
+
 const variant = computed(() => {
-  return props.outlined ? 'outlined' : 'flat'
+  return props.outlined ? 'outlined' : 'tonal'
 })
 </script>

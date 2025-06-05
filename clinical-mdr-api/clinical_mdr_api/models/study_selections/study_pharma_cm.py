@@ -60,13 +60,13 @@ class StudyPharmaCM(BaseModel):
     study_type: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = (
         None
     )
-    secondary_ids: Annotated[
-        list[CompactRegistryIdentifier], Field(json_schema_extra={"nullable": True})
-    ] = []
+    secondary_ids: list[CompactRegistryIdentifier] = Field(
+        json_schema_extra={"nullable": True}, default_factory=list
+    )
 
     responsible_party: Annotated[str, Field()] = "Sponsor"
-    primary_disease_or_condition_being_studied: Annotated[list[str], Field()] = []
-    primary_purpose: Annotated[list[str], Field()] = []
+    primary_disease_or_condition_being_studied: list[str] = Field(default_factory=list)
+    primary_purpose: list[str] = Field(default_factory=list)
     study_phase: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = (
         None
     )
@@ -82,11 +82,11 @@ class StudyPharmaCM(BaseModel):
     number_of_subjects: Annotated[
         int | None, Field(json_schema_extra={"nullable": True})
     ] = None
-    study_arms: Annotated[list[CompactStudyArm], Field()] = []
+    study_arms: list[CompactStudyArm] = Field(default_factory=list)
     intervention_type: Annotated[
         str | None, Field(json_schema_extra={"nullable": True})
     ] = None
-    outcome_measures: Annotated[list[CompactOutcomeMeasure], Field()] = []
+    outcome_measures: list[CompactOutcomeMeasure] = Field(default_factory=list)
     minimum_age: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = (
         None
     )
@@ -96,8 +96,8 @@ class StudyPharmaCM(BaseModel):
     accepts_healthy_volunteers: Annotated[
         bool | None, Field(json_schema_extra={"nullable": True})
     ] = None
-    inclusion_criteria: Annotated[list[str], Field()] = []
-    exclusion_criteria: Annotated[list[str], Field()] = []
+    inclusion_criteria: list[str] = Field(default_factory=list)
+    exclusion_criteria: list[str] = Field(default_factory=list)
 
     @classmethod
     def from_various_data(

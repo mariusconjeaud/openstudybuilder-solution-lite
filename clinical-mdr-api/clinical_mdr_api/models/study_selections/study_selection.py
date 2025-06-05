@@ -1,6 +1,6 @@
 import re
 from datetime import datetime
-from typing import Annotated, Callable, Iterable, NamedTuple, Self
+from typing import Annotated, Callable, Iterable, Mapping, NamedTuple, Self
 
 from pydantic import ConfigDict, Field, model_validator
 
@@ -107,7 +107,7 @@ from clinical_mdr_api.models.concepts.activities.activity_instance import (
 )
 from clinical_mdr_api.models.concepts.compound import Compound
 from clinical_mdr_api.models.concepts.compound_alias import CompoundAlias
-from clinical_mdr_api.models.concepts.concept import SimpleNumericValueWithUnit
+from clinical_mdr_api.models.concepts.concept import Concept, SimpleNumericValueWithUnit
 from clinical_mdr_api.models.concepts.medicinal_product import MedicinalProduct
 from clinical_mdr_api.models.controlled_terminologies.ct_term import SimpleTermModel
 from clinical_mdr_api.models.controlled_terminologies.ct_term_name import CTTermName
@@ -544,12 +544,10 @@ class StudySelectionObjectiveTemplateSelectInput(PostInputModel):
             description="The unique id of the objective template that is to be selected.",
         ),
     ]
-    parameter_terms: Annotated[
-        list[TemplateParameterMultiSelectInput],
-        Field(
-            description="An ordered list of selected parameter terms that are used to replace the parameters of the objective template.",
-        ),
-    ] = []
+    parameter_terms: list[TemplateParameterMultiSelectInput] = Field(
+        description="An ordered list of selected parameter terms that are used to replace the parameters of the objective template.",
+        default_factory=list,
+    )
     library_name: Annotated[
         str | None,
         Field(
@@ -1025,12 +1023,10 @@ class StudySelectionEndpointTemplateSelectInput(PostInputModel):
         ),
     ]
     study_objective_uid: Annotated[str | None, STUDY_OBJECTIVE_UID_FIELD] = None
-    parameter_terms: Annotated[
-        list[TemplateParameterMultiSelectInput],
-        Field(
-            description="An ordered list of selected parameter terms that are used to replace the parameters of the endpoint template.",
-        ),
-    ] = []
+    parameter_terms: list[TemplateParameterMultiSelectInput] = Field(
+        description="An ordered list of selected parameter terms that are used to replace the parameters of the endpoint template.",
+        default_factory=list,
+    )
     library_name: Annotated[
         str | None,
         Field(
@@ -1795,12 +1791,10 @@ class StudySelectionCriteriaTemplateSelectInput(PostInputModel):
             description="The unique id of the criteria template that is to be selected.",
         ),
     ]
-    parameter_terms: Annotated[
-        list[TemplateParameterMultiSelectInput],
-        Field(
-            description="An ordered list of selected parameter terms that are used to replace the parameters of the criteria template.",
-        ),
-    ] = []
+    parameter_terms: list[TemplateParameterMultiSelectInput] = Field(
+        description="An ordered list of selected parameter terms that are used to replace the parameters of the criteria template.",
+        default_factory=list,
+    )
     library_name: Annotated[
         str,
         Field(
@@ -1838,7 +1832,7 @@ class StudySelectionCriteriaKeyCriteria(PatchInputModel):
 class DetailedSoAHistory(BaseModel):
     object_type: Annotated[str, Field()]
     description: Annotated[str, Field()]
-    action: str = CHANGE_TYPE_FIELD
+    action: Annotated[str, Field()] = CHANGE_TYPE_FIELD
     author_username: Annotated[
         str | None,
         Field(
@@ -1925,9 +1919,9 @@ class StudySelectionActivityCore(StudySelection):
             json_schema_extra={"source": "uid", "nullable": True},
         ),
     ]
-    study_activity_subgroup: SimpleStudyActivitySubGroup | None
-    study_activity_group: SimpleStudyActivityGroup | None
-    study_soa_group: SimpleStudySoAGroup
+    study_activity_subgroup: Annotated[SimpleStudyActivitySubGroup | None, Field()]
+    study_activity_group: Annotated[SimpleStudyActivityGroup | None, Field()]
+    study_soa_group: Annotated[SimpleStudySoAGroup, Field()]
     activity: Annotated[
         ActivityForStudyActivity | None,
         Field(
@@ -2048,119 +2042,69 @@ class StudySelectionActivity(StudySelectionActivityCore):
     def from_study_selection_activity_vo_and_order(
         cls,
         study_uid: str,
-        specific_selection: StudySelectionActivityVO,
+        study_selection: StudySelectionActivityVO,
         get_activity_by_uid_callback: Callable[[str], ActivityForStudyActivity],
-        get_activity_by_uid_version_callback: Callable[[str], ActivityForStudyActivity],
-        get_ct_term_flowchart_group: Callable[[str], CTTermName],
+        get_activity_by_uid_version_callback: Callable[
+            [str, str], ActivityForStudyActivity
+        ],
+        get_ct_term_flowchart_group: Callable[..., CTTermName],
         terms_at_specific_datetime: datetime | None,
         accepted_version: bool = False,
         study_value_version: str | None = None,
-        soa_groups: list[CTTermName] | None = None,
-        activity_for_study_activities: list[ActivityForStudyActivity] | None = None,
+        activity_versions_by_uid: (
+            Mapping[str, Iterable[ActivityForStudyActivity]] | None
+        ) = None,
     ) -> Self:
-        single_study_selection = specific_selection
-        study_activity_uid = specific_selection.study_selection_uid
-        activity_uid = single_study_selection.activity_uid
-
-        flowchart_group = (
-            get_ct_term_flowchart_group(
-                single_study_selection.soa_group_term_uid,
+        if (
+            not (soa_group_term_name := study_selection.soa_group_term_name)
+            and study_selection.soa_group_term_uid
+        ):
+            soa_group_term = get_ct_term_flowchart_group(
+                study_selection.soa_group_term_uid,
                 at_specific_date=terms_at_specific_datetime,
                 include_retired_versions=True,
             )
-            if not soa_groups
-            else next(
-                (
-                    soa_group
-                    for soa_group in soa_groups
-                    if soa_group.term_uid == single_study_selection.soa_group_term_uid
-                ),
-                None,
-            )
-        )
-
-        BusinessLogicException.raise_if(
-            soa_groups and not flowchart_group,
-            msg="All Preloaded SoA Groups should exist.",
-        )
-
-        assert activity_uid is not None
-        latest_activity = None
-        if activity_for_study_activities:
-            latest_activity = max(
-                (
-                    i_activity
-                    for i_activity in activity_for_study_activities
-                    if i_activity.uid == single_study_selection.activity_uid
-                ),
-                key=lambda a: version_string_to_tuple(a.version),
-            )
-
             BusinessLogicException.raise_if_not(
-                latest_activity,
-                msg="All Preloaded Activities Versions should exist.",
+                soa_group_term,
+                msg=f"Preloaded CTTerm {study_selection.soa_group_term_uid} not found.",
             )
-        else:
-            latest_activity = get_activity_by_uid_callback(
-                single_study_selection.activity_uid
-            )
+            soa_group_term_name = soa_group_term.sponsor_preferred_name
 
-        if (
-            latest_activity
-            and latest_activity.version == single_study_selection.activity_version
-        ):
-            selected_activity = latest_activity
-            latest_activity = None
-        else:
-            selected_activity = (
-                get_activity_by_uid_version_callback(
-                    activity_uid, single_study_selection.activity_version
-                )
-                if not activity_for_study_activities
-                else next(
-                    (
-                        activity
-                        for activity in activity_for_study_activities
-                        if activity.uid == single_study_selection.activity_uid
-                        and activity.version == single_study_selection.activity_version
-                    ),
-                    None,
-                )
-            )
-            BusinessLogicException.raise_if(
-                not selected_activity and activity_for_study_activities,
-                msg="All Preloaded Activities Versions should exist.",
-            )
+        latest_activity, selected_activity = _find_versions(
+            uid=study_selection.activity_uid,
+            version=study_selection.activity_version,
+            versions_by_uid=activity_versions_by_uid,
+            get_by_uid_callback=get_activity_by_uid_callback,
+            get_by_uid_version_callback=get_activity_by_uid_version_callback,
+        )
 
-        activity_subgroup_name = single_study_selection.activity_subgroup_name
-        activity_group_name = single_study_selection.activity_group_name
         return cls(
-            study_activity_uid=study_activity_uid,
+            study_activity_uid=study_selection.study_selection_uid,
             study_activity_subgroup=SimpleStudyActivitySubGroup(
-                study_activity_subgroup_uid=single_study_selection.study_activity_subgroup_uid,
-                activity_subgroup_uid=single_study_selection.activity_subgroup_uid,
-                activity_subgroup_name=activity_subgroup_name,
-                order=single_study_selection.study_activity_subgroup_order,
+                study_activity_subgroup_uid=study_selection.study_activity_subgroup_uid,
+                activity_subgroup_uid=study_selection.activity_subgroup_uid,
+                activity_subgroup_name=study_selection.activity_subgroup_name,
+                order=study_selection.study_activity_subgroup_order,
             ),
             study_activity_group=SimpleStudyActivityGroup(
-                study_activity_group_uid=single_study_selection.study_activity_group_uid,
-                activity_group_uid=single_study_selection.activity_group_uid,
-                activity_group_name=activity_group_name,
-                order=single_study_selection.study_activity_group_order,
+                study_activity_group_uid=study_selection.study_activity_group_uid,
+                activity_group_uid=study_selection.activity_group_uid,
+                activity_group_name=study_selection.activity_group_name,
+                order=study_selection.study_activity_group_order,
             ),
             study_soa_group=SimpleStudySoAGroup(
-                study_soa_group_uid=single_study_selection.study_soa_group_uid,
-                soa_group_term_uid=flowchart_group.term_uid,
-                soa_group_term_name=flowchart_group.sponsor_preferred_name,
-                order=single_study_selection.study_soa_group_order,
+                study_soa_group_uid=study_selection.study_soa_group_uid,
+                soa_group_term_uid=study_selection.soa_group_term_uid,
+                soa_group_term_name=soa_group_term_name,
+                order=study_selection.study_soa_group_order,
             ),
             activity=selected_activity,
             latest_activity=latest_activity,
-            order=single_study_selection.order,
-            show_activity_group_in_protocol_flowchart=single_study_selection.show_activity_group_in_protocol_flowchart,
-            show_activity_subgroup_in_protocol_flowchart=single_study_selection.show_activity_subgroup_in_protocol_flowchart,
-            show_activity_in_protocol_flowchart=single_study_selection.show_activity_in_protocol_flowchart,
-            show_soa_group_in_protocol_flowchart=single_study_selection.show_soa_group_in_protocol_flowchart,
+            order=study_selection.order,
+            show_activity_group_in_protocol_flowchart=study_selection.show_activity_group_in_protocol_flowchart,
+            show_activity_subgroup_in_protocol_flowchart=study_selection.show_activity_subgroup_in_protocol_flowchart,
+            show_activity_in_protocol_flowchart=study_selection.show_activity_in_protocol_flowchart,
+            show_soa_group_in_protocol_flowchart=study_selection.show_soa_group_in_protocol_flowchart,
             accepted_version=accepted_version,
             study_uid=study_uid,
             study_version=(
@@ -2168,8 +2112,8 @@ class StudySelectionActivity(StudySelectionActivityCore):
                 if study_value_version
                 else get_latest_on_datetime_str()
             ),
-            start_date=single_study_selection.start_date,
-            author_username=single_study_selection.author_username,
+            start_date=study_selection.start_date,
+            author_username=study_selection.author_username,
         )
 
 
@@ -2183,10 +2127,10 @@ class StudySelectionActivityCreateInput(PostInputModel):
 
 class StudySelectionActivityInSoACreateInput(PatchInputModel):
     soa_group_term_uid: Annotated[str, Field(description="flowchart CT term uid")]
-    activity_uid: str
-    activity_subgroup_uid: str | None = None
-    activity_group_uid: str | None = None
-    activity_instance_uid: str | None = None
+    activity_uid: Annotated[str, Field()]
+    activity_subgroup_uid: Annotated[str | None, Field()] = None
+    activity_group_uid: Annotated[str | None, Field()] = None
+    activity_instance_uid: Annotated[str | None, Field()] = None
     order: Annotated[
         int,
         Field(json_schema_extra={"nullable": True}, gt=0, lt=settings.MAX_INT_NEO4J),
@@ -2200,7 +2144,7 @@ class StudyActivitySubGroupEditInput(PatchInputModel):
 
 
 class StudyActivitySubGroup(BaseModel):
-    show_activity_subgroup_in_protocol_flowchart: bool | None = (
+    show_activity_subgroup_in_protocol_flowchart: Annotated[bool | None, Field()] = (
         SHOW_ACTIVITY_SUBGROUP_IN_PROTOCOL_FLOWCHART_FIELD
     )
     study_uid: Annotated[
@@ -2375,7 +2319,7 @@ class StudySelectionActivityInput(PatchInputModel):
 
 
 class StudyActivityReplaceActivityInput(StudySelectionActivityInput):
-    activity_uid: str
+    activity_uid: Annotated[str, Field()]
 
 
 class StudySelectionActivityRequestEditInput(StudySelectionActivityInput):
@@ -2386,9 +2330,9 @@ class StudySelectionActivityRequestEditInput(StudySelectionActivityInput):
     activity_subgroup_uid: Annotated[str | None, Field()] = None
     activity_uid: Annotated[str | None, Field()] = None
     activity_name: Annotated[str | None, Field()] = None
-    request_rationale: str | None = None
-    is_data_collected: bool | None = None
-    is_request_final: bool | None = None
+    request_rationale: Annotated[str | None, Field()] = None
+    is_data_collected: Annotated[bool | None, Field()] = None
+    is_request_final: Annotated[bool | None, Field()] = None
 
 
 class UpdateActivityPlaceholderToSponsorActivity(StudySelectionActivityInput):
@@ -2412,7 +2356,7 @@ class StudySelectionActivityBatchUpdateInput(InputModel):
     study_activity_uid: Annotated[
         str, Field(description="UID of the Study Activity to update")
     ]
-    content: StudySelectionActivityInput
+    content: Annotated[StudySelectionActivityInput, Field()]
 
 
 class StudySelectionActivityBatchDeleteInput(InputModel):
@@ -2423,16 +2367,17 @@ class StudySelectionActivityBatchDeleteInput(InputModel):
 
 class StudySelectionActivityBatchInput(BatchInputModel):
     method: Annotated[str, METHOD_FIELD]
-    content: (
-        StudySelectionActivityBatchUpdateInput
-        | StudySelectionActivityCreateInput
-        | StudySelectionActivityBatchDeleteInput
-    )
+    content: Annotated[
+        StudySelectionActivityCreateInput
+        | StudySelectionActivityBatchUpdateInput
+        | StudySelectionActivityBatchDeleteInput,
+        Field(),
+    ]
 
 
 class StudySelectionActivityBatchOutput(BaseModel):
     response_code: Annotated[int, RESPONSE_CODE_FIELD]
-    content: StudySelectionActivity | None | BatchErrorResponse
+    content: Annotated[StudySelectionActivity | None | BatchErrorResponse, Field()]
 
 
 #
@@ -2444,7 +2389,7 @@ class StudySelectionActivityInstance(BaseModel):
         Field(description=STUDY_UID_DESC, json_schema_extra={"nullable": True}),
     ]
 
-    show_activity_instance_in_protocol_flowchart: bool = (
+    show_activity_instance_in_protocol_flowchart: Annotated[bool, Field()] = (
         SHOW_ACTIVITY_INSTANCE_IN_PROTOCOL_FLOWCHART_FIELD
     )
     study_activity_instance_uid: Annotated[
@@ -2468,7 +2413,7 @@ class StudySelectionActivityInstance(BaseModel):
             json_schema_extra={"nullable": True},
         ),
     ] = None
-    activity: Activity
+    activity: Annotated[Activity, Field()]
     activity_instance: Annotated[
         ActivityInstance | None, Field(json_schema_extra={"nullable": True})
     ] = None
@@ -2502,11 +2447,13 @@ class StudySelectionActivityInstance(BaseModel):
             json_schema_extra={"nullable": True},
         ),
     ] = None
-    state: StudyActivityInstanceState
-    study_activity_subgroup: SimpleStudyActivitySubGroup | None = None
-    study_activity_group: SimpleStudyActivityGroup | None = None
-    study_soa_group: SimpleStudySoAGroup | None = None
-    order: int | None = None
+    state: Annotated[StudyActivityInstanceState, Field()]
+    study_activity_subgroup: Annotated[SimpleStudyActivitySubGroup | None, Field()] = (
+        None
+    )
+    study_activity_group: Annotated[SimpleStudyActivityGroup | None, Field()] = None
+    study_soa_group: Annotated[SimpleStudySoAGroup | None, Field()] = None
+    order: Annotated[int | None, Field()] = None
 
     @classmethod
     def _get_state_out_of_activity_and_activity_instance(
@@ -2564,163 +2511,80 @@ class StudySelectionActivityInstance(BaseModel):
     def from_study_selection_activity_instance_vo_and_order(
         cls,
         study_uid: str,
-        specific_selection: StudySelectionActivityInstanceVO,
+        study_selection: StudySelectionActivityInstanceVO,
         get_activity_by_uid_callback: Callable[[str], Activity],
         get_activity_by_uid_version_callback: Callable[[str, str], Activity],
         get_activity_instance_by_uid_callback: Callable[[str], ActivityInstance],
         get_activity_instance_by_uid_version_callback: Callable[
             [str, str], ActivityInstance
         ],
-        activity_for_study_activity_instances: (
-            list[ActivityForStudyActivity] | None
+        activity_versions_by_uid: (
+            Mapping[str, Iterable[ActivityForStudyActivity]] | None
         ) = None,
-        activity_instances_for_study_activity_instances: (
-            list[ActivityInstance] | None
+        activity_instance_versions_by_uid: (
+            Mapping[str, Iterable[ActivityInstance]] | None
         ) = None,
     ) -> Self:
-        single_study_selection = specific_selection
-        study_activity_instance_uid = single_study_selection.study_selection_uid
-        activity_uid = single_study_selection.activity_uid
-        activity_instance_uid = single_study_selection.activity_instance_uid
 
-        assert activity_uid is not None
-        if activity_for_study_activity_instances:
-            latest_activity = max(
-                (
-                    i_activity
-                    for i_activity in activity_for_study_activity_instances
-                    if i_activity.uid == single_study_selection.activity_uid
-                ),
-                key=lambda a: version_string_to_tuple(a.version),
-            )
-            BusinessLogicException.raise_if_not(
-                latest_activity,
-                msg="All Preloaded Activities Versions should exist.",
-            )
-        else:
-            latest_activity = get_activity_by_uid_callback(
-                single_study_selection.activity_uid
-            )
+        latest_activity, selected_activity = _find_versions(
+            uid=study_selection.activity_uid,
+            version=study_selection.activity_version,
+            versions_by_uid=activity_versions_by_uid,
+            get_by_uid_callback=get_activity_by_uid_callback,
+            get_by_uid_version_callback=get_activity_by_uid_version_callback,
+        )
 
-        if (
-            latest_activity
-            and latest_activity.version == single_study_selection.activity_version
-        ):
-            selected_activity = latest_activity
-            latest_activity = None
-        else:
-            selected_activity = (
-                get_activity_by_uid_version_callback(
-                    activity_uid, single_study_selection.activity_version
-                )
-                if not activity_for_study_activity_instances
-                else next(
-                    (
-                        activity
-                        for activity in activity_for_study_activity_instances
-                        if activity.uid == single_study_selection.activity_uid
-                        and activity.version == single_study_selection.activity_version
-                    ),
-                    None,
-                )
+        latest_activity_instance, selected_activity_instance = (
+            _find_versions(
+                uid=study_selection.activity_instance_uid,
+                version=study_selection.activity_instance_version,
+                versions_by_uid=activity_instance_versions_by_uid,
+                get_by_uid_callback=get_activity_instance_by_uid_callback,
+                get_by_uid_version_callback=get_activity_instance_by_uid_version_callback,
             )
-            BusinessLogicException.raise_if(
-                not selected_activity and activity_for_study_activity_instances,
-                msg="All Preloaded Activities Versions should exist.",
-            )
+            if study_selection.activity_instance_uid
+            else (None, None)
+        )
 
-        if activity_instance_uid:
-            if activity_instances_for_study_activity_instances:
-                latest_activity_instance = max(
-                    (
-                        i_activity
-                        for i_activity in activity_instances_for_study_activity_instances
-                        if i_activity.uid == activity_instance_uid
-                    ),
-                    key=lambda a: version_string_to_tuple(a.version),
-                )
-                BusinessLogicException.raise_if_not(
-                    latest_activity_instance,
-                    msg="All Preloaded Activities Versions should exist.",
-                )
-            else:
-                latest_activity_instance = get_activity_instance_by_uid_callback(
-                    activity_instance_uid
-                )
-
-            if (
-                latest_activity_instance
-                and latest_activity_instance.version
-                == single_study_selection.activity_instance_version
-            ):
-                selected_activity_instance = latest_activity_instance
-                latest_activity_instance = None
-            else:
-                selected_activity_instance = (
-                    get_activity_instance_by_uid_version_callback(
-                        activity_instance_uid,
-                        single_study_selection.activity_instance_version,
-                    )
-                    if not activity_instances_for_study_activity_instances
-                    else next(
-                        (
-                            activity_instance
-                            for activity_instance in activity_instances_for_study_activity_instances
-                            if activity_instance.uid == activity_instance_uid
-                            and activity_instance.version
-                            == single_study_selection.activity_instance_version
-                        ),
-                        None,
-                    )
-                )
-            BusinessLogicException.raise_if(
-                not selected_activity_instance
-                and activity_instances_for_study_activity_instances,
-                msg="All Preloaded Activities Instance Versions should exist.",
-            )
-
-        else:
-            selected_activity_instance = None
-            latest_activity_instance = None
         return cls(
-            study_activity_instance_uid=study_activity_instance_uid,
-            study_activity_uid=single_study_selection.study_activity_uid,
+            study_activity_instance_uid=study_selection.study_selection_uid,
+            study_activity_uid=study_selection.study_activity_uid,
             activity=selected_activity,
             latest_activity=latest_activity,
             activity_instance=selected_activity_instance,
             latest_activity_instance=latest_activity_instance,
-            show_activity_instance_in_protocol_flowchart=single_study_selection.show_activity_instance_in_protocol_flowchart,
+            show_activity_instance_in_protocol_flowchart=study_selection.show_activity_instance_in_protocol_flowchart,
             study_uid=study_uid,
-            start_date=single_study_selection.start_date,
-            author_username=single_study_selection.author_username,
+            start_date=study_selection.start_date,
+            author_username=study_selection.author_username,
             state=cls._get_state_out_of_activity_and_activity_instance(
                 activity=selected_activity, activity_instance=selected_activity_instance
             ),
             study_activity_subgroup=(
                 SimpleStudyActivitySubGroup(
-                    study_activity_subgroup_uid=single_study_selection.study_activity_subgroup_uid,
-                    activity_subgroup_uid=single_study_selection.activity_subgroup_uid,
-                    activity_subgroup_name=single_study_selection.activity_subgroup_name,
+                    study_activity_subgroup_uid=study_selection.study_activity_subgroup_uid,
+                    activity_subgroup_uid=study_selection.activity_subgroup_uid,
+                    activity_subgroup_name=study_selection.activity_subgroup_name,
                 )
-                if single_study_selection.study_activity_subgroup_uid
+                if study_selection.study_activity_subgroup_uid
                 else None
             ),
             study_activity_group=(
                 SimpleStudyActivityGroup(
-                    study_activity_group_uid=single_study_selection.study_activity_group_uid,
-                    activity_group_uid=single_study_selection.activity_group_uid,
-                    activity_group_name=single_study_selection.activity_group_name,
+                    study_activity_group_uid=study_selection.study_activity_group_uid,
+                    activity_group_uid=study_selection.activity_group_uid,
+                    activity_group_name=study_selection.activity_group_name,
                 )
-                if single_study_selection.study_activity_group_uid
+                if study_selection.study_activity_group_uid
                 else None
             ),
             study_soa_group=(
                 SimpleStudySoAGroup(
-                    study_soa_group_uid=single_study_selection.study_soa_group_uid,
-                    soa_group_term_uid=single_study_selection.soa_group_term_uid,
-                    soa_group_term_name=single_study_selection.soa_group_term_name,
+                    study_soa_group_uid=study_selection.study_soa_group_uid,
+                    soa_group_term_uid=study_selection.soa_group_term_uid,
+                    soa_group_term_name=study_selection.soa_group_term_name,
                 )
-                if single_study_selection.study_soa_group_uid
+                if study_selection.study_soa_group_uid
                 else None
             ),
         )
@@ -2743,16 +2607,15 @@ class StudySelectionActivityInstanceEditInput(PatchInputModel):
 
 
 class StudySelectionActivityInstanceBatchCreate(InputModel):
-    activity_instance_uids: Annotated[
-        list[str],
-        Field(),
-    ] = []
+    activity_instance_uids: list[str] = Field(default_factory=list)
     study_activity_uid: Annotated[str | None, Field()] = None
 
 
 class StudySelectionActivityInstanceBatchOutput(BaseModel):
     response_code: Annotated[int, RESPONSE_CODE_FIELD]
-    content: StudySelectionActivityInstance | None | BatchErrorResponse
+    content: Annotated[
+        StudySelectionActivityInstance | None | BatchErrorResponse, Field()
+    ]
 
 
 #
@@ -2887,12 +2750,16 @@ class StudyActivityScheduleDeleteInput(InputModel):
 
 class StudyActivityScheduleBatchInput(BatchInputModel):
     method: Annotated[str, METHOD_FIELD]
-    content: StudyActivityScheduleCreateInput | StudyActivityScheduleDeleteInput
+    content: Annotated[
+        StudyActivityScheduleCreateInput | StudyActivityScheduleDeleteInput, Field()
+    ]
 
 
 class StudyActivityScheduleBatchOutput(BaseModel):
     response_code: Annotated[int, RESPONSE_CODE_FIELD]
-    content: StudyActivitySchedule | None | BatchErrorResponse = None
+    content: Annotated[StudyActivitySchedule | None | BatchErrorResponse, Field()] = (
+        None
+    )
 
 
 class StudySoAEditBatchInput(BatchInputModel):
@@ -2904,18 +2771,22 @@ class StudySoAEditBatchInput(BatchInputModel):
             pattern="^(StudyActivity|StudyActivitySchedule)$",
         ),
     ]
-    content: (
+    content: Annotated[
         StudyActivityScheduleCreateInput
         | StudySelectionActivityBatchUpdateInput
         | StudySelectionActivityCreateInput
         | StudySelectionActivityBatchDeleteInput
-        | StudyActivityScheduleDeleteInput
-    )
+        | StudyActivityScheduleDeleteInput,
+        Field(),
+    ]
 
 
 class StudySoAEditBatchOutput(BaseModel):
     response_code: Annotated[int, RESPONSE_CODE_FIELD]
-    content: StudySelectionActivity | StudyActivitySchedule | None | BatchErrorResponse
+    content: Annotated[
+        StudySelectionActivity | StudyActivitySchedule | None | BatchErrorResponse,
+        Field(),
+    ]
 
 
 # Study design cells
@@ -3116,7 +2987,7 @@ class StudyDesignCellHistory(BaseModel):
 
 
 class StudyDesignCellVersion(StudyDesignCellHistory):
-    changes: list[str]
+    changes: Annotated[list[str], Field()]
 
 
 class StudyDesignCellCreateInput(PostInputModel):
@@ -3179,16 +3050,17 @@ class StudyDesignCellDeleteInput(InputModel):
 
 class StudyDesignCellBatchInput(BatchInputModel):
     method: Annotated[str, METHOD_FIELD]
-    content: (
+    content: Annotated[
         StudyDesignCellCreateInput
         | StudyDesignCellDeleteInput
-        | StudyDesignCellEditInput
-    )
+        | StudyDesignCellEditInput,
+        Field(),
+    ]
 
 
 class StudyDesignCellBatchOutput(BaseModel):
     response_code: Annotated[int, RESPONSE_CODE_FIELD]
-    content: StudyDesignCell | None | BatchErrorResponse = None
+    content: Annotated[StudyDesignCell | None | BatchErrorResponse, Field()] = None
 
 
 # Study brancharms without ArmRoot
@@ -3629,7 +3501,7 @@ class StudySelectionArmNewOrder(PatchInputModel):
 
 
 class StudySelectionArmVersion(StudySelectionArm):
-    changes: list[str]
+    changes: Annotated[list[str], Field()]
 
 
 # Study Activity Instructions
@@ -3769,12 +3641,17 @@ class StudyActivityInstructionDeleteInput(InputModel):
 
 class StudyActivityInstructionBatchInput(BatchInputModel):
     method: Annotated[str, METHOD_FIELD]
-    content: StudyActivityInstructionCreateInput | StudyActivityInstructionDeleteInput
+    content: Annotated[
+        StudyActivityInstructionCreateInput | StudyActivityInstructionDeleteInput,
+        Field(),
+    ]
 
 
 class StudyActivityInstructionBatchOutput(BaseModel):
     response_code: Annotated[int, RESPONSE_CODE_FIELD]
-    content: StudyActivityInstruction | None | BatchErrorResponse = None
+    content: Annotated[
+        StudyActivityInstruction | None | BatchErrorResponse, Field()
+    ] = None
 
 
 # Study elements
@@ -4168,7 +4045,7 @@ class StudySelectionElementNewOrder(PatchInputModel):
 
 
 class StudySelectionElementVersion(StudySelectionElement):
-    changes: list[str]
+    changes: Annotated[list[str], Field()]
 
 
 # Study brancharms adding Arm Root parameter
@@ -4400,7 +4277,7 @@ class StudySelectionBranchArmNewOrder(PatchInputModel):
 
 
 class StudySelectionBranchArmVersion(StudySelectionBranchArmHistory):
-    changes: list[str]
+    changes: Annotated[list[str], Field()]
 
 
 # Study cohorts
@@ -4708,7 +4585,7 @@ class StudySelectionCohortNewOrder(PatchInputModel):
 
 
 class StudySelectionCohortVersion(StudySelectionCohortHistory):
-    changes: list[str]
+    changes: Annotated[list[str], Field()]
 
 
 #
@@ -4852,6 +4729,9 @@ class ReferencedItem(BaseModel):
     item_uid: Annotated[str, Field()]
     item_name: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = None
     item_type: Annotated[SoAItemType, Field()]
+    visible_in_protocol_soa: Annotated[
+        bool | None, Field(json_schema_extra={"nullable": True})
+    ] = None
 
 
 class SoAFootnoteReference(BaseModel):
@@ -4873,5 +4753,51 @@ class SoACellReference(BaseModel):
 
 
 class CellCoordinates(NamedTuple):
-    row: int
-    col: int
+    row: Annotated[int, Field()]
+    col: Annotated[int, Field()]
+
+
+def _find_versions(
+    uid: str,
+    version: str,
+    versions_by_uid: Mapping[str, Iterable[Concept]] | None = None,
+    get_by_uid_callback: Callable[[str], Concept] | None = None,
+    get_by_uid_version_callback: Callable[[str, str], Concept] | None = None,
+) -> tuple[Concept, Concept]:
+    latest_version, selected_version = None, None
+
+    if versions_by_uid:
+        latest_version = max(
+            versions_by_uid[uid],
+            key=lambda a: version_string_to_tuple(a.version),
+        )
+        BusinessLogicException.raise_if_not(
+            latest_version,
+            msg=f"Preloaded {uid} not found.",
+        )
+
+    elif get_by_uid_callback:
+        latest_version = get_by_uid_callback(uid)
+
+    if latest_version and latest_version.version == version:
+        selected_version = latest_version
+        latest_version = None
+
+    elif versions_by_uid:
+        selected_version = next(
+            (
+                activity
+                for activity in versions_by_uid[uid]
+                if activity.version == version
+            ),
+            None,
+        )
+        BusinessLogicException.raise_if_not(
+            selected_version,
+            msg=f"Preloaded {uid} version {version} not found.",
+        )
+
+    elif get_by_uid_version_callback:
+        selected_version = get_by_uid_version_callback(uid, version)
+
+    return latest_version, selected_version

@@ -1,3 +1,5 @@
+import { apiActivityName } from "./library_activities_steps";
+
 const {Given, When, Then } = require("@badeball/cypress-cucumber-preprocessor");
 const { closeSync } = require("fs");
 
@@ -5,6 +7,7 @@ let current_activity
 let new_activity_name
 let first_in_order
 let last_in_order
+
 When('At least {string} activites are present in {string} study', (number_of_activities, study_id) => {
     prepareActivites(number_of_activities, study_id)
 })
@@ -120,12 +123,9 @@ Then('The activities are removed from the study', () => {
 })
 
 When('The user enables the Reorder Activities function for acitivities in the same {string} flowchart subgroup and {string} group', (subgroup, group) => {
-    cy.get('[aria-label="Expand table"]').click()
-            cy.contains('tr[class="bg-white"]', subgroup).within(() => {
-                cy.clickButton('table-item-action-button')
-            })
+    cy.get('input[aria-label="Expand table"]').check()
+    cy.contains('tr[class="bg-white"]', subgroup).within(() => cy.clickButton('table-item-action-button'))
     cy.clickButton('Reorder')
-
 })
 
 When('The user updates the order of activities', () => {
@@ -134,24 +134,46 @@ When('The user updates the order of activities', () => {
     cy.get('.mdi-sort').first().parentsUntil('td').invoke('text').then((text) => {last_in_order = text})
     cy.get('.mdi-sort').last().parentsUntil('td').invoke('text').then((text) => {first_in_order = text})
 
-    cy.get('.mdi-sort').last().parentsUntil('td').drag('.sticky-column > .d-flex', {
-        source: { x: 100, y: 100 }, // applies to the element being dragged
+    cy.get('.mdi-sort').last().parentsUntil('td').drag('tr.bg-white', {
+        source: { x: 0, y: -50 }, // applies to the element being dragged
         target: { position: 'left' }, // applies to the drop target
         force: true, // applied to both the source and target element)
-        })
-    cy.contains('.v-btn', 'Finish reordering').click()
-    
-})
-Then('The new order of activites is visible', () => {
-    cy.get('[aria-label="Expand table"]').click()
-    cy.contains('tr[class="bg-white"]', 'Acute Kidney Injury').within(() => {
-        cy.clickButton('table-item-action-button')
     })
-    cy.clickButton('Reorder')
-    cy.get('.mdi-sort').first().parentsUntil('td').should('contain', first_in_order)
-    
+    cy.wait(1000)
+    cy.contains('.v-btn', 'Finish reordering').click()
+    cy.wait('@orderRequest')
 })
 
+Then('The new order of activites is visible', () => {
+    cy.get('input[aria-label="Expand table"]').check()
+    cy.contains('tr[class="bg-white"]', 'Acute Kidney Injury').within(() => cy.clickButton('table-item-action-button'))
+    cy.clickButton('Reorder')
+    cy.get('.mdi-sort').first().parentsUntil('td').should('contain', first_in_order)
+})
+
+Then('Text about no added visits and activities is displayed', () => cy.get('.v-empty-state__title').should('have.text', 'No activities & visits added yet'))
+
+Then('User can click Add visit button', () => cy.contains('button', 'Add visit').click())
+
+Then('User can click Add study activity button', () => cy.contains('button', 'Add study activity').click())
+
+Then('No activities are found', () => cy.get('table[aria-label="SoA table"] .bg-white').should('not.exist'))
+
+Then('Activity is found in table', () => cy.contains('table[aria-label="SoA table"] .bg-white', apiActivityName).should('exist'))
+
+When('User search for non-existing activity', () => cy.contains('.v-input__control', 'Search Activities').type('xxx'))
+
+When('User search newly added activity', () => cy.contains('.v-input__control', 'Search Activities').type(apiActivityName))
+
+When('User search newly added activity in lowercase', () => cy.contains('.v-input__control', 'Search Activities').type(apiActivityName.toLowerCase()))
+
+When('User search newly added activity by partial name', () => cy.contains('.v-input__control', 'Search Activities').type(apiActivityName.slice(-3)))
+
+When('User search search activity by subgroup', () => cy.contains('.v-input__control', 'Search Activities').type('API_SubGroup'))
+
+When('User search search activity by group', () => cy.contains('.v-input__control', 'Search Activities').type('API_Group'))
+
+When('User expand table', () => cy.contains('.v-selection-control', 'Expand table').click())
 
 function bulkAction(action) {
     cy.request('api/studies/Study_000001/study-activities?total_count=true').then((req) => {

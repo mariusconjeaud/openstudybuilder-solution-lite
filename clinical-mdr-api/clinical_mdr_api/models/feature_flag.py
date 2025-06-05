@@ -6,9 +6,9 @@ from clinical_mdr_api.models.utils import BaseModel, PatchInputModel, PostInputM
 
 
 class FeatureFlag(BaseModel):
-    sn: int
-    name: str
-    enabled: bool
+    sn: Annotated[int, Field()]
+    name: Annotated[str, Field()]
+    enabled: Annotated[bool, Field()]
     description: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = (
         None
     )
@@ -16,9 +16,9 @@ class FeatureFlag(BaseModel):
 
 class FeatureFlagInput(PostInputModel):
     name: Annotated[str, Field(min_length=1)]
-    enabled: bool
+    enabled: Annotated[bool, Field()]
     description: Annotated[str | None, Field(min_length=1)] = None
 
 
 class FeatureFlagPatchInput(PatchInputModel):
-    enabled: bool = False
+    enabled: Annotated[bool, Field()] = False

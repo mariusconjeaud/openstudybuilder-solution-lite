@@ -246,13 +246,12 @@ class ActivityInstanceClass(VersionProperties):
     dataset_class: Annotated[
         SimpleDatasetClass | None, Field(json_schema_extra={"nullable": True})
     ] = None
-    activity_item_classes: Annotated[
-        list[CompactActivityItemClass] | None,
-        Field(json_schema_extra={"nullable": True}),
-    ] = []
-    data_domains: Annotated[
-        list[DataDomain] | None, Field(json_schema_extra={"nullable": True})
-    ] = []
+    activity_item_classes: list[CompactActivityItemClass] | None = Field(
+        json_schema_extra={"nullable": True}, default_factory=list
+    )
+    data_domains: list[DataDomain] | None = Field(
+        json_schema_extra={"nullable": True}, default_factory=list
+    )
     library_name: Annotated[
         str | None,
         Field(json_schema_extra={"source": "has_library.name", "nullable": True}),
@@ -405,14 +404,14 @@ class ActivityInstanceClass(VersionProperties):
 
 class ActivityInstanceClassInput(InputModel):
     name: Annotated[str | None, Field(min_length=1)] = None
-    order: int | None = None
+    order: Annotated[int | None, Field()] = None
     definition: Annotated[str | None, Field(min_length=1)] = None
-    is_domain_specific: bool | None = None
-    level: int | None = None
+    is_domain_specific: Annotated[bool | None, Field()] = None
+    level: Annotated[int | None, Field()] = None
     library_name: Annotated[str | None, Field(min_length=1)] = None
     parent_uid: Annotated[str | None, Field(min_length=1)] = None
     dataset_class_uid: Annotated[str | None, Field(min_length=1)] = None
-    data_domain_uids: list[str] | None = None
+    data_domain_uids: Annotated[list[str] | None, Field()] = None
     change_description: Annotated[str | None, Field(min_length=1)] = None
 
 
@@ -421,9 +420,4 @@ class ActivityInstanceClassVersion(ActivityInstanceClass):
     Class for storing ActivityInstanceClass and calculation of differences
     """
 
-    changes: Annotated[
-        list[str],
-        Field(
-            description=CHANGES_FIELD_DESC,
-        ),
-    ] = []
+    changes: list[str] = Field(description=CHANGES_FIELD_DESC, default_factory=list)

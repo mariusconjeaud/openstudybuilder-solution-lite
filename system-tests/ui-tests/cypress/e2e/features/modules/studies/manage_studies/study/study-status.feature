@@ -1,17 +1,17 @@
 @REQ_ID:1741028
-Feature: Studies - Study Status
+Feature: Studies - Manage Study - Study Status
 
     Background: User must be logged in
         Given The user is logged in
 
-    Scenario:  User must be able to navigate to the Study Status page
+    Scenario: [Navigation] User must be able to navigate to the Study Status page
         Given A test study is selected
         Given The '/studies' page is opened
         When The 'Study' submenu is clicked in the 'Manage Study' section
         And The 'Study Status' tab is selected
         Then The current URL is '/studies/Study_000001/study_status/study_status'
 
-    Scenario: User must be able to see the Study Status page table with correct columns
+    Scenario: [Table][Columns][Names] User must be able to see the Study Status page table with correct columns
         Given A test study is selected
         Given The '/studies/Study_000001/study_status/study_status' page is opened
         Then A table is visible with following headers
@@ -22,7 +22,7 @@ Feature: Studies - Study Status
             | Modified            |
             | Modified by         |
 
-    Scenario: User must be able to use column selection option
+    Scenario: [Table][Columns][Visibility] User must be able to use column selection option
         Given The '/studies/Study_000001/study_status/study_status' page is opened
         When The first column is selected from Select Columns option for table with actions
         Then The table contain only selected column and actions column

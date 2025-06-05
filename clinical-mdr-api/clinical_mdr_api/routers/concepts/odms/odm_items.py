@@ -36,7 +36,6 @@ OdmItemUID = Path(description="The unique id of the ODM Item.")
     dependencies=[rbac.LIBRARY_READ],
     summary="Return every variable related to the selected status and version of the ODM Items",
     description=_generic_descriptions.DATA_EXPORTS_HEADER,
-    response_model=CustomPage[OdmItem],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -152,7 +151,7 @@ def get_all_odm_items(
     total_count: Annotated[
         bool | None, Query(description=_generic_descriptions.TOTAL_COUNT)
     ] = False,
-):
+) -> CustomPage[OdmItem]:
     odm_item_service = OdmItemService()
     results = odm_item_service.get_all_concepts(
         library=library_name,
@@ -174,7 +173,6 @@ def get_all_odm_items(
     summary="Returns possible values from the database for a given header",
     description="""Allowed parameters include : field name for which to get possible
     values, search string to provide filtering for the field name, additional filters to apply on other fields""",
-    response_model=list[Any],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -205,7 +203,7 @@ def get_distinct_values_for_header(
     page_size: Annotated[
         int | None, Query(description=_generic_descriptions.HEADER_PAGE_SIZE)
     ] = config.DEFAULT_HEADER_PAGE_SIZE,
-):
+) -> list[Any]:
     odm_item_service = OdmItemService()
     return odm_item_service.get_distinct_values_for_header(
         library=library_name,
@@ -221,14 +219,13 @@ def get_distinct_values_for_header(
     "/item-groups",
     dependencies=[rbac.LIBRARY_READ],
     summary="Get all ODM Items that belongs to an ODM Item Group",
-    response_model=list[OdmElementWithParentUid],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
         404: _generic_descriptions.ERROR_404,
     },
 )
-def get_odm_items_that_belongs_to_item_group():
+def get_odm_items_that_belongs_to_item_group() -> list[OdmElementWithParentUid]:
     odm_item_service = OdmItemService()
     return odm_item_service.get_items_that_belongs_to_item_groups()
 
@@ -237,14 +234,13 @@ def get_odm_items_that_belongs_to_item_group():
     "/{odm_item_uid}",
     dependencies=[rbac.LIBRARY_READ],
     summary="Get details on a specific ODM Item (in a specific version)",
-    response_model=OdmItem,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
         404: _generic_descriptions.ERROR_404,
     },
 )
-def get_odm_item(odm_item_uid: Annotated[str, OdmItemUID]):
+def get_odm_item(odm_item_uid: Annotated[str, OdmItemUID]) -> OdmItem:
     odm_item_service = OdmItemService()
     return odm_item_service.get_by_uid(uid=odm_item_uid)
 
@@ -253,14 +249,13 @@ def get_odm_item(odm_item_uid: Annotated[str, OdmItemUID]):
     "/{odm_item_uid}/relationships",
     dependencies=[rbac.LIBRARY_READ],
     summary="Get UIDs of a specific ODM Item's relationships",
-    response_model=dict,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
         404: _generic_descriptions.ERROR_404,
     },
 )
-def get_active_relationships(odm_item_uid: Annotated[str, OdmItemUID]):
+def get_active_relationships(odm_item_uid: Annotated[str, OdmItemUID]) -> dict:
     odm_item_service = OdmItemService()
     return odm_item_service.get_active_relationships(uid=odm_item_uid)
 
@@ -283,7 +278,6 @@ State after:
 Possible errors:
  - Invalid uid.
     """,
-    response_model=list[OdmItem],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -293,7 +287,7 @@ Possible errors:
         },
     },
 )
-def get_odm_item_versions(odm_item_uid: Annotated[str, OdmItemUID]):
+def get_odm_item_versions(odm_item_uid: Annotated[str, OdmItemUID]) -> list[OdmItem]:
     odm_item_service = OdmItemService()
     return odm_item_service.get_version_history(uid=odm_item_uid)
 
@@ -302,7 +296,6 @@ def get_odm_item_versions(odm_item_uid: Annotated[str, OdmItemUID]):
     "",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Creates a new Item in 'Draft' status with version 0.1",
-    response_model=OdmItem,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -316,7 +309,9 @@ def get_odm_item_versions(odm_item_uid: Annotated[str, OdmItemUID]):
         409: _generic_descriptions.ERROR_409,
     },
 )
-def create_odm_item(odm_item_create_input: Annotated[OdmItemPostInput, Body()]):
+def create_odm_item(
+    odm_item_create_input: Annotated[OdmItemPostInput, Body()],
+) -> OdmItem:
     odm_item_service = OdmItemService()
     return odm_item_service.create_with_relations(concept_input=odm_item_create_input)
 
@@ -325,7 +320,6 @@ def create_odm_item(odm_item_create_input: Annotated[OdmItemPostInput, Body()]):
     "/{odm_item_uid}",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Update ODM Item",
-    response_model=OdmItem,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -346,7 +340,7 @@ def create_odm_item(odm_item_create_input: Annotated[OdmItemPostInput, Body()]):
 def edit_odm_item(
     odm_item_uid: Annotated[str, OdmItemUID],
     odm_item_edit_input: Annotated[OdmItemPatchInput, Body()],
-):
+) -> OdmItem:
     odm_item_service = OdmItemService()
     return odm_item_service.update_with_relations(
         uid=odm_item_uid, concept_edit_input=odm_item_edit_input
@@ -371,7 +365,6 @@ State after:
 Possible errors:
  - Invalid uid or status not Final.
 """,
-    response_model=OdmItem,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -389,7 +382,7 @@ Possible errors:
         },
     },
 )
-def create_odm_item_version(odm_item_uid: Annotated[str, OdmItemUID]):
+def create_odm_item_version(odm_item_uid: Annotated[str, OdmItemUID]) -> OdmItem:
     odm_item_service = OdmItemService()
     return odm_item_service.create_new_version(
         uid=odm_item_uid, cascade_new_version=True
@@ -400,7 +393,6 @@ def create_odm_item_version(odm_item_uid: Annotated[str, OdmItemUID]):
     "/{odm_item_uid}/approvals",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Approve draft version of ODM Item",
-    response_model=OdmItem,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -417,7 +409,7 @@ def create_odm_item_version(odm_item_uid: Annotated[str, OdmItemUID]):
         },
     },
 )
-def approve_odm_item(odm_item_uid: Annotated[str, OdmItemUID]):
+def approve_odm_item(odm_item_uid: Annotated[str, OdmItemUID]) -> OdmItem:
     odm_item_service = OdmItemService()
     return odm_item_service.approve(uid=odm_item_uid, cascade_edit_and_approve=True)
 
@@ -426,7 +418,6 @@ def approve_odm_item(odm_item_uid: Annotated[str, OdmItemUID]):
     "/{odm_item_uid}/activations",
     dependencies=[rbac.LIBRARY_WRITE],
     summary=" Inactivate final version of ODM Item",
-    response_model=OdmItem,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -442,7 +433,7 @@ def approve_odm_item(odm_item_uid: Annotated[str, OdmItemUID]):
         },
     },
 )
-def inactivate_odm_item(odm_item_uid: Annotated[str, OdmItemUID]):
+def inactivate_odm_item(odm_item_uid: Annotated[str, OdmItemUID]) -> OdmItem:
     odm_item_service = OdmItemService()
     return odm_item_service.inactivate_final(uid=odm_item_uid, cascade_inactivate=True)
 
@@ -451,7 +442,6 @@ def inactivate_odm_item(odm_item_uid: Annotated[str, OdmItemUID]):
     "/{odm_item_uid}/activations",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Reactivate retired version of a ODM Item",
-    response_model=OdmItem,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -467,7 +457,7 @@ def inactivate_odm_item(odm_item_uid: Annotated[str, OdmItemUID]):
         },
     },
 )
-def reactivate_odm_item(odm_item_uid: Annotated[str, OdmItemUID]):
+def reactivate_odm_item(odm_item_uid: Annotated[str, OdmItemUID]) -> OdmItem:
     odm_item_service = OdmItemService()
     return odm_item_service.reactivate_retired(
         uid=odm_item_uid, cascade_reactivate=True
@@ -478,7 +468,6 @@ def reactivate_odm_item(odm_item_uid: Annotated[str, OdmItemUID]):
     "/{odm_item_uid}/activities",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Add an activity to the ODM Item.",
-    response_model=OdmItem,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -504,7 +493,7 @@ def add_activity_to_odm_item(
             description="If true, the existing activity relationship will be replaced with the provided activity relationship.",
         ),
     ] = False,
-):
+) -> OdmItem:
     odm_item_service = OdmItemService()
     return odm_item_service.add_activity(
         uid=odm_item_uid,
@@ -517,7 +506,6 @@ def add_activity_to_odm_item(
     "/{odm_item_uid}/vendor-elements",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Adds ODM Vendor Elements to the ODM Item.",
-    response_model=OdmItem,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -545,7 +533,7 @@ def add_vendor_elements_to_odm_item(
             description="If true, all existing ODM Vendor Element relationships will be replaced with the provided ODM Vendor Element relationships.",
         ),
     ] = False,
-):
+) -> OdmItem:
     odm_item_service = OdmItemService()
     return odm_item_service.add_vendor_elements(
         uid=odm_item_uid,
@@ -558,7 +546,6 @@ def add_vendor_elements_to_odm_item(
     "/{odm_item_uid}/vendor-attributes",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Adds ODM Vendor Attributes to the ODM Item.",
-    response_model=OdmItem,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -584,7 +571,7 @@ def add_vendor_attributes_to_odm_item(
             description="""If true, all existing ODM Vendor Attribute relationships will be replaced with the provided ODM Vendor Attribute relationships.""",
         ),
     ] = False,
-):
+) -> OdmItem:
     odm_item_service = OdmItemService()
     return odm_item_service.add_vendor_attributes(
         uid=odm_item_uid,
@@ -597,7 +584,6 @@ def add_vendor_attributes_to_odm_item(
     "/{odm_item_uid}/vendor-element-attributes",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Adds ODM Vendor Element attributes to the ODM Item.",
-    response_model=OdmItem,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -623,7 +609,7 @@ def add_vendor_element_attributes_to_odm_item(
             description="""If true, all existing ODM Vendor Element attribute relationships will be replaced with the provided ODM Vendor Element attribute relationships.""",
         ),
     ] = False,
-):
+) -> OdmItem:
     odm_item_service = OdmItemService()
     return odm_item_service.add_vendor_element_attributes(
         uid=odm_item_uid,
@@ -636,7 +622,6 @@ def add_vendor_element_attributes_to_odm_item(
     "/{odm_item_uid}/vendors",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Manages all ODM Vendors by replacing existing ODM Vendors by provided ODM Vendors.",
-    response_model=OdmItem,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -656,7 +641,7 @@ def add_vendor_element_attributes_to_odm_item(
 def manage_vendors_of_odm_item_group(
     odm_item_uid: Annotated[str, OdmItemUID],
     odm_vendors_post_input: Annotated[OdmVendorsPostInput, Body()],
-):
+) -> OdmItem:
     odm_item_group_service = OdmItemService()
     return odm_item_group_service.manage_vendors(
         uid=odm_item_uid, odm_vendors_post_input=odm_vendors_post_input
@@ -667,7 +652,6 @@ def manage_vendors_of_odm_item_group(
     "/{odm_item_uid}",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Delete draft version of ODM Item",
-    response_model=None,
     status_code=204,
     responses={
         403: _generic_descriptions.ERROR_403,

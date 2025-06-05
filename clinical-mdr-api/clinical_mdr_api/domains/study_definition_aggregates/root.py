@@ -175,17 +175,15 @@ class StudyDefinitionSnapshot:
         study_title: str | None = None
         study_short_title: str | None = None
 
-    uid: str | None  # = None
+    uid: str | None
     study_parent_part_uid: str | None
     study_subpart_uids: list[str]
-    current_metadata: StudyMetadataSnapshot | None  # = None
-    draft_metadata: StudyMetadataSnapshot | None  # = None
-    released_metadata: StudyMetadataSnapshot | None  # = None
-    locked_metadata_versions: MutableSequence[
-        StudyMetadataSnapshot
-    ]  # = field(default_factory=list)
+    current_metadata: StudyMetadataSnapshot | None
+    draft_metadata: StudyMetadataSnapshot | None
+    released_metadata: StudyMetadataSnapshot | None
+    locked_metadata_versions: MutableSequence[StudyMetadataSnapshot]
     study_status: str | None
-    deleted: bool  # = False
+    deleted: bool
     specific_metadata: StudyMetadataSnapshot | None = None
 
 

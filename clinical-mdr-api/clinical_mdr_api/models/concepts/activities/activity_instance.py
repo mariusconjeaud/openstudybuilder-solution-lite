@@ -44,13 +44,13 @@ from common.utils import convert_to_datetime
 
 
 class ActivityInstanceHierarchySimpleModel(BaseModel):
-    activity: ActivityHierarchySimpleModel
-    activity_subgroup: ActivityHierarchySimpleModel
-    activity_group: ActivityHierarchySimpleModel
+    activity: Annotated[ActivityHierarchySimpleModel, Field()]
+    activity_subgroup: Annotated[ActivityHierarchySimpleModel, Field()]
+    activity_group: Annotated[ActivityHierarchySimpleModel, Field()]
 
 
 class ActivityInstanceGrouping(ActivityGrouping):
-    activity_uid: str
+    activity_uid: Annotated[str, Field()]
 
 
 class ActivityInstance(ActivityBase):
@@ -164,32 +164,34 @@ class ActivityInstance(ActivityBase):
 
     @classmethod
     def from_activity_instance_ar_objects(
-        cls,
-        activity_instance_ar: ActivityInstanceAR,
-        activity_ars: list[ActivityAR],
-        activity_instance_subgroup_ars: list[ActivitySubGroupAR],
-        activity_instance_group_ars: list[ActivityGroupAR],
+        cls, activity_instance_ar: ActivityInstanceAR
     ) -> Self:
         activity_items = []
         for activity_item in activity_instance_ar.concept_vo.activity_items:
-            ct_terms = []
-            unit_definitions = []
-            odm_items = []
-            for unit in activity_item.unit_definitions:
-                unit_definitions.append(
+            unit_definitions = sorted(
+                [
                     CompactUnitDefinition(uid=unit.uid, name=unit.name)
-                )
-            unit_definitions.sort(key=lambda x: x.uid)
-            for term in activity_item.ct_terms:
-                ct_terms.append(CompactCTTerm(uid=term.uid, name=term.name))
-            ct_terms.sort(key=lambda x: x.uid)
-            for odm_item in activity_item.odm_items:
-                odm_items.append(
-                    CompactOdmItem(
-                        uid=odm_item.uid, oid=odm_item.oid, name=odm_item.name
-                    )
-                )
-            odm_items.sort(key=lambda x: x.uid)
+                    for unit in activity_item.unit_definitions
+                ],
+                key=lambda x: x.uid,
+            )
+
+            ct_terms = sorted(
+                [
+                    CompactCTTerm(uid=term.uid, name=term.name)
+                    for term in activity_item.ct_terms
+                ],
+                key=lambda x: x.uid,
+            )
+
+            odm_items = sorted(
+                [
+                    CompactOdmItem(uid=item.uid, oid=item.oid, name=item.name)
+                    for item in activity_item.odm_items
+                ],
+                key=lambda x: x.uid,
+            )
+
             activity_items.append(
                 ActivityItem(
                     activity_item_class=CompactActivityItemClass(
@@ -202,34 +204,24 @@ class ActivityInstance(ActivityBase):
                     odm_items=odm_items,
                 )
             )
-        activity_instance_groupings = []
-        for (
-            activity_instance_group_ar,
-            activity_instance_subgroup_ar,
-            activity_ar,
-        ) in zip(
-            activity_instance_group_ars, activity_instance_subgroup_ars, activity_ars
-        ):
-            activity = ActivityHierarchySimpleModel.from_activity_ar_object(
-                activity_ar=activity_ar,
+
+        activity_instance_groupings = [
+            ActivityInstanceHierarchySimpleModel(
+                activity_group=ActivityHierarchySimpleModel(
+                    uid=activity_instance_grouping_vo.activity_group_uid,
+                    name=activity_instance_grouping_vo.activity_group_name,
+                ),
+                activity_subgroup=ActivityHierarchySimpleModel(
+                    uid=activity_instance_grouping_vo.activity_subgroup_uid,
+                    name=activity_instance_grouping_vo.activity_subgroup_name,
+                ),
+                activity=ActivityHierarchySimpleModel(
+                    uid=activity_instance_grouping_vo.activity_uid,
+                    name=activity_instance_grouping_vo.activity_name,
+                ),
             )
-            activity_instance_group = (
-                ActivityHierarchySimpleModel.from_activity_ar_object(
-                    activity_ar=activity_instance_group_ar,
-                )
-            )
-            activity_instance_subgroup = (
-                ActivityHierarchySimpleModel.from_activity_ar_object(
-                    activity_ar=activity_instance_subgroup_ar,
-                )
-            )
-            activity_instance_groupings.append(
-                ActivityInstanceHierarchySimpleModel(
-                    activity_group=activity_instance_group,
-                    activity_subgroup=activity_instance_subgroup,
-                    activity=activity,
-                )
-            )
+            for activity_instance_grouping_vo in activity_instance_ar.concept_vo.activity_groupings
+        ]
 
         return cls(
             uid=activity_instance_ar.uid,
@@ -307,13 +299,13 @@ class ActivityInstance(ActivityBase):
             description="List of activity items",
         ),
     ]
-    start_date: datetime
+    start_date: Annotated[datetime, Field()]
     end_date: Annotated[
         datetime | None, Field(json_schema_extra={"nullable": True})
     ] = None
-    status: str
-    version: str
-    change_description: str
+    status: Annotated[str, Field()]
+    version: Annotated[str, Field()]
+    change_description: Annotated[str, Field()]
     author_username: Annotated[
         str | None,
         Field(
@@ -335,18 +327,18 @@ class ActivityInstanceCreateInput(ExtendedConceptPostInput):
     nci_concept_id: Annotated[str | None, Field(min_length=1)] = None
     nci_concept_name: Annotated[str | None, Field(min_length=1)] = None
     topic_code: Annotated[str | None, Field(min_length=1)] = None
-    is_research_lab: bool = False
-    molecular_weight: float | None = None
+    is_research_lab: Annotated[bool, Field()] = False
+    molecular_weight: Annotated[float | None, Field()] = None
     adam_param_code: Annotated[str | None, Field(min_length=1)] = None
-    is_required_for_activity: bool = False
-    is_default_selected_for_activity: bool = False
-    is_data_sharing: bool = False
-    is_legacy_usage: bool = False
-    is_derived: bool = False
+    is_required_for_activity: Annotated[bool, Field()] = False
+    is_default_selected_for_activity: Annotated[bool, Field()] = False
+    is_data_sharing: Annotated[bool, Field()] = False
+    is_legacy_usage: Annotated[bool, Field()] = False
+    is_derived: Annotated[bool, Field()] = False
     legacy_description: Annotated[str | None, Field(min_length=1)] = None
-    activity_groupings: list[ActivityInstanceGrouping] | None = None
+    activity_groupings: Annotated[list[ActivityInstanceGrouping] | None, Field()] = None
     activity_instance_class_uid: Annotated[str, Field(min_length=1)]
-    activity_items: list[ActivityItemCreateInput] | None = None
+    activity_items: Annotated[list[ActivityItemCreateInput] | None, Field()] = None
     library_name: Annotated[str, Field(min_length=1)]
 
 
@@ -364,18 +356,18 @@ class ActivityInstanceEditInput(ExtendedConceptPatchInput):
     nci_concept_id: Annotated[str | None, Field(min_length=1)] = None
     nci_concept_name: Annotated[str | None, Field(min_length=1)] = None
     topic_code: Annotated[str | None, Field(min_length=1)] = None
-    is_research_lab: bool | None = None
-    molecular_weight: float | None = None
+    is_research_lab: Annotated[bool | None, Field()] = None
+    molecular_weight: Annotated[float | None, Field()] = None
     adam_param_code: Annotated[str | None, Field(min_length=1)] = None
-    is_required_for_activity: bool | None = None
-    is_default_selected_for_activity: bool | None = None
-    is_data_sharing: bool | None = None
-    is_legacy_usage: bool | None = None
-    is_derived: bool | None = None
+    is_required_for_activity: Annotated[bool | None, Field()] = None
+    is_default_selected_for_activity: Annotated[bool | None, Field()] = None
+    is_data_sharing: Annotated[bool | None, Field()] = None
+    is_legacy_usage: Annotated[bool | None, Field()] = None
+    is_derived: Annotated[bool | None, Field()] = None
     legacy_description: Annotated[str | None, Field(min_length=1)] = None
     activity_instance_class_uid: Annotated[str | None, Field(min_length=1)] = None
-    activity_groupings: list[ActivityInstanceGrouping] | None = None
-    activity_items: list[ActivityItemCreateInput] | None = None
+    activity_groupings: Annotated[list[ActivityInstanceGrouping] | None, Field()] = None
+    activity_items: Annotated[list[ActivityItemCreateInput] | None, Field()] = None
     change_description: Annotated[str, Field(min_length=1)]
 
 
@@ -384,12 +376,7 @@ class ActivityInstanceVersion(ActivityInstance):
     Class for storing ActivityInstance and calculation of differences
     """
 
-    changes: Annotated[
-        list[str],
-        Field(
-            description=CHANGES_FIELD_DESC,
-        ),
-    ] = []
+    changes: list[str] = Field(description=CHANGES_FIELD_DESC, default_factory=list)
 
 
 class SimpleActivity(BaseModel):
@@ -434,11 +421,11 @@ class SimpleActivityItemClass(BaseModel):
 class SimplifiedActivityItem(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
-    ct_terms: Annotated[list[LibraryItem], Field()] = []
-    unit_definitions: Annotated[list[CompactUnitDefinition], Field()] = []
+    ct_terms: list[LibraryItem] = Field(default_factory=list)
+    unit_definitions: list[CompactUnitDefinition] = Field(default_factory=list)
     activity_item_class: Annotated[SimpleActivityItemClass, Field()]
-    is_adam_param_specific: bool
-    odm_items: Annotated[list[CompactOdmItem], Field()] = []
+    is_adam_param_specific: Annotated[bool, Field()]
+    odm_items: list[CompactOdmItem] = Field(default_factory=list)
 
 
 class SimpleActivityInstanceGrouping(SimpleActivityGrouping):
@@ -450,6 +437,202 @@ class ActivityInstanceOverview(BaseModel):
     activity_instance: Annotated[SimpleActivityInstance, Field()]
     activity_items: Annotated[list[SimplifiedActivityItem], Field()]
     all_versions: Annotated[list[str], Field()]
+
+    @classmethod
+    def from_repository_input(cls, overview: dict):
+        activity_items = []
+        for activity_item in overview.get("activity_items"):
+            units = sorted(
+                [
+                    CompactUnitDefinition(
+                        name=unit.get("name"),
+                        uid=unit.get("uid"),
+                        dimension_name=unit.get("dimension_name"),
+                    )
+                    for unit in activity_item.get("unit_definitions", {})
+                ],
+                key=lambda x: x.uid,
+            )
+            terms = sorted(
+                [
+                    LibraryItem(name=term.get("name"), uid=term.get("uid"))
+                    for term in activity_item.get("ct_terms", {})
+                ],
+                key=lambda x: x.uid,
+            )
+            odm_items = sorted(
+                [
+                    CompactOdmItem(
+                        uid=odm_item.get("uid"),
+                        oid=odm_item.get("oid"),
+                        name=odm_item.get("name"),
+                    )
+                    for odm_item in activity_item.get("odm_items", [])
+                ],
+                key=lambda x: x.uid,
+            )
+            activity_items.append(
+                SimplifiedActivityItem(
+                    ct_terms=terms,
+                    unit_definitions=units,
+                    odm_items=odm_items,
+                    activity_item_class=SimpleActivityItemClass(
+                        name=activity_item.get("activity_item_class").get("name"),
+                        order=activity_item.get("activity_item_class").get("order"),
+                        role_name=activity_item.get("activity_item_class_role"),
+                        data_type_name=activity_item.get(
+                            "activity_item_class_data_type"
+                        ),
+                    ),
+                    is_adam_param_specific=activity_item.get(
+                        "is_adam_param_specific", False
+                    ),
+                )
+            )
+
+        return cls(
+            activity_groupings=[
+                SimpleActivityInstanceGrouping(
+                    activity=SimpleActivity(
+                        uid=activity_grouping.get("uid"),
+                        name=activity_grouping.get("activity_value").get("name"),
+                        definition=activity_grouping.get("activity_value").get(
+                            "definition"
+                        ),
+                        nci_concept_id=activity_grouping.get("activity_value").get(
+                            "nci_concept_id"
+                        ),
+                        nci_concept_name=activity_grouping.get("activity_value").get(
+                            "nci_concept_name"
+                        ),
+                        synonyms=activity_grouping.get("activity_value").get(
+                            "synonyms", []
+                        ),
+                        is_data_collected=activity_grouping.get("activity_value").get(
+                            "is_data_collected", False
+                        ),
+                        is_multiple_selection_allowed=activity_grouping.get(
+                            "activity_value"
+                        ).get("is_multiple_selection_allowed", True),
+                        library_name=activity_grouping.get("activity_library_name"),
+                        version=activity_grouping.get("version", {}).get("version"),
+                        status=activity_grouping.get("version", {}).get("status"),
+                    ),
+                    activity_group=SimpleActivityGroup(
+                        uid=activity_grouping.get("activity_group_uid"),
+                        name=activity_grouping.get("activity_group_value").get("name"),
+                        definition=activity_grouping.get("activity_group_value").get(
+                            "definition"
+                        ),
+                    ),
+                    activity_subgroup=SimpleActivitySubGroup(
+                        uid=activity_grouping.get("activity_subgroup_uid"),
+                        name=activity_grouping.get("activity_subgroup_value").get(
+                            "name"
+                        ),
+                        definition=activity_grouping.get("activity_subgroup_value").get(
+                            "definition"
+                        ),
+                    ),
+                )
+                for activity_grouping in overview.get("hierarchy")
+            ],
+            activity_instance=SimpleActivityInstance(
+                uid=overview.get("activity_instance_root").get("uid"),
+                name=overview.get("activity_instance_value").get("name"),
+                name_sentence_case=overview.get("activity_instance_value").get(
+                    "name_sentence_case"
+                ),
+                abbreviation=overview.get("activity_instance_value").get(
+                    "abbreviation"
+                ),
+                definition=overview.get("activity_instance_value").get("definition"),
+                nci_concept_id=overview.get("activity_instance_value").get(
+                    "nci_concept_id"
+                ),
+                nci_concept_name=overview.get("activity_instance_value").get(
+                    "nci_concept_name"
+                ),
+                adam_param_code=overview.get("activity_instance_value").get(
+                    "adam_param_code"
+                ),
+                is_required_for_activity=overview.get("activity_instance_value").get(
+                    "is_required_for_activity", False
+                ),
+                is_default_selected_for_activity=overview.get(
+                    "activity_instance_value"
+                ).get("is_default_selected_for_activity", False),
+                is_data_sharing=overview.get("activity_instance_value").get(
+                    "is_data_sharing", False
+                ),
+                is_legacy_usage=overview.get("activity_instance_value").get(
+                    "is_legacy_usage", False
+                ),
+                is_derived=overview.get("activity_instance_value").get(
+                    "is_derived", False
+                ),
+                topic_code=overview.get("activity_instance_value").get("topic_code"),
+                is_research_lab=overview.get("activity_instance_value").get(
+                    "is_research_lab", False
+                ),
+                molecular_weight=overview.get("activity_instance_value").get(
+                    "molecular_weight"
+                ),
+                library_name=overview.get("instance_library_name"),
+                activity_instance_class=SimpleActivityInstanceClass(
+                    name=overview.get("activity_instance_class").get("name")
+                ),
+                status=overview.get("has_version", {}).get("status"),
+                version=overview.get("has_version", {}).get("version"),
+                start_date=convert_to_datetime(
+                    overview.get("has_version", {}).get("start_date")
+                ),
+                end_date=convert_to_datetime(
+                    overview.get("has_version", {}).get("end_date")
+                ),
+            ),
+            activity_items=activity_items,
+            all_versions=overview.get("all_versions"),
+        )
+
+
+class ActivityInstanceDetail(BaseModel):
+    """Model for activity instance detail information with pagination support."""
+
+    uid: Annotated[str, Field()]
+    name: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = None
+    definition: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = (
+        None
+    )
+    abbreviation: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = (
+        None
+    )
+    version: Annotated[str, Field()]
+    status: Annotated[str, Field()]
+    activity_instance_class: Annotated[SimpleActivityInstanceClass | None, Field()] = (
+        None
+    )
+    start_date: Annotated[
+        datetime | None, Field(json_schema_extra={"nullable": True})
+    ] = None
+    is_required_for_activity: Annotated[bool, Field()] = False
+    is_default_selected_for_activity: Annotated[bool, Field()] = False
+    topic_code: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = (
+        None
+    )
+    adam_param_code: Annotated[
+        str | None, Field(json_schema_extra={"nullable": True})
+    ] = None
+    children: Annotated[list[dict] | None, Field()] = None
+
+
+class ActivityInstancePaginatedResponse(BaseModel):
+    """Paginated response for activity instances."""
+
+    items: list[ActivityInstanceDetail]
+    total: int
+    page: int
+    page_size: int
 
     @classmethod
     def from_repository_input(cls, overview: dict):

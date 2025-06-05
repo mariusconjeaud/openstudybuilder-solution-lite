@@ -26,6 +26,7 @@ class ActivityInstructionTemplateName(BaseModel):
         str,
         Field(
             description="The actual value/content. It may include parameters referenced by simple strings in square brackets [].",
+            json_schema_extra={"format": "html"},
         ),
     ]
     name_plain: Annotated[
@@ -38,7 +39,7 @@ class ActivityInstructionTemplateName(BaseModel):
         str | None,
         Field(
             description="Optional guidance text for using the template.",
-            json_schema_extra={"nullable": True},
+            json_schema_extra={"nullable": True, "format": "html"},
         ),
     ] = None
 
@@ -60,7 +61,6 @@ class ActivityInstructionTemplate(ActivityInstructionTemplateNameUid):
     start_date: Annotated[
         datetime | None,
         Field(
-            default_factory=datetime.utcnow,
             description="Part of the metadata: The point in time when the (version of the) activity instruction template was created. "
             "The format is ISO 8601 in UTC±0, e.g.: '2020-10-31T16:00:00+00:00' for October 31, 2020 at 6pm in UTC+2 timezone.",
             json_schema_extra={"nullable": True},
@@ -69,9 +69,8 @@ class ActivityInstructionTemplate(ActivityInstructionTemplateNameUid):
     end_date: Annotated[
         datetime | None,
         Field(
-            default_factory=datetime.utcnow,
             description="""Part of the metadata: The point in time when the version of
-        the activity instruction template was closed (and a new one was created)]. """
+        the activity instruction template was closed (and a new one was created)]]. """
             "The format is ISO 8601 in UTC±0, e.g.: '2020-10-31T16:00:00+00:00' for October 31, 2020 at 6pm in UTC+2 timezone.",
             json_schema_extra={"nullable": True},
         ),
@@ -105,21 +104,17 @@ class ActivityInstructionTemplate(ActivityInstructionTemplateNameUid):
             json_schema_extra={"nullable": True},
         ),
     ] = None
-    possible_actions: Annotated[
-        list[str],
-        Field(
-            description=(
-                "Holds those actions that can be performed on the activity instruction template. "
-                "Actions are: 'approve', 'edit', 'new_version', 'inactivate', 'reactivate' and 'delete'."
-            )
+    possible_actions: list[str] = Field(
+        description=(
+            "Holds those actions that can be performed on the activity instruction template. "
+            "Actions are: 'approve', 'edit', 'new_version', 'inactivate', 'reactivate' and 'delete'."
         ),
-    ] = []
-    parameters: Annotated[
-        list[TemplateParameter],
-        Field(
-            description="Those parameters that are used by the activity instruction template.",
-        ),
-    ] = []
+        default_factory=list,
+    )
+    parameters: list[TemplateParameter] = Field(
+        description="Those parameters that are used by the activity instruction template.",
+        default_factory=list,
+    )
     library: Annotated[
         Library | None,
         Field(
@@ -129,24 +124,22 @@ class ActivityInstructionTemplate(ActivityInstructionTemplateNameUid):
     ] = None
 
     # Template indexings
-    indications: Annotated[
-        list[SimpleTermModel],
-        Field(
-            description="The study indications, conditions, diseases or disorders in scope for the template.",
-        ),
-    ] = []
-    activities: Annotated[
-        list[SimpleNameModel],
-        Field(description="The activities in scope for the template"),
-    ] = []
-    activity_groups: Annotated[
-        list[SimpleNameModel],
-        Field(description="The activity groups in scope for the template"),
-    ] = []
-    activity_subgroups: Annotated[
-        list[SimpleNameModel],
-        Field(description="The activity sub groups in scope for the template"),
-    ] = []
+    indications: list[SimpleTermModel] = Field(
+        description="The study indications, conditions, diseases or disorders in scope for the template.",
+        default_factory=list,
+    )
+
+    activities: list[SimpleNameModel] = Field(
+        description="The activities in scope for the template", default_factory=list
+    )
+    activity_groups: list[SimpleNameModel] = Field(
+        description="The activity groups in scope for the template",
+        default_factory=list,
+    )
+    activity_subgroups: list[SimpleNameModel] = Field(
+        description="The activity sub groups in scope for the template",
+        default_factory=list,
+    )
 
     study_count: Annotated[
         int, Field(description="Count of studies referencing template")
@@ -218,12 +211,7 @@ class ActivityInstructionTemplateVersion(ActivityInstructionTemplate):
     Class for storing Activity Instruction Templates and calculation of differences
     """
 
-    changes: Annotated[
-        list[str],
-        Field(
-            description=CHANGES_FIELD_DESC,
-        ),
-    ] = []
+    changes: list[str] = Field(description=CHANGES_FIELD_DESC, default_factory=list)
 
 
 class ActivityInstructionTemplatePreValidateInput(InputModel):
@@ -232,12 +220,15 @@ class ActivityInstructionTemplatePreValidateInput(InputModel):
         Field(
             description="The actual value/content. It may include parameters referenced by simple strings in square brackets [].",
             min_length=1,
+            json_schema_extra={"format": "html"},
         ),
     ]
     guidance_text: Annotated[
         str | None,
         Field(
-            description="Optional guidance text for using the template.", min_length=1
+            description="Optional guidance text for using the template.",
+            min_length=1,
+            json_schema_extra={"format": "html"},
         ),
     ] = None
 
@@ -248,12 +239,15 @@ class ActivityInstructionTemplateCreateInput(PostInputModel):
         Field(
             description="The actual value/content. It may include parameters referenced by simple strings in square brackets [].",
             min_length=1,
+            json_schema_extra={"format": "html"},
         ),
     ]
     guidance_text: Annotated[
         str | None,
         Field(
-            description="Optional guidance text for using the template.", min_length=1
+            description="Optional guidance text for using the template.",
+            min_length=1,
+            json_schema_extra={"format": "html"},
         ),
     ] = None
     library_name: Annotated[
@@ -285,12 +279,15 @@ class ActivityInstructionTemplateEditInput(PatchInputModel):
         Field(
             description="The actual value/content. It may include parameters referenced by simple strings in square brackets [].",
             min_length=1,
+            json_schema_extra={"format": "html"},
         ),
     ]
     guidance_text: Annotated[
         str | None,
         Field(
-            description="Optional guidance text for using the template.", min_length=1
+            description="Optional guidance text for using the template.",
+            min_length=1,
+            json_schema_extra={"format": "html"},
         ),
     ] = None
     change_description: Annotated[

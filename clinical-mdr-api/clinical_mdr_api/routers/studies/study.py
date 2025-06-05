@@ -3,7 +3,7 @@
 import os
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Body, Path, Query, Request, Response, status
+from fastapi import APIRouter, Body, Path, Query, Request
 from fastapi.responses import HTMLResponse, StreamingResponse
 from pydantic.types import Json
 
@@ -168,7 +168,6 @@ PROJECT_NUMBER = Query(
     "/study-objectives",
     dependencies=[rbac.STUDY_READ],
     summary="Returns all study objectives currently selected",
-    response_model=CustomPage[StudySelectionObjective],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -240,7 +239,6 @@ def get_all_selected_objectives_for_all_studies(
     summary="Returns possible values from the database for a given header",
     description="""Allowed parameters include : field name for which to get possible
     values, search string to provide filtering for the field name, additional filters to apply on other fields""",
-    response_model=list[Any],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -272,7 +270,7 @@ def get_distinct_objective_values_for_header(
     page_size: Annotated[
         int | None, Query(description=_generic_descriptions.HEADER_PAGE_SIZE)
     ] = config.DEFAULT_HEADER_PAGE_SIZE,
-):
+) -> list[Any]:
     service = StudyObjectiveSelectionService()
     return service.get_distinct_values_for_header(
         project_name=project_name,
@@ -290,7 +288,6 @@ def get_distinct_objective_values_for_header(
     dependencies=[rbac.STUDY_READ],
     summary="Returns all study objectives currently selected for study with provided uid",
     description=_generic_descriptions.DATA_EXPORTS_HEADER,
-    response_model=GenericFilteringReturn[StudySelectionObjective],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -383,7 +380,6 @@ def get_all_selected_objectives(
     summary="Returns possible values from the database for a given header",
     description="""Allowed parameters include : field name for which to get possible
     values, search string to provide filtering for the field name, additional filters to apply on other fields""",
-    response_model=list[Any],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -419,7 +415,7 @@ def get_distinct_values_for_header(
     study_value_version: Annotated[
         str | None, _generic_descriptions.STUDY_VALUE_VERSION_QUERY
     ] = None,
-):
+) -> list[Any]:
     service = StudyObjectiveSelectionService()
     return service.get_distinct_values_for_header(
         study_uid=study_uid,
@@ -448,7 +444,6 @@ The following values should be return for all study objectives.
 - objective_level
 - order
     """,
-    response_model=list[StudySelectionObjectiveCore],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -467,7 +462,6 @@ def get_all_objectives_audit_trail(
     "/studies/{study_uid}/study-objectives/{study_objective_uid}",
     dependencies=[rbac.STUDY_READ],
     summary="Returns specific study objective",
-    response_model=StudySelectionObjective,
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -507,7 +501,6 @@ The following values should be return for selected study objective:
 - objective_level
 - order
     """,
-    response_model=list[StudySelectionObjectiveCore],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -521,7 +514,7 @@ The following values should be return for selected study objective:
 def get_selected_objective_audit_trail(
     study_uid: Annotated[str, studyUID],
     study_objective_uid: Annotated[str, study_objective_uid_path],
-) -> StudySelectionObjectiveCore:
+) -> list[StudySelectionObjectiveCore]:
     service = StudyObjectiveSelectionService()
     return service.get_specific_selection_audit_trail(
         study_uid=study_uid, study_selection_uid=study_objective_uid
@@ -532,7 +525,6 @@ def get_selected_objective_audit_trail(
     "/studies/{study_uid}/study-objectives",
     dependencies=[rbac.STUDY_WRITE],
     summary="Creating a study objective selection based on the input data, including optionally creating a library objective",
-    response_model=StudySelectionObjective,
     response_model_exclude_unset=True,
     status_code=201,
     responses={
@@ -613,7 +605,6 @@ def post_new_objective_selection_create(
     - order (Derived Integer)
     - latest version of the selected objective template/instance
     """,
-    response_model=list[StudySelectionObjective],
     response_model_exclude_unset=True,
     status_code=201,
     responses={
@@ -637,7 +628,7 @@ def post_batch_select_objective_template(
             description="List of objects with properties needed to identify the templates to select",
         ),
     ],
-) -> StudySelectionObjective:
+) -> list[StudySelectionObjective]:
     service = StudyObjectiveSelectionService()
     return service.batch_select_objective_template(
         study_uid=study_uid, selection_create_input=selection
@@ -648,7 +639,6 @@ def post_batch_select_objective_template(
     "/studies/{study_uid}/study-objectives/preview",
     dependencies=[rbac.STUDY_WRITE],
     summary="Preview creating a study objective selection based on the input data",
-    response_model=StudySelectionObjective,
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -683,7 +673,6 @@ def preview_new_objective_selection_create(
     "/studies/{study_uid}/study-objectives/{study_objective_uid}",
     dependencies=[rbac.STUDY_WRITE],
     summary="Deletes a study objective",
-    response_model=None,
     status_code=204,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -703,14 +692,12 @@ def delete_selected_objective(
     service.delete_selection(
         study_uid=study_uid, study_selection_uid=study_objective_uid
     )
-    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.patch(
     "/studies/{study_uid}/study-objectives/{study_objective_uid}/order",
     dependencies=[rbac.STUDY_WRITE],
     summary="Change a order of a study objective",
-    response_model=StudySelectionObjective,
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -742,7 +729,6 @@ def patch_new_objective_selection_order(
     "/studies/{study_uid}/study-objectives/{study_objective_uid}",
     dependencies=[rbac.STUDY_WRITE],
     summary="update the objective level of a study objective",
-    response_model=StudySelectionObjective,
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -774,7 +760,6 @@ def patch_update_objective_selection(
     "/studies/{study_uid}/study-objectives/{study_objective_uid}/sync-latest-version",
     dependencies=[rbac.STUDY_WRITE],
     summary="update to latest objective version study selection",
-    response_model=StudySelectionObjective,
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -803,7 +788,6 @@ def sync_latest_version(
     "/study-endpoints",
     dependencies=[rbac.STUDY_READ],
     summary="Returns all study endpoints currently selected",
-    response_model=CustomPage[StudySelectionEndpoint],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -875,7 +859,6 @@ def get_all_selected_endpoints_for_all_studies(
     summary="Returns possible values from the database for a given header",
     description="""Allowed parameters include : field name for which to get possible
     values, search string to provide filtering for the field name, additional filters to apply on other fields""",
-    response_model=list[Any],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -907,7 +890,7 @@ def get_distinct_endpoint_values_for_header(
     page_size: Annotated[
         int | None, Query(description=_generic_descriptions.HEADER_PAGE_SIZE)
     ] = config.DEFAULT_HEADER_PAGE_SIZE,
-):
+) -> list[Any]:
     service = StudyEndpointSelectionService()
     return service.get_distinct_values_for_header(
         project_name=project_name,
@@ -943,7 +926,6 @@ State after:
 
 {_generic_descriptions.DATA_EXPORTS_HEADER}
 """,
-    response_model=GenericFilteringReturn[StudySelectionEndpoint],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -1036,7 +1018,6 @@ def get_all_selected_endpoints(
     summary="Returns possible values from the database for a given header",
     description="""Allowed parameters include : field name for which to get possible
     values, search string to provide filtering for the field name, additional filters to apply on other fields""",
-    response_model=list[Any],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -1072,7 +1053,7 @@ def get_distinct_study_endpoint_values_for_header(
     study_value_version: Annotated[
         str | None, _generic_descriptions.STUDY_VALUE_VERSION_QUERY
     ] = None,
-):
+) -> list[Any]:
     service = StudyEndpointSelectionService()
     return service.get_distinct_values_for_header(
         study_uid=study_uid,
@@ -1113,7 +1094,6 @@ Possible errors:
 Returned data:
  - List of actions and changes related to study endpoints.
     """,
-    response_model=list[StudySelectionEndpoint],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -1149,7 +1129,6 @@ Business logic:
 State after:
  - no change
 """,
-    response_model=StudySelectionEndpoint,
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -1202,7 +1181,6 @@ Possible errors:
 Returned data:
  - List of actions and changes related to the specified study endpoints.
     """,
-    response_model=list[StudySelectionEndpoint],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -1216,7 +1194,7 @@ Returned data:
 def get_selected_endpoint_audit_trail(
     study_uid: Annotated[str, studyUID],
     study_endpoint_uid: Annotated[str, study_endpoint_uid_path],
-) -> StudySelectionEndpoint:
+) -> list[StudySelectionEndpoint]:
     service = StudyEndpointSelectionService()
     return service.get_specific_selection_audit_trail(
         study_uid=study_uid, study_selection_uid=study_endpoint_uid
@@ -1227,7 +1205,6 @@ def get_selected_endpoint_audit_trail(
     "/studies/{study_uid}/study-endpoints",
     dependencies=[rbac.STUDY_WRITE],
     summary="Creates a study endpoint selection based on the input data, including optionally creating library endpoint",
-    response_model=StudySelectionEndpoint,
     response_model_exclude_unset=True,
     status_code=201,
     responses={
@@ -1307,7 +1284,6 @@ def post_new_endpoint_selection_create(
     - order (Derived Integer)
     - latest version of the selected endpoint template/instance
     """,
-    response_model=list[StudySelectionEndpoint],
     response_model_exclude_unset=True,
     status_code=201,
     responses={
@@ -1331,7 +1307,7 @@ def post_batch_select_endpoint_template(
             description="List of objects with properties needed to identify the templates to select",
         ),
     ],
-) -> StudySelectionEndpoint:
+) -> list[StudySelectionEndpoint]:
     service = StudyEndpointSelectionService()
     return service.batch_select_endpoint_template(
         study_uid=study_uid, selection_create_input=selection
@@ -1342,7 +1318,6 @@ def post_batch_select_endpoint_template(
     "/studies/{study_uid}/study-endpoints/preview",
     dependencies=[rbac.STUDY_WRITE],
     summary="Preview creating a study endpoint selection based on the input data",
-    response_model=StudySelectionEndpoint,
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -1391,7 +1366,6 @@ State after:
 - Study endpoint is deleted from the study, but still exist as a node in the database with a reference from the audit trail.
 - Added new entry in the audit trail for the deletion of the study-endpoint.
 """,
-    response_model=None,
     status_code=204,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -1411,7 +1385,6 @@ def delete_selected_endpoint(
     service.delete_selection(
         study_uid=study_uid, study_selection_uid=study_endpoint_uid
     )
-    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.patch(
@@ -1431,7 +1404,6 @@ State after:
  - Note this will change order on either the preceding or following study-endpoints as well.
  - Added new entry in the audit trail for the re-ordering of the study-endpoints.
 """,
-    response_model=StudySelectionEndpoint,
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -1482,7 +1454,6 @@ State after:
     - Replace the currently selected study endpoint based on the same functionality as POST `/studies/{study_uid}/study-endpoints`
  - Added new entry in the audit trail for the update of the study-endpoint.
 """,
-    response_model=StudySelectionEndpoint,
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -1573,7 +1544,6 @@ def get_all_selected_objectives_and_endpoints_standard_html(
     "/study-compounds",
     dependencies=[rbac.STUDY_READ],
     summary="Returns all study compounds currently selected",
-    response_model=CustomPage[StudySelectionCompound],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -1637,7 +1607,6 @@ def get_all_selected_compounds_for_all_studies(
     summary="Returns possible values from the database for a given header",
     description="""Allowed parameters include : field name for which to get possible
     values, search string to provide filtering for the field name, additional filters to apply on other fields""",
-    response_model=list[Any],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -1669,7 +1638,7 @@ def get_distinct_compound_values_for_header(
     page_size: Annotated[
         int | None, Query(description=_generic_descriptions.HEADER_PAGE_SIZE)
     ] = config.DEFAULT_HEADER_PAGE_SIZE,
-):
+) -> list[Any]:
     service = StudyCompoundSelectionService()
     return service.get_distinct_values_for_header(
         project_name=project_name,
@@ -1705,7 +1674,6 @@ State after:
 
 {_generic_descriptions.DATA_EXPORTS_HEADER}
 """,
-    response_model=GenericFilteringReturn[StudySelectionCompound],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -1789,7 +1757,6 @@ def get_all_selected_compounds(
     summary="Returns possible values from the database for a given header",
     description="""Allowed parameters include : field name for which to get possible
     values, search string to provide filtering for the field name, additional filters to apply on other fields""",
-    response_model=list[Any],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -1825,7 +1792,7 @@ def get_distinct_compounds_values_for_header(
     page_size: Annotated[
         int | None, Query(description=_generic_descriptions.HEADER_PAGE_SIZE)
     ] = config.DEFAULT_HEADER_PAGE_SIZE,
-):
+) -> list[Any]:
     service = StudyCompoundSelectionService()
     return service.get_distinct_values_for_header(
         study_uid=study_uid,
@@ -1866,7 +1833,6 @@ Possible errors:
 Returned data:
  - List of actions and changes related to study compounds.
     """,
-    response_model=list[StudySelectionCompound],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -1908,7 +1874,6 @@ Possible errors:
 Returned data:
  - List of actions and changes related to the specified study compound.
     """,
-    response_model=list[StudySelectionCompound],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -1922,7 +1887,7 @@ Returned data:
 def get_selected_compound_audit_trail(
     study_uid: Annotated[str, studyUID],
     study_compound_uid: Annotated[str, study_compound_uid_path],
-) -> StudySelectionCompound:
+) -> list[StudySelectionCompound]:
     service = StudyCompoundSelectionService()
     return service.get_specific_selection_audit_trail(
         study_uid=study_uid, study_selection_uid=study_compound_uid
@@ -1949,7 +1914,6 @@ Business logic:
 State after:
  - no change
 """,
-    response_model=StudySelectionCompound,
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -2001,7 +1965,6 @@ State after:
  - compound is added as study compound to the study.
  - Added new entry in the audit trail for the creation of the study-compound.
  """,
-    response_model=StudySelectionCompound,
     response_model_exclude_unset=True,
     status_code=201,
     responses={
@@ -2045,7 +2008,6 @@ State after:
 - Study compound is deleted from the study, but still exist as a node in the database with a reference from the audit trail.
 - Added new entry in the audit trail for the deletion of the study-compound.
 """,
-    response_model=None,
     status_code=204,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -2065,7 +2027,6 @@ def delete_selected_compound(
     service.delete_selection(
         study_uid=study_uid, study_selection_uid=study_compound_uid
     )
-    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.patch(
@@ -2085,7 +2046,6 @@ State after:
  - Note this will change order on either the preceding or following study-compounds as well.
  - Added new entry in the audit trail for the re-ordering of the study-compounds.
 """,
-    response_model=StudySelectionCompound,
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -2143,7 +2103,6 @@ Business logic:
 State after:
  - compound or related parameters is updated for the study compound.
  - Added new entry in the audit trail for the update of the study-compound.""",
-    response_model=StudySelectionCompound,
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -2189,7 +2148,6 @@ State after:
  - Study endpoint selection exists
  - Endpoint version selected for study endpoint selection is the latest available final version.
  - Added new entry in the audit trail for the update of the study-endpoint.""",
-    response_model=StudySelectionEndpoint,
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -2204,7 +2162,7 @@ State after:
 def sync_latest_endpoint_version(
     study_uid: Annotated[str, studyUID],
     study_endpoint_uid: Annotated[str, study_endpoint_uid_path],
-) -> StudySelectionObjective:
+) -> StudySelectionEndpoint:
     service = StudyEndpointSelectionService()
     return service.update_selection_to_latest_version_of_endpoint(
         study_uid=study_uid, study_selection_uid=study_endpoint_uid
@@ -2229,7 +2187,6 @@ def sync_latest_endpoint_version(
      - Study endpoint selection exists
      - Timeframe version selected for study endpoint selection is the latest available final version.
      - Added new entry in the audit trail for the update of the study-endpoint.""",
-    response_model=StudySelectionEndpoint,
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -2244,7 +2201,7 @@ def sync_latest_endpoint_version(
 def sync_latest_timeframe_version(
     study_uid: Annotated[str, studyUID],
     study_endpoint_uid: Annotated[str, study_endpoint_uid_path],
-) -> StudySelectionObjective:
+) -> StudySelectionEndpoint:
     service = StudyEndpointSelectionService()
     return service.update_selection_to_latest_version_of_timeframe(
         study_uid=study_uid, study_selection_uid=study_endpoint_uid
@@ -2269,7 +2226,6 @@ def sync_latest_timeframe_version(
      - Study endpoint selection exists
      - Timeframe and endpoint version selected for study endpoint selection is not changed.
      - Added new entry in the audit trail for the update of the study-endpoint.""",
-    response_model=StudySelectionEndpoint,
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -2284,7 +2240,7 @@ def sync_latest_timeframe_version(
 def patch_endpoint_accept_version(
     study_uid: Annotated[str, studyUID],
     study_endpoint_uid: Annotated[str, study_endpoint_uid_path],
-) -> StudySelectionObjective:
+) -> StudySelectionEndpoint:
     service = StudyEndpointSelectionService()
     return service.update_selection_accept_versions(
         study_uid=study_uid, study_selection_uid=study_endpoint_uid
@@ -2309,7 +2265,6 @@ def patch_endpoint_accept_version(
      - Study endpoint selection exists
      - Objective version selected for study endpoint selection is not changed.
      - Added new entry in the audit trail for the update of the study-endpoint.""",
-    response_model=StudySelectionObjective,
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -2338,7 +2293,6 @@ def patch_objective_accept_version(
     "/study-criteria",
     dependencies=[rbac.STUDY_READ],
     summary="Returns all study criteria currently selected",
-    response_model=CustomPage[StudySelectionCriteria],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -2410,7 +2364,6 @@ def get_all_selected_criteria_for_all_studies(
     summary="Returns possible values from the database for a given header",
     description="""Allowed parameters include : field name for which to get possible
     values, search string to provide filtering for the field name, additional filters to apply on other fields""",
-    response_model=list[Any],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -2442,7 +2395,7 @@ def get_distinct_criteria_values_for_header(
     page_size: Annotated[
         int | None, Query(description=_generic_descriptions.HEADER_PAGE_SIZE)
     ] = config.DEFAULT_HEADER_PAGE_SIZE,
-):
+) -> list[Any]:
     service = StudyCriteriaSelectionService()
     return service.get_distinct_values_for_header(
         project_name=project_name,
@@ -2495,7 +2448,6 @@ List selected study with the following information:
 
 {_generic_descriptions.DATA_EXPORTS_HEADER}
 """,
-    response_model=CustomPage[StudySelectionCriteria],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -2593,7 +2545,6 @@ def get_all_selected_criteria(
     summary="Returns possible values from the database for a given header",
     description="""Allowed parameters include : field name for which to get possible
     values, search string to provide filtering for the field name, additional filters to apply on other fields""",
-    response_model=list[Any],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -2627,7 +2578,7 @@ def get_distinct_study_criteria_values_for_header(
     study_value_version: Annotated[
         str | None, _generic_descriptions.STUDY_VALUE_VERSION_QUERY
     ] = None,
-):
+) -> list[Any]:
     service = StudyCriteriaSelectionService()
     return service.get_distinct_values_for_header(
         study_uid=study_uid,
@@ -2673,7 +2624,6 @@ def get_distinct_study_criteria_values_for_header(
         - Boolean indication if all expected selections have been made.
         - Boolean indication if the study criteria can be re-ordered.
     """,
-    response_model=list[StudySelectionCriteriaCore],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -2734,7 +2684,6 @@ def get_all_criteria_audit_trail(
         - Boolean indication if all expected selections have been made.
         - Boolean indication if the study criteria can be re-ordered.
     """,
-    response_model=StudySelectionCriteria,
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -2793,7 +2742,6 @@ def get_selected_criteria(
         - Boolean indication if all expected selections have been made.
         - Boolean indication if the study criteria can be re-ordered.
     """,
-    response_model=list[StudySelectionCriteriaCore],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -2807,7 +2755,7 @@ def get_selected_criteria(
 def get_selected_criteria_audit_trail(
     study_uid: Annotated[str, studyUID],
     study_criteria_uid: Annotated[str, study_criteria_uid_path],
-) -> StudySelectionCriteriaCore:
+) -> list[StudySelectionCriteriaCore]:
     service = StudyCriteriaSelectionService()
     return service.get_specific_selection_audit_trail(
         study_uid=study_uid, study_selection_uid=study_criteria_uid
@@ -2847,7 +2795,6 @@ def get_selected_criteria_audit_trail(
         - Boolean indication if edit is possible. (study is in Draft status)
         - Boolean indication if all expected selections have been made. (expected !== required)
     """,
-    response_model=StudySelectionCriteria,
     response_model_exclude_unset=True,
     status_code=201,
     responses={
@@ -2902,7 +2849,6 @@ def post_new_criteria_selection_create(
     "/studies/{study_uid}/study-criteria/preview",
     dependencies=[rbac.STUDY_WRITE],
     summary="Previews creating a study criteria selection based on the input data including creating new criteria",
-    response_model=StudySelectionCriteria,
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -2962,7 +2908,6 @@ def preview_new_criteria_selection_create(
     - order (Derived Integer)
     - latest version of the selected criteria template/instance
     """,
-    response_model=list[StudySelectionCriteria],
     response_model_exclude_unset=True,
     status_code=201,
     responses={
@@ -2986,7 +2931,7 @@ def post_batch_select_criteria_template(
             description="List of objects with properties needed to identify the templates to select",
         ),
     ],
-) -> StudySelectionCriteria:
+) -> list[StudySelectionCriteria]:
     service = StudyCriteriaSelectionService()
     return service.batch_select_criteria_template(
         study_uid=study_uid, selection_create_input=selection
@@ -3021,7 +2966,6 @@ def post_batch_select_criteria_template(
     - order
     - latest version of the selected criteria
     """,
-    response_model=StudySelectionCriteria,
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -3074,7 +3018,6 @@ def patch_update_criteria_selection(
     Returned data:
     - none
     """,
-    response_model=None,
     status_code=204,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -3094,14 +3037,12 @@ def delete_selected_criteria(
     service.delete_selection(
         study_uid=study_uid, study_selection_uid=study_criteria_uid
     )
-    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.patch(
     "/studies/{study_uid}/study-criteria/{study_criteria_uid}/order",
     dependencies=[rbac.STUDY_WRITE],
     summary="Change the order of a study criteria",
-    response_model=StudySelectionCriteria,
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -3133,7 +3074,6 @@ def patch_new_criteria_selection_order(
     "/studies/{study_uid}/study-criteria/{study_criteria_uid}/key-criteria",
     dependencies=[rbac.STUDY_WRITE],
     summary="Change the key-criteria property of a study criteria",
-    response_model=StudySelectionCriteria,
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -3167,7 +3107,6 @@ def patch_criteria_selection_key_criteria_property(
     "/studies/{study_uid}/study-criteria/{study_criteria_uid}/sync-latest-version",
     dependencies=[rbac.STUDY_WRITE],
     summary="update to latest criteria version study selection",
-    response_model=StudySelectionCriteria,
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -3197,7 +3136,6 @@ def sync_criteria_latest_version(
     Business logic:
      - Update specified criteria study-selection, setting accepted version to show that update was refused by user.
     """,
-    response_model=StudySelectionCriteria,
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -3227,7 +3165,6 @@ def patch_criteria_accept_version(
     "/study-activity-instances",
     dependencies=[rbac.STUDY_READ],
     summary="Returns all study activity instances currently selected",
-    response_model=CustomPage[StudySelectionActivityInstance],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -3322,7 +3259,6 @@ def get_all_selected_activity_instances_for_all_studies(
     dependencies=[rbac.STUDY_READ],
     summary="Returns all study activity instances currently selected",
     description=_generic_descriptions.DATA_EXPORTS_HEADER,
-    response_model=CustomPage[StudySelectionActivityInstance],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -3458,7 +3394,6 @@ def get_all_selected_activity_instances(
     summary="Returns possible values from the database for a given header",
     description="""Allowed parameters include : field name for which to get possible
     values, search string to provide filtering for the field name, additional filters to apply on other fields""",
-    response_model=list[Any],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -3492,7 +3427,7 @@ def get_distinct_study_activity_instances_values_for_header(
     study_value_version: Annotated[
         str | None, _generic_descriptions.STUDY_VALUE_VERSION_QUERY
     ] = None,
-):
+) -> list[Any]:
     service = StudyActivityInstanceSelectionService()
     return service.get_distinct_values_for_header(
         study_uid=study_uid,
@@ -3509,7 +3444,6 @@ def get_distinct_study_activity_instances_values_for_header(
     "/studies/{study_uid}/study-activity-instances/{study_activity_instance_uid}",
     dependencies=[rbac.STUDY_WRITE],
     summary="Delete a study activity instance",
-    response_model=None,
     status_code=204,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -3529,14 +3463,12 @@ def delete_study_activity_instance(
     service.delete_selection(
         study_uid=study_uid, study_selection_uid=study_activity_instance_uid
     )
-    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.post(
     "/studies/{study_uid}/study-activity-instances",
     dependencies=[rbac.STUDY_WRITE],
     summary="Creating a study activity instance selection based on the input data",
-    response_model=StudySelectionActivityInstance,
     response_model_exclude_unset=True,
     status_code=201,
     responses={
@@ -3573,7 +3505,6 @@ State before:
 Business logic:
 State after:
  - Added new entry in the audit trail for the update of the study-activity-instance.""",
-    response_model=StudySelectionActivityInstance,
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -3592,7 +3523,7 @@ def patch_update_study_activity_instance(
         StudySelectionActivityInstanceEditInput,
         Body(description="Related parameters of the selection that shall be updated."),
     ],
-) -> StudySelectionActivity:
+) -> StudySelectionActivityInstance:
     service = StudyActivityInstanceSelectionService()
     return service.patch_selection(
         study_uid=study_uid,
@@ -3615,7 +3546,6 @@ The following values should be returned for all study activity instances:
 - state
 - order
     """,
-    response_model=list[StudySelectionActivityInstance],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -3634,7 +3564,6 @@ def get_all_study_activity_instance_audit_trail(
     "/studies/{study_uid}/study-activity-instances/{study_activity_instance_uid}",
     dependencies=[rbac.STUDY_READ],
     summary="Returns specific study activity instance",
-    response_model=StudySelectionActivityInstance,
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -3651,7 +3580,7 @@ def get_selected_activity_instance(
     study_value_version: Annotated[
         str | None, _generic_descriptions.STUDY_VALUE_VERSION_QUERY
     ] = None,
-) -> StudySelectionActivity:
+) -> StudySelectionActivityInstance:
     service = StudyActivityInstanceSelectionService()
     return service.get_specific_selection(
         study_uid=study_uid,
@@ -3664,7 +3593,6 @@ def get_selected_activity_instance(
     "/studies/{study_uid}/study-activity-instances/{study_activity_instance_uid}/audit-trail",
     dependencies=[rbac.STUDY_READ],
     summary="List audit trail related to a specific StudyActivityInstance.",
-    response_model=list[StudySelectionActivityInstance],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -3678,7 +3606,7 @@ def get_selected_activity_instance(
 def get_specific_study_activity_instance_audit_trail(
     study_uid: Annotated[str, studyUID],
     study_activity_instance_uid: Annotated[str, study_activity_instance_uid_path],
-) -> StudySelectionActivityInstance:
+) -> list[StudySelectionActivityInstance]:
     service = StudyActivityInstanceSelectionService()
     return service.get_specific_selection_audit_trail(
         study_uid=study_uid, study_selection_uid=study_activity_instance_uid
@@ -3704,7 +3632,6 @@ def get_specific_study_activity_instance_audit_trail(
      - Study activity instance selection exists
      - Activity instance version selected for study activity instance selection is changed.
      - Added new entry in the audit trail for the update of the study-activity-instance.""",
-    response_model=StudySelectionActivityInstance,
     response_model_exclude_unset=True,
     status_code=201,
     responses={
@@ -3730,7 +3657,6 @@ def patch_study_activity_instance_sync_to_latest_activity_instance(
     "/studies/{study_uid}/study-activity-instances/batch-select",
     dependencies=[rbac.STUDY_WRITE],
     summary="Batch select ActivityInstance to a given Study",
-    response_model=list[StudySelectionActivityInstanceBatchOutput],
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -3762,7 +3688,6 @@ def post_new_soa_footnotes_batch_select(
     "/study-activities",
     dependencies=[rbac.STUDY_READ],
     summary="Returns all study activities currently selected",
-    response_model=CustomPage[StudySelectionActivity],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -3821,7 +3746,7 @@ def get_all_selected_activities_for_all_studies(
     total_count: Annotated[
         bool | None, Query(description=_generic_descriptions.TOTAL_COUNT)
     ] = False,
-) -> CustomPage[StudySelectionEndpoint]:
+) -> CustomPage[StudySelectionActivity]:
     service = StudyActivitySelectionService()
     all_selections = service.get_all_selections_for_all_studies(
         project_name=project_name,
@@ -3849,7 +3774,6 @@ def get_all_selected_activities_for_all_studies(
     dependencies=[rbac.STUDY_READ],
     summary="Returns all study activities currently selected",
     description=_generic_descriptions.DATA_EXPORTS_HEADER,
-    response_model=CustomPage[StudySelectionActivity],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -3967,7 +3891,6 @@ def get_all_selected_activities(
     summary="Returns possible values from the database for a given header",
     description="""Allowed parameters include : field name for which to get possible
     values, search string to provide filtering for the field name, additional filters to apply on other fields""",
-    response_model=list[Any],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -4001,7 +3924,7 @@ def get_distinct_activity_values_for_header(
     study_value_version: Annotated[
         str | None, _generic_descriptions.STUDY_VALUE_VERSION_QUERY
     ] = None,
-):
+) -> list[Any]:
     service = StudyActivitySelectionService()
     return service.get_distinct_values_for_header(
         study_uid=study_uid,
@@ -4026,7 +3949,6 @@ The following values should be returned for all study activities:
 - activity
 - order
     """,
-    response_model=list[StudySelectionActivityCore],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -4045,7 +3967,6 @@ def get_all_activity_audit_trail(
     "/studies/{study_uid}/study-activities/{study_activity_uid}",
     dependencies=[rbac.STUDY_READ],
     summary="Returns specific study activity",
-    response_model=StudySelectionActivity,
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -4075,7 +3996,6 @@ def get_selected_activity(
     "/studies/{study_uid}/study-activities/{study_activity_uid}/audit-trail",
     dependencies=[rbac.STUDY_READ],
     summary="List audit trail related to definition of a specific study activity.",
-    response_model=list[StudySelectionActivityCore],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -4089,7 +4009,7 @@ def get_selected_activity(
 def get_selected_activity_audit_trail(
     study_uid: Annotated[str, studyUID],
     study_activity_uid: Annotated[str, study_activity_uid_path],
-) -> StudySelectionActivityCore:
+) -> list[StudySelectionActivityCore]:
     service = StudyActivitySelectionService()
     return service.get_specific_selection_audit_trail(
         study_uid=study_uid, study_selection_uid=study_activity_uid
@@ -4100,7 +4020,6 @@ def get_selected_activity_audit_trail(
     "/studies/{study_uid}/study-activities",
     dependencies=[rbac.STUDY_WRITE],
     summary="Creating a study activity selection based on the input data",
-    response_model=StudySelectionActivity,
     response_model_exclude_unset=True,
     status_code=201,
     responses={
@@ -4141,7 +4060,6 @@ State before:
 Business logic:
 State after:
  - Added new entry in the audit trail for the update of the study-activity.""",
-    response_model=StudySelectionActivity,
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -4188,7 +4106,6 @@ def patch_update_activity_selection(
      - Study activity selection exists
      - Activity version selected for study activity selection is changed.
      - Added new entry in the audit trail for the update of the study-activity.""",
-    response_model=StudySelectionActivity,
     response_model_exclude_unset=True,
     status_code=201,
     responses={
@@ -4214,7 +4131,6 @@ def patch_study_activity_sync_to_latest_activity(
     "/studies/{study_uid}/study-activities/{study_activity_uid}/activity-replacements",
     dependencies=[rbac.STUDY_WRITE],
     summary="Exchanging selected activity for given StudyActivity based on the input data",
-    response_model=StudySelectionActivity,
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -4254,7 +4170,6 @@ def replace_selected_activity_for_study_activity(
     dependencies=[rbac.STUDY_READ],
     summary="Returns all study activity subgroups currently selected",
     description=_generic_descriptions.DATA_EXPORTS_HEADER,
-    response_model=CustomPage[StudyActivitySubGroup],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -4327,7 +4242,6 @@ State before:
 Business logic:
 State after:
  - Added new entry in the audit trail for the update of the study-activity-subgroup.""",
-    response_model=StudyActivitySubGroup,
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -4359,7 +4273,6 @@ def patch_update_activity_subgroup_selection(
     "/studies/{study_uid}/study-activity-subgroups/{study_activity_subgroup_uid}/order",
     dependencies=[rbac.STUDY_WRITE],
     summary="Change the order of a study activity subgroup",
-    response_model=StudyActivitySubGroup,
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -4393,7 +4306,6 @@ def patch_activity_subgroup_new_order(
     dependencies=[rbac.STUDY_READ],
     summary="Returns all study activity groups currently selected",
     description=_generic_descriptions.DATA_EXPORTS_HEADER,
-    response_model=CustomPage[StudyActivityGroup],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -4466,7 +4378,6 @@ State before:
 Business logic:
 State after:
  - Added new entry in the audit trail for the update of the study-activity-group.""",
-    response_model=StudyActivityGroup,
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -4498,7 +4409,6 @@ def patch_update_activity_group_selection(
     "/studies/{study_uid}/study-activity-groups/{study_activity_group_uid}/order",
     dependencies=[rbac.STUDY_WRITE],
     summary="Change the order of a study activity group",
-    response_model=StudyActivityGroup,
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -4532,7 +4442,6 @@ def patch_activity_group_new_order(
     dependencies=[rbac.STUDY_READ],
     summary="Returns all study soa groups currently selected",
     description=_generic_descriptions.DATA_EXPORTS_HEADER,
-    response_model=CustomPage[StudySoAGroup],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -4605,7 +4514,6 @@ State before:
 Business logic:
 State after:
  - Added new entry in the audit trail for the update of the study-soa-group.""",
-    response_model=StudySoAGroup,
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -4624,7 +4532,7 @@ def patch_update_soa_group_selection(
         StudySoAGroupEditInput,
         Body(description="Related parameters of the selection that shall be updated."),
     ],
-) -> StudyActivityGroup:
+) -> StudySoAGroup:
     service = StudySoAGroupService()
     return service.patch_selection(
         study_uid=study_uid,
@@ -4637,7 +4545,6 @@ def patch_update_soa_group_selection(
     "/studies/{study_uid}/study-soa-groups/{study_soa_group_uid}/order",
     dependencies=[rbac.STUDY_WRITE],
     summary="Change the order of a study soa group",
-    response_model=StudySoAGroup,
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -4675,7 +4582,6 @@ State before:
 Business logic:
 State after:
  - Added new entry in the audit trail for the update of the study-activity.""",
-    response_model=StudySelectionActivity,
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -4715,7 +4621,6 @@ State before:
 Business logic:
 State after:
  - Added new entry in the audit trail for the update of the study-activity.""",
-    response_model=StudySelectionActivity,
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -4742,7 +4647,6 @@ def update_activity_request_with_sponsor_activity(
     "/studies/{study_uid}/study-activities/{study_activity_uid}",
     dependencies=[rbac.STUDY_WRITE],
     summary="Delete a study activity",
-    response_model=None,
     status_code=204,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -4762,18 +4666,17 @@ def delete_selected_activity(
     service.delete_selection(
         study_uid=study_uid, study_selection_uid=study_activity_uid
     )
-    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.post(
     "/studies/{study_uid}/study-activities/batch",
     dependencies=[rbac.STUDY_WRITE],
     summary="Batch create and/or edit of study activities",
-    response_model=list[StudySelectionActivityBatchOutput],
     status_code=207,
     responses={
         403: _generic_descriptions.ERROR_403,
         404: _generic_descriptions.ERROR_404,
+        405: _generic_descriptions.ERROR_405,
     },
 )
 @decorators.validate_if_study_is_not_locked("study_uid")
@@ -4789,7 +4692,6 @@ def activity_selection_batch_operations(
     "/studies/{study_uid}/soa-edits/batch",
     dependencies=[rbac.STUDY_WRITE],
     summary="Batch create/edit/delete of study activities or study-activity-schedules",
-    response_model=list[StudySoAEditBatchOutput],
     status_code=207,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -4809,7 +4711,6 @@ def study_activity_and_schedule_batch_operations(
     "/studies/{study_uid}/study-activities/{study_activity_uid}/order",
     dependencies=[rbac.STUDY_WRITE],
     summary="Change the order of a study activity",
-    response_model=StudySelectionActivity,
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -4863,7 +4764,6 @@ Possible errors:
 
 {_generic_descriptions.DATA_EXPORTS_HEADER}
 """,
-    response_model=CustomPage[StudySelectionArmWithConnectedBranchArms],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -4955,7 +4855,6 @@ def get_all_selected_arms(
     summary="Returns possible values from the database for a given header",
     description="""Allowed parameters include : field name for which to get possible
     values, search string to provide filtering for the field name, additional filters to apply on other fields""",
-    response_model=list[Any],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -4986,7 +4885,7 @@ def get_distinct_arm_values_for_header(
     page_size: Annotated[
         int | None, Query(description=_generic_descriptions.HEADER_PAGE_SIZE)
     ] = config.DEFAULT_HEADER_PAGE_SIZE,
-):
+) -> list[Any]:
     service = StudyArmSelectionService()
     return service.get_distinct_values_for_header(
         study_uid=study_uid,
@@ -5002,7 +4901,6 @@ def get_distinct_arm_values_for_header(
     "/study-arms",
     dependencies=[rbac.STUDY_READ],
     summary="Returns all study arms currently selected",
-    response_model=CustomPage[StudySelectionArmWithConnectedBranchArms],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -5072,7 +4970,6 @@ Business logic:
 
 State after:
  - Added new entry in the audit trail for the update of the study-arm.""",
-    response_model=StudySelectionArmWithConnectedBranchArms,
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -5104,7 +5001,6 @@ def patch_update_arm_selection(
     "/studies/{study_uid}/study-arms",
     dependencies=[rbac.STUDY_WRITE],
     summary="Creating a study arm selection based on the input data",
-    response_model=StudySelectionArm,
     response_model_exclude_unset=True,
     status_code=201,
     responses={
@@ -5135,7 +5031,6 @@ def post_new_arm_selection_create(
     "/studies/{study_uid}/study-arms/{study_arm_uid}/audit-trail",
     dependencies=[rbac.STUDY_READ],
     summary="List audit trail related to definition of a specific study arm.",
-    response_model=list[StudySelectionArmVersion],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -5160,7 +5055,6 @@ def get_selected_arm_audit_trail(
     "/studies/{study_uid}/study-arms/audit-trail",
     dependencies=[rbac.STUDY_READ],
     summary="List audit trail related to definition of all study arms.",
-    response_model=list[StudySelectionArmVersion],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -5179,7 +5073,6 @@ def get_all_arm_audit_trail(
     "/studies/{study_uid}/study-arms/{study_arm_uid}",
     dependencies=[rbac.STUDY_READ],
     summary="Returns specific study arm",
-    response_model=StudySelectionArmWithConnectedBranchArms,
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -5209,7 +5102,6 @@ def get_selected_arm(
     "/studies/{study_uid}/study-arms/{study_arm_uid}/order",
     dependencies=[rbac.STUDY_WRITE],
     summary="Change the order of a study arm",
-    response_model=StudySelectionArmWithConnectedBranchArms,
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -5241,7 +5133,6 @@ def patch_new_arm_selection_order(
     "/studies/{study_uid}/study-arms/{study_arm_uid}",
     dependencies=[rbac.STUDY_WRITE],
     summary="Delete a study arm",
-    response_model=None,
     status_code=204,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -5259,7 +5150,6 @@ def delete_selected_arm(
 ):
     service = StudyArmSelectionService()
     service.delete_selection(study_uid=study_uid, study_selection_uid=study_arm_uid)
-    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 # API endpoints to study elements
@@ -5269,7 +5159,6 @@ def delete_selected_arm(
     "/studies/{study_uid}/study-elements",
     dependencies=[rbac.STUDY_WRITE],
     summary="Creating a study element selection based on the input data",
-    response_model=StudySelectionElement,
     response_model_exclude_unset=True,
     status_code=201,
     responses={
@@ -5312,7 +5201,6 @@ Possible errors:
 
 {_generic_descriptions.DATA_EXPORTS_HEADER}
 """,
-    response_model=CustomPage[StudySelectionElement],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -5405,7 +5293,6 @@ def get_all_selected_elements(
     summary="Returns possible values from the database for a given header",
     description="""Allowed parameters include : field name for which to get possible
     values, search string to provide filtering for the field name, additional filters to apply on other fields""",
-    response_model=list[Any],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -5439,7 +5326,7 @@ def get_distinct_element_values_for_header(
     study_value_version: Annotated[
         str | None, _generic_descriptions.STUDY_VALUE_VERSION_QUERY
     ] = None,
-):
+) -> list[Any]:
     service = StudyElementSelectionService()
     return service.get_distinct_values_for_header(
         study_uid=study_uid,
@@ -5456,7 +5343,6 @@ def get_distinct_element_values_for_header(
     "/studies/{study_uid}/study-elements/{study_element_uid}",
     dependencies=[rbac.STUDY_READ],
     summary="Returns specific study element",
-    response_model=StudySelectionElement,
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -5492,7 +5378,6 @@ def get_selected_element(
         Business logic:
         State after:
         - Added new entry in the audit trail for the update of the study-element.""",
-    response_model=StudySelectionElement,
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -5524,7 +5409,6 @@ def patch_update_element_selection(
     "/studies/{study_uid}/study-elements/{study_element_uid}/audit-trail",
     dependencies=[rbac.STUDY_READ],
     summary="List audit trail related to definition of a specific study element.",
-    response_model=list[StudySelectionElementVersion],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -5549,7 +5433,6 @@ def get_selected_element_audit_trail(
     "/studies/{study_uid}/study-element/audit-trail",
     dependencies=[rbac.STUDY_READ],
     summary="List audit trail related to definition of all study element.",
-    response_model=list[StudySelectionElementVersion],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -5568,7 +5451,6 @@ def get_all_element_audit_trail(
     "/studies/{study_uid}/study-elements/{study_element_uid}",
     dependencies=[rbac.STUDY_WRITE],
     summary="Delete a study element",
-    response_model=None,
     status_code=204,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -5586,14 +5468,12 @@ def delete_selected_element(
 ):
     service = StudyElementSelectionService()
     service.delete_selection(study_uid=study_uid, study_selection_uid=study_element_uid)
-    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.get(
     "/study-elements/allowed-element-configs",
     dependencies=[rbac.STUDY_READ],
     summary="Returns all allowed config sets for element type and subtype",
-    response_model=list[StudyElementTypes],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -5610,7 +5490,6 @@ def get_all_configs() -> list[StudyElementTypes]:
     "/studies/{study_uid}/study-elements/{study_element_uid}/order",
     dependencies=[rbac.STUDY_WRITE],
     summary="Change the order of a study element",
-    response_model=StudySelectionElement,
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -5645,7 +5524,6 @@ def patch_new_element_selection_order(
     "/studies/{study_uid}/study-branch-arms",
     dependencies=[rbac.STUDY_WRITE],
     summary="Creating a study branch arm selection based on the input data",
-    response_model=StudySelectionBranchArm,
     response_model_exclude_unset=True,
     status_code=201,
     responses={
@@ -5695,7 +5573,6 @@ Possible errors:
 
 {_generic_descriptions.DATA_EXPORTS_HEADER}
 """,
-    response_model=list[StudySelectionBranchArm],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -5745,7 +5622,6 @@ def get_all_selected_branch_arms(
     "/studies/{study_uid}/study-branch-arms/{study_branch_arm_uid}",
     dependencies=[rbac.STUDY_READ],
     summary="Returns specific study branch arm",
-    response_model=StudySelectionBranchArm,
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -5781,7 +5657,6 @@ def get_selected_branch_arm(
             Business logic:
             State after:
             - Added new entry in the audit trail for the update of the study-branch-arm.""",
-    response_model=StudySelectionBranchArm,
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -5813,7 +5688,6 @@ def patch_update_branch_arm_selection(
     "/studies/{study_uid}/study-branch-arms/{study_branch_arm_uid}/audit-trail",
     dependencies=[rbac.STUDY_READ],
     summary="List audit trail related to definition of a specific study branch-arm.",
-    response_model=list[StudySelectionBranchArmVersion],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -5838,7 +5712,6 @@ def get_selected_branch_arm_audit_trail(
     "/studies/{study_uid}/study-branch-arm/audit-trail",
     dependencies=[rbac.STUDY_READ],
     summary="List audit trail related to definition of all study branch-arm.",
-    response_model=list[StudySelectionBranchArmVersion],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -5857,7 +5730,6 @@ def get_all_branch_arm_audit_trail(
     "/studies/{study_uid}/study-branch-arms/{study_branch_arm_uid}",
     dependencies=[rbac.STUDY_WRITE],
     summary="Delete a study branch arm",
-    response_model=None,
     status_code=204,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -5877,14 +5749,12 @@ def delete_selected_branch_arm(
     service.delete_selection(
         study_uid=study_uid, study_selection_uid=study_branch_arm_uid
     )
-    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.patch(
     "/studies/{study_uid}/study-branch-arms/{study_branch_arm_uid}/order",
     dependencies=[rbac.STUDY_WRITE],
     summary="Change the order of a study branch arm",
-    response_model=StudySelectionBranchArm,
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -5933,7 +5803,6 @@ def patch_new_branch_arm_selection_order(
     Possible errors:
     - Invalid study-uid.
 """,
-    response_model=list[StudySelectionBranchArm],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -5963,7 +5832,6 @@ def get_all_selected_branch_arms_within_arm(
     "/studies/{study_uid}/study-cohorts",
     dependencies=[rbac.STUDY_WRITE],
     summary="Creating a study cohort selection based on the input data",
-    response_model=StudySelectionCohort,
     response_model_exclude_unset=True,
     status_code=201,
     responses={
@@ -6013,7 +5881,6 @@ Possible errors:
 
 {_generic_descriptions.DATA_EXPORTS_HEADER}
 """,
-    response_model=CustomPage[StudySelectionCohort],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -6112,7 +5979,6 @@ def get_all_selected_cohorts(
     "/studies/{study_uid}/study-cohorts/{study_cohort_uid}",
     dependencies=[rbac.STUDY_READ],
     summary="Returns specific study cohort",
-    response_model=StudySelectionCohort,
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -6148,7 +6014,6 @@ def get_selected_cohort(
             Business logic:
             State after:
             - Added new entry in the audit trail for the update of the study-cohort.""",
-    response_model=StudySelectionCohort,
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -6180,7 +6045,6 @@ def patch_update_cohort_selection(
     "/studies/{study_uid}/study-cohorts/{study_cohort_uid}/audit-trail",
     dependencies=[rbac.STUDY_READ],
     summary="List audit trail related to definition of a specific study study-cohorts.",
-    response_model=list[StudySelectionCohortVersion],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -6205,7 +6069,6 @@ def get_selected_cohort_audit_trail(
     "/studies/{study_uid}/study-cohort/audit-trail",
     dependencies=[rbac.STUDY_READ],
     summary="List audit trail related to definition of all study study-cohort.",
-    response_model=list[StudySelectionCohortVersion],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -6224,7 +6087,6 @@ def get_all_cohort_audit_trail(
     "/studies/{study_uid}/study-cohorts/{study_cohort_uid}",
     dependencies=[rbac.STUDY_WRITE],
     summary="Delete a study cohort",
-    response_model=None,
     status_code=204,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -6242,14 +6104,12 @@ def delete_selected_cohort(
 ):
     service = StudyCohortSelectionService()
     service.delete_selection(study_uid=study_uid, study_selection_uid=study_cohort_uid)
-    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.patch(
     "/studies/{study_uid}/study-cohorts/{study_cohort_uid}/order",
     dependencies=[rbac.STUDY_WRITE],
     summary="Change the order of a study cohort",
-    response_model=StudySelectionCohort,
     response_model_exclude_unset=True,
     status_code=200,
     responses={

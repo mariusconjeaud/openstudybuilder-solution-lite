@@ -545,6 +545,35 @@ class TestUtils:
             assert response_json[key] is not None, f"Field '{key}' is None"
 
     @classmethod
+    def assert_paginated_response_shape_ok(
+        cls,
+        response_json: any,
+        include_study_version: bool = True,
+    ):
+        expected_fields = {"self", "prev", "next", "items"}
+        if include_study_version:
+            expected_fields.add("study_version")
+
+        assert response_json.keys() == expected_fields
+        for field in expected_fields:
+            assert response_json[field] is not None, f"Field '{field}' is None"
+
+        if include_study_version:
+            assert response_json["study_version"].keys() == {
+                "version_status",
+                "version_number",
+                "version_started_at",
+                "version_ended_at",
+                "retrieved_at",
+            }
+
+            for field in response_json["study_version"]:
+                if field not in ["version_ended_at", "version_number"]:
+                    assert (
+                        response_json["study_version"][field] is not None
+                    ), f"Field '{field}' is None"
+
+    @classmethod
     def assert_timestamp_is_in_utc_zone(cls, val: str):
         datetime_ts: datetime = datetime.strptime(val, config.DATE_TIME_FORMAT)
         assert datetime_ts.tzinfo == timezone.utc
@@ -2074,7 +2103,7 @@ class TestUtils:
         template_parameter=False,
         approve: bool = True,
     ) -> UnitDefinitionModel:
-        service = UnitDefinitionService(meta_repository=MetaRepository(AUTHOR))
+        service = UnitDefinitionService()
 
         payload: UnitDefinitionPostInput = UnitDefinitionPostInput(
             name=name,
@@ -2098,7 +2127,7 @@ class TestUtils:
             template_parameter=template_parameter,
         )
 
-        result: UnitDefinitionModel = service.post(post_input=payload)
+        result: UnitDefinitionModel = service.create(concept_input=payload)
         if approve:
             service.approve(result.uid)
         return result
@@ -2674,9 +2703,9 @@ class TestUtils:
         status: str | None = None,
         version: str | None = None,
     ) -> UnitDefinitionModel:
-        return UnitDefinitionService(meta_repository=MetaRepository(AUTHOR)).get_by_uid(
+        return UnitDefinitionService().get_by_uid(
             uid=unit_uid,
-            at_specified_datetime=at_specified_datetime,
+            at_specific_date=at_specified_datetime,
             status=status,
             version=version,
         )

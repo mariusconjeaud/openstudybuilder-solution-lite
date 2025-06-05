@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Body, Path, Response, status
+from fastapi import APIRouter, Body, Path
 
 from clinical_mdr_api.models.brands.brand import Brand, BrandCreateInput
 from clinical_mdr_api.routers import _generic_descriptions
@@ -19,7 +19,6 @@ Service = BrandService
     "",
     dependencies=[rbac.LIBRARY_READ],
     summary="Returns all brands.",
-    response_model=list[Brand],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -34,7 +33,6 @@ def get_brands() -> list[Brand]:
     "/{brand_uid}",
     dependencies=[rbac.LIBRARY_READ],
     summary="Returns the brand identified by the specified 'brand_uid'.",
-    response_model=Brand,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -51,7 +49,6 @@ def get_brand(
     "",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Creates a new brand.",
-    response_model=Brand,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -76,13 +73,11 @@ def create(
     "/{brand_uid}",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Deletes the brand identified by 'brand_uid'.",
-    response_model=None,
     status_code=204,
     responses={
         403: _generic_descriptions.ERROR_403,
         204: {"description": "No Content - The item was successfully deleted."},
     },
 )
-def delete(brand_uid: Annotated[str, BrandUID]) -> Response:
+def delete(brand_uid: Annotated[str, BrandUID]):
     Service().delete(brand_uid)
-    return Response(status_code=status.HTTP_204_NO_CONTENT)

@@ -28,4 +28,4 @@ class TemplateParameterMultiSelectInput(InputModel):
             "the conjunction string to connect them. Available values are ['and', 'or', ','].",
         ),
     ] = None
-    labels: list[str] | None = None
+    labels: Annotated[list[str] | None, Field()] = None

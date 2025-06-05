@@ -27,7 +27,7 @@ class ObjectiveTemplateName(BaseModel):
         str | None,
         Field(
             description="The actual value/content. It may include parameters referenced by simple strings in square brackets [].",
-            json_schema_extra={"nullable": True},
+            json_schema_extra={"nullable": True, "format": "html"},
         ),
     ]
     name_plain: Annotated[
@@ -41,7 +41,7 @@ class ObjectiveTemplateName(BaseModel):
         str | None,
         Field(
             description="Optional guidance text for using the template.",
-            json_schema_extra={"nullable": True},
+            json_schema_extra={"nullable": True, "format": "html"},
         ),
     ] = None
 
@@ -61,7 +61,6 @@ class ObjectiveTemplate(ObjectiveTemplateNameUid):
     start_date: Annotated[
         datetime | None,
         Field(
-            default_factory=datetime.utcnow,
             description="Part of the metadata: The point in time when the (version of the) objective template was created. "
             "The format is ISO 8601 in UTC±0, e.g.: '2020-10-31T16:00:00+00:00' for October 31, 2020 at 6pm in UTC+2 timezone.",
             json_schema_extra={"nullable": True},
@@ -70,7 +69,6 @@ class ObjectiveTemplate(ObjectiveTemplateNameUid):
     end_date: Annotated[
         datetime | None,
         Field(
-            default_factory=datetime.utcnow,
             description="Part of the metadata: The point in time when the version of the objective template was closed (and a new one was created). "
             "The format is ISO 8601 in UTC±0, e.g.: '2020-10-31T16:00:00+00:00' for October 31, 2020 at 6pm in UTC+2 timezone.",
             json_schema_extra={"nullable": True},
@@ -105,15 +103,13 @@ class ObjectiveTemplate(ObjectiveTemplateNameUid):
             json_schema_extra={"nullable": True},
         ),
     ] = None
-    possible_actions: Annotated[
-        list[str],
-        Field(
-            description=(
-                "Holds those actions that can be performed on the objective template. "
-                "Actions are: 'approve', 'edit', 'new_version', 'inactivate', 'reactivate' and 'delete'."
-            )
+    possible_actions: list[str] = Field(
+        description=(
+            "Holds those actions that can be performed on the objective template. "
+            "Actions are: 'approve', 'edit', 'new_version', 'inactivate', 'reactivate' and 'delete'."
         ),
-    ] = []
+        default_factory=list,
+    )
     parameters: Annotated[
         list[TemplateParameter] | None,
         Field(
@@ -130,20 +126,18 @@ class ObjectiveTemplate(ObjectiveTemplateNameUid):
     ] = None
 
     # Template indexings
-    indications: Annotated[
-        list[SimpleTermModel],
-        Field(
-            description="The study indications, conditions, diseases or disorders in scope for the template.",
-        ),
-    ] = []
+    indications: list[SimpleTermModel] = Field(
+        description="The study indications, conditions, diseases or disorders in scope for the template.",
+        default_factory=list,
+    )
     is_confirmatory_testing: Annotated[
         bool,
         Field(description="Indicates if template is related to confirmatory testing."),
     ] = False
-    categories: Annotated[
-        list[SimpleCTTermNameAndAttributes],
-        Field(description="A list of categories the template belongs to."),
-    ] = []
+    categories: list[SimpleCTTermNameAndAttributes] = Field(
+        description="A list of categories the template belongs to.",
+        default_factory=list,
+    )
 
     study_count: Annotated[
         int, Field(description="Count of studies referencing template")
@@ -213,12 +207,7 @@ class ObjectiveTemplateVersion(ObjectiveTemplate):
     Class for storing Objective Templates and calculation of differences
     """
 
-    changes: Annotated[
-        list[str],
-        Field(
-            description=CHANGES_FIELD_DESC,
-        ),
-    ] = []
+    changes: list[str] = Field(description=CHANGES_FIELD_DESC, default_factory=list)
 
 
 class ObjectiveTemplatePreValidateInput(PostInputModel):
@@ -227,12 +216,15 @@ class ObjectiveTemplatePreValidateInput(PostInputModel):
         Field(
             description="The actual value/content. It may include parameters referenced by simple strings in square brackets [].",
             min_length=1,
+            json_schema_extra={"format": "html"},
         ),
     ]
     guidance_text: Annotated[
         str | None,
         Field(
-            description="Optional guidance text for using the template.", min_length=1
+            description="Optional guidance text for using the template.",
+            min_length=1,
+            json_schema_extra={"format": "html"},
         ),
     ] = None
 
@@ -243,12 +235,15 @@ class ObjectiveTemplateCreateInput(PostInputModel):
         Field(
             description="The actual value/content. It may include parameters referenced by simple strings in square brackets [].",
             min_length=1,
+            json_schema_extra={"format": "html"},
         ),
     ]
     guidance_text: Annotated[
         str | None,
         Field(
-            description="Optional guidance text for using the template.", min_length=1
+            description="Optional guidance text for using the template.",
+            min_length=1,
+            json_schema_extra={"format": "html"},
         ),
     ] = None
     study_uid: Annotated[
@@ -288,12 +283,15 @@ class ObjectiveTemplateEditInput(PatchInputModel):
         Field(
             description="The actual value/content. It may include parameters referenced by simple strings in square brackets [].",
             min_length=1,
+            json_schema_extra={"format": "html"},
         ),
     ]
     guidance_text: Annotated[
         str | None,
         Field(
-            description="Optional guidance text for using the template.", min_length=1
+            description="Optional guidance text for using the template.",
+            min_length=1,
+            json_schema_extra={"format": "html"},
         ),
     ] = None
     change_description: Annotated[

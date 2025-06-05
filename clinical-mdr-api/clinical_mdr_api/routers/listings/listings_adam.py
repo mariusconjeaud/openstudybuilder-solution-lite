@@ -25,8 +25,6 @@ router = APIRouter()
     "/studies/{study_uid}/adam/{adam_report}",
     dependencies=[rbac.STUDY_READ],
     summary="ADaM report listing, could be MDVISIT or MDENDPT as specified on adam_report",
-    response_model=CustomPage[StudyVisitAdamListing]
-    | CustomPage[StudyEndpntAdamListing],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -74,7 +72,7 @@ def get_adam_listing(
     study_value_version: Annotated[
         str | None, _generic_descriptions.STUDY_VALUE_VERSION_QUERY
     ] = None,
-):
+) -> CustomPage[StudyVisitAdamListing] | CustomPage[StudyEndpntAdamListing]:
     service = ListingsService()
     all_items = service.get_report(
         adam_report=adam_report,
@@ -102,7 +100,6 @@ def get_adam_listing(
     summary="Returns possible values from the database for a given header",
     description="""Allowed parameters include : field name for which to get possible
     values, search string to provide filtering for the field name, additional filters to apply on other fields""",
-    response_model=list[Any],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -141,7 +138,7 @@ def get_distinct_adam_listing_values_for_header(
     study_value_version: Annotated[
         str | None, _generic_descriptions.STUDY_VALUE_VERSION_QUERY
     ] = None,
-):
+) -> list[Any]:
     service = ListingsService()
     return service.get_distinct_adam_listing_values_for_headers(
         study_uid=study_uid,

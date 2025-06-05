@@ -23,6 +23,23 @@ export default {
       headers,
     })
   },
+
+  getActivityGroupDetails(uid, version) {
+    const params = { version }
+    return repository.get(`${resource}/activity-groups/${uid}/details`, {
+      params,
+    })
+  },
+
+  getActivityGroupSubgroups(uid, version, options = {}) {
+    const params = {
+      version,
+      ...options,
+    }
+    return repository.get(`${resource}/activity-groups/${uid}/subgroups`, {
+      params,
+    })
+  },
   getCOSMoSOverview(source, uid) {
     return repository.get(`${resource}/${source}/${uid}/overview.cosmos`)
   },
@@ -121,11 +138,30 @@ export default {
     const patch_data = {
       ...data,
     }
+    if (
+      ['activities', 'activity-groups', 'activity-sub-groups'].includes(source)
+    ) {
+      return repository.put(`${resource}/${source}/${uid}`, patch_data, {
+        params,
+      })
+    }
     return repository.patch(`${resource}/${source}/${uid}`, patch_data, {
       params,
     })
   },
   createFromActivityRequest(data) {
     return repository.post(`${resource}/activities/sponsor-activities`, data)
+  },
+  getVersionDetail(uid, version, params) {
+    return repository.get(
+      `${resource}/activities/${uid}/versions/${version}/groupings`,
+      { params }
+    )
+  },
+  getVersionInstances(uid, version, params) {
+    return repository.get(
+      `${resource}/activities/${uid}/versions/${version}/instances`,
+      { params }
+    )
   },
 }

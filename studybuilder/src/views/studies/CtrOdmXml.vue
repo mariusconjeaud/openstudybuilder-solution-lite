@@ -16,7 +16,11 @@
         </v-btn>
       </div>
     </div>
-    <div id="CtrOdmHtml" class="mt-4" v-html="htmlDocument" />
+    <div
+      id="CtrOdmHtml"
+      class="mt-4"
+      v-html="sanitizeHTMLHandler(htmlDocument)"
+    />
   </div>
 </template>
 
@@ -25,6 +29,7 @@ import { studySelectedNavigationGuard } from '@/mixins/studies'
 import study from '@/api/study'
 import exportLoader from '@/utils/exportLoader'
 import axios from 'axios'
+import { sanitizeHTML } from '@/utils/sanitize'
 
 export default {
   components: {},
@@ -60,6 +65,9 @@ export default {
     this.renderXml()
   },
   methods: {
+    sanitizeHTMLHandler(html) {
+      return sanitizeHTML(html)
+    },
     renderXml() {
       this.loadingMessage = this.$t('CtrOdmXmlVue.loading')
       study

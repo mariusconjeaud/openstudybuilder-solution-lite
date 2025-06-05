@@ -8,7 +8,6 @@ from starlette.routing import Mount
 
 from clinical_mdr_api.domains.versioned_object_aggregate import LibraryItemStatus
 from clinical_mdr_api.models.study_selections.study import Study
-from clinical_mdr_api.services._meta_repository import MetaRepository
 from clinical_mdr_api.services.concepts.unit_definitions.unit_definition import (
     UnitDefinitionService,
 )
@@ -3590,7 +3589,7 @@ def inject_base_data(inject_unit_subset: bool = True) -> Study:
 def fix_study_preferred_time_unit(study_uid):
     """Fix up Cypher-injected study to have a preferred time unit for the protocol SOA which is mandatory for locking"""
 
-    unit_definition_service = UnitDefinitionService(meta_repository=MetaRepository())
+    unit_definition_service = UnitDefinitionService()
 
     unit_definitions = {
         u.name: u

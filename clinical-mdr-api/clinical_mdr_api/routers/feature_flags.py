@@ -24,7 +24,6 @@ service = FeatureFlagService()
     "/{serial_number}",
     dependencies=[rbac.ADMIN_READ],
     summary="Returns the feature flag identified by the provided Serial Number.",
-    response_model=FeatureFlag,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -40,7 +39,6 @@ def get_feature_flag(serial_number: Annotated[int, SN]) -> FeatureFlag:
     "",
     dependencies=[rbac.ADMIN_WRITE],
     summary="Creates a feature flag.",
-    response_model=FeatureFlag,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -58,7 +56,6 @@ def create_feature_flag(
     "/{serial_number}",
     dependencies=[rbac.ADMIN_WRITE],
     summary="Updates the feature flag identified by the provided Serial Number.",
-    response_model=FeatureFlag,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,

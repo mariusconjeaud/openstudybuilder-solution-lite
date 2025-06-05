@@ -3,29 +3,34 @@
     <v-card :elevation="elevation" class="rounded-0">
       <v-card-title
         style="z-index: 3; position: relative"
-        class="mt-3 d-flex align-center"
+        class="d-flex align-center"
         :class="props.noPadding ? 'pa-0' : 'pt-0'"
       >
-        <v-text-field
-          v-if="!hideSearchField || onlyTextSearch"
-          v-model="search"
-          clearable
-          clear-icon="mdi-close"
-          density="compact"
-          prepend-inner-icon="mdi-magnify"
-          :label="$t('_global.search')"
-          single-line
-          color="nnBaseBlue"
-          hide-details
-          style="min-width: 200px; max-width: 300px"
-          rounded="lg"
-          class="mr-4 searchFieldLabel"
-          data-cy="search-field"
-          variant="outlined"
-        />
+        <div class="search-container d-flex align-center pl-0">
+          <v-text-field
+            v-if="!hideSearchField || onlyTextSearch"
+            v-model="search"
+            clearable
+            clear-icon="mdi-close"
+            density="compact"
+            prepend-inner-icon="mdi-magnify"
+            :label="$t('_global.search')"
+            single-line
+            color="nnBaseBlue"
+            hide-details
+            style="min-width: 240px; max-width: 300px"
+            rounded="lg"
+            class="searchFieldLabel ml-0"
+            data-cy="search-field"
+            variant="outlined"
+          />
+        </div>
+
         <slot name="beforeSwitches" />
+
+        <!-- Toggle switches -->
         <template v-if="!hideDefaultSwitches">
-          <div :title="$t('NNTableTooltips.select_rows')">
+          <div :title="$t('NNTableTooltips.select_rows')" class="ml-4">
             <v-switch
               v-model="showSelectBoxes"
               data-cy="select-rows"
@@ -37,10 +42,13 @@
             />
           </div>
         </template>
+
         <slot name="afterSwitches" />
         <v-spacer />
         <slot name="headerCenter" />
         <v-spacer />
+
+        <!-- Right-side actions -->
         <slot name="beforeActions" />
         <v-radio-group
           v-if="showColumnNamesToggleButton"
@@ -53,8 +61,8 @@
           <v-radio :label="$t('NNTable.column_labels')" :value="false" />
           <v-radio :label="$t('NNTable.column_names')" :value="true" />
         </v-radio-group>
-        <v-spacer />
-        <div v-if="!hideActionsMenu" class="mt-3">
+
+        <div v-if="!hideActionsMenu" class="actions-container">
           <slot
             name="actions"
             :show-select-boxes="showSelectBoxes"
@@ -134,6 +142,7 @@
             @click="openHistory"
           />
         </div>
+
         <slot name="beforeTable" />
       </v-card-title>
       <v-card-text :class="{ 'pa-0': props.noPadding }">
@@ -186,10 +195,12 @@
               :items-per-page="computedItemsPerPage"
               :items-per-page-options="computedItemsPerPageOptions"
               :items-per-page-text="$t('Settings.rows')"
-              class="py-4 mr-0"
+              class="py-4 mr-0 data-table-visible"
               :row-props="rowProps"
               :loading="loading"
-              :height="tableHeight || areaProps.areaHeight"
+              :height="
+                tableHeight || (props.noPadding ? 'auto' : areaProps.areaHeight)
+              "
               :items="items"
               :search="search"
               :headers="shownColumns"
@@ -357,6 +368,10 @@ const props = defineProps({
   defaultHeaders: {
     type: Array,
     default: () => [],
+  },
+  useCachedFiltering: {
+    type: Boolean,
+    default: true,
   },
   items: {
     type: Array,
@@ -702,6 +717,7 @@ onMounted(() => {
   }
   // For now we will implement saving of latest filtering only for Library and Studies Activities, it might change in the future
   if (
+    props.useCachedFiltering &&
     filteringParams.value.tableName === window.location.pathname &&
     (window.location.pathname.indexOf('library/activities') > 0 ||
       window.location.pathname.indexOf('activities/list'))
@@ -901,7 +917,8 @@ function filterTable(options) {
     }
     // For now we will implement saving of latest filtering only for Library and Studies Activities, it might change in the future
     if (
-      window.location.pathname.indexOf('library/activities') >= 0 ||
+      (props.useCachedFiltering &&
+        window.location.pathname.indexOf('library/activities') >= 0) ||
       window.location.pathname.indexOf('activities/list')
     ) {
       filteringParamsStore.setFilteringParams({
@@ -952,6 +969,7 @@ function closeHistory() {
 
 defineExpose({
   filterTable,
+  selectedColumns,
 })
 </script>
 
@@ -1037,5 +1055,49 @@ defineExpose({
 }
 .clearAllBtn {
   color: rgb(var(--v-theme-nnBaseBlue)) !important;
+}
+
+/* Essential search container styling */
+.search-container {
+  min-height: 42px;
+  padding-left: 0 !important;
+  margin-left: 0 !important;
+}
+
+.searchFieldLabel.v-text-field {
+  margin-left: 0 !important;
+}
+
+.searchFieldLabel.v-text-field :deep(.v-field__outline) {
+  border-radius: 4px !important;
+}
+
+/* Only essential card styling */
+:deep(.v-card) {
+  border-radius: 0 !important;
+  overflow: visible;
+}
+
+:deep(.v-card-title) {
+  padding-left: 0 !important;
+  padding-right: 16px;
+}
+
+/* Search field white background */
+.searchFieldLabel.v-text-field .v-field__overlay,
+[data-cy='search-field'] .v-field__overlay {
+  background-color: white !important;
+  opacity: 1 !important;
+}
+
+/* Ensure text remains visible */
+.searchFieldLabel.v-text-field input {
+  color: rgba(0, 0, 0, 0.87) !important;
+}
+
+/* Essential white background styles */
+.v-field__overlay {
+  background-color: white !important;
+  opacity: 1 !important;
 }
 </style>

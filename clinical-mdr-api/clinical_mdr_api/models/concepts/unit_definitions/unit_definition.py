@@ -2,6 +2,7 @@ from typing import Annotated, Callable, Self
 
 from pydantic import Field
 
+from clinical_mdr_api.descriptions.general import CHANGES_FIELD_DESC
 from clinical_mdr_api.domains.concepts.unit_definitions.unit_definition import (
     UnitDefinitionAR,
 )
@@ -17,14 +18,14 @@ from clinical_mdr_api.models.utils import BaseModel
 
 
 class UnitDefinitionModel(ConceptModel):
-    convertible_unit: bool
-    display_unit: bool
-    master_unit: bool
-    si_unit: bool
-    us_conventional_unit: bool
-    use_complex_unit_conversion: bool
-    ct_units: list[SimpleTermModel]
-    unit_subsets: list[SimpleTermModel]
+    convertible_unit: Annotated[bool, Field()]
+    display_unit: Annotated[bool, Field()]
+    master_unit: Annotated[bool, Field()]
+    si_unit: Annotated[bool, Field()]
+    us_conventional_unit: Annotated[bool, Field()]
+    use_complex_unit_conversion: Annotated[bool, Field()]
+    ct_units: Annotated[list[SimpleTermModel], Field()]
+    unit_subsets: Annotated[list[SimpleTermModel], Field()]
     ucum: Annotated[
         SimpleTermModel | None, Field(json_schema_extra={"nullable": True})
     ] = None
@@ -45,7 +46,7 @@ class UnitDefinitionModel(ConceptModel):
     definition: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = (
         None
     )
-    template_parameter: bool
+    template_parameter: Annotated[bool, Field()]
 
     @classmethod
     def from_unit_definition_ar(
@@ -135,43 +136,43 @@ class UnitDefinitionModel(ConceptModel):
 
 
 class UnitDefinitionPostInput(ConceptPostInput):
-    convertible_unit: bool
-    display_unit: bool
-    master_unit: bool
-    si_unit: bool
-    us_conventional_unit: bool
-    use_complex_unit_conversion: bool = False
-    ct_units: list[str]
-    unit_subsets: list[str] | None = []
-    ucum: str | None = None
-    unit_dimension: str | None = None
-    legacy_code: str | None = None
-    use_molecular_weight: bool | None = None
-    conversion_factor_to_master: float | None = None
-    comment: str | None = None
-    order: int | None = None
-    definition: str | None = None
-    template_parameter: bool = False
+    convertible_unit: Annotated[bool, Field()]
+    display_unit: Annotated[bool, Field()]
+    master_unit: Annotated[bool, Field()]
+    si_unit: Annotated[bool, Field()]
+    us_conventional_unit: Annotated[bool, Field()]
+    use_complex_unit_conversion: Annotated[bool, Field()] = False
+    ct_units: Annotated[list[str], Field()]
+    unit_subsets: list[str] | None = Field(default_factory=list)
+    ucum: Annotated[str | None, Field()] = None
+    unit_dimension: Annotated[str | None, Field()] = None
+    legacy_code: Annotated[str | None, Field()] = None
+    use_molecular_weight: Annotated[bool | None, Field()] = None
+    conversion_factor_to_master: Annotated[float | None, Field()] = None
+    comment: Annotated[str | None, Field()] = None
+    order: Annotated[int | None, Field()] = None
+    definition: Annotated[str | None, Field()] = None
+    template_parameter: Annotated[bool, Field()] = False
 
 
 class UnitDefinitionPatchInput(ConceptPatchInput):
-    convertible_unit: bool | None = None
-    display_unit: bool | None = None
-    master_unit: bool | None = None
-    si_unit: bool | None = None
-    us_conventional_unit: bool | None = None
-    use_complex_unit_conversion: bool | None = None
-    ct_units: list[str] | None = []
-    unit_subsets: list[str] | None = []
-    ucum: str | None = None
-    unit_dimension: str | None = None
-    legacy_code: str | None = None
-    use_molecular_weight: bool | None = None
-    conversion_factor_to_master: float | None = None
-    comment: str | None = None
-    order: int | None = None
-    definition: str | None = None
-    template_parameter: bool | None = None
+    convertible_unit: Annotated[bool | None, Field()] = None
+    display_unit: Annotated[bool | None, Field()] = None
+    master_unit: Annotated[bool | None, Field()] = None
+    si_unit: Annotated[bool | None, Field()] = None
+    us_conventional_unit: Annotated[bool | None, Field()] = None
+    use_complex_unit_conversion: Annotated[bool | None, Field()] = None
+    ct_units: list[str] | None = Field(default_factory=list)
+    unit_subsets: list[str] | None = Field(default_factory=list)
+    ucum: Annotated[str | None, Field()] = None
+    unit_dimension: Annotated[str | None, Field()] = None
+    legacy_code: Annotated[str | None, Field()] = None
+    use_molecular_weight: Annotated[bool | None, Field()] = None
+    conversion_factor_to_master: Annotated[float | None, Field()] = None
+    comment: Annotated[str | None, Field()] = None
+    order: Annotated[int | None, Field()] = None
+    definition: Annotated[str | None, Field()] = None
+    template_parameter: Annotated[bool | None, Field()] = None
 
 
 class UnitDefinitionSimpleModel(BaseModel):
@@ -180,3 +181,11 @@ class UnitDefinitionSimpleModel(BaseModel):
     dimension_name: Annotated[
         str | None, Field(json_schema_extra={"nullable": True})
     ] = None
+
+
+class UnitDefinitionModelVersion(UnitDefinitionModel):
+    """
+    Class for storing UnitDefinitionModel and calculation of differences
+    """
+
+    changes: list[str] = Field(description=CHANGES_FIELD_DESC, default_factory=list)

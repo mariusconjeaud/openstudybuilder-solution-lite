@@ -165,14 +165,15 @@ def test_post_versions_activity_group(api_client):
     assert res["possible_actions"] == ["approve", "edit"]
 
 
-def test_patch_draft_activity_group(api_client):
+def test_update_draft_activity_group(api_client):
     data = {
         "name": "new_activity_name",
         "name_sentence_case": "new_activity_name",
+        "abbreviation": "abbv",
         "definition": "new_definition",
         "change_description": "activity patch",
     }
-    response = api_client.patch(
+    response = api_client.put(
         "/concepts/activities/activity-groups/ActivityGroup_000001", json=data
     )
 

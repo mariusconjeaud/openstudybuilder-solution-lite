@@ -87,3 +87,9 @@ def after_load_schema(
         if path in schema.raw_schema["paths"]:
             del schema.raw_schema["paths"][path]
             print(f" - {path}")
+
+    # Remove 'security' field from each operation, as we run tests without authentication
+    for _path, path_def in schema.raw_schema["paths"].items():
+        for _method, method_def in path_def.items():
+            if "security" in method_def:
+                del method_def["security"]

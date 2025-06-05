@@ -22,7 +22,6 @@ Then('The Controlled Terminology Version data is reflected in the table', () => 
 
 When('The Controlled Terminology Version is edited', () => {
     currentTimestamp = currentDate()
-    cy.tableRowActions(0, 'Edit')
     cy.get('.mdi-menu-down').click()
     cy.selectFirstVSelect('sponsor-ct-package-dropdown')    
     cy.fillInput('description-field','Edited description')
@@ -38,11 +37,6 @@ Then('The edited Controlled Terminology Version data is reflected in the table',
     cy.checkLastRow('Modified', currentTimestamp)
     cy.checkLastRow('Modified by', '8e0e7301-7bd3-49f2-b39e-e7fdd4dcdd22')
 
-})
-
-When('A Controlled Terminology Version is deleted', () => {
-    cy.tableRowActions(0, 'Delete')
-    cy.clickButton('continue-popup')
 })
 
 Then('The Controlled Terminology Version data is removed from the table', () => {
@@ -69,7 +63,6 @@ When('The user is presented with version history of the output containing timest
 })
 
 When('The user clicks on History for particular element', () => {
-    cy.tableRowActions(0, 'Show history')
     cy.elementContain('version-history-window', 'Standard version selections history')
     cy.elementContain('version-history-window', 'CT Catalogue')
     cy.elementContain('version-history-window', 'Sponsor CT Package')

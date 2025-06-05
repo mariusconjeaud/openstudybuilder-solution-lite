@@ -24,10 +24,13 @@ from clinical_mdr_api.models.concepts.activities.activity import (
     ActivityOverview,
     ActivityRequestRejectInput,
     ActivityVersion,
+    ActivityVersionDetail,
 )
 from clinical_mdr_api.models.concepts.activities.activity_instance import (
+    ActivityInstanceDetail,
     ActivityInstanceEditInput,
 )
+from clinical_mdr_api.models.utils import GenericFilteringReturn
 from clinical_mdr_api.services._utils import is_library_editable
 from clinical_mdr_api.services.concepts import constants
 from clinical_mdr_api.services.concepts.activities.activity_instance_service import (
@@ -40,7 +43,6 @@ from clinical_mdr_api.services.concepts.concept_generic_service import (
 from clinical_mdr_api.utils import normalize_string
 from common.config import REQUESTED_LIBRARY_NAME
 from common.exceptions import BusinessLogicException, NotFoundException
-from common.utils import get_edit_input_or_previous_value
 
 
 class ActivityService(ConceptGenericService[ActivityAR]):
@@ -165,12 +167,12 @@ class ActivityService(ConceptGenericService[ActivityAR]):
     def _edit_aggregate(
         self, item: ActivityAR, concept_edit_input: ActivityEditInput
     ) -> ActivityAR:
-        activity_groups_by_uid, activity_subgroups_by_uid = (
-            self._get_activity_groups_and_subgroups_from_activity_groupings(
-                concept_edit_input.activity_groupings
-            )
-        )
         if "activity_groupings" in concept_edit_input.model_fields_set:
+            activity_groups_by_uid, activity_subgroups_by_uid = (
+                self._get_activity_groups_and_subgroups_from_activity_groupings(
+                    concept_edit_input.activity_groupings
+                )
+            )
             activity_groupings = (
                 [
                     self._to_activity_grouping_vo(
@@ -184,34 +186,26 @@ class ActivityService(ConceptGenericService[ActivityAR]):
                 else []
             )
         else:
-            activity_groupings = item.concept_vo.activity_groupings
-        synonyms = get_edit_input_or_previous_value(
-            concept_edit_input, item.concept_vo, "synonyms"
+            activity_groupings = []
+            activity_groups_by_uid = set()
+            activity_subgroups_by_uid = set()
+        synonyms = (
+            [] if concept_edit_input.synonyms is None else concept_edit_input.synonyms
         )
-        if synonyms is None:
-            synonyms = []
         item.edit_draft(
             author_id=self.author_id,
             change_description=concept_edit_input.change_description,
             concept_vo=ActivityVO.from_repository_values(
-                nci_concept_id=get_edit_input_or_previous_value(
-                    concept_edit_input, item.concept_vo, "nci_concept_id"
-                ),
-                nci_concept_name=get_edit_input_or_previous_value(
-                    concept_edit_input, item.concept_vo, "nci_concept_name"
-                ),
+                nci_concept_id=concept_edit_input.nci_concept_id,
+                nci_concept_name=concept_edit_input.nci_concept_name,
                 name=concept_edit_input.name,
                 name_sentence_case=concept_edit_input.name_sentence_case,
-                synonyms=get_edit_input_or_previous_value(
-                    concept_edit_input, item.concept_vo, "synonyms"
-                ),
+                synonyms=synonyms,
                 definition=concept_edit_input.definition,
                 abbreviation=concept_edit_input.abbreviation,
                 activity_groupings=activity_groupings,
                 activity_instances=[],
-                request_rationale=get_edit_input_or_previous_value(
-                    concept_edit_input, item.concept_vo, "request_rationale"
-                ),
+                request_rationale=concept_edit_input.request_rationale,
                 is_request_final=concept_edit_input.is_request_final,
                 is_data_collected=concept_edit_input.is_data_collected,
                 is_multiple_selection_allowed=concept_edit_input.is_multiple_selection_allowed,
@@ -408,16 +402,6 @@ class ActivityService(ConceptGenericService[ActivityAR]):
         item_metadata = activity_before_save.item_metadata
         last_final_version = f"{item_metadata.major_version}.0"
 
-        groupings = item.concept_vo.activity_groupings
-        instance_groupings = []
-        for grouping in groupings:
-            grp = {
-                "activity_uid": item.uid,
-                "activity_group_uid": grouping.activity_group_uid,
-                "activity_subgroup_uid": grouping.activity_subgroup_uid,
-            }
-            instance_groupings.append(grp)
-
         linked_instances = (
             self._repos.activity_repository.get_linked_upgradable_activity_instances(
                 uid=item.uid, version=last_final_version
@@ -425,6 +409,7 @@ class ActivityService(ConceptGenericService[ActivityAR]):
         )
         if linked_instances is None:
             return
+
         instance_service = ActivityInstanceService()
 
         for instance in linked_instances.get("activity_instances", []):
@@ -433,12 +418,130 @@ class ActivityService(ConceptGenericService[ActivityAR]):
                 LibraryItemStatus.FINAL.value,
             ):
                 continue
+
+            instance_groupings = []
+            for grouping in item.concept_vo.activity_groupings:
+                grp = {
+                    "activity_uid": item.uid,
+                    "activity_group_uid": grouping.activity_group_uid,
+                    "activity_subgroup_uid": grouping.activity_subgroup_uid,
+                }
+                if grp in instance["activity_groupings"]:
+                    instance_groupings.append(grp)
+
+            if not instance_groupings:
+                # No matching groupings found, skip this instance
+                continue
+
             if instance["version"]["status"] == LibraryItemStatus.FINAL.value:
                 instance_service.non_transactional_create_new_version(instance["uid"])
             edit_input = ActivityInstanceEditInput(
                 change_description="Cascade edit", activity_groupings=instance_groupings
             )
             instance_service.non_transactional_edit(
-                uid=instance["uid"], concept_edit_input=edit_input
+                uid=instance["uid"], concept_edit_input=edit_input, patch_mode=False
             )
             instance_service.non_transactional_approve(instance["uid"])
+
+    def get_specific_activity_version_groupings(
+        self,
+        activity_uid: str,
+        version: str,
+        page_number: int = 1,
+        page_size: int = 10,
+        total_count: bool = False,
+    ) -> ActivityVersionDetail | dict:
+        """
+        Get activity groupings information for a specific version of an activity with pagination support.
+
+        Args:
+            activity_uid: The unique ID of the activity
+            version: The version of the activity in format 'x.y'
+            page_number: The page number for pagination
+            page_size: The number of items per page
+            total_count: Whether to include the total count of items
+
+        Returns:
+            A paginated response containing activity version details
+        """
+        NotFoundException.raise_if_not(
+            self.repository.exists_by("uid", activity_uid, True),
+            "Activity",
+            activity_uid,
+        )
+
+        data = self._repos.activity_repository.get_specific_activity_version_groupings(
+            uid=activity_uid,
+            version=version,
+            page_number=page_number,
+            page_size=page_size,
+            total_count=total_count,
+        )
+
+        if isinstance(data, GenericFilteringReturn):
+            # Handle paginated response from GenericFilteringReturn
+            items = [
+                ActivityVersionDetail.from_repository_input(item) for item in data.items
+            ]
+            return GenericFilteringReturn.create(items=items, total=data.total)
+
+        # Handle non-paginated response for backward compatibility
+        return ActivityVersionDetail.from_repository_input(data=data)
+
+    def specific_version_exists(self, uid: str, version: str) -> bool:
+        """Checks if a specific version exists for a given concept UID."""
+        # This could be implemented in the repository if preferred, but here it's in the service
+        query = """
+            MATCH (root {uid: $uid})-[rel:HAS_VERSION {version: $version}]->()
+            RETURN count(rel) > 0
+        """
+        # Ensure db is imported: from neomodel import db
+        result, _ = db.cypher_query(query, params={"uid": uid, "version": version})
+        return result[0][0] if result and result[0] else False
+
+    def get_activity_instances_for_version(
+        self,
+        activity_uid: str,
+        version: str | None,
+        page_number: int = 1,
+        page_size: int = 10,
+    ) -> GenericFilteringReturn[ActivityInstanceDetail]:
+        """
+        Get activity instances relevant to a specific activity version's timeframe,
+        with pagination.
+
+        Args:
+            activity_uid: The unique ID of the activity.
+            version: The specific version of the activity (e.g., "16.0").
+            page_number: The page number for pagination.
+            page_size: The number of items per page.
+        """
+        NotFoundException.raise_if_not(
+            self.repository.exists_by("uid", activity_uid, True),
+            "Activity",
+            activity_uid,
+        )
+        # Also check if the specific version exists for better error handling
+        NotFoundException.raise_if_not(
+            self.specific_version_exists(activity_uid, version),
+            "Activity Version",
+            f"{activity_uid} version {version}",
+        )
+
+        # Calculate skip value based on page number and size
+        skip = (page_number - 1) * page_size if page_size > 0 else 0
+
+        # Get instances and total count from repository
+        instances, total_count = (
+            self._repos.activity_repository.get_activity_instances_for_version(
+                activity_uid=activity_uid,
+                version=version,
+                skip=skip,
+                limit=page_size,
+            )
+        )
+
+        # Transform each instance dict into a model
+        instance_models = [ActivityInstanceDetail(**instance) for instance in instances]
+
+        return GenericFilteringReturn.create(items=instance_models, total=total_count)

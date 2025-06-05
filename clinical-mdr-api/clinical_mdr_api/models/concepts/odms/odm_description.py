@@ -16,17 +16,17 @@ from clinical_mdr_api.models.validators import is_language_supported
 
 
 class OdmDescription(ConceptModel):
-    language: str
-    description: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = (
-        None
-    )
-    instruction: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = (
-        None
-    )
-    sponsor_instruction: Annotated[
-        str | None, Field(json_schema_extra={"nullable": True})
+    language: Annotated[str, Field()]
+    description: Annotated[
+        str | None, Field(json_schema_extra={"nullable": True, "format": "html"})
     ] = None
-    possible_actions: list[str]
+    instruction: Annotated[
+        str | None, Field(json_schema_extra={"nullable": True, "format": "html"})
+    ] = None
+    sponsor_instruction: Annotated[
+        str | None, Field(json_schema_extra={"nullable": True, "format": "html"})
+    ] = None
+    possible_actions: Annotated[list[str], Field()]
 
     @classmethod
     def from_odm_description_ar(cls, odm_description_ar: OdmDescriptionAR) -> Self:
@@ -87,23 +87,29 @@ class OdmDescriptionSimpleModel(BaseModel):
     uid: Annotated[str, Field()]
     name: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = None
     language: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = None
-    description: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = (
-        None
-    )
-    instruction: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = (
-        None
-    )
+    description: Annotated[
+        str | None, Field(json_schema_extra={"nullable": True, "format": "html"})
+    ] = None
+    instruction: Annotated[
+        str | None, Field(json_schema_extra={"nullable": True, "format": "html"})
+    ] = None
     sponsor_instruction: Annotated[
-        str | None, Field(json_schema_extra={"nullable": True})
+        str | None, Field(json_schema_extra={"nullable": True, "format": "html"})
     ] = None
     version: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = None
 
 
 class OdmDescriptionPostInput(ConceptPostInput):
     language: Annotated[str, Field(min_length=1)]
-    description: Annotated[str | None, Field(min_length=1)] = None
-    instruction: Annotated[str | None, Field(min_length=1)] = None
-    sponsor_instruction: Annotated[str | None, Field(min_length=1)] = None
+    description: Annotated[
+        str | None, Field(min_length=1, json_schema_extra={"format": "html"})
+    ] = None
+    instruction: Annotated[
+        str | None, Field(min_length=1, json_schema_extra={"format": "html"})
+    ] = None
+    sponsor_instruction: Annotated[
+        str | None, Field(min_length=1, json_schema_extra={"format": "html"})
+    ] = None
 
     _date_validator = field_validator("language")(is_language_supported)
 
@@ -120,9 +126,15 @@ class OdmDescriptionPatchInput(ConceptPatchInput):
 class OdmDescriptionBatchPatchInput(ConceptPatchInput):
     uid: Annotated[str, Field(min_length=1)]
     language: Annotated[str | None, Field(min_length=1)]
-    description: Annotated[str | None, Field(min_length=1)]
-    instruction: Annotated[str | None, Field(min_length=1)]
-    sponsor_instruction: Annotated[str | None, Field(min_length=1)]
+    description: Annotated[
+        str | None, Field(min_length=1, json_schema_extra={"format": "html"})
+    ]
+    instruction: Annotated[
+        str | None, Field(min_length=1, json_schema_extra={"format": "html"})
+    ]
+    sponsor_instruction: Annotated[
+        str | None, Field(min_length=1, json_schema_extra={"format": "html"})
+    ]
 
 
 class OdmDescriptionBatchInput(BatchInputModel):
@@ -130,14 +142,14 @@ class OdmDescriptionBatchInput(BatchInputModel):
         str,
         Field(description="HTTP method corresponding to operation type", min_length=1),
     ]
-    content: OdmDescriptionBatchPatchInput | OdmDescriptionPostInput
+    content: Annotated[OdmDescriptionBatchPatchInput | OdmDescriptionPostInput, Field()]
 
 
 class OdmDescriptionBatchOutput(BaseModel):
     response_code: Annotated[
         int, Field(description="The HTTP response code related to input operation")
     ]
-    content: OdmDescription | None | BatchErrorResponse
+    content: Annotated[OdmDescription | None | BatchErrorResponse, Field()]
 
 
 class OdmDescriptionVersion(OdmDescription):
@@ -145,9 +157,4 @@ class OdmDescriptionVersion(OdmDescription):
     Class for storing OdmDescription and calculation of differences
     """
 
-    changes: Annotated[
-        list[str],
-        Field(
-            description=CHANGES_FIELD_DESC,
-        ),
-    ] = []
+    changes: list[str] = Field(description=CHANGES_FIELD_DESC, default_factory=list)

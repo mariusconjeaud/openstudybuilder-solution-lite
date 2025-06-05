@@ -1,7 +1,6 @@
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Body, Path, Query, Request, Response
-from fastapi import status as fast_api_status
+from fastapi import APIRouter, Body, Path, Query, Request
 from pydantic.types import Json
 
 from clinical_mdr_api.domain_repositories.models.syntax import TimeframeValue
@@ -42,7 +41,6 @@ TimeframeUID = Path(description="The unique id of the timeframe.")
     dependencies=[rbac.LIBRARY_READ],
     summary="Returns all timeframes in their latest/newest version.",
     description=_generic_descriptions.DATA_EXPORTS_HEADER,
-    response_model=CustomPage[Timeframe],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -122,7 +120,7 @@ def get_all(
     total_count: Annotated[
         bool | None, Query(description=_generic_descriptions.TOTAL_COUNT)
     ] = False,
-):
+) -> CustomPage[Timeframe]:
     data = Service().get_all(
         status=status,
         return_study_count=True,
@@ -144,7 +142,6 @@ def get_all(
     summary="Returns possible values from the database for a given header",
     description="""Allowed parameters include : field name for which to get possible
     values, search string to provide filtering for the field name, additional filters to apply on other fields""",
-    response_model=list[Any],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -185,7 +182,7 @@ def get_distinct_values_for_header(
     page_size: Annotated[
         int | None, Query(description=_generic_descriptions.HEADER_PAGE_SIZE)
     ] = config.DEFAULT_HEADER_PAGE_SIZE,
-):
+) -> list[Any]:
     return Service().get_distinct_values_for_header(
         status=status,
         field_name=field_name,
@@ -199,7 +196,6 @@ def get_distinct_values_for_header(
 @router.get(
     "/audit-trail",
     dependencies=[rbac.LIBRARY_READ],
-    response_model=CustomPage[Timeframe],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -231,7 +227,7 @@ def retrieve_audit_trail(
     total_count: Annotated[
         bool | None, Query(description=_generic_descriptions.TOTAL_COUNT)
     ] = False,
-):
+) -> CustomPage[Timeframe]:
     results = Service().get_all(
         page_number=page_number,
         page_size=page_size,
@@ -252,7 +248,6 @@ def retrieve_audit_trail(
     summary="Returns the latest/newest version of a specific timeframe identified by 'timeframe_uid'.",
     description="""If multiple request query parameters are used, then they need to
     match all at the same time (they are combined with the AND operation).""",
-    response_model=Timeframe | None,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -284,7 +279,7 @@ def get(
             r"E.g. '0.1', '0.2', '1.0', ...",
         ),
     ] = None,
-):
+) -> Timeframe:
     return Service().get_by_uid(uid=timeframe_uid, version=version, status=status)
 
 
@@ -294,7 +289,6 @@ def get(
     summary="Returns the version history of a specific timeframe identified by 'timeframe_uid'.",
     description="The returned versions are ordered by\n"
     "0. start_date descending (newest entries first)",
-    response_model=list[TimeframeVersion],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -304,7 +298,7 @@ def get(
         },
     },
 )
-def get_versions(timeframe_uid: Annotated[str, TimeframeUID]):
+def get_versions(timeframe_uid: Annotated[str, TimeframeUID]) -> list[TimeframeVersion]:
     return Service().get_version_history(timeframe_uid)
 
 
@@ -322,7 +316,6 @@ If the request succeeds:
 * The 'change_description' property will be set automatically.
 * The 'version' property will be set to '0.1'.
 """,
-    response_model=Timeframe,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -347,7 +340,7 @@ def create(
         TimeframeCreateInput,
         Body(description="Related parameters of the timeframe that shall be created."),
     ],
-):
+) -> Timeframe:
     return Service().create(timeframe)
 
 
@@ -363,7 +356,6 @@ def create(
 If the request succeeds:
 * No timeframe will be created, but the result of the request will show what the timeframe will look like.
 """,
-    response_model=Timeframe,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -390,7 +382,7 @@ def preview(
             description="Related parameters of the timeframe that shall be previewed."
         ),
     ],
-):
+) -> Timeframe:
     return Service().create(timeframe, preview=True)
 
 
@@ -406,7 +398,6 @@ If the request succeeds:
 * The 'version' property will be increased automatically by +0.1.
 * The status will remain in 'Draft'.
 """,
-    response_model=Timeframe,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -434,7 +425,7 @@ def edit(
             description="The new parameter terms for the timeframe including the change description.",
         ),
     ],
-):
+) -> Timeframe:
     return Service().edit_draft(timeframe_uid, timeframe)
 
 
@@ -451,7 +442,6 @@ If the request succeeds:
 * The 'change_description' property will be set automatically.
 * The 'version' property will be increased automatically to the next major version.
     """,
-    response_model=Timeframe,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -468,7 +458,7 @@ If the request succeeds:
         },
     },
 )
-def approve(timeframe_uid: Annotated[str, TimeframeUID]):
+def approve(timeframe_uid: Annotated[str, TimeframeUID]) -> Timeframe:
     return Service().approve(timeframe_uid)
 
 
@@ -484,7 +474,6 @@ If the request succeeds:
 * The 'change_description' property will be set automatically. 
 * The 'version' property will remain the same as before.
     """,
-    response_model=Timeframe,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -500,7 +489,7 @@ If the request succeeds:
         },
     },
 )
-def inactivate(timeframe_uid: Annotated[str, TimeframeUID]):
+def inactivate(timeframe_uid: Annotated[str, TimeframeUID]) -> Timeframe:
     return Service().inactivate_final(timeframe_uid)
 
 
@@ -517,7 +506,6 @@ If the request succeeds:
 * The 'change_description' property will be set automatically. 
 * The 'version' property will remain the same as before.
     """,
-    response_model=Timeframe,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -533,7 +521,7 @@ If the request succeeds:
         },
     },
 )
-def reactivate(timeframe_uid: Annotated[str, TimeframeUID]):
+def reactivate(timeframe_uid: Annotated[str, TimeframeUID]) -> Timeframe:
     return Service().reactivate_retired(timeframe_uid)
 
 
@@ -545,7 +533,6 @@ def reactivate(timeframe_uid: Annotated[str, TimeframeUID]):
 * the timeframe is in 'Draft' status and
 * the timeframe has never been in 'Final' status and
 * the timeframe belongs to a library that allows deleting (the 'is_editable' property of the library needs to be true).""",
-    response_model=None,
     status_code=204,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -564,13 +551,11 @@ def reactivate(timeframe_uid: Annotated[str, TimeframeUID]):
 )
 def delete(timeframe_uid: Annotated[str, TimeframeUID]):
     Service().soft_delete(timeframe_uid)
-    return Response(status_code=fast_api_status.HTTP_204_NO_CONTENT)
 
 
 @router.get(
     "/{timeframe_uid}/studies",
     dependencies=[rbac.STUDY_READ],
-    response_model=list[Study],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -590,7 +575,7 @@ def get_studies(
         list[StudyComponentEnum] | None,
         Query(description=study_section_description("exclude")),
     ] = None,
-):
+) -> list[Study]:
     return Service().get_referencing_studies(
         uid=timeframe_uid,
         node_type=TimeframeValue,
@@ -606,7 +591,6 @@ def get_studies(
     description="Returns all template parameters used in the timeframe template "
     "that is the basis for the timeframe identified by 'timeframe_uid'. "
     "Includes the available values per parameter.",
-    response_model=list[ComplexTemplateParameter],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -621,5 +605,5 @@ def get_parameters(
             description="if specified only valid parameters for a given study will be returned.",
         ),
     ] = None,
-):
+) -> list[ComplexTemplateParameter]:
     return Service().get_parameters(timeframe_uid, study_uid=study_uid)

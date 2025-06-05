@@ -19,7 +19,6 @@ router = APIRouter()
     "/studies/study-metadata",
     dependencies=[rbac.STUDY_READ],
     summary="Retrieve study metadata of a specific study",
-    response_model=StudyMetadataListingModel,
     response_class=PrettyJSONResponse,
     status_code=200,
     responses={
@@ -49,7 +48,7 @@ def get_study_metadata(
             r"format in YYYY-MM-DDThh:mm:ssZ. ",
         ),
     ] = None,
-):
+) -> StudyMetadataListingModel:
     study_metadata_listing_service = StudyMetadataListingService()
     return study_metadata_listing_service.get_study_metadata(
         project_id, study_number, subpart_acronym, study_value_version, datetime

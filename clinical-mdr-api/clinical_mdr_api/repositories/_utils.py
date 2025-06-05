@@ -991,6 +991,9 @@ class CypherQueryBuilder:
                 )
 
                 if get_sub_fields(attr_desc) is not None:
+                    if self.format_filter_sort_keys:
+                        last_property = self.format_filter_sort_keys(last_property)
+
                     alias_clause = f"[attr in {attr_desc_name} | attr.{last_property}]"
 
         if not alias_clause:

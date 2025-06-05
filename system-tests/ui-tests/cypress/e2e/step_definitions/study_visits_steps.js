@@ -1,7 +1,14 @@
 const { Given, When, Then } = require("@badeball/cypress-cucumber-preprocessor");
 import { getCurrStudyUid } from '../../support/helper_functions'
 
-let visitsCount
+let studyVisits_uid
+
+When('[API] Study vists uids are fetched for study {string}', (study_uid) => cy.getStudyVisits(study_uid).then(uids => studyVisits_uid = uids))
+
+When('[API] Study visits in study {string} are cleaned-up', (study_uid) => {
+    const studyVisitsSorted_uid = studyVisits_uid.sort().reverse()
+    studyVisitsSorted_uid.forEach(visit_uid => cy.deleteStudyVisitByUid(study_uid, visit_uid))
+})
 
 Given('The epoch exists in selected study', () => {
     cy.createTestEpoch(getCurrStudyUid())
@@ -22,9 +29,7 @@ Given('The study without Study Epoch has been selected', () => {
     cy.selectTestStudy('Study_000004')
 })
 
-Given('The study without anchor visit has been selected', () => {
-    cy.selectTestStudy('Study_000003')
-})
+Given('The study with uid {string} is selected', study_uid => cy.selectTestStudy(study_uid))
 
 When('The epoch for visit is not selected in new visit form', () => {
     cy.wait(2500)
@@ -119,7 +124,6 @@ Then('The Anchor visit checkbox is disabled', () => {
 
 When('The study visit is edited', () => {
     cy.waitForTableData()
-    cy.tableRowActions(0, 'Edit')
     cy.clickFormActionButton('continue')
     cy.wait(3000)
     cy.clickFormActionButton('continue')
@@ -129,12 +133,6 @@ When('The study visit is edited', () => {
 
 Then('The study visit data is reflected within the Study Visits table', () => {
     cy.tableContains('Edited visit description')
-})
-
-When('The study visit is deleted', () => {
-    cy.wait(2000)
-    cy.waitForTableData()
-    cy.tableRowActions(0, 'Delete')
 })
 
 When('The user opens edit form for the study epoch for chosen study visit', () => {

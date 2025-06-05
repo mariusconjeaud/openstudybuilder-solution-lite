@@ -104,7 +104,10 @@ STATS_UPDATE_QUERY = """
     """
 
 DATABASE = environ.get("NEO4J_MDR_DATABASE")
-uri = "neo4j://{}:{}".format(
+NEO4J_PROTOCOL = environ.get("NEO4J_PROTOCOL", "neo4j")
+
+uri = "{}://{}:{}".format(
+    NEO4J_PROTOCOL,
     environ.get("NEO4J_MDR_HOST"), environ.get("NEO4J_MDR_BOLT_PORT")
 )
 

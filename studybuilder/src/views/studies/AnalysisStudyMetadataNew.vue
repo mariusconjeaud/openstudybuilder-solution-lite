@@ -20,7 +20,7 @@
             :headers="mdEndpntHeaders"
           >
             <template #[`item.OBJTV`]="{ item }">
-              <div v-html="item.OBJTV" />
+              <div v-html="sanitizeHTML(item.OBJTV)" />
             </template>
             <template #[`item.RACT`]="{ item }">
               {{ $filters.itemList(item.RACT) }}
@@ -46,6 +46,7 @@ import { useI18n } from 'vue-i18n'
 import AnalysisMetadataTable from '@/components/studies/AnalysisMetadataTable.vue'
 import HelpButton from '@/components/tools/HelpButton.vue'
 import NavigationTabs from '@/components/tools/NavigationTabs.vue'
+import { sanitizeHTML } from '@/utils/sanitize'
 
 const { t } = useI18n()
 const mdEndpntHeaders = [

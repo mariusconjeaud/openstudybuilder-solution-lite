@@ -92,11 +92,11 @@
                 params: { id: getActivitySubgroupUID(item) },
               }"
             >
-              <span v-html="subGroupsDisplay(item)"></span>
+              <span v-html="sanitizeHTML(subGroupsDisplay(item))"></span>
             </router-link>
           </template>
           <template v-else>
-            <span v-html="subGroupsDisplay(item)"></span>
+            <span v-html="sanitizeHTML(subGroupsDisplay(item))"></span>
           </template>
         </template>
         <template v-else-if="source === 'activity-groups'">
@@ -107,11 +107,11 @@
                 params: { id: getActivityGroupUID(item) },
               }"
             >
-              <span v-html="groupsDisplay(item)"></span>
+              <span v-html="sanitizeHTML(groupsDisplay(item))"></span>
             </router-link>
           </template>
           <template v-else>
-            <span v-html="groupsDisplay(item)"></span>
+            <span v-html="sanitizeHTML(groupsDisplay(item))"></span>
           </template>
         </template>
         <template v-else>
@@ -124,7 +124,7 @@
         <NCIConceptLink :concept-id="item.nci_concept_id" />
       </template>
       <template #[`item.synonyms`]="{ item }">
-        <div v-html="synonymsDisplay(item.synonyms)" />
+        <div v-html="sanitizeHTML(synonymsDisplay(item.synonyms))" />
       </template>
       <template #[`item.status`]="{ item }">
         <StatusChip :status="item.status" />
@@ -515,6 +515,7 @@ import { useFeatureFlagsStore } from '@/stores/feature-flags'
 import { computed, inject, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import filters from '@/filters'
+import { sanitizeHTML, escapeHTML } from '@/utils/sanitize'
 
 const props = defineProps({
   source: {
@@ -702,7 +703,6 @@ const instantiationsHeaders = [
     key: 'activity_instance_class.name',
   },
   { title: t('ActivityTable.instance'), key: 'name' },
-  { title: t('_global.definition'), key: 'definition' },
   {
     title: t('ActivityTable.nci_concept_id'),
     key: 'nci_concept_id',
@@ -1186,15 +1186,8 @@ function isExpand() {
 }
 
 function synonymsDisplay(item) {
-  let display = ''
-  if (!item) {
-    return ''
-  } else {
-    item.forEach((element) => {
-      display += '&#9679; ' + element + '</br>'
-    })
-    return display
-  }
+  if (!item?.length) return ''
+  return item.map((element) => `&#9679; ${escapeHTML(element)}`).join('<br />')
 }
 
 function groupsDisplay(item) {
@@ -1206,13 +1199,15 @@ function groupsDisplay(item) {
 
   if (Array.isArray(groupName)) {
     if (groupName.length === 1) {
-      return groupName[0]
+      return escapeHTML(groupName[0])
     } else {
-      return groupName.map((name) => `&#9679; ${name}`).join('</br>')
+      return groupName
+        .map((name) => `&#9679; ${escapeHTML(name)}`)
+        .join('<br />')
     }
   }
 
-  return groupName
+  return escapeHTML(groupName)
 }
 
 function subGroupsDisplay(item) {
@@ -1224,13 +1219,13 @@ function subGroupsDisplay(item) {
 
   if (Array.isArray(subName)) {
     if (subName.length === 1) {
-      return subName[0]
+      return escapeHTML(subName[0])
     } else {
-      return subName.map((name) => `&#9679; ${name}`).join('</br>')
+      return subName.map((name) => `&#9679; ${escapeHTML(name)}`).join('<br />')
     }
   }
 
-  return subName
+  return escapeHTML(subName)
 }
 
 function activitiesDisplay(item) {

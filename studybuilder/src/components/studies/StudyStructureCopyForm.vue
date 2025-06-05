@@ -14,7 +14,7 @@
           <div class="dialog-sub-title">
             {{ $t('StudyStructureCopyForm.preview_of_study') }}
           </div>
-          <div class="my-4" v-html="studyDesignSvg" />
+          <div class="my-4" v-html="sanitizeHTML(studyDesignSvg)" />
           <div class="dialog-title mb-4">
             {{ $t('StudyStructureCopyForm.title2') }}
           </div>
@@ -142,6 +142,7 @@ import studyApi from '@/api/study'
 import StudySelectorField from './StudySelectorField.vue'
 import CheckboxField from '@/components/ui/CheckboxField.vue'
 import CheckboxWithChildField from '@/components/ui/CheckboxWithChildField.vue'
+import { sanitizeHTML } from '@/utils/sanitize'
 
 const props = defineProps({
   modelValue: {

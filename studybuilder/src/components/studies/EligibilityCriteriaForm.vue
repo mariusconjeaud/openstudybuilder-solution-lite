@@ -86,10 +86,18 @@
         </template>
         <template #[`item.guidance_text`]="{ item }">
           <template v-if="item.criteria_template">
-            <span v-html="item.criteria_template.guidance_text" />
+            <span
+              v-html="sanitizeHTMLHandler(item.criteria_template.guidance_text)"
+            />
           </template>
           <template v-else>
-            <span v-html="item.criteria.criteria_template.guidance_text" />
+            <span
+              v-html="
+                sanitizeHTMLHandler(
+                  item.criteria.criteria_template.guidance_text
+                )
+              "
+            />
           </template>
         </template>
         <template #[`item.actions`]="{ item }">
@@ -131,10 +139,14 @@
           </template>
           <template #[`item.guidance_text`]="{ item }">
             <template v-if="item.criteria_template">
-              <span v-html="item.criteria_template.guidance_text" />
+              <span
+                v-html="
+                  sanitizeHTMLHandler(item.criteria_template.guidance_text)
+                "
+              />
             </template>
             <template v-else>
-              <span v-html="item.criteria.guidance_text" />
+              <span v-html="sanitizeHTMLHandler(item.criteria.guidance_text)" />
             </template>
           </template>
         </StudySelectionTable>
@@ -146,7 +158,7 @@
           <NNParameterHighlighter :name="item.name" default-color="orange" />
         </template>
         <template #[`item.guidance_text`]="{ item }">
-          <span v-html="item.guidance_text" />
+          <span v-html="sanitizeHTMLHandler(item.guidance_text)" />
         </template>
         <template #[`item.actions`]="{ item }">
           <v-btn
@@ -226,7 +238,7 @@
             />
           </template>
           <template #[`item.guidance_text`]="{ item }">
-            <span v-html="item.guidance_text" />
+            <span v-html="sanitizeHTMLHandler(item.guidance_text)" />
           </template>
           <template #[`item.actions`]="{ item }">
             <v-btn
@@ -305,6 +317,7 @@ import filteringParameters from '@/utils/filteringParameters'
 import statuses from '@/constants/statuses'
 import { QuillEditor } from '@vueup/vue-quill'
 import { useStudiesGeneralStore } from '@/stores/studies-general'
+import { sanitizeHTML } from '@/utils/sanitize'
 
 export default {
   components: {
@@ -492,6 +505,9 @@ export default {
     })
   },
   methods: {
+    sanitizeHTMLHandler(html) {
+      return sanitizeHTML(html)
+    },
     close() {
       this.$emit('close')
       this.$refs.stepper.reset()

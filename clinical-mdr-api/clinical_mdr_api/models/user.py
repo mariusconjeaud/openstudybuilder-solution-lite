@@ -12,7 +12,7 @@ class UserInfo(PydanticBaseModel):
     email: Annotated[str | None, Field(json_schema_extra={"nullable": True})]
     azp: Annotated[str | None, Field(json_schema_extra={"nullable": True})]
     oid: Annotated[str | None, Field(json_schema_extra={"nullable": True})]
-    roles: Annotated[list[str], Field()] = []
+    roles: list[str] = Field(default_factory=list)
     created: Annotated[datetime, Field(json_schema_extra={"nullable": True})]
     updated: Annotated[datetime | None, Field(json_schema_extra={"nullable": True})]
 

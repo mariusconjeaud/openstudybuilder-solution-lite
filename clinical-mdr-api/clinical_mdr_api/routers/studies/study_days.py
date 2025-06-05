@@ -36,7 +36,6 @@ State after:
 
 Possible errors:
  - Invalid library name specified.""",
-    response_model=CustomPage[NumericValue],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -72,7 +71,7 @@ def get_study_days(
     total_count: Annotated[
         bool | None, Query(description=_generic_descriptions.TOTAL_COUNT)
     ] = False,
-):
+) -> CustomPage[NumericValue]:
     study_day_service = StudyDayService()
     results = study_day_service.get_all_concepts(
         library=library_name,
@@ -94,7 +93,6 @@ def get_study_days(
     summary="Returns possible values from the database for a given header",
     description="Allowed parameters include : field name for which to get possible values, "
     "search string to provide filtering for the field name, additional filters to apply on other fields",
-    response_model=list[Any],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -125,7 +123,7 @@ def get_distinct_values_for_header(
     page_size: Annotated[
         int | None, Query(description=_generic_descriptions.HEADER_PAGE_SIZE)
     ] = config.DEFAULT_HEADER_PAGE_SIZE,
-):
+) -> list[Any]:
     study_day_service = StudyDayService()
     return study_day_service.get_distinct_values_for_header(
         library=library_name,
@@ -151,14 +149,13 @@ State after:
 Possible errors:
  - Invalid uid
  """,
-    response_model=NumericValue,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
         404: _generic_descriptions.ERROR_404,
     },
 )
-def get_study_day(study_day_uid: Annotated[str, StudyDayUID]):
+def get_study_day(study_day_uid: Annotated[str, StudyDayUID]) -> NumericValue:
     study_day_service = StudyDayService()
     return study_day_service.get_by_uid(uid=study_day_uid)
 
@@ -177,7 +174,6 @@ Business logic:
 Possible errors:
  - Invalid library.
 """,
-    response_model=NumericValue,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -192,6 +188,6 @@ Possible errors:
 )
 def create(
     numeric_value_create_input: Annotated[NumericValuePostInput, Body()],
-):
+) -> NumericValue:
     study_day_service = StudyDayService()
     return study_day_service.create(concept_input=numeric_value_create_input)

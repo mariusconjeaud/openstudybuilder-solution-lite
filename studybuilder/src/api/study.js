@@ -867,10 +867,10 @@ export default {
     )
   },
   getDdfUsdmJson(studyUid) {
-    return repository.get(`ddf/v3/studyDefinitions/${studyUid}`)
+    return repository.get(`usdm/v3/studyDefinitions/${studyUid}`)
   },
   getDdfIchM11(studyUid) {
-    return repository.get(`ddf/v3/studyDefinitions/${studyUid}/m11`)
+    return repository.get(`usdm/v3/studyDefinitions/${studyUid}/m11`)
   },
   getStudyStandardVersions(studyUid) {
     return repository.get(`${resource}/${studyUid}/study-standard-versions`)

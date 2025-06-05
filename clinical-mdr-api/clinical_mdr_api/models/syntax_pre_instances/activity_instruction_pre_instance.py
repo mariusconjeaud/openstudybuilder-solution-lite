@@ -22,13 +22,15 @@ from clinical_mdr_api.models.utils import BaseModel, PatchInputModel
 
 
 class ActivityInstructionPreInstance(BaseModel):
-    uid: str
+    uid: Annotated[str, Field()]
     sequence_id: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = (
         None
     )
-    template_uid: str
-    template_name: str
-    name: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = None
+    template_uid: Annotated[str, Field()]
+    template_name: Annotated[str, Field()]
+    name: Annotated[
+        str | None, Field(json_schema_extra={"nullable": True, "format": "html"})
+    ] = None
     name_plain: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = (
         None
     )
@@ -46,35 +48,30 @@ class ActivityInstructionPreInstance(BaseModel):
     author_username: Annotated[
         str | None, Field(json_schema_extra={"nullable": True})
     ] = None
-    parameter_terms: Annotated[
-        list[MultiTemplateParameterTerm],
-        Field(
-            description=(
-                """Holds the parameter terms that are used within the activity instruction.
+    parameter_terms: list[MultiTemplateParameterTerm] = Field(
+        description=(
+            """Holds the parameter terms that are used within the activity instruction.
             The terms are ordered as they occur in the activity instruction name."""
-            ),
         ),
-    ] = []
-    indications: Annotated[
-        list[SimpleTermModel],
-        Field(
-            description="The study indications, conditions, diseases or disorders in scope for the pre-instance.",
-        ),
-    ] = []
-    activities: Annotated[
-        list[SimpleNameModel],
-        Field(description="The activities in scope for the pre-instance"),
-    ] = []
-    activity_groups: Annotated[
-        list[SimpleNameModel],
-        Field(description="The activity groups in scope for the pre-instance"),
-    ] = []
-    activity_subgroups: Annotated[
-        list[SimpleNameModel],
-        Field(description="The activity sub groups in scope for the pre-instance"),
-    ] = []
-    library: Library | None = None
-    possible_actions: Annotated[list[str], Field()] = []
+        default_factory=list,
+    )
+    indications: list[SimpleTermModel] = Field(
+        description="The study indications, conditions, diseases or disorders in scope for the pre-instance.",
+        default_factory=list,
+    )
+    activities: list[SimpleNameModel] = Field(
+        description="The activities in scope for the pre-instance", default_factory=list
+    )
+    activity_groups: list[SimpleNameModel] = Field(
+        description="The activity groups in scope for the pre-instance",
+        default_factory=list,
+    )
+    activity_subgroups: list[SimpleNameModel] = Field(
+        description="The activity sub groups in scope for the pre-instance",
+        default_factory=list,
+    )
+    library: Annotated[Library | None, Field()] = None
+    possible_actions: list[str] = Field(default_factory=list)
 
     @classmethod
     def from_activity_instruction_pre_instance_ar(
@@ -131,10 +128,10 @@ class ActivityInstructionPreInstance(BaseModel):
 
 
 class ActivityInstructionPreInstanceCreateInput(PreInstancePostInput):
-    indication_uids: list[str]
-    activity_uids: list[str]
-    activity_group_uids: list[str]
-    activity_subgroup_uids: list[str]
+    indication_uids: Annotated[list[str], Field()]
+    activity_uids: Annotated[list[str], Field()]
+    activity_group_uids: Annotated[list[str], Field()]
+    activity_subgroup_uids: Annotated[list[str], Field()]
 
 
 class ActivityInstructionPreInstanceEditInput(PreInstancePatchInput):
@@ -179,9 +176,4 @@ class ActivityInstructionPreInstanceVersion(ActivityInstructionPreInstance):
     Class for storing ActivityInstruction Pre-Instances and calculation of differences
     """
 
-    changes: Annotated[
-        list[str],
-        Field(
-            description=CHANGES_FIELD_DESC,
-        ),
-    ] = []
+    changes: list[str] = Field(description=CHANGES_FIELD_DESC, default_factory=list)

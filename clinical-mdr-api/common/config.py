@@ -1,6 +1,7 @@
 """Configuration parameters."""
 
 import os
+import string
 import urllib.parse
 from os import environ
 
@@ -67,9 +68,12 @@ BASIC_EPOCH_NAME = "Basic"
 STUDY_EPOCH_EPOCH_UID = "C99079"
 STUDY_DISEASE_MILESTONE_TYPE_NAME = "Disease Milestone Type"
 
+SPECIAL_VISIT_LETTERS = string.ascii_uppercase
+SPECIAL_VISIT_MAX_NUMBER = len(string.ascii_uppercase)
 STUDY_VISIT_TYPE_NAME = "VisitType"
 STUDY_VISIT_TYPE_INFORMATION_VISIT = "Information"
 STUDY_VISIT_REPEATING_FREQUENCY = "Repeating Visit Frequency"
+STUDY_VISIT_TYPE_EARLY_DISCONTINUATION_VISIT = "Early discontinuation"
 STUDY_VISIT_NAME = "VisitName"
 STUDY_DAY_NAME = "StudyDay"
 STUDY_DURATION_DAYS_NAME = "StudyDurationDays"

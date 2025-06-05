@@ -1,5 +1,5 @@
 @REQ_ID:1074260
-Feature: Studies - Detailed SoA
+Feature: Studies - Define Study - Study Activities - Schedule of Activities - Detailed
 
     As a system user,
     I want the system to ensure [Scenario],
@@ -9,7 +9,7 @@ Feature: Studies - Detailed SoA
         Given The user is logged in
         And A test study is selected
 
-    Scenario: User must be able to navigate to Detailed SoA page using side menu
+    Scenario: [Navigation] User must be able to navigate to Detailed SoA page using side menu
         Given The '/studies' page is opened
         When The 'Study Activities' submenu is clicked in the 'Define Study' section
         And The 'Schedule of Activities' tab is selected
@@ -98,7 +98,7 @@ Feature: Studies - Detailed SoA
             | Activity Subgroup |
             | Activity          |
 
-    Scenario: User must be able to remove Study Activity from Detailed SoA
+    Scenario: [Actions][Remove Activity] User must be able to remove Study Activity from Detailed SoA
         Given At least '1' activites are present in 'Study_000001' study
         And The '/studies/Study_000001/activities/soa' page is opened
         When The user click on 'Remove Activity' action for an Activity
@@ -126,7 +126,7 @@ Feature: Studies - Detailed SoA
         Then The newly selected avtivity replaces previous activity in study
         And The scheduling is not affected
 
-    Scenario: User must be able to exchange activity in given Study in Detailed SoA through selection from library
+    Scenario: [Actions][Exchange Activity] User must be able to exchange activity in given Study in Detailed SoA through selection from library
         Given At least '1' activites are present in 'Study_000001' study
         And The '/studies/Study_000001/activities/soa' page is opened
         When The user click on 'Exchange Activity' action for an Activity
@@ -157,7 +157,7 @@ Feature: Studies - Detailed SoA
         When The user adds an activity from different group than selected to add activity
         Then The activity is assigned to group user has selected
 
-    Scenario: User must be able to add activity from library
+    Scenario: [Create][Positive case] User must be able to add activity from library
         Given At least '1' activites are present in 'Study_000001' study
         And The '/studies/Study_000001/activities/soa' page is opened
         When The user click on 'Add activity' action for an Activity
@@ -180,7 +180,7 @@ Feature: Studies - Detailed SoA
         And The user goes through selection from library form
         Then The newly created avtivity is present in SoA
 
-    Scenario: User must be able to open bulk edit activities form on Detailed SoA
+    Scenario: [Bulk][Edit] User must be able to open bulk edit activities form on Detailed SoA
         Given At least '2' activites are present in 'Study_000001' study
         And The '/studies/Study_000001/activities/soa' page is opened
         When The user selects rows in SoA table
@@ -203,21 +203,72 @@ Feature: Studies - Detailed SoA
         And The user removes selection of one of Activities on the form
         Then The selection disappears from the form
 
-    Scenario: User must not be able to bulk edit without selecting Activity Group and Visit
+    Scenario: [Bulk][Mandory fields] User must not be able to bulk edit without selecting Activity Group and Visit
         Given At least '2' activites are present in 'Study_000001' study
         And The '/studies/Study_000001/activities/soa' page is opened
         When The user edits activities in bulk without selecting Activity Group and Visit
         Then The validation appears for Activity Group field in bulk edit form
 
-    Scenario: User must be able to bulk delete activities on Detailed SoA
+    Scenario: [Bulk][Delete] User must be able to bulk delete activities on Detailed SoA
         Given At least '2' activites are present in 'Study_000001' study
         And The '/studies/Study_000001/activities/soa' page is opened
         When The user delete activities in bulk
         Then The activities are removed from the study
         
-    Scenario: User must be able to enable reordering of activities in Detailed SoA
+    Scenario: [Actions][Reordering] User must be able to enable reordering of activities in Detailed SoA
         Given At least '3' activities are present in 'Study_000001' in the same 'Acute Kidney Injury' flowchart subgroup and 'BIOMARKERS' group
         And The '/studies/Study_000001/activities/soa' page is opened
         When The user enables the Reorder Activities function for acitivities in the same 'Acute Kidney Injury' flowchart subgroup and 'BIOMARKERS' group
         And The user updates the order of activities
         Then The new order of activites is visible
+
+    Scenario: [New study] User must be able to see buttons for adding new activity or visit when Study is empty
+        Given The '/studies/select_or_add_study/active' page is opened
+        When A new study is added
+        And [API] Study uid is fetched
+        And Go to created study
+        Then Text about no added visits and activities is displayed
+        And User can click Add visit button
+        Then The current URL is '/study_structure/visits'
+        And Go to created study
+        And User can click Add study activity button
+        Then The current URL is '/activities/list'
+
+    Scenario: [Table][Search][Positive case] User must be able to search study activity
+        Given [API] Study Activity is created and approved
+        And The '/studies/Study_000001/activities/list' page is opened
+        And User adds newly created activity with status Final
+        And The '/studies/Study_000001/activities/soa' page is opened
+        And User expand table
+        When User search newly added activity
+        Then Activity is found in table
+
+    Scenario: [Table][Search][Case sensitivity] User must be able to search study activity ingnoring case sensitivity
+        And The '/studies/Study_000001/activities/soa' page is opened
+        And User expand table
+        When User search newly added activity in lowercase
+        Then Activity is found in table
+
+    Scenario: [Table][Search][Partial text] User must be able to search activity by only inputing 3 characters
+        And The '/studies/Study_000001/activities/soa' page is opened
+        And User expand table
+        When User search newly added activity by partial name
+        Then Activity is found in table
+
+    Scenario: [Table][Search][Negative] User must be able to search non-existing study activity
+        Given The '/studies/Study_000001/activities/soa' page is opened
+        And User expand table
+        When User search for non-existing activity
+        Then No activities are found
+
+    Scenario: [Table][Search][Negative] User must not be able to search activity by activity subgroup
+        Given The '/studies/Study_000001/activities/soa' page is opened
+        And User expand table
+        When User search search activity by subgroup
+        Then No activities are found
+
+    Scenario: [Table][Search][Negative] User must not be able to search activity by activity group
+        Given The '/studies/Study_000001/activities/soa' page is opened
+        And User expand table
+        When User search search activity by group
+        Then No activities are found

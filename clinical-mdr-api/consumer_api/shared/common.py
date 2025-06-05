@@ -1,6 +1,7 @@
 import logging
 import os
 import urllib.parse
+from enum import Enum
 from typing import Any
 
 from neomodel.sync_.core import db
@@ -9,6 +10,11 @@ APP_ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../"))
 
 
 log = logging.getLogger(__name__)
+
+
+class SortByType(Enum):
+    STRING = "string"
+    NUMBER = "number"
 
 
 def query(
@@ -61,8 +67,13 @@ def db_pagination_clause(page_size: int, page_number: int) -> str:
     return f"SKIP {page_number - 1} * {page_size} LIMIT {page_size}"
 
 
-def db_sort_clause(sort_by: str, sort_order: str = "ASC") -> str:
-    return f"ORDER BY toLower({sort_by}) {sort_order}"
+def db_sort_clause(
+    sort_by: str, sort_order: str = "ASC", sort_by_type: SortByType = SortByType.STRING
+) -> str:
+    if sort_by_type == SortByType.NUMBER:
+        return f"ORDER BY toFloat({sort_by}) {sort_order}"
+
+    return f"ORDER BY toLower(toString({sort_by})) {sort_order}"
 
 
 def get_api_version() -> str:

@@ -172,9 +172,27 @@ def get_sub_fields(field_info: FieldInfo):
     return None
 
 
-def version_string_to_tuple(version: str) -> tuple[int, int]:
-    major, minor = version.split(".", 1)
-    return (int(major), int(minor))
+def version_string_to_tuple(version: str) -> tuple[int, ...]:
+    """
+    Converts a version string to a tuple of integers.
+
+    Args:
+        version (str): The version string to convert, e.g., "1.2.3".
+
+    Returns:
+        tuple[int, ...]: A tuple of integers representing the version.
+
+    Examples:
+        >>> version_string_to_tuple("1.2.3")
+        (1, 2, 3)
+
+        >>> version_string_to_tuple("4.5.6.7")
+        (4, 5, 6, 7)
+
+        >>> version_string_to_tuple("0.1")
+        (0, 1)
+    """
+    return tuple(map(int, version.split(".")))
 
 
 def get_edit_input_or_previous_value(

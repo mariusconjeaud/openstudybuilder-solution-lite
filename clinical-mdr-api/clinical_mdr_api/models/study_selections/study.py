@@ -92,28 +92,22 @@ class StudySoaPreferencesInput(PatchInputModel):
         populate_by_name=True, title="Study SoA Preferences input"
     )
 
-    show_epochs: Annotated[
-        bool,
-        Field(
-            description="Show study epochs in detailed SoA",
-            alias=config.STUDY_FIELD_SOA_SHOW_EPOCHS,
-        ),
-    ] = True
-    show_milestones: Annotated[
-        bool,
-        Field(
-            description="Show study milestones in detailed SoA",
-            alias=config.STUDY_FIELD_SOA_SHOW_MILESTONES,
-        ),
-    ] = False
-    baseline_as_time_zero: Annotated[
-        bool,
-        Field(
-            title="Baseline shown as time 0",
-            description="Show the baseline visit as time 0 in all SoA layouts",
-            alias=config.STUDY_FIELD_SOA_BASELINE_AS_TIME_ZERO,
-        ),
-    ] = False
+    show_epochs: bool = Field(
+        True,
+        description="Show study epochs in detailed SoA",
+        alias=config.STUDY_FIELD_SOA_SHOW_EPOCHS,
+    )
+    show_milestones: bool = Field(
+        False,
+        description="Show study milestones in detailed SoA",
+        alias=config.STUDY_FIELD_SOA_SHOW_MILESTONES,
+    )
+    baseline_as_time_zero: bool = Field(
+        False,
+        title="Baseline shown as time 0",
+        description="Show the baseline visit as time 0 in all SoA layouts",
+        alias=config.STUDY_FIELD_SOA_BASELINE_AS_TIME_ZERO,
+    )
 
 
 class StudySoaPreferences(StudySoaPreferencesInput):
@@ -1400,7 +1394,7 @@ class StudyPatchRequestJsonModel(PatchInputModel):
 
 
 class StudyParentPart(BaseModel):
-    uid: str
+    uid: Annotated[str, Field()]
     study_number: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = (
         None
     )
@@ -1417,7 +1411,7 @@ class StudyParentPart(BaseModel):
     study_title: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = (
         None
     )
-    registry_identifiers: RegistryIdentifiersJsonModel
+    registry_identifiers: Annotated[RegistryIdentifiersJsonModel, Field()]
 
     @classmethod
     def from_study_uid(
@@ -1451,7 +1445,7 @@ class StudyParentPart(BaseModel):
 
 
 class StudyStructureOverview(BaseModel):
-    study_ids: list[str]
+    study_ids: Annotated[list[str], Field()]
     arms: Annotated[int, Field(title="Number of Study Arms")]
     pre_treatment_epochs: Annotated[
         int, Field(title="Number of Study Pre Treatment Epochs")
@@ -1465,7 +1459,7 @@ class StudyStructureOverview(BaseModel):
     no_treatment_elements: Annotated[
         int, Field(title="Number of No Treatment Elements")
     ]
-    cohorts_in_study: str
+    cohorts_in_study: Annotated[str, Field()]
 
 
 class CompactStudy(BaseModel):
@@ -1479,7 +1473,7 @@ class CompactStudy(BaseModel):
     study_parent_part: Annotated[
         StudyParentPart | None, Field(json_schema_extra={"nullable": True})
     ] = None
-    study_subpart_uids: list[str]
+    study_subpart_uids: Annotated[list[str], Field()]
     possible_actions: Annotated[
         list[str],
         Field(
@@ -1532,7 +1526,7 @@ class Study(BaseModel):
         StudyParentPart | None,
         Field(json_schema_extra={"nullable": True}),
     ]
-    study_subpart_uids: list[str]
+    study_subpart_uids: Annotated[list[str], Field()]
     possible_actions: Annotated[
         list[str],
         Field(
@@ -1630,31 +1624,31 @@ class StudyStructureStatistics(BaseModel):
 
 
 class StudyCreateInput(PostInputModel):
-    study_number: str | None = None
+    study_number: Annotated[str | None, Field()] = None
 
-    study_acronym: str | None = None
+    study_acronym: Annotated[str | None, Field()] = None
 
     project_number: Annotated[str, Field(min_length=1)]
 
-    description: str | None = None
+    description: Annotated[str | None, Field()] = None
 
 
 class StudyCloneInput(StudyCreateInput):
-    copy_study_arm: bool = False
-    copy_study_branch_arm: bool = False
-    copy_study_cohort: bool = False
-    copy_study_element: bool = False
-    copy_study_visit: bool = False
-    copy_study_visits_study_footnote: bool = False
-    copy_study_epoch: bool = False
-    copy_study_epochs_study_footnote: bool = False
-    copy_study_design_matrix: bool = False
+    copy_study_arm: Annotated[bool, Field()] = False
+    copy_study_branch_arm: Annotated[bool, Field()] = False
+    copy_study_cohort: Annotated[bool, Field()] = False
+    copy_study_element: Annotated[bool, Field()] = False
+    copy_study_visit: Annotated[bool, Field()] = False
+    copy_study_visits_study_footnote: Annotated[bool, Field()] = False
+    copy_study_epoch: Annotated[bool, Field()] = False
+    copy_study_epochs_study_footnote: Annotated[bool, Field()] = False
+    copy_study_design_matrix: Annotated[bool, Field()] = False
 
 
 class StudySubpartCreateInput(PostInputModel):
     study_subpart_acronym: Annotated[str, Field(min_length=1)]
 
-    description: str | None = None
+    description: Annotated[str | None, Field()] = None
 
     study_parent_part_uid: Annotated[str, Field(min_length=1)]
 
@@ -1841,10 +1835,5 @@ class StudySubpartAuditTrail(BaseModel):
     author_username: Annotated[
         str | None, Field(json_schema_extra={"nullable": True})
     ] = None
-    change_type: str
-    changes: Annotated[
-        list[str],
-        Field(
-            description=CHANGES_FIELD_DESC,
-        ),
-    ] = []
+    change_type: Annotated[str, Field()]
+    changes: list[str] = Field(description=CHANGES_FIELD_DESC, default_factory=list)

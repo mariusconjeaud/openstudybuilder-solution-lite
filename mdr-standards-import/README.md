@@ -20,6 +20,7 @@ Create `.env` file (in the root of the repository) with the following content (a
 #
 # Neo4j Database
 #
+NEO4J_PROTOCOL=neo4j
 NEO4J_MDR_BOLT_PORT=5078
 NEO4J_MDR_HOST=localhost
 NEO4J_MDR_AUTH_USER=neo4j

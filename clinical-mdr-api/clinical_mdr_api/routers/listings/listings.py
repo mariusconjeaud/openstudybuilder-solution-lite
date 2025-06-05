@@ -32,7 +32,6 @@ metadata_router = APIRouter()
     "/metadata",
     dependencies=[rbac.LIBRARY_READ],
     summary="Metadata for datasets",
-    response_model=CustomPage[MetaData],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -75,7 +74,7 @@ def get_metadata(
     total_count: Annotated[
         bool | None, Query(description=_generic_descriptions.TOTAL_COUNT)
     ] = False,
-):
+) -> CustomPage[MetaData]:
     service = ListingsService()
     all_items = service.list_metadata(
         dataset_name=dataset_name,
@@ -101,7 +100,6 @@ def get_metadata(
     summary="Returns possible values from the database for a given header",
     description="""Allowed parameters include : field name for which to get possible
     values, search string to provide filtering for the field name, additional filters to apply on other fields""",
-    response_model=list[Any],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -131,7 +129,7 @@ def get_distinct_values_for_header(
     page_size: Annotated[
         int | None, Query(description=_generic_descriptions.HEADER_PAGE_SIZE)
     ] = config.DEFAULT_HEADER_PAGE_SIZE,
-):
+) -> list[Any]:
     service = ListingsService()
     return service.get_distinct_values_for_header(
         action=service.list_metadata,
@@ -148,7 +146,6 @@ def get_distinct_values_for_header(
     dependencies=[rbac.LIBRARY_READ],
     summary="List library metadata for Activities in the legacy format for CDW-MMA General Clinical Metadata",
     description=_generic_descriptions.DATA_EXPORTS_HEADER,
-    response_model=CustomPage[TopicCdDef],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -213,7 +210,7 @@ def get_all_activities_report(
     total_count: Annotated[
         bool | None, Query(description=_generic_descriptions.TOTAL_COUNT)
     ] = False,
-):
+) -> CustomPage[TopicCdDef]:
     service = ListingsService()
     all_items = service.list_topic_cd(
         at_specified_datetime=at_specified_date_time,
@@ -239,7 +236,6 @@ def get_all_activities_report(
     summary="Returns possible values from the database for a given header",
     description="""Allowed parameters include : field name for which to get possible
     values, search string to provide filtering for the field name, additional filters to apply on other fields""",
-    response_model=list[Any],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -269,7 +265,7 @@ def get_distinct_topic_cd_def_values_for_header(
     page_size: Annotated[
         int | None, Query(description=_generic_descriptions.HEADER_PAGE_SIZE)
     ] = config.DEFAULT_HEADER_PAGE_SIZE,
-):
+) -> list[Any]:
     service = ListingsService()
     return service.get_distinct_values_for_header(
         action=service.list_topic_cd,
@@ -285,7 +281,6 @@ def get_distinct_topic_cd_def_values_for_header(
     "/libraries/all/gcmd/cdisc-ct-ver",
     dependencies=[rbac.LIBRARY_READ],
     summary="CDW-MMA legacy dataset cdisc_ct_ver",
-    response_model=CustomPage[CDISCCTVer],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -335,7 +330,7 @@ def get_cdisc_ct_ver_data(
     total_count: Annotated[
         bool | None, Query(description=_generic_descriptions.TOTAL_COUNT)
     ] = False,
-):
+) -> CustomPage[CDISCCTVer]:
     service = ListingsService()
     all_items = service.list_cdisc_ct_ver(
         catalogue_name=catalogue_name,
@@ -362,7 +357,6 @@ def get_cdisc_ct_ver_data(
     summary="Returns possible values from the database for a given header",
     description="""Allowed parameters include : field name for which to get possible
     values, search string to provide filtering for the field name, additional filters to apply on other fields""",
-    response_model=list[Any],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -392,7 +386,7 @@ def get_distinct_cdisc_ct_ver_values_for_header(
     page_size: Annotated[
         int | None, Query(description=_generic_descriptions.HEADER_PAGE_SIZE)
     ] = config.DEFAULT_HEADER_PAGE_SIZE,
-):
+) -> list[Any]:
     service = ListingsService()
     return service.get_distinct_values_for_header(
         action=service.list_cdisc_ct_ver,
@@ -408,7 +402,6 @@ def get_distinct_cdisc_ct_ver_values_for_header(
     "/libraries/all/gcmd/cdisc-ct-pkg",
     dependencies=[rbac.LIBRARY_READ],
     summary="CDW-MMA legacy dataset cdisc_ct_pkg",
-    response_model=CustomPage[CDISCCTPkg],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -458,7 +451,7 @@ def get_cdisc_ct_pkg_data(
     total_count: Annotated[
         bool | None, Query(description=_generic_descriptions.TOTAL_COUNT)
     ] = False,
-):
+) -> CustomPage[CDISCCTPkg]:
     service = ListingsService()
     all_items = service.list_cdisc_ct_pkg(
         catalogue_name=catalogue_name,
@@ -485,7 +478,6 @@ def get_cdisc_ct_pkg_data(
     summary="Returns possible values from the database for a given header",
     description="""Allowed parameters include : field name for which to get possible
     values, search string to provide filtering for the field name, additional filters to apply on other fields""",
-    response_model=list[Any],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -515,7 +507,7 @@ def get_distinct_cdisc_ct_pkg_values_for_header(
     page_size: Annotated[
         int | None, Query(description=_generic_descriptions.HEADER_PAGE_SIZE)
     ] = config.DEFAULT_HEADER_PAGE_SIZE,
-):
+) -> list[Any]:
     service = ListingsService()
     return service.get_distinct_values_for_header(
         action=service.list_cdisc_ct_pkg,
@@ -531,7 +523,6 @@ def get_distinct_cdisc_ct_pkg_values_for_header(
     "/libraries/all/gcmd/cdisc-ct-list",
     dependencies=[rbac.LIBRARY_READ],
     summary="CDW-MMA legacy dataset cdisc_ct_list",
-    response_model=CustomPage[CDISCCTList],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -588,7 +579,7 @@ def get_cdisc_ct_list_data(
     total_count: Annotated[
         bool | None, Query(description=_generic_descriptions.TOTAL_COUNT)
     ] = False,
-):
+) -> CustomPage[CDISCCTList]:
     service = ListingsService()
     all_items = service.list_cdisc_ct_list(
         catalogue_name=catalogue_name,
@@ -616,7 +607,6 @@ def get_cdisc_ct_list_data(
     summary="Returns possible values from the database for a given header",
     description="""Allowed parameters include : field name for which to get possible
     values, search string to provide filtering for the field name, additional filters to apply on other fields""",
-    response_model=list[Any],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -646,7 +636,7 @@ def get_distinct_cdisc_ct_list_values_for_header(
     page_size: Annotated[
         int | None, Query(description=_generic_descriptions.HEADER_PAGE_SIZE)
     ] = config.DEFAULT_HEADER_PAGE_SIZE,
-):
+) -> list[Any]:
     service = ListingsService()
     return service.get_distinct_values_for_header(
         action=service.list_cdisc_ct_list,
@@ -662,7 +652,6 @@ def get_distinct_cdisc_ct_list_values_for_header(
     "/libraries/all/gcmd/cdisc-ct-val",
     dependencies=[rbac.LIBRARY_READ],
     summary="CDW-MMA legacy dataset cdisc_ct_val",
-    response_model=CustomPage[CDISCCTVal],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -719,7 +708,7 @@ def get_cdisc_ct_val_data(
     total_count: Annotated[
         bool | None, Query(description=_generic_descriptions.TOTAL_COUNT)
     ] = False,
-):
+) -> CustomPage[CDISCCTVal]:
     service = ListingsService()
     all_items = service.list_cdisc_ct_val(
         catalogue_name=catalogue_name,
@@ -747,7 +736,6 @@ def get_cdisc_ct_val_data(
     summary="Returns possible values from the database for a given header",
     description="""Allowed parameters include : field name for which to get possible
     values, search string to provide filtering for the field name, additional filters to apply on other fields""",
-    response_model=list[Any],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -777,7 +765,7 @@ def get_distinct_cdisc_ct_val_values_for_header(
     page_size: Annotated[
         int | None, Query(description=_generic_descriptions.HEADER_PAGE_SIZE)
     ] = config.DEFAULT_HEADER_PAGE_SIZE,
-):
+) -> list[Any]:
     service = ListingsService()
     return service.get_distinct_values_for_header(
         action=service.list_cdisc_ct_val,

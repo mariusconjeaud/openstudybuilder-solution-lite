@@ -70,7 +70,7 @@
     <StudyForm
       :open="showForm"
       :edited-study="activeStudy"
-      @close="closeForm"
+      @close="closeForms"
     />
     <v-dialog
       v-model="showCreationForm"
@@ -78,7 +78,7 @@
       fullscreen
       content-class="fullscreen-dialog"
     >
-      <StudyCreationForm @close="showCreationForm = false" />
+      <StudyCreationForm @close="closeForms" />
     </v-dialog>
   </div>
 </template>
@@ -174,8 +174,9 @@ const exportDataUrl = computed(() => {
   return result
 })
 
-function closeForm() {
+function closeForms() {
   showForm.value = false
+  showCreationForm.value = false
   activeStudy.value = null
   table.value.filterTable()
   emit('refreshStudies')

@@ -41,10 +41,10 @@ class DictionaryTerm(BaseModel):
             ),
         )
 
-    term_uid: str
-    dictionary_id: str
-    name: str
-    name_sentence_case: str
+    term_uid: Annotated[str, Field()]
+    dictionary_id: Annotated[str, Field()]
+    name: Annotated[str, Field()]
+    name_sentence_case: Annotated[str, Field()]
     abbreviation: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = (
         None
     )
@@ -62,7 +62,7 @@ class DictionaryTerm(BaseModel):
         ),
     ]
 
-    library_name: str
+    library_name: Annotated[str, Field()]
     start_date: Annotated[
         datetime | None, Field(json_schema_extra={"nullable": True})
     ] = None
@@ -136,12 +136,12 @@ class DictionaryTermSubstance(DictionaryTerm):
 
 
 class CompoundSubstance(BaseModel):
-    substance_term_uid: str
-    substance_name: str
-    substance_unii: str
-    pclass_term_uid: str | None = None
-    pclass_name: str | None = None
-    pclass_id: str | None = None
+    substance_term_uid: Annotated[str, Field()]
+    substance_name: Annotated[str, Field()]
+    substance_unii: Annotated[str, Field()]
+    pclass_term_uid: Annotated[str | None, Field()] = None
+    pclass_name: Annotated[str | None, Field()] = None
+    pclass_id: Annotated[str | None, Field()] = None
 
     @classmethod
     def from_term_uid(
@@ -187,9 +187,4 @@ class DictionaryTermVersion(DictionaryTerm):
     Class for storing DictionaryTerm and calculation of differences
     """
 
-    changes: Annotated[
-        list[str],
-        Field(
-            description=CHANGES_FIELD_DESC,
-        ),
-    ] = []
+    changes: list[str] = Field(description=CHANGES_FIELD_DESC, default_factory=list)

@@ -6,18 +6,29 @@
   >
     <template #activator="{ props }">
       <span v-bind="props">
-        <div class="template-readonly" v-html="getShortVersion()" />
+        <div
+          class="template-readonly"
+          v-html="sanitizeHTML(getShortVersion())"
+        />
       </span>
     </template>
     <span>
-      <div class="template-readonly" v-html="getFormatedParts()" />
+      <div
+        class="template-readonly"
+        v-html="sanitizeHTML(getFormatedParts())"
+      />
     </span>
   </v-tooltip>
-  <div v-else class="template-readonly" v-html="getFormatedParts()" />
+  <div
+    v-else
+    class="template-readonly"
+    v-html="sanitizeHTML(getFormatedParts())"
+  />
 </template>
 
 <script setup>
 import { computed } from 'vue'
+import { sanitizeHTML } from '@/utils/sanitize'
 
 const props = defineProps({
   value: {

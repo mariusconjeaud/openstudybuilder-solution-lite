@@ -129,18 +129,18 @@ class RegistryIdentifiersListingModel(BaseModel):
         description="Registry identifiers model for listing supplying SDTM generation framework.",
     )
 
-    ct_gov: str
-    eudract: str
-    utn: str
-    japic: str
-    ind: str
-    eutn: str
-    civ: str
-    nctn: str
-    jrct: str
-    nmpa: str
-    esn: str
-    ide: str
+    ct_gov: Annotated[str, Field()]
+    eudract: Annotated[str, Field()]
+    utn: Annotated[str, Field()]
+    japic: Annotated[str, Field()]
+    ind: Annotated[str, Field()]
+    eutn: Annotated[str, Field()]
+    civ: Annotated[str, Field()]
+    nctn: Annotated[str, Field()]
+    jrct: Annotated[str, Field()]
+    nmpa: Annotated[str, Field()]
+    esn: Annotated[str, Field()]
+    ide: Annotated[str, Field()]
 
     @classmethod
     def from_study_registry_identifiers_vo(
@@ -185,29 +185,29 @@ class StudyTypeListingModel(BaseModel):
         ),
     )
 
-    stype: str
-    stype_nf: str
+    stype: Annotated[str, Field()]
+    stype_nf: Annotated[str, Field()]
 
-    trial_type: list[SimpleListingCTModel]
-    trial_type_nf: str
+    trial_type: Annotated[list[SimpleListingCTModel], Field()]
+    trial_type_nf: Annotated[str, Field()]
 
-    phase: str
-    phase_nf: str
+    phase: Annotated[str, Field()]
+    phase_nf: Annotated[str, Field()]
 
-    extension: str
-    extension_nf: str
+    extension: Annotated[str, Field()]
+    extension_nf: Annotated[str, Field()]
 
-    adaptive: str
-    adaptive_nf: str
+    adaptive: Annotated[str, Field()]
+    adaptive_nf: Annotated[str, Field()]
 
-    stop_rule: str
-    stop_rule_nf: str
+    stop_rule: Annotated[str, Field()]
+    stop_rule_nf: Annotated[str, Field()]
 
-    confirmed_res_min_dur: str
-    confirmed_res_min_dur_nf: str
+    confirmed_res_min_dur: Annotated[str, Field()]
+    confirmed_res_min_dur_nf: Annotated[str, Field()]
 
-    post_auth: str
-    post_auth_nf: str
+    post_auth: Annotated[str, Field()]
+    post_auth_nf: Annotated[str, Field()]
 
     @classmethod
     def from_high_level_study_design_vo(
@@ -289,49 +289,49 @@ class StudyPopulationListingModel(BaseModel):
         ),
     )
 
-    therapy_area: list[SimpleListingCTModel]
-    therapy_area_nf: str
+    therapy_area: Annotated[list[SimpleListingCTModel], Field()]
+    therapy_area_nf: Annotated[str, Field()]
 
-    indication: list[SimpleListingCTModel]
-    indication_nf: str
+    indication: Annotated[list[SimpleListingCTModel], Field()]
+    indication_nf: Annotated[str, Field()]
 
-    diag_grp: list[SimpleListingCTModel]
-    diag_grp_nf: str
+    diag_grp: Annotated[list[SimpleListingCTModel], Field()]
+    diag_grp_nf: Annotated[str, Field()]
 
-    sex: str
-    sex_nf: str
+    sex: Annotated[str, Field()]
+    sex_nf: Annotated[str, Field()]
 
-    rare_dis: str
-    rare_dis_nf: str
+    rare_dis: Annotated[str, Field()]
+    rare_dis_nf: Annotated[str, Field()]
 
-    healthy_subj: str
-    healthy_subj_nf: str
+    healthy_subj: Annotated[str, Field()]
+    healthy_subj_nf: Annotated[str, Field()]
 
-    min_age: str
-    min_age_nf: str
+    min_age: Annotated[str, Field()]
+    min_age_nf: Annotated[str, Field()]
 
-    max_age: str
-    max_age_nf: str
+    max_age: Annotated[str, Field()]
+    max_age_nf: Annotated[str, Field()]
 
-    stable_dis_min_dur: str
-    stable_dis_min_dur_nf: str
+    stable_dis_min_dur: Annotated[str, Field()]
+    stable_dis_min_dur_nf: Annotated[str, Field()]
 
-    pediatric: str
-    pediatric_nf: str
+    pediatric: Annotated[str, Field()]
+    pediatric_nf: Annotated[str, Field()]
 
-    pediatric_postmarket: str
-    pediatric_postmarket_nf: str
+    pediatric_postmarket: Annotated[str, Field()]
+    pediatric_postmarket_nf: Annotated[str, Field()]
 
-    pediatric_inv: str
-    pediatric_inv_nf: str
+    pediatric_inv: Annotated[str, Field()]
+    pediatric_inv_nf: Annotated[str, Field()]
 
-    relapse_criteria: str
-    relapse_criteria_nf: str
+    relapse_criteria: Annotated[str, Field()]
+    relapse_criteria_nf: Annotated[str, Field()]
 
     plan_no_subject: Annotated[
         int | None, Field(json_schema_extra={"nullable": True})
     ] = None
-    plan_no_subject_nf: str
+    plan_no_subject_nf: Annotated[str, Field()]
 
     @classmethod
     def from_study_population_vo(
@@ -468,32 +468,32 @@ class StudyAttributesListingModel(BaseModel):
         ),
     )
 
-    intv_type: str
-    intv_type_nf: str
+    intv_type: Annotated[str, Field()]
+    intv_type_nf: Annotated[str, Field()]
 
-    add_on: str
-    add_on_nf: str
+    add_on: Annotated[str, Field()]
+    add_on_nf: Annotated[str, Field()]
 
-    control_type: str
-    control_type_nf: str
+    control_type: Annotated[str, Field()]
+    control_type_nf: Annotated[str, Field()]
 
-    intv_model: str
-    intv_model_nf: str
+    intv_model: Annotated[str, Field()]
+    intv_model_nf: Annotated[str, Field()]
 
-    randomised: str
-    randomised_nf: str
+    randomised: Annotated[str, Field()]
+    randomised_nf: Annotated[str, Field()]
 
-    strata: str
-    strata_nf: str
+    strata: Annotated[str, Field()]
+    strata_nf: Annotated[str, Field()]
 
-    blinding: str
-    blinding_nf: str
+    blinding: Annotated[str, Field()]
+    blinding_nf: Annotated[str, Field()]
 
-    planned_length: str
-    planned_length_nf: str
+    planned_length: Annotated[str, Field()]
+    planned_length_nf: Annotated[str, Field()]
 
-    study_intent: list[SimpleListingCTModel]
-    study_intent_nf: str
+    study_intent: Annotated[list[SimpleListingCTModel], Field()]
+    study_intent_nf: Annotated[str, Field()]
 
     @classmethod
     def from_study_intervention_vo(
@@ -577,14 +577,14 @@ class StudyAttributesListingModel(BaseModel):
 
 
 class StudySelctionListingModel(BaseModel):
-    uid: str
-    name: str
-    short_name: str
-    code: str
+    uid: Annotated[str, Field()]
+    name: Annotated[str, Field()]
+    short_name: Annotated[str, Field()]
+    code: Annotated[str, Field()]
     no_subject: Annotated[int | None, Field(json_schema_extra={"nullable": True})] = (
         None
     )
-    desc: str
+    desc: Annotated[str, Field()]
 
 
 class StudyBranchArmListingModel(StudySelctionListingModel):
@@ -593,9 +593,9 @@ class StudyBranchArmListingModel(StudySelctionListingModel):
         description="Study Branch Arm model for listing.",
     )
 
-    order: int
-    arm_uid: str
-    rand_grp: str
+    order: Annotated[int, Field()]
+    arm_uid: Annotated[str, Field()]
+    rand_grp: Annotated[str, Field()]
 
     @classmethod
     def from_study_selection_branch_arm_vo(
@@ -642,9 +642,9 @@ class StudyArmListingModel(StudySelctionListingModel):
         title="Study Arm model for listing", description="Study Arm model for listing."
     )
 
-    order: int
-    rand_grp: str
-    type: str
+    order: Annotated[int, Field()]
+    rand_grp: Annotated[str, Field()]
+    type: Annotated[str, Field()]
 
     @classmethod
     def from_study_selection_arm_vo(
@@ -694,8 +694,8 @@ class StudyCohortListingModel(StudySelctionListingModel):
         description="Study attributes model for listing",
     )
 
-    arm_uid: list[str]
-    branch_uid: list[str]
+    arm_uid: Annotated[list[str], Field()]
+    branch_uid: Annotated[list[str], Field()]
 
     @classmethod
     def from_study_selection_cohort_vo(
@@ -736,14 +736,14 @@ class StudyCohortListingModel(StudySelctionListingModel):
 
 
 class StudyEpochListingModel(BaseModel):
-    uid: str
-    order: int
-    name: str
-    type: str
-    subtype: str
-    start_rule: str
-    end_rule: str
-    description: str
+    uid: Annotated[str, Field()]
+    order: Annotated[int, Field()]
+    name: Annotated[str, Field()]
+    type: Annotated[str, Field()]
+    subtype: Annotated[str, Field()]
+    start_rule: Annotated[str, Field()]
+    end_rule: Annotated[str, Field()]
+    description: Annotated[str, Field()]
 
     @classmethod
     def from_study_epoch(
@@ -785,16 +785,16 @@ class StudyEpochListingModel(BaseModel):
 
 
 class StudyElementListingModel(BaseModel):
-    uid: str
-    order: int
-    name: str
-    short_name: str
-    type: str
-    subtype: str
-    start_rule: str
-    end_rule: str
-    dur: str
-    desc: str
+    uid: Annotated[str, Field()]
+    order: Annotated[int, Field()]
+    name: Annotated[str, Field()]
+    short_name: Annotated[str, Field()]
+    type: Annotated[str, Field()]
+    subtype: Annotated[str, Field()]
+    start_rule: Annotated[str, Field()]
+    end_rule: Annotated[str, Field()]
+    dur: Annotated[str, Field()]
+    desc: Annotated[str, Field()]
 
     @classmethod
     def from_study_element_vo(
@@ -841,10 +841,10 @@ class StudyElementListingModel(BaseModel):
 
 
 class StudyDesignMatrixListingModel(BaseModel):
-    arm_uid: str
-    branch_uid: str
-    epoch_uid: str
-    element_uid: str
+    arm_uid: Annotated[str, Field()]
+    branch_uid: Annotated[str, Field()]
+    epoch_uid: Annotated[str, Field()]
+    element_uid: Annotated[str, Field()]
 
     @classmethod
     def from_study_design_cell_vo(
@@ -873,13 +873,13 @@ class StudyDesignMatrixListingModel(BaseModel):
 
 
 class StudyVisitListingModel(BaseModel):
-    epoch_uid: str
-    epoch_name: str
-    visit_type: str
-    contact_model: str
-    visit_no: str
-    name: str
-    short_name: str
+    epoch_uid: Annotated[str, Field()]
+    epoch_name: Annotated[str, Field()]
+    visit_type: Annotated[str, Field()]
+    contact_model: Annotated[str, Field()]
+    visit_no: Annotated[str, Field()]
+    name: Annotated[str, Field()]
+    short_name: Annotated[str, Field()]
     study_day: Annotated[int | None, Field(json_schema_extra={"nullable": True})] = None
     window_min: Annotated[int | None, Field(json_schema_extra={"nullable": True})] = (
         None
@@ -887,11 +887,11 @@ class StudyVisitListingModel(BaseModel):
     window_max: Annotated[int | None, Field(json_schema_extra={"nullable": True})] = (
         None
     )
-    window_unit: str
-    desc: str
-    epoch_alloc: str
-    start_rule: str
-    end_rule: str
+    window_unit: Annotated[str, Field()]
+    desc: Annotated[str, Field()]
+    epoch_alloc: Annotated[str, Field()]
+    start_rule: Annotated[str, Field()]
+    end_rule: Annotated[str, Field()]
 
     @classmethod
     def from_study_visit_vo(
@@ -941,8 +941,8 @@ class StudyVisitListingModel(BaseModel):
 
 
 class StudyCriteriaListingModel(BaseModel):
-    type: str
-    text: str
+    type: Annotated[str, Field()]
+    text: Annotated[str, Field()]
 
     @classmethod
     def from_study_criteria_vo(
@@ -983,9 +983,9 @@ class StudyCriteriaListingModel(BaseModel):
 
 
 class StudyObjectiveListingModel(BaseModel):
-    uid: str
-    type: str
-    text: str
+    uid: Annotated[str, Field()]
+    type: Annotated[str, Field()]
+    text: Annotated[str, Field()]
 
     @classmethod
     def from_study_objective_vo(
@@ -1026,13 +1026,13 @@ class StudyObjectiveListingModel(BaseModel):
 
 
 class StudyEndpointListingModel(BaseModel):
-    uid: str
-    type: str
-    subtype: str
-    text: str
-    objective_uid: str
-    timeframe: str
-    endpoint_unit: str
+    uid: Annotated[str, Field()]
+    type: Annotated[str, Field()]
+    subtype: Annotated[str, Field()]
+    text: Annotated[str, Field()]
+    objective_uid: Annotated[str, Field()]
+    timeframe: Annotated[str, Field()]
+    endpoint_unit: Annotated[str, Field()]
 
     @classmethod
     def from_study_endpoint_vo(
@@ -1105,12 +1105,12 @@ class StudyMetadataListingModel(BaseModel):
         description="Study Metadata model for listing.",
     )
 
-    api_ver: str
-    study_id: str
-    study_ver: float
-    specified_dt: str
-    request_dt: str
-    title: str
+    api_ver: Annotated[str, Field()]
+    study_id: Annotated[str, Field()]
+    study_ver: Annotated[float, Field()]
+    specified_dt: Annotated[str, Field()]
+    request_dt: Annotated[str, Field()]
+    title: Annotated[str, Field()]
     reg_id: Annotated[
         RegistryIdentifiersListingModel | None,
         Field(json_schema_extra={"nullable": True}),

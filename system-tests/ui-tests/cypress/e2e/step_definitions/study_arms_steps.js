@@ -1,5 +1,10 @@
 const { Given, When, Then } = require("@badeball/cypress-cucumber-preprocessor");
 
+let armName
+
+When('The Study Arm is found', () => cy.searchAndCheckPresence(armName, true))
+
+When('The Study Arm is no longer available', () => cy.searchAndCheckPresence(armName, false))
 
 Given('The Study Arm exists within the study', () => {
     cy.createTestArm('Study_000001')
@@ -8,6 +13,7 @@ Given('The Study Arm exists within the study', () => {
 
 When('The new study arm form is filled and saved', () => {
     cy.fixture('studyArm').then((arm) => {
+        armName = arm.name
         cy.clickButton('add-study-arm')
         cy.selectAutoComplete('arm-type', arm.type)
         cy.fillInput('arm-name', arm.name)
@@ -34,7 +40,7 @@ Then('The new study arm is visible within the study arms table', () => {
 
 When('The arm data is edited and saved', () => {
     cy.fixture('studyArm').then((arm) => {
-        cy.rowActionsByValue(arm.name, 'Edit')
+        armName = arm.edit_name
         cy.fillInput('arm-name', arm.edit_name)
         cy.fillInput('arm-short-name', arm.edit_short_name)
         cy.fillInput('arm-description', arm.edit_description)
@@ -171,13 +177,4 @@ Then('The system displays the message {string}', (message) => {
 
 Then('The message {string} is displayed', (message) => {
     cy.contains(message).should('exist')
-})
-
-When('The delete action is clicked for the {string} study arm', (armName) => {
-    cy.rowActionsByValue(armName, 'Delete')
-    cy.checkSnackbarMessage('Arm deleted')
-})
-
-Then('The {string} arm is no longer available', (armName) => {
-    cy.get('tbody').should('not.contain', armName)
 })

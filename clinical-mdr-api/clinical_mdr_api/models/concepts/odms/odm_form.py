@@ -66,13 +66,15 @@ class OdmForm(ConceptModel):
         list[OdmDescriptionSimpleModel] | None,
         Field(json_schema_extra={"nullable": True}),
     ] = None
-    aliases: list[OdmAliasSimpleModel]
-    activity_groups: list[ActivityHierarchySimpleModel]
-    item_groups: list[OdmItemGroupRefModel]
-    vendor_elements: list[OdmVendorElementRelationModel]
-    vendor_attributes: list[OdmVendorAttributeRelationModel]
-    vendor_element_attributes: list[OdmVendorElementAttributeRelationModel]
-    possible_actions: list[str]
+    aliases: Annotated[list[OdmAliasSimpleModel], Field()]
+    activity_groups: Annotated[list[ActivityHierarchySimpleModel], Field()]
+    item_groups: Annotated[list[OdmItemGroupRefModel], Field()]
+    vendor_elements: Annotated[list[OdmVendorElementRelationModel], Field()]
+    vendor_attributes: Annotated[list[OdmVendorAttributeRelationModel], Field()]
+    vendor_element_attributes: Annotated[
+        list[OdmVendorElementAttributeRelationModel], Field()
+    ]
+    possible_actions: Annotated[list[str], Field()]
 
     @classmethod
     def from_odm_form_ar(
@@ -246,28 +248,30 @@ class OdmFormRefModel(BaseModel):
 
 class OdmFormPostInput(ConceptPostInput):
     oid: Annotated[str | None, Field(min_length=1)] = None
-    sdtm_version: str | None = None
+    sdtm_version: Annotated[str | None, Field()] = None
     repeating: Annotated[str, Field(min_length=1)]
-    scope_uid: str | None = None
-    descriptions: list[OdmDescriptionPostInput | str]
-    alias_uids: list[str]
+    scope_uid: Annotated[str | None, Field()] = None
+    descriptions: Annotated[list[OdmDescriptionPostInput | str], Field()]
+    alias_uids: Annotated[list[str], Field()]
 
 
 class OdmFormPatchInput(ConceptPatchInput):
     oid: Annotated[str | None, Field(min_length=1)]
-    sdtm_version: str | None
-    repeating: str | None
-    scope_uid: str | None
-    descriptions: list[OdmDescriptionBatchPatchInput | OdmDescriptionPostInput | str]
-    alias_uids: list[str]
+    sdtm_version: Annotated[str | None, Field()]
+    repeating: Annotated[str | None, Field()]
+    scope_uid: Annotated[str | None, Field()]
+    descriptions: Annotated[
+        list[OdmDescriptionBatchPatchInput | OdmDescriptionPostInput | str], Field()
+    ]
+    alias_uids: Annotated[list[str], Field()]
 
 
 class OdmFormItemGroupPostInput(PostInputModel):
     uid: Annotated[str, Field(min_length=1)]
     order_number: Annotated[int, Field(lt=config.MAX_INT_NEO4J)]
     mandatory: Annotated[str, Field(min_length=1)]
-    collection_exception_condition_oid: str | None = None
-    vendor: OdmRefVendorPostInput
+    collection_exception_condition_oid: Annotated[str | None, Field()] = None
+    vendor: Annotated[OdmRefVendorPostInput, Field()]
 
 
 class OdmFormActivityGroupPostInput(PostInputModel):
@@ -279,9 +283,4 @@ class OdmFormVersion(OdmForm):
     Class for storing OdmForm and calculation of differences
     """
 
-    changes: Annotated[
-        list[str],
-        Field(
-            description=CHANGES_FIELD_DESC,
-        ),
-    ] = []
+    changes: list[str] = Field(description=CHANGES_FIELD_DESC, default_factory=list)

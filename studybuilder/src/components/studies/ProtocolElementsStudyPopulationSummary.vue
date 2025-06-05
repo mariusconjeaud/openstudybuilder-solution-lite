@@ -20,11 +20,15 @@
           v-if="criterias.length > 0"
           class="text-h6 text-grey"
         >
-          <span v-html="name" />
+          <span v-html="sanitizeHTMLHandler(name)" />
         </v-expansion-panel-title>
         <v-expansion-panel-text>
           <ol>
-            <li v-for="(item, index) in criterias" :key="index" v-html="item" />
+            <li
+              v-for="(item, index) in criterias"
+              :key="index"
+              v-html="sanitizeHTMLHandler(item)"
+            />
           </ol>
         </v-expansion-panel-text>
       </v-expansion-panel>
@@ -36,6 +40,7 @@
 import study from '@/api/study'
 import { useStudiesGeneralStore } from '@/stores/studies-general'
 import { computed } from 'vue'
+import { sanitizeHTML } from '@/utils/sanitize'
 
 export default {
   setup() {
@@ -84,6 +89,9 @@ export default {
     })
   },
   methods: {
+    sanitizeHTMLHandler(html) {
+      return sanitizeHTML(html)
+    },
     openAll() {
       let length = Object.keys(this.studyCriterias).length
       while (length >= 0) {

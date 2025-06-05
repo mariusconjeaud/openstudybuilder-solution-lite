@@ -53,7 +53,11 @@
         </v-menu>
       </v-col>
     </v-row>
-    <div id="protocolFlowchart" class="mt-4" v-html="protocolFlowchart" />
+    <div
+      id="protocolFlowchart"
+      class="mt-4"
+      v-html="sanitizeHTMLHandler(protocolFlowchart)"
+    />
   </div>
 </template>
 
@@ -66,6 +70,7 @@ import { useSoaContentLoadingStore } from '@/stores/soa-content-loading'
 import unitConstants from '@/constants/units'
 import units from '@/api/units'
 import { useAccessGuard } from '@/composables/accessGuard'
+import { sanitizeHTML } from '@/utils/sanitize'
 
 export default {
   props: {
@@ -119,6 +124,9 @@ export default {
       })
   },
   methods: {
+    sanitizeHTMLHandler(html) {
+      return sanitizeHTML(html)
+    },
     switchIsEnabled(layouts = []) {
       return (
         !this.selectedStudyVersion &&
@@ -191,7 +199,7 @@ export default {
     &,
     & th,
     & td {
-      border: 1px solid #ebe8e5;
+      border: 1px solid black;
       padding: 1px 3px;
     }
 
@@ -199,7 +207,7 @@ export default {
       background-color: rgb(var(--v-theme-tableGray));
 
       & th {
-        border-color: white;
+        border-color: black;
       }
 
       & .header1:nth-child(n + 2) {
@@ -224,29 +232,21 @@ export default {
       }
 
       & .soaGroup {
-        background-color: #b1d5f2;
+        background-color: rgb(var(--v-theme-tableGray));
         font-weight: bold;
-      }
-
-      & .soaGroup ~ td {
-        background-color: #b1d5f2;
       }
 
       & .group {
-        background-color: #d8eaf8;
+        background-color: rgb(var(--v-theme-tableGray));
         font-weight: bold;
       }
 
-      & .group ~ td {
-        background-color: #d8eaf8;
-      }
-
-      & .subGroup:first-child {
-        font-weight: bold;
-        padding-left: 1em;
+      & .subGroup {
+        background-color: rgb(var(--v-theme-tableGray));
       }
 
       & .activity:first-child {
+        background-color: rgb(var(--v-theme-tableGray));
         padding-left: 1em;
       }
 
@@ -254,18 +254,6 @@ export default {
         padding-left: 2em;
         font-style: italic;
       }
-    }
-  }
-
-  dl.footnotes {
-    margin: 1em;
-
-    display: grid;
-    grid-template-columns: 1em auto;
-
-    dt {
-      font-size: 70%;
-      vertical-align: top;
     }
   }
 }

@@ -9,7 +9,7 @@ Feature: Studies - Browse released or locked study definitions
 
         Rule: User must be able to browse the locked or released study definition data independent of the latest draft version.
 
-                Scenario Outline: User must be able to browse the latest study definition content when the study status is Draft
+                Scenario Outline: [Study][Latest] User must be able to browse the latest study definition content when the study status is Draft
                         Given The CDISC DEV-1111 study is selected
                         When The '<page>' for '<study field>' is selected
                         Then The '<value>' is displayed
@@ -26,7 +26,7 @@ Feature: Studies - Browse released or locked study definitions
                                 # | activities/list                         | Activity              | Activity Placeholder for new draft |
 
 
-                Scenario Outline: User must be able to browse the locked study definition content when the study previously has been locked
+                Scenario Outline:  [Study][Locked] User must be able to browse the locked study definition content when the study previously has been locked
                         Given The CDISC DEV-1111 study is selected
                         And The Study Status page in Manage Study is accessed
                         And The test study definition in status Locked and version 1 is selected
@@ -45,7 +45,7 @@ Feature: Studies - Browse released or locked study definitions
                                 # | activities/list                         | Activity              | Activity Placeholder for v1  |
 
 
-                Scenario Outline: User must be able to browse the released study definition content when the study previously has been released
+                Scenario Outline:  [Study][Released] User must be able to browse the released study definition content when the study previously has been released
                         Given The CDISC DEV-1111 study is selected
                         And The Study Status page in Manage Study is accessed
                         And The test study definition in status Released and version 1.1 is selected

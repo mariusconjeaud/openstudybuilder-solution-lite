@@ -25,7 +25,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-
 ### License for 3rd party library babel-plugin-add-module-exports
 
 [MIT](http://59naga.mit-license.org/)

@@ -1,7 +1,7 @@
 from datetime import date
 from typing import Annotated, Any
 
-from fastapi import Body, Path, Query, Request, Response, status
+from fastapi import Body, Path, Query, Request
 from pydantic.types import Json
 
 from clinical_mdr_api.models.study_selections import study_epoch
@@ -51,7 +51,6 @@ Possible errors:
 
 {_generic_descriptions.DATA_EXPORTS_HEADER}
 """,
-    response_model=CustomPage[study_epoch.StudyEpoch],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -147,7 +146,6 @@ def get_all(
     summary="Returns possible values from the database for a given header",
     description="""Allowed parameters include : field name for which to get possible
     values, search string to provide filtering for the field name, additional filters to apply on other fields""",
-    response_model=list[Any],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -181,7 +179,7 @@ def get_distinct_values_for_header(
     study_value_version: Annotated[
         str | None, _generic_descriptions.STUDY_VALUE_VERSION_QUERY
     ] = None,
-):
+) -> list[Any]:
     service = StudyEpochService(
         study_uid=study_uid, study_value_version=study_value_version
     )
@@ -214,7 +212,6 @@ State after:
 Possible errors:
  - Invalid study-uid.
      """,
-    response_model=list[study_epoch.StudyEpochVersion],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -255,7 +252,6 @@ State after:
 Possible errors:
  - Invalid study-uid or study_epoch Uid.
     """,
-    response_model=study_epoch.StudyEpoch,
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -302,7 +298,6 @@ State after:
 Possible errors:
  - Invalid study-uid.
      """,
-    response_model=list[study_epoch.StudyEpochVersion],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -340,7 +335,6 @@ State after:
 Possible errors:
  - Invalid study-uid or Epoch CT Term uid.
     """,
-    response_model=study_epoch.StudyEpoch,
     response_model_exclude_unset=True,
     status_code=201,
     responses={
@@ -371,7 +365,6 @@ def post_new_epoch_create(
     "/studies/{study_uid}/study-epochs/preview",
     dependencies=[rbac.STUDY_WRITE],
     summary="Preview a study epoch",
-    response_model=study_epoch.StudyEpoch,
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -415,7 +408,6 @@ State after:
 Possible errors:
 - Invalid study-uid or study_epoch_uid.
     """,
-    response_model=None,
     status_code=204,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -434,7 +426,6 @@ def delete_study_epoch(
     service = StudyEpochService(study_uid=study_uid)
 
     service.delete(study_uid=study_uid, study_epoch_uid=study_epoch_uid)
-    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.patch(
@@ -467,7 +458,6 @@ Possible errors:
  - Decrease order number for the first study epoch on the list
  - Increase order number for the last study epoch on the list
     """,
-    response_model=study_epoch.StudyEpoch,
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -512,7 +502,6 @@ State after:
 Possible errors:
  - Invalid study-uid or study_epoch_uid .
     """,
-    response_model=study_epoch.StudyEpoch,
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -545,7 +534,6 @@ def patch_update_epoch(
     "/epochs/allowed-configs",
     dependencies=[rbac.STUDY_READ],
     summary="Returns all allowed config sets",
-    response_model=list[study_epoch.StudyEpochTypes],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -562,7 +550,7 @@ def get_all_configs(
         This should be in date format YYYY-MM-DD""",
         ),
     ] = None,
-) -> list[study_epoch.StudyEpoch]:
+) -> list[study_epoch.StudyEpochTypes]:
     service = StudyEpochService(terms_at_specific_date=terms_at_specific_date)
     return service.get_allowed_configs()
 
@@ -574,7 +562,6 @@ def get_all_configs(
     "/studies/{study_uid}/allowed-consecutive-groups",
     dependencies=[rbac.STUDY_READ],
     summary="Returns all consecutive groups",
-    response_model=set[str],
     response_model_exclude_unset=True,
     status_code=200,
     responses={

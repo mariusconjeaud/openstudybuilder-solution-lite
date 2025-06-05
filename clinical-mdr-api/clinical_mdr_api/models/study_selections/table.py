@@ -6,8 +6,8 @@ from clinical_mdr_api.models.utils import BaseModel
 
 
 class TableDimension(dict):
-    default_factory: Callable[..., VT] | None = None
-    _size: int = 0
+    default_factory: Annotated[Callable[..., VT] | None, Field()] = None
+    _size: Annotated[int, Field()] = 0
 
     def __init__(
         self,

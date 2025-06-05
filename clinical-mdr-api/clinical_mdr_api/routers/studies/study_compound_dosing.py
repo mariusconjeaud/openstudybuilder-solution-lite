@@ -1,6 +1,6 @@
 from typing import Annotated, Any
 
-from fastapi import Body, Query, Request, Response, status
+from fastapi import Body, Query, Request
 from pydantic.types import Json
 
 from clinical_mdr_api.models.study_selections.study_selection import (
@@ -26,7 +26,6 @@ from common.models.error import ErrorResponse
     dependencies=[rbac.STUDY_READ],
     summary="List all study compound dosings currently defined for the study",
     description=_generic_descriptions.DATA_EXPORTS_HEADER,
-    response_model=CustomPage[StudyCompoundDosing],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -116,7 +115,6 @@ def get_all_selected_compound_dosings(
     summary="Returns possible values from the database for a given header",
     description="""Allowed parameters include : field name for which to get possible
     values, search string to provide filtering for the field name, additional filters to apply on other fields""",
-    response_model=list[Any],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -147,7 +145,7 @@ def get_distinct_values_for_header(
     page_size: Annotated[
         int | None, Query(description=_generic_descriptions.HEADER_PAGE_SIZE)
     ] = config.DEFAULT_HEADER_PAGE_SIZE,
-):
+) -> list[Any]:
     service = StudyCompoundDosingSelectionService()
     return service.get_distinct_values_for_header(
         study_uid=study_uid,
@@ -165,7 +163,6 @@ def get_distinct_values_for_header(
     summary="Returns possible values from the database for a given header",
     description="""Allowed parameters include : field name for which to get possible
     values, search string to provide filtering for the field name, additional filters to apply on other fields""",
-    response_model=list[Any],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -195,7 +192,7 @@ def get_distinct_compound_dosings_values_for_header(
     page_size: Annotated[
         int | None, Query(description=_generic_descriptions.HEADER_PAGE_SIZE)
     ] = config.DEFAULT_HEADER_PAGE_SIZE,
-):
+) -> list[Any]:
     service = StudyCompoundDosingSelectionService()
     return service.get_distinct_values_for_header(
         field_name=field_name,
@@ -232,7 +229,6 @@ Possible errors:
 Returned data:
  - List of actions and changes related to study compounds.
     """,
-    response_model=list[StudyCompoundDosing],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -274,7 +270,6 @@ Possible errors:
 Returned data:
  - List of actions and changes related to the specified study compound dosing.
     """,
-    response_model=list[StudyCompoundDosing],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -288,7 +283,7 @@ Returned data:
 def get_compound_dosing_audit_trail(
     study_uid: Annotated[str, utils.studyUID],
     study_compound_dosing_uid: Annotated[str, utils.study_compound_dosing_uid],
-) -> StudyCompoundDosing:
+) -> list[StudyCompoundDosing]:
     service = StudyCompoundDosingSelectionService()
     return service.get_compound_dosing_audit_trail(
         study_uid=study_uid, compound_dosing_uid=study_compound_dosing_uid
@@ -299,7 +294,6 @@ def get_compound_dosing_audit_trail(
     "/studies/{study_uid}/study-compound-dosings",
     dependencies=[rbac.STUDY_WRITE],
     summary="Add a study compound dosing to a study",
-    response_model=StudyCompoundDosing,
     response_model_exclude_unset=True,
     status_code=201,
     responses={
@@ -332,7 +326,6 @@ def create_study_compound_dosing(
     "/studies/{study_uid}/study-compound-dosings/{study_compound_dosing_uid}",
     dependencies=[rbac.STUDY_WRITE],
     summary="Delete a study compound dosing",
-    response_model=None,
     status_code=204,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -353,7 +346,6 @@ def delete_compound_dosing(
     service.delete_selection(
         study_uid=study_uid, study_selection_uid=study_compound_dosing_uid
     )
-    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.patch(
@@ -373,7 +365,6 @@ Business logic:
 State after:
  - related parameters are updated for the study compound dosing.
  - Added new entry in the audit trail for the update of the study-compound-dosing.""",
-    response_model=StudyCompoundDosing,
     response_model_exclude_unset=True,
     status_code=200,
     responses={

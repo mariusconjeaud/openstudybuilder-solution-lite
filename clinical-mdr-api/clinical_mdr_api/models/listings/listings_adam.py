@@ -15,7 +15,9 @@ class StudyEndpntAdamListing(BaseModel):
             json_schema_extra={"nullable": True},
         ),
     ] = None
-    OBJTV: Annotated[str, Field(description="Objective")]
+    OBJTV: Annotated[
+        str, Field(description="Objective", json_schema_extra={"format": "html"})
+    ]
     OBJTVPT: Annotated[
         str | None,
         Field(title="Objective Plain Text", json_schema_extra={"nullable": True}),

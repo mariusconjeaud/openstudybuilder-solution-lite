@@ -2,8 +2,7 @@
 
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Body, Path, Query, Request, Response
-from fastapi import status as fast_api_status
+from fastapi import APIRouter, Body, Path, Query, Request
 from pydantic.types import Json
 
 from clinical_mdr_api.domains.versioned_object_aggregate import LibraryItemStatus
@@ -58,7 +57,6 @@ name='MORE TESTING of the superiority in the efficacy of [Intervention] with [Ac
     dependencies=[rbac.LIBRARY_READ],
     summary="Returns all timeframe templates in their latest/newest version.",
     description=_generic_descriptions.DATA_EXPORTS_HEADER,
-    response_model=CustomPage[TimeframeTemplate],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -166,7 +164,6 @@ def get_timeframe_templates(
     summary="Returns possible values from the database for a given header",
     description="""Allowed parameters include : field name for which to get possible
     values, search string to provide filtering for the field name, additional filters to apply on other fields""",
-    response_model=list[Any],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -207,7 +204,7 @@ def get_distinct_values_for_header(
     page_size: Annotated[
         int | None, Query(description=_generic_descriptions.HEADER_PAGE_SIZE)
     ] = config.DEFAULT_HEADER_PAGE_SIZE,
-):
+) -> list[Any]:
     return Service().get_distinct_values_for_header(
         status=status,
         field_name=field_name,
@@ -221,7 +218,6 @@ def get_distinct_values_for_header(
 @router.get(
     "/audit-trail",
     dependencies=[rbac.LIBRARY_READ],
-    response_model=CustomPage[TimeframeTemplate],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -253,7 +249,7 @@ def retrieve_audit_trail(
     total_count: Annotated[
         bool | None, Query(description=_generic_descriptions.TOTAL_COUNT)
     ] = False,
-):
+) -> CustomPage[TimeframeTemplate]:
     results = Service().get_all(
         page_number=page_number,
         page_size=page_size,
@@ -274,7 +270,6 @@ def retrieve_audit_trail(
     summary="Returns the latest/newest version of a specific timeframe template identified by 'timeframe_template_uid'.",
     description="""If multiple request query parameters are used, then they need to
     match all at the same time (they are combined with the AND operation).""",
-    response_model=TimeframeTemplateWithCount,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -286,7 +281,7 @@ def retrieve_audit_trail(
 )
 def get_timeframe_template(
     timeframe_template_uid: Annotated[str, TimeframeTemplateUID],
-) -> TimeframeTemplate:
+) -> TimeframeTemplateWithCount:
     return Service().get_by_uid(timeframe_template_uid)
 
 
@@ -299,7 +294,6 @@ The returned versions are ordered by `start_date` descending (newest entries fir
 
 {_generic_descriptions.DATA_EXPORTS_HEADER}
 """,
-    response_model=list[TimeframeTemplateVersion],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -362,7 +356,6 @@ def get_timeframe_template_versions(
     "This is due to the fact, that the version number remains the same when inactivating or reactivating an timeframe template "
     "(switching between 'Final' and 'Retired' status). \n\n"
     "In that case the latest/newest representation is returned.",
-    response_model=TimeframeTemplate,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -401,7 +394,6 @@ If the request succeeds:
 
 """
     + PARAMETERS_NOTE,
-    response_model=TimeframeTemplate,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -446,7 +438,6 @@ Once the timeframe template has been approved, only the surrounding text (exclud
 
 """
     + PARAMETERS_NOTE,
-    response_model=TimeframeTemplate,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -493,7 +484,6 @@ If the request succeeds:
 Parameters in the 'name' property cannot be changed with this request.
 Only the surrounding text (excluding the parameters) can be changed.
 """,
-    response_model=TimeframeTemplate,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -537,7 +527,6 @@ If the request succeeds:
 * The 'change_description' property will be set automatically.
 * The 'version' property will be increased automatically to the next major version.
     """,
-    response_model=TimeframeTemplate,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -583,7 +572,6 @@ If the request succeeds:
 * The 'change_description' property will be set automatically.
 * The 'version' property will remain the same as before.
     """,
-    response_model=TimeframeTemplate,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -600,7 +588,7 @@ If the request succeeds:
     },
 )
 def inactivate(
-    timeframe_template_uid: Annotated[str, TimeframeTemplateUID]
+    timeframe_template_uid: Annotated[str, TimeframeTemplateUID],
 ) -> TimeframeTemplate:
     return Service().inactivate_final(timeframe_template_uid)
 
@@ -617,7 +605,6 @@ If the request succeeds:
 * The 'change_description' property will be set automatically.
 * The 'version' property will remain the same as before.
     """,
-    response_model=TimeframeTemplate,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -634,7 +621,7 @@ If the request succeeds:
     },
 )
 def reactivate(
-    timeframe_template_uid: Annotated[str, TimeframeTemplateUID]
+    timeframe_template_uid: Annotated[str, TimeframeTemplateUID],
 ) -> TimeframeTemplate:
     return Service().reactivate_retired(timeframe_template_uid)
 
@@ -648,7 +635,6 @@ def reactivate(
 * the timeframe template has never been in 'Final' status and
 * the timeframe template has no references to any timeframes and
 * the timeframe template belongs to a library that allows deleting (the 'is_editable' property of the library needs to be true).""",
-    response_model=None,
     status_code=204,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -670,9 +656,8 @@ def reactivate(
 )
 def delete_timeframe_template(
     timeframe_template_uid: Annotated[str, TimeframeTemplateUID],
-) -> Response:
+):
     Service().soft_delete(timeframe_template_uid)
-    return Response(status_code=fast_api_status.HTTP_204_NO_CONTENT)
 
 
 # TODO this endpoint potentially returns duplicated entries (by intention, currently).
@@ -690,7 +675,6 @@ Per parameter, the parameter.values are ordered by
 Note that parameters may be used multiple times in templates.
 In that case, the same parameter (with the same values) is included multiple times in the response.
     """,
-    response_model=list[ComplexTemplateParameter],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -705,7 +689,7 @@ def get_parameters(
             description="if specified only valid parameters for a given study will be returned.",
         ),
     ] = None,
-):
+) -> list[ComplexTemplateParameter]:
     return Service().get_parameters(timeframe_template_uid, study_uid=study_uid)
 
 

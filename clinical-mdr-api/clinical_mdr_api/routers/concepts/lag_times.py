@@ -36,7 +36,6 @@ State after:
 
 Possible errors:
  - Invalid library name specified.""",
-    response_model=CustomPage[LagTime],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -72,7 +71,7 @@ def get_lag_times(
     total_count: Annotated[
         bool | None, Query(description=_generic_descriptions.TOTAL_COUNT)
     ] = False,
-):
+) -> CustomPage[LagTime]:
     lag_time_service = LagTimeService()
     results = lag_time_service.get_all_concepts(
         library=library_name,
@@ -94,7 +93,6 @@ def get_lag_times(
     summary="Returns possible values from the database for a given header",
     description="Allowed parameters include : field name for which to get possible values, "
     "search string to provide filtering for the field name, additional filters to apply on other fields",
-    response_model=list[Any],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -125,7 +123,7 @@ def get_distinct_values_for_header(
     page_size: Annotated[
         int | None, Query(description=_generic_descriptions.HEADER_PAGE_SIZE)
     ] = False,
-):
+) -> list[Any]:
     lag_time_service = LagTimeService()
     return lag_time_service.get_distinct_values_for_header(
         library=library_name,
@@ -151,14 +149,13 @@ State after:
 Possible errors:
  - Invalid uid
  """,
-    response_model=LagTime,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
         404: _generic_descriptions.ERROR_404,
     },
 )
-def get_lag_time(lag_time_uid: Annotated[str, LagTimeUID]):
+def get_lag_time(lag_time_uid: Annotated[str, LagTimeUID]) -> LagTime:
     lag_time_service = LagTimeService()
     return lag_time_service.get_by_uid(uid=lag_time_uid)
 
@@ -177,7 +174,6 @@ Business logic:
 Possible errors:
  - Invalid library.
 """,
-    response_model=LagTime,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -190,6 +186,6 @@ Possible errors:
         },
     },
 )
-def create(lag_time_create_input: Annotated[LagTimePostInput, Body()]):
+def create(lag_time_create_input: Annotated[LagTimePostInput, Body()]) -> LagTime:
     lag_time_service = LagTimeService()
     return lag_time_service.create(concept_input=lag_time_create_input)

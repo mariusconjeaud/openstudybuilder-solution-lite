@@ -3,15 +3,16 @@ import os
 import sys
 import uuid
 from neo4j import GraphDatabase, Driver
+from os import environ
 
 DATABASE = os.environ.get("NEO4J_MDR_DATABASE")
 HOST = os.environ.get("NEO4J_MDR_HOST")
 PORT = os.environ.get("NEO4J_MDR_BOLT_PORT")
 USER = os.environ.get("NEO4J_MDR_AUTH_USER")
 PASS = os.environ.get("NEO4J_MDR_AUTH_PASSWORD")
+NEO4J_PROTOCOL = environ.get("NEO4J_PROTOCOL", "neo4j")
 
-uri = f"neo4j://{HOST}:{PORT}"
-
+uri = f"{NEO4J_PROTOCOL}://{HOST}:{PORT}"
 
 def load_reports(driver: Driver, directory: str):
     # Loop over all.json files in the given relative directory

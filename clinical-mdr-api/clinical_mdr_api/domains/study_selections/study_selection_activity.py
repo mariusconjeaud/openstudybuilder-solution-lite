@@ -31,6 +31,7 @@ class StudySelectionActivityVO(study_selection_base.StudySelectionBaseVO):
     study_soa_group_uid: str
     study_soa_group_order: int | None
     soa_group_term_uid: str
+    soa_group_term_name: str | None
     order: int | None
     show_activity_in_protocol_flowchart: bool
     show_activity_group_in_protocol_flowchart: bool
@@ -52,6 +53,8 @@ class StudySelectionActivityVO(study_selection_base.StudySelectionBaseVO):
         study_soa_group_uid: str,
         soa_group_term_uid: str,
         author_id: str,
+        soa_group_term_name: str | None = None,
+        author_username: str | None = None,
         study_soa_group_order: int | None = None,
         activity_library_name: str | None = None,
         study_activity_subgroup_uid: str | None = None,
@@ -88,6 +91,7 @@ class StudySelectionActivityVO(study_selection_base.StudySelectionBaseVO):
             study_soa_group_uid=normalize_string(study_soa_group_uid),
             study_soa_group_order=study_soa_group_order,
             soa_group_term_uid=normalize_string(soa_group_term_uid),
+            soa_group_term_name=normalize_string(soa_group_term_name),
             show_activity_in_protocol_flowchart=show_activity_in_protocol_flowchart,
             show_activity_group_in_protocol_flowchart=show_activity_group_in_protocol_flowchart,
             show_activity_subgroup_in_protocol_flowchart=show_activity_subgroup_in_protocol_flowchart,
@@ -104,7 +108,11 @@ class StudySelectionActivityVO(study_selection_base.StudySelectionBaseVO):
             activity_group_name=normalize_string(activity_group_name),
             order=order,
             author_id=normalize_string(author_id),
-            author_username=UserInfoService.get_author_username_from_id(author_id),
+            author_username=(
+                UserInfoService.get_author_username_from_id(author_id)
+                if author_username is None
+                else normalize_string(author_username)
+            ),
             accepted_version=accepted_version,
         )
 

@@ -724,7 +724,7 @@ class StudySoAFootnoteService:
         study_soa_footnote_uid: str,
         study_uid: str,
     ) -> list[StudySoAFootnoteVersion]:
-        all_versions = self.repository.get_all_versions_for_specific_visit(
+        all_versions = self.repository.get_all_versions_for_specific_footnote(
             uid=study_soa_footnote_uid, study_uid=study_uid
         )
         versions = [

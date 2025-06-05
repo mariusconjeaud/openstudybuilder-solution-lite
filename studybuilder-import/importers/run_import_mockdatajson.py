@@ -125,6 +125,8 @@ STUDIES = "Studies"
 CONCEPT_VALUES = "ConceptValues"
 DICTIONARIES = "Dictionaries"
 
+DEFINITION_PLACEHOLDER = "(no definition provided)"
+
 
 IMPORT_DIR = os.path.dirname(IMPORT_PROJECTS)
 
@@ -718,6 +720,8 @@ class MockdataJson(BaseImporter):
                     self._copy_parameters(value, data_new[key], clone=False)
                 else:
                     data_new[key] = value
+        if "definition" in data_new and data_new["definition"] == "":
+            data_new["definition"] = DEFINITION_PLACEHOLDER
         return data_new
 
     def create_dict_path(self, data, path, key, value):
@@ -755,6 +759,8 @@ class MockdataJson(BaseImporter):
                 # print("Skip:", path, key, value_old)
             # else:
             # print("Skip key:", key)
+        if "definition" in data_new and data_new["definition"] == "":
+            data_new["definition"] = DEFINITION_PLACEHOLDER
         return data_new
 
     def get_dict_path(self, data, path, default=None):
@@ -2841,6 +2847,8 @@ class MockdataJson(BaseImporter):
             for key in data.keys():
                 if not key.lower().endswith("uid"):
                     data[key] = group.get(key, data[key])
+            if "definition" in data and data["definition"] == "":
+                data["definition"] = DEFINITION_PLACEHOLDER
             path = "/concepts/activities/activity-groups"
             res = self.api.simple_post_to_api(path, data)
             if res is not None:
@@ -2871,7 +2879,8 @@ class MockdataJson(BaseImporter):
                     data[key], (list, dict, tuple)
                 ):
                     data[key] = subgroup.get(key, data[key])
-
+            if "definition" in data and data["definition"] == "":
+                data["definition"] = DEFINITION_PLACEHOLDER
             if subgroup.get("activity_groups") is not None:
                 for group in subgroup["activity_groups"]:
                     uid = self.lookup_activity_group_uid(group["name"])
@@ -2907,7 +2916,8 @@ class MockdataJson(BaseImporter):
             for key in data.keys():
                 if not key.lower().endswith("uid"):
                     data[key] = activity.get(key, data[key])
-
+            if "definition" in data and data["definition"] == "":
+                data["definition"] = DEFINITION_PLACEHOLDER
             data["activity_groupings"] = []
             if activity.get("activity_groupings") is not None:
                 for grouping in activity["activity_groupings"]:

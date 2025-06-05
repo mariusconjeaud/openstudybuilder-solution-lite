@@ -12,7 +12,7 @@ Feature: Studies - Protocol Process
     #    When The 'Protocol Process' submenu is clicked in the 'Process Overview' section
     #    Then The current URL is 'studies/protocol_process'
 
-    Scenario: User must be able to see the page buttons
+    Scenario: [Navigation][Buttons] User must be able to see the page buttons
         Given The '/studies/protocol_process' page is opened
         Then The following buttons are visible
             | buttons           |
@@ -23,17 +23,17 @@ Feature: Studies - Protocol Process
             | Study Population |
             | Study Activities |
 
-    Scenario: User must be able to use the Select Study button
+    Scenario: [Navigation][Select Study] User must be able to use the Select Study button
         Given The '/studies/protocol_process' page is opened
         When The 'Select study' button is clicked in Protocol Process page
         Then The 'Select study ID or acronym' form is opened
 
-    Scenario: User must be able to use the New Study Study button
+    Scenario: [Navigation][New Study] User must be able to use the New Study Study button
         Given The '/studies/protocol_process' page is opened
         When The 'Add New Study' button is clicked in Protocol Process page
         Then The current URL is 'studies/select_or_add_study'
 
-    Scenario Outline: User must be able to use the Study Structure button
+    Scenario Outline: [Navigation][Study Structure] User must be able to use the Study Structure button
         Given A test study is selected
         And The '/studies/protocol_process' page is opened
         When The 'Study Structure' button is clicked in Protocol Process page
@@ -48,7 +48,7 @@ Feature: Studies - Protocol Process
             | Study Visits   | studies/Study_000001/study_structure/visits        |
             | Design Matrix  | studies/Study_000001/study_structure/design_matrix |
 
-    Scenario Outline: User must be able to use the Study Purpose button
+    Scenario Outline: [Navifation][Study Purpose] User must be able to use the Study Purpose button
         Given A test study is selected
         And The '/studies/protocol_process' page is opened
         When The 'Study Purpose' button is clicked in Protocol Process page
@@ -61,7 +61,7 @@ Feature: Studies - Protocol Process
             | Objectives  | studies/Study_000001/study_purpose/objectives |
             | Endpoints   | studies/Study_000001/study_purpose/endpoints  |
 
-    Scenario Outline: User must be able to use the Study Population button
+    Scenario Outline: [Navigation][Study Population] User must be able to use the Study Population button
         Given A test study is selected
         And The '/studies/protocol_process' page is opened
         When The 'Study Population' button is clicked in Protocol Process page
@@ -79,7 +79,7 @@ Feature: Studies - Protocol Process
             | Withdrawal Criteria    | studies/Study_000001/selection_criteria/Withdrawal%20Criteria    |
 
 
-    Scenario Outline: User must be able to use the Study Activites button
+    Scenario Outline: [Navigation][Study Activities] User must be able to use the Study Activites button
         Given A test study is selected
         And The '/studies/protocol_process' page is opened
         When The 'Study Activities' button is clicked in Protocol Process page

@@ -28,9 +28,9 @@ from clinical_mdr_api.models.validators import validate_name_only_contains_lette
 
 class OdmVendorElement(ConceptModel):
     compatible_types: Annotated[list[str], Field(json_schema_extra={"is_json": True})]
-    vendor_namespace: OdmVendorNamespaceSimpleModel
-    vendor_attributes: list[OdmVendorAttributeSimpleModel]
-    possible_actions: list[str]
+    vendor_namespace: Annotated[OdmVendorNamespaceSimpleModel, Field()]
+    vendor_attributes: Annotated[list[OdmVendorAttributeSimpleModel], Field()]
+    possible_actions: Annotated[list[str], Field()]
 
     @classmethod
     def from_odm_vendor_element_ar(
@@ -124,9 +124,4 @@ class OdmVendorElementVersion(OdmVendorElement):
     Class for storing OdmVendorElement and calculation of differences
     """
 
-    changes: Annotated[
-        list[str],
-        Field(
-            description=CHANGES_FIELD_DESC,
-        ),
-    ] = []
+    changes: list[str] = Field(description=CHANGES_FIELD_DESC, default_factory=list)

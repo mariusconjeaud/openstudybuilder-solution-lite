@@ -197,7 +197,7 @@ Feature: Library - Objective templates
     # Scenario: User must be able to add a new Objective Parent Template in 'Parent Templates' tab
     #     Given The '/library/objective_templates' page is opened
     #     When The new criteria is added in the library
-    #     Then The new Criteria is visible in the Criteria Templates Table
+    #     Then The Criteria is visible in the Criteria Templates Table
 
     # Scenario: User must not be able to add a new Objective Parent Template without mandatory field filled in under 'create template'
     #     Given The '/library/objective_templates' page is opened
@@ -232,7 +232,7 @@ Feature: Library - Objective templates
 
     # Scenario: User must be able to edit draft version of the Objective Parent Template
     #     Given The test objective parent template exists with a status as 'Draft'
-    #     When The 'Edit' option is selected from the three dot menu list
+    #     When The 'Edit' option is clicked from the three dot menu list
     #     And The template is updated with test data and saved
     #     Then The pop up displays 'Objective Parent Template updated'
 
@@ -242,18 +242,18 @@ Feature: Library - Objective templates
     Scenario: Default value for change description when Objective Parent Template version is below version 1.0
         Given The test objective parent template exists with a status as 'Draft'
         And objective parent template version is below version 1.0
-        When The 'Edit' option is selected from the three dot menu list
+        When The 'Edit' option is clicked from the three dot menu list
         Then the default value for change description must be 'Work in progress'
 
     Scenario: No default value for change description when Objective Parent Template version is above version 1.0
         Given The test objective parent template exists with a status as 'Draft'
-        When The 'Edit' option is selected from the three dot menu list
+        When The 'Edit' option is clicked from the three dot menu list
         And objective parent template version is above version 1.0
         Then no default value for change description should be provided
 
     # Scenario: User must not be able to save the edited version of the draft Objective Parent Template without filled in mandatory field 'Change description'
     #     Given The test objective parent template exists with a status as 'Draft'
-    #     When The 'Edit' option is selected from the three dot menu list
+    #     When The 'Edit' option is clicked from the three dot menu list
     #     And The 'Change description' field is not filled with test data
     #     Then The pop up displays 'This field is required'
     #     And The user is not able to save the edited objective parent template

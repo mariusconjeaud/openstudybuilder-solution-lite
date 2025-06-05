@@ -55,8 +55,11 @@ class StudySelectionActivityInstanceRepository(
     def _create_value_object_from_repository(
         self, selection: dict, acv: bool
     ) -> StudySelectionActivityInstanceVO:
-        activity = selection.get("activity", {})
-        activity_instance = selection.get("activity_instance", {})
+        activity = selection.get("activity") or {}
+        activity_instance = selection.get("activity_instance") or {}
+        study_activity_subgroup = selection.get("study_activity_subgroup") or {}
+        study_activity_group = selection.get("study_activity_group") or {}
+        study_soa_group = selection.get("study_soa_group") or {}
         return StudySelectionActivityInstanceVO.from_input_values(
             study_uid=selection["study_uid"],
             study_selection_uid=selection["study_selection_uid"],
@@ -64,12 +67,8 @@ class StudySelectionActivityInstanceRepository(
             activity_uid=activity.get("uid"),
             activity_name=activity.get("name"),
             activity_version=f"{activity.get('major_version')}.{activity.get('minor_version')}",
-            activity_instance_uid=(
-                activity_instance.get("uid") if activity_instance else None
-            ),
-            activity_instance_name=(
-                activity_instance.get("name") if activity_instance else None
-            ),
+            activity_instance_uid=activity_instance.get("uid"),
+            activity_instance_name=activity_instance.get("name"),
             activity_instance_version=(
                 f"{activity_instance.get('major_version')}.{activity_instance.get('minor_version')}"
                 if activity_instance
@@ -80,40 +79,24 @@ class StudySelectionActivityInstanceRepository(
             ],
             start_date=convert_to_datetime(value=selection["start_date"]),
             author_id=selection["author_id"],
+            author_username=selection["author_username"],
             accepted_version=acv,
-            study_activity_subgroup_uid=selection.get(
-                "study_activity_subgroup", {}
-            ).get("selection_uid"),
-            activity_subgroup_uid=selection.get("study_activity_subgroup", {}).get(
-                "activity_subgroup_uid"
-            ),
-            activity_subgroup_name=selection.get("study_activity_subgroup", {}).get(
+            study_activity_subgroup_uid=study_activity_subgroup.get("selection_uid"),
+            activity_subgroup_uid=study_activity_subgroup.get("activity_subgroup_uid"),
+            activity_subgroup_name=study_activity_subgroup.get(
                 "activity_subgroup_name"
             ),
-            study_activity_group_uid=selection.get("study_activity_group", {}).get(
-                "selection_uid"
-            ),
-            activity_group_uid=selection.get("study_activity_group", {}).get(
-                "activity_group_uid"
-            ),
-            activity_group_name=selection.get("study_activity_group", {}).get(
-                "activity_group_name"
-            ),
-            study_soa_group_uid=selection.get("study_soa_group", {}).get(
-                "selection_uid"
-            ),
-            soa_group_term_uid=selection.get("study_soa_group", {}).get(
-                "soa_group_uid"
-            ),
-            soa_group_term_name=selection.get("study_soa_group", {}).get(
-                "soa_group_name"
-            ),
+            study_activity_group_uid=study_activity_group.get("selection_uid"),
+            activity_group_uid=study_activity_group.get("activity_group_uid"),
+            activity_group_name=study_activity_group.get("activity_group_name"),
+            study_soa_group_uid=study_soa_group.get("selection_uid"),
+            soa_group_term_uid=study_soa_group.get("soa_group_uid"),
+            soa_group_term_name=study_soa_group.get("soa_group_name"),
         )
 
     def _order_by_query(self):
         return """
             WITH DISTINCT *
-            ORDER BY sa.uid ASC
             MATCH (sa)<-[:AFTER]-(sac:StudyAction)
         """
 
@@ -183,7 +166,8 @@ class StudySelectionActivityInstanceRepository(
                         uid: activity_root.uid,
                         name: activity_value.name,
                         major_version: toInteger(split(has_version.version,'.')[0]),
-                        minor_version: toInteger(split(has_version.version,'.')[1])
+                        minor_version: toInteger(split(has_version.version,'.')[1]),
+                        order: study_activity.order
                     }], ['major_version', 'minor_version'])) AS activity,
                 head(apoc.coll.sortMulti([(sa)-[:HAS_SELECTED_ACTIVITY_INSTANCE]->(activity_instance_name:ActivityInstanceValue)<-[has_version:HAS_VERSION]
                 -(activity_instance_root:ActivityInstanceRoot) WHERE has_version.status IN ['Final', 'Retired'] |  
@@ -191,31 +175,38 @@ class StudySelectionActivityInstanceRepository(
                         uid: activity_instance_root.uid, 
                         name:activity_instance_name.name,
                         major_version: toInteger(split(has_version.version,'.')[0]),
-                        minor_version: toInteger(split(has_version.version,'.')[1])
+                        minor_version: toInteger(split(has_version.version,'.')[1]),
+                        order: sa.order
                     }], ['major_version', 'minor_version'])) AS activity_instance,
                 head([(study_activity)-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_SUBGROUP]->(study_activity_subgroup_selection)
                     -[:HAS_SELECTED_ACTIVITY_SUBGROUP]->(activity_subgroup_value:ActivitySubGroupValue)<-[:HAS_VERSION]-(activity_subgroup_root:ActivitySubGroupRoot) | 
                     {
                         selection_uid: study_activity_subgroup_selection.uid, 
                         activity_subgroup_uid:activity_subgroup_root.uid,
-                        activity_subgroup_name: activity_subgroup_value.name
+                        activity_subgroup_name: activity_subgroup_value.name,
+                        order: study_activity_subgroup_selection.order
                     }]) AS study_activity_subgroup,
                 head([(study_activity)-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_GROUP]->(study_activity_group_selection)
                     -[:HAS_SELECTED_ACTIVITY_GROUP]->(activity_group_value:ActivityGroupValue)<-[:HAS_VERSION]-(activity_group_root:ActivityGroupRoot) | 
                     {
                         selection_uid: study_activity_group_selection.uid, 
                         activity_group_uid: activity_group_root.uid,
-                        activity_group_name: activity_group_value.name
+                        activity_group_name: activity_group_value.name,
+                        order: study_activity_group_selection.order
                     }]) AS study_activity_group,
                 head([(study_activity)-[:STUDY_ACTIVITY_HAS_STUDY_SOA_GROUP]->(study_soa_group_selection)
                     -[:HAS_FLOWCHART_GROUP]->(ct_term_root:CTTermRoot)-[:HAS_NAME_ROOT]-(:CTTermNameRoot)-[:LATEST]->(flowchart_value:CTTermNameValue) | 
                     {
                         selection_uid: study_soa_group_selection.uid, 
                         soa_group_uid: ct_term_root.uid,
-                        soa_group_name: flowchart_value.name
+                        soa_group_name: flowchart_value.name,
+                        order: study_soa_group_selection.order
                     }]) AS study_soa_group,
                 sac.date AS start_date,
-                sac.author_id AS author_id"""
+                sac.author_id AS author_id,
+                COALESCE(head([(user:User)-[*0]-() WHERE user.user_id=sac.author_id | user.username]), sac.author_id) AS author_username
+                ORDER BY study_soa_group.order, study_activity_group.order, study_activity_subgroup.order, activity.order, activity_instance.order
+        """
 
     def get_selection_history(
         self, selection: dict, change_type: str, end_date: datetime

@@ -27,7 +27,7 @@
           "id": "705f65b8-21d4-47db-a71a-7867c32cb06b",
           "title": "Guide",
           "query": "This NeoDash report allow you to browse the **Controlled Terminology** with both the CDISC and the Sponsor Codelists / Terms: here we display the evolution of each Codelist from Package to Package.\n\n\n",
-          "width": 6,
+          "width": 24,
           "height": 4,
           "x": 0,
           "y": 0,
@@ -43,7 +43,7 @@
       "reports": [
         {
           "id": "1009ff47-1b86-4141-be6d-be5e794bdb83",
-          "title": "Overview at date : $neodash_selected_date",
+          "title": "Overview at Date : $neodash_selected_date",
           "query": "MATCH (n1:CTCodelistAttributesValue)<-[r1]-(n2:CTCodelistAttributesRoot)<-[r2]-(n3:CTCodelistRoot)\nMATCH (n5:CTCatalogue)-[r4]->(n3)<-[r3]-(n4:Library)\nMATCH p=(n3)-[r5]->(n6:CTTermRoot)-[r6]->(n7:CTTermAttributesRoot)-[r7:HAS_VERSION]->(n8:CTTermAttributesValue)\nWHERE n1.name=$neodash_ctcodelistattributesvalue_name AND ((date(r7.start_date) <= date($neodash_selected_date) < date(r7.end_date)) OR (r7.end_date IS NULL AND (date(r7.start_date) <= date($neodash_selected_date) )))\nRETURN DISTINCT p\n",
           "width": 12,
           "height": 4,
@@ -77,15 +77,15 @@
               "CTTermAttributesValue",
               "preferred_term",
               "concept_id",
+              "synonyms",
               "code_submission_value",
-              "definition",
-              "synonyms"
+              "definition"
             ]
           ]
         },
         {
           "id": "dd410e42-aa14-4777-bc30-b0b2a8124758",
-          "title": "Pick a date for the graph view",
+          "title": "Pick a Date for the Graph View",
           "query": "RETURN true;",
           "width": 6,
           "height": 4,
@@ -110,8 +110,7 @@
           "y": 10,
           "type": "gantt",
           "selection": {
-            "Term": "(label)",
-            "NEXT": "(label)"
+            "Term": "(label)"
           },
           "settings": {
             "startDateProperty": "start_date",
@@ -133,15 +132,12 @@
               "retire_date",
               "version",
               "start_date"
-            ],
-            [
-              "NEXT"
             ]
           ]
         },
         {
           "id": "9175edb5-b4f8-4ed7-b325-e62dbeddb8c7",
-          "title": "Terms history for codelist - $neodash_ctcodelistattributesvalue_name",
+          "title": "Terms History for Codelist - $neodash_ctcodelistattributesvalue_name",
           "query": "MATCH (n1:CTCodelistAttributesValue)<-[r1:HAS_VERSION]-(n2:CTCodelistAttributesRoot)<-[r2]-(n3:CTCodelistRoot)-[r5]->(n6:CTTermRoot)-[r6]->(n7:CTTermAttributesRoot)-[r7:HAS_VERSION]->(n8:CTTermAttributesValue),\n(n6)<-[:CONTAINS_TERM]-(lib_term:Library),\n(n3)<-[:CONTAINS_CODELIST]-(lib_cl:Library) \nWITH DISTINCT n1,r1,n2,r2,n3,r5,n6,r6,n7,r7,n8,lib_term, lib_cl\nWHERE n1.name=$neodash_ctcodelistattributesvalue_name \nWITH DISTINCT n1.name AS CodelistName, \nlib_cl.name as CodelistOwner,\nn3.uid AS Codelist, \nn8.code_submission_value AS SubVal,\nn6.concept_id as `Term C-code`,\nlib_term.name as TermOwner,\ncase when r7.start_date is not null then apoc.temporal.format(r7.start_date,\"YYYY-MM-dd\")  else '' end as start_date,\ncase when r5.end_date is not null then apoc.temporal.format(r5.end_date,\"YYYY-MM-dd\")  else '' end as retire_date\nWITH CodelistName, CodelistOwner, Codelist, SubVal,  TermOwner,`Term C-code`,\nsize(apoc.coll.toSet(collect(start_date)))-1 as numChange, \napoc.coll.sort(apoc.coll.toSet(collect(start_date))) as startDate,\nretire_date\nwith distinct Codelist, \nCodelistName, \nCodelistOwner,\n`Term C-code`,\nSubVal,\nTermOwner,\nnumChange, \nstartDate, \nretire_date order by Codelist, CodelistName, SubVal\nwith Codelist,\nCodelistOwner,\nCodelistName as`Codelist Name`,\n`Term C-code`,\nSubVal as `Submission Value`,\nTermOwner,\nnumChange as `#Changes`,\nstartDate[0] as `Creation Date`,\ncase when size(startDate) >1 then startDate[1..(size(startDate))] else '' end as `Date of Change(s)`,\nretire_date as `Retire Date`,\ncase when not retire_date='' then 'retired' else 'active' end as Status\nreturn\nCodelist,\nCodelistOwner,\n`Codelist Name`,\n`Term C-code`,\n`Submission Value`,\nTermOwner,\n`#Changes`,\n`Creation Date`,\n`Date of Change(s)`,\n`Retire Date`,\nStatus ",
           "width": 23,
           "height": 6,
@@ -188,7 +184,7 @@
         },
         {
           "id": "4f6dde88-b8e2-401d-b046-bbf293f3467a",
-          "title": "Codelist Concept id",
+          "title": "Codelist Concept ID",
           "query": "MATCH (n1:CTCodelistAttributesValue)<-[r1:HAS_VERSION]-(n2:CTCodelistAttributesRoot)<-[r2]-(n3:CTCodelistRoot)\nWHERE n1.name=$neodash_ctcodelistattributesvalue_name\nRETURN n3.uid\n",
           "width": 5,
           "height": 2,
@@ -201,8 +197,8 @@
         },
         {
           "id": "bf3d7781-3d3d-4be6-b6c4-5736a0b5a427",
-          "title": "Details for term(s): $neodash_subval",
-          "query": "MATCH (n1:CTCodelistAttributesValue)<-[r1:HAS_VERSION]-(n2:CTCodelistAttributesRoot)<-[r2]-(n3:CTCodelistRoot)-[r5]->(n6:CTTermRoot)-[r6]->(n7:CTTermAttributesRoot)-[r7:HAS_VERSION]->(n8:CTTermAttributesValue)\nWITH DISTINCT n1,r1,n2,r2,n3,r5,n6,r6,n7,r7,n8\nWHERE n1.name=$neodash_ctcodelistattributesvalue_name and n8.code_submission_value in $neodash_subval\nwith CASE when n8.concept_id is null THEN toString(id(n8)) ELSE n8.concept_id END as concept_id, apoc.map.merge(properties(n8),apoc.map.fromValues(['version',r7.version,'start_date',r7.start_date,'retire_date',r5.end_date,'end_date',r7.end_date])) as term order by r7.version\nwith concept_id, collect(term) as terms\nwith concept_id,CASE WHEN size(terms)=1 THEN [[null,terms[0]]] ELSE apoc.coll.pairs(terms) END as terms\nwith concept_id, CASE WHEN size(terms)=1  THEN terms ELSE apoc.coll.insert(terms[0..size(terms)-1], 0, [null,terms[0][0]]) END as terms\nwith concept_id,terms, [p in terms | CASE WHEN (p[0]['definition']=p[1]['definition']) or p[0]['definition'] is null \nTHEN 'no' ELSE 'yes' END ] as def_diff,\n[p in terms | CASE WHEN (p[0]['code_submission_value']=p[1]['code_submission_value']) or p[0]['code_submission_value'] is null \nTHEN 'no' ELSE 'yes' END ] as subval_diff,\n[p in terms | CASE WHEN (p[0]['preferred_term']=p[1]['preferred_term']) or p[0]['preferred_term'] is null \nTHEN 'no' ELSE 'yes' END ] as pref_term_diff,\n[p in terms | CASE WHEN (p[0]['concept_id']=p[1]['concept_id']) or p[0]['concept_id'] is null \nTHEN 'no' ELSE 'yes' END ] as concept_diff,\n[p in terms | CASE WHEN (p[0]['synonyms']=p[1]['synonyms']) or p[0]['synonyms'] is null \nTHEN 'no' ELSE 'yes' END ] as sym_diff\nwith concept_id, terms, def_diff, subval_diff, pref_term_diff, concept_diff, sym_diff,range(0,size(terms)-1,1) AS coll_size\nUNWIND coll_size AS idx\nwith concept_id, terms[idx][1]as term, \ndef_diff[idx] as def_diff,\nsubval_diff[idx] as subval_diff, \npref_term_diff[idx] as pref_term_diff, \nconcept_diff[idx] as concept_diff,\nsym_diff[idx] as sym_diff\nWITH concept_id, CASE WHEN \"code_submission_value\" in keys(term) THEN term.code_submission_value ELSE null END as `Submission Value`,\nCASE WHEN 'concept_id' in keys(term) THEN term.concept_id ELSE null END as `C-code`,\nCASE WHEN \"preferred_term\" in keys(term) THEN term.preferred_term ELSE null END as `Preferred Term`,\nCASE WHEN \"synonyms\" in keys(term) THEN term.synonyms ELSE null END as Synonyms,\nCASE WHEN \"definition\" in keys(term) THEN term.definition ELSE null END as Definition,\ncase when term.start_date is not null then apoc.temporal.format(term.start_date,\"YYYY-MM-dd\")  else null end as `Start Date`,\ncase when term.end_date is not null then apoc.temporal.format(term.end_date,\"YYYY-MM-dd\")  else null end as end_date,\ncase when term.retire_date is not null then apoc.temporal.format(term.retire_date,\"YYYY-MM-dd\")  else null end as `Retire Date`,\nterm.version as Version,\ndef_diff,subval_diff,pref_term_diff,concept_diff, sym_diff\nreturn `Submission Value`,\n`C-code`,\n`Preferred Term`,\nSynonyms,\nDefinition,\n`Start Date`,\ncoalesce(end_date,`Retire Date`) as `End Date`,\nVersion,\nsubval_diff as `Submission Value diff`,\nconcept_diff as `C-code diff`,\npref_term_diff as `Preferred Term diff`,\nsym_diff as `Synonyms diff`,\ndef_diff as `Definition diff`\norder by concept_id,`Start Date`, `End Date`\n",
+          "title": "Details for Term(s): $neodash_subval",
+          "query": "MATCH (n1:CTCodelistAttributesValue)<-[r1:HAS_VERSION]-(n2:CTCodelistAttributesRoot)<-[r2]-(n3:CTCodelistRoot)-[r5]->(n6:CTTermRoot)-[r6]->(n7:CTTermAttributesRoot)-[r7:HAS_VERSION]->(n8:CTTermAttributesValue)\nWITH DISTINCT n1,r1,n2,r2,n3,r5,n6,r6,n7,r7,n8\nWHERE n1.name=$neodash_ctcodelistattributesvalue_name and n8.code_submission_value in $neodash_subval\nwith CASE when n8.concept_id is null THEN toString(id(n8)) ELSE n8.concept_id END as concept_id, apoc.map.merge(properties(n8),apoc.map.fromValues(['version',r7.version,'start_date',r7.start_date,'retire_date',r5.end_date,'end_date',r7.end_date])) as term order by r7.version\nwith concept_id, collect(term) as terms\nwith concept_id,CASE WHEN size(terms)=1 THEN [[null,terms[0]]] ELSE apoc.coll.pairs(terms) END as terms\nwith concept_id, CASE WHEN size(terms)=1  THEN terms ELSE apoc.coll.insert(terms[0..size(terms)-1], 0, [null,terms[0][0]]) END as terms\nwith concept_id,terms, [p in terms | CASE WHEN (p[0]['definition']=p[1]['definition']) or p[0]['definition'] is null \nTHEN 'no' ELSE 'yes' END ] as def_diff,\n[p in terms | CASE WHEN (p[0]['code_submission_value']=p[1]['code_submission_value']) or p[0]['code_submission_value'] is null \nTHEN 'no' ELSE 'yes' END ] as subval_diff,\n[p in terms | CASE WHEN (p[0]['preferred_term']=p[1]['preferred_term']) or p[0]['preferred_term'] is null \nTHEN 'no' ELSE 'yes' END ] as pref_term_diff,\n[p in terms | CASE WHEN (p[0]['concept_id']=p[1]['concept_id']) or p[0]['concept_id'] is null \nTHEN 'no' ELSE 'yes' END ] as concept_diff,\n[p in terms | CASE WHEN (p[0]['synonyms']=p[1]['synonyms']) or p[0]['synonyms'] is null \nTHEN 'no' ELSE 'yes' END ] as sym_diff\nwith concept_id, terms, def_diff, subval_diff, pref_term_diff, concept_diff, sym_diff,range(0,size(terms)-1,1) AS coll_size\nUNWIND coll_size AS idx\nwith concept_id, terms[idx][1]as term, \ndef_diff[idx] as def_diff,\nsubval_diff[idx] as subval_diff, \npref_term_diff[idx] as pref_term_diff, \nconcept_diff[idx] as concept_diff,\nsym_diff[idx] as sym_diff\nWITH concept_id, CASE WHEN \"code_submission_value\" in keys(term) THEN term.code_submission_value ELSE null END as `Submission Value`,\nCASE WHEN 'concept_id' in keys(term) THEN term.concept_id ELSE null END as `C-code`,\nCASE WHEN \"preferred_term\" in keys(term) THEN term.preferred_term ELSE null END as `Preferred Term`,\nCASE WHEN \"synonyms\" in keys(term) THEN term.synonyms ELSE null END as Synonyms,\nCASE WHEN \"definition\" in keys(term) THEN term.definition ELSE null END as Definition,\ncase when term.start_date is not null then apoc.temporal.format(term.start_date,\"YYYY-MM-dd\")  else null end as `Start Date`,\ncase when term.end_date is not null then apoc.temporal.format(term.end_date,\"YYYY-MM-dd\")  else null end as end_date,\ncase when term.retire_date is not null then apoc.temporal.format(term.retire_date,\"YYYY-MM-dd\")  else null end as `Retire Date`,\nterm.version as Version,\ndef_diff,subval_diff,pref_term_diff,concept_diff, sym_diff\nreturn \n`Start Date`,\ncoalesce(end_date,`Retire Date`) as `End Date`,\nVersion,\n`Submission Value`,\n`C-code`,\n`Preferred Term`,\nSynonyms,\nDefinition,\nsubval_diff as __subval_diff,\nconcept_diff as __concept_diff,\npref_term_diff as __pref_term_diff,\nsym_diff as __sym_diff,\ndef_diff as __def_diff\norder by concept_id,`Start Date`, `End Date`\n",
           "width": 23,
           "height": 6,
           "x": 0,
@@ -213,8 +209,8 @@
             "refreshButtonEnabled": true,
             "compact": true,
             "wrapContent": true,
-            "columnWidths": "[1,1,1,1,2,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5]",
-            "noDataMessage": "Select one or more terms in table above",
+            "columnWidths": "[1,1,1,1,1,1,1,4]",
+            "noDataMessage": "Select one or more terms in table above.",
             "actionsRules": [
               {
                 "condition": "Click",
@@ -226,74 +222,84 @@
             ],
             "styleRules": [
               {
-                "field": "Submission Value diff",
+                "field": "__subval_diff",
                 "condition": "=",
                 "value": "no",
-                "customization": "cell text color",
-                "customizationValue": "green"
+                "customization": "cell color",
+                "customizationValue": "#5FE8866E",
+                "targetField": "Submission Value"
               },
               {
-                "field": "Submission Value diff",
+                "field": "__subval_diff",
                 "condition": "=",
                 "value": "yes",
-                "customization": "cell text color",
-                "customizationValue": "red"
+                "customization": "cell color",
+                "customizationValue": "#FF11116E",
+                "targetField": "Submission Value"
               },
               {
-                "field": "C-code diff",
+                "field": "__concept_diff",
                 "condition": "=",
                 "value": "no",
-                "customization": "cell text color",
-                "customizationValue": "green"
+                "customization": "cell color",
+                "customizationValue": "#5FE8866E",
+                "targetField": "C-code"
               },
               {
-                "field": "C-code diff",
+                "field": "__concept_diff",
                 "condition": "=",
                 "value": "yed",
-                "customization": "cell text color",
-                "customizationValue": "red"
+                "customization": "cell color",
+                "customizationValue": "#FF11116E",
+                "targetField": "C-code"
               },
               {
-                "field": "Preferred Term diff",
+                "field": "__pref_term_diff",
                 "condition": "=",
                 "value": "no",
-                "customization": "cell text color",
-                "customizationValue": "green"
+                "customization": "cell color",
+                "customizationValue": "#5FE8866E",
+                "targetField": "Preferred Term"
               },
               {
-                "field": "Preferred Term diff",
+                "field": "__pref_term_diff",
                 "condition": "=",
                 "value": "yes",
-                "customization": "cell text color",
-                "customizationValue": "red"
+                "customization": "cell color",
+                "customizationValue": "#FF11116E",
+                "targetField": "Preferred Term"
               },
               {
-                "field": "Synonyms diff",
+                "field": "__sym_diff",
                 "condition": "=",
                 "value": "no",
-                "customization": "cell text color",
-                "customizationValue": "green"
+                "customization": "cell color",
+                "customizationValue": "#5FE8866E",
+                "targetField": "Synonyms"
               },
               {
-                "field": "Synonyms diff",
+                "field": "__pref_term_diff",
                 "condition": "=",
                 "value": "yes",
-                "customization": "cell text color",
-                "customizationValue": "red"
+                "customization": "cell color",
+                "customizationValue": "#FF11116E",
+                "targetField": "Synonyms"
               },
               {
-                "field": "Definition diff",
+                "field": "__def_diff",
                 "condition": "=",
                 "value": "no",
-                "customization": "cell text color",
-                "customizationValue": "green"
+                "customization": "cell color",
+                "customizationValue": "#5FE8866E",
+                "targetField": "Definition"
               },
               {
-                "field": "Definition diff",
+                "field": "__def_diff",
                 "condition": "=",
                 "value": "yes",
-                "customization": "cell text color",
-                "customizationValue": "red"
+                "customization": "cell color",
+                "customizationValue": "#FF11116E",
+                "targetField": "Definition"
               }
             ]
           }

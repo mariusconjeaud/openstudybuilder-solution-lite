@@ -101,6 +101,8 @@ def get_study_m11_protocol(
 
     context = {
         "study_id": study_uid,
+        "study_indications": ddf_study.versions[0].studyDesigns[0].indications,
+        "study_interventions": ddf_study.versions[0].studyInterventions[0],
         "study_name": ddf_study.name,
         "protocol_full_title": ddf_study.description,
         "study_design_figure_svg": study_design_figure,
@@ -111,9 +113,7 @@ def get_study_m11_protocol(
         "sponsor_legal_address": "Novo Nordisk A/S Novo Allé, 2880 Bagsvaerd Denmark Tel: +45 4444 8888",
         "protocol_number": ddf_study.versions[0].studyIdentifiers[0].id,
         "protocol_version": ddf_study.documentedBy[0].versions[0].version,
-        "trial_phase": ddf_study.versions[0]
-        .studyDesigns[0]
-        .studyPhase.standardCode.code,
+        "trial_phase": ddf_study.versions[0].studyDesigns[0].studyPhase.standardCode,
         "primary_objectives": [
             objective.dict()
             for objective in ddf_study.versions[0].studyDesigns[0].objectives
@@ -129,6 +129,9 @@ def get_study_m11_protocol(
         # .studyDesigns[0]
         # .interventionModel.decode
         # or "",
+        "population_healthy_subjects": ddf_study.versions[0]
+        .studyDesigns[0]
+        .population.includesHealthySubjects,
         "population_planned_maximum_age": (
             ddf_study.versions[0].studyDesigns[0].population.plannedAge.maxValue.value
             if ddf_study.versions[0].studyDesigns[0].population.plannedAge is not None
@@ -154,6 +157,104 @@ def get_study_m11_protocol(
             else "Missing"
         ),
         "number_of_arms": len(ddf_study.versions[0].studyDesigns[0].arms),
+        "civ_id_sin_number": next(
+            (
+                identifier.text
+                for identifier in ddf_study.versions[0].studyIdentifiers
+                if identifier.scopeId == "civ_id_sin_number"
+            ),
+            None,
+        ),
+        "ct_gov_id": next(
+            (
+                identifier.text
+                for identifier in ddf_study.versions[0].studyIdentifiers
+                if identifier.scopeId == "ct_gov_id"
+            ),
+            None,
+        ),
+        "eudamed_srn_number": next(
+            (
+                identifier.text
+                for identifier in ddf_study.versions[0].studyIdentifiers
+                if identifier.scopeId == "eudamed_srn_number"
+            ),
+            None,
+        ),
+        "eudract_id": next(
+            (
+                identifier.text
+                for identifier in ddf_study.versions[0].studyIdentifiers
+                if identifier.scopeId == "eudract_id"
+            ),
+            None,
+        ),
+        "eu_trial_number": next(
+            (
+                identifier.text
+                for identifier in ddf_study.versions[0].studyIdentifiers
+                if identifier.scopeId == "eu_trial_number"
+            ),
+            None,
+        ),
+        "investigational_device_exemption_ide_number": next(
+            (
+                identifier.text
+                for identifier in ddf_study.versions[0].studyIdentifiers
+                if identifier.scopeId == "investigational_device_exemption_ide_number"
+            ),
+            None,
+        ),
+        "investigational_new_drug_application_number_ind": next(
+            (
+                identifier.text
+                for identifier in ddf_study.versions[0].studyIdentifiers
+                if identifier.scopeId
+                == "investigational_new_drug_application_number_ind"
+            ),
+            None,
+        ),
+        "japanese_trial_registry_id_japic": next(
+            (
+                identifier.text
+                for identifier in ddf_study.versions[0].studyIdentifiers
+                if identifier.scopeId == "japanese_trial_registry_id_japic"
+            ),
+            None,
+        ),
+        "japanese_trial_registry_number_jrct": next(
+            (
+                identifier.text
+                for identifier in ddf_study.versions[0].studyIdentifiers
+                if identifier.scopeId == "japanese_trial_registry_number_jrct"
+            ),
+            None,
+        ),
+        "national_clinical_trial_number": next(
+            (
+                identifier.text
+                for identifier in ddf_study.versions[0].studyIdentifiers
+                if identifier.scopeId == "national_clinical_trial_number"
+            ),
+            None,
+        ),
+        "national_medical_products_administration_nmpa_number": next(
+            (
+                identifier.text
+                for identifier in ddf_study.versions[0].studyIdentifiers
+                if identifier.scopeId
+                == "national_medical_products_administration_nmpa_number"
+            ),
+            None,
+        ),
+        "universal_trial_number_utn": next(
+            (
+                identifier.text
+                for identifier in ddf_study.versions[0].studyIdentifiers
+                if identifier.scopeId == "universal_trial_number_utn"
+            ),
+            None,
+        ),
     }
 
     return templates.TemplateResponse(
