@@ -37,7 +37,6 @@ from clinical_mdr_api.models.study_selections.study_selection import (
 from clinical_mdr_api.models.study_selections.study_visit import StudyVisit
 from clinical_mdr_api.models.syntax_instances.footnote import Footnote
 from clinical_mdr_api.models.syntax_templates.footnote_template import FootnoteTemplate
-from clinical_mdr_api.services._meta_repository import MetaRepository
 from clinical_mdr_api.services.concepts.unit_definitions.unit_definition import (
     UnitDefinitionService,
 )
@@ -481,11 +480,7 @@ class SoATestData:
 
         self._unit_definitions = {
             u.name: u
-            for u in UnitDefinitionService(
-                meta_repository=MetaRepository(self.AUTHOR_ID)
-            )
-            .get_all(library_name=LIBRARY_NAME)
-            .items
+            for u in UnitDefinitionService().get_all(library_name=LIBRARY_NAME).items
         }
 
         self._epoch_terms = self.create_epoch_terms()

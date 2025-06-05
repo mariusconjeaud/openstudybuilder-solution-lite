@@ -17,7 +17,6 @@ router = APIRouter()
     "",
     dependencies=[rbac.LIBRARY_READ],
     summary="Returns all libraries",
-    response_model=list[Library],
 )
 # pylint: disable=unused-argument
 def get_libraries(
@@ -28,7 +27,7 @@ def get_libraries(
             "Valid values are: 'true' or 'false'.",
         ),
     ] = None,
-):
+) -> list[Library]:
     return service.get_libraries(is_editable)
 
 
@@ -36,7 +35,6 @@ def get_libraries(
     "",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Creates a new library.",
-    response_model=Library,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -44,8 +42,5 @@ def get_libraries(
         409: _generic_descriptions.ERROR_409,
     },
 )
-# pylint: disable=unused-argument
-def create_library(
-    library: Annotated[Library, Body()],
-):
+def create_library(library: Annotated[Library, Body()]) -> Library:
     return service.create(library.name, library.is_editable)

@@ -5,11 +5,9 @@ from pydantic import BaseModel, Field
 from clinical_mdr_api.descriptions.general import CHANGES_FIELD_DESC
 from clinical_mdr_api.domains.concepts.activities.activity_group import ActivityGroupAR
 from clinical_mdr_api.models.concepts.activities.activity import ActivityBase
-from clinical_mdr_api.models.concepts.concept import (
-    ExtendedConceptPatchInput,
-    ExtendedConceptPostInput,
-)
+from clinical_mdr_api.models.concepts.concept import ExtendedConceptPostInput
 from clinical_mdr_api.models.libraries.library import Library
+from clinical_mdr_api.models.utils import EditInputModel
 
 
 class ActivityGroup(ActivityBase):
@@ -34,11 +32,22 @@ class ActivityGroup(ActivityBase):
         )
 
 
-class ActivityGroupEditInput(ExtendedConceptPatchInput):
-    change_description: Annotated[str | None, Field(min_length=1)] = None
+class BaseActivityGroupInput(ExtendedConceptPostInput):
+    name: Annotated[
+        str,
+        Field(
+            description="The name or the actual value. E.g. 'Systolic Blood Pressure', 'Body Temperature', 'Metformin', ...",
+            min_length=1,
+        ),
+    ]
+    name_sentence_case: Annotated[str, Field(min_length=1)]
 
 
-class ActivityGroupCreateInput(ExtendedConceptPostInput):
+class ActivityGroupEditInput(BaseActivityGroupInput, EditInputModel):
+    pass
+
+
+class ActivityGroupCreateInput(BaseActivityGroupInput):
     library_name: Annotated[str, Field(min_length=1)]
 
 
@@ -47,44 +56,40 @@ class ActivityGroupVersion(ActivityGroup):
     Class for storing ActivityGroup and calculation of differences
     """
 
-    changes: Annotated[
-        list[str],
-        Field(
-            description=CHANGES_FIELD_DESC,
-        ),
-    ] = []
+    changes: list[str] = Field(description=CHANGES_FIELD_DESC, default_factory=list)
 
 
 class ActivityGroupDetail(BaseModel):
     """Detailed view of an Activity Group for the overview endpoint"""
 
-    name: str
-    name_sentence_case: str | None = None
-    library_name: str | None = None
-    start_date: str | None = None
-    end_date: str | None = None
-    status: str
-    version: str
-    possible_actions: list[str]
-    change_description: str | None = None
-    author_username: str
-    definition: str | None = None
-    abbreviation: str | None = None
+    name: Annotated[str, Field()]
+    name_sentence_case: Annotated[str | None, Field()] = None
+    library_name: Annotated[str | None, Field()] = None
+    start_date: Annotated[str | None, Field()] = None
+    end_date: Annotated[str | None, Field()] = None
+    status: Annotated[str, Field()]
+    version: Annotated[str, Field()]
+    possible_actions: Annotated[list[str], Field()]
+    change_description: Annotated[str | None, Field()] = None
+    author_username: Annotated[str, Field()]
+    definition: Annotated[str | None, Field()] = None
+    abbreviation: Annotated[str | None, Field()] = None
+    all_versions: list[str] = Field(default_factory=list)
 
 
 class SimpleSubGroup(BaseModel):
     """Simple representation of a Subgroup for the overview listing"""
 
-    uid: str
-    name: str
-    version: str
-    status: str
-    definition: str | None = None
+    uid: Annotated[str, Field()]
+    name: Annotated[str, Field()]
+    version: Annotated[str, Field()]
+    status: Annotated[str, Field()]
+    definition: Annotated[str | None, Field()] = None
 
 
 class ActivityGroupOverview(BaseModel):
     """Complete overview model for an Activity Group"""
 
-    group: ActivityGroupDetail
-    subgroups: list[SimpleSubGroup]
-    all_versions: list[str]
+    group: Annotated[ActivityGroupDetail, Field()]
+    subgroups: Annotated[list[SimpleSubGroup], Field()]
+    all_versions: Annotated[list[str], Field()]

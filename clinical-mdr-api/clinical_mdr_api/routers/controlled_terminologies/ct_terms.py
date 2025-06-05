@@ -37,7 +37,6 @@ CTTermUID = Path(description="The unique id of the ct term.")
   * CTTermNameRoot
   * CTTermNameValue
 """,
-    response_model=CTTerm,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -56,7 +55,7 @@ def create(
         CTTermCreateInput,
         Body(description="Properties to create CTTermAttributes and CTTermName."),
     ],
-):
+) -> CTTerm:
     ct_term_service = CTTermService()
     return ct_term_service.create(term_input)
 
@@ -66,7 +65,6 @@ def create(
     dependencies=[rbac.LIBRARY_READ],
     summary="Returns all terms names and attributes.",
     description=_generic_descriptions.DATA_EXPORTS_HEADER,
-    response_model=CustomPage[CTTermNameAndAttributes],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -167,7 +165,7 @@ def get_all_terms(
     total_count: Annotated[
         bool | None, Query(description=_generic_descriptions.TOTAL_COUNT)
     ] = False,
-):
+) -> CustomPage[CTTermNameAndAttributes]:
     ct_term_service = CTTermService()
     results = ct_term_service.get_all_terms(
         codelist_uid=codelist_uid,
@@ -194,7 +192,6 @@ def get_all_terms(
     summary="Returns possibles values from the database for a given header",
     description="""Allowed parameters include : field name for which to get possible
     values, search string to provide filtering for the field name, additional filters to apply on other fields""",
-    response_model=list[Any],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -240,7 +237,7 @@ def get_distinct_values_for_header(
     page_size: Annotated[
         int | None, Query(description=_generic_descriptions.HEADER_PAGE_SIZE)
     ] = config.DEFAULT_HEADER_PAGE_SIZE,
-):
+) -> list[Any]:
     ct_term_service = CTTermService()
     return ct_term_service.get_distinct_values_for_header(
         codelist_uid=codelist_uid,
@@ -259,7 +256,6 @@ def get_distinct_values_for_header(
     "/terms/{term_uid}/parents",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Adds a CT Term Root node as a parent to the selected term node.",
-    response_model=CTTerm,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -287,7 +283,7 @@ def add_parent(
             "Valid types are 'type' or 'subtype'",
         ),
     ],
-):
+) -> CTTerm:
     ct_term_service = CTTermService()
     return ct_term_service.add_parent(
         term_uid=term_uid, parent_uid=parent_uid, relationship_type=relationship_type
@@ -298,7 +294,6 @@ def add_parent(
     "/terms/{term_uid}/parents",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Removes a parent term from the selected term node",
-    response_model=CTTerm,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -326,7 +321,7 @@ def remove_parent(
             "Valid types are 'type' or 'subtype'",
         ),
     ],
-):
+) -> CTTerm:
     ct_term_service = CTTermService()
     return ct_term_service.remove_parent(
         term_uid=term_uid, parent_uid=parent_uid, relationship_type=relationship_type
@@ -338,7 +333,6 @@ def remove_parent(
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Change an order of codelist-term relationship",
     description="""Reordering will create new HAS_TERM relationship.""",
-    response_model=CTTerm,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,

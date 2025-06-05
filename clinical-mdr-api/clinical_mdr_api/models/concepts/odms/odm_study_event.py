@@ -27,9 +27,9 @@ class OdmStudyEvent(ConceptModel):
     description: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = (
         None
     )
-    display_in_tree: bool = True
-    forms: list[OdmFormRefModel]
-    possible_actions: list[str]
+    display_in_tree: Annotated[bool, Field()] = True
+    forms: Annotated[list[OdmFormRefModel], Field()]
+    possible_actions: Annotated[list[str], Field()]
 
     @classmethod
     def from_odm_study_event_ar(
@@ -73,18 +73,18 @@ class OdmStudyEvent(ConceptModel):
 
 class OdmStudyEventPostInput(ConceptPostInput):
     oid: Annotated[str | None, Field(min_length=1)] = None
-    effective_date: date | None = None
-    retired_date: date | None = None
+    effective_date: Annotated[date | None, Field()] = None
+    retired_date: Annotated[date | None, Field()] = None
     description: Annotated[str | None, Field(min_length=1)] = None
-    display_in_tree: bool = True
+    display_in_tree: Annotated[bool, Field()] = True
 
 
 class OdmStudyEventPatchInput(ConceptPatchInput):
     oid: Annotated[str | None, Field(min_length=1)]
-    effective_date: date | None
-    retired_date: date | None
+    effective_date: Annotated[date | None, Field()]
+    retired_date: Annotated[date | None, Field()]
     description: Annotated[str | None, Field(min_length=1)] = None
-    display_in_tree: bool = True
+    display_in_tree: Annotated[bool, Field()] = True
 
 
 class OdmStudyEventFormPostInput(PostInputModel):
@@ -102,9 +102,4 @@ class OdmStudyEventVersion(OdmStudyEvent):
     Class for storing OdmStudyEvents and calculation of differences
     """
 
-    changes: Annotated[
-        list[str],
-        Field(
-            description=CHANGES_FIELD_DESC,
-        ),
-    ] = []
+    changes: list[str] = Field(description=CHANGES_FIELD_DESC, default_factory=list)

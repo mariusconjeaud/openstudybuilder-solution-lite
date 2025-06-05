@@ -43,7 +43,6 @@ Then('The study compound is available in the table', () => {
 
 When('The study compound is edited', () => {
     cy.waitForTableData()
-    cy.tableRowActions(0, 'Edit')
     cy.fixture('studyCompound').then((compound) => {
         cy.selectAutoComplete('Type of treatment', compound.edit_typeof_treatment)
         cy.clickButton('type_of_treatment-continue-button')
@@ -61,7 +60,6 @@ Then('The updated study compound is available in the table', () => {
 
 When('The study compound is deleted', () => {
     cy.waitForTableData()
-    cy.tableRowActions(0, 'Delete')
     cy.contains('.v-btn__content', 'Continue').click({ force: true })
     cy.checkSnackbarMessage('Study compound deleted')
 })

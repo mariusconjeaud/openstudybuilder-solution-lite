@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import Body, Query, Response, status
+from fastapi import Body, Query
 
 from clinical_mdr_api.models.study_selections.study_selection import (
     StudyActivitySchedule,
@@ -23,7 +23,6 @@ from common.models.error import ErrorResponse
     "/studies/{study_uid}/study-activity-schedules",
     dependencies=[rbac.STUDY_READ],
     summary="List all study activity schedules currently defined for the study",
-    response_model=list[StudyActivitySchedule],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -58,7 +57,6 @@ def get_all_selected_activities(
     "/studies/{study_uid}/study-activity-schedules",
     dependencies=[rbac.STUDY_WRITE],
     summary="Add a study activity schedule to a study",
-    response_model=StudyActivitySchedule,
     response_model_exclude_unset=True,
     status_code=201,
     responses={
@@ -88,7 +86,6 @@ def post_new_activity_schedule_create(
     "/studies/{study_uid}/study-activity-schedules/{study_activity_schedule_uid}",
     dependencies=[rbac.STUDY_WRITE],
     summary="Delete a study activity schedule",
-    response_model=None,
     status_code=204,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -105,7 +102,6 @@ def delete_activity_schedule(
 ):
     service = StudyActivityScheduleService()
     service.delete(study_uid=study_uid, schedule_uid=study_activity_schedule_uid)
-    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.get(
@@ -120,7 +116,6 @@ The following values should be returned for all study activities:
 - activity
 - order
     """,
-    response_model=list[StudyActivityScheduleHistory],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -139,7 +134,6 @@ def get_all_schedules_audit_trail(
     "/studies/{study_uid}/study-activity-schedules/batch",
     dependencies=[rbac.STUDY_WRITE],
     summary="Batch operations (create, delete) for study activity schedules",
-    response_model=list[StudyActivityScheduleBatchOutput],
     status_code=207,
     responses={
         403: _generic_descriptions.ERROR_403,

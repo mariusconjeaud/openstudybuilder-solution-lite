@@ -24,6 +24,7 @@ from mdr_standards_import.scripts.utils import (
 from neo4j.exceptions import ServiceUnavailable
 
 
+NEO4J_MDR_DATABASE = environ.get("NEO4J_MDR_DATABASE", "neo4j")
 CDISC_IMPORT_DATABASE = environ.get("NEO4J_CDISC_IMPORT_DATABASE", "cdisc")
 AUTH_TOKEN = environ.get("CDISC_AUTH_TOKEN")
 HEADERS = {"api-key": AUTH_TOKEN, "Accept": "application/json"}
@@ -218,7 +219,7 @@ def get_available_model_versions_meta_data_from_api() -> json:
 
 
 def download_newer_data_model_versions_than(
-    last_available_versions: dict, to_directory: str, library: str="CDISC"
+    last_available_versions: dict, to_directory: str, library: str = "CDISC"
 ):
     """
     Downloads the versions from the CDISC REST API where the version number is higher than the specified
@@ -245,7 +246,10 @@ def download_newer_data_model_versions_than(
             version_number = path.basename(href)
 
             data_model_import = DataModelImport(
-                library=library, catalogue=catalogue, version_number=version_number, author_id="TMP"
+                library=library,
+                catalogue=catalogue,
+                version_number=version_number,
+                author_id="TMP",
             )
             if (catalogue not in last_available_versions) or (
                 catalogue in last_available_versions
@@ -422,15 +426,19 @@ def create_cdisc_data_dir(directory: str):
 
 def get_latest_effective_date():
     cdisc_neo4j_driver = get_cdisc_neo4j_driver()
-    try:
-        with cdisc_neo4j_driver.session(database="system") as session:
-            session.run(
-                "CREATE DATABASE $database IF NOT EXISTS",
-                database=CDISC_IMPORT_DATABASE,
-            )
-    except ServiceUnavailable:
-        print("Can't connect to neo4j database, using default latest date")
-        return None
+
+    # If using a staging database, it might not exist yet
+    # so we need to create it first
+    if CDISC_IMPORT_DATABASE != NEO4J_MDR_DATABASE:
+        try:
+            with cdisc_neo4j_driver.session(database="system") as session:
+                session.run(
+                    "CREATE DATABASE $database IF NOT EXISTS",
+                    database=CDISC_IMPORT_DATABASE,
+                )
+        except ServiceUnavailable:
+            print("Can't connect to neo4j database, using default latest date")
+            return None
 
     with cdisc_neo4j_driver.session(database=CDISC_IMPORT_DATABASE) as session:
         with session.begin_transaction() as tx:
@@ -450,15 +458,19 @@ def get_latest_effective_date():
 
 def get_latest_data_model_versions():
     cdisc_neo4j_driver = get_cdisc_neo4j_driver()
-    try:
-        with cdisc_neo4j_driver.session(database="system") as session:
-            session.run(
-                "CREATE DATABASE $database IF NOT EXISTS",
-                database=CDISC_IMPORT_DATABASE,
-            )
-    except ServiceUnavailable:
-        print("Can't connect to neo4j database, using default latest version")
-        return {}
+
+    # If using a staging database, it might not exist yet
+    # so we need to create it first
+    if CDISC_IMPORT_DATABASE != NEO4J_MDR_DATABASE:
+        try:
+            with cdisc_neo4j_driver.session(database="system") as session:
+                session.run(
+                    "CREATE DATABASE $database IF NOT EXISTS",
+                    database=CDISC_IMPORT_DATABASE,
+                )
+        except ServiceUnavailable:
+            print("Can't connect to neo4j database, using default latest version")
+            return {}
 
     with cdisc_neo4j_driver.session(database=CDISC_IMPORT_DATABASE) as session:
         with session.begin_transaction() as tx:

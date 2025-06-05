@@ -88,9 +88,11 @@ const fetchTerms = _debounce(function () {
 }, 800)
 
 const reset = () => {
-  model.value = null
-  allowedValues.value = []
-  search.value = ''
+  if (search.value && search.value !== '') {
+    model.value = null
+    allowedValues.value = []
+    search.value = ''
+  }
 }
 
 watch(search, () => {

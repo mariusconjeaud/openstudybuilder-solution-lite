@@ -46,7 +46,6 @@ Possible errors:
  
 {_generic_descriptions.DATA_EXPORTS_HEADER}
 """,
-    response_model=CustomPage[ActiveSubstance],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -105,7 +104,7 @@ def get_active_substances(
     total_count: Annotated[
         bool | None, Query(description=_generic_descriptions.TOTAL_COUNT)
     ] = False,
-):
+) -> CustomPage[ActiveSubstance]:
     active_substance_service = ActiveSubstanceService()
     results = active_substance_service.get_all_concepts(
         library=library_name,
@@ -141,7 +140,6 @@ Possible errors:
 
 {_generic_descriptions.DATA_EXPORTS_HEADER}
 """,
-    response_model=CustomPage[ActiveSubstance],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -200,7 +198,7 @@ def get_active_substances_versions(
     total_count: Annotated[
         bool | None, Query(description=_generic_descriptions.TOTAL_COUNT)
     ] = False,
-):
+) -> CustomPage[ActiveSubstance]:
     service = ActiveSubstanceService()
     results = service.get_all_concept_versions(
         library=library_name,
@@ -222,7 +220,6 @@ def get_active_substances_versions(
     summary="Returns possible values from the database for a given header",
     description="Allowed parameters include : field name for which to get possible values, "
     "search string to provide filtering for the field name, additional filters to apply on other fields",
-    response_model=list[Any],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -253,7 +250,7 @@ def get_distinct_values_for_header(
     page_size: Annotated[
         int | None, Query(description=_generic_descriptions.HEADER_PAGE_SIZE)
     ] = config.DEFAULT_HEADER_PAGE_SIZE,
-):
+) -> list[Any]:
     active_substance_service = ActiveSubstanceService()
     return active_substance_service.get_distinct_values_for_header(
         library=library_name,
@@ -273,14 +270,15 @@ def get_distinct_values_for_header(
 Possible errors:
  - Invalid uid, at_specified_date_time, status or version.
  """,
-    response_model=ActiveSubstance,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
         404: _generic_descriptions.ERROR_404,
     },
 )
-def get_activity(active_substance_uid: Annotated[str, ActiveSubstanceUID]):
+def get_activity(
+    active_substance_uid: Annotated[str, ActiveSubstanceUID],
+) -> ActiveSubstance:
     active_substance_service = ActiveSubstanceService()
     return active_substance_service.get_by_uid(uid=active_substance_uid)
 
@@ -303,7 +301,6 @@ State after:
 Possible errors:
  - Invalid uid.
     """,
-    response_model=list[ActiveSubstance],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -313,7 +310,9 @@ Possible errors:
         },
     },
 )
-def get_versions(active_substance_uid: Annotated[str, ActiveSubstanceUID]):
+def get_versions(
+    active_substance_uid: Annotated[str, ActiveSubstanceUID],
+) -> list[ActiveSubstance]:
     active_substance_service = ActiveSubstanceService()
     return active_substance_service.get_version_history(uid=active_substance_uid)
 
@@ -342,7 +341,6 @@ State after:
 Possible errors:
  - Invalid library or control terminology uid's specified.
 """,
-    response_model=ActiveSubstance,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -359,7 +357,7 @@ Possible errors:
 )
 def create(
     active_substance_create_input: Annotated[ActiveSubstanceCreateInput, Body()],
-):
+) -> ActiveSubstance:
     active_substance_service = ActiveSubstanceService()
     return active_substance_service.create(concept_input=active_substance_create_input)
 
@@ -386,7 +384,6 @@ Possible errors:
  - Invalid uid.
 
 """,
-    response_model=ActiveSubstance,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -407,7 +404,7 @@ Possible errors:
 def edit(
     active_substance_uid: Annotated[str, ActiveSubstanceUID],
     active_substance_edit_input: Annotated[ActiveSubstanceEditInput, Body()],
-):
+) -> ActiveSubstance:
     active_substance_service = ActiveSubstanceService()
     return active_substance_service.edit_draft(
         uid=active_substance_uid, concept_edit_input=active_substance_edit_input
@@ -435,7 +432,6 @@ State after:
 Possible errors:
  - Invalid uid or status not Draft.
     """,
-    response_model=ActiveSubstance,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -452,7 +448,9 @@ Possible errors:
         },
     },
 )
-def approve(active_substance_uid: Annotated[str, ActiveSubstanceUID]):
+def approve(
+    active_substance_uid: Annotated[str, ActiveSubstanceUID],
+) -> ActiveSubstance:
     active_substance_service = ActiveSubstanceService()
     return active_substance_service.approve(uid=active_substance_uid)
 
@@ -475,7 +473,6 @@ State after:
 Possible errors:
  - Invalid uid or status not Final.
 """,
-    response_model=ActiveSubstance,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -493,7 +490,9 @@ Possible errors:
         },
     },
 )
-def create_new_version(active_substance_uid: Annotated[str, ActiveSubstanceUID]):
+def create_new_version(
+    active_substance_uid: Annotated[str, ActiveSubstanceUID],
+) -> ActiveSubstance:
     active_substance_service = ActiveSubstanceService()
     return active_substance_service.create_new_version(uid=active_substance_uid)
 
@@ -519,7 +518,6 @@ State after:
 Possible errors:
  - Invalid uid or status not Final.
     """,
-    response_model=ActiveSubstance,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -535,7 +533,9 @@ Possible errors:
         },
     },
 )
-def inactivate(active_substance_uid: Annotated[str, ActiveSubstanceUID]):
+def inactivate(
+    active_substance_uid: Annotated[str, ActiveSubstanceUID],
+) -> ActiveSubstance:
     active_substance_service = ActiveSubstanceService()
     return active_substance_service.inactivate_final(uid=active_substance_uid)
 
@@ -561,7 +561,6 @@ State after:
 Possible errors:
  - Invalid uid or status not Retired.
     """,
-    response_model=ActiveSubstance,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -577,7 +576,9 @@ Possible errors:
         },
     },
 )
-def reactivate(active_substance_uid: Annotated[str, ActiveSubstanceUID]):
+def reactivate(
+    active_substance_uid: Annotated[str, ActiveSubstanceUID],
+) -> ActiveSubstance:
     active_substance_service = ActiveSubstanceService()
     return active_substance_service.reactivate_retired(uid=active_substance_uid)
 
@@ -601,7 +602,6 @@ State after:
 Possible errors:
  - Invalid uid or status not Draft or exist in version 1.0 or above (previously been approved) or not in an editable library.
     """,
-    response_model=None,
     status_code=204,
     responses={
         403: _generic_descriptions.ERROR_403,

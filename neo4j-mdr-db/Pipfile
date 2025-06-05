@@ -16,6 +16,7 @@ python_version = "3.13.0"
 
 [scripts]
 init_neo4j = "python init_neo4j.py"
+init_aura = "python init_aura.py"
 update_ct_stats = "python update_ct_stats.py"
 export_to_cypher = "python export_to_cypher.py"
 import_from_cypher = "python import_from_cypher.py"

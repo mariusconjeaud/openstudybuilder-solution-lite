@@ -74,10 +74,16 @@ body {
   border-color: rgb(var(--v-theme-nnFadedBlue200)) !important;
 }
 
+.v-data-table__th {
+  border-left-style: outset;
+  border-bottom-style: outset;
+  border-width: 1px !important;
+  border-color: rgb(var(--v-theme-nnFadedBlue200)) !important;
+}
+
 .v-data-table {
   .v-table__wrapper {
-    border: solid;
-    border-color: rgb(var(--v-theme-nnFadedBlue200)) !important;
+    border: none !important;
   }
 }
 
@@ -91,6 +97,25 @@ body {
     }
   }
 }
+
+// Target tables in expanded rows to not have round corners while root table still have round corners
+td.pa-0 > .v-data-table {
+  border-radius: 0 !important;
+}
+
+td.pa-0 > .v-data-table > .v-table__wrapper {
+  border-radius: 0 !important;
+}
+
+td.pa-0
+  tr[style*='background-color: rgb(var(--v-theme-dfltBackgroundLight2))'] {
+  border-radius: 0 !important;
+}
+
+.v-data-table__expanded-row > td > .v-data-table {
+  border-radius: 0 !important;
+}
+// Target Tables in expanded rows done
 
 thead.v-data-table-header {
   background-color: rgba(0, 0, 0, 0.1);

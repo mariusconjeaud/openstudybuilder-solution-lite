@@ -48,7 +48,6 @@ Possible errors:
  
 {_generic_descriptions.DATA_EXPORTS_HEADER}
 """,
-    response_model=CustomPage[PharmaceuticalProduct],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -106,7 +105,7 @@ def get_pharmaceutical_products(
     total_count: Annotated[
         bool | None, Query(description=_generic_descriptions.TOTAL_COUNT)
     ] = False,
-):
+) -> CustomPage[PharmaceuticalProduct]:
     pharmaceutical_product_service = PharmaceuticalProductService()
     results = pharmaceutical_product_service.get_all_concepts(
         library=library_name,
@@ -142,7 +141,6 @@ Possible errors:
 
 {_generic_descriptions.DATA_EXPORTS_HEADER}
 """,
-    response_model=CustomPage[PharmaceuticalProduct],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -198,7 +196,7 @@ def get_pharmaceutical_products_versions(
     total_count: Annotated[
         bool | None, Query(description=_generic_descriptions.TOTAL_COUNT)
     ] = False,
-):
+) -> CustomPage[PharmaceuticalProduct]:
     service = PharmaceuticalProductService()
     results = service.get_all_concept_versions(
         library=library_name,
@@ -220,7 +218,6 @@ def get_pharmaceutical_products_versions(
     summary="Returns possible values from the database for a given header",
     description="Allowed parameters include : field name for which to get possible values, "
     "search string to provide filtering for the field name, additional filters to apply on other fields",
-    response_model=list[Any],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -251,7 +248,7 @@ def get_distinct_values_for_header(
     page_size: Annotated[
         int | None, Query(description=_generic_descriptions.HEADER_PAGE_SIZE)
     ] = config.DEFAULT_HEADER_PAGE_SIZE,
-):
+) -> list[Any]:
     pharmaceutical_product_service = PharmaceuticalProductService()
     return pharmaceutical_product_service.get_distinct_values_for_header(
         library=library_name,
@@ -271,7 +268,6 @@ def get_distinct_values_for_header(
 Possible errors:
  - Invalid uid, at_specified_date_time, status or version.
  """,
-    response_model=PharmaceuticalProduct,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -280,7 +276,7 @@ Possible errors:
 )
 def get_activity(
     pharmaceutical_product_uid: Annotated[str, PharmaceuticalProductUID],
-):
+) -> PharmaceuticalProduct:
     pharmaceutical_product_service = PharmaceuticalProductService()
     return pharmaceutical_product_service.get_by_uid(uid=pharmaceutical_product_uid)
 
@@ -303,7 +299,6 @@ State after:
 Possible errors:
  - Invalid uid.
     """,
-    response_model=list[PharmaceuticalProduct],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -315,7 +310,7 @@ Possible errors:
 )
 def get_versions(
     pharmaceutical_product_uid: Annotated[str, PharmaceuticalProductUID],
-):
+) -> list[PharmaceuticalProduct]:
     pharmaceutical_product_service = PharmaceuticalProductService()
     return pharmaceutical_product_service.get_version_history(
         uid=pharmaceutical_product_uid
@@ -346,7 +341,6 @@ State after:
 Possible errors:
  - Invalid library or control terminology uid's specified.
 """,
-    response_model=PharmaceuticalProduct,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -365,7 +359,7 @@ def create(
     pharmaceutical_product_create_input: Annotated[
         PharmaceuticalProductCreateInput, Body()
     ],
-):
+) -> PharmaceuticalProduct:
     pharmaceutical_product_service = PharmaceuticalProductService()
     return pharmaceutical_product_service.create(
         concept_input=pharmaceutical_product_create_input
@@ -394,7 +388,6 @@ Possible errors:
  - Invalid uid.
 
 """,
-    response_model=PharmaceuticalProduct,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -417,7 +410,7 @@ def edit(
     pharmaceutical_product_edit_input: Annotated[
         PharmaceuticalProductEditInput, Body()
     ],
-):
+) -> PharmaceuticalProduct:
     pharmaceutical_product_service = PharmaceuticalProductService()
     return pharmaceutical_product_service.edit_draft(
         uid=pharmaceutical_product_uid,
@@ -446,7 +439,6 @@ State after:
 Possible errors:
  - Invalid uid or status not Draft.
     """,
-    response_model=PharmaceuticalProduct,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -465,7 +457,7 @@ Possible errors:
 )
 def approve(
     pharmaceutical_product_uid: Annotated[str, PharmaceuticalProductUID],
-):
+) -> PharmaceuticalProduct:
     pharmaceutical_product_service = PharmaceuticalProductService()
     return pharmaceutical_product_service.approve(uid=pharmaceutical_product_uid)
 
@@ -488,7 +480,6 @@ State after:
 Possible errors:
  - Invalid uid or status not Final.
 """,
-    response_model=PharmaceuticalProduct,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -508,7 +499,7 @@ Possible errors:
 )
 def create_new_version(
     pharmaceutical_product_uid: Annotated[str, PharmaceuticalProductUID],
-):
+) -> PharmaceuticalProduct:
     pharmaceutical_product_service = PharmaceuticalProductService()
     return pharmaceutical_product_service.create_new_version(
         uid=pharmaceutical_product_uid
@@ -536,7 +527,6 @@ State after:
 Possible errors:
  - Invalid uid or status not Final.
     """,
-    response_model=PharmaceuticalProduct,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -554,7 +544,7 @@ Possible errors:
 )
 def inactivate(
     pharmaceutical_product_uid: Annotated[str, PharmaceuticalProductUID],
-):
+) -> PharmaceuticalProduct:
     pharmaceutical_product_service = PharmaceuticalProductService()
     return pharmaceutical_product_service.inactivate_final(
         uid=pharmaceutical_product_uid
@@ -582,7 +572,6 @@ State after:
 Possible errors:
  - Invalid uid or status not Retired.
     """,
-    response_model=PharmaceuticalProduct,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -600,7 +589,7 @@ Possible errors:
 )
 def reactivate(
     pharmaceutical_product_uid: Annotated[str, PharmaceuticalProductUID],
-):
+) -> PharmaceuticalProduct:
     pharmaceutical_product_service = PharmaceuticalProductService()
     return pharmaceutical_product_service.reactivate_retired(
         uid=pharmaceutical_product_uid
@@ -626,7 +615,6 @@ State after:
 Possible errors:
  - Invalid uid or status not Draft or exist in version 1.0 or above (previously been approved) or not in an editable library.
     """,
-    response_model=None,
     status_code=204,
     responses={
         403: _generic_descriptions.ERROR_403,

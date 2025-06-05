@@ -3,8 +3,7 @@ import traceback
 from mdr_standards_import.scripts.entities.cdisc_ct.ct_import import CTImport
 from mdr_standards_import.scripts.entities.cdisc_ct.package import Package
 
-from os import listdir
-from os import path
+from os import listdir, path, environ
 from mdr_standards_import.scripts.exceptions.effective_date_exists import (
     EffectiveDateExists,
 )
@@ -16,6 +15,8 @@ from mdr_standards_import.scripts.repositories.repository import (
     create_indexes_if_not_existent,
     create_ct_import,
 )
+
+NEO4J_MDR_DATABASE = environ.get("NEO4J_MDR_DATABASE", "neo4j")
 
 
 def print_summary(tx, import_id, start_time):
@@ -97,10 +98,14 @@ def import_json_data_into_cdisc_db(
         start_time = time.time()
         ct_import = CTImport(effective_date, author_id)
 
-        with cdisc_import_neo4j_driver.session(database="system") as session:
-            session.run(
-                "CREATE DATABASE $database IF NOT EXISTS", database=cdisc_import_db_name
-            )
+        # If using a staging database, it might not exist yet
+        # so we need to create it first
+        if cdisc_import_db_name != NEO4J_MDR_DATABASE:
+            with cdisc_import_neo4j_driver.session(database="system") as session:
+                session.run(
+                    "CREATE DATABASE $database IF NOT EXISTS",
+                    database=cdisc_import_db_name,
+                )
 
         with cdisc_import_neo4j_driver.session(
             database=cdisc_import_db_name

@@ -200,12 +200,13 @@ def test_flowchart_with_non_latest_activities(soa_test_data: SoATestData, api_cl
             f"/concepts/activities/activities/{soa_test_data.activities[activity].uid}/versions",
         )
         assert_response_status_code(response, 201)
-        response = api_client.patch(
+        response = api_client.put(
             f"/concepts/activities/activities/{soa_test_data.activities[activity].uid}",
             json={
                 "change_description": "Change to have a new version not updated in library",
                 "name": text_value_2_name,
                 "name_sentence_case": text_value_2_name,
+                "library_name": soa_test_data.activities[activity].library_name,
                 "guidance_text": "don't know",
             },
         )

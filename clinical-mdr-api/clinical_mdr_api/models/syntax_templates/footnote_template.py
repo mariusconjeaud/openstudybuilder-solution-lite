@@ -24,7 +24,7 @@ class FootnoteTemplateName(BaseModel):
         str | None,
         Field(
             description="The actual value/content. It may include parameters referenced by simple strings in square brackets [].",
-            json_schema_extra={"nullable": True},
+            json_schema_extra={"nullable": True, "format": "html"},
         ),
     ] = None
     name_plain: Annotated[
@@ -57,7 +57,6 @@ class FootnoteTemplate(FootnoteTemplateNameUid):
     start_date: Annotated[
         datetime | None,
         Field(
-            default_factory=datetime.utcnow,
             description="Part of the metadata: The point in time when the (version of the) footnote template was created. "
             "The format is ISO 8601 in UTC±0, e.g.: '2020-10-31T16:00:00+00:00' for October 31, 2020 at 6pm in UTC+2 timezone.",
             json_schema_extra={"nullable": True},
@@ -66,7 +65,6 @@ class FootnoteTemplate(FootnoteTemplateNameUid):
     end_date: Annotated[
         datetime | None,
         Field(
-            default_factory=datetime.utcnow,
             description="Part of the metadata: The point in time when the version of the footnote template was closed (and a new one was created). "
             "The format is ISO 8601 in UTC±0, e.g.: '2020-10-31T16:00:00+00:00' for October 31, 2020 at 6pm in UTC+2 timezone.",
             json_schema_extra={"nullable": True},
@@ -101,19 +99,17 @@ class FootnoteTemplate(FootnoteTemplateNameUid):
             json_schema_extra={"nullable": True},
         ),
     ] = None
-    possible_actions: Annotated[
-        list[str],
-        Field(
-            description=(
-                "Holds those actions that can be performed on the footnote template. "
-                "Actions are: 'approve', 'edit', 'new_version', 'inactivate', 'reactivate' and 'delete'."
-            )
+    possible_actions: list[str] = Field(
+        description=(
+            "Holds those actions that can be performed on the footnote template. "
+            "Actions are: 'approve', 'edit', 'new_version', 'inactivate', 'reactivate' and 'delete'."
         ),
-    ] = []
-    parameters: Annotated[
-        list[TemplateParameter],
-        Field(description="Those parameters that are used by the footnote template."),
-    ] = []
+        default_factory=list,
+    )
+    parameters: list[TemplateParameter] = Field(
+        description="Those parameters that are used by the footnote template.",
+        default_factory=list,
+    )
     library: Annotated[
         Library | None,
         Field(
@@ -127,26 +123,21 @@ class FootnoteTemplate(FootnoteTemplateNameUid):
         SimpleCTTermNameAndAttributes | None,
         Field(description="The footnote type.", json_schema_extra={"nullable": True}),
     ] = None
-    indications: Annotated[
-        list[SimpleTermModel],
-        Field(
-            description="The study indications, conditions, diseases or disorders in scope for the template.",
-        ),
-    ] = []
-    activities: Annotated[
-        list[SimpleNameModel],
-        Field(
-            description="The activities in scope for the template",
-        ),
-    ] = []
-    activity_groups: Annotated[
-        list[SimpleNameModel],
-        Field(description="The activity groups in scope for the template"),
-    ] = []
-    activity_subgroups: Annotated[
-        list[SimpleNameModel],
-        Field(description="The activity sub groups in scope for the template"),
-    ] = []
+    indications: list[SimpleTermModel] = Field(
+        description="The study indications, conditions, diseases or disorders in scope for the template.",
+        default_factory=list,
+    )
+    activities: list[SimpleNameModel] = Field(
+        description="The activities in scope for the template", default_factory=list
+    )
+    activity_groups: list[SimpleNameModel] = Field(
+        description="The activity groups in scope for the template",
+        default_factory=list,
+    )
+    activity_subgroups: list[SimpleNameModel] = Field(
+        description="The activity sub groups in scope for the template",
+        default_factory=list,
+    )
     study_count: Annotated[
         int, Field(description="Count of studies referencing template")
     ] = 0
@@ -212,12 +203,7 @@ class FootnoteTemplateVersion(FootnoteTemplate):
     Class for storing Footnote Templates and calculation of differences
     """
 
-    changes: Annotated[
-        list[str],
-        Field(
-            description=CHANGES_FIELD_DESC,
-        ),
-    ] = []
+    changes: list[str] = Field(description=CHANGES_FIELD_DESC, default_factory=list)
 
 
 class FootnoteTemplatePreValidateInput(PostInputModel):
@@ -226,6 +212,7 @@ class FootnoteTemplatePreValidateInput(PostInputModel):
         Field(
             description="The actual value/content. It may include parameters referenced by simple strings in square brackets [].",
             min_length=1,
+            json_schema_extra={"format": "html"},
         ),
     ]
 
@@ -236,6 +223,7 @@ class FootnoteTemplateCreateInput(PostInputModel):
         Field(
             description="The actual value/content. It may include parameters referenced by simple strings in square brackets [].",
             min_length=1,
+            json_schema_extra={"format": "html"},
         ),
     ]
     study_uid: Annotated[
@@ -291,6 +279,7 @@ class FootnoteTemplateEditInput(PatchInputModel):
         Field(
             description="The actual value/content. It may include parameters referenced by simple strings in square brackets [].",
             min_length=1,
+            json_schema_extra={"format": "html"},
         ),
     ]
     change_description: Annotated[

@@ -52,11 +52,13 @@ Feature: Studies - Study Compounds
     Scenario: User must be able to edit the Study Compound
         Given The study compound is available in the test study
         And The '/studies/Study_000001/study_interventions/study_compounds' page is opened
+        And The 'Edit' option is clicked from the three dot menu list
         When The study compound is edited
         Then The updated study compound is available in the table
 
     Scenario: User must be able to delete the Study Compound
         Given The study compound is available in the test study
         And The '/studies/Study_000001/study_interventions/study_compounds' page is opened
+        And The 'Delete' option is clicked from the three dot menu list
         When The study compound is deleted
         Then The study compound is no longer available

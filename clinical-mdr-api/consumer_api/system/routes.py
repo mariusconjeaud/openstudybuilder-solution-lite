@@ -3,7 +3,7 @@
 import os
 
 from fastapi import APIRouter, HTTPException
-from fastapi.responses import FileResponse, PlainTextResponse
+from fastapi.responses import FileResponse
 
 from consumer_api.shared.common import APP_ROOT_DIR
 from consumer_api.system import service
@@ -15,17 +15,15 @@ router = APIRouter()
 @router.get(
     "/information",
     summary="Returns various information about this API (running version, etc.)",
-    response_model=service.SystemInformation,
     status_code=200,
 )
-def get_system_information():
+def get_system_information() -> service.SystemInformation:
     return service.get_system_information()
 
 
 @router.get(
     "/information/build-id",
     summary="Returns build id as plain text",
-    response_class=PlainTextResponse,
     status_code=200,
 )
 def get_build_id() -> str:
@@ -35,17 +33,15 @@ def get_build_id() -> str:
 @router.get(
     "/healthcheck",
     summary="Returns 200 OK status if the system is ready to serve requests",
-    response_class=PlainTextResponse,
     status_code=200,
 )
-def healthcheck():
+def healthcheck() -> str:
     return "OK"
 
 
 @router.get(
     "/information/sbom.md",
     summary="Returns SBOM as markdown text",
-    response_class=FileResponse,
     status_code=200,
 )
 def get_sbom_md() -> FileResponse:
@@ -59,7 +55,6 @@ def get_sbom_md() -> FileResponse:
 @router.get(
     "/information/license.md",
     summary="Returns license as markdown text",
-    response_class=FileResponse,
     status_code=200,
 )
 def get_license_md() -> FileResponse:

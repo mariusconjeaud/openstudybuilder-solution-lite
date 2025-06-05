@@ -17,7 +17,7 @@
       @filter="fetchStructures"
     >
       <template #[`item.study_ids`]="{ item }">
-        <div v-html="item.study_ids" />
+        <div v-html="sanitizeHTML(item.study_ids)" />
       </template>
     </NNTable>
   </div>
@@ -30,6 +30,7 @@ import NNTable from '@/components/tools/NNTable.vue'
 import studyApi from '@/api/study'
 import filteringParameters from '@/utils/filteringParameters'
 import HelpButton from '@/components/tools/HelpButton.vue'
+import { escapeHTML, sanitizeHTML } from '@/utils/sanitize'
 
 const { t } = useI18n()
 
@@ -75,7 +76,7 @@ function fetchStructures(filters, options, filtersUpdated) {
   studyApi.getStructureOverview(params).then((resp) => {
     items.value = resp.data.items.map((elm) => ({
       ...elm,
-      study_ids: elm.study_ids.join(',<br>'),
+      study_ids: elm.study_ids.map(escapeHTML).join(',<br>'),
     }))
     total.value = resp.data.total
   })

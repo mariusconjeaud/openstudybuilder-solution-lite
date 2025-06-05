@@ -50,7 +50,6 @@ TIME_UNIT_QUERY = Query(
         403: _generic_descriptions.ERROR_403,
         404: _generic_descriptions.ERROR_404,
     },
-    response_model=dict[str, tuple[int, int]],
 )
 def get_study_flowchart_coordinates(
     study_uid: Annotated[str, STUDY_UID_PATH],
@@ -73,7 +72,6 @@ def get_study_flowchart_coordinates(
         403: _generic_descriptions.ERROR_403,
         404: _generic_descriptions.ERROR_404,
     },
-    response_model=TableWithFootnotes,
     response_model_exclude_none=True,
 )
 def get_study_flowchart(
@@ -240,7 +238,6 @@ def get_operational_soa_html(
     "/{study_uid}/detailed-soa-history",
     dependencies=[rbac.STUDY_READ],
     summary="Returns the history of changes performed to a specific detailed SoA",
-    response_model=CustomPage[DetailedSoAHistory],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -282,7 +279,6 @@ def get_detailed_soa_history(
     "/{study_uid}/detailed-soa-exports",
     dependencies=[rbac.STUDY_READ],
     summary="Exports the Detailed SoA content",
-    response_model=list[dict],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -332,7 +328,6 @@ def export_detailed_soa_content(
     "/{study_uid}/operational-soa-exports",
     dependencies=[rbac.STUDY_READ],
     summary="Exports the Operational SoA content",
-    response_model=list[dict],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -394,7 +389,6 @@ def export_operational_soa_content(
     "/{study_uid}/protocol-soa-exports",
     dependencies=[rbac.STUDY_READ],
     summary="Exports the Protocol SoA content",
-    response_model=list[dict],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,

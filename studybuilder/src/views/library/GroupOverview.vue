@@ -3,7 +3,7 @@
     <div class="d-flex page-title">
       {{ groupOverview.group.name }}
       <HelpButtonWithPanels
-        :help-text="$t('_help.SubgroupOverview.general')"
+        :help-text="$t('_help.GroupOverview.general')"
         :items="helpItems"
       />
     </div>
@@ -20,10 +20,13 @@
 <script setup>
 import { ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import GroupOverviewComponent from '@/components/library/GroupOverview.vue'
 import HelpButtonWithPanels from '@/components/tools/HelpButtonWithPanels.vue'
 import activities from '@/api/activities'
 import { useAppStore } from '@/stores/app'
+
+const { t } = useI18n()
 
 const route = useRoute()
 const appStore = useAppStore()
@@ -48,21 +51,83 @@ const helpItems = [
 
 const fetchOverview = async () => {
   try {
-    // Fetch main overview data
-    const resp = await activities.getObjectOverview(
-      'activity-groups',
-      route.params.id,
-      route.params.version
-    )
-    groupOverview.value = resp.data
-    appStore.addBreadcrumbsLevel(
-      groupOverview.value.group.name,
-      { name: 'GroupOverview', params: route.params },
-      4,
-      true
-    )
+    groupOverview.value = null
 
-    // Fetch YAML version
+    let groupData, allVersions
+    // Initialize subgroupsData as an empty array - component will handle fetching
+    const subgroupsData = []
+
+    try {
+      const detailsResp = await activities.getActivityGroupDetails(
+        route.params.id,
+        route.params.version
+      )
+
+      if (detailsResp.data) {
+        if (detailsResp.data.group) {
+          groupData = detailsResp.data.group
+          allVersions = detailsResp.data.all_versions || []
+        } else {
+          groupData = detailsResp.data
+          allVersions = detailsResp.data.all_versions || []
+        }
+      }
+    } catch (detailsError) {
+      console.error('Error fetching group details:', detailsError)
+    }
+
+    if (!groupData || !groupData.name) {
+      appStore.addBreadcrumbsLevel(
+        t('_global.loading'),
+        { name: 'GroupOverview', params: route.params },
+        4,
+        true
+      )
+    } else {
+      appStore.addBreadcrumbsLevel(
+        groupData.name,
+        { name: 'GroupOverview', params: route.params },
+        4,
+        true
+      )
+    }
+
+    if (!groupData) {
+      try {
+        console.warn('Falling back to original overview endpoint')
+        const resp = await activities.getObjectOverview(
+          'activity-groups',
+          route.params.id,
+          route.params.version
+        )
+
+        groupOverview.value = resp.data
+
+        if (groupOverview.value?.group?.name) {
+          appStore.addBreadcrumbsLevel(
+            groupOverview.value.group.name,
+            { name: 'GroupOverview', params: route.params },
+            4,
+            true
+          )
+        }
+
+        return
+      } catch (fallbackError) {
+        console.error(
+          'Error with fallback to original endpoint:',
+          fallbackError
+        )
+        throw fallbackError
+      }
+    }
+
+    groupOverview.value = {
+      group: groupData,
+      all_versions: allVersions || [],
+      subgroups: subgroupsData || [],
+    }
+
     try {
       const yamlResp = await activities.getObjectOverview(
         'activity-groups',

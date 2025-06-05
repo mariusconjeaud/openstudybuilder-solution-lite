@@ -100,15 +100,15 @@ class ActivityItem(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     activity_item_class: Annotated[CompactActivityItemClass, Field()]
-    ct_terms: Annotated[list[CompactCTTerm], Field()] = []
-    unit_definitions: Annotated[list[CompactUnitDefinition], Field()] = []
-    is_adam_param_specific: bool
-    odm_items: Annotated[list[CompactOdmItem], Field()] = []
+    ct_terms: list[CompactCTTerm] = Field(default_factory=list)
+    unit_definitions: list[CompactUnitDefinition] = Field(default_factory=list)
+    is_adam_param_specific: Annotated[bool, Field()]
+    odm_items: list[CompactOdmItem] = Field(default_factory=list)
 
 
 class ActivityItemCreateInput(PostInputModel):
     activity_item_class_uid: Annotated[str, Field(min_length=1)]
-    ct_term_uids: list[str]
-    unit_definition_uids: list[str]
-    is_adam_param_specific: bool
-    odm_item_uids: list[str]
+    ct_term_uids: Annotated[list[str], Field()]
+    unit_definition_uids: Annotated[list[str], Field()]
+    is_adam_param_specific: Annotated[bool, Field()]
+    odm_item_uids: Annotated[list[str], Field()]

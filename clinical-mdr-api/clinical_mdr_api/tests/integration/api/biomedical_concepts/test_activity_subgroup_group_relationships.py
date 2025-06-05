@@ -183,12 +183,17 @@ def test_activity_subgroup_versioning_preserves_group_relationships(api_client):
     )
     current_data = response.json()
 
-    response = api_client.patch(
+    response = api_client.put(
         f"/concepts/activities/activity-sub-groups/{activity_subgroup_2.uid}",
         json={
             "name": current_data[
                 "name"
             ],  # Use exactly the same name to avoid case sensitivity validation
+            "name_sentence_case": current_data["name_sentence_case"],
+            "library_name": current_data["library_name"],
+            "activity_groups": [
+                group["uid"] for group in current_data["activity_groups"]
+            ],
             "definition": "Updated definition for subgroup 2",
             "change_description": "Updated subgroup definition",
         },

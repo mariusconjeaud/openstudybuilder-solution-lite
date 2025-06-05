@@ -306,7 +306,7 @@ class StudyCompoundDosingSelectionService(StudySelectionMixin):
 
     def get_compound_dosing_audit_trail(
         self, study_uid: str, compound_dosing_uid: str
-    ) -> StudyCompoundDosing:
+    ) -> list[StudyCompoundDosing]:
         try:
             selection_history = (
                 self._repos.study_compound_dosing_repository.find_selection_history(

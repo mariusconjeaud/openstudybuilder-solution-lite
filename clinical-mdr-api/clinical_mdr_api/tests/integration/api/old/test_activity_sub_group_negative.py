@@ -86,12 +86,15 @@ def test_post_new_activity_sub_group_name_already_exists(api_client):
     assert res["message"] == "Activity Subgroup with Name 'name1' already exists."
 
 
-def test_patch_activity_non_existent_sub_group1(api_client):
+def test_update_activity_non_existent_sub_group1(api_client):
     data = {
+        "name": "name1",
+        "name_sentence_case": "name1",
         "change_description": "Test change",
+        "library_name": "Sponsor",
         "activity_groups": ["activity_group_root_non_existent"],
     }
-    response = api_client.patch(
+    response = api_client.put(
         "/concepts/activities/activity-sub-groups/activity_subgroup_root1", json=data
     )
 
@@ -106,13 +109,15 @@ def test_patch_activity_non_existent_sub_group1(api_client):
     )
 
 
-def test_patch_activity_name_already_exists1(api_client):
+def test_update_activity_name_already_exists1(api_client):
     data = {
         "name": "name1",
         "name_sentence_case": "name1",
+        "library_name": "Sponsor",
+        "activity_groups": [],
         "change_description": "Test change",
     }
-    response = api_client.patch(
+    response = api_client.put(
         "/concepts/activities/activity-sub-groups/activity_subgroup_root2", json=data
     )
 

@@ -17,14 +17,14 @@ class StudyDiseaseMilestoneEditInput(PatchInputModel):
     disease_milestone_type: Annotated[
         str | None, Field(description="Study Disease Milestone Type uid")
     ] = None
-    repetition_indicator: bool | None = None
+    repetition_indicator: Annotated[bool | None, Field()] = None
 
 
 class StudyDiseaseMilestoneCreateInput(PostInputModel):
     disease_milestone_type: Annotated[
         str, Field(description="Study Disease Milestone Type uid")
     ]
-    repetition_indicator: bool
+    repetition_indicator: Annotated[bool, Field()]
     order: Annotated[
         int | None,
         Field(
@@ -34,7 +34,7 @@ class StudyDiseaseMilestoneCreateInput(PostInputModel):
             description="The ordering of the selection",
         ),
     ] = None
-    study_uid: str
+    study_uid: Annotated[str, Field()]
 
 
 class StudyDiseaseMilestoneOGM(BaseModel, StudyDiseaseMilestoneVO):
@@ -145,9 +145,9 @@ class StudyDiseaseMilestone(StudyDiseaseMilestoneCreateInput):
             json_schema_extra={"nullable": True},
         ),
     ] = None
-    disease_milestone_type: str
-    disease_milestone_type_name: str
-    disease_milestone_type_definition: str
+    disease_milestone_type: Annotated[str, Field()]
+    disease_milestone_type_name: Annotated[str, Field()]
+    disease_milestone_type_definition: Annotated[str, Field()]
     start_date: Annotated[
         datetime, Field(description="Study DiseaseMilestone last modification date")
     ]
@@ -168,7 +168,7 @@ class StudyDiseaseMilestone(StudyDiseaseMilestoneCreateInput):
 
 
 class StudyDiseaseMilestoneVersion(StudyDiseaseMilestone):
-    changes: list[str]
+    changes: Annotated[list[str], Field()]
 
 
 class StudySelectionDiseaseMilestoneNewOrder(BaseModel):

@@ -8,9 +8,9 @@ from clinical_mdr_api.models.utils import BaseModel, PostInputModel
 
 
 class OdmElementWithParentUid(BaseModel):
-    uid: str
-    name: str
-    parent_uids: list[str]
+    uid: Annotated[str, Field()]
+    name: Annotated[str, Field()]
+    parent_uids: Annotated[list[str], Field()]
 
 
 class OdmVendorRelationPostInput(PostInputModel):
@@ -24,13 +24,13 @@ class OdmVendorElementRelationPostInput(PostInputModel):
 
 
 class OdmVendorsPostInput(PostInputModel):
-    elements: list[OdmVendorElementRelationPostInput]
-    element_attributes: list[OdmVendorRelationPostInput]
-    attributes: list[OdmVendorRelationPostInput]
+    elements: Annotated[list[OdmVendorElementRelationPostInput], Field()]
+    element_attributes: Annotated[list[OdmVendorRelationPostInput], Field()]
+    attributes: Annotated[list[OdmVendorRelationPostInput], Field()]
 
 
 class OdmRefVendorPostInput(PostInputModel):
-    attributes: list[OdmVendorRelationPostInput]
+    attributes: Annotated[list[OdmVendorRelationPostInput], Field()]
 
 
 class OdmRefVendorAttributeModel(BaseModel):
@@ -78,7 +78,7 @@ class OdmRefVendorAttributeModel(BaseModel):
 
 
 class OdmRefVendor(BaseModel):
-    attributes: list[OdmRefVendorAttributeModel]
+    attributes: Annotated[list[OdmRefVendorAttributeModel], Field()]
 
 
 class OdmVendorNamespaceSimpleModel(BaseModel):

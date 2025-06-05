@@ -1,12 +1,14 @@
 import abc
+from collections import defaultdict
 from datetime import datetime
-from typing import Any, Callable, TypeVar
+from typing import Any, Callable, Iterable, TypeVar
 
 from neomodel import db
 
 from clinical_mdr_api.domain_repositories.study_selections.study_activity_base_repository import (
     StudySelectionActivityBaseRepository,
 )
+from clinical_mdr_api.domains.concepts.activities.activity import ActivityAR
 from clinical_mdr_api.domains.study_selections.study_selection_base import (
     StudySelectionBaseAR,
     StudySelectionBaseVO,
@@ -152,7 +154,8 @@ class StudyActivitySelectionBaseService(StudySelectionMixin):
         else:
             study_uids = None
 
-        selection_ars = self.repository.find_all(
+        # selection_ars = self.repository.find_all(
+        selection_ar = self.repository.find_all(
             project_name=project_name,
             project_number=project_number,
             study_uids=study_uids,
@@ -161,11 +164,7 @@ class StudyActivitySelectionBaseService(StudySelectionMixin):
 
         # In order for filtering to work, we need to unwind the aggregated AR object first
         # Unwind ARs
-        selections = []
-        for selection_ar in selection_ars:
-            parsed_selections = self._transform_all_to_response_model(selection_ar)
-            for selection in parsed_selections:
-                selections.append(selection)
+        selections = self._transform_all_to_response_model(selection_ar)
 
         # Do filtering, sorting, pagination and count
         filtered_items = service_level_generic_filtering(
@@ -474,3 +473,23 @@ class StudyActivitySelectionBaseService(StudySelectionMixin):
             return reordered_item
         finally:
             repos.close()
+
+    def _get_linked_activities(
+        self,
+        selection_vos: Iterable[StudySelectionBaseVO],
+    ) -> list[ActivityAR]:
+        version_specific_uids = defaultdict(set)
+
+        for selection_vo in selection_vos:
+            version_specific_uids[selection_vo.activity_uid].add(
+                selection_vo.activity_version
+            )
+            version_specific_uids[selection_vo.activity_uid].add("LATEST")
+
+        if not version_specific_uids:
+            return []
+
+        return self._repos.activity_repository.get_all_optimized(
+            version_specific_uids=version_specific_uids,
+            include_retired_versions=True,
+        )[0]

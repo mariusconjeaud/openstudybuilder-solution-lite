@@ -3,8 +3,7 @@
 from datetime import datetime
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Body, Path, Query, Response
-from fastapi import status as fast_api_status
+from fastapi import APIRouter, Body, Path, Query
 from pydantic.types import Json
 
 from clinical_mdr_api.domains.versioned_object_aggregate import LibraryItemStatus
@@ -34,7 +33,6 @@ CTTermUID = Path(description="The unique id of the CTTermNames")
     "/terms/names",
     dependencies=[rbac.LIBRARY_READ],
     summary="Returns all terms names.",
-    response_model=CustomPage[CTTermName | CTTermNameSimple],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -98,7 +96,7 @@ def get_terms(
     total_count: Annotated[
         bool | None, Query(description=_generic_descriptions.TOTAL_COUNT)
     ] = False,
-):
+) -> CustomPage[CTTermName | CTTermNameSimple]:
     ct_term_name_service = CTTermNameService()
     results = ct_term_name_service.get_all_ct_terms(
         codelist_uid=codelist_uid,
@@ -146,7 +144,6 @@ def get_terms(
     summary="Returns possibles values from the database for a given header",
     description="""Allowed parameters include : field name for which to get possible
     values, search string to provide filtering for the field name, additional filters to apply on other fields""",
-    response_model=list[Any],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -192,7 +189,7 @@ def get_distinct_values_for_header(
     page_size: Annotated[
         int | None, Query(description=_generic_descriptions.HEADER_PAGE_SIZE)
     ] = config.DEFAULT_HEADER_PAGE_SIZE,
-):
+) -> list[Any]:
     ct_term_service = CTTermNameService()
     return ct_term_service.get_distinct_values_for_header(
         codelist_uid=codelist_uid,
@@ -211,7 +208,6 @@ def get_distinct_values_for_header(
     "/terms/{term_uid}/names",
     dependencies=[rbac.LIBRARY_READ],
     summary="Returns the latest/newest version of a specific ct term identified by 'term_uid'",
-    response_model=CTTermName,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -247,7 +243,7 @@ def get_term_names(
             "<major>.<minor> where <major> and <minor> are digits. E.g. '0.1', '0.2', '1.0',",
         ),
     ] = None,
-):
+) -> CTTermName:
     ct_term_name_service = CTTermNameService()
     return ct_term_name_service.get_by_uid(
         term_uid=term_uid,
@@ -263,7 +259,6 @@ def get_term_names(
     summary="Returns the version history of a specific CTTermName identified by 'term_uid'.",
     description="The returned versions are ordered by\n"
     "0. start_date descending (newest entries first)",
-    response_model=list[CTTermNameVersion],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -273,7 +268,7 @@ def get_term_names(
         },
     },
 )
-def get_versions(term_uid: Annotated[str, CTTermUID]):
+def get_versions(term_uid: Annotated[str, CTTermUID]) -> list[CTTermNameVersion]:
     ct_term_name_service = CTTermNameService()
     return ct_term_name_service.get_version_history(term_uid=term_uid)
 
@@ -290,7 +285,6 @@ If the request succeeds:
 * The 'version' property will be increased automatically by +0.1.
 * The status will remain in 'Draft'.
 """,
-    response_model=CTTermName,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -316,7 +310,7 @@ def edit(
             description="The new parameter terms for the term including the change description.",
         ),
     ],
-):
+) -> CTTermName:
     ct_term_name_service = CTTermNameService()
     return ct_term_name_service.edit_draft(term_uid=term_uid, term_input=term_input)
 
@@ -334,7 +328,6 @@ If the request succeeds:
 * The 'change_description' property will be set automatically to 'new-version'.
 * The 'version' property will be increased by '0.1'.
 """,
-    response_model=CTTermName,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -352,7 +345,7 @@ If the request succeeds:
         },
     },
 )
-def create(term_uid: Annotated[str, CTTermUID]):
+def create(term_uid: Annotated[str, CTTermUID]) -> CTTermName:
     ct_term_name_service = CTTermNameService()
     return ct_term_name_service.create_new_version(term_uid=term_uid)
 
@@ -370,7 +363,6 @@ If the request succeeds:
 * The 'change_description' property will be set automatically to 'Approved version'.
 * The 'version' property will be increased automatically to the next major version.
     """,
-    response_model=CTTermName,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -387,7 +379,7 @@ If the request succeeds:
         },
     },
 )
-def approve(term_uid: Annotated[str, CTTermUID]):
+def approve(term_uid: Annotated[str, CTTermUID]) -> CTTermName:
     ct_term_name_service = CTTermNameService()
     return ct_term_name_service.approve(term_uid=term_uid)
 
@@ -404,7 +396,6 @@ If the request succeeds:
 * The 'change_description' property will be set automatically. 
 * The 'version' property will remain the same as before.
     """,
-    response_model=CTTermName,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -420,7 +411,7 @@ If the request succeeds:
         },
     },
 )
-def inactivate(term_uid: Annotated[str, CTTermUID]):
+def inactivate(term_uid: Annotated[str, CTTermUID]) -> CTTermName:
     ct_term_name_service = CTTermNameService()
     return ct_term_name_service.inactivate_final(term_uid=term_uid)
 
@@ -437,7 +428,6 @@ If the request succeeds:
 * The 'change_description' property will be set automatically. 
 * The 'version' property will remain the same as before.
     """,
-    response_model=CTTermName,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -453,7 +443,7 @@ If the request succeeds:
         },
     },
 )
-def reactivate(term_uid: Annotated[str, CTTermUID]):
+def reactivate(term_uid: Annotated[str, CTTermUID]) -> CTTermName:
     ct_term_name_service = CTTermNameService()
     return ct_term_name_service.reactivate_retired(term_uid=term_uid)
 
@@ -466,7 +456,6 @@ def reactivate(term_uid: Annotated[str, CTTermUID]):
 * the term is in 'Draft' status and
 * the term has never been in 'Final' status and
 * the term belongs to a library that allows deleting (the 'is_editable' property of the library needs to be true).""",
-    response_model=None,
     status_code=204,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -487,4 +476,3 @@ def reactivate(term_uid: Annotated[str, CTTermUID]):
 def delete_ct_term(term_uid: Annotated[str, CTTermUID]):
     ct_term_name_service = CTTermNameService()
     ct_term_name_service.soft_delete(term_uid=term_uid)
-    return Response(status_code=fast_api_status.HTTP_204_NO_CONTENT)

@@ -1,5 +1,5 @@
 @REQ_ID:1074258 @manual_test
-Feature: Studies - Study Objectives
+Feature: Studies - Define Study - Study Purpose - Study Objectives
 
     Background: User is logged in and study has been selected
         Given The user is logged in   
@@ -95,6 +95,7 @@ Feature: Studies - Study Objectives
     @manual_test    
     Scenario: User must be able to read change history of selected element
         Given The '/studies/Study_000001/study_purpose/objectives' page is opened
+        And The 'Show history' option is clicked from the three dot menu list
         When The user clicks on History for particular element
         Then The user is presented with history of changes for that element
         And The history contains timestamps and usernames

@@ -1,5 +1,5 @@
 @REQ_ID:1074254 @manual_test
-Feature: Studies - Study Elements
+Feature: Studies - Define Study - Study Structure - Study Elements
 
     As a system user,
     I want the system to ensure [Scenario],

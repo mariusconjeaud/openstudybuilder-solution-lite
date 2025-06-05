@@ -24,8 +24,8 @@ class StudyFieldType(Enum):
 
 
 class CTConfigBaseModel(BaseModel):
-    study_field_name: str
-    study_field_data_type: StudyFieldType
+    study_field_name: Annotated[str, Field()]
+    study_field_data_type: Annotated[StudyFieldType, Field()]
     study_field_null_value_code: Annotated[
         str | None, Field(json_schema_extra={"nullable": True})
     ] = None
@@ -40,8 +40,8 @@ class CTConfigBaseModel(BaseModel):
     study_field_grouping: Annotated[
         str | None, Field(json_schema_extra={"nullable": True})
     ] = None
-    study_field_name_api: str
-    is_dictionary_term: bool
+    study_field_name_api: Annotated[str, Field()]
+    is_dictionary_term: Annotated[bool, Field()]
 
 
 class CTConfigOGM(VersionProperties):
@@ -135,7 +135,7 @@ class CTConfigModel(CTConfigBaseModel, NoLibraryConceptModelNoName):
 
 class CTConfigPostInput(PostInputModel):
     study_field_name: Annotated[str, Field(min_length=1)]
-    study_field_data_type: StudyFieldType
+    study_field_data_type: Annotated[StudyFieldType, Field()]
     study_field_null_value_code: Annotated[str | None, Field(min_length=1)] = None
 
     configured_codelist_uid: Annotated[str | None, Field(min_length=1)] = None
@@ -143,7 +143,7 @@ class CTConfigPostInput(PostInputModel):
 
     study_field_grouping: Annotated[str | None, Field(min_length=1)] = None
     study_field_name_api: Annotated[str, Field(min_length=1)]
-    is_dictionary_term: bool
+    is_dictionary_term: Annotated[bool, Field()]
     # field used to create a configuration based on codelist name
     configured_codelist_name: Annotated[str | None, Field(min_length=1)] = None
 
@@ -157,7 +157,7 @@ class CTConfigPostInput(PostInputModel):
 
 class CTConfigPatchInput(PatchInputModel):
     study_field_name: Annotated[str, Field(min_length=1)]
-    study_field_data_type: StudyFieldType
+    study_field_data_type: Annotated[StudyFieldType, Field()]
     study_field_null_value_code: Annotated[str | None, Field(min_length=1)] = None
 
     configured_codelist_uid: Annotated[str | None, Field(min_length=1)] = None
@@ -165,5 +165,5 @@ class CTConfigPatchInput(PatchInputModel):
 
     study_field_grouping: Annotated[str | None, Field(min_length=1)] = None
     study_field_name_api: Annotated[str, Field(min_length=1)]
-    is_dictionary_term: bool
+    is_dictionary_term: Annotated[bool, Field()]
     change_description: Annotated[str, Field(min_length=1)]

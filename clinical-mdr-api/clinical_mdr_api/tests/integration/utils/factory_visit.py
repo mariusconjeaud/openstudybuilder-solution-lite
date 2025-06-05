@@ -6,7 +6,6 @@ from clinical_mdr_api.models.study_selections.study_visit import (
     StudyVisitCreateInput,
     StudyVisitEditInput,
 )
-from clinical_mdr_api.services._meta_repository import MetaRepository
 from clinical_mdr_api.services.concepts.unit_definitions.unit_definition import (
     UnitDefinitionService,
 )
@@ -132,10 +131,10 @@ def create_study_visit_codelists(
         library_name,
     )
     if create_unit_definitions:
-        unit_service = UnitDefinitionService(meta_repository=MetaRepository())
-        week_unit = unit_service.post(UnitDefinitionPostInput(**WEEK))
+        unit_service = UnitDefinitionService()
+        week_unit = unit_service.create(UnitDefinitionPostInput(**WEEK))
         unit_service.approve(uid=week_unit.uid)
-        day_unit = unit_service.post(UnitDefinitionPostInput(**DAY))
+        day_unit = unit_service.create(UnitDefinitionPostInput(**DAY))
         unit_service.approve(uid=day_unit.uid)
 
     codelist = create_codelist(
@@ -181,7 +180,14 @@ def create_study_visit_codelists(
         catalogue_name,
         library_name,
     )
-
+    create_ct_term(
+        codelist.codelist_uid,
+        "Early discontinuation",
+        "VisitType_0005",
+        5,
+        catalogue_name,
+        library_name,
+    )
     codelist = create_codelist(
         "Time Point Reference", "CTCodelist_00005", catalogue_name, library_name
     )

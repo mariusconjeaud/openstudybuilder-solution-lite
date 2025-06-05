@@ -16,7 +16,7 @@ black = "~=24.10.0"
 python_version = "3.13.0"
 
 [scripts]
-build-sbom = "pipelines/scripts/build-sbom.sh"
+build-sbom = "python pipelines/scripts/generate_sbom.py"
 import_all = "python -m run_import"
 import_feature_flags = "python -m importers.run_import_feature_flags"
 import_dummydata = "python -m importers.run_import_dummydata"

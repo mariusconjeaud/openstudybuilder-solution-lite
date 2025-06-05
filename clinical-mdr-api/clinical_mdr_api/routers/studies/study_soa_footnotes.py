@@ -1,6 +1,6 @@
 from typing import Annotated, Any
 
-from fastapi import Body, Query, Response, status
+from fastapi import Body, Query
 from pydantic import Json
 
 from clinical_mdr_api.models.study_selections.study_soa_footnote import (
@@ -27,7 +27,6 @@ from common.models.error import ErrorResponse
     "/study-soa-footnotes",
     dependencies=[rbac.STUDY_READ],
     summary="List all study soa footnotes defined for all studies",
-    response_model=CustomPage[StudySoAFootnote],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -83,7 +82,6 @@ def get_all_study_soa_footnotes_from_all_studies(
     "/studies/{study_uid}/study-soa-footnotes",
     dependencies=[rbac.STUDY_READ],
     summary="List all study soa footnotes currently defined for the study",
-    response_model=CustomPage[StudySoAFootnote],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -151,7 +149,6 @@ def get_all_study_soa_footnotes(
     summary="Returns possible values from the database for a given header",
     description="Allowed parameters include : field name for which to get possible values, "
     "search string to provide filtering for the field name, additional filters to apply on other fields",
-    response_model=list[Any],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -185,7 +182,7 @@ def get_distinct_values_for_header(
     study_value_version: Annotated[
         str | None, _generic_descriptions.STUDY_VALUE_VERSION_QUERY
     ] = None,
-):
+) -> list[Any]:
     service = StudySoAFootnoteService()
     return service.get_distinct_values_for_header(
         study_uid=study_uid,
@@ -204,7 +201,6 @@ def get_distinct_values_for_header(
     summary="Returns possible values from the database for a given header",
     description="Allowed parameters include : field name for which to get possible values, "
     "search string to provide filtering for the field name, additional filters to apply on other fields",
-    response_model=list[Any],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -234,7 +230,7 @@ def get_distinct_values_for_header_top_level(
     page_size: Annotated[
         int | None, Query(description=_generic_descriptions.HEADER_PAGE_SIZE)
     ] = config.DEFAULT_HEADER_PAGE_SIZE,
-):
+) -> list[Any]:
     service = StudySoAFootnoteService()
     return service.get_distinct_values_for_header(
         study_uid=None,
@@ -250,7 +246,6 @@ def get_distinct_values_for_header_top_level(
     "/studies/{study_uid}/study-soa-footnotes/{study_soa_footnote_uid}",
     dependencies=[rbac.STUDY_READ],
     summary="List a specific study soa footnote defined for a study",
-    response_model=StudySoAFootnote,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -278,7 +273,6 @@ def get_study_soa_footnote(
     "/studies/{study_uid}/study-soa-footnotes",
     dependencies=[rbac.STUDY_WRITE],
     summary="Add a study soa footnote to a study",
-    response_model=StudySoAFootnote,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -316,7 +310,6 @@ def post_new_soa_footnote(
     "/studies/{study_uid}/study-soa-footnotes/batch-select",
     dependencies=[rbac.STUDY_WRITE],
     summary="Batch create Study SoA footnotes to a given Study",
-    response_model=list[StudySoAFootnote],
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -333,7 +326,7 @@ def post_new_soa_footnotes_batch_select(
         list[StudySoAFootnoteCreateFootnoteInput],
         Body(description="Related parameters of the footnote that shall be created."),
     ],
-) -> StudySoAFootnote:
+) -> list[StudySoAFootnote]:
     service = StudySoAFootnoteService()
     return service.batch_create(study_uid=study_uid, footnote_input=soa_footnote_input)
 
@@ -342,7 +335,6 @@ def post_new_soa_footnotes_batch_select(
     "/studies/{study_uid}/study-soa-footnotes/batch-edit",
     dependencies=[rbac.STUDY_WRITE],
     summary="Edit a batch of study soa footnotes",
-    response_model=list[StudySoAFootnoteBatchOutput],
     status_code=207,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -356,7 +348,7 @@ def batch_edit_study_soa_footnote(
         list[StudySoAFootnoteBatchEditInput],
         Body(description="List of Patch payloads to update StudySoAFootnotes"),
     ],
-):
+) -> list[StudySoAFootnoteBatchOutput]:
     service = StudySoAFootnoteService()
     return service.batch_edit(
         study_uid=study_uid,
@@ -368,7 +360,6 @@ def batch_edit_study_soa_footnote(
     "/studies/{study_uid}/study-soa-footnotes/{study_soa_footnote_uid}",
     dependencies=[rbac.STUDY_WRITE],
     summary="Edit a study soa footnote",
-    response_model=StudySoAFootnote,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -389,7 +380,7 @@ def edit_study_soa_footnote(
         StudySoAFootnoteEditInput,
         Body(description="Related parameters of the schedule that shall be edited."),
     ],
-):
+) -> StudySoAFootnote:
     service = StudySoAFootnoteService()
     return service.edit(
         study_uid=study_uid,
@@ -402,7 +393,6 @@ def edit_study_soa_footnote(
     "/studies/{study_uid}/study-soa-footnotes/{study_soa_footnote_uid}",
     dependencies=[rbac.STUDY_WRITE],
     summary="Delete a study soa footnote",
-    response_model=None,
     status_code=204,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -422,14 +412,12 @@ def delete_study_soa_footnote(
 ):
     service = StudySoAFootnoteService()
     service.delete(study_uid=study_uid, study_soa_footnote_uid=study_soa_footnote_uid)
-    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.post(
     "/studies/{study_uid}/study-soa-footnotes/preview",
     dependencies=[rbac.STUDY_WRITE],
     summary="Preview creating a study soa footnote selection based on the input data",
-    response_model=StudySoAFootnote,
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -472,7 +460,6 @@ The following values should be returned for all study soa footnotes:
 - activity
 - order
     """,
-    response_model=list[StudySoAFootnoteVersion],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -502,7 +489,6 @@ The following values should be returned for all study soa footnotes:
 - activity
 - order
     """,
-    response_model=list[StudySoAFootnoteVersion],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -535,7 +521,6 @@ def get_all_soa_footnotes_audit_trail(
      - Study SoA Footnote selection exists
      - Footnote version selected for study SoA Footnote selection is not changed.
      - Added new entry in the audit trail for the update of the study-soa-footnote.""",
-    response_model=StudySoAFootnote,
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -580,7 +565,6 @@ def patch_footnote_accept_version(
      - Study SoA Footnote selection exists
      - Footnote version selected for study SoA Footnote selection is not changed.
      - Added new entry in the audit trail for the update of the study-soa-footnote.""",
-    response_model=StudySoAFootnote,
     response_model_exclude_unset=True,
     status_code=200,
     responses={

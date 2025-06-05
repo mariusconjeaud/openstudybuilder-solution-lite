@@ -1,51 +1,12 @@
-import { objectVersion, objectName } from "../../support/front_end_commands/table_commands";
 const { Given, When, Then } = require("@badeball/cypress-cucumber-preprocessor");
 
-let defaultCriteriaName, newCriteriaNameUpdated
-let indicationSelected, criterionCatSelected, criterionSubCatSelected, parameterSelected, version
+let defaultCriteriaName, indicationSelected, criterionCatSelected, criterionSubCatSelected, parameterSelected
 
-Given('The criteria template exists with a status as {string}', (status) => {
-    cy.searchAndGetData(status, 'Parent template').then(() => {
-        version = objectVersion
-        defaultCriteriaName = objectName
-    })
-})
+When('The new criteria is added in the library', () => createCriteria(false))
 
-Given('The Final criteria template exist', () => createAndApproveTemplate())
+When('The new Criteria is added in the library with not applicable for indexes', () => createCriteria(true))
 
-Given('The Retired criteria template exist', () => {
-    createAndApproveTemplate()
-    cy.performActionOnSearchedItem('Inactivate')
-})
-
-When('The new criteria is added in the library', () => {
-    createCriteria()
-    cy.searchAndCheckResults(defaultCriteriaName)
-})
-
-When('The new Criteria is added in the library with not applicable for indexes', () => {
-    defaultCriteriaName = Date.now()
-    cy.clickButton('add-template')
-    fillNameAndContinue(defaultCriteriaName)
-    cy.checkAllCheckboxes()
-    cy.clickFormActionButton('save')
-})
-
-Then('The new Criteria is visible in the Criteria Templates Table', () => {
-    cy.checkRowByIndex(0, 'Parent template', defaultCriteriaName)
-    cy.checkStatusAndVersion('Draft', '0.1')
-})
-
-Then('The new Criteria is visible with Not Applicable indexes in the Criteria Templates Table', () => {
-    cy.checkRowByIndex(0, 'Parent template', defaultCriteriaName)
-    cy.checkStatusAndVersion('Draft', '0.1')
-})
-
-Then('The updated Criteria is visible within the table', () => {
-    cy.searchAndCheckResults(newCriteriaNameUpdated)
-    cy.checkRowByIndex(0, 'Parent template', newCriteriaNameUpdated)
-    cy.checkStatusAndVersion('Draft', '0.2')
-})
+Then('The Criteria is visible in the Criteria Templates Table', () => cy.checkRowByIndex(0, 'Parent template', defaultCriteriaName))
 
 When('The new Criteria template is added without template text', () => {
     cy.clickButton('add-template')
@@ -86,17 +47,9 @@ Then('The parameter is not visible in the text representation', () => checkParam
 
 Then('The parameter value is visible in the text representation', () => checkParameterValue(true, parameterSelected.split('...')[0]))
 
-When('The created criteria template is edited without change description provided', () => {
-    cy.clickFormActionButton('continue')
-    cy.clickFormActionButton('continue')
-    cy.clickFormActionButton('continue')
-    cy.clearField('template-change-description')
-    cy.clickFormActionButton('save')
-})
-
 Then('The validation appears for criteria change description field', () => cy.checkIfValidationAppears('template-change-description'))
 
-Then('The criteria is no longer available', () => cy.confirmItemNotAvailable(defaultCriteriaName))
+Then('The criteria is no longer available', () => cy.searchAndCheckPresence(defaultCriteriaName, false))
 
 When('The indexing is updated for the Criteria Template', () => {
     fillIndexingData(true)
@@ -104,12 +57,13 @@ When('The indexing is updated for the Criteria Template', () => {
 })
 
 When('The criteria metadata is updated', () => {
-    newCriteriaNameUpdated = `${Date.now()} Updated`
-    fillNameAndContinue(newCriteriaNameUpdated)
+    defaultCriteriaName = `${Date.now()} Updated`
+    fillNameAndContinue(defaultCriteriaName)
     fillIndexingData(true)
     cy.clickFormActionButton('continue')
     cy.fillInput('template-change-description', 'updated for test')
     cy.clickFormActionButton('save')
+    cy.searchAndCheckPresence(defaultCriteriaName, true)
 })
 
 Then('The indexes in criteria template are updated', () => {
@@ -119,23 +73,28 @@ Then('The indexes in criteria template are updated', () => {
     cy.get('[data-cy="form-body"]').should('contain', criterionSubCatSelected)
 })
 
-Then('The criteria template is updated to draft with version incremented by 0.1', () => cy.checkStatusAndVersion('Draft', version + 0.1))
+Then('[API] {string} Criteria in status Draft exists', (type) => createCriteriaViaApi(type))
 
-Then('The template is displayed with a status as Retired with the same version as before', () => cy.checkStatusAndVersion('Retired', version))
+Then('[API] Criteria is approved', () => cy.approveCriteria())
 
-Then('The criteria template is displayed with a status as Final with the same version as before', () => cy.checkStatusAndVersion('Final', version))
+Then('[API] Criteria is inactivated', () => cy.inactivateCriteria())
 
-Then('The status of the criteria template displayed as Final with a version rounded up to full number', () => cy.checkStatusAndVersion('Final', 1))
+Then('Criteria in searched for', () => {
+    cy.intercept('/api/criteria-templates?page_number=1&*').as('getCriteria')
+    cy.wait('@getCriteria', {timeout: 20000})
+    cy.searchAndCheckPresence(defaultCriteriaName, true)
+})
 
-function createCriteria() {
-    defaultCriteriaName = Date.now()
+function createCriteria(notApplicableIndexes) {
+    defaultCriteriaName = `Criteria${Date.now()}`
     cy.clickButton('add-template')
     fillNameAndContinue(defaultCriteriaName)
-    fillIndexingData(false)
+    notApplicableIndexes ? cy.checkAllCheckboxes() : fillIndexingData(false)
     cy.intercept('/api/criteria-templates?page_number=1&*').as('getCriteria')
     cy.clickFormActionButton('save')
     cy.wait('@getCriteria', {timeout: 20000})
     cy.waitForTable()
+    cy.searchAndCheckPresence(defaultCriteriaName, true)
 }
 
 function fillNameAndContinue(name) {
@@ -157,14 +116,22 @@ function fillIndexingData(update) {
     cy.get('[data-cy="template-criterion-sub-category"] input').invoke('text').then(text => criterionSubCatSelected = text)
 }
 
-function createAndApproveTemplate() {
-    createCriteria()
-    cy.searchAndCheckResults(defaultCriteriaName)
-    cy.performActionOnSearchedItem('Approve')
-}
-
 function checkParameterValue(shouldContain, value) {
     let condition = shouldContain ? 'contain' : 'not.contain'
     cy.get('[edit-mode="false"] .template-readonly').should(condition, value)
     cy.get('[edit-mode="false"] .pa-4').should(condition, value)
+}
+
+function createCriteriaViaApi(type, customName = '') {
+    if (type == 'Inclusion') cy.getInclusionCriteriaUid()
+        else if (type == 'Exclusion') cy.getExclusionCriteriaUid()
+            else if (type == 'Dosing') cy.getDosingCriteriaUid()
+                else if (type == 'Withdrawal') cy.getWithdrawalCriteriaUid()
+                    else if (type == 'Run-in') cy.getRunInCriteriaUid()
+                        else if (type == 'Randomisation') cy.getRandomizationCriteriaUid()
+    cy.getInidicationUid()
+    cy.getCriteriaCategoryUid()
+    cy.getCriteriaSubCategoryUid()
+    cy.createCriteria(customName)
+    cy.getCriteriaName().then(name => defaultCriteriaName = name.replace('<p>', '').replace('</p>', '').trim())
 }

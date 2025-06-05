@@ -126,12 +126,16 @@ From the add visit menu, you can add an unscheduled visit type. This is supposed
 
 ## Adding a Special Visit
 
-The special visit is supposed to be used for early discontinuation of study treatment but has been made generic so it can be used for other purposes. 
-The special visit is referencing to another existing visit. Example: Visit 10 is the planned End of treatment visit with a specific data collection (assigned activities). As always, subjects are allowed to skip treatment earlier and, in that case, an end of treatment data collection is needed. The special visit will in this case be visible as 10A.
+The special visit is supposed to be used for early discontinuation of study treatment but has been made generic so it can be used for other purposes.
+This visit does not have a specific timing, however it is created in relation to another scheduled visit.For example, if there is a visit in the Schedule of Activities that is supposed to happen after scheduled V5 and before V6 (without detailed information about the timing), but that visit is required only if specific criteria are met, then the Special Visit can be used with the time reference set as V5. The special visit will be displayed in the SoA as V5A. If more than one visit like this is needed, then each subsequent special visit will be named VxxB, VxxC, and so on, where "xx" is the number of the related visit.
 
-![Example - Visit 10 and visit 10A](~@source/images/user_guides/guide_visits_07.png)
+The primary purpose of special visits is to capture early discontinuation. If V12 is the planned End of treatment visit with specific data collection (assigned activities), it is always possible for a participant to discontinue treatment earlier. In such cases, an early end-of-treatment data collection is required. The special Early discontinuation visit will then be recorded in the Schedule of Activities as V12X. If more than one early discontinuation visit is needed, subsequent visits will be named V12Y and V12Z.
 
-Figure 9: Example -  Visit 10 and visit 10A
+If the trial has more treatment phases, such as an extension phase, a special Early Discontinuation Visit may be created as the very last visit in the trial.
+An additional footnote may be linked to this visit, explaining that assessments related to this visit should be performed whenever a participant discontinues from the study early, either during the Treatment phase or prior to the last extension visit.
+
+![Example - Visit V5 and V5A and V5B. Early discontinuation V12X](~@source/images/user_guides/guide_visits_07.png)
+Figure 9: Example - Visit V5 and V5A and V5B. Early discontinuation V12X
 
 
 ## Adding a Manually defined visit

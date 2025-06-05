@@ -25,7 +25,6 @@ OdmDescriptionUID = Path(description="The unique id of the ODM Description.")
     "",
     dependencies=[rbac.LIBRARY_READ],
     summary="Return a listing of ODM Descriptions",
-    response_model=CustomPage[OdmDescription],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -61,7 +60,7 @@ def get_all_odm_descriptions(
     total_count: Annotated[
         bool | None, Query(description=_generic_descriptions.TOTAL_COUNT)
     ] = False,
-):
+) -> CustomPage[OdmDescription]:
     odm_description_service = OdmDescriptionService()
     results = odm_description_service.get_all_concepts(
         library=library_name,
@@ -83,7 +82,6 @@ def get_all_odm_descriptions(
     summary="Returns possible values from the database for a given header",
     description="""Allowed parameters include : field name for which to get possible
     values, search string to provide filtering for the field name, additional filters to apply on other fields""",
-    response_model=list[Any],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -114,7 +112,7 @@ def get_distinct_values_for_header(
     page_size: Annotated[
         int | None, Query(description=_generic_descriptions.HEADER_PAGE_SIZE)
     ] = config.DEFAULT_HEADER_PAGE_SIZE,
-):
+) -> list[Any]:
     odm_description_service = OdmDescriptionService()
     return odm_description_service.get_distinct_values_for_header(
         library=library_name,
@@ -130,14 +128,15 @@ def get_distinct_values_for_header(
     "/{odm_description_uid}/relationships",
     dependencies=[rbac.LIBRARY_READ],
     summary="Get UIDs of a specific ODM Description's relationships",
-    response_model=dict,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
         404: _generic_descriptions.ERROR_404,
     },
 )
-def get_active_relationships(odm_description_uid: Annotated[str, OdmDescriptionUID]):
+def get_active_relationships(
+    odm_description_uid: Annotated[str, OdmDescriptionUID],
+) -> dict:
     odm_description_service = OdmDescriptionService()
     return odm_description_service.get_active_relationships(uid=odm_description_uid)
 
@@ -160,7 +159,6 @@ State after:
 Possible errors:
  - Invalid uid.
     """,
-    response_model=list[OdmDescription],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -171,8 +169,8 @@ Possible errors:
     },
 )
 def get_odm_description_versions(
-    odm_description_uid: Annotated[str, OdmDescriptionUID]
-):
+    odm_description_uid: Annotated[str, OdmDescriptionUID],
+) -> list[OdmDescription]:
     odm_description_service = OdmDescriptionService()
     return odm_description_service.get_version_history(uid=odm_description_uid)
 
@@ -181,7 +179,6 @@ def get_odm_description_versions(
 #     "",
 #     dependencies=[rbac.LIBRARY_WRITE],
 #     summary="Create a new ODM Description",
-#     response_model=OdmDescription,
 #     status_code=201,
 #     responses={
 #         201: {"description": "Created - The ODM Description was successfully created."},
@@ -197,7 +194,7 @@ def get_odm_description_versions(
 # )
 # def create_odm_description(
 #     odm_description_create_input: Annotated[OdmDescriptionPostInput, Body()],
-# ):
+# ) -> OdmDescription:
 #     odm_description_service = OdmDescriptionService()
 #     return odm_description_service.create(concept_input=odm_description_create_input)
 
@@ -206,7 +203,6 @@ def get_odm_description_versions(
 #     "/batch",
 #     dependencies=[rbac.LIBRARY_WRITE],
 #     summary="Batch operations (create, edit) for ODM Descriptions",
-#     response_model=list[OdmDescriptionBatchOutput],
 #     status_code=207,
 #     responses={
 #         404: _generic_descriptions.ERROR_404,
@@ -217,7 +213,7 @@ def get_odm_description_versions(
 #     operations: Annotated[
 #         list[OdmDescriptionBatchInput], Body(description="List of operation to perform")
 #     ]
-# ):
+# ) -> list[OdmDescriptionBatchOutput]:
 #     odm_description_service = OdmDescriptionService()
 #     return odm_description_service.handle_batch_operations(operations)
 
@@ -226,7 +222,6 @@ def get_odm_description_versions(
 #     "/{odm_description_uid}",
 #     dependencies=[rbac.LIBRARY_WRITE],
 #     summary="Update an ODM Description",
-#     response_model=OdmDescription,
 #     status_code=200,
 #     responses={
 #         200: {"description": "OK."},
@@ -247,7 +242,7 @@ def get_odm_description_versions(
 # def edit_odm_description(
 #     odm_description_uid: Annotated[str, OdmDescriptionUID],
 #     odm_description_edit_input: Annotated[OdmDescriptionPatchInput, Body()],
-# ):
+# ) -> OdmDescription:
 #     odm_description_service = OdmDescriptionService()
 #     return odm_description_service.edit_draft(
 #         uid=odm_description_uid, concept_edit_input=odm_description_edit_input
@@ -272,7 +267,6 @@ def get_odm_description_versions(
 # Possible errors:
 #  - Invalid uid or status not Final.
 # """,
-#     response_model=OdmDescription,
 #     status_code=201,
 #     responses={
 #         201: {"description": "OK."},
@@ -292,7 +286,7 @@ def get_odm_description_versions(
 # )
 # def create_odm_description_version(
 #     odm_description_uid: Annotated[str, OdmDescriptionUID]
-# ):
+# ) -> OdmDescription:
 #     odm_description_service = OdmDescriptionService()
 #     return odm_description_service.create_new_version(uid=odm_description_uid)
 
@@ -301,7 +295,6 @@ def get_odm_description_versions(
 #     "/{odm_description_uid}/approvals",
 #     dependencies=[rbac.LIBRARY_WRITE],
 #     summary="Approve an ODM Description",
-#     response_model=OdmDescription,
 #     status_code=201,
 #     responses={
 #         201: {"description": "OK."},
@@ -318,7 +311,7 @@ def get_odm_description_versions(
 #
 #     },
 # )
-# def approve_odm_description(odm_description_uid: Annotated[str, OdmDescriptionUID]):
+# def approve_odm_description(odm_description_uid: Annotated[str, OdmDescriptionUID]) -> OdmDescription:
 #     odm_description_service = OdmDescriptionService()
 #     return odm_description_service.approve(uid=odm_description_uid)
 
@@ -327,7 +320,6 @@ def get_odm_description_versions(
 #     "/{odm_description_uid}/activations",
 #     dependencies=[rbac.LIBRARY_WRITE],
 #     summary=" Inactivate an ODM Description",
-#     response_model=OdmDescription,
 #     status_code=200,
 #     responses={
 #         200: {"description": "OK."},
@@ -343,7 +335,7 @@ def get_odm_description_versions(
 #
 #     },
 # )
-# def inactivate_odm_description(odm_description_uid: Annotated[str, OdmDescriptionUID]):
+# def inactivate_odm_description(odm_description_uid: Annotated[str, OdmDescriptionUID]) -> OdmDescription:
 #     odm_description_service = OdmDescriptionService()
 #     return odm_description_service.inactivate_final(uid=odm_description_uid)
 
@@ -352,7 +344,6 @@ def get_odm_description_versions(
 #     "/{odm_description_uid}/activations",
 #     dependencies=[rbac.LIBRARY_WRITE],
 #     summary="Reactivate an ODM Description",
-#     response_model=OdmDescription,
 #     status_code=200,
 #     responses={
 #         200: {"description": "OK."},
@@ -368,7 +359,7 @@ def get_odm_description_versions(
 #
 #     },
 # )
-# def reactivate_odm_description(odm_description_uid: Annotated[str, OdmDescriptionUID]):
+# def reactivate_odm_description(odm_description_uid: Annotated[str, OdmDescriptionUID]) -> OdmDescription:
 #     odm_description_service = OdmDescriptionService()
 #     return odm_description_service.reactivate_retired(uid=odm_description_uid)
 
@@ -377,7 +368,6 @@ def get_odm_description_versions(
 #     "/{odm_description_uid}",
 #     dependencies=[rbac.LIBRARY_WRITE],
 #     summary="Delete draft version of ODM Description",
-#     response_model=None,
 #     status_code=204,
 #     responses={
 #         204: {

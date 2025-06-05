@@ -3,13 +3,15 @@
     <h1
       class="text-h3"
       v-html="
-        $t(
-          'HomeView.title',
-          appEnv
-            ? {
-                env: `<strong style='color: rgb(var(--v-theme-nnSeaBlue400)); font-size: 64px;'>${appEnv}</strong> <strong>environment</strong>`,
-              }
-            : ''
+        sanitizeHTMLHandler(
+          $t(
+            'HomeView.title',
+            appEnv
+              ? {
+                  env: `<strong style='color: rgb(var(--v-theme-nnSeaBlue400)); font-size: 64px;'>${appEnv}</strong> <strong>environment</strong>`,
+                }
+              : ''
+          )
         )
       "
     ></h1>
@@ -75,6 +77,7 @@
 import licenseContent from '../../LICENSE.md?raw'
 import AboutLicense from '@/components/layout/AboutLicense.vue'
 import { getAppEnv } from '@/utils/generalUtils'
+import { sanitizeHTML } from '@/utils/sanitize'
 
 export default {
   components: {
@@ -100,6 +103,11 @@ export default {
   },
   beforeCreate() {
     this.licenseContent = licenseContent
+  },
+  methods: {
+    sanitizeHTMLHandler(html) {
+      return sanitizeHTML(html)
+    },
   },
 }
 </script>

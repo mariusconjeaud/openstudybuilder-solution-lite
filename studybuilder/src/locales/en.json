@@ -304,6 +304,7 @@
           "is_data_collected": "Specifies if the activity involves data collection.",
           "class": "The class in which the Activity Instance belongs to.",
           "instances": "The list of Activity Instances. An Activity Instance is a detailed definition of the activity specifying e.g. unit, specimen, location etc.",
+          "no_instances": "No activity instances available for this activity.",
           "activity_groupings": "The list of groups and sub-groups assigned.",
           "history_title": "History for activity [{uid}]",
           "name": "Name",
@@ -345,6 +346,12 @@
             "ct_term_name": "The term being referred to for the item, if applicable. It will list the possible/allowable terms.",
             "unit_def_name": "The list of allowable/possible units.",
             "item_class": "The class that the item belongs to. The class determines where the information will mapped to in SDTM/CDASH."
+        },
+        "SubgroupOverview": {
+            "general": "An activity subgroup is a subgrouping of activities within an activity group. The subgrouping is used for protocol SoA display and for searching in the List of Activities."
+        },
+        "GroupOverview": {
+            "general": "An activity group is a grouping of related activities. Activity groups are used for protocol SoA display and for searching in the List of Activities."
         },
         "CompoundsView": {
             "general": "Definitions of compounds are created from the Compounds tab. If an alias name for a compound is needed, then this can be defined in the compound aliases tab."
@@ -558,7 +565,7 @@
             "general": "Use the add button (under the menu) to add the endpoint needed. The endpoint can be based on standard templates, selected from other studies or created from scratch. Some criteria contain parameters highlighted with orange text (parameter labels) or green text (parameter values) for which new values can be selected, or the parameter omitted, by using the Edit button next to each editable endpoint in the table."
         },
         "StudyVisitForm": {
-            "vtype_step_label": "Select the type of visit: Scheduled visit is a planned visit as per protocol. Unscheduled visit is an additional visit to capture activities that may happen outside of normal schedule, e.g. extra lab samples. Non Visit is for study activities not related to any visits, e.g. for self-measured plasma glucose results. The Unscheduled Visit and Non Visit are placeholders required for most of the studies for proper SDTM mapping. Special Visit is a visit without specific timing but related to data collection. Example: early discontinuation visit, where certain data are to be collected, but not at the timing of the originally planned End of Treatment visit. A special visit is always related to another visit and is shown in the schedule of activities as visit VXXA (XX being the number of the related visit). There can be only one Special Visits per study period (Epoch). If after first patient enrolled on study (FPFV) adding new visit as per protocol amendment is needed, then Manually defined visit has to be used. After FPFV changing names or numbering of visits that were initially implemented may have serious consequences, while adding Manually Defined visit is not impacting on data that were already collected.",
+            "vtype_step_label": "Select the type of visit: Scheduled visit is a planned visit as per protocol. Unscheduled visit is an additional visit to capture activities that may happen outside of normal schedule, e.g. extra lab samples. Non Visit is for study activities not related to any visits, e.g. for self-measured plasma glucose results. The Unscheduled Visit and Non Visit are placeholders required for most of the studies for proper SDTM mapping. Special visit is a visit without specific timing but related to data collection. Special visits are always connected to another visit and are shown in the schedule of activities as visits VxxA, VxxB, etc. (where 'xx' is the number of the related visit). This type of visit can also be used as an “Early Discontinuation Visit,” during which specific data are collected, but not at the time of the originally planned End of Treatment visit. In this case, the Special Visit will be named VxxX. There may be more than one early discontinuation visit in the trial, and any additional early discontinuation visits will be named VxxY and VxxZ. If after first participant enrolled on study (FPFV) adding new visit as per protocol amendment is needed, then Manually defined visit has to be used. After FPFV changing names or numbering of visits that were initially implemented may have serious consequences, while adding Manually Defined visit is not impacting on data that were already collected.",
             "period": "Select the study period (epoch) applicable for the visit. The epoch types correspond to the epochs defined in the Study Epochs tab.",
             "single_anchor_addtional": "Selection is applicable only if visit scheduling type is scheduled. For newly created visits by default the Single Visit radiobutton is selected. If visits need subgrouping, e.g. a set of days (Day 1, Day 2, Day 3) to be grouped into a one visit (Visit 3), then select Anchor visit in visit group. It will allow to create Visit 3 Day 1, which will be the local anchor visit for subsequent sub-visits. To add subsequent visits (Visit 3 Day 2, Visit 3 Day 3) then, while creating them, select Additional sub-visit radiobutton and appropriate anchor visit from the time reference drop-down. Repeating visits can typically be used for non-interventional studies, where participants return for the same visit multiple times during the study according to their individual needs (for example, one participant may come to visit 3 five times, while another may have 10 visits as visit 3). If there are any requirements about the repetition of such visits (daily, weekly, monthly), then it can be defined via the Repeating frequency item. If visits require a different frequency than those present on the pull-down list, then leave Repeating frequency item blank and provide the proper frequency by entering the details into the Visit description item.",
             "visit_type": "For definition of visit types see: Library, Code Lists, Sponsor, and filter Sponsor Preferred name=VisitType or Concept ID CTCodelist_000002 to review the terms. Additional Visit types can be requested via the Study Standards Developer. To create an information visit as Visit 0, use the Visit type=Information and set negative timing towards Global anchor visit. Visit types can be marked as SoA milestones in a study.",
@@ -810,10 +817,11 @@
             "general": "A 'Study Activity' is an assessment or procedure performed on a subject in a clinical study. The menu option 'Study Activities' is where you administer/select the activities needed for your study and the group them, you assign them to relevant visits, and specify how it should be in the protocol view of the Schedule of Activity (SoA). You can also attach footnotes to the SoA, control the SoA header row and preview different detail levels of the SoA.",
             "settings": "The 'Settings' option allow you to control the time unit (days/weeks) for the SoA and whether or not you need baseline visit (eg. randomisation) shown as time 0",
             "study_activities": "The activities can be selected from the library, from other studies or activity placeholders can be created for requesting new activities.",
-            "detailed_soa": "The Detailed SoA is where you define at what visit(s) an activity is needed. The SoA has four levels: </br> 1) SoA group </br> 2) Activity group </br> 3) Activity subgroup </br> 4) Activity </br> Click the circle to select or unselect that an activity should be done at that visit. Click the eye icon to toggle the visibility of an activity level in the Protocol SoA. If an activity level is hidden, the timings ticked will 'inherit up' a level, so you can hide the Activity and Activity subgroup level to just include the Activity group in the Protocol SoA (for example you might want to hide e.g. 'Height' and 'Weight' and just include 'Body measurements' in the Protocol SoA).",
-            "detailed_soa_actions": "Use the ellipsis (three dots) to the left of an activity to access these: </br><b> Edit Activity: </b> Adjust details in an activity. </br><b> Add Activity: </b>Add an activity above the selected activity (you can change the order of activities from the 'Study Activities' tab). </br><b> Exchange Activity: </b> Replace an activity with a new activity while keeping visits and footnotes in the detailed SoA. </br><b> Remove Activity: </b> Remove the activity, any visits and references to footnotes that have been added to this activity. A removed activity can be added again under the ‘Study Activities’ tab. Footnotes will not be removed, so can be linked to again.",
+            "detailed_soa": "The Detailed SoA is where you define at what visit(s) an activity is needed. The SoA has four levels: <br /> 1) SoA group <br /> 2) Activity group <br /> 3) Activity subgroup <br /> 4) Activity <br /> Click the circle to select or unselect that an activity should be done at that visit. Click the eye icon to toggle the visibility of an activity level in the Protocol SoA. If an activity level is hidden, the timings ticked will 'inherit up' a level, so you can hide the Activity and Activity subgroup level to just include the Activity group in the Protocol SoA (for example you might want to hide e.g. 'Height' and 'Weight' and just include 'Body measurements' in the Protocol SoA).",
+            "detailed_soa_actions": "Use the ellipsis (three dots) to the left of an activity to access these: <br /><b> Edit Activity: </b> Adjust details in an activity. <br /><b> Add Activity: </b>Add an activity above the selected activity (you can change the order of activities from the 'Study Activities' tab). <br /><b> Exchange Activity: </b> Replace an activity with a new activity while keeping visits and footnotes in the detailed SoA. <br /><b> Remove Activity: </b> Remove the activity, any visits and references to footnotes that have been added to this activity. A removed activity can be added again under the ‘Study Activities’ tab. Footnotes will not be removed, so can be linked to again.",
             "detailed_soa_reordering": "You can use drag-and-drop for easy reordering of rows in the detailed SoA. To enable, click the 3 dots to the left of a row title and select 'Reorder' in the menu. Now you can reorder rows using your mouse - simply drag-and-drop on the arrow-icon to the left of the row. Reordering is done within a context - so if you select 'Reorder' on a SoA group, then you can reorder only SoA groups, whereas if you select 'Reorder' on an activity, then you can reorder only within that group. When you are done, click the 'Finish reordering' button to exit the reordering mode.",
             "study_footnotes": "Select or create footnotes to be used in the  protocol SoA. Footnotes can be selected from library, other studies or created from scratch. The footnotes will automatically be ordered by occurrence in the SoA.",
+            "hidden_activity_footnotes": "If you link to an activity that is hidden, the footnote will not 'inherit up' to a visible level above. Instead a warning will be shown under 'Linked to' and this must then be addressed to ensure proper display of footnotes in the Protocol SoA.",
             "protocol_soa": "The Protocol SoA is a preview of the settings/selections in the 'Detailed SoA' section. The view is what will be pulled into the protocol template via the Word add-in. You can also preview the SoA at the detailed and data specification operational level.",
             "instructions": "NOTE: This functionality is not in use yet. When in use, it will link selected activities from the SoA to the applicable instruction text for section 8 of the protocol 'Study assessments and procedures'"
         },
@@ -3208,8 +3216,8 @@
     "ActivitiesView": {
         "title": "Study Activities",
         "study_flowchart": "Study SoA",
-        "tab1_title": "Study Activities",
-        "tab2_title": "Schedule of Activities"
+        "tab1_title": "Schedule of Activities",
+        "tab2_title": "Study Activities"
     },
     "ProtocolFlowchart": {
         "protocol": "Protocol SoA",
@@ -3281,6 +3289,7 @@
         "detailed_soa_actions": "Detailed SoA: Edit, Add, Exchange or Remove an activity ",
         "detailed_soa_reordering": "Drag-and-drop reordering",
         "study_footnotes": "Study Footnotes",
+        "hidden_activity_footnotes": "Hidden Activity Footnotes",
         "protocol_soa": "Protocol SoA"
     },
     "StudyDataSpecifications": {
@@ -3404,7 +3413,15 @@
         "finish_reordering_btn": "Finish reordering",
         "reorder": "Reorder",
         "add_footnote": "Add footnote",
-        "remove_footnote": "Remove footnote"
+        "remove_footnote": "Remove footnote",
+        "bulk_actions": "Bulk actions",
+        "empty_soa_title_1": "No activities & visits added yet",
+        "empty_soa_title_2": "No activities added yet",
+        "empty_soa_text_1": "You have not added any Study Activities or Visits yet. Click the button to add your first Activity or Visit.",
+        "empty_soa_text_2": "You have not added any Study Activities yet. Click the button to add your first Activity.",
+        "add_study_activity": "Add study activity",
+        "add_visit": "Add visit",
+        "search_activities": "Search Activities"
     },
     "StudyActivityInstructionTable": {
         "activities": "Activities",
@@ -4079,6 +4096,8 @@
         "is_data_collected": "Data collection",
         "class": "Activity instance class",
         "instances": "Activity instances",
+        "no_instances": "No activity instances available for this activity.",
+        "no_subgroups": "No subgroups available.",
         "activity_groupings": "Activity groupings",
         "history_title": "History for activity [{uid}]",
         "name": "Name",
@@ -4092,9 +4111,26 @@
         "definition": "Definition",
         "activities": "Activities"
     },
+    "activityInstancesTable": {
+        "versionNotAvailable": "Version not available",
+        "exportLabel": "Activity Instances",
+        "noInstancesFound": "No activity instances found for this activity.",
+        "noItemsAvailable": "No items available",
+        "headerName": "Name",
+        "headerDefinition": "Definition",
+        "headerVersion": "Version",
+        "headerStatus": "Status",
+        "headerActivityInstanceClass": "Activity Instance class",
+        "headerTopicCode": "Topic code",
+        "headerAdamParamCode": "Adam parameter code"
+  },
+  "activitySummary": {
+        "dataCollection": "Data collection"
+    },
     "YamlViewer": {
         "search_content": "Search for content",
         "expand_all": "Expand all",
+        "collapse_all": "Collapse all",
         "download": "Download YAML content",
         "close_tab": "Close YAML viewer"
     },
@@ -4158,7 +4194,8 @@
         "not_linked_warning": "This footnote is not linked to anything.",
         "remove": "Remove Footnote",
         "keep": "Keep footnote",
-        "link_unlink": "Link/Unlink Footnote"
+        "link_unlink": "Link/Unlink Footnote",
+        "hidden_activity_warning": "This footnote links to one or more hidden activities!"
     },
     "StudyFootnoteForm": {
         "add_title": "Add SoA footnotes",
@@ -4439,7 +4476,8 @@
         "step3_description": "Activity item class selection for PARAM and PARAMCD",
         "step4_description": "Optional activity item selection",
         "code_submission_value": "Code submission value",
-        "name_submission_value": "Name submission value"
+        "name_submission_value": "Name submission value",
+        "activity_not_selected": "You must select an activity from the list"
     },
     "ActivityInstancePreview": {
         "activity_instance_name": "Activity instance name",

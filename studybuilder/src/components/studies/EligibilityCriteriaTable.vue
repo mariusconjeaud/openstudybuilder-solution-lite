@@ -116,10 +116,10 @@
     </template>
     <template #[`item.criteria.criteria_template.guidance_text`]="{ item }">
       <template v-if="item.template">
-        <span v-html="item.template.guidance_text" />
+        <span v-html="sanitizeHTML(item.template.guidance_text)" />
       </template>
       <template v-else>
-        <span v-html="item.criteria.template.guidance_text" />
+        <span v-html="sanitizeHTML(item.criteria.template.guidance_text)" />
       </template>
     </template>
     <template #[`item.key_criteria`]="{ item }">
@@ -194,6 +194,7 @@ import statuses from '@/constants/statuses'
 import { useAccessGuard } from '@/composables/accessGuard'
 import { useStudiesGeneralStore } from '@/stores/studies-general'
 import { useDragAndDrop } from '@formkit/drag-and-drop/vue'
+import { sanitizeHTML } from '@/utils/sanitize'
 
 const eventBusEmit = inject('eventBusEmit')
 const roles = inject('roles')

@@ -19,7 +19,7 @@
     <div
       id="ProtocolInterventions"
       class="mt-4"
-      v-html="protocolInterventionsTable"
+      v-html="sanitizeHTMLHandler(protocolInterventionsTable)"
     />
   </div>
   <div v-else>
@@ -33,6 +33,7 @@ import exportLoader from '@/utils/exportLoader'
 import UnderConstruction from '@/components/layout/UnderConstruction.vue'
 import { useStudiesGeneralStore } from '@/stores/studies-general'
 import { computed } from 'vue'
+import { sanitizeHTML } from '@/utils/sanitize'
 
 export default {
   components: {
@@ -71,6 +72,9 @@ export default {
     this.updateTable()
   },
   methods: {
+    sanitizeHTMLHandler(html) {
+      return sanitizeHTML(html)
+    },
     updateTable() {
       this.loadingMessage = this.$t('ProtocolInterventionsTable.loading')
       study

@@ -60,7 +60,7 @@ watch(tab, (newValue) => {
 watch(
   () => route.params.type,
   (newValue) => {
-    tab.value = newValue
+    tab.value = newValue || criteriaTypes.value[0].name.sponsor_preferred_name
     nextTick(() => {
       if (tableRefs.value[newValue]) {
         tableRefs.value[newValue].restoreTab()

@@ -11,6 +11,7 @@
       rounded="lg"
       density="compact"
       clearable
+      :loading="loading"
       @update:model-value="autoPopulateAcronym"
     />
     <span class="mx-4">{{ $t('StudyQuickSelectForm.and_or') }}</span>
@@ -25,6 +26,7 @@
       rounded="lg"
       density="compact"
       clearable
+      :loading="loading"
       @update:model-value="autoPopulateId"
     />
   </div>
@@ -48,6 +50,7 @@ const formRules = inject('formRules')
 const studies = ref([])
 const studyById = ref(null)
 const studyByAcronym = ref(null)
+const loading = ref(false)
 
 const studiesWithId = computed(() => {
   return studies.value.filter(
@@ -62,12 +65,14 @@ const studiesWithAcronym = computed(() => {
 })
 
 onMounted(() => {
+  loading.value = true
   const params = {
     sort_by: { 'current_metadata.identification_metadata.study_id': true },
     page_size: 0,
   }
   studyApi.get(params).then((resp) => {
     studies.value = resp.data.items
+    loading.value = false
   })
 })
 

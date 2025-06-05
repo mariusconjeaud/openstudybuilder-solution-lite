@@ -1,6 +1,6 @@
 @REQ_ID:2866939
 @pending_implementation
-Feature: Studies - Study Data Exchange Standard Versions
+Feature: Studies - Manage Studies - Data Standard Versions - Data Exchange
 
     Background: User must be logged in
         Given The user is logged in
@@ -53,6 +53,7 @@ Feature: Studies - Study Data Exchange Standard Versions
     @pending_implementation
     Scenario: User must be able to read change history of selected Study Data Exchange Standard Version
         Given The '/studies/Study_000001/study_data_standards/data_exchange_versions' page is opened
+        And The 'Show history' option is clicked from the three dot menu list
         When The user clicks on History for particular element
         Then The user is presented with history of changes for that element
         And The history contains timestamps and usernames

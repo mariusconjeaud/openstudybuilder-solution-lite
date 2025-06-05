@@ -186,11 +186,11 @@ class OdmItemUnitDefinitionWithRelationship(BaseModel):
         SimpleTermModel | SimpleDictionaryTermModel | None,
         Field(json_schema_extra={"nullable": True}),
     ] = None
-    ct_units: Annotated[list[SimpleTermModel], Field()] = []
+    ct_units: list[SimpleTermModel] = Field(default_factory=list)
 
 
 class OdmItem(ConceptModel):
-    oid: str | None
+    oid: Annotated[str | None, Field()]
     prompt: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = None
     datatype: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = None
     length: Annotated[int | None, Field(json_schema_extra={"nullable": True})] = None
@@ -205,21 +205,23 @@ class OdmItem(ConceptModel):
     )
     origin: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = None
     comment: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = None
-    descriptions: list[OdmDescriptionSimpleModel]
-    aliases: list[OdmAliasSimpleModel]
-    unit_definitions: list[OdmItemUnitDefinitionWithRelationship]
+    descriptions: Annotated[list[OdmDescriptionSimpleModel], Field()]
+    aliases: Annotated[list[OdmAliasSimpleModel], Field()]
+    unit_definitions: Annotated[list[OdmItemUnitDefinitionWithRelationship], Field()]
     codelist: Annotated[
         CTCodelistAttributesSimpleModel | None,
         Field(json_schema_extra={"nullable": True}),
     ] = None
-    terms: list[OdmItemTermRelationshipModel]
+    terms: Annotated[list[OdmItemTermRelationshipModel], Field()]
     activity: Annotated[
         ActivityHierarchySimpleModel | None, Field(json_schema_extra={"nullable": True})
     ] = None
-    vendor_elements: list[OdmVendorElementRelationModel]
-    vendor_attributes: list[OdmVendorAttributeRelationModel]
-    vendor_element_attributes: list[OdmVendorElementAttributeRelationModel]
-    possible_actions: list[str]
+    vendor_elements: Annotated[list[OdmVendorElementRelationModel], Field()]
+    vendor_attributes: Annotated[list[OdmVendorAttributeRelationModel], Field()]
+    vendor_element_attributes: Annotated[
+        list[OdmVendorElementAttributeRelationModel], Field()
+    ]
+    possible_actions: Annotated[list[str], Field()]
 
     @classmethod
     def from_odm_item_ar(
@@ -454,21 +456,21 @@ class OdmItemRefModel(BaseModel):
 
 class OdmItemTermRelationshipInput(InputModel):
     uid: Annotated[str, Field(min_length=1)]
-    mandatory: bool = True
-    order: int | None = 999999
-    display_text: str | None = None
+    mandatory: Annotated[bool, Field()] = True
+    order: Annotated[int | None, Field()] = 999999
+    display_text: Annotated[str | None, Field()] = None
 
 
 class OdmItemUnitDefinitionRelationshipInput(InputModel):
     uid: Annotated[str, Field(min_length=1)]
-    mandatory: bool = True
-    order: int | None = 999999
+    mandatory: Annotated[bool, Field()] = True
+    order: Annotated[int | None, Field()] = 999999
 
 
 class OdmItemPostInput(ConceptPostInput):
     oid: Annotated[str | None, Field(min_length=1)] = None
     datatype: Annotated[str, Field(min_length=1)]
-    prompt: str | None = None
+    prompt: Annotated[str | None, Field()] = None
     length: Annotated[
         int | None,
         Field(json_schema_extra={"nullable": True}, ge=0, lt=config.MAX_INT_NEO4J),
@@ -477,21 +479,23 @@ class OdmItemPostInput(ConceptPostInput):
         int | None,
         Field(json_schema_extra={"nullable": True}, ge=0, lt=config.MAX_INT_NEO4J),
     ] = None
-    sas_field_name: str | None = None
-    sds_var_name: str | None = None
-    origin: str | None = None
-    comment: str | None = None
-    descriptions: list[OdmDescriptionPostInput | str]
-    alias_uids: list[str]
+    sas_field_name: Annotated[str | None, Field()] = None
+    sds_var_name: Annotated[str | None, Field()] = None
+    origin: Annotated[str | None, Field()] = None
+    comment: Annotated[str | None, Field()] = None
+    descriptions: Annotated[list[OdmDescriptionPostInput | str], Field()]
+    alias_uids: Annotated[list[str], Field()]
     codelist_uid: Annotated[str | None, Field(min_length=1)] = None
-    unit_definitions: list[OdmItemUnitDefinitionRelationshipInput] = []
-    terms: list[OdmItemTermRelationshipInput] = []
+    unit_definitions: list[OdmItemUnitDefinitionRelationshipInput] = Field(
+        default_factory=list
+    )
+    terms: list[OdmItemTermRelationshipInput] = Field(default_factory=list)
 
 
 class OdmItemPatchInput(ConceptPatchInput):
     oid: Annotated[str | None, Field(min_length=1)]
-    datatype: str | None
-    prompt: str | None
+    datatype: Annotated[str | None, Field()]
+    prompt: Annotated[str | None, Field()]
     length: Annotated[
         int | None,
         Field(json_schema_extra={"nullable": True}, ge=0, lt=config.MAX_INT_NEO4J),
@@ -500,15 +504,17 @@ class OdmItemPatchInput(ConceptPatchInput):
         int | None,
         Field(json_schema_extra={"nullable": True}, ge=0, lt=config.MAX_INT_NEO4J),
     ]
-    sas_field_name: str | None
-    sds_var_name: str | None
-    origin: str | None
-    comment: str | None
-    descriptions: list[OdmDescriptionBatchPatchInput | OdmDescriptionPostInput | str]
-    alias_uids: list[str]
-    unit_definitions: list[OdmItemUnitDefinitionRelationshipInput]
+    sas_field_name: Annotated[str | None, Field()]
+    sds_var_name: Annotated[str | None, Field()]
+    origin: Annotated[str | None, Field()]
+    comment: Annotated[str | None, Field()]
+    descriptions: Annotated[
+        list[OdmDescriptionBatchPatchInput | OdmDescriptionPostInput | str], Field()
+    ]
+    alias_uids: Annotated[list[str], Field()]
+    unit_definitions: Annotated[list[OdmItemUnitDefinitionRelationshipInput], Field()]
     codelist_uid: Annotated[str | None, Field(min_length=1)]
-    terms: list[OdmItemTermRelationshipInput]
+    terms: Annotated[list[OdmItemTermRelationshipInput], Field()]
 
 
 class OdmItemActivityPostInput(PostInputModel):
@@ -520,9 +526,4 @@ class OdmItemVersion(OdmItem):
     Class for storing OdmItem and calculation of differences
     """
 
-    changes: Annotated[
-        list[str],
-        Field(
-            description=CHANGES_FIELD_DESC,
-        ),
-    ] = []
+    changes: list[str] = Field(description=CHANGES_FIELD_DESC, default_factory=list)

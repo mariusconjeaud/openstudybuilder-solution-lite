@@ -44,7 +44,7 @@ class OdmVendorAttribute(ConceptModel):
     vendor_element: Annotated[
         OdmVendorElementSimpleModel | None, Field(json_schema_extra={"nullable": True})
     ] = None
-    possible_actions: list[str]
+    possible_actions: Annotated[list[str], Field()]
 
     @classmethod
     def from_odm_vendor_attribute_ar(
@@ -182,7 +182,7 @@ class OdmVendorElementAttributeRelationModel(BaseModel):
 
 
 class OdmVendorAttributePostInput(ConceptPostInput):
-    compatible_types: list[VendorAttributeCompatibleType] = []
+    compatible_types: list[VendorAttributeCompatibleType] = Field(default_factory=list)
     data_type: Annotated[str, Field(min_length=1)] = "string"
     value_regex: Annotated[str | None, Field(min_length=1)] = None
     vendor_namespace_uid: Annotated[str | None, Field(min_length=1)] = None
@@ -211,7 +211,7 @@ class OdmVendorAttributePostInput(ConceptPostInput):
 
 
 class OdmVendorAttributePatchInput(ConceptPatchInput):
-    compatible_types: list[VendorAttributeCompatibleType]
+    compatible_types: Annotated[list[VendorAttributeCompatibleType], Field()]
     data_type: Annotated[str | None, Field(min_length=1)]
     value_regex: Annotated[str | None, Field(min_length=1)]
 
@@ -223,9 +223,4 @@ class OdmVendorAttributeVersion(OdmVendorAttribute):
     Class for storing OdmVendorAttribute and calculation of differences
     """
 
-    changes: Annotated[
-        list[str],
-        Field(
-            description=CHANGES_FIELD_DESC,
-        ),
-    ] = []
+    changes: list[str] = Field(description=CHANGES_FIELD_DESC, default_factory=list)

@@ -19,14 +19,13 @@ router = APIRouter()
     dependencies=[rbac.LIBRARY_READ],
     summary="Returns all template parameter available with samples of the available values.",
     description="The returned template parameter are ordered by\n0. name ascending",
-    response_model=list[TemplateParameter],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
         404: _generic_descriptions.ERROR_404,
     },
 )
-def get_all_template_parameters():
+def get_all_template_parameters() -> list[TemplateParameter]:
     return service.get_all()
 
 
@@ -34,7 +33,6 @@ def get_all_template_parameters():
     "/{name}/terms",
     dependencies=[rbac.LIBRARY_READ],
     summary="Return all terms available for the given template parameter.",
-    response_model=list[TemplateParameterTerm],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -43,5 +41,5 @@ def get_all_template_parameters():
 )
 def get_template_parameter_terms(
     name: Annotated[str, Path(description="Name of the template parameter")],
-):
+) -> list[TemplateParameterTerm]:
     return service.get_template_parameter_terms(name)

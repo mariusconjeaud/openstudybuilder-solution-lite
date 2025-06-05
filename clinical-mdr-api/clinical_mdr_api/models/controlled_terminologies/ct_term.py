@@ -71,7 +71,7 @@ class CTTerm(BaseModel):
 
     catalogue_name: Annotated[str, Field()]
 
-    codelists: Annotated[list[CTTermCodelist], Field()] = []
+    codelists: list[CTTermCodelist] = Field(default_factory=list)
 
     concept_id: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = (
         None
@@ -95,16 +95,14 @@ class CTTerm(BaseModel):
 
     sponsor_preferred_name_sentence_case: Annotated[str, Field()]
 
-    library_name: str
-    possible_actions: Annotated[
-        list[str],
-        Field(
-            description=(
-                "Holds those actions that can be performed on the CTTerm. "
-                "Actions are: 'approve', 'edit', 'new_version'."
-            )
+    library_name: Annotated[str, Field()]
+    possible_actions: list[str] = Field(
+        description=(
+            "Holds those actions that can be performed on the CTTerm. "
+            "Actions are: 'approve', 'edit', 'new_version'."
         ),
-    ] = []
+        default_factory=list,
+    )
 
 
 class CTTermCreateInput(PostInputModel):
@@ -165,7 +163,7 @@ class CTTermNameAndAttributes(BaseModel):
 
     term_uid: Annotated[str, Field()]
     catalogue_name: Annotated[str, Field()]
-    codelists: Annotated[list[CTTermCodelist], Field()] = []
+    codelists: list[CTTermCodelist] = Field(default_factory=list)
 
     library_name: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = (
         None
@@ -287,7 +285,7 @@ class SimpleCTTermNameWithConflictFlag(BaseModel):
 
 
 class TermWithCodelistMetadata(BaseModel):
-    term_uid: str
+    term_uid: Annotated[str, Field()]
     name: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = None
     name_submission_value: Annotated[
         str | None, Field(json_schema_extra={"nullable": True})
@@ -335,7 +333,7 @@ class SimpleTermModel(BaseModel):
             simple_term_model = None
         return simple_term_model
 
-    term_uid: str
+    term_uid: Annotated[str, Field()]
     name: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = None
 
 

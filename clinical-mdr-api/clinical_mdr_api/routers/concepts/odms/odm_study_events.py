@@ -32,7 +32,6 @@ OdmStudyEventUID = Path(description="The unique id of the ODM Study Event.")
     dependencies=[rbac.LIBRARY_READ],
     summary="Return every variable related to the selected status and version of the ODM Study Events",
     description=_generic_descriptions.DATA_EXPORTS_HEADER,
-    response_model=CustomPage[OdmStudyEvent],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -94,7 +93,7 @@ def get_all_odm_study_events(
     total_count: Annotated[
         bool | None, Query(description=_generic_descriptions.TOTAL_COUNT)
     ] = False,
-):
+) -> CustomPage[OdmStudyEvent]:
     odm_study_event_service = OdmStudyEventService()
     results = odm_study_event_service.get_all_concepts(
         library=library_name,
@@ -116,7 +115,6 @@ def get_all_odm_study_events(
     summary="Returns possible values from the database for a given header",
     description="""Allowed parameters include : field name for which to get possible
     values, search string to provide filtering for the field name, additional filters to apply on other fields""",
-    response_model=list[Any],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -147,7 +145,7 @@ def get_distinct_values_for_header(
     page_size: Annotated[
         int | None, Query(description=_generic_descriptions.HEADER_PAGE_SIZE)
     ] = config.DEFAULT_HEADER_PAGE_SIZE,
-):
+) -> list[Any]:
     odm_study_event_service = OdmStudyEventService()
     return odm_study_event_service.get_distinct_values_for_header(
         library=library_name,
@@ -163,14 +161,15 @@ def get_distinct_values_for_header(
     "/{odm_study_event_uid}",
     dependencies=[rbac.LIBRARY_READ],
     summary="Get details on a specific ODM Study Event (in a specific version)",
-    response_model=OdmStudyEvent,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
         404: _generic_descriptions.ERROR_404,
     },
 )
-def get_odm_study_event(odm_study_event_uid: Annotated[str, OdmStudyEventUID]):
+def get_odm_study_event(
+    odm_study_event_uid: Annotated[str, OdmStudyEventUID],
+) -> OdmStudyEvent:
     odm_study_event_service = OdmStudyEventService()
     return odm_study_event_service.get_by_uid(uid=odm_study_event_uid)
 
@@ -179,14 +178,15 @@ def get_odm_study_event(odm_study_event_uid: Annotated[str, OdmStudyEventUID]):
     "/{odm_study_event_uid}/relationships",
     dependencies=[rbac.LIBRARY_READ],
     summary="Get UIDs of a specific ODM Study Event's relationships",
-    response_model=dict,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
         404: _generic_descriptions.ERROR_404,
     },
 )
-def get_active_relationships(odm_study_event_uid: Annotated[str, OdmStudyEventUID]):
+def get_active_relationships(
+    odm_study_event_uid: Annotated[str, OdmStudyEventUID],
+) -> dict:
     odm_study_event_service = OdmStudyEventService()
     return odm_study_event_service.get_active_relationships(uid=odm_study_event_uid)
 
@@ -209,7 +209,6 @@ State after:
 Possible errors:
  - Invalid uid.
     """,
-    response_model=list[OdmStudyEvent],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -219,7 +218,9 @@ Possible errors:
         },
     },
 )
-def get_odm_study_event_versions(odm_study_event_uid: Annotated[str, OdmStudyEventUID]):
+def get_odm_study_event_versions(
+    odm_study_event_uid: Annotated[str, OdmStudyEventUID],
+) -> list[OdmStudyEvent]:
     odm_study_event_service = OdmStudyEventService()
     return odm_study_event_service.get_version_history(uid=odm_study_event_uid)
 
@@ -228,7 +229,6 @@ def get_odm_study_event_versions(odm_study_event_uid: Annotated[str, OdmStudyEve
     "",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Creates a new Study Event in 'Draft' status with version 0.1",
-    response_model=OdmStudyEvent,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -244,7 +244,7 @@ def get_odm_study_event_versions(odm_study_event_uid: Annotated[str, OdmStudyEve
 )
 def create_odm_study_event(
     odm_study_event_create_input: Annotated[OdmStudyEventPostInput, Body()],
-):
+) -> OdmStudyEvent:
     odm_study_event_service = OdmStudyEventService()
     return odm_study_event_service.create(concept_input=odm_study_event_create_input)
 
@@ -253,7 +253,6 @@ def create_odm_study_event(
     "/{odm_study_event_uid}",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Update ODM Study Event",
-    response_model=OdmStudyEvent,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -274,7 +273,7 @@ def create_odm_study_event(
 def edit_odm_study_event(
     odm_study_event_uid: Annotated[str, OdmStudyEventUID],
     odm_study_event_edit_input: Annotated[OdmStudyEventPatchInput, Body()],
-):
+) -> OdmStudyEvent:
     odm_study_event_service = OdmStudyEventService()
     return odm_study_event_service.edit_draft(
         uid=odm_study_event_uid, concept_edit_input=odm_study_event_edit_input
@@ -299,7 +298,6 @@ State after:
 Possible errors:
  - Invalid uid or status not Final.
 """,
-    response_model=OdmStudyEvent,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -318,8 +316,8 @@ Possible errors:
     },
 )
 def create_odm_study_event_version(
-    odm_study_event_uid: Annotated[str, OdmStudyEventUID]
-):
+    odm_study_event_uid: Annotated[str, OdmStudyEventUID],
+) -> OdmStudyEvent:
     odm_study_event_service = OdmStudyEventService()
     return odm_study_event_service.create_new_version(uid=odm_study_event_uid)
 
@@ -328,7 +326,6 @@ def create_odm_study_event_version(
     "/{odm_study_event_uid}/approvals",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Approve draft version of ODM Study Event",
-    response_model=OdmStudyEvent,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -345,7 +342,9 @@ def create_odm_study_event_version(
         },
     },
 )
-def approve_odm_study_event(odm_study_event_uid: Annotated[str, OdmStudyEventUID]):
+def approve_odm_study_event(
+    odm_study_event_uid: Annotated[str, OdmStudyEventUID],
+) -> OdmStudyEvent:
     odm_study_event_service = OdmStudyEventService()
     return odm_study_event_service.approve(uid=odm_study_event_uid)
 
@@ -354,7 +353,6 @@ def approve_odm_study_event(odm_study_event_uid: Annotated[str, OdmStudyEventUID
     "/{odm_study_event_uid}/activations",
     dependencies=[rbac.LIBRARY_WRITE],
     summary=" Inactivate final version of ODM Study Event",
-    response_model=OdmStudyEvent,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -370,7 +368,9 @@ def approve_odm_study_event(odm_study_event_uid: Annotated[str, OdmStudyEventUID
         },
     },
 )
-def inactivate_odm_study_event(odm_study_event_uid: Annotated[str, OdmStudyEventUID]):
+def inactivate_odm_study_event(
+    odm_study_event_uid: Annotated[str, OdmStudyEventUID],
+) -> OdmStudyEvent:
     odm_study_event_service = OdmStudyEventService()
     return odm_study_event_service.inactivate_final(uid=odm_study_event_uid)
 
@@ -379,7 +379,6 @@ def inactivate_odm_study_event(odm_study_event_uid: Annotated[str, OdmStudyEvent
     "/{odm_study_event_uid}/activations",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Reactivate retired version of a ODM Study Event",
-    response_model=OdmStudyEvent,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -395,7 +394,9 @@ def inactivate_odm_study_event(odm_study_event_uid: Annotated[str, OdmStudyEvent
         },
     },
 )
-def reactivate_odm_study_event(odm_study_event_uid: Annotated[str, OdmStudyEventUID]):
+def reactivate_odm_study_event(
+    odm_study_event_uid: Annotated[str, OdmStudyEventUID],
+) -> OdmStudyEvent:
     odm_study_event_service = OdmStudyEventService()
     return odm_study_event_service.reactivate_retired(uid=odm_study_event_uid)
 
@@ -404,7 +405,6 @@ def reactivate_odm_study_event(odm_study_event_uid: Annotated[str, OdmStudyEvent
     "/{odm_study_event_uid}/forms",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Adds forms to the ODM Study Event.",
-    response_model=OdmStudyEvent,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -432,7 +432,7 @@ def add_forms_to_odm_study_event(
             description="If true, all existing form relationships will be replaced with the provided form relationships.",
         ),
     ] = False,
-):
+) -> OdmStudyEvent:
     odm_study_event_service = OdmStudyEventService()
     return odm_study_event_service.add_forms(
         uid=odm_study_event_uid,
@@ -445,7 +445,6 @@ def add_forms_to_odm_study_event(
     "/{odm_study_event_uid}",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Delete draft version of ODM Study Event",
-    response_model=None,
     status_code=204,
     responses={
         403: _generic_descriptions.ERROR_403,

@@ -89,20 +89,21 @@ class StudySelectionActivityBaseRepository(Generic[_AggregateRootType], abc.ABC)
         raise NotImplementedError
 
     def _versioning_query(self):
+        """Find the version to an ActivityValue
+
+        by (activity_root)-[activity_version:HAS_VERSION]-(activity_value) of redundant relationship
+        """
         return """
-        WITH DISTINCT *
+            WITH DISTINCT *
             CALL {
                 WITH ar, av
-                MATCH (ar)-[hv:HAS_VERSION]-(av)
-                WHERE hv.status in ['Final', 'Retired']
-                WITH hv
-                ORDER BY
-                    toInteger(split(hv.version, '.')[0]) ASC,
-                    toInteger(split(hv.version, '.')[1]) ASC,
-                    hv.end_date ASC,
-                    hv.start_date ASC
-                WITH collect(hv) as hvs
-                RETURN last(hvs) as hv_ver
+                MATCH (ar)-[activity_version:HAS_VERSION]-(av)
+                WHERE activity_version.status in ['Final', 'Retired']
+                WITH activity_version
+                ORDER BY [i IN split(activity_version.version, '.') | toInteger(i)] DESC,
+                         activity_version.end_date DESC, activity_version.start_date DESC
+                LIMIT 1
+                RETURN activity_version AS hv_ver
             }
         """
 
@@ -195,22 +196,10 @@ class StudySelectionActivityBaseRepository(Generic[_AggregateRootType], abc.ABC)
             study_uids=study_uids,
             **kwargs,
         )
-        # Create a dictionary, with study_uid as key, and list of selections as value
-        selection_aggregate_dict = {}
-        selection_aggregates = []
-        for selection in all_selections:
-            if selection.study_uid in selection_aggregate_dict:
-                selection_aggregate_dict[selection.study_uid].append(selection)
-            else:
-                selection_aggregate_dict[selection.study_uid] = [selection]
-        # Then, create the list of AR from the dictionary
-        for study_uid, selections in selection_aggregate_dict.items():
-            selection_aggregates.append(
-                self._aggregate_root_type.from_repository_values(
-                    study_uid=study_uid, study_objects_selection=selections
-                )
-            )
-        return selection_aggregates
+        selection_aggregate = self._aggregate_root_type.from_repository_values(
+            study_uid=None, study_objects_selection=all_selections
+        )
+        return selection_aggregate
 
     def find_by_study(
         self,

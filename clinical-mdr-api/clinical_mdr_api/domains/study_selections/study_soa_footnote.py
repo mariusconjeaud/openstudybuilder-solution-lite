@@ -6,7 +6,6 @@ from clinical_mdr_api.domains.study_definition_aggregates.study_metadata import 
     StudyStatus,
 )
 from clinical_mdr_api.domains.study_selections.study_selection_base import SoAItemType
-from clinical_mdr_api.services.user_info import UserInfoService
 from common.exceptions import AlreadyExistsException
 
 
@@ -15,6 +14,7 @@ class ReferencedItemVO:
     item_type: SoAItemType
     item_uid: str
     item_name: str | None = None
+    visible_in_protocol_soa: bool | None = None
 
 
 @dataclass
@@ -69,6 +69,7 @@ class StudySoAFootnoteVO:
         modified: datetime | None = None,
         generate_uid_callback: Callable[[], str | None] = (lambda: None),
         accepted_version: bool = False,
+        author_username: str | None = None,
     ) -> Self:
         footnote_ar = cls(
             uid=generate_uid_callback(),
@@ -80,7 +81,7 @@ class StudySoAFootnoteVO:
             footnote_number=footnote_number,
             referenced_items=referenced_items,
             author_id=author_id,
-            author_username=UserInfoService.get_author_username_from_id(author_id),
+            author_username=author_username,
             status=status,
             modified=modified,
             accepted_version=accepted_version,
@@ -102,6 +103,7 @@ class StudySoAFootnoteVO:
         accepted_version: bool,
         footnote_version: str = None,
         footnote_template_version: str = None,
+        author_username: str | None = None,
     ) -> Self:
         footnote_ar = cls(
             uid=uid,
@@ -114,7 +116,7 @@ class StudySoAFootnoteVO:
             referenced_items=referenced_items,
             modified=modified,
             author_id=author_id,
-            author_username=UserInfoService.get_author_username_from_id(author_id),
+            author_username=author_username,
             status=status,
             accepted_version=accepted_version,
         )

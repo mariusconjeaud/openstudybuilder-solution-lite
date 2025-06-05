@@ -24,7 +24,6 @@ Then('The newly added unit is visible within the Units table', () => {
     cy.checkRowByIndex(0, 'Unit dimension', unit.unit_dimension)
     cy.checkRowByIndex(0, 'Legacy code', unit.legacy_code)
     cy.checkRowByIndex(0, 'Conversion factor to master', unit.conversion_factor_to_master)
-    cy.checkStatusAndVersion('Draft', '0.1')
   })
 })
 
@@ -59,7 +58,7 @@ Then('The validation message appears for codelist term field', () => cy.checkIfV
 
 Then('The validation message appears for already existing unit name', () => cy.checkSnackbarMessage(`Unit Definition with ['name: ${unitName}'] already exists.`))
 
-When('Unit is found', () => cy.searchFor(unitName, false))
+When('Unit is found', () => cy.searchAndCheckPresence(unitName, true))
 
 Then('The Use complex unit conversion toggle is set to false', () => checkComplexUnitConversion(false))
 

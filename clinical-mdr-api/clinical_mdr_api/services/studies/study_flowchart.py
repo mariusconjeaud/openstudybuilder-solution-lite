@@ -1009,6 +1009,10 @@ class StudyFlowchartService:
         ]
 
         for study_selection_activity in selection_activities:
+            # Do not show activity instance placeholders
+            if not getattr(study_selection_activity, "activity_instance", None):
+                continue
+
             rows.append(row := TableRow())
 
             # Visibility

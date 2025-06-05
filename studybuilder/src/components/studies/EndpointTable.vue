@@ -425,13 +425,13 @@ async function updateTimeframeVersion(item) {
   }
   const message =
     t('StudyEndpointsTable.update_timeframe_version_alert') +
-    ' ' +
+    '\n' +
     t('StudyEndpointsTable.previous_version') +
-    ' ' +
+    '\n' +
     item.timeframe.name_plain +
-    ' ' +
+    '\n' +
     t('StudyEndpointsTable.new_version') +
-    ' ' +
+    '\n' +
     item.latest_timeframe.name_plain
 
   if (await confirm.value.open(message, options)) {

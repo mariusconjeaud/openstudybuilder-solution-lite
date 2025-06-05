@@ -12,7 +12,7 @@ class ClinicalProgramme(BaseModel):
     uid: Annotated[
         str, Field(description="The unique id of the ClinicalProgramme value.")
     ]
-    name: str
+    name: Annotated[str, Field()]
 
     @classmethod
     def from_uid(

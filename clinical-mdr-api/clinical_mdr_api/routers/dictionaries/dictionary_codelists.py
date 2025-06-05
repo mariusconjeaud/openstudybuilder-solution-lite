@@ -52,7 +52,6 @@ Possible errors:
 
 {_generic_descriptions.DATA_EXPORTS_HEADER}
 """,
-    response_model=CustomPage[DictionaryCodelist],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -110,7 +109,7 @@ def get_codelists(
     total_count: Annotated[
         bool | None, Query(description=_generic_descriptions.TOTAL_COUNT)
     ] = False,
-):
+) -> CustomPage[DictionaryCodelist]:
     dictionary_codelist_service = DictionaryCodelistGenericService()
     results = dictionary_codelist_service.get_all_dictionary_codelists(
         library=library_name,
@@ -132,7 +131,6 @@ def get_codelists(
     summary="Returns possibles values from the database for a given header",
     description="Allowed parameters include : field name for which to get possible values, "
     "search string to provide filtering for the field name, additional filters to apply on other fields",
-    response_model=list[Any],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -163,7 +161,7 @@ def get_distinct_values_for_header(
     page_size: Annotated[
         int | None, Query(description=_generic_descriptions.HEADER_PAGE_SIZE)
     ] = config.DEFAULT_HEADER_PAGE_SIZE,
-):
+) -> list[Any]:
     dictionary_codelist_service = DictionaryCodelistGenericService()
     return dictionary_codelist_service.get_distinct_values_for_header(
         library=library_name,
@@ -183,7 +181,6 @@ def get_distinct_values_for_header(
   * DictionaryCodelistRoot
   * DictionaryCodelistValue
 """,
-    response_model=DictionaryCodelist,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -203,7 +200,7 @@ def create(
         DictionaryCodelistCreateInput,
         Body(description="Properties to create DictionaryCodelistValue node."),
     ],
-):
+) -> DictionaryCodelist:
     dictionary_codelist_service = DictionaryCodelistGenericService()
     return dictionary_codelist_service.create(dictionary_codelist_input)
 
@@ -221,7 +218,6 @@ Business logic:
 
 State after:
  - No change""",
-    response_model=DictionaryCodelist,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -239,7 +235,7 @@ def get_codelist(
             "<major>.<minor> where <major> and <minor> are digits. E.g. '0.1', '0.2', '1.0',",
         ),
     ],
-):
+) -> DictionaryCodelist:
     dictionary_codelist_service = DictionaryCodelistGenericService()
     return dictionary_codelist_service.get_by_uid(
         codelist_uid=dictionary_codelist_uid, version=version
@@ -264,7 +260,6 @@ State after:
 Possible errors:
  - Invalid codelist_uid.
     """,
-    response_model=list[DictionaryCodelistVersion],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -276,7 +271,7 @@ Possible errors:
 )
 def get_versions(
     dictionary_codelist_uid: Annotated[str, DictionaryCodelistUID],
-):
+) -> list[DictionaryCodelistVersion]:
     dictionary_codelist_service = DictionaryCodelistGenericService()
     return dictionary_codelist_service.get_version_history(
         codelist_uid=dictionary_codelist_uid
@@ -302,7 +297,6 @@ State after:
 Possible errors:
  - Invalid codelist_uid.
 """,
-    response_model=DictionaryCodelist,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -328,7 +322,7 @@ def edit(
             description="The new parameter terms for the dictionary codelist including the change description.",
         ),
     ],
-):
+) -> DictionaryCodelist:
     dictionary_codelist_service = DictionaryCodelistGenericService()
     return dictionary_codelist_service.edit_draft(
         codelist_uid=dictionary_codelist_uid, codelist_input=dictionary_codelist_input
@@ -357,7 +351,6 @@ Possible errors:
  - Invalid codelist_uid or status not Final.
  
 """,
-    response_model=DictionaryCodelist,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -379,7 +372,7 @@ Possible errors:
 )
 def create_new_version(
     dictionary_codelist_uid: Annotated[str, DictionaryCodelistUID],
-):
+) -> DictionaryCodelist:
     dictionary_codelist_service = DictionaryCodelistGenericService()
     return dictionary_codelist_service.create_new_version(
         codelist_uid=dictionary_codelist_uid
@@ -407,7 +400,6 @@ State after:
 Possible errors:
  - Invalid codelist_uid or status not Draft.
     """,
-    response_model=DictionaryCodelist,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -426,7 +418,7 @@ Possible errors:
 )
 def approve(
     dictionary_codelist_uid: Annotated[str, DictionaryCodelistUID],
-):
+) -> DictionaryCodelist:
     dictionary_codelist_service = DictionaryCodelistGenericService()
     return dictionary_codelist_service.approve(codelist_uid=dictionary_codelist_uid)
 
@@ -447,7 +439,6 @@ Possible errors:
 -  Invalid term_uid.
 -  Codelist with {dictionary_codelist_uid} is not extensible.
 - Term is already part of the specified codelist.""",
-    response_model=DictionaryCodelist,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -472,7 +463,7 @@ def add_term(
         DictionaryCodelistTermInput,
         Body(description="UID of the DictionaryTermRoot node."),
     ],
-):
+) -> DictionaryCodelist:
     dictionary_codelist_service = DictionaryCodelistGenericService()
     return dictionary_codelist_service.add_term(
         codelist_uid=dictionary_codelist_uid, term_uid=term_input.term_uid
@@ -498,7 +489,6 @@ Possible errors:
  - Invalid codelist_uid.
  - Invalid dictionary_term_uid.
 - Term is not part of the specified codelist. """,
-    response_model=DictionaryCodelist,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -521,7 +511,7 @@ Possible errors:
 def remove_term(
     dictionary_codelist_uid: Annotated[str, DictionaryCodelistUID],
     dictionary_term_uid: Annotated[str, TermUID],
-):
+) -> DictionaryCodelist:
     dictionary_codelist_service = DictionaryCodelistGenericService()
     return dictionary_codelist_service.remove_term(
         codelist_uid=dictionary_codelist_uid, term_uid=dictionary_term_uid

@@ -63,14 +63,14 @@ class StudyEpochCreateInput(PostInputModel):
 
 
 class StudyEpochEditInput(PatchInputModel):
-    study_uid: str
+    study_uid: Annotated[str, Field()]
     start_rule: Annotated[
         str | None, Field(description="Study Epoch Start description")
     ] = None
     end_rule: Annotated[
         str | None, Field(description="Study Epoch end description")
     ] = None
-    epoch: str | None = None
+    epoch: Annotated[str | None, Field()] = None
     duration_unit: Annotated[
         str | None, Field(description="Study Epoch duration preferred unit")
     ] = None
@@ -91,8 +91,8 @@ class StudyEpochEditInput(PatchInputModel):
         "#FFFFFF"
     )
     # Override epoch from Create Input to make it Optional
-    epoch_subtype: str | None = None
-    change_description: str
+    epoch_subtype: Annotated[str | None, Field()] = None
+    change_description: Annotated[str, Field()]
 
 
 class StudyEpoch(BaseModel):
@@ -223,11 +223,11 @@ class StudyEpoch(BaseModel):
 
 
 class StudyEpochVersion(StudyEpoch):
-    changes: list[str]
+    changes: Annotated[list[str], Field()]
 
 
 class StudyEpochTypes(BaseModel):
     type: Annotated[str, Field(description="Study Epoch type")]
-    type_name: str
+    type_name: Annotated[str, Field()]
     subtype: Annotated[str, Field(description="Study Epoch subtype")]
-    subtype_name: str
+    subtype_name: Annotated[str, Field()]

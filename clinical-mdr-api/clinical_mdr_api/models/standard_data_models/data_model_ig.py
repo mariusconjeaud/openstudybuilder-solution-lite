@@ -9,12 +9,12 @@ from common.utils import convert_to_datetime
 
 
 class SimpleDataModel(BaseModel):
-    uid: str
-    name: str
+    uid: Annotated[str, Field()]
+    name: Annotated[str, Field()]
 
 
 class DataModelIG(BaseModel):
-    uid: str
+    uid: Annotated[str, Field()]
     name: Annotated[
         str,
         Field(

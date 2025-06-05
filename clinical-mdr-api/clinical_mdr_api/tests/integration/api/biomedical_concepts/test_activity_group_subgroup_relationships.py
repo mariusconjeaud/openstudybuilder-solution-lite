@@ -150,20 +150,14 @@ def test_activity_group_versioning_preserves_subgroup_relationships(api_client):
     ).json()
     update_data = {
         "name": current_group["name"],
+        "name_sentence_case": current_group["name_sentence_case"],
         "definition": "Updated definition for group 1",
-        "status": "Draft",
-    }
-
-    # Create patch data with change_description field
-    patch_data = {
-        "name": update_data["name"],
-        "definition": update_data["definition"],
         "change_description": "Updated group definition",  # Add change_description field
     }
 
-    response = api_client.patch(
+    response = api_client.put(
         f"/concepts/activities/activity-groups/{activity_group_1.uid}",
-        json=patch_data,
+        json=update_data,
     )
     assert_response_status_code(response, 200)
 

@@ -16,7 +16,7 @@ When('The {string} button is clicked in Protocol Process page', (button) => {
     cy.get(`.v-card-text [data-cy="${button}"]`).click({force: true})
 })
 
-When('The {string} is clicked in the dropdown', (item) => cy.contains('.v-list-item--link', item).click({force: true}))
+When('The {string} is clicked in the dropdown', (item) => cy.contains('.v-overlay__content .v-list-item', item).click())
 
 When('The last available item from timeline is clicked', () => {
     cy.waitForTable()
@@ -41,6 +41,23 @@ Then('The form is not closed', () => {
 
 When('The continue is clicked in confirmation popup', () => {
     cy.clickButton('continue-popup')
+})
+
+When('The online help button is clicked', () => {
+    cy.get('.page-title').within(() => {
+        cy.get('.mdi-help-circle-outline').click()
+    })
+})
+
+Then('The online help panel shows {string} panel with content {string}', (panelName, helpText) => {
+    cy.contains('.v-expansion-panel', panelName).then((el) => {
+        cy.wrap(el).click()
+        cy.wrap(el).within(() => {
+            cy.get('.v-expansion-panel-text__wrapper div').invoke('text').then((text) => {
+                expect(text.trim()).to.eq(helpText.trim());
+            })
+        })
+    })
 })
 
 function expandPagesDropdown(tileName) {

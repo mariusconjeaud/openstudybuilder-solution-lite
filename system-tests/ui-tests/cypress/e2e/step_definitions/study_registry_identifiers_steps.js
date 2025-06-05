@@ -5,9 +5,9 @@ When('The identifiers are set with following data', (dataTable) => {
     cy.nullRegistryIdentifiersForStudy()
     cy.waitForTable()
     cy.clickButton('edit-content')
-    dataTable.hashes().forEach((element) => {
-        cy.fillInput(element.identifier, element.value)
-    })
+    cy.wait(1000)
+    cy.uncheckAllCheckboxes()
+    dataTable.hashes().forEach(element => cy.fillInput(element.identifier, element.value))
     cy.clickButton('save-button')
     cy.waitForFormSave()
 })
@@ -17,6 +17,7 @@ When('The not applicable is checked for all identifiers', (dataTable) => {
     cy.nullRegistryIdentifiersForStudy()
     cy.waitForTable()
     cy.clickButton('edit-content')
+    cy.wait(1000)
     cy.checkAllCheckboxes()
     cy.clickButton('save-button')
     cy.waitForFormSave()
@@ -24,8 +25,6 @@ When('The not applicable is checked for all identifiers', (dataTable) => {
 
 Then('The identifiers table is showing following data', (dataTable) => {
     cy.waitForTableData()
-    dataTable.hashes().forEach((element) => {
-        cy.tableContains(element.value)
-    })
+    dataTable.hashes().forEach(element => cy.tableContains(element.value))
 })
 

@@ -2,7 +2,7 @@ from datetime import datetime
 from io import BytesIO
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, File, Path, Query, Response, UploadFile
+from fastapi import APIRouter, File, Path, Query, Response, UploadFile
 from fastapi.responses import StreamingResponse
 
 from clinical_mdr_api.domains._utils import ObjectStatus
@@ -22,9 +22,6 @@ from clinical_mdr_api.services.concepts.odms.odm_xml_importer import (
 )
 from clinical_mdr_api.services.concepts.odms.odm_xml_stylesheets import (
     OdmXmlStylesheetService,
-)
-from clinical_mdr_api.services.concepts.unit_definitions.unit_definition import (
-    UnitDefinitionService,
 )
 from common.auth import rbac
 
@@ -50,14 +47,16 @@ If `parent` is empty or `*` is given then the mapping will apply to all occurren
     summary="Export ODM XML",
     status_code=200,
     responses={
+        200: {
+            "description": "Successful Response",
+            "content": {"application/xml": {}, "application/pdf": {}},
+        },
         403: _generic_descriptions.ERROR_403,
         404: _generic_descriptions.ERROR_404,
     },
+    response_class=Response,
 )
 def get_odm_document(
-    unit_definition_service: Annotated[
-        UnitDefinitionService, Depends(UnitDefinitionService)
-    ],
     target_uid: str,
     target_type: TargetType,
     allowed_namespaces: Annotated[
@@ -85,7 +84,6 @@ def get_odm_document(
         pdf,
         stylesheet,
         mapper_file,
-        unit_definition_service,
     )
     rs = odm_xml_export_service.get_odm_document()
 
@@ -111,9 +109,11 @@ def get_odm_document(
     summary="Export ODM CSV",
     status_code=200,
     responses={
+        200: {"description": "Successful Response", "content": {"text/csv": {}}},
         403: _generic_descriptions.ERROR_403,
         404: _generic_descriptions.ERROR_404,
     },
+    response_class=StreamingResponse,
 )
 def get_odm_csv(target_uid: str, target_type: TargetType):
     odm_csv_exporter_service = OdmCsvExporterService(target_uid, target_type)
@@ -163,14 +163,13 @@ def store_odm_xml(
     "/xmls/stylesheets",
     dependencies=[rbac.LIBRARY_READ],
     summary="Listing of all available ODM XML Stylesheet names",
-    response_model=list[str],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
         404: _generic_descriptions.ERROR_404,
     },
 )
-def get_available_stylesheet_names():
+def get_available_stylesheet_names() -> list[str]:
     return OdmXmlStylesheetService.get_available_stylesheet_names()
 
 
@@ -180,9 +179,11 @@ def get_available_stylesheet_names():
     summary="Get a specific ODM XML Stylesheet",
     status_code=200,
     responses={
+        200: {"description": "Successful Response", "content": {"application/xml": {}}},
         403: _generic_descriptions.ERROR_403,
         404: _generic_descriptions.ERROR_404,
     },
+    response_class=Response,
 )
 def get_specific_stylesheet(
     stylesheet: Annotated[str, Path(description="Name of the ODM XML Stylesheet.")],

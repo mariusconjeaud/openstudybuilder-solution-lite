@@ -1,22 +1,24 @@
 @REQ_ID:1074254
-Feature: Studies - Study Epochs
+Feature: Studies - Define Study - Study Structure - Study Epochs
 
     Background: User is logged in and study has been selected
         Given The user is logged in
         And A test study is selected
 
-    Scenario: Opening the page
+    Scenario: [Navigation] Opening the page
         Given The '/studies' page is opened
         When The 'Study Structure' submenu is clicked in the 'Define Study' section
         And The 'Study Epochs' tab is selected
         Then The current URL is '/studies/Study_000001/study_structure/epochs'
 
-    Scenario: Page structure
+    Scenario: [Table][Options] Page structure
         Given The '/studies/Study_000001/study_structure/epochs' page is opened
         Then A table is visible with following options
             | options                                                         |
             | Add select boxes to table to allow selection of rows for export |
 
+    Scenario: [Table][Columns][Names] User must be able to see the Study Visit table with following columns
+        Given The '/studies/Study_000001/study_structure/epochs' page is opened
         And A table is visible with following headers
             | headers          |
             | #                |
@@ -29,50 +31,58 @@ Feature: Studies - Study Epochs
             | Number of visits |
             | Assigned colour  |
 
-    Scenario: User must be able to use column selection option
+    Scenario: [Online help] User must be able to read online help for the page
+        Given The '/studies/Study_000001/study_structure/epochs' page is opened
+        And The online help button is clicked
+        Then The online help panel shows 'Study Epochs' panel with content "The study epoch is a period of time that serves a purpose in the trial, e.g. Screening, Treatment, Follow-up. The purpose of ex. a Treatment epoch will be to expose subjects to a treatment."
+
+    Scenario: [Table][Columns][Visibility] User must be able to use column selection option
         Given The '/studies/Study_000001/study_structure/epochs' page is opened
         When The first column is selected from Select Columns option for table with actions
         Then The table contain only selected column and actions column
     
-    Scenario: User must be able to add a Study Epoch
+    Scenario: [Create][Positve case] User must be able to add a Study Epoch
         Given The '/studies/Study_000001/study_structure/epochs' page is opened
         When A new Study Epoch is added
+        And Study Epoch is found
         Then The new Study Epoch is available within the table
 
-    Scenario: User must be able to edit a Study Epoch
+    Scenario: [Actions][Edit] User must be able to edit a Study Epoch
         Given The '/studies/Study_000001/study_structure/epochs' page is opened
-        And The Study Epoch exists in the Study
+        And Study Epoch is found
+        And The 'Edit' option is clicked from the three dot menu list
         When The Study Epoch is edited
+        And Study Epoch is found
         Then The edited Study Epoch with updated values is available within the table
 
-    Scenario: User must not be able to edit the Epoch Type and Subtype
+    Scenario: [Actions][Edit][Fields check] User must not be able to edit the Epoch Type and Subtype
         Given The '/studies/Study_000001/study_structure/epochs' page is opened
-        And The Study Epoch exists in the Study
-        When The Epoch edit form is opened
+        And Study Epoch is found
+        When The 'Edit' option is clicked from the three dot menu list
         Then The Type and Subtype fields are disabled
 
-    Scenario: User must be able to delete the Study Epoch and all related study design cells
+    Scenario: [Actions][Delete] User must be able to delete the Study Epoch and all related study design cells
         Given The '/studies/Study_000001/study_structure/epochs' page is opened
-        And The Study Epoch exists in the Study
-        When The Study Epoch is deleted
-        Then The Epoch is not visible in the table
+        And Study Epoch is found
+        And The 'Delete' option is clicked from the three dot menu list
+        Then Study Epoch is not available
 
-    Scenario: User must be able to export the data in CSV format
+    Scenario: [Export][CSV] User must be able to export the data in CSV format
         Given The '/studies/Study_000001/study_structure/epochs' page is opened
         And The user exports the data in 'CSV' format
         Then The study specific 'StudyEpochs' file is downloaded in 'csv' format
 
-    Scenario: User must be able to export the data in JSON format
+    Scenario: [Export][Json] User must be able to export the data in JSON format
         Given The '/studies/Study_000001/study_structure/epochs' page is opened
         And The user exports the data in 'JSON' format
         Then The study specific 'StudyEpochs' file is downloaded in 'json' format
 
-    Scenario: User must be able to export the data in XML format
+    Scenario: [Export][Xml] User must be able to export the data in XML format
         Given The '/studies/Study_000001/study_structure/epochs' page is opened
         And The user exports the data in 'XML' format
         Then The study specific 'StudyEpochs' file is downloaded in 'xml' format
 
-    Scenario: User must be able to export the data in EXCEL format
+    Scenario: [Export][Excel] User must be able to export the data in EXCEL format
         Given The '/studies/Study_000001/study_structure/epochs' page is opened
         And The user exports the data in 'EXCEL' format
         Then The study specific 'StudyEpochs' file is downloaded in 'xlsx' format
@@ -93,6 +103,7 @@ Feature: Studies - Study Epochs
     @manual_test
     Scenario: User must be able to read change history of selected element
         Given The '//studies/Study_000001/study_structure/epochs' page is opened
+        And The 'Show history' option is clicked from the three dot menu list
         When The user clicks on History for particular element
         Then The user is presented with history of changes for that element
         And The history contains timestamps and usernames

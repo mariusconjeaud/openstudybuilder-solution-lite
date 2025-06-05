@@ -70,9 +70,9 @@ class CTCodelistAttributes(BaseModel):
         Field(json_schema_extra={"nullable": True, "remove_from_wildcard": True}),
     ] = None
 
-    child_codelist_uids: Annotated[
-        list[str], Field(json_schema_extra={"remove_from_wildcard": True})
-    ] = []
+    child_codelist_uids: list[str] = Field(
+        json_schema_extra={"remove_from_wildcard": True}, default_factory=list
+    )
 
     name: Annotated[str, Field()]
 
@@ -103,15 +103,13 @@ class CTCodelistAttributes(BaseModel):
     author_username: Annotated[
         str | None, Field(json_schema_extra={"nullable": True})
     ] = None
-    possible_actions: Annotated[
-        list[str],
-        Field(
-            description=(
-                "Holds those actions that can be performed on the CTCodelistAttributes. "
-                "Actions are: 'approve', 'edit', 'new_version'."
-            ),
+    possible_actions: list[str] = Field(
+        description=(
+            "Holds those actions that can be performed on the CTCodelistAttributes. "
+            "Actions are: 'approve', 'edit', 'new_version'."
         ),
-    ] = []
+        default_factory=list,
+    )
 
 
 class CTCodelistAttributesSimpleModel(BaseModel):
@@ -159,12 +157,7 @@ class CTCodelistAttributesVersion(CTCodelistAttributes):
     Class for storing CTCodelistAttributes and calculation of differences
     """
 
-    changes: Annotated[
-        list[str],
-        Field(
-            description=CHANGES_FIELD_DESC,
-        ),
-    ] = []
+    changes: list[str] = Field(description=CHANGES_FIELD_DESC, default_factory=list)
 
 
 class CTCodelistAttributesEditInput(PatchInputModel):
@@ -172,5 +165,5 @@ class CTCodelistAttributesEditInput(PatchInputModel):
     submission_value: Annotated[str | None, Field(min_length=1)] = None
     nci_preferred_name: Annotated[str | None, Field(min_length=1)] = None
     definition: Annotated[str | None, Field(min_length=1)] = None
-    extensible: bool | None = None
+    extensible: Annotated[bool | None, Field()] = None
     change_description: Annotated[str | None, Field(min_length=1)] = None

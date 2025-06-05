@@ -26,6 +26,7 @@ from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryVO,
 )
 from clinical_mdr_api.models.concepts.activities.activity import Activity
+from clinical_mdr_api.models.utils import GenericFilteringReturn
 from common.config import REQUESTED_LIBRARY_NAME
 from common.exceptions import BusinessLogicException
 from common.utils import convert_to_datetime, version_string_to_tuple
@@ -166,7 +167,7 @@ class ActivityRepository(ConceptGenericRepository[ActivityAR]):
                 definition=value.definition,
                 abbreviation=value.abbreviation,
                 activity_groupings=activity_groupings,
-                activity_instances=activity_root["activity_instances"],
+                activity_instances=activity_root.get("activity_instances", []),
                 request_rationale=value.request_rationale,
                 is_request_final=(
                     value.is_request_final if value.is_request_final else False
@@ -543,6 +544,14 @@ class ActivityRepository(ConceptGenericRepository[ActivityAR]):
                 return f"{activity_groupings_part}.activity_group.name"
             if prop == "activity_subgroup_name":
                 return f"{activity_groupings_part}.activity_subgroup.name"
+        if key in [
+            "activity_group_uid",
+            "activity_group_name",
+            "activity_subgroup_uid",
+            "activity_subgroup_name",
+        ]:
+            _split = key.rsplit("_", 1)
+            return f"{_split[0]}.{_split[1]}"
         return key
 
     def specific_alias_clause(
@@ -928,9 +937,16 @@ class ActivityRepository(ConceptGenericRepository[ActivityAR]):
         query = (
             match
             + """
-        MATCH (activity_value)-[:HAS_GROUPING]->(:ActivityGrouping)<-[:HAS_ACTIVITY]-
+        MATCH (activity_value)-[:HAS_GROUPING]->(activity_grouping:ActivityGrouping)<-[:HAS_ACTIVITY]-
             (activity_instance_value:ActivityInstanceValue)<-[aihv:HAS_VERSION]-(activity_instance_root:ActivityInstanceRoot)
-        WITH DISTINCT activity_root, activity_value, activity_instance_root, activity_instance_value, aihv
+        OPTIONAL MATCH (activity_grouping)-[:IN_SUBGROUP]->(activity_valid_group:ActivityValidGroup)
+        <-[:HAS_GROUP]-(activity_subgroup_value:ActivitySubGroupValue)<-[:HAS_VERSION]-(activity_subgroup_root:ActivitySubGroupRoot)
+        OPTIONAL MATCH (activity_valid_group)-[:IN_GROUP]->(activity_group_value:ActivityGroupValue)<-[:HAS_VERSION]-(activity_group_root:ActivityGroupRoot)
+        WITH DISTINCT activity_root, activity_value, activity_instance_root, activity_instance_value, aihv, COLLECT(DISTINCT {
+            activity_uid: activity_root.uid,
+            activity_group_uid: activity_group_root.uid,
+            activity_subgroup_uid: activity_subgroup_root.uid
+        }) AS activity_groupings
         WHERE aihv.end_date IS NULL AND NOT EXISTS ((activity_instance_value)<--(:DeletedActivityInstanceRoot))
         WITH *,
             {
@@ -954,7 +970,8 @@ class ActivityRepository(ConceptGenericRepository[ActivityAR]):
                 is_derived:coalesce(activity_instance_value.is_derived, false),
                 topic_code:activity_instance_value.topic_code,
                 activity_instance_class: head([(activity_instance_value)-[:ACTIVITY_INSTANCE_CLASS]->(activity_instance_class_root:ActivityInstanceClassRoot)
-                    -[:LATEST]->(activity_instance_class_value:ActivityInstanceClassValue) | activity_instance_class_value])
+                    -[:LATEST]->(activity_instance_class_value:ActivityInstanceClassValue) | activity_instance_class_value]),
+                activity_groupings: activity_groupings
             } AS activity_instance ORDER BY activity_instance.uid, activity_instance.name
         RETURN
             collect(activity_instance) as activity_instances
@@ -990,3 +1007,469 @@ RETURN r.uid, [value IN $syn WHERE value IN v.synonyms] as existingSynonyms
             return {}
 
         return {item[0]: item[1] for item in rs[0]}
+
+    def get_specific_activity_version_groupings(
+        self,
+        uid: str,
+        version: str,
+        page_number: int = 1,
+        page_size: int = 10,
+        total_count: bool = False,
+    ) -> GenericFilteringReturn:
+        """
+        Get activity groupings information for a specific version of an activity, including
+        related subgroups, groups, and instances that existed during this version's validity period.
+        """
+        query = """
+            // 1. Find a specific activity version
+            MATCH (ar:ActivityRoot {uid: $uid})-[av_rel:HAS_VERSION {version: $version}]->(av:ActivityValue)
+
+            // 2. Find when this version's validity ends (either its end_date or the start of the next version)
+            OPTIONAL MATCH (ar)-[next_rel:HAS_VERSION]->(next_av:ActivityValue)
+            WHERE toFloat(next_rel.version) > toFloat(av_rel.version)
+            WITH av, ar, av_rel, 
+                 CASE WHEN av_rel.end_date IS NULL 
+                      THEN min(next_rel.start_date) 
+                      ELSE av_rel.end_date 
+                 END as version_end_date
+
+            // 3. Find all subgroup and group versions connected to it
+            MATCH (av)-[:HAS_GROUPING]->(agrp:ActivityGrouping)-[:IN_SUBGROUP]->(avg:ActivityValidGroup)
+            MATCH (avg)-[:IN_GROUP]->(gv:ActivityGroupValue)<-[gv_rel:HAS_VERSION]-(gr:ActivityGroupRoot)
+            MATCH (avg)<-[:HAS_GROUP]-(sgv:ActivitySubGroupValue)<-[sgv_rel:HAS_VERSION]-(sgr:ActivitySubGroupRoot)
+
+            // Filter versions that existed when the activity was created
+            WHERE sgv_rel.start_date <= av_rel.start_date AND gv_rel.start_date <= av_rel.start_date
+
+            WITH av, ar, av_rel, sgv, sgv_rel, gv, gv_rel, gr, sgr, avg, version_end_date
+
+            // 4. Find activity instances connected to this activity via groupings
+            OPTIONAL MATCH (avg)<-[:IN_SUBGROUP]-(agrp:ActivityGrouping)<-[:HAS_ACTIVITY]-(activity_instance_value:ActivityInstanceValue)<-[aihv:HAS_VERSION]-(activity_instance_root:ActivityInstanceRoot)
+
+            // Make sure the instance is connected to this specific activity
+            WHERE EXISTS {
+                (activity_instance_value)-[:HAS_ACTIVITY]->(agrp2:ActivityGrouping)-[:HAS_GROUPING]-(av)
+            }
+            AND aihv.start_date <= COALESCE(version_end_date, datetime())
+            AND NOT EXISTS((activity_instance_value)<--(:DeletedActivityInstanceRoot))
+
+            // 5. Collect all relevant data for processing
+            WITH 
+                ar.uid as activity_uid, 
+                av_rel.version as activity_version,
+                avg.uid as valid_group_uid,
+                sgr.uid as subgroup_uid, 
+                gr.uid as group_uid,
+                sgv_rel.version as subgroup_version,
+                gv_rel.version as group_version,
+                sgv.name as subgroup_name,
+                gv.name as group_name,
+                sgv_rel.status as subgroup_status,
+                gv_rel.status as group_status,
+                toInteger(SPLIT(sgv_rel.version, '.')[0]) as sg_major_version,
+                toInteger(SPLIT(sgv_rel.version, '.')[1]) as sg_minor_version,
+                toInteger(SPLIT(gv_rel.version, '.')[0]) as g_major_version,
+                toInteger(SPLIT(gv_rel.version, '.')[1]) as g_minor_version,
+                collect(DISTINCT {
+                    instance_uid: activity_instance_root.uid,
+                    instance_name: activity_instance_value.name
+                }) as activity_instances
+
+            // 6. For each valid group, collect all version information
+            WITH 
+                activity_uid, 
+                activity_version, 
+                valid_group_uid, 
+                subgroup_uid, 
+                group_uid,
+                collect({
+                    sg_major: sg_major_version, 
+                    sg_minor: sg_minor_version, 
+                    g_major: g_major_version, 
+                    g_minor: g_minor_version,
+                    subgroup_version: subgroup_version, 
+                    group_version: group_version,
+                    subgroup_name: subgroup_name, 
+                    group_name: group_name,
+                    subgroup_status: subgroup_status,
+                    group_status: group_status
+                }) as versions,
+                activity_instances
+
+            // 7. Find highest major version
+            WITH 
+                activity_uid, 
+                activity_version, 
+                valid_group_uid, 
+                subgroup_uid, 
+                group_uid, 
+                versions,
+                reduce(max_sg_major = 0, v IN versions | 
+                    CASE WHEN v.sg_major > max_sg_major THEN v.sg_major ELSE max_sg_major END
+                ) as max_sg_major,
+                reduce(max_g_major = 0, v IN versions | 
+                    CASE WHEN v.g_major > max_g_major THEN v.g_major ELSE max_g_major END
+                ) as max_g_major,
+                activity_instances
+
+            // 8. Filter to only include versions with the maximum major version
+            WITH 
+                activity_uid, 
+                activity_version, 
+                valid_group_uid, 
+                subgroup_uid, 
+                group_uid, 
+                [v in versions WHERE v.sg_major = max_sg_major] as sg_max_major_versions,
+                [v in versions WHERE v.g_major = max_g_major] as g_max_major_versions,
+                max_sg_major, 
+                max_g_major,
+                activity_instances
+
+            // 9. Find highest minor version
+            WITH 
+                activity_uid, 
+                activity_version, 
+                valid_group_uid, 
+                subgroup_uid, 
+                group_uid, 
+                max_sg_major, 
+                max_g_major,
+                reduce(max_sg_minor = -1, v IN sg_max_major_versions | 
+                    CASE WHEN v.sg_minor > max_sg_minor THEN v.sg_minor ELSE max_sg_minor END
+                ) as max_sg_minor,
+                reduce(max_g_minor = -1, v IN g_max_major_versions | 
+                    CASE WHEN v.g_minor > max_g_minor THEN v.g_minor ELSE max_g_minor END
+                ) as max_g_minor,
+                sg_max_major_versions, 
+                g_max_major_versions,
+                activity_instances
+
+            // 10. Extract the specific version information
+            WITH 
+                activity_uid, 
+                activity_version, 
+                valid_group_uid, 
+                subgroup_uid, 
+                group_uid, 
+                max_sg_major, 
+                max_sg_minor, 
+                max_g_major, 
+                max_g_minor,
+                [v in sg_max_major_versions WHERE v.sg_minor = max_sg_minor][0] as sg_version_info,
+                [v in g_max_major_versions WHERE v.g_minor = max_g_minor][0] as g_version_info,
+                activity_instances
+
+            // 11. Return data
+            RETURN 
+                activity_uid, 
+                activity_version, 
+                valid_group_uid,
+                subgroup_uid, 
+                sg_version_info.subgroup_name as subgroup_name, 
+                sg_version_info.subgroup_version as subgroup_version,
+                sg_version_info.subgroup_status as subgroup_status,
+                group_uid, 
+                g_version_info.group_name as group_name, 
+                g_version_info.group_version as group_version,
+                g_version_info.group_status as group_status,
+                activity_instances
+            """
+
+        result_array, _ = db.cypher_query(
+            query=query, params={"uid": uid, "version": version}
+        )
+
+        BusinessLogicException.raise_if(
+            len(result_array) == 0,
+            msg=f"No data found for activity {uid} version {version}",
+        )
+
+        # Process the result into a structured format
+        activity_groupings = []
+        all_activity_instances = set()
+
+        for row in result_array:
+            (
+                _,  # activity_uid (unused)
+                _,  # activity_version (unused)
+                valid_group_uid,
+                subgroup_uid,
+                subgroup_name,
+                subgroup_version,
+                subgroup_status,
+                group_uid,
+                group_name,
+                group_version,
+                group_status,
+                activity_instances,
+            ) = row
+
+            # Process instances - filtering out None values
+            group_instances = []
+            for instance in activity_instances:
+                if instance["instance_uid"] is not None:
+                    # Add to the specific group's instances
+                    group_instances.append(
+                        {
+                            "uid": instance["instance_uid"],
+                            "name": instance["instance_name"],
+                        }
+                    )
+                    # Also track for the global list (backward compatibility)
+                    all_activity_instances.add(
+                        (instance["instance_uid"], instance["instance_name"])
+                    )
+
+            # Add grouping information with its specific instances
+            activity_groupings.append(
+                {
+                    "valid_group_uid": valid_group_uid,
+                    "subgroup": {
+                        "uid": subgroup_uid,
+                        "name": subgroup_name,
+                        "version": subgroup_version,
+                        "status": subgroup_status,
+                    },
+                    "group": {
+                        "uid": group_uid,
+                        "name": group_name,
+                        "version": group_version,
+                        "status": group_status,
+                    },
+                    "activity_instances": group_instances,
+                }
+            )
+
+        # Convert activity instances to list of dictionaries
+        activity_instances_list = [
+            {"uid": uid, "name": name}
+            for uid, name in all_activity_instances
+            if uid is not None
+        ]
+
+        # Handle pagination if requested
+        if page_size > 0:
+            total = len(activity_groupings) if total_count else None
+            start_idx = (page_number - 1) * page_size
+            end_idx = start_idx + page_size
+            paginated_groupings = activity_groupings[start_idx:end_idx]
+
+            # Return paginated results with GenericFilteringReturn.create()
+            items = [
+                {
+                    "activity_uid": uid,
+                    "activity_version": version,
+                    "activity_groupings": paginated_groupings,
+                    "activity_instances": activity_instances_list,
+                }
+            ]
+            return GenericFilteringReturn.create(
+                items=items, total=total or len(paginated_groupings)
+            )
+
+        # For backward compatibility, wrap single item in GenericFilteringReturn
+        item = {
+            "activity_uid": uid,
+            "activity_version": version,
+            "activity_groupings": activity_groupings,
+            "activity_instances": activity_instances_list,
+        }
+        return GenericFilteringReturn.create(items=[item], total=1)
+
+    def get_activity_instances_for_version(
+        self,
+        activity_uid: str,
+        version: str | None,
+        skip: int = 0,
+        limit: int = 10,
+    ) -> tuple[list[dict], int]:
+        """
+        Retrieves a paginated list of activity instances relevant to a specific
+        activity version's time validity window.
+
+        For each relevant activity instance, it returns the latest version active
+        during the activity version's timeframe, along with all its older versions
+        as children.
+
+        Args:
+            activity_uid (str): The UID of the parent activity.
+            version (str): The specific version of the parent activity (e.g., "16.0").
+            skip (int): Number of records to skip for pagination (0-based).
+            limit (int): Maximum number of records to return.
+
+        Returns:
+            tuple[list[dict], int]: A tuple containing the list of activity instance
+                                    dictionaries and the total count of unique relevant instances.
+        """
+        # Ensure skip and limit are non-negative integers
+        if not isinstance(skip, int) or skip < 0:
+            skip = 0
+
+        # Store original limit for pagination logic
+        original_page_size = limit
+
+        if not isinstance(limit, int) or limit < 0:
+            # Default to a reasonable value for negative or invalid values
+            limit = 10
+
+        # Query 1: Calculate version_end_date and count total relevant roots
+        count_and_end_date_query = """
+            // 1a. Find the specific activity version
+            MATCH (activity_root:ActivityRoot {uid: $uid})-[av_rel:HAS_VERSION {version: $version}]->(activity_value:ActivityValue)
+            WITH activity_root, av_rel, activity_value
+
+            // 1b. Find the minimum start date of subsequent versions (if any)
+            OPTIONAL MATCH (activity_root)-[next_rel:HAS_VERSION]->(:ActivityValue)
+            WHERE toFloat(next_rel.version) > toFloat($version) // Use parameter
+            WITH activity_value, av_rel, min(next_rel.start_date) as min_next_start_date // Grouping implicitly by activity_value, av_rel
+
+            // 1c. Calculate the final version_end_date
+            WITH activity_value, COALESCE(av_rel.end_date, min_next_start_date, datetime()) as version_end_date
+
+            // 2. Find distinct relevant ActivityInstance Roots and count them
+            MATCH (activity_value)-[:HAS_GROUPING]->(:ActivityGrouping)<-[:HAS_ACTIVITY]-(:ActivityInstanceValue)<-[aihv_check:HAS_VERSION]-(ai_root:ActivityInstanceRoot)
+            // *** NOTE: Add appropriate deletion check here if needed, e.g.: ***
+            // WHERE NOT coalesce(ai_root.is_deleted, false)
+            // AND NOT EXISTS((activity_instance_value)<--(:DeletedActivityInstanceRoot))
+            WHERE aihv_check.start_date <= version_end_date
+            RETURN count(DISTINCT ai_root) as total_count, version_end_date
+        """
+        params_count = {"uid": activity_uid, "version": version}
+        try:
+            count_result, _ = db.cypher_query(
+                query=count_and_end_date_query,
+                params=params_count,
+                resolve_objects=False,
+            )
+            if not count_result or not count_result[0]:
+                # This case might mean the activity/version doesn't exist or has no linked instances
+                return [], 0
+            total_count = count_result[0][0]
+            version_end_date = count_result[0][1]  # Get the calculated end date
+
+            # Handle case where activity/version exists but no instances meet criteria
+            if total_count == 0:
+                return [], 0
+
+        except IndexError:
+            # Handle case where query returns empty results unexpectedly
+            return [], 0
+        except Exception as e:
+            # Log error or raise a more specific exception
+            print(f"Error executing count/end_date query: {e}")
+            raise  # Re-raise for now, or handle appropriately
+
+        # Query 2: Fetch details for paginated roots
+
+        # Build pagination clause based on original page size
+        pagination_clause = ""
+        if original_page_size > 0:
+            pagination_clause = f"""
+            // 3. Apply Pagination to the distinct relevant roots
+            ORDER BY ai_root.uid
+            SKIP {skip}
+            LIMIT {limit}
+            """
+        else:
+            pagination_clause = """
+            // 3. Apply ordering but no pagination (return all items)
+            ORDER BY ai_root.uid
+            """
+
+        details_query = f"""
+            // 1. Find the specific activity version's value node
+            MATCH (activity_root:ActivityRoot {{uid: $uid}})-[:HAS_VERSION {{version: $version}}]->(activity_value:ActivityValue)
+            WITH activity_value, $version_end_date as version_end_date // Pass calculated end date as parameter
+
+            // 2. Find distinct relevant ActivityInstance Roots linked via groupings
+            MATCH (activity_value)-[:HAS_GROUPING]->(:ActivityGrouping)<-[:HAS_ACTIVITY]-(:ActivityInstanceValue)<-[aihv_check:HAS_VERSION]-(ai_root:ActivityInstanceRoot)
+            // *** NOTE: Add appropriate deletion check here if needed ***
+            WHERE aihv_check.start_date <= version_end_date
+            WITH DISTINCT ai_root, version_end_date
+{pagination_clause}
+            WITH ai_root, version_end_date // Pass paginated roots forward
+
+            // --- Instance Detail Fetching ---
+
+            // 4. For each paginated root, find all its versions
+            MATCH (ai_root)-[aihv:HAS_VERSION]->(ai_val:ActivityInstanceValue)
+            // *** NOTE: Add appropriate deletion check here if needed ***
+
+            // 5. Filter versions active within the window & Order them
+            WITH ai_root, aihv, ai_val, version_end_date
+            WHERE aihv.start_date <= version_end_date
+            WITH ai_root, aihv, ai_val, version_end_date // Pass rows for ordering
+            ORDER BY ai_root.uid, aihv.start_date DESC, toFloat(aihv.version) DESC
+
+            // 6. Collect the ordered versions per root
+            WITH ai_root, version_end_date, collect({{rel: aihv, val: ai_val}}) as relevant_versions_sorted
+
+            // 7. Identify the specific version to display (the first in the sorted list)
+            // Use RETURN DISTINCT to handle potential duplicates if pagination wasn't perfect (shouldn't happen with ORDER BY uid)
+            WITH DISTINCT ai_root, relevant_versions_sorted[0] as display_instance_map // Map {{rel:..., val:...}}
+
+            // 8. Get library info for the root
+            OPTIONAL MATCH (library)-[:CONTAINS_CONCEPT]->(ai_root)
+
+            // 9. Get ActivityInstanceClass for the display instance version node
+            WITH ai_root, display_instance_map, library, display_instance_map.val as display_instance_node
+            OPTIONAL MATCH (display_instance_node)-[:ACTIVITY_INSTANCE_CLASS]->(:ActivityInstanceClassRoot)-[:LATEST]->(aic_value:ActivityInstanceClassValue)
+
+            // 10. Find all *other* versions (children)
+            WITH ai_root, display_instance_map, display_instance_node, library, aic_value
+            OPTIONAL MATCH (ai_root)-[child_aihv:HAS_VERSION]->(child_ai_val:ActivityInstanceValue)
+            WHERE child_aihv <> display_instance_map.rel AND
+                  (child_aihv.start_date < display_instance_map.rel.start_date
+                   OR (child_aihv.start_date = display_instance_map.rel.start_date AND toFloat(child_aihv.version) < toFloat(display_instance_map.rel.version)))
+            // *** NOTE: Add appropriate deletion check here if needed ***
+
+            // 11. Get ActivityInstanceClass for children
+            OPTIONAL MATCH (child_ai_val)-[:ACTIVITY_INSTANCE_CLASS]->(:ActivityInstanceClassRoot)-[:LATEST]->(child_aic_value:ActivityInstanceClassValue)
+
+            // 12. Order children (newest first) and collect
+            WITH ai_root, display_instance_map, library, aic_value, child_aihv, child_ai_val, child_aic_value
+            ORDER BY child_aihv.start_date DESC, toFloat(child_aihv.version) DESC
+            WITH ai_root, display_instance_map, library, aic_value, collect(
+                CASE WHEN child_aihv IS NULL THEN null ELSE {{
+                    uid: ai_root.uid, version: child_aihv.version, status: child_aihv.status, name: child_ai_val.name,
+                    definition: child_ai_val.definition, abbreviation: child_ai_val.abbreviation,
+                    topic_code: child_ai_val.topic_code, adam_param_code: child_ai_val.adam_param_code,
+                    activity_instance_class: CASE WHEN child_aic_value IS NULL THEN null ELSE {{ name: child_aic_value.name }} END
+                }} END
+            ) as children_data_list
+
+            // 13. Format the final output map
+            RETURN {{
+                activity_instance_library_name: library.name, uid: ai_root.uid, version: display_instance_map.rel.version,
+                status: display_instance_map.rel.status, name: display_instance_map.val.name,
+                name_sentence_case: display_instance_map.val.name_sentence_case, abbreviation: display_instance_map.val.abbreviation,
+                definition: display_instance_map.val.definition, adam_param_code: display_instance_map.val.adam_param_code,
+                is_required_for_activity: coalesce(display_instance_map.val.is_required_for_activity, false),
+                is_default_selected_for_activity: coalesce(display_instance_map.val.is_default_selected_for_activity, false),
+                is_data_sharing: coalesce(display_instance_map.val.is_data_sharing, false),
+                is_legacy_usage: coalesce(display_instance_map.val.is_legacy_usage, false),
+                is_derived: coalesce(display_instance_map.val.is_derived, false),
+                topic_code: display_instance_map.val.topic_code,
+                activity_instance_class: CASE WHEN aic_value IS NULL THEN null ELSE {{ name: aic_value.name }} END,
+                children: [c IN children_data_list WHERE c IS NOT NULL]
+            }} AS instance
+        """
+
+        params_details = {
+            "uid": activity_uid,
+            "version": version,
+            "version_end_date": version_end_date,
+            # SKIP and LIMIT are embedded in the f-string, not passed as params here
+        }
+
+        try:
+            instances_results, _ = db.cypher_query(
+                query=details_query, params=params_details, resolve_objects=False
+            )
+            instances = [row[0] for row in instances_results]
+        except Exception as e:
+            # Log error or raise a more specific exception
+            print(f"Error executing details query: {e}")
+            raise  # Re-raise for now, or handle appropriately
+
+        return instances, total_count

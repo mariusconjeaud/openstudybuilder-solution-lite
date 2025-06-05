@@ -1,6 +1,6 @@
 @REQ_ID:XXXX 
 
-Feature: Library - Concept Overview Page Versioning Check
+Feature: Library - Concepts - Activities - Overview Page Versioning
   As a user, I want to verify that every Overview Page in the Concepts Library, including Activities, 
         Activity Groups, Activity Subgroups, and Activity Instances can manage the version correctly.
 
@@ -9,30 +9,30 @@ Feature: Library - Concept Overview Page Versioning Check
     When The '/administration' page is opened
     And The 'Feature flags' button is clicked
     Then Activity instance wizard feature flag is turned off
-    And [API] Activity Instance in status Final with Final group, subgroub and activity linked exists
+    And [API] Activity Instance in status Final with Final group, subgroup and activity linked exists
     And [API] Activity, activity instance, group and subgroup names are fetched
     
-  Scenario: Edit the activity
+  Scenario: [Activity][Overview][Edit] Edit the activity
     Given The '/library/activities/activities' page is opened
     And A test activity overview page is opened
     When I click 'New version' button
-    Then I verify that the version is '1.1' and status is 'Draft'
-    And I verify that there is an instance with status 'Final' and version '1.0'
-    And I verify that there is an instance with status 'Draft' and version '0.1'
+    Then I verify that the activity version is '1.1' and status is 'Draft'
+    And I verify that there is an instance linked with status 'Final' and version '1.0'
+    And I verify that there is an instance linked with status 'Draft' and version '0.1'
     When I click 'Edit' button 
     And I make changes to the activity, enter a reason for change and save
-    Then I verify that the version is '1.2' and status is 'Draft'
-    And I verify that no 'Activity instances' is linked
+    Then I verify that the activity version is '1.2' and status is 'Draft'
+    And I verify that linked Activity Instances table is empty
 
-  Scenario: Approve the Activity
+  Scenario: [Activity][Overview][Approve] Approve the Activity
     Given The '/library/activities/activities' page is opened
     And A test activity overview page is opened
     When I click 'Approve' button
-    Then I verify that the version is '2.0' and status is 'Final'
-    And I verify that there is an instance with status 'Final' and version '2.0'
-    And I verify that there is an instance with status 'Draft' and version '1.2'
+    Then I verify that the activity version is '2.0' and status is 'Final'
+    And I verify that there is an instance linked with status 'Final' and version '2.0'
+    And I verify that there is an instance linked with status 'Draft' and version '1.2'
  
-Scenario: Edit the Instance
+Scenario: [Activity Instance][Overview][Edit] Edit the Instance
     Given The '/library/activities/activity-instances' page is opened
     And A test instance overview page is opened
     When I click 'New version' button
@@ -43,14 +43,14 @@ Scenario: Edit the Instance
     Then I verify that the version is '2.2' and status is 'Draft'
     # I verify that no 'Activity' is linked (API and UI not implemented yet)
  
-  Scenario: Approve the Instance
+  Scenario: [Activity Instance][Overview][Approve] Approve the Instance
     Given The '/library/activities/activity-instances' page is opened
     And A test instance overview page is opened
     When I click 'Approve' button
     Then I verify that the version is '3.0' and status is 'Final'
     And I verify that there is an activity with status 'Final' and version '2.0'
 
-  Scenario: Edit the Group
+  Scenario: [Group][Overview][Edit] Edit the Group
     Given The '/library/activities/activity-groups' page is opened
     And A test group overview page is opened
     When I click 'New version' button
@@ -61,7 +61,7 @@ Scenario: Edit the Instance
     Then I verify that the version is '1.2' and status is 'Draft'
     # And I verify that no 'Activity subgroups' is linked (API and UI not implemented yet)
 
-  Scenario: Approve the Group
+  Scenario: [Group][Overview][Approve] Approve the Group
     Given The '/library/activities/activity-groups' page is opened
     And A test group overview page is opened
     When I click 'Approve' button
@@ -70,7 +70,7 @@ Scenario: Edit the Instance
     #version incrementation not implemented yet
     #And I verify that there is a subgroup with status 'Final' and version '1.0' 
     
-  Scenario: Edit the SubGroup
+  Scenario: [Subgroup][Overview][Edit] Edit the SubGroup
     Given The '/library/activities/activity-subgroups' page is opened
     And A test subgroup overview page is opened
     When I click 'New version' button
@@ -84,7 +84,7 @@ Scenario: Edit the Instance
     And I verify that no 'Activities' is linked
     # And I verify that no 'Activity group' is linked  (API and UI not implemented yet)
 
-  Scenario: Approve the SubGroup
+  Scenario: [Subgroup][Overview][Approve] Approve the SubGroup
     Given The '/library/activities/activity-subgroups' page is opened
     And A test subgroup overview page is opened
     When I click 'Approve' button

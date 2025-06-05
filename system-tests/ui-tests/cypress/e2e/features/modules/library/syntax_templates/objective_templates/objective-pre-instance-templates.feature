@@ -1,9 +1,9 @@
 @REQ_ID:1070684
-Feature: Library - Objective template Pre-Instantiations
+Feature: Library - Syntax Templates - Objectives - Pre-instance
     Background: User must be logged in
         Given The user is logged in
 
-    Scenario: User must be able to see the Parent Objective template table with listed columns
+    Scenario: [Table][Columns][Names] User must be able to see the table with correct columns
         Given The '/library/objective_templates/pre-instances' page is opened
         Then A table is visible with following headers
             | headers         |
@@ -13,25 +13,30 @@ Feature: Library - Objective template Pre-Instantiations
             | Status          |
             | Version         |
 
-    Scenario: User must be able to select visibility of columns in the table 
+    Scenario: [Table][Columns][Visibility] User must be able to select visibility of columns in the table 
         Given The '/library/objective_templates/pre-instances' page is opened
         When The first column is selected from Select Columns option for table with actions
         Then The table contain only selected column and actions column
 
-    Scenario: User must be able to add a new Objective Template Pre-instantiation in Parent Template tab
+    Scenario: [Create][Positive case] User must be able to create Objective Template Pre-instantiation in Parent Template tab
         Given The '/library/objective_templates/parent' page is opened
         When The new objective to be used as pre-instantiation is added in the library
-        When The 'Approve' action is clicked for the created objective template for pre-instantiation
+        And Objective template for pre-instantiation is found
+        When The 'Approve' option is clicked from the three dot menu list
+        And Objective template for pre-instantiation is found
+        And The 'Create pre-instantiation' option is clicked from the three dot menu list
         When The pre-instantiation is created from that objective template
         Then The pop up displays 'Objective template pre-instantiation added'
         And The newly added Objective Template Pre-instantiation is visible as a new row in the table
+        And The item has status 'Draft' and version '0.1'
 
     @manual_test
     Scenario: User must be able to edit an existing Objective Template Pre-instantiation in Pre-instance Template tab
         Given The test objective pre-instance template exists with a status as 'Draft'
-        When The 'Edit' action is clicked for the objective pre-instantiation
+        When The 'Edit' option is clicked from the three dot menu list
         And The objective pre-instantiation metadata is updated
         Then The updated Objective is visible within the table
+        And The item has status 'Draft' and version '0.2'
 
     @manual_test
     Scenario: User must be able to edit indexing properties for the Objective Pre-instantiation Template with a status as 'Final'
@@ -140,6 +145,7 @@ Feature: Library - Objective template Pre-Instantiations
     @manual_test
     Scenario: User must be able to read change history of selected element
         Given the '/library/objective_templates' page is opened
+        And The 'Show history' option is clicked from the three dot menu list
         When The user clicks on History for particular element
         Then The user is presented with history of changes for that element
         And The history contains timestamps and usernames

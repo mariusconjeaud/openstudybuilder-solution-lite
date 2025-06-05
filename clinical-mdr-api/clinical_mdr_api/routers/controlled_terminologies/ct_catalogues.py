@@ -23,7 +23,6 @@ router = APIRouter()
     "/catalogues",
     dependencies=[rbac.LIBRARY_READ],
     summary="Returns all controlled terminology catalogues.",
-    response_model=list[CTCatalogue],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -38,7 +37,7 @@ def get_catalogues(
             description="If specified, only catalogues from given library are returned."
         ),
     ] = None,
-):
+) -> list[CTCatalogue]:
     ct_catalogue_service = CTCatalogueService()
     return ct_catalogue_service.get_all_ct_catalogues(library_name=library_name)
 
@@ -47,7 +46,6 @@ def get_catalogues(
     "/catalogues/changes",
     dependencies=[rbac.LIBRARY_READ],
     summary="List changes between codelists and terms in CT Catalogues.",
-    response_model=CTCatalogueChanges,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -97,7 +95,7 @@ def get_catalogues_changes(
             },
         ),
     ] = None,
-):
+) -> CTCatalogueChanges:
     if end_datetime is None:
         end_datetime = datetime.now(timezone.utc)
     ct_catalogue_service = CTCatalogueService()

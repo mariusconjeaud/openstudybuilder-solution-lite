@@ -4,6 +4,7 @@
     :title="title"
     :steps="steps"
     :form-observer-getter="getObserver"
+    :extra-step-validation="extraStepValidation"
     :help-items="helpItems"
     @close="close"
     @step-loaded="initStep"
@@ -16,35 +17,36 @@
       <v-alert
         color="nnLightBlue200"
         icon="$info"
-        class="mt-4 text-nnTrueBlue"
+        class="my-4 text-nnTrueBlue"
         type="info"
         rounded="lg"
         :text="$t('ActivityInstanceForm.step1_help')"
       />
       <v-form ref="step1FormRef">
-        <v-radio-group v-model="selectedActivity" :rules="[formRules.required]">
-          <NNTable
-            hide-default-switches
-            hide-export-button
-            no-padding
-            column-data-resource="concepts/activities/activities"
-            :modifiable-table="false"
-            :headers="activitiesHeaders"
-            :items="activities"
-            :items-length="totalActivities"
-            @filter="fetchActivities"
-          >
-            <template #[`item.selection`]="{ item }">
+        <NNTable
+          hide-default-switches
+          hide-export-button
+          no-padding
+          column-data-resource="concepts/activities/activities"
+          item-value="uid"
+          :modifiable-table="false"
+          :headers="activitiesHeaders"
+          :items="activities"
+          :items-length="totalActivities"
+          @filter="fetchActivities"
+        >
+          <template #[`item.selection`]="{ item }">
+            <v-radio-group v-model="selectedActivity" hide-details>
               <v-radio
                 color="primary"
                 :value="getFullActivityUid(item)"
               ></v-radio>
-            </template>
-            <template #[`item.activity_instances`]="{ item }">
-              <div v-html="showInstances(item)"></div>
-            </template>
-          </NNTable>
-        </v-radio-group>
+            </v-radio-group>
+          </template>
+          <template #[`item.activity_instances`]="{ item }">
+            <div v-html="sanitizeHTML(showInstances(item))"></div>
+          </template>
+        </NNTable>
       </v-form>
     </template>
     <template #[`step.required`]>
@@ -75,6 +77,7 @@
             item-title="code_submission_value"
             item-value="uid"
             return-object
+            :rules="[formRules.required]"
             @update:model-value="filterActivityInstanceClasses"
           />
         </div>
@@ -212,7 +215,10 @@
             variant="outlined"
             density="compact"
             class="mr-4"
-            :rules="[formRules.required]"
+            :rules="[
+              formRules.required,
+              (value) => formRules.sameAs(value, step3Form.name),
+            ]"
           />
           <v-text-field
             v-model="step3Form.nci_concept_name"
@@ -239,7 +245,7 @@
             :rules="[formRules.required]"
           />
           <v-text-field
-            v-model="step3Form.nci_code"
+            v-model="step3Form.nci_concept_id"
             :label="$t('ActivityInstancePreview.nci_code')"
             variant="outlined"
             density="compact"
@@ -386,6 +392,7 @@
 
 <script setup>
 import { computed, inject, ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import ActivityItemClassField from './ActivityItemClassField.vue'
 import HorizontalStepperForm from '@/components/tools/HorizontalStepperForm.vue'
@@ -396,7 +403,9 @@ import activityInstanceClassesApi from '@/api/activityInstanceClasses'
 import activityItemClassesApi from '@/api/activityItemClasses'
 import activityItemClassesConstants from '@/constants/activityItemClasses'
 import libraryConstants from '@/constants/libraries.js'
+import statuses from '@/constants/statuses.js'
 import filteringParameters from '@/utils/filteringParameters'
+import { escapeHTML, sanitizeHTML } from '@/utils/sanitize'
 
 const emit = defineEmits(['close'])
 const props = defineProps({
@@ -406,6 +415,7 @@ const props = defineProps({
   },
 })
 
+const router = useRouter()
 const { t } = useI18n()
 const eventBusEmit = inject('eventBusEmit')
 const formRules = inject('formRules')
@@ -598,7 +608,7 @@ const domainDataCategories = computed(() => {
 })
 
 const activitiesHeaders = [
-  { title: '', key: 'selection', noFilter: true },
+  { title: '', key: 'selection', sortable: false, noFilter: true },
   {
     title: t('ActivityInstanceForm.activity_group'),
     key: 'activity_groupings.0.activity_group_name',
@@ -640,6 +650,19 @@ function fetchActivities(filters, options, filtersUpdated) {
     filters,
     filtersUpdated
   )
+  if (options?.sortBy?.length) {
+    if (
+      [
+        'activity_groupings.0.activity_group_name',
+        'activity_groupings.0.activity_subgroup_name',
+      ].includes(options.sortBy[0].key)
+    ) {
+      const parts = options.sortBy[0].key.split('.')
+      const sortKey = `${parts[0]}[0].${parts[2]}`
+      params.sort_by = `{"${sortKey}":${options.sortBy[0].order === 'asc'}}`
+    }
+  }
+  params.filters = { status: { v: [statuses.FINAL] } }
   params.group_by_groupings = false
   activitiesApi.get(params, 'activities').then((resp) => {
     activities.value = resp.data.items
@@ -741,7 +764,9 @@ function resetForms() {
 }
 
 function showInstances(item) {
-  return item.activity_instances.map((instance) => instance.name).join('<br/>')
+  return item.activity_instances
+    .map((instance) => escapeHTML(instance.name))
+    .join('<br/>')
 }
 
 function close() {
@@ -757,6 +782,17 @@ function getObserver(step) {
     4: step4FormRef,
   }
   return observers[step]?.value
+}
+
+function extraStepValidation(step) {
+  if (step === 1 && !selectedActivity.value) {
+    eventBusEmit('notification', {
+      msg: t('ActivityInstanceForm.activity_not_selected'),
+      type: 'error',
+    })
+    return false
+  }
+  return true
 }
 
 function prepareCreationPayload(forPreview) {
@@ -852,11 +888,14 @@ async function initStep(step) {
 async function submit() {
   const payload = prepareCreationPayload()
   try {
-    await activitiesApi.create(payload, 'activity-instances')
+    const resp = await activitiesApi.create(payload, 'activity-instances')
     eventBusEmit('notification', {
       msg: t('ActivityInstanceForm.add_success'),
     })
-    close()
+    router.push({
+      name: 'ActivityInstanceOverview',
+      params: { id: resp.data.uid },
+    })
   } finally {
     stepper.value.loading = false
   }

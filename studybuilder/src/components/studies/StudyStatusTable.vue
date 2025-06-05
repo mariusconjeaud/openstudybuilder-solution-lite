@@ -170,8 +170,8 @@ export default {
             .version_metadata.study_status
       )
     },
-    selectStudyVersion(studyVersion) {
-      this.studiesGeneralStore.selectStudy(studyVersion, true)
+    async selectStudyVersion(studyVersion) {
+      await this.studiesGeneralStore.selectStudy(studyVersion, true)
     },
     closeEditForm() {
       this.showEditForm = false
@@ -215,7 +215,7 @@ export default {
       const resp = await api.unlockStudy(
         this.studiesGeneralStore.selectedStudy.uid
       )
-      this.studiesGeneralStore.selectStudy(resp.data)
+      await this.studiesGeneralStore.selectStudy(resp.data)
       this.eventBusEmit('notification', {
         msg: this.$t('StudyStatusTable.unlock_success'),
         type: 'success',

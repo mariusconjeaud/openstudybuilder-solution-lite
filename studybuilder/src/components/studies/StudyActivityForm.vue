@@ -1102,10 +1102,10 @@ function isStudyActivitySelected(studyActivity) {
       selected = studyActivities.value.find(
         (item) =>
           item.activity.uid === studyActivity.activity.uid &&
-            item.study_activity_group.activity_group_uid ===
-              studyActivity.study_activity_group.activity_group_uid &&
-            item.study_activity_subgroup.activity_subgroup_uid ===
-              studyActivity.study_activity_subgroup.activity_subgroup_uid
+          item.study_activity_group.activity_group_uid ===
+            studyActivity.study_activity_group.activity_group_uid &&
+          item.study_activity_subgroup.activity_subgroup_uid ===
+            studyActivity.study_activity_subgroup.activity_subgroup_uid
       )
     } catch (error) {
       console.error(error)
@@ -1196,7 +1196,10 @@ async function submit() {
       resetLoading.value += 1
       return
     }
-    if (_isEmpty(form.value.activity_groupings[0]) || !form.value.activity_groupings[0].activity_group_uid) {
+    if (
+      _isEmpty(form.value.activity_groupings[0]) ||
+      !form.value.activity_groupings[0].activity_group_uid
+    ) {
       delete form.value.activity_groupings
     }
     const createdActivity = await activitiesApi.create(form.value, 'activities')

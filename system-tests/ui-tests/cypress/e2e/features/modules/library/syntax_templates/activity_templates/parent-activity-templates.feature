@@ -1,16 +1,16 @@
 @REQ_ID:1070684
-Feature: Library - Activity Templates
+Feature: Library - Syntax Templates - Activity Instructions - Parent
 
     As a user, I want to manage every Activity template under the Syntax Template Library
     Background: User must be logged in
         Given The user is logged in
 
-    Scenario: User must be able to navigate to the Activity template under the Syntax Template Library
+    Scenario: [Navigation] User must be able to navigate to the Activty Instruction template under the Syntax template Library
         Given The '/library' page is opened
         When The 'Activity Instructions' submenu is clicked in the 'Syntax Templates' section
         Then The current URL is '/library/activity_instruction_templates/parent'
 
-    Scenario: User must be able to see the Parent Activity template table with listed columns
+    Scenario: [Table][Columns][Names] User must be able to see the table with correct columns
         Given The '/library/activity_instruction_templates/parent' page is opened
         And A table is visible with following headers
             | headers         |
@@ -21,7 +21,7 @@ Feature: Library - Activity Templates
             | Status          |
             | Version         |
 
-    Scenario: User must be able to select visibility of columns in the table
+    Scenario: [Table][Columns][Visibility] User must be able to select visibility of columns in the table 
         Given The '/library/activity_instruction_templates/parent' page is opened
         When The first column is selected from Select Columns option for table with actions
         Then The table contain only selected column and actions column
@@ -43,136 +43,162 @@ Feature: Library - Activity Templates
         Then all related activity template instantiations must be cascade updated to new version and approved
         And the displayed pop-up snack must include information on number of updated activity template instantiations
 
-    Scenario: User must be able to add a new Parent Activity template in Sponsor standards tab
+    Scenario: [Create][Positive case] User must be able to create Activity Instruction template
         Given The 'library/activity_instruction_templates/parent' page is opened
         When The new activity is added in the library
-        Then The new Activity is visible in the Activity Templates Table
+        Then The Activity Instruction template is visible in the table
+        And The item has status 'Draft' and version '0.1'
 
-    Scenario: User must be able to add a new Parent Activity template with NA indexes in Sponsor standards tab
+    Scenario: [Create][N/A indexes] User must be able to create Activity Instruction template with NA indexes
         Given The 'library/activity_instruction_templates/parent' page is opened
         When The new Activity is added in the library with not applicable for indexes
-        Then The new Activity is visible with Not Applicable indexes in the Activity Templates Table
+        Then The Activity Instruction template is visible in the table
+        And The item has status 'Draft' and version '0.1'
 
-    Scenario: User must be able to edit draft version of the Parent Activity template
+    Scenario: [Actions][Edit][0.1 version] User must be able to edit initial version of the Activity Instruction template
+        Given [API] Activity in status Final with Final group and subgroub exists
+        And [API] Activity Instruction in status Draft exists
+        And The 'library/activity_instruction_templates/parent' page is opened
+        And Activity Instruction is searched for
         Given The 'library/activity_instruction_templates/parent' page is opened
-        Given The new activity is added in the library
         When The 'Edit' option is clicked from the three dot menu list
         And The activity metadata is updated
-        Then The updated Activity is visible within the table
+        Then The Activity Instruction template is visible in the table
+        And The item has status 'Draft' and version '0.2'
 
-    Scenario: User must not be able to create a new Parent Activity template without Template Text populated
+    Scenario: [Create][Mandatory fields] User must not be able to create Activity Instruction template without: Template Text
         Given The 'library/activity_instruction_templates/parent' page is opened
         When The new Activity template is added without template text
         Then The validation appears for Template name
         And The form is not closed
 
-    Scenario: User must not be able to create a new Parent Activity template with not unique Template Text
-        Given The 'library/activity_instruction_templates/parent' page is opened
-        When The new activity is added in the library
+    Scenario: [Create][Uniqueness check][Name] User must not be able to create Activity Instruction template with not unique Template Text
+        Given [API] Activity in status Final with Final group and subgroub exists
+        And [API] Activity Instruction in status Draft exists
+        And The 'library/activity_instruction_templates/parent' page is opened
         And The second activity is added with the same template text
         Then The pop up displays 'already exists'
         And The form is not closed
 
-    Scenario: User must not be able to create a new Parent Activity template without Indication or Disorder field populated
+    Scenario: [Create][Mandatory fields] User must not be able to create Activity Instruction template without: Indication or Disorder
         Given The 'library/activity_instruction_templates/parent' page is opened
         When The new Activity template is added without Indication or Disorder
         Then The validation appears for Indication or Disorder field
         And The form is not closed
 
-    Scenario: User must not be able to create a new Parent Activity template without Activity Group field populated
+    Scenario: [Create][Mandatory fields] User must not be able to create Activity Instruction template without: Activity Group
         Given The 'library/activity_instruction_templates/parent' page is opened
         When The new Activity template is added without Activity Group
         Then The validation appears for Activity Group field
         And The form is not closed
 
-    Scenario: User must not be able to create a new Parent Activity template without Activity Subgroup field populated
+    Scenario: [Create][Mandatory fields] User must not be able to create Activity Instruction template without: Activity SubGroup
         Given The 'library/activity_instruction_templates/parent' page is opened
         When The new Activity template is added without Activity Subgroup
         Then The validation appears for Activity Subgroup field
         And The form is not closed
 
-    Scenario: User must not be able to create a new Parent Activity template without Activity field populated
+    Scenario: [Create][Mandatory fields] User must not be able to create Activity Instruction template without: Activity
         Given The 'library/activity_instruction_templates/parent' page is opened
         When The new Activity template is added without Activity field
         Then The validation appears for Activity field
         And The form is not closed
 
-    Scenario: User must be able to verify valid syntax when adding a new Parent Activity template
+    Scenario: [Create][Syntax validation] User must be able to verify syntax when creating Activity Instruction template
         Given The 'library/activity_instruction_templates/parent' page is opened
         When The new template name is prepared with a parameters
         And The syntax is verified
         Then The pop up displays "This syntax is valid"
 
-    Scenario: User must be able to hide parameter from the Parent Activity template
+    Scenario: [Create][Hide parameters] User must be able to hide parameter of the Activity Instruction template
         Given The 'library/activity_instruction_templates/parent' page is opened
         When The new template name is prepared with a parameters
         And The user hides the parameter in the next step
         Then The parameter is not visible in the text representation
 
-    Scenario: User must be able to test template for the Parent Activity template
+    Scenario: [Create][Select parameters] User must be able to select parameter of the Activity Instruction template
         Given The 'library/activity_instruction_templates/parent' page is opened
         When The new template name is prepared with a parameters
         And The user picks the parameter from the dropdown list
         Then The parameter value is visible in the text representation
 
-    Scenario: User must be able to delete the drafted version of Parent Activity template in version below 1.0
-        Given The 'library/activity_instruction_templates/parent' page is opened
-        Given The new activity is added in the library
+    Scenario: [Actions][Delete] User must be able to delete the Draft Activity Instruction template in version below 1.0
+        Given [API] Activity in status Final with Final group and subgroub exists
+        And [API] Activity Instruction in status Draft exists
+        And The 'library/activity_instruction_templates/parent' page is opened
+        And Activity Instruction is searched for
         When The 'Delete' option is clicked from the three dot menu list
         Then The parent activity is no longer available
 
-    Scenario: User must be able to approve the drafted version of Parent Activity template
-        Given The 'library/activity_instruction_templates/parent' page is opened
-        Given The new activity is added in the library
+    Scenario: [Actions][Approve] User must be able to approve the Draft Activity Instruction template
+        Given [API] Activity in status Final with Final group and subgroub exists
+        And [API] Activity Instruction in status Draft exists
+        And The 'library/activity_instruction_templates/parent' page is opened
+        And Activity Instruction is searched for
         When The 'Approve' option is clicked from the three dot menu list
         Then The pop up displays 'Activity template is now in Final state'
-        And The activity template has status Final and version 1.0
+        And The item has status 'Final' and version '1.0'
 
-    Scenario: User must be able to edit indexing for final version of the templates
-        Given The 'library/activity_instruction_templates/parent' page is opened
-        Given The activity template exists with a status as 'Final'
+    Scenario: [Actions][Edit indexing] User must be able to edit indexing of Final Activity Instruction template
+        Given [API] Activity in status Final with Final group and subgroub exists
+        And [API] Activity Instruction in status Draft exists
+        And [API] Activity Instruction is approved
+        And The 'library/activity_instruction_templates/parent' page is opened
+        And Activity Instruction is searched for
         When The 'Edit indexing' option is clicked from the three dot menu list
         And The indexing is updated for the Activity Template
         And The 'Edit indexing' option is clicked from the three dot menu list
         Then The indexes in activity template are updated
 
-    Scenario: User must not be able to save the edited version of the draft Parent Activity template without filled in mandatory field 'Change description'
-        Given The 'library/activity_instruction_templates/parent' page is opened
-        Given The new activity is added in the library
+    Scenario: [Actions][Edit][Mandatory fields] User must not be able to save changes to Activity Instruction template without: Change description
+        Given [API] Activity in status Final with Final group and subgroub exists
+        And [API] Activity Instruction in status Draft exists
+        And The 'library/activity_instruction_templates/parent' page is opened
+        And Activity Instruction is searched for
         When The 'Edit' option is clicked from the three dot menu list
         When The created activity template is edited without change description provided
         Then The validation appears for activity change description field
         And The form is not closed
 
-    Scenario: User must be able to add a new version for the Parent Activity template with a status as 'Final'
-        Given The 'library/activity_instruction_templates/parent' page is opened
-        Given The new activity is added in the library
-        When The 'Approve' option is clicked from the three dot menu list
-        Given The activity template exists with a status as 'Final'
+    Scenario: [Actions][New version] User must be able to add a new version of the Final Activity Instruction template
+        Given [API] Activity in status Final with Final group and subgroub exists
+        And [API] Activity Instruction in status Draft exists
+        And [API] Activity Instruction is approved
+        And The 'library/activity_instruction_templates/parent' page is opened
+        And Activity Instruction is searched for
         When The 'New version' option is clicked from the three dot menu list
         Then The pop up displays 'New version created'
-        And The activity template has status Draft and version incremented by 0.1
+        And The item has status 'Draft' and version '1.1'
 
-    Scenario: User must be able to inactivate the Parent Activity template with a status as 'Final'
-        Given The 'library/activity_instruction_templates/parent' page is opened
-        Given The new activity is added in the library
-        When The 'Approve' option is clicked from the three dot menu list
-        Given The activity template exists with a status as 'Final'
+    Scenario: [Actions][Inactivate] User must be able to inactivate the Final Activity Instruction template
+        Given [API] Activity in status Final with Final group and subgroub exists
+        And [API] Activity Instruction in status Draft exists
+        And [API] Activity Instruction is approved
+        And The 'library/activity_instruction_templates/parent' page is opened
+        And Activity Instruction is searched for
         When The 'Inactivate' option is clicked from the three dot menu list
         Then The pop up displays 'Activity template retired'
-        And The activity template has status Retired and the same version as before
+        And The item has status 'Retired' and version '1.0'
 
-    Scenario: User must be able to reactivate the Parent Activity template with a status as 'Retired'
-        Given The 'library/activity_instruction_templates/parent' page is opened
-        Given The activity template exists with a status as 'Retired'
+    Scenario: [Actions][Reactivate] User must be able to reactivate the Retired Activity Instruction template
+        Given [API] Activity in status Final with Final group and subgroub exists
+        And [API] Activity Instruction in status Draft exists
+        And [API] Activity Instruction is approved
+        And [API] Activity Instruction is inactivated
+        And The 'library/activity_instruction_templates/parent' page is opened
+        And Activity Instruction is searched for
         When The 'Reactivate' option is clicked from the three dot menu list
         Then The pop up displays 'Activity template is now in Final state'
-        And The activity template has status Final and the same version as before
+        And The item has status 'Final' and version '1.0'
 
     @manual_test
     Scenario: User must be able to view the history for the Parent Activity template with a status as 'Retired'
-        Given The 'library/activity_instruction_templates/parent' page is opened
-        Given The activity template exists with a status as 'Retired'
+        Given [API] Activity in status Final with Final group and subgroub exists
+        And [API] Activity Instruction in status Draft exists
+        And [API] Activity Instruction is approved
+        And [API] Activity Instruction is inactivated
+        And The 'library/activity_instruction_templates/parent' page is opened
+        And Activity Instruction is searched for
         When The 'Reactivate' option is clicked from the three dot menu list
         Then The 'History for template' window is displayed with the following column list with values
             | Column | Header                 |
@@ -197,16 +223,17 @@ Feature: Library - Activity Templates
     @manual_test
     Scenario: User must be able to read change history of selected element
         Given The 'library/activity_instruction_templates/parent' page is opened
+        And The 'Show history' option is clicked from the three dot menu list
         When The user clicks on History for particular element
         Then The user is presented with history of changes for that element
         And The history contains timestamps and usernames
 
-    Scenario: User must be able to use table pagination
+    Scenario: [Table][Pagination] User must be able to use table pagination        
         Given The '/library/activity_instruction_templates/parent' page is opened
         When The user switches pages of the table
         Then The table page presents correct data
 
-    Scenario Outline: User must be able to filter the table by text fields
+    Scenario Outline: [Table][Filtering] User must be able to filter the table by text fields
         Given The 'library/activity_instruction_templates/parent' page is opened
         When The user filters field '<name>'
         Then The table is filtered correctly

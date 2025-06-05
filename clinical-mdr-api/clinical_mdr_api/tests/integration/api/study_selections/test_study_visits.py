@@ -2042,6 +2042,135 @@ def test_study_visit_editing_study_epoch(api_client):
     assert res["study_epoch_uid"] == study_epoch_2.uid
 
 
+def test_creating_special_visit(api_client):
+    study = TestUtils.create_study(project_number=project.project_number)
+    study_epoch = create_study_epoch("EpochSubType_0001", study_uid=study.uid)
+
+    # Global Anchor Visit
+    inputs = {
+        "study_epoch_uid": study_epoch.uid,
+        "visit_type_uid": "VisitType_0002",
+        "time_reference_uid": "VisitSubType_0005",
+        "time_value": 0,
+        "time_unit_uid": DAYUID,
+        "visit_class": "SINGLE_VISIT",
+        "visit_subclass": "SINGLE_VISIT",
+        "is_global_anchor_visit": True,
+    }
+    global_anchor_datadict = visits_basic_data.copy()
+    global_anchor_datadict.update(inputs)
+    response = api_client.post(
+        f"/studies/{study.uid}/study-visits",
+        json=global_anchor_datadict,
+    )
+    assert_response_status_code(response, 201)
+    global_anchor_visit_before_update = response.json()
+    global_anchor_visit = global_anchor_visit_before_update["uid"]
+    assert global_anchor_visit_before_update["is_soa_milestone"] is False
+
+    # Special Visit
+    special_visit_input = {
+        "visit_sublabel_reference": global_anchor_visit,
+        "study_epoch_uid": study_epoch.uid,
+        "visit_type_uid": "VisitType_0002",
+        "time_reference_uid": "VisitSubType_0005",
+        "time_unit_uid": DAYUID,
+        "visit_class": "SPECIAL_VISIT",
+        "visit_subclass": "SINGLE_VISIT",
+        "is_global_anchor_visit": False,
+    }
+    datadict = visits_basic_data
+    datadict.update(special_visit_input)
+    response = api_client.post(
+        f"/studies/{study.uid}/study-visits",
+        json=datadict,
+    )
+    assert_response_status_code(response, 201)
+    special_visit_v2a = response.json()
+    assert special_visit_v2a["visit_short_name"] == "V1A"
+
+    # edit global anchor visit
+    global_anchor_edit_datadict = {"uid": global_anchor_visit, "is_soa_milestone": True}
+    global_anchor_datadict.update(global_anchor_edit_datadict)
+    response = api_client.patch(
+        f"/studies/{study.uid}/study-visits/{global_anchor_visit}",
+        json=global_anchor_datadict,
+    )
+    assert_response_status_code(response, 200)
+    global_anchor_visit_after_update = response.json()
+    assert global_anchor_visit_after_update["is_soa_milestone"] is True
+
+    # Try to create another SpecialVisit which is not Discontinuation Visit
+    response = api_client.post(
+        f"/studies/{study.uid}/study-visits",
+        json=datadict,
+    )
+    assert_response_status_code(response, 201)
+    special_visit_v2b = response.json()
+    assert special_visit_v2b["visit_short_name"] == "V1B"
+
+    # Create early discontinuation special visit anchored to a visit that already has other special visits
+    # assert that ordering for early discontinuation will start from 'X'
+    datadict.update({"visit_type_uid": "VisitType_0005"})
+    response = api_client.post(
+        f"/studies/{study.uid}/study-visits",
+        json=datadict,
+    )
+    assert_response_status_code(response, 201)
+    res = response.json()
+    assert res["visit_short_name"] == "V1X"
+
+    second_study_epoch = create_study_epoch("EpochSubType_0002", study_uid=study.uid)
+    # Visit Day 10
+    inputs = {
+        "study_epoch_uid": second_study_epoch.uid,
+        "visit_type_uid": "VisitType_0002",
+        "time_reference_uid": "VisitSubType_0005",
+        "time_value": 10,
+        "time_unit_uid": DAYUID,
+        "visit_class": "SINGLE_VISIT",
+        "visit_subclass": "SINGLE_VISIT",
+        "is_global_anchor_visit": False,
+    }
+    datadict = visits_basic_data
+    datadict.update(inputs)
+    response = api_client.post(
+        f"/studies/{study.uid}/study-visits",
+        json=datadict,
+    )
+    assert_response_status_code(response, 201)
+    visit_day_10 = response.json()["uid"]
+
+    # Special Visit
+    special_visit_input = {
+        "visit_sublabel_reference": visit_day_10,
+        "study_epoch_uid": second_study_epoch.uid,
+        "visit_type_uid": "VisitType_0005",
+        "time_reference_uid": "VisitSubType_0005",
+        "time_unit_uid": DAYUID,
+        "visit_class": "SPECIAL_VISIT",
+        "visit_subclass": "SINGLE_VISIT",
+        "is_global_anchor_visit": False,
+    }
+    datadict = visits_basic_data
+    datadict.update(special_visit_input)
+    response = api_client.post(
+        f"/studies/{study.uid}/study-visits",
+        json=datadict,
+    )
+    assert_response_status_code(response, 201)
+    res = response.json()
+    assert res["visit_short_name"] == "V2X"
+
+    response = api_client.post(
+        f"/studies/{study.uid}/study-visits",
+        json=datadict,
+    )
+    assert_response_status_code(response, 201)
+    res = response.json()
+    assert res["visit_short_name"] == "V2Y"
+
+
 def test_editing_special_visit(api_client):
     study = TestUtils.create_study(project_number=project.project_number)
     study_epoch = create_study_epoch("EpochSubType_0001", study_uid=study.uid)

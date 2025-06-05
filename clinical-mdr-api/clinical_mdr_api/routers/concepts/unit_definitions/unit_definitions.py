@@ -1,8 +1,7 @@
 from datetime import datetime
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Body, Depends, Path, Query, Request, Response
-from fastapi import status as fast_api_status
+from fastapi import APIRouter, Body, Depends, Path, Query, Request
 from pydantic.types import Json
 
 from clinical_mdr_api.domains.versioned_object_aggregate import LibraryItemStatus
@@ -24,8 +23,6 @@ from common.models.error import ErrorResponse
 # Prefixed with "/concepts/unit-definitions"
 router = APIRouter()
 
-Service = UnitDefinitionService
-
 
 # Argument definitions
 UnitDefinitionUID = Path(description="The unique id of unit definition.")
@@ -40,10 +37,8 @@ Allowed parameters include : filter on fields, sort by field name with sort dire
 
 {_generic_descriptions.DATA_EXPORTS_HEADER}
 """,
-    response_model=CustomPage[UnitDefinitionModel],
     status_code=200,
     responses={
-        403: _generic_descriptions.ERROR_403,
         200: {
             "content": {
                 "text/csv": {
@@ -60,6 +55,8 @@ Allowed parameters include : filter on fields, sort by field name with sort dire
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {},
             }
         },
+        403: _generic_descriptions.ERROR_403,
+        404: _generic_descriptions.ERROR_404,
     },
 )
 @decorators.allow_exports(
@@ -96,7 +93,7 @@ Allowed parameters include : filter on fields, sort by field name with sort dire
 # pylint: disable=unused-argument
 def get_all(
     request: Request,  # request is actually required by the allow_exports decorator
-    service: Annotated[Service, Depends(Service)],
+    service: Annotated[UnitDefinitionService, Depends(UnitDefinitionService)],
     library_name: Annotated[str | None, Query()] = None,
     dimension: Annotated[
         str | None,
@@ -161,7 +158,6 @@ def get_all(
     summary="Returns possible values from the database for a given header",
     description="""Allowed parameters include : field name for which to get possible
     values, search string to provide filtering for the field name, additional filters to apply on other fields""",
-    response_model=list[Any],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -172,7 +168,7 @@ def get_all(
     },
 )
 def get_distinct_values_for_header(
-    service: Annotated[Service, Depends(Service)],
+    service: Annotated[UnitDefinitionService, Depends(UnitDefinitionService)],
     field_name: Annotated[
         str, Query(description=_generic_descriptions.HEADER_FIELD_NAME)
     ],
@@ -205,9 +201,9 @@ def get_distinct_values_for_header(
     page_size: Annotated[
         int | None, Query(description=_generic_descriptions.HEADER_PAGE_SIZE)
     ] = config.DEFAULT_HEADER_PAGE_SIZE,
-):
+) -> list[Any]:
     return service.get_distinct_values_for_header(
-        library_name=library_name,
+        library=library_name,
         dimension=dimension,
         subset=subset,
         field_name=field_name,
@@ -224,7 +220,6 @@ def get_distinct_values_for_header(
     summary="Returns the latest/newest version of a specific Unit definition identified by 'unit_definition_uid'.",
     description="""If multiple request query parameters are used, then they need to
     match all at the same time (they are combined with the AND operation).""",
-    response_model=UnitDefinitionModel,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -236,7 +231,7 @@ def get_distinct_values_for_header(
     },
 )
 def get_by_uid(
-    service: Annotated[Service, Depends(Service)],
+    service: Annotated[UnitDefinitionService, Depends(UnitDefinitionService)],
     unit_definition_uid: Annotated[str, UnitDefinitionUID],
     at_specified_date_time: Annotated[
         datetime | None,
@@ -271,7 +266,7 @@ def get_by_uid(
         unit_definition_uid,
         version=version,
         status=status,
-        at_specified_datetime=at_specified_date_time,
+        at_specific_date=at_specified_date_time,
     )
 
 
@@ -284,7 +279,6 @@ The returned versions are ordered by `start_date` descending (newest entries fir
 
 {_generic_descriptions.DATA_EXPORTS_HEADER}
 """,
-    response_model=list[UnitDefinitionModel],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -344,16 +338,15 @@ The returned versions are ordered by `start_date` descending (newest entries fir
 # pylint: disable=unused-argument
 def get_versions(
     request: Request,  # request is actually required by the allow_exports decorator
-    service: Annotated[Service, Depends(Service)],
+    service: Annotated[UnitDefinitionService, Depends(UnitDefinitionService)],
     unit_definition_uid: Annotated[str, UnitDefinitionUID],
 ) -> list[UnitDefinitionModel]:
-    return service.get_versions(unit_definition_uid)
+    return service.get_version_history(unit_definition_uid)
 
 
 @router.post(
     "",
     dependencies=[rbac.LIBRARY_WRITE],
-    response_model=UnitDefinitionModel,
     summary="Creates a new unit definition in 'Draft' status.",
     description="""This request is only valid if the unit definition
 * belongs to a library that allows creating (the 'is_editable' property of the library needs to be true).
@@ -383,12 +376,12 @@ If the request succeeds:
     },
 )
 def post(
-    service: Annotated[Service, Depends(Service)],
+    service: Annotated[UnitDefinitionService, Depends(UnitDefinitionService)],
     unit_definition_post_input: Annotated[
         UnitDefinitionPostInput, Body(description="The concept that shall be created.")
     ],
 ) -> UnitDefinitionModel:
-    return service.post(unit_definition_post_input)  # type: ignore
+    return service.create(unit_definition_post_input)
 
 
 @router.patch(
@@ -404,7 +397,6 @@ If the request succeeds:
 * The status will remain in 'Draft'.
 
 """,
-    response_model=UnitDefinitionModel,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -423,7 +415,7 @@ If the request succeeds:
     },
 )
 def patch(
-    service: Annotated[Service, Depends(Service)],
+    service: Annotated[UnitDefinitionService, Depends(UnitDefinitionService)],
     unit_definition_uid: Annotated[str, UnitDefinitionUID],
     patch_input: Annotated[
         UnitDefinitionPatchInput,
@@ -432,7 +424,7 @@ def patch(
         ),
     ],
 ) -> UnitDefinitionModel:
-    return service.patch(unit_definition_uid, patch_input)
+    return service.edit_draft(unit_definition_uid, patch_input)
 
 
 @router.post(
@@ -449,7 +441,6 @@ If the request succeeds:
 * The 'version' property of the new version will be automatically set to the version of the latest 'Final' or 'Retired' version increased by +0.1.
 
 """,
-    response_model=UnitDefinitionModel,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -467,10 +458,10 @@ If the request succeeds:
     },
 )
 def new_version(
-    service: Annotated[Service, Depends(Service)],
+    service: Annotated[UnitDefinitionService, Depends(UnitDefinitionService)],
     unit_definition_uid: Annotated[str, UnitDefinitionUID],
 ) -> UnitDefinitionModel:
-    return service.new_version(unit_definition_uid)
+    return service.create_new_version(unit_definition_uid)
 
 
 @router.post(
@@ -486,7 +477,6 @@ If the request succeeds:
 * The 'change_description' property will be set automatically.
 * The 'version' property will be increased automatically to the next major version.
     """,
-    response_model=UnitDefinitionModel,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -504,7 +494,7 @@ If the request succeeds:
     },
 )
 def approve(
-    service: Annotated[Service, Depends(Service)],
+    service: Annotated[UnitDefinitionService, Depends(UnitDefinitionService)],
     unit_definition_uid: Annotated[str, UnitDefinitionUID],
 ) -> UnitDefinitionModel:
     return service.approve(unit_definition_uid)
@@ -522,7 +512,6 @@ If the request succeeds:
 * The 'change_description' property will be set automatically.
 * The 'version' property will remain the same as before.
     """,
-    response_model=UnitDefinitionModel,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -539,10 +528,10 @@ If the request succeeds:
     },
 )
 def inactivate(
-    service: Annotated[Service, Depends(Service)],
+    service: Annotated[UnitDefinitionService, Depends(UnitDefinitionService)],
     unit_definition_uid: Annotated[str, UnitDefinitionUID],
 ) -> UnitDefinitionModel:
-    return service.inactivate(unit_definition_uid)
+    return service.inactivate_final(unit_definition_uid)
 
 
 @router.post(
@@ -557,7 +546,6 @@ If the request succeeds:
 * The 'change_description' property will be set automatically.
 * The 'version' property will remain the same as before.
     """,
-    response_model=UnitDefinitionModel,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -574,10 +562,10 @@ If the request succeeds:
     },
 )
 def reactivate(
-    service: Annotated[Service, Depends(Service)],
+    service: Annotated[UnitDefinitionService, Depends(UnitDefinitionService)],
     unit_definition_uid: Annotated[str, UnitDefinitionUID],
 ) -> UnitDefinitionModel:
-    return service.reactivate(unit_definition_uid)
+    return service.reactivate_retired(unit_definition_uid)
 
 
 @router.delete(
@@ -588,7 +576,6 @@ def reactivate(
 * the unit definition is in 'Draft' status and
 * the unit definition has never been in 'Final' status and
 * the unit definition belongs to a library that allows deleting (the 'is_editable' property of the library needs to be true).""",
-    response_model=None,
     status_code=204,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -607,8 +594,7 @@ def reactivate(
     },
 )
 def delete(
-    service: Annotated[Service, Depends(Service)],
+    service: Annotated[UnitDefinitionService, Depends(UnitDefinitionService)],
     unit_definition_uid: Annotated[str, UnitDefinitionUID],
 ) -> None:
-    service.delete(unit_definition_uid)
-    return Response(status_code=fast_api_status.HTTP_204_NO_CONTENT)
+    service.soft_delete(unit_definition_uid)

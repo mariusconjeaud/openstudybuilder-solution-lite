@@ -1,8 +1,8 @@
-Cypress.Commands.add('createCrfTemplate', () => {
+Cypress.Commands.add('createCrfTemplate', (name) => {
     cy.request({
         method: 'POST',
         url: Cypress.env('API') + '/concepts/odms/study-events',
-        body: '{"name":"AutomatedTest"}'
+        body: `{"name":"${name}"}`
     })
     cy.reload()
 })
@@ -25,11 +25,11 @@ Cypress.Commands.add('createCrfItemGroup', (oid) => {
     cy.reload()
 })
 
-Cypress.Commands.add('createCrfItem', (oid) => {
+Cypress.Commands.add('createCrfItem', (name, oid) => {
     cy.request({
         method: 'POST',
         url: Cypress.env('API') + '/concepts/odms/items',
-        body: '{"oid":"' + oid + '","alias_uids":[],"locked":"no","name":"AutomatedTestsItem","datatype":"INTEGER","descriptions":[{"library_name":"Sponsor","language":"ENG","name":"AutomatedTestsItem"}],"library_name":"Sponsor","codelist_uid":null,"unitDefinitions":[],"terms":[]}'
+        body: `{"oid":"${oid}","alias_uids":[],"locked":"no","name":"${name}","datatype":"INTEGER","descriptions":[{"library_name":"Sponsor","language":"ENG","name":"${name}"}],"library_name":"Sponsor","codelist_uid":null,"unitDefinitions":[],"terms":[]}`
     })
     cy.reload()
 })

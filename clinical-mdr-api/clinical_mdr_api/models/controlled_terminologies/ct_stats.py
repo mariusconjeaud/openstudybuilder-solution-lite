@@ -10,13 +10,13 @@ from clinical_mdr_api.models.utils import BaseModel
 
 
 class CodelistCount(BaseModel):
-    library_name: str
-    count: int
+    library_name: Annotated[str, Field()]
+    count: Annotated[int, Field()]
 
 
 class TermCount(BaseModel):
-    library_name: str
-    count: int
+    library_name: Annotated[str, Field()]
+    count: Annotated[int, Field()]
 
 
 class CountTypeEnum(str, Enum):
@@ -26,13 +26,13 @@ class CountTypeEnum(str, Enum):
 
 
 class CountByType(BaseModel):
-    type: CountTypeEnum
-    count: int
+    type: Annotated[CountTypeEnum, Field()]
+    count: Annotated[int, Field()]
 
 
 class CountByTypeByYear(BaseModel):
-    year: int
-    counts: list[CountByType]
+    year: Annotated[int, Field()]
+    counts: Annotated[list[CountByType], Field()]
 
 
 class CTStats(BaseModel):

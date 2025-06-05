@@ -1,6 +1,6 @@
 @REQ_ID:2383812
 
-Feature: Library - Manage project
+Feature: Library - Admin Definitions - Projects
 
     Background: A Clinical Programme is existed
         Given The user is logged in
@@ -10,34 +10,53 @@ Feature: Library - Manage project
         When The first column is selected from Select Columns option for table with actions
         Then The table contain only selected column and actions column
 
-    Scenario: User must be able to create a new project
+    Scenario: [Create][Postive case] User must be able to create a new project
+        Given The '/library/clinical_programmes' page is opened
         Given A Clinical Programme is created
         Given The '/library/projects' page is opened
         When Click on the + button to create a new project
-        Then The pop-up window is opened to indicate to add a new project
         When Select an existed clinical programme
         And Input a project name, project number and description
-        And Click on SAVE button
+        And 'save' button is clicked on form
         Then The pop up displays 'Project added'
-        And The newly created project is shown in the table
+        And Test project is found
 
-    Scenario: User must be able to edit the none study-linked project
+    Scenario: [Actions][Edit] User must be able to edit the none study-linked project
+        Given The '/library/clinical_programmes' page is opened
         Given A Clinical Programme is created
         Given The '/library/projects' page is opened
+        And Click on the + button to create a new project
         And A test project exists and is not linked to any study
-        When Click on 'Edit' option from the three dot menu beside this test project
-        Then The pop-up window is opened to indicate to update the project
+        And Test project is found
+        When The 'Edit' option is clicked from the three dot menu list
         When Update the project name to a new one
-        And Click on SAVE button
+        And 'save' button is clicked on form
         Then The pop up displays 'Project updated'
-        And The updated project is shown in the table
+        And Test project is found
 
-    Scenario: User must be able to delete the none study-linked project
+    Scenario: [Actions][Delete] User must be able to delete the none study-linked project
+        Given The '/library/clinical_programmes' page is opened
         Given A Clinical Programme is created
         Given The '/library/projects' page is opened
+        And Click on the + button to create a new project
         And A test project exists and is not linked to any study
-        When Click on 'Delete' option from the three dot menu beside this test project
-        Then The pop-up window is opened to indicate this project will be deleted
-        When Click on CONTINUE button
+        And Test project is found
+        When The 'Delete' option is clicked from the three dot menu list
+        When The continue is clicked in confirmation popup
         Then The pop up displays 'Project deleted'
-        And The deleted project is not shown anymore in the table
+        And Test project is no longer available
+
+    Scenario: [Actions][Edit][Negative case] User must Not be able to edit a study-linked project
+        Given The '/library/projects' page is opened
+        And Test project with linked study is found
+        When The 'Edit' option is clicked from the three dot menu list
+        When User tries to update project name
+        And 'save' button is clicked on form
+        Then The error message displays that this project cannot be updated due to linked studies
+
+    Scenario: [Actions][Delete][Negative case]User must Not be able to delete a study-linked project
+        Given The '/library/projects' page is opened
+        And Test project with linked study is found
+        When The 'Delete' option is clicked from the three dot menu list
+        When The continue is clicked in confirmation popup
+        Then The error message shows that this project cannot be deleted due to linked studies

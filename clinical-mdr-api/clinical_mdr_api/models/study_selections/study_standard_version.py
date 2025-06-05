@@ -213,4 +213,4 @@ class StudyStandardVersion(BaseModel):
 
 
 class StudyStandardVersionVersion(StudyStandardVersion):
-    changes: list[str]
+    changes: Annotated[list[str], Field()]

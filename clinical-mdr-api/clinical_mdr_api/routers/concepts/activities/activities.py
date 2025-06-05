@@ -2,7 +2,7 @@
 
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Body, Path, Query, Response, status
+from fastapi import APIRouter, Body, Path, Query
 from pydantic.types import Json
 from starlette.requests import Request
 
@@ -13,8 +13,12 @@ from clinical_mdr_api.models.concepts.activities.activity import (
     ActivityFromRequestInput,
     ActivityOverview,
     ActivityRequestRejectInput,
+    ActivityVersionDetail,
 )
-from clinical_mdr_api.models.utils import CustomPage
+from clinical_mdr_api.models.concepts.activities.activity_instance import (
+    ActivityInstanceDetail,
+)
+from clinical_mdr_api.models.utils import CustomPage, GenericFilteringReturn
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.routers import _generic_descriptions, decorators
 from clinical_mdr_api.routers.responses import YAMLResponse
@@ -50,7 +54,6 @@ Possible errors:
 
 {_generic_descriptions.DATA_EXPORTS_HEADER}
 """,
-    response_model=CustomPage[Activity],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -153,7 +156,7 @@ def get_activities(
     total_count: Annotated[
         bool | None, Query(description=_generic_descriptions.TOTAL_COUNT)
     ] = False,
-):
+) -> CustomPage[Activity]:
     activity_service = ActivityService()
     results = activity_service.get_all_concepts(
         library=library_name,
@@ -195,7 +198,6 @@ Possible errors:
 
 {_generic_descriptions.DATA_EXPORTS_HEADER}
 """,
-    response_model=CustomPage[Activity],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -285,7 +287,7 @@ def get_activities_versions(
     total_count: Annotated[
         bool | None, Query(description=_generic_descriptions.TOTAL_COUNT)
     ] = False,
-):
+) -> CustomPage[Activity]:
     activity_service = ActivityService()
     results = activity_service.get_all_concept_versions(
         library=library_name,
@@ -312,7 +314,6 @@ def get_activities_versions(
     summary="Returns possible values from the database for a given header",
     description="Allowed parameters include : field name for which to get possible values, "
     "search string to provide filtering for the field name, additional filters to apply on other fields",
-    response_model=list[Any],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -364,7 +365,7 @@ def get_distinct_values_for_header(
     page_size: Annotated[
         int | None, Query(description=_generic_descriptions.HEADER_PAGE_SIZE)
     ] = config.DEFAULT_HEADER_PAGE_SIZE,
-):
+) -> list[Any]:
     activity_service = ActivityService()
     return activity_service.get_distinct_values_for_header(
         library=library_name,
@@ -397,9 +398,8 @@ State after:
  - No change
 
 Possible errors:
- - Invalid uid, at_specified_date_time, status or version.
+ - Invalid uid or at_specified_date_time, status or version.
  """,
-    response_model=Activity,
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -407,7 +407,7 @@ Possible errors:
         404: _generic_descriptions.ERROR_404,
     },
 )
-def get_activity(activity_uid: Annotated[str, ActivityUID]):
+def get_activity(activity_uid: Annotated[str, ActivityUID]) -> Activity:
     activity_service = ActivityService()
     return activity_service.get_by_uid(uid=activity_uid)
 
@@ -433,7 +433,6 @@ State after:
 Possible errors:
  - Invalid uid.
  """,
-    response_model=ActivityOverview,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -449,6 +448,7 @@ Possible errors:
             "activity_instance",
         ],
         "formats": [
+            "text/csv",
             "application/x-yaml",
         ],
     }
@@ -461,7 +461,7 @@ def get_activity_overview(
         str | None,
         Query(description="Select specific version, omit to view latest version"),
     ] = None,
-):
+) -> ActivityOverview:
     activity_service = ActivityService()
     return activity_service.get_activity_overview(
         activity_uid=activity_uid, version=version
@@ -507,6 +507,161 @@ def get_cosmos_activity_overview(
 
 
 @router.get(
+    "/activities/{activity_uid}/versions/{version}/groupings",
+    dependencies=[rbac.LIBRARY_READ],
+    summary="Get activity groupings for a specific version of an activity",
+    description="""
+State before:
+ - An activity with uid and version must exist.
+
+Business logic:
+ - Return activity groupings information for the activity groupings table, including related subgroups, groups, and instances
+   at the time the version was created.
+
+State after:
+ - No change
+
+Possible errors:
+ - Invalid uid or version.
+ """,
+    response_model=CustomPage[ActivityVersionDetail],
+    response_model_exclude_unset=True,
+    status_code=200,
+    responses={
+        403: _generic_descriptions.ERROR_403,
+        404: _generic_descriptions.ERROR_404,
+    },
+)
+def get_specific_activity_version_groupings(
+    activity_uid: Annotated[str, ActivityUID],
+    version: Annotated[
+        str, Path(description="The version of the activity in format 'x.y'")
+    ],
+    page_number: Annotated[
+        int | None, Query(ge=1, description=_generic_descriptions.PAGE_NUMBER)
+    ] = config.DEFAULT_PAGE_NUMBER,
+    page_size: Annotated[
+        int | None,
+        Query(
+            ge=0,
+            le=config.MAX_PAGE_SIZE,
+            description=_generic_descriptions.PAGE_SIZE,
+        ),
+    ] = config.DEFAULT_PAGE_SIZE,
+    total_count: Annotated[
+        bool | None, Query(description=_generic_descriptions.TOTAL_COUNT)
+    ] = False,
+):
+    activity_service = ActivityService()
+    results = activity_service.get_specific_activity_version_groupings(
+        activity_uid=activity_uid,
+        version=version,
+        page_number=page_number,
+        page_size=page_size,
+        total_count=total_count,
+    )
+
+    # Consistently handle response whether it's paginated or single item
+    items = results.items if isinstance(results, GenericFilteringReturn) else [results]
+    total = results.total if isinstance(results, GenericFilteringReturn) else 1
+
+    return CustomPage.create(items=items, total=total, page=page_number, size=page_size)
+
+
+@router.get(
+    "/activities/{activity_uid}/versions/{version}/instances",
+    dependencies=[rbac.LIBRARY_READ],
+    summary="Get activity instances relevant to a specific activity version",
+    description=f"""
+    Retrieve a paginated list of activity instances that were relevant during
+    the time validity window of a *specific* version of an activity.
+
+    For each relevant instance, the latest version active during the activity's
+    version window is returned, along with all its older versions in the `children` array.
+
+    Args:
+        activity_uid: The unique ID of the activity.
+        version: The specific version of the activity (e.g., "16.0").
+        page_number: The page number for pagination (default: 1).
+        page_size: The number of items per page (default: 10).
+        roots_only: If true, returns only the highest version of each unique activity instance.
+                   If false, returns all versions of all activity instances.
+
+    Returns:
+        A paginated response containing activity instances relevant to the specified
+        activity version's timeframe.
+    {_generic_descriptions.DATA_EXPORTS_HEADER}
+    """,
+    response_model_exclude_unset=True,
+    status_code=200,
+    responses={
+        403: _generic_descriptions.ERROR_403,
+        404: _generic_descriptions.ERROR_404,
+    },
+)
+@decorators.allow_exports(
+    {
+        "defaults": [
+            "uid",
+            "name",
+            "version",
+            "status",
+            "definition",
+        ],
+        "formats": [
+            "text/csv",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "text/xml",
+            "application/json",
+        ],
+    }
+)
+# pylint: disable=unused-argument
+def get_instances_for_specific_activity_version(
+    request: Request,  # request is actually required by the allow_exports decorator
+    activity_uid: Annotated[str, ActivityUID],
+    version: Annotated[
+        str, Path(description="The specific version of the activity (e.g., '16.0')")
+    ],
+    page_number: Annotated[
+        int | None,
+        Query(
+            description=_generic_descriptions.PAGE_NUMBER,
+        ),
+    ] = config.DEFAULT_PAGE_NUMBER,
+    page_size: Annotated[
+        int | None,
+        Query(
+            description=_generic_descriptions.PAGE_SIZE,
+        ),
+    ] = config.DEFAULT_PAGE_SIZE,
+) -> GenericFilteringReturn[ActivityInstanceDetail]:
+    """
+    Get activity instances relevant to a specific activity version's timeframe.
+
+    Args:
+        activity_uid: The unique ID of the activity.
+        version: The specific version of the activity.
+        page_number: The page number for pagination.
+        page_size: The number of items per page.
+
+    Returns:
+        A paginated response containing relevant activity instances.
+    """
+    activity_service = ActivityService()
+    try:
+        result = activity_service.get_activity_instances_for_version(
+            activity_uid=activity_uid,
+            version=version,
+            page_number=page_number,
+            page_size=page_size,
+        )
+        return result
+    except Exception as e:
+        raise e
+
+
+@router.get(
     "/activities/{activity_uid}/versions",
     dependencies=[rbac.LIBRARY_READ],
     summary="List version history for activities",
@@ -524,7 +679,6 @@ State after:
 Possible errors:
  - Invalid uid.
     """,
-    response_model=list[Activity],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -535,7 +689,7 @@ Possible errors:
         },
     },
 )
-def get_versions(activity_uid: Annotated[str, ActivityUID]):
+def get_versions(activity_uid: Annotated[str, ActivityUID]) -> list[Activity]:
     activity_service = ActivityService()
     return activity_service.get_version_history(uid=activity_uid)
 
@@ -564,7 +718,6 @@ State after:
 Possible errors:
  - Invalid library or control terminology uid's specified.
 """,
-    response_model=Activity,
     response_model_exclude_unset=True,
     status_code=201,
     responses={
@@ -581,7 +734,7 @@ Possible errors:
 )
 def create(
     activity_create_input: Annotated[ActivityCreateInput, Body()],
-):
+) -> Activity:
     activity_service = ActivityService()
     return activity_service.create(concept_input=activity_create_input)
 
@@ -610,7 +763,6 @@ State after:
 Possible errors:
  - Invalid library or control terminology uid's specified.
 """,
-    response_model=Activity,
     response_model_exclude_unset=True,
     status_code=201,
     responses={
@@ -627,7 +779,7 @@ Possible errors:
 )
 def create_sponsor_activity_from_activity_request(
     activity_create_input: Annotated[ActivityFromRequestInput, Body()],
-):
+) -> Activity:
     activity_service = ActivityService()
     return activity_service.replace_requested_activity_with_sponsor(
         sponsor_activity_input=activity_create_input
@@ -652,7 +804,6 @@ State after:
 Possible errors:
  - Non existing ActivityRequest specified or specified ActivityRequest is not in Final state..
 """,
-    response_model=Activity,
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -670,7 +821,7 @@ Possible errors:
 def reject_activity_request(
     activity_uid: Annotated[str, ActivityUID],
     activity_request_rejection_input: Annotated[ActivityRequestRejectInput, Body()],
-):
+) -> Activity:
     activity_service = ActivityService()
     return activity_service.reject_activity_request(
         activity_request_uid=activity_uid,
@@ -678,7 +829,7 @@ def reject_activity_request(
     )
 
 
-@router.patch(
+@router.put(
     "/activities/{activity_uid}",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Update activity",
@@ -700,7 +851,6 @@ Possible errors:
  - Invalid uid.
 
 """,
-    response_model=Activity,
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -722,10 +872,10 @@ Possible errors:
 def edit(
     activity_uid: Annotated[str, ActivityUID],
     activity_edit_input: Annotated[ActivityEditInput, Body()],
-):
+) -> Activity:
     activity_service = ActivityService()
     return activity_service.edit_draft(
-        uid=activity_uid, concept_edit_input=activity_edit_input
+        uid=activity_uid, concept_edit_input=activity_edit_input, patch_mode=False
     )
 
 
@@ -747,7 +897,6 @@ State after:
 Possible errors:
  - Invalid uid or status not Final.
 """,
-    response_model=Activity,
     response_model_exclude_unset=True,
     status_code=201,
     responses={
@@ -766,7 +915,7 @@ Possible errors:
         },
     },
 )
-def new_version(activity_uid: Annotated[str, ActivityUID]):
+def new_version(activity_uid: Annotated[str, ActivityUID]) -> Activity:
     activity_service = ActivityService()
     return activity_service.create_new_version(uid=activity_uid)
 
@@ -794,7 +943,6 @@ State after:
 Possible errors:
  - Invalid uid or status not Draft.
     """,
-    response_model=Activity,
     response_model_exclude_unset=True,
     status_code=201,
     responses={
@@ -817,7 +965,7 @@ def approve(
     cascade_edit_and_approve: Annotated[
         bool | None, Query(description="Approve all linked activity instances")
     ] = False,
-):
+) -> Activity:
     activity_service = ActivityService()
     return activity_service.approve(
         uid=activity_uid, cascade_edit_and_approve=cascade_edit_and_approve
@@ -845,7 +993,6 @@ State after:
 Possible errors:
  - Invalid uid or status not Final.
     """,
-    response_model=Activity,
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -862,7 +1009,7 @@ Possible errors:
         },
     },
 )
-def inactivate(activity_uid: Annotated[str, ActivityUID]):
+def inactivate(activity_uid: Annotated[str, ActivityUID]) -> Activity:
     activity_service = ActivityService()
     return activity_service.inactivate_final(uid=activity_uid)
 
@@ -888,7 +1035,6 @@ State after:
 Possible errors:
  - Invalid uid or status not Retired.
     """,
-    response_model=Activity,
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -905,7 +1051,7 @@ Possible errors:
         },
     },
 )
-def reactivate(activity_uid: Annotated[str, ActivityUID]):
+def reactivate(activity_uid: Annotated[str, ActivityUID]) -> Activity:
     activity_service = ActivityService()
     return activity_service.reactivate_retired(uid=activity_uid)
 
@@ -929,7 +1075,6 @@ State after:
 Possible errors:
  - Invalid uid or status not Draft or exist in version 1.0 or above (previously been approved) or not in an editable library.
     """,
-    response_model=None,
     status_code=204,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -950,4 +1095,3 @@ Possible errors:
 def delete_activity(activity_uid: Annotated[str, ActivityUID]):
     activity_service = ActivityService()
     activity_service.soft_delete(uid=activity_uid)
-    return Response(status_code=status.HTTP_204_NO_CONTENT)

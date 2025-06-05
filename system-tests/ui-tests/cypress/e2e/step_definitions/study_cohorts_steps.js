@@ -1,8 +1,13 @@
 const { When, Then } = require("@badeball/cypress-cucumber-preprocessor");
 
+let cohortName
 let cohort_code = 50
+
+When('The Study Cohort is found', () => cy.searchAndCheckPresence(cohortName, true))
+
 When('The form for new study cohort is filled and saved', () => {
   cy.fixture('studyCohort').then((cohort) => {
+    cohortName = cohort.name
     cy.clickButton('add-study-cohort')
     cy.fillInput('study-cohort-name', cohort.name)
     cy.fillInput('study-cohort-short-name', cohort.short_name)
@@ -12,8 +17,10 @@ When('The form for new study cohort is filled and saved', () => {
     cy.clickButton('save-button')
   })
 })
+
 When('The form for new study cohort is filled', () => {
   cy.fixture('studyCohort').then((cohort) => {
+    cohortName = cohort.name
     cy.clickButton('add-study-cohort')
     cy.fillInput('study-cohort-name', cohort.name)
     cy.fillInput('study-cohort-short-name', cohort.short_name)
@@ -22,7 +29,6 @@ When('The form for new study cohort is filled', () => {
     cy.fillInput('study-cohort-description', cohort.description)
   })
 })
-
 
 Then('The study cohort is visible within the table', () => {
   cy.fixture('studyCohort').then((cohort) => {
@@ -35,7 +41,7 @@ Then('The study cohort is visible within the table', () => {
 
 When('The study cohort is edited', () => {
   cy.fixture('studyCohort').then((cohort) => {
-    cy.rowActionsByValue(cohort.name, 'Edit')
+    cohortName = cohort.edit_name
     cy.fillInput('study-cohort-name', cohort.edit_name)
     cy.fillInput('study-cohort-short-name', cohort.edit_short_name)
     cy.fillInput('study-cohort-description', cohort.edit_description)
@@ -43,11 +49,6 @@ When('The study cohort is edited', () => {
   cy.clickButton('save-button')
   cy.waitForFormSave()
   cy.checkSnackbarMessage('Cohort updated')
-})
-
-When('The study cohort is edit form is opened', () => {
-    cy.wait(1500)
-    cy.tableRowActions(0, 'Edit')
 })
 
 Then('The fields of Arm and Branch arms in the cohort edit form are active for editing', () => {

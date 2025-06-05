@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import Body, Response, status
+from fastapi import Body
 
 from clinical_mdr_api.models.study_selections.study_selection import (
     StudyDesignCell,
@@ -9,7 +9,6 @@ from clinical_mdr_api.models.study_selections.study_selection import (
     StudyDesignCellCreateInput,
     StudyDesignCellEditInput,
     StudyDesignCellVersion,
-    StudySelectionActivity,
 )
 from clinical_mdr_api.routers import _generic_descriptions, decorators
 from clinical_mdr_api.routers import study_router as router
@@ -23,7 +22,6 @@ from common.models.error import ErrorResponse
     "/studies/{study_uid}/study-design-cells",
     dependencies=[rbac.STUDY_READ],
     summary="List all study design cells currently defined for the study",
-    response_model=list[StudyDesignCell],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -51,7 +49,6 @@ def get_all_design_cells(
     "/studies/{study_uid}/study-design-cells",
     dependencies=[rbac.STUDY_WRITE],
     summary="Add a study design cell to a study",
-    response_model=StudyDesignCell,
     response_model_exclude_unset=True,
     status_code=201,
     responses={
@@ -105,9 +102,8 @@ def post_new_design_cell_create(
         -Transition_rule
             -no dependencies, is just a string field
      """,
-    response_model=None,
     response_model_exclude_unset=True,
-    status_code=204,
+    status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
         200: {
@@ -128,20 +124,18 @@ def edit_design_cell(
         StudyDesignCellEditInput,
         Body(description="Related parameters of the selection that shall be updated."),
     ],
-) -> StudySelectionActivity:
+) -> StudyDesignCell:
     service = StudyDesignCellService()
-    service.patch(
+    return service.patch(
         study_uid=study_uid,
         design_cell_update_input=selection,
     )
-    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.delete(
     "/studies/{study_uid}/study-design-cells/{study_design_cell_uid}",
     dependencies=[rbac.STUDY_WRITE],
     summary="Delete a study design cell",
-    response_model=None,
     status_code=204,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -159,7 +153,6 @@ def delete_design_cell(
 ):
     service = StudyDesignCellService()
     service.delete(study_uid=study_uid, design_cell_uid=study_design_cell_uid)
-    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.get(
@@ -174,7 +167,6 @@ The following values should be returned for all study design cells:
 - activity
 - order
     """,
-    response_model=list[StudyDesignCellVersion],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -193,7 +185,6 @@ def get_all_design_cells_audit_trail(
     "/studies/{study_uid}/study-design-cells/{study_design_cell_uid}/audit-trail/",
     dependencies=[rbac.STUDY_READ],
     summary="List audit trail related to definition of a specific study design cell.",
-    response_model=list[StudyDesignCellVersion],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -207,7 +198,7 @@ def get_all_design_cells_audit_trail(
 def get_specific_schedule_audit_trail(
     study_uid: Annotated[str, utils.studyUID],
     study_design_cell_uid: Annotated[str, utils.study_design_cell_uid],
-) -> StudyDesignCellVersion:
+) -> list[StudyDesignCellVersion]:
     service = StudyDesignCellService()
     return service.get_specific_selection_audit_trail(
         study_uid=study_uid, design_cell_uid=study_design_cell_uid
@@ -218,7 +209,6 @@ def get_specific_schedule_audit_trail(
     "/studies/{study_uid}/study-design-cells/batch",
     dependencies=[rbac.STUDY_WRITE],
     summary="Batch operations (create, delete) for study design cells",
-    response_model=list[StudyDesignCellBatchOutput],
     status_code=207,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -259,7 +249,6 @@ def design_cell_batch_operations(
     Possible errors:
     - Invalid study-uid.
 """,
-    response_model=list[StudyDesignCell],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -308,7 +297,6 @@ def get_all_selected_design_cells_connected_arm(
     Possible errors:
     - Invalid study-uid.
 """,
-    response_model=list[StudyDesignCell],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -353,7 +341,6 @@ def get_all_selected_design_cells_connected_branch_arm(
     Possible errors:
     - Invalid study-uid.
 """,
-    response_model=list[StudyDesignCell],
     response_model_exclude_unset=True,
     status_code=200,
     responses={

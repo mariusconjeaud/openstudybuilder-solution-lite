@@ -3,11 +3,11 @@ const { Given, When, Then } = require('@badeball/cypress-cucumber-preprocessor')
 let defaultObjectiveName, apiObjectiveName, objectiveSequenceNumber
 let indicationSelected, categorySelected
 
-When('The objective template is found', () => cy.searchFor(apiObjectiveName))
+When('The objective template is found', () => cy.searchAndCheckPresence(apiObjectiveName, true))
 
-When('The objective template is not created', () => cy.confirmItemNotAvailable(defaultObjectiveName))
+When('The objective template is not created', () => cy.searchAndCheckPresence(defaultObjectiveName, false))
 
-When('The objective template is not updated', () => cy.confirmItemNotAvailable(defaultObjectiveName))
+When('The objective template is not updated', () => cy.searchAndCheckPresence(defaultObjectiveName, false))
 
 Then('The objective template name is displayed in the table', () => cy.checkRowByIndex(0, 'Parent template', defaultObjectiveName))
 
@@ -79,7 +79,7 @@ Then("The validation appears for Objective Category field", () => cy.checkIfVali
 
 Then('The validation appears for Template name', () => cy.checkIfValidationAppears('template-text-field'))
 
-Then('The objective is no longer available', () => cy.confirmItemNotAvailable(apiObjectiveName))
+Then('The objective is no longer available', () => cy.searchAndCheckPresence(apiObjectiveName, false))
 
 When('The template is edited witout providing mandatory change description', () => {
   cy.wait(500)
@@ -148,7 +148,7 @@ function startTemplateCreation(name, clickAddButton = true) {
 
 function saveAndSearch(name) {
   cy.clickFormActionButton('save')
-  cy.searchFor(name)
+  cy.searchAndCheckPresence(name, true)
 }
 
 function changeIndexes(clear) {

@@ -2,7 +2,7 @@
 
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Body, Path, Query, Response, status
+from fastapi import APIRouter, Body, Path, Query
 from pydantic.types import Json
 from starlette.requests import Request
 
@@ -50,7 +50,6 @@ Possible errors:
 
 {_generic_descriptions.DATA_EXPORTS_HEADER}
 """,
-    response_model=CustomPage[ActivityItemClass],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -99,7 +98,7 @@ def get_activity_item_classes(
     total_count: Annotated[
         bool | None, Query(description=_generic_descriptions.TOTAL_COUNT)
     ] = False,
-):
+) -> CustomPage[ActivityItemClass]:
     activity_item_class_service = ActivityItemClassService()
     results = activity_item_class_service.get_all_items(
         sort_by=sort_by,
@@ -120,7 +119,6 @@ def get_activity_item_classes(
     summary="Returns possible values from the database for a given header",
     description="Allowed parameters include : field name for which to get possible values, "
     "search string to provide filtering for the field name, additional filters to apply on other fields",
-    response_model=list[Any],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -150,7 +148,7 @@ def get_distinct_values_for_header(
     page_size: Annotated[
         int | None, Query(description=_generic_descriptions.HEADER_PAGE_SIZE)
     ] = config.DEFAULT_HEADER_PAGE_SIZE,
-):
+) -> list[Any]:
     activity_item_class_service = ActivityItemClassService()
     return activity_item_class_service.get_distinct_values_for_header(
         field_name=field_name,
@@ -175,7 +173,6 @@ State after:
 Possible errors:
  - ActivityItemClass not found
  """,
-    response_model=ActivityItemClass,
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -185,7 +182,7 @@ Possible errors:
 )
 def get_activity(
     activity_item_class_uid: Annotated[str, ActivityItemClassUID],
-):
+) -> ActivityItemClass:
     activity_item_class_service = ActivityItemClassService()
     return activity_item_class_service.get_by_uid(uid=activity_item_class_uid)
 
@@ -208,7 +205,6 @@ State after:
 Possible errors:
  - Invalid uid.
     """,
-    response_model=list[ActivityItemClass],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -221,7 +217,7 @@ Possible errors:
 )
 def get_versions(
     activity_item_class_uid: Annotated[str, ActivityItemClassUID],
-):
+) -> list[ActivityItemClass]:
     activity_item_class_service = ActivityItemClassService()
     return activity_item_class_service.get_version_history(uid=activity_item_class_uid)
 
@@ -231,7 +227,6 @@ def get_versions(
     dependencies=[rbac.LIBRARY_READ],
     summary="Returns all terms names and attributes.",
     description=_generic_descriptions.DATA_EXPORTS_HEADER,
-    response_model=CustomPage[TermWithCodelistMetadata],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -304,7 +299,7 @@ def get_all_terms(
     total_count: Annotated[
         bool | None, Query(description=_generic_descriptions.TOTAL_COUNT)
     ] = False,
-):
+) -> CustomPage[TermWithCodelistMetadata]:
     results = ActivityItemClassService().get_terms_of_activity_item_class(
         activity_item_class_uid=activity_item_class_uid,
         sort_by=sort_by,
@@ -342,7 +337,6 @@ State after:
 Possible errors:
  - Invalid library or control terminology uid's specified.
 """,
-    response_model=ActivityItemClass,
     response_model_exclude_unset=True,
     status_code=201,
     responses={
@@ -358,7 +352,7 @@ Possible errors:
 )
 def create(
     activity_item_class_input: Annotated[ActivityItemClassCreateInput, Body()],
-):
+) -> ActivityItemClass:
     activity_item_class_service = ActivityItemClassService()
     return activity_item_class_service.create(item_input=activity_item_class_input)
 
@@ -384,7 +378,6 @@ Possible errors:
  - Invalid uid.
 
 """,
-    response_model=ActivityItemClass,
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -406,7 +399,7 @@ Possible errors:
 def edit(
     activity_item_class_uid: Annotated[str, ActivityItemClassUID],
     activity_item_class_input: Annotated[ActivityItemClassEditInput, Body()],
-):
+) -> ActivityItemClass:
     activity_item_class_service = ActivityItemClassService()
     return activity_item_class_service.edit_draft(
         uid=activity_item_class_uid, item_edit_input=activity_item_class_input
@@ -427,7 +420,6 @@ Business logic:
 Possible errors:
 - Invalid uid
 """,
-    response_model=ActivityItemClass,
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -446,7 +438,7 @@ def patch_mappings(
         ActivityItemClassMappingInput,
         Body(description="The uid of variable classes to map activity item class to."),
     ],
-):
+) -> ActivityItemClass:
     activity_item_class_service = ActivityItemClassService()
     return activity_item_class_service.patch_mappings(
         uid=activity_item_class_uid, mapping_input=mapping_input
@@ -471,7 +463,6 @@ State after:
 Possible errors:
  - Invalid uid or status not Final.
 """,
-    response_model=ActivityItemClass,
     response_model_exclude_unset=True,
     status_code=201,
     responses={
@@ -492,7 +483,7 @@ Possible errors:
 )
 def new_version(
     activity_item_class_uid: Annotated[str, ActivityItemClassUID],
-):
+) -> ActivityItemClass:
     activity_item_class_service = ActivityItemClassService()
     return activity_item_class_service.create_new_version(uid=activity_item_class_uid)
 
@@ -518,7 +509,6 @@ State after:
 Possible errors:
  - Invalid uid or status not Draft.
     """,
-    response_model=ActivityItemClass,
     response_model_exclude_unset=True,
     status_code=201,
     responses={
@@ -538,7 +528,7 @@ Possible errors:
 )
 def approve(
     activity_item_class_uid: Annotated[str, ActivityItemClassUID],
-):
+) -> ActivityItemClass:
     activity_item_class_service = ActivityItemClassService()
     return activity_item_class_service.approve(uid=activity_item_class_uid)
 
@@ -564,7 +554,6 @@ State after:
 Possible errors:
  - Invalid uid or status not Final.
     """,
-    response_model=ActivityItemClass,
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -583,7 +572,7 @@ Possible errors:
 )
 def inactivate(
     activity_item_class_uid: Annotated[str, ActivityItemClassUID],
-):
+) -> ActivityItemClass:
     activity_item_class_service = ActivityItemClassService()
     return activity_item_class_service.inactivate_final(uid=activity_item_class_uid)
 
@@ -609,7 +598,6 @@ State after:
 Possible errors:
  - Invalid uid or status not Retired.
     """,
-    response_model=ActivityItemClass,
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -628,7 +616,7 @@ Possible errors:
 )
 def reactivate(
     activity_item_class_uid: Annotated[str, ActivityItemClassUID],
-):
+) -> ActivityItemClass:
     activity_item_class_service = ActivityItemClassService()
     return activity_item_class_service.reactivate_retired(uid=activity_item_class_uid)
 
@@ -652,7 +640,6 @@ State after:
 Possible errors:
  - Invalid uid or status not Draft or exist in version 1.0 or above (previously been approved) or not in an editable library.
     """,
-    response_model=None,
     status_code=204,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -677,4 +664,3 @@ def delete_activity_item_class(
 ):
     activity_item_class_service = ActivityItemClassService()
     activity_item_class_service.soft_delete(uid=activity_item_class_uid)
-    return Response(status_code=status.HTTP_204_NO_CONTENT)

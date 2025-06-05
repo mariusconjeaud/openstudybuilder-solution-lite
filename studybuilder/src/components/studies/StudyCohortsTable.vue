@@ -9,7 +9,7 @@
       :history-data-fetcher="fetchCohortsHistory"
       :history-title="$t('StudyCohorts.global_history_title')"
       :export-data-url="exportDataUrl"
-      export-object-label="StudyCohors"
+      export-object-label="StudyCohorts"
       disable-filtering
       :hide-default-body="sortMode && cohorts.length > 0"
       @filter="fetchStudyCohorts"

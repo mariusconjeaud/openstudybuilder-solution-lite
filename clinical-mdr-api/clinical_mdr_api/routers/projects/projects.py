@@ -28,7 +28,6 @@ ProjectUID = Path(description="The unique id of the project.")
     "",
     dependencies=[rbac.LIBRARY_READ],
     summary="Returns all projects.",
-    response_model=GenericFilteringReturn[Project],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -100,7 +99,6 @@ def get_projects(
     summary="Returns possible values from the database for a given header",
     description="""Allowed parameters include : field name for which to get possible
     values, search string to provide filtering for the field name, additional filters to apply on other fields""",
-    response_model=list[Any],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -127,7 +125,7 @@ def get_distinct_values_for_header(
     page_size: Annotated[
         int | None, Query(description=_generic_descriptions.HEADER_PAGE_SIZE)
     ] = config.DEFAULT_HEADER_PAGE_SIZE,
-):
+) -> list[Any]:
     service = ProjectService()
     return service.get_project_headers(
         field_name=field_name,
@@ -142,7 +140,6 @@ def get_distinct_values_for_header(
     "/{project_uid}",
     dependencies=[rbac.LIBRARY_READ],
     summary="Get a project.",
-    response_model=Project,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -158,7 +155,6 @@ def get(project_uid: Annotated[str, ProjectUID]) -> Project:
     "",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Creates a new project.",
-    response_model=Project,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -185,7 +181,6 @@ def create(
     "/{project_uid}",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Edit a project.",
-    response_model=Project,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,

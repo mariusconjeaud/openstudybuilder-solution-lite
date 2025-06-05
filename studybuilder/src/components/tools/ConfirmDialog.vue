@@ -12,7 +12,7 @@
       <v-card-text v-if="savedMessage" class="pt-2 dialogText">
         <v-row no-gutters class="align-center pa-2">
           <v-col cols="12">
-            <div class="text-body-1 mt-1" v-html="savedMessage" />
+            <div class="text-body-1 mt-1" v-html="sanitizeHTML(savedMessage)" />
           </v-col>
         </v-row>
         <v-divider class="pa-2" />
@@ -59,6 +59,7 @@
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
+import { escapeHTML, sanitizeHTML } from '@/utils/sanitize'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -91,9 +92,9 @@ const btnClasses = computed(() => {
   }
 })
 
-const open = (message, extraOptions) => {
+const open = (message_plain, extraOptions) => {
   dialog.value = true
-  savedMessage.value = message
+  savedMessage.value = escapeHTML(message_plain).replace(/\n+/g, '<br />')
   options.value = Object.assign(options.value, extraOptions)
   return new Promise((resolve) => {
     savedResolve = resolve

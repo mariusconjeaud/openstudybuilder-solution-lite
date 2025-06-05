@@ -37,7 +37,6 @@ OdmFormUID = Path(description="The unique id of the ODM Form.")
     dependencies=[rbac.LIBRARY_READ],
     summary="Return every variable related to the selected status and version of the ODM Forms",
     description=_generic_descriptions.DATA_EXPORTS_HEADER,
-    response_model=CustomPage[OdmForm],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -137,7 +136,7 @@ def get_all_odm_forms(
     total_count: Annotated[
         bool | None, Query(description=_generic_descriptions.TOTAL_COUNT)
     ] = False,
-):
+) -> CustomPage[OdmForm]:
     odm_form_service = OdmFormService()
     results = odm_form_service.get_all_concepts(
         library=library_name,
@@ -159,7 +158,6 @@ def get_all_odm_forms(
     summary="Returns possible values from the database for a given header",
     description="""Allowed parameters include : field name for which to get possible
     values, search string to provide filtering for the field name, additional filters to apply on other fields""",
-    response_model=list[Any],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -190,7 +188,7 @@ def get_distinct_values_for_header(
     page_size: Annotated[
         int | None, Query(description=_generic_descriptions.HEADER_PAGE_SIZE)
     ] = config.DEFAULT_HEADER_PAGE_SIZE,
-):
+) -> list[Any]:
     odm_form_service = OdmFormService()
     return odm_form_service.get_distinct_values_for_header(
         library=library_name,
@@ -207,7 +205,6 @@ def get_distinct_values_for_header(
     dependencies=[rbac.LIBRARY_READ],
     summary="Get all ODM Forms that belongs to an ODM Study Event",
     description=_generic_descriptions.DATA_EXPORTS_HEADER,
-    response_model=list[OdmElementWithParentUid],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -242,7 +239,7 @@ def get_distinct_values_for_header(
 # pylint: disable=unused-argument
 def get_odm_form_that_belongs_to_study_event(
     request: Request,  # request is actually required by the allow_exports decorator
-):
+) -> list[OdmElementWithParentUid]:
     odm_form_service = OdmFormService()
     return odm_form_service.get_forms_that_belongs_to_study_event()
 
@@ -251,14 +248,13 @@ def get_odm_form_that_belongs_to_study_event(
     "/{odm_form_uid}",
     dependencies=[rbac.LIBRARY_READ],
     summary="Get details on a specific ODM Form (in a specific version)",
-    response_model=OdmForm,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
         404: _generic_descriptions.ERROR_404,
     },
 )
-def get_odm_form(odm_form_uid: Annotated[str, OdmFormUID]):
+def get_odm_form(odm_form_uid: Annotated[str, OdmFormUID]) -> OdmForm:
     odm_form_service = OdmFormService()
     return odm_form_service.get_by_uid(uid=odm_form_uid)
 
@@ -267,14 +263,13 @@ def get_odm_form(odm_form_uid: Annotated[str, OdmFormUID]):
     "/{odm_form_uid}/relationships",
     dependencies=[rbac.LIBRARY_READ],
     summary="Get UIDs of a specific ODM Form's relationships",
-    response_model=dict,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
         404: _generic_descriptions.ERROR_404,
     },
 )
-def get_active_relationships(odm_form_uid: Annotated[str, OdmFormUID]):
+def get_active_relationships(odm_form_uid: Annotated[str, OdmFormUID]) -> dict:
     odm_form_service = OdmFormService()
     return odm_form_service.get_active_relationships(uid=odm_form_uid)
 
@@ -297,7 +292,6 @@ State after:
 Possible errors:
  - Invalid uid.
     """,
-    response_model=list[OdmForm],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -307,7 +301,7 @@ Possible errors:
         },
     },
 )
-def get_odm_form_versions(odm_form_uid: Annotated[str, OdmFormUID]):
+def get_odm_form_versions(odm_form_uid: Annotated[str, OdmFormUID]) -> list[OdmForm]:
     odm_form_service = OdmFormService()
     return odm_form_service.get_version_history(uid=odm_form_uid)
 
@@ -316,7 +310,6 @@ def get_odm_form_versions(odm_form_uid: Annotated[str, OdmFormUID]):
     "",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Creates a new Form in 'Draft' status with version 0.1",
-    response_model=OdmForm,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -332,7 +325,7 @@ def get_odm_form_versions(odm_form_uid: Annotated[str, OdmFormUID]):
 )
 def create_odm_form(
     odm_form_create_input: Annotated[OdmFormPostInput, Body()],
-):
+) -> OdmForm:
     odm_form_service = OdmFormService()
 
     return odm_form_service.create_with_relations(concept_input=odm_form_create_input)
@@ -342,7 +335,6 @@ def create_odm_form(
     "/{odm_form_uid}",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Update ODM Form",
-    response_model=OdmForm,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -363,7 +355,7 @@ def create_odm_form(
 def edit_odm_form(
     odm_form_uid: Annotated[str, OdmFormUID],
     odm_form_edit_input: Annotated[OdmFormPatchInput, Body()],
-):
+) -> OdmForm:
     odm_form_service = OdmFormService()
     return odm_form_service.update_with_relations(
         uid=odm_form_uid, concept_edit_input=odm_form_edit_input
@@ -388,7 +380,6 @@ State after:
 Possible errors:
  - Invalid uid or status not Final.
 """,
-    response_model=OdmForm,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -406,7 +397,7 @@ Possible errors:
         },
     },
 )
-def create_odm_form_version(odm_form_uid: Annotated[str, OdmFormUID]):
+def create_odm_form_version(odm_form_uid: Annotated[str, OdmFormUID]) -> OdmForm:
     odm_form_service = OdmFormService()
     return odm_form_service.create_new_version(
         uid=odm_form_uid, cascade_new_version=True
@@ -417,7 +408,6 @@ def create_odm_form_version(odm_form_uid: Annotated[str, OdmFormUID]):
     "/{odm_form_uid}/approvals",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Approve draft version of ODM Form",
-    response_model=OdmForm,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -434,7 +424,7 @@ def create_odm_form_version(odm_form_uid: Annotated[str, OdmFormUID]):
         },
     },
 )
-def approve_odm_form(odm_form_uid: Annotated[str, OdmFormUID]):
+def approve_odm_form(odm_form_uid: Annotated[str, OdmFormUID]) -> OdmForm:
     odm_form_service = OdmFormService()
     return odm_form_service.approve(uid=odm_form_uid, cascade_edit_and_approve=True)
 
@@ -443,7 +433,6 @@ def approve_odm_form(odm_form_uid: Annotated[str, OdmFormUID]):
     "/{odm_form_uid}/activations",
     dependencies=[rbac.LIBRARY_WRITE],
     summary=" Inactivate final version of ODM Form",
-    response_model=OdmForm,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -459,7 +448,7 @@ def approve_odm_form(odm_form_uid: Annotated[str, OdmFormUID]):
         },
     },
 )
-def inactivate_odm_form(odm_form_uid: Annotated[str, OdmFormUID]):
+def inactivate_odm_form(odm_form_uid: Annotated[str, OdmFormUID]) -> OdmForm:
     odm_form_service = OdmFormService()
     return odm_form_service.inactivate_final(uid=odm_form_uid, cascade_inactivate=True)
 
@@ -468,7 +457,6 @@ def inactivate_odm_form(odm_form_uid: Annotated[str, OdmFormUID]):
     "/{odm_form_uid}/activations",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Reactivate retired version of a ODM Form",
-    response_model=OdmForm,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -484,7 +472,7 @@ def inactivate_odm_form(odm_form_uid: Annotated[str, OdmFormUID]):
         },
     },
 )
-def reactivate_odm_form(odm_form_uid: Annotated[str, OdmFormUID]):
+def reactivate_odm_form(odm_form_uid: Annotated[str, OdmFormUID]) -> OdmForm:
     odm_form_service = OdmFormService()
     return odm_form_service.reactivate_retired(
         uid=odm_form_uid, cascade_reactivate=True
@@ -495,7 +483,6 @@ def reactivate_odm_form(odm_form_uid: Annotated[str, OdmFormUID]):
     "/{odm_form_uid}/activity-groups",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Adds activity groups to the ODM Form.",
-    response_model=OdmForm,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -523,7 +510,7 @@ def add_activity_groups_to_odm_form(
             description="If true, all existing activity group relationships will be replaced with the provided activity group relationships.",
         ),
     ] = False,
-):
+) -> OdmForm:
     odm_form_service = OdmFormService()
     return odm_form_service.add_activity_groups(
         uid=odm_form_uid,
@@ -536,7 +523,6 @@ def add_activity_groups_to_odm_form(
     "/{odm_form_uid}/item-groups",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Adds item groups to the ODM Form.",
-    response_model=OdmForm,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -562,7 +548,7 @@ def add_item_groups_to_odm_form(
             description="If true, all existing item group relationships will be replaced with the provided item group relationships.",
         ),
     ] = False,
-):
+) -> OdmForm:
     odm_form_service = OdmFormService()
     return odm_form_service.add_item_groups(
         uid=odm_form_uid,
@@ -575,7 +561,6 @@ def add_item_groups_to_odm_form(
     "/{odm_form_uid}/vendor-elements",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Adds ODM Vendor Elements to the ODM Form.",
-    response_model=OdmForm,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -603,7 +588,7 @@ def add_vendor_elements_to_odm_form(
             description="If true, all existing ODM Vendor Element relationships will be replaced with the provided ODM Vendor Element relationships.",
         ),
     ] = False,
-):
+) -> OdmForm:
     odm_form_service = OdmFormService()
     return odm_form_service.add_vendor_elements(
         uid=odm_form_uid,
@@ -616,7 +601,6 @@ def add_vendor_elements_to_odm_form(
     "/{odm_form_uid}/vendor-attributes",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Adds ODM Vendor Attributes to the ODM Form.",
-    response_model=OdmForm,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -643,7 +627,7 @@ def add_vendor_attributes_to_odm_form(
         be replaced with the provided ODM Vendor Attribute relationships.""",
         ),
     ] = False,
-):
+) -> OdmForm:
     odm_form_service = OdmFormService()
     return odm_form_service.add_vendor_attributes(
         uid=odm_form_uid,
@@ -656,7 +640,6 @@ def add_vendor_attributes_to_odm_form(
     "/{odm_form_uid}/vendor-element-attributes",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Adds ODM Vendor Element attributes to the ODM Form.",
-    response_model=OdmForm,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -683,7 +666,7 @@ def add_vendor_element_attributes_to_odm_form(
         will be replaced with the provided ODM Vendor Element attribute relationships.""",
         ),
     ] = False,
-):
+) -> OdmForm:
     odm_form_service = OdmFormService()
     return odm_form_service.add_vendor_element_attributes(
         uid=odm_form_uid,
@@ -696,7 +679,6 @@ def add_vendor_element_attributes_to_odm_form(
     "/{odm_form_uid}/vendors",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Manages all ODM Vendors by replacing existing ODM Vendors by provided ODM Vendors.",
-    response_model=OdmForm,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -716,7 +698,7 @@ def add_vendor_element_attributes_to_odm_form(
 def manage_vendors_of_odm_form(
     odm_form_uid: Annotated[str, OdmFormUID],
     odm_vendors_post_input: Annotated[OdmVendorsPostInput, Body()],
-):
+) -> OdmForm:
     odm_form_service = OdmFormService()
     return odm_form_service.manage_vendors(
         uid=odm_form_uid, odm_vendors_post_input=odm_vendors_post_input
@@ -727,7 +709,6 @@ def manage_vendors_of_odm_form(
     "/{odm_form_uid}",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Delete draft version of ODM Form",
-    response_model=None,
     status_code=204,
     responses={
         403: _generic_descriptions.ERROR_403,

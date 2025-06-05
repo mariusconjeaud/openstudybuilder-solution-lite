@@ -29,7 +29,6 @@ OdmFormalExpressionUID = Path(description="The unique id of the ODM Formal Expre
     "",
     dependencies=[rbac.LIBRARY_READ],
     summary="Return every variable related to the selected status and version of the ODM Formal Expressions",
-    response_model=CustomPage[OdmFormalExpression],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -65,7 +64,7 @@ def get_all_odm_formal_expressions(
     total_count: Annotated[
         bool | None, Query(description=_generic_descriptions.TOTAL_COUNT)
     ] = False,
-):
+) -> CustomPage[OdmFormalExpression]:
     odm_formal_expression_service = OdmFormalExpressionService()
     results = odm_formal_expression_service.get_all_concepts(
         library=library_name,
@@ -87,7 +86,6 @@ def get_all_odm_formal_expressions(
     summary="Returns possible values from the database for a given header",
     description="""Allowed parameters include : field name for which to get possible
     values, search string to provide filtering for the field name, additional filters to apply on other fields""",
-    response_model=list[Any],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -118,7 +116,7 @@ def get_distinct_values_for_header(
     page_size: Annotated[
         int | None, Query(description=_generic_descriptions.HEADER_PAGE_SIZE)
     ] = config.DEFAULT_HEADER_PAGE_SIZE,
-):
+) -> list[Any]:
     odm_formal_expression_service = OdmFormalExpressionService()
     return odm_formal_expression_service.get_distinct_values_for_header(
         library=library_name,
@@ -134,7 +132,6 @@ def get_distinct_values_for_header(
     "/{odm_formal_expression_uid}",
     dependencies=[rbac.LIBRARY_READ],
     summary="Get details on a specific ODM Formal Expression (in a specific version)",
-    response_model=OdmFormalExpression,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -142,8 +139,8 @@ def get_distinct_values_for_header(
     },
 )
 def get_odm_formal_expression(
-    odm_formal_expression_uid: Annotated[str, OdmFormalExpressionUID]
-):
+    odm_formal_expression_uid: Annotated[str, OdmFormalExpressionUID],
+) -> OdmFormalExpression:
     odm_formal_expression_service = OdmFormalExpressionService()
     return odm_formal_expression_service.get_by_uid(uid=odm_formal_expression_uid)
 
@@ -152,7 +149,6 @@ def get_odm_formal_expression(
     "/{odm_formal_expression_uid}/relationships",
     dependencies=[rbac.LIBRARY_READ],
     summary="Get UIDs of a specific ODM Formal Expression's relationships",
-    response_model=dict,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -160,8 +156,8 @@ def get_odm_formal_expression(
     },
 )
 def get_active_relationships(
-    odm_formal_expression_uid: Annotated[str, OdmFormalExpressionUID]
-):
+    odm_formal_expression_uid: Annotated[str, OdmFormalExpressionUID],
+) -> dict:
     odm_formal_expression_service = OdmFormalExpressionService()
     return odm_formal_expression_service.get_active_relationships(
         uid=odm_formal_expression_uid
@@ -186,7 +182,6 @@ State after:
 Possible errors:
  - Invalid uid.
     """,
-    response_model=list[OdmFormalExpression],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -198,7 +193,7 @@ Possible errors:
 )
 def get_odm_formal_expression_versions(
     odm_formal_expression_uid: Annotated[str, OdmFormalExpressionUID],
-):
+) -> list[OdmFormalExpression]:
     odm_formal_expression_service = OdmFormalExpressionService()
     return odm_formal_expression_service.get_version_history(
         uid=odm_formal_expression_uid
@@ -209,7 +204,6 @@ def get_odm_formal_expression_versions(
     "",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Creates a new Form in 'Draft' status with version 0.1",
-    response_model=OdmFormalExpression,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -227,7 +221,7 @@ def get_odm_formal_expression_versions(
 )
 def create_odm_formal_expression(
     odm_formal_expression_create_input: Annotated[OdmFormalExpressionPostInput, Body()],
-):
+) -> OdmFormalExpression:
     odm_formal_expression_service = OdmFormalExpressionService()
     return odm_formal_expression_service.create(
         concept_input=odm_formal_expression_create_input
@@ -238,7 +232,6 @@ def create_odm_formal_expression(
     "/{odm_formal_expression_uid}",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Update ODM Formal Expression",
-    response_model=OdmFormalExpression,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -259,7 +252,7 @@ def create_odm_formal_expression(
 def edit_odm_formal_expression(
     odm_formal_expression_uid: Annotated[str, OdmFormalExpressionUID],
     odm_formal_expression_edit_input: Annotated[OdmFormalExpressionPatchInput, Body()],
-):
+) -> OdmFormalExpression:
     odm_formal_expression_service = OdmFormalExpressionService()
     return odm_formal_expression_service.edit_draft(
         uid=odm_formal_expression_uid,
@@ -285,7 +278,6 @@ State after:
 Possible errors:
  - Invalid uid or status not Final.
 """,
-    response_model=OdmFormalExpression,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -305,7 +297,7 @@ Possible errors:
 )
 def create_odm_formal_expression_version(
     odm_formal_expression_uid: Annotated[str, OdmFormalExpressionUID],
-):
+) -> OdmFormalExpression:
     odm_formal_expression_service = OdmFormalExpressionService()
     return odm_formal_expression_service.create_new_version(
         uid=odm_formal_expression_uid
@@ -316,7 +308,6 @@ def create_odm_formal_expression_version(
     "/{odm_formal_expression_uid}/approvals",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Approve draft version of ODM Formal Expression",
-    response_model=OdmFormalExpression,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -335,7 +326,7 @@ def create_odm_formal_expression_version(
 )
 def approve_odm_formal_expression(
     odm_formal_expression_uid: Annotated[str, OdmFormalExpressionUID],
-):
+) -> OdmFormalExpression:
     odm_formal_expression_service = OdmFormalExpressionService()
     return odm_formal_expression_service.approve(uid=odm_formal_expression_uid)
 
@@ -344,7 +335,6 @@ def approve_odm_formal_expression(
     "/{odm_formal_expression_uid}/activations",
     dependencies=[rbac.LIBRARY_WRITE],
     summary=" Inactivate final version of ODM Formal Expression",
-    response_model=OdmFormalExpression,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -362,7 +352,7 @@ def approve_odm_formal_expression(
 )
 def inactivate_odm_formal_expression(
     odm_formal_expression_uid: Annotated[str, OdmFormalExpressionUID],
-):
+) -> OdmFormalExpression:
     odm_formal_expression_service = OdmFormalExpressionService()
     return odm_formal_expression_service.inactivate_final(uid=odm_formal_expression_uid)
 
@@ -371,7 +361,6 @@ def inactivate_odm_formal_expression(
     "/{odm_formal_expression_uid}/activations",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Reactivate retired version of a ODM Formal Expression",
-    response_model=OdmFormalExpression,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -389,7 +378,7 @@ def inactivate_odm_formal_expression(
 )
 def reactivate_odm_formal_expression(
     odm_formal_expression_uid: Annotated[str, OdmFormalExpressionUID],
-):
+) -> OdmFormalExpression:
     odm_formal_expression_service = OdmFormalExpressionService()
     return odm_formal_expression_service.reactivate_retired(
         uid=odm_formal_expression_uid
@@ -400,7 +389,6 @@ def reactivate_odm_formal_expression(
     "/{odm_formal_expression_uid}",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Delete draft version of ODM Formal Expression",
-    response_model=None,
     status_code=204,
     responses={
         403: _generic_descriptions.ERROR_403,

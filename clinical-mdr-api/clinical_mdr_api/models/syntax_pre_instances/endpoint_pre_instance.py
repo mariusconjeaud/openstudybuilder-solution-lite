@@ -24,13 +24,15 @@ from clinical_mdr_api.models.utils import BaseModel, PatchInputModel
 
 
 class EndpointPreInstance(BaseModel):
-    uid: str
+    uid: Annotated[str, Field()]
     sequence_id: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = (
         None
     )
-    template_uid: str
-    template_name: str
-    name: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = None
+    template_uid: Annotated[str, Field()]
+    template_name: Annotated[str, Field()]
+    name: Annotated[
+        str | None, Field(json_schema_extra={"nullable": True, "format": "html"})
+    ] = None
     name_plain: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = (
         None
     )
@@ -48,30 +50,26 @@ class EndpointPreInstance(BaseModel):
     author_username: Annotated[
         str | None, Field(json_schema_extra={"nullable": True})
     ] = None
-    parameter_terms: Annotated[
-        list[MultiTemplateParameterTerm],
-        Field(
-            description="Holds the parameter terms that are used within the endpoint. The terms are ordered as they occur in the endpoint name.",
-        ),
-    ] = []
-    indications: Annotated[
-        list[SimpleTermModel],
-        Field(
-            description="The study indications, conditions, diseases or disorders in scope for the pre-instance.",
-        ),
-    ] = []
-    categories: Annotated[
-        list[SimpleCTTermNameAndAttributes],
-        Field(description="A list of categories the pre-instance belongs to."),
-    ] = []
-    sub_categories: Annotated[
-        list[SimpleCTTermNameAndAttributes],
-        Field(description="A list of sub-categories the pre-instance belongs to."),
-    ] = []
+    parameter_terms: list[MultiTemplateParameterTerm] = Field(
+        description="Holds the parameter terms that are used within the endpoint. The terms are ordered as they occur in the endpoint name.",
+        default_factory=list,
+    )
+    indications: list[SimpleTermModel] = Field(
+        description="The study indications, conditions, diseases or disorders in scope for the pre-instance.",
+        default_factory=list,
+    )
+    categories: list[SimpleCTTermNameAndAttributes] = Field(
+        description="A list of categories the pre-instance belongs to.",
+        default_factory=list,
+    )
+    sub_categories: list[SimpleCTTermNameAndAttributes] = Field(
+        description="A list of sub-categories the pre-instance belongs to.",
+        default_factory=list,
+    )
     library: Annotated[Library | None, Field(json_schema_extra={"nullable": True})] = (
         None
     )
-    possible_actions: list[str] = []
+    possible_actions: list[str] = Field(default_factory=list)
 
     @classmethod
     def from_endpoint_pre_instance_ar(
@@ -120,9 +118,9 @@ class EndpointPreInstance(BaseModel):
 
 
 class EndpointPreInstanceCreateInput(PreInstancePostInput):
-    indication_uids: list[str]
-    category_uids: list[str]
-    sub_category_uids: list[str]
+    indication_uids: Annotated[list[str], Field()]
+    category_uids: Annotated[list[str], Field()]
+    sub_category_uids: Annotated[list[str], Field()]
 
 
 class EndpointPreInstanceEditInput(PreInstancePatchInput):
@@ -161,9 +159,4 @@ class EndpointPreInstanceVersion(EndpointPreInstance):
     Class for storing Endpoint Pre-Instances and calculation of differences
     """
 
-    changes: Annotated[
-        list[str],
-        Field(
-            description=CHANGES_FIELD_DESC,
-        ),
-    ] = []
+    changes: list[str] = Field(description=CHANGES_FIELD_DESC, default_factory=list)

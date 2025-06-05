@@ -43,7 +43,6 @@ from clinical_mdr_api.tests.integration.utils.method_library import (
 from clinical_mdr_api.tests.integration.utils.utils import TestUtils
 from common.config import NON_VISIT_NUMBER, SDTM_CT_CATALOGUE_NAME
 from common.exceptions import (
-    AlreadyExistsException,
     BusinessLogicException,
     NotFoundException,
     ValidationException,
@@ -1301,10 +1300,6 @@ class TestStudyVisitManagement(unittest.TestCase):
         )
         self.assertEqual(all_visits[3].time_value, 15)
 
-        with self.assertRaises(AlreadyExistsException):
-            visit_service.create(
-                study_uid=self.study.uid, study_visit_input=visit_input
-            )
         with self.assertRaises(BusinessLogicException) as message:
             visit_service.delete(
                 study_uid=self.study.uid, study_visit_uid=special_visit_anchor.uid

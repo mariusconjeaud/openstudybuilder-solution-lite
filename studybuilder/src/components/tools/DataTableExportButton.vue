@@ -90,7 +90,7 @@ function createDownloadLink(content, format) {
   let fileName = `${props.objectLabel} ${today}.${format.extension}`
   if (window.location.pathname.startsWith('/studies')) {
     fileName =
-      `${studiesGeneralStore.selectedStudy.current_metadata.identification_metadata.study_id} ` +
+      `${studiesGeneralStore.selectedStudy ? studiesGeneralStore.selectedStudy.current_metadata.identification_metadata.study_id + ' ' : ''}` +
       fileName
   }
   exportLoader.downloadFile(content, format.mediaType, fileName)
@@ -235,7 +235,7 @@ async function exportContent(format) {
   if (params.page_size === undefined) {
     params.page_size = 0
   }
-  if (props.filters) {
+  if (props.filters && !params.filters) {
     params.filters = props.filters
   }
   repository

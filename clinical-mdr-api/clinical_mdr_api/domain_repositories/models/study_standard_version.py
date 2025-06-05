@@ -1,4 +1,4 @@
-from neomodel import (  # ZeroOrOne,
+from neomodel import (
     BooleanProperty,
     One,
     RelationshipFrom,

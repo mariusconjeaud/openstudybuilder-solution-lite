@@ -28,21 +28,25 @@ def test__activity_group_repository__get_linked_activity_subgroup_uids__with_ver
 
     result = repository.get_linked_activity_subgroup_uids(group_uid, version)
 
-    assert len(result) == 1
-    assert result[0]["uid"] == "test-subgroup-id"
-    assert result[0]["name"] == "Test Subgroup"
-    assert result[0]["version"] == "1.0"
-    assert result[0]["status"] == "Final"
-    assert result[0]["definition"] == "Test definition"
+    assert len(result["subgroups"]) == 1
+    assert result["subgroups"][0]["uid"] == "test-subgroup-id"
+    assert result["subgroups"][0]["name"] == "Test Subgroup"
+    assert result["subgroups"][0]["version"] == "1.0"
+    assert result["subgroups"][0]["status"] == "Final"
+    assert result["subgroups"][0]["definition"] == "Test definition"
 
     mock_cypher_query.assert_called_once()
 
     assert mock_cypher_query.called
-    assert any(
-        "(gv)-[:IN_GROUP]-(avg:ActivityValidGroup)-[:HAS_GROUP]-(sgv:ActivitySubGroupValue)"
-        in str(call)
-        for call in mock_cypher_query.call_args_list
-    )
+
+    # Check for the exact query patterns as they appear in the repository
+    query_string = str(mock_cypher_query.call_args_list[0])
+    assert (
+        "(avg:ActivityValidGroup)-[:IN_GROUP]->(gv)" in query_string
+    ), "ActivityValidGroup relationship pattern not found"
+    assert (
+        "(sgv:ActivitySubGroupValue)-[:HAS_GROUP]->(avg)" in query_string
+    ), "ActivitySubGroupValue relationship pattern not found"
     assert any(
         f"'group_uid': '{group_uid}'" in str(call)
         for call in mock_cypher_query.call_args_list
@@ -65,7 +69,7 @@ def test__activity_group_repository__get_linked_activity_subgroup_uids__no_resul
 
     result = repository.get_linked_activity_subgroup_uids(group_uid, version)
 
-    assert result == []
+    assert result["subgroups"] == []
 
 
 @patch("neomodel.db.cypher_query")
@@ -92,16 +96,20 @@ def test__activity_group_repository__get_linked_activity_subgroup_uids__new_vers
 
     result = repository.get_linked_activity_subgroup_uids(group_uid, version)
 
-    assert len(result) == 1
-    assert result[0]["uid"] == "test-subgroup-id-1"
-    assert result[0]["status"] == "Final"
+    assert len(result["subgroups"]) == 1
+    assert result["subgroups"][0]["uid"] == "test-subgroup-id-1"
+    assert result["subgroups"][0]["status"] == "Final"
 
     assert mock_cypher_query.called
-    assert any(
-        'HAS_VERSION {status: "Final"}' in str(call)
-        or 'HAS_VERSION { status: "Final" }' in str(call)
-        for call in mock_cypher_query.call_args_list
-    )
+    # Check for the exact query patterns as they appear in the repository
+    query_string = str(mock_cypher_query.call_args_list[0])
+    assert (
+        "(avg:ActivityValidGroup)-[:IN_GROUP]->(gv)" in query_string
+    ), "ActivityValidGroup relationship pattern not found"
+    assert (
+        "(sgv:ActivitySubGroupValue)-[:HAS_GROUP]->(avg)" in query_string
+    ), "ActivitySubGroupValue relationship pattern not found"
+    assert 'sgv_rel.status = "Final"' in query_string, "Status filter pattern not found"
 
 
 @patch("neomodel.db.cypher_query")
@@ -138,17 +146,21 @@ def test__activity_group_repository__draft_status_subgroups_not_included(
 
     result = repository.get_linked_activity_subgroup_uids(group_uid, version)
 
-    assert len(result) == 1
-    assert result[0]["uid"] == "final-subgroup-id"
-    assert result[0]["status"] == "Final"
-    assert "draft-subgroup-id" not in str(result)
+    assert len(result["subgroups"]) == 1
+    assert result["subgroups"][0]["uid"] == "final-subgroup-id"
+    assert result["subgroups"][0]["status"] == "Final"
+    assert "draft-subgroup-id" not in str(result["subgroups"])
 
     assert mock_cypher_query.called
-    assert any(
-        'HAS_VERSION {status: "Final"}' in str(call)
-        or 'HAS_VERSION { status: "Final" }' in str(call)
-        for call in mock_cypher_query.call_args_list
-    )
+    # Check for the exact query patterns as they appear in the repository
+    query_string = str(mock_cypher_query.call_args_list[0])
+    assert (
+        "(avg:ActivityValidGroup)-[:IN_GROUP]->(gv)" in query_string
+    ), "ActivityValidGroup relationship pattern not found"
+    assert (
+        "(sgv:ActivitySubGroupValue)-[:HAS_GROUP]->(avg)" in query_string
+    ), "ActivitySubGroupValue relationship pattern not found"
+    assert 'sgv_rel.status = "Final"' in query_string, "Status filter pattern not found"
 
 
 @patch("neomodel.db.cypher_query")
@@ -211,25 +223,25 @@ def test__activity_group_repository__versioning_preserves_subgroup_relationships
         group_uid, original_version
     )
 
-    assert len(result_v1) == 1
-    assert result_v1[0]["uid"] == subgroup_uid
-    assert result_v1[0]["name"] == subgroup_name
+    assert len(result_v1["subgroups"]) == 1
+    assert result_v1["subgroups"][0]["uid"] == subgroup_uid
+    assert result_v1["subgroups"][0]["name"] == subgroup_name
 
     # 2. Test with new version (2.0)
     new_version = "2.0"
     result_v2 = repository.get_linked_activity_subgroup_uids(group_uid, new_version)
 
     # Verify relationships are preserved in the new version
-    assert len(result_v2) == 1
-    assert result_v2[0]["uid"] == subgroup_uid
-    assert result_v2[0]["name"] == subgroup_name
+    assert len(result_v2["subgroups"]) == 1
+    assert result_v2["subgroups"][0]["uid"] == subgroup_uid
+    assert result_v2["subgroups"][0]["name"] == subgroup_name
     # 3. Test with edited version (2.0 after changes)
     result_edited = repository.get_linked_activity_subgroup_uids(group_uid, new_version)
 
     # Verify relationships are still preserved after editing
-    assert len(result_edited) == 1
-    assert result_edited[0]["uid"] == subgroup_uid
-    assert result_edited[0]["name"] == subgroup_name
+    assert len(result_edited["subgroups"]) == 1
+    assert result_edited["subgroups"][0]["uid"] == subgroup_uid
+    assert result_edited["subgroups"][0]["name"] == subgroup_name
 
     # Verify correct query parameters were used
     assert len(mock_cypher_query.call_args_list) == 3

@@ -31,7 +31,6 @@ OdmAliasUID = Path(description="The unique id of the ODM Alias.")
     dependencies=[rbac.LIBRARY_READ],
     summary="Return a listing of ODM Aliases",
     description=_generic_descriptions.DATA_EXPORTS_HEADER,
-    response_model=CustomPage[OdmAlias],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -89,7 +88,7 @@ def get_all_odm_aliases(
     total_count: Annotated[
         bool | None, Query(description=_generic_descriptions.TOTAL_COUNT)
     ] = False,
-):
+) -> CustomPage[OdmAlias]:
     odm_alias_service = OdmAliasService()
     results = odm_alias_service.get_all_concepts(
         library=library_name,
@@ -111,7 +110,6 @@ def get_all_odm_aliases(
     summary="Returns possible values from the database for a given header",
     description="""Allowed parameters include : field name for which to get possible
     values, search string to provide filtering for the field name, additional filters to apply on other fields""",
-    response_model=list[Any],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -142,7 +140,7 @@ def get_distinct_values_for_header(
     page_size: Annotated[
         int | None, Query(description=_generic_descriptions.HEADER_PAGE_SIZE)
     ] = config.DEFAULT_HEADER_PAGE_SIZE,
-):
+) -> list[Any]:
     odm_alias_service = OdmAliasService()
     return odm_alias_service.get_distinct_values_for_header(
         library=library_name,
@@ -158,14 +156,13 @@ def get_distinct_values_for_header(
     "/{odm_alias_uid}/relationships",
     dependencies=[rbac.LIBRARY_READ],
     summary="Get UIDs of a specific ODM Alias' relationships",
-    response_model=dict,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
         404: _generic_descriptions.ERROR_404,
     },
 )
-def get_active_relationships(odm_alias_uid: Annotated[str, OdmAliasUID]):
+def get_active_relationships(odm_alias_uid: Annotated[str, OdmAliasUID]) -> dict:
     odm_alias_service = OdmAliasService()
     return odm_alias_service.get_active_relationships(uid=odm_alias_uid)
 
@@ -188,7 +185,6 @@ State after:
 Possible errors:
  - Invalid uid.
     """,
-    response_model=list[OdmAlias],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -198,7 +194,9 @@ Possible errors:
         },
     },
 )
-def get_odm_alias_versions(odm_alias_uid: Annotated[str, OdmAliasUID]):
+def get_odm_alias_versions(
+    odm_alias_uid: Annotated[str, OdmAliasUID],
+) -> list[OdmAlias]:
     odm_alias_service = OdmAliasService()
     return odm_alias_service.get_version_history(uid=odm_alias_uid)
 
@@ -207,7 +205,6 @@ def get_odm_alias_versions(odm_alias_uid: Annotated[str, OdmAliasUID]):
     "",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Create a new ODM Alias",
-    response_model=OdmAlias,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -221,7 +218,9 @@ def get_odm_alias_versions(odm_alias_uid: Annotated[str, OdmAliasUID]):
         409: _generic_descriptions.ERROR_409,
     },
 )
-def create_odm_alias(odm_alias_create_input: Annotated[OdmAliasPostInput, Body()]):
+def create_odm_alias(
+    odm_alias_create_input: Annotated[OdmAliasPostInput, Body()],
+) -> OdmAlias:
     odm_alias_service = OdmAliasService()
     return odm_alias_service.create(concept_input=odm_alias_create_input)
 
@@ -230,7 +229,6 @@ def create_odm_alias(odm_alias_create_input: Annotated[OdmAliasPostInput, Body()
     "/batch",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Batch operations (create, edit) for ODM Aliases",
-    response_model=list[OdmAliasBatchOutput],
     status_code=207,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -240,8 +238,8 @@ def create_odm_alias(odm_alias_create_input: Annotated[OdmAliasPostInput, Body()
 def odm_alias_batch_operations(
     operations: Annotated[
         list[OdmAliasBatchInput], Body(description="List of operation to perform")
-    ]
-):
+    ],
+) -> list[OdmAliasBatchOutput]:
     odm_alias_service = OdmAliasService()
     return odm_alias_service.handle_batch_operations(operations)
 
@@ -250,7 +248,6 @@ def odm_alias_batch_operations(
     "/{odm_alias_uid}",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Update an ODM Alias",
-    response_model=OdmAlias,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -271,7 +268,7 @@ def odm_alias_batch_operations(
 def edit_odm_alias(
     odm_alias_uid: Annotated[str, OdmAliasUID],
     odm_alias_edit_input: Annotated[OdmAliasPatchInput, Body()],
-):
+) -> OdmAlias:
     odm_alias_service = OdmAliasService()
     return odm_alias_service.edit_draft(
         uid=odm_alias_uid, concept_edit_input=odm_alias_edit_input
@@ -296,7 +293,6 @@ State after:
 Possible errors:
  - Invalid uid or status not Final.
 """,
-    response_model=OdmAlias,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -314,7 +310,7 @@ Possible errors:
         },
     },
 )
-def create_odm_alias_version(odm_alias_uid: Annotated[str, OdmAliasUID]):
+def create_odm_alias_version(odm_alias_uid: Annotated[str, OdmAliasUID]) -> OdmAlias:
     odm_alias_service = OdmAliasService()
     return odm_alias_service.create_new_version(uid=odm_alias_uid)
 
@@ -323,7 +319,6 @@ def create_odm_alias_version(odm_alias_uid: Annotated[str, OdmAliasUID]):
     "/{odm_alias_uid}/approvals",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Approve an ODM Alias",
-    response_model=OdmAlias,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -340,7 +335,7 @@ def create_odm_alias_version(odm_alias_uid: Annotated[str, OdmAliasUID]):
         },
     },
 )
-def approve_odm_alias(odm_alias_uid: Annotated[str, OdmAliasUID]):
+def approve_odm_alias(odm_alias_uid: Annotated[str, OdmAliasUID]) -> OdmAlias:
     odm_alias_service = OdmAliasService()
     return odm_alias_service.approve(uid=odm_alias_uid)
 
@@ -349,7 +344,6 @@ def approve_odm_alias(odm_alias_uid: Annotated[str, OdmAliasUID]):
     "/{odm_alias_uid}/activations",
     dependencies=[rbac.LIBRARY_WRITE],
     summary=" Inactivate an ODM Alias",
-    response_model=OdmAlias,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -365,7 +359,7 @@ def approve_odm_alias(odm_alias_uid: Annotated[str, OdmAliasUID]):
         },
     },
 )
-def inactivate_odm_alias(odm_alias_uid: Annotated[str, OdmAliasUID]):
+def inactivate_odm_alias(odm_alias_uid: Annotated[str, OdmAliasUID]) -> OdmAlias:
     odm_alias_service = OdmAliasService()
     return odm_alias_service.inactivate_final(uid=odm_alias_uid)
 
@@ -374,7 +368,6 @@ def inactivate_odm_alias(odm_alias_uid: Annotated[str, OdmAliasUID]):
     "/{odm_alias_uid}/activations",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Reactivate an ODM Alias",
-    response_model=OdmAlias,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -390,7 +383,7 @@ def inactivate_odm_alias(odm_alias_uid: Annotated[str, OdmAliasUID]):
         },
     },
 )
-def reactivate_odm_alias(odm_alias_uid: Annotated[str, OdmAliasUID]):
+def reactivate_odm_alias(odm_alias_uid: Annotated[str, OdmAliasUID]) -> OdmAlias:
     odm_alias_service = OdmAliasService()
     return odm_alias_service.reactivate_retired(uid=odm_alias_uid)
 
@@ -399,7 +392,6 @@ def reactivate_odm_alias(odm_alias_uid: Annotated[str, OdmAliasUID]):
     "/{odm_alias_uid}",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Delete draft version of ODM Alias",
-    response_model=None,
     status_code=204,
     responses={
         403: _generic_descriptions.ERROR_403,

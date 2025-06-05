@@ -190,6 +190,8 @@ class Units(BaseImporter):
         headers = next(readCSV)
         api_tasks = []
         existing_units = self.api.get_all_from_api("/concepts/unit-definitions")
+        if existing_units is None:
+            existing_units = []
         existing_units_by_uid = {v["uid"]: v for v in existing_units}
         existing_rows = self.api.get_all_identifiers(
             existing_units,

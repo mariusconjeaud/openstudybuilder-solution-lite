@@ -250,7 +250,7 @@ class StudyActivityScheduleRepository(base.StudySelectionRepository):
         operational_return = ""
         if operational:
             operational_match = """
-            MATCH (sv)--(sa_instance)<-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_INSTANCE]-(sa)
+            MATCH (sv)--(sa_instance:StudyActivityInstance)<-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_INSTANCE]-(sa)
             MATCH (sa)-[:HAS_SELECTED_ACTIVITY]-(:ActivityValue)-[:HAS_VERSION]-(:ActivityRoot)-[:CONTAINS_CONCEPT]-(lib:Library)
                 WHERE lib.name <> $library_name
             """

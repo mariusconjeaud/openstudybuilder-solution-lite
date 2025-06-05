@@ -49,7 +49,7 @@ class StudySoAFootnote(BaseModel):
             "The format is ISO 8601 in UTC±0, e.g.: '2020-10-31T16:00:00+00:00' for October 31, 2020 at 6pm in UTC+2 timezone.",
         ),
     ] = None
-    referenced_items: Annotated[list[ReferencedItem], Field()] = []
+    referenced_items: list[ReferencedItem] = Field(default_factory=list)
     footnote: Annotated[
         Footnote | None, Field(json_schema_extra={"nullable": True})
     ] = None
@@ -70,6 +70,7 @@ class StudySoAFootnote(BaseModel):
             json_schema_extra={"nullable": True},
         ),
     ] = None
+    author_username: Annotated[str | None, Field(nullable=True)] = None
 
     @classmethod
     def from_study_soa_footnote_vo(
@@ -128,6 +129,7 @@ class StudySoAFootnote(BaseModel):
                     item_uid=ref_item.item_uid,
                     item_name=ref_item.item_name,
                     item_type=ref_item.item_type,
+                    visible_in_protocol_soa=ref_item.visible_in_protocol_soa,
                 )
                 for ref_item in study_soa_footnote_vo.referenced_items
             ],
@@ -136,16 +138,16 @@ class StudySoAFootnote(BaseModel):
             template=footnote_template,
             modified=study_soa_footnote_vo.modified,
             accepted_version=study_soa_footnote_vo.accepted_version,
+            author_username=study_soa_footnote_vo.author_username,
         )
 
 
 class StudySoAFootnoteCreateInput(PostInputModel):
     footnote_uid: Annotated[str | None, Field()] = None
     footnote_template_uid: Annotated[str | None, Field()] = None
-    referenced_items: Annotated[
-        list[ReferencedItem],
-        Field(title="The list of items referenced by a single footnote"),
-    ] = []
+    referenced_items: list[ReferencedItem] = Field(
+        title="The list of items referenced by a single footnote", default_factory=list
+    )
 
 
 class StudySoAFootnoteCreateFootnoteInput(PostInputModel):
@@ -153,10 +155,10 @@ class StudySoAFootnoteCreateFootnoteInput(PostInputModel):
         FootnoteCreateInput,
         Field(description="Footnote data to create new footnote"),
     ]
-    referenced_items: Annotated[
-        list[ReferencedItem],
-        Field(title="The list of items referenced by a single footnote"),
-    ] = []
+    referenced_items: list[ReferencedItem] = Field(
+        title="The list of items referenced by a single footnote",
+        default_factory=list,
+    )
 
 
 class StudySoAFootnoteEditInput(PatchInputModel):
@@ -216,17 +218,18 @@ class StudySoAFootnoteHistory(StudySoAFootnote):
             start_date=study_soa_footnote_vo.start_date,
             end_date=study_soa_footnote_vo.end_date,
             change_type=study_soa_footnote_vo.change_type,
+            author_username=study_soa_footnote_vo.author_username,
         )
 
 
 class StudySoAFootnoteVersion(StudySoAFootnoteHistory):
-    changes: list[str]
+    changes: Annotated[list[str], Field()]
 
 
 class StudySoAFootnoteBatchEditInput(StudySoAFootnoteEditInput):
-    study_soa_footnote_uid: str
+    study_soa_footnote_uid: Annotated[str, Field()]
 
 
 class StudySoAFootnoteBatchOutput(BaseModel):
-    response_code: int = RESPONSE_CODE_FIELD
-    content: StudySoAFootnote | None | BatchErrorResponse
+    response_code: Annotated[int, Field()] = RESPONSE_CODE_FIELD
+    content: Annotated[StudySoAFootnote | None | BatchErrorResponse, Field()]

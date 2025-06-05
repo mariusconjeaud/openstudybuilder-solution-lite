@@ -1,18 +1,18 @@
 @REQ_ID:1070683
-Feature: Library - CRF Tree
+Feature: Library - Concepts - CRFs - CRF Tree
 
     As a user, I want to view and manage CRF Tree in the Library
 
     Background: User must be logged in
         Given The user is logged in
 
-    Scenario: User must be able to navigate to CRF Tree page
+    Scenario: [Navigation] User must be able to navigate to CRF Tree page
         Given The '/library' page is opened
         When The 'CRFs' submenu is clicked in the 'Concepts' section
         And The 'CRF Tree' tab is selected
         Then The current URL is 'library/crfs/crf-tree'
 
-    Scenario: User must be able to see the table of the CRF Tree
+    Scenario: [Table][Columns][Names] User must be able to see the table of the CRF Tree
         Given The 'library/crfs/crf-tree' page is opened
         Then A table is visible with following headers
             | headers                                 |

@@ -23,7 +23,7 @@ class EndpointTemplateName(BaseModel):
         str | None,
         Field(
             description="The actual value/content. It may include parameters referenced by simple strings in square brackets [].",
-            json_schema_extra={"nullable": True},
+            json_schema_extra={"nullable": True, "format": "html"},
         ),
     ]
     name_plain: Annotated[
@@ -37,7 +37,7 @@ class EndpointTemplateName(BaseModel):
         str | None,
         Field(
             description="Optional guidance text for using the template.",
-            json_schema_extra={"nullable": True},
+            json_schema_extra={"nullable": True, "format": "html"},
         ),
     ] = None
 
@@ -57,7 +57,6 @@ class EndpointTemplate(EndpointTemplateNameUid):
     start_date: Annotated[
         datetime | None,
         Field(
-            default_factory=datetime.utcnow,
             description="Part of the metadata: The point in time when the (version of the) endpoint template was created. "
             "The format is ISO 8601 in UTC±0, e.g.: '2020-10-31T16:00:00+00:00' for October 31, 2020 at 6pm in UTC+2 timezone.",
             json_schema_extra={"nullable": True},
@@ -66,7 +65,6 @@ class EndpointTemplate(EndpointTemplateNameUid):
     end_date: Annotated[
         datetime | None,
         Field(
-            default_factory=datetime.utcnow,
             description="Part of the metadata: The point in time when the version of the endpoint template was closed (and a new one was created). "
             "The format is ISO 8601 in UTC±0, e.g.: '2020-10-31T16:00:00+00:00' for October 31, 2020 at 6pm in UTC+2 timezone.",
             json_schema_extra={"nullable": True},
@@ -101,19 +99,17 @@ class EndpointTemplate(EndpointTemplateNameUid):
             json_schema_extra={"nullable": True},
         ),
     ] = None
-    possible_actions: Annotated[
-        list[str],
-        Field(
-            description=(
-                "Holds those actions that can be performed on the endpoint template. "
-                "Actions are: 'approve', 'edit', 'new_version', 'inactivate', 'reactivate' and 'delete'."
-            )
+    possible_actions: list[str] = Field(
+        description=(
+            "Holds those actions that can be performed on the endpoint template. "
+            "Actions are: 'approve', 'edit', 'new_version', 'inactivate', 'reactivate' and 'delete'."
         ),
-    ] = []
-    parameters: Annotated[
-        list[TemplateParameter],
-        Field(description="Those parameters that are used by the endpoint template."),
-    ] = []
+        default_factory=list,
+    )
+    parameters: list[TemplateParameter] = Field(
+        description="Those parameters that are used by the endpoint template.",
+        default_factory=list,
+    )
     library: Annotated[
         Library | None,
         Field(
@@ -123,20 +119,18 @@ class EndpointTemplate(EndpointTemplateNameUid):
     ] = None
 
     # Template indexings
-    indications: Annotated[
-        list[SimpleTermModel],
-        Field(
-            description="The study indications, conditions, diseases or disorders in scope for the template.",
-        ),
-    ] = []
-    categories: Annotated[
-        list[SimpleCTTermNameAndAttributes],
-        Field(description="A list of categories the template belongs to."),
-    ] = []
-    sub_categories: Annotated[
-        list[SimpleCTTermNameAndAttributes],
-        Field(description="A list of sub-categories the template belongs to."),
-    ] = []
+    indications: list[SimpleTermModel] = Field(
+        description="The study indications, conditions, diseases or disorders in scope for the template.",
+        default_factory=list,
+    )
+    categories: list[SimpleCTTermNameAndAttributes] = Field(
+        description="A list of categories the template belongs to.",
+        default_factory=list,
+    )
+    sub_categories: list[SimpleCTTermNameAndAttributes] = Field(
+        description="A list of sub-categories the template belongs to.",
+        default_factory=list,
+    )
 
     study_count: Annotated[
         int, Field(description="Count of studies referencing template")
@@ -198,12 +192,7 @@ class EndpointTemplateWithCount(EndpointTemplate):
 
 
 class EndpointTemplateVersion(EndpointTemplate):
-    changes: Annotated[
-        list[str],
-        Field(
-            description=CHANGES_FIELD_DESC,
-        ),
-    ] = []
+    changes: list[str] = Field(description=CHANGES_FIELD_DESC, default_factory=list)
 
 
 class EndpointTemplatePreValidateInput(PostInputModel):
@@ -212,12 +201,15 @@ class EndpointTemplatePreValidateInput(PostInputModel):
         Field(
             description="The actual value/content. It may include parameters referenced by simple strings in square brackets [].",
             min_length=1,
+            json_schema_extra={"format": "html"},
         ),
     ]
     guidance_text: Annotated[
         str | None,
         Field(
-            description="Optional guidance text for using the template.", min_length=1
+            description="Optional guidance text for using the template.",
+            min_length=1,
+            json_schema_extra={"format": "html"},
         ),
     ] = None
 
@@ -228,12 +220,15 @@ class EndpointTemplateCreateInput(PostInputModel):
         Field(
             description="The actual value/content. It may include parameters referenced by simple strings in square brackets [].",
             min_length=1,
+            json_schema_extra={"format": "html"},
         ),
     ]
     guidance_text: Annotated[
         str | None,
         Field(
-            description="Optional guidance text for using the template.", min_length=1
+            description="Optional guidance text for using the template.",
+            min_length=1,
+            json_schema_extra={"format": "html"},
         ),
     ] = None
     study_uid: Annotated[
@@ -276,12 +271,15 @@ class EndpointTemplateEditInput(PatchInputModel):
         Field(
             description="The actual value/content. It may include parameters referenced by simple strings in square brackets [].",
             min_length=1,
+            json_schema_extra={"format": "html"},
         ),
     ]
     guidance_text: Annotated[
         str | None,
         Field(
-            description="Optional guidance text for using the template.", min_length=1
+            description="Optional guidance text for using the template.",
+            min_length=1,
+            json_schema_extra={"format": "html"},
         ),
     ] = None
     change_description: Annotated[

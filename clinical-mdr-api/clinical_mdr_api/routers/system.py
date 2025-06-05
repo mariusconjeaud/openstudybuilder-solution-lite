@@ -21,10 +21,9 @@ router = APIRouter()
 @router.get(
     "/information",
     summary="Returns various information about this API (running version, etc.)",
-    response_model=SystemInformation,
     status_code=200,
 )
-def get_system_information():
+def get_system_information() -> SystemInformation:
     return service.get_system_information()
 
 
@@ -75,7 +74,6 @@ def get_license_md() -> FileResponse:
 @router.get(
     "/feature-flags",
     summary="Returns all feature flags.",
-    response_model=list[FeatureFlag],
     status_code=200,
     responses={
         404: _generic_descriptions.ERROR_404,
@@ -88,7 +86,6 @@ def get_all_feature_flags() -> list[FeatureFlag]:
 @router.get(
     "/notifications",
     summary="Returns all notifications that are both published and in the specified time.",
-    response_model=list[Notification],
     status_code=200,
     responses={
         404: _generic_descriptions.ERROR_404,

@@ -22,8 +22,10 @@ from clinical_mdr_api.models.utils import BaseModel, PatchInputModel, PostInputM
 
 
 class ActivityInstructionNameUid(BaseModel):
-    uid: str
-    name: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = None
+    uid: Annotated[str, Field()]
+    name: Annotated[
+        str | None, Field(json_schema_extra={"nullable": True, "format": "html"})
+    ] = None
     name_plain: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = (
         None
     )
@@ -44,14 +46,12 @@ class ActivityInstruction(ActivityInstructionNameUid):
     author_username: Annotated[
         str | None, Field(json_schema_extra={"nullable": True})
     ] = None
-    template: ActivityInstructionTemplateNameUidLibrary | None
-    parameter_terms: Annotated[
-        list[MultiTemplateParameterTerm],
-        Field(
-            description="""Holds the parameter terms that are used within the activity
+    template: Annotated[ActivityInstructionTemplateNameUidLibrary | None, Field()]
+    parameter_terms: list[MultiTemplateParameterTerm] = Field(
+        description="""Holds the parameter terms that are used within the activity
         instruction. The terms are ordered as they occur in the activity instruction name.""",
-        ),
-    ] = []
+        default_factory=list,
+    )
     library: Annotated[Library | None, Field(json_schema_extra={"nullable": True})] = (
         None
     )
@@ -123,12 +123,7 @@ class ActivityInstructionVersion(ActivityInstruction):
     Class for storing Activity Instructions and calculation of differences
     """
 
-    changes: Annotated[
-        list[str],
-        Field(
-            description=CHANGES_FIELD_DESC,
-        ),
-    ] = []
+    changes: list[str] = Field(description=CHANGES_FIELD_DESC, default_factory=list)
 
 
 class ActivityInstructionEditInput(PatchInputModel):

@@ -1,18 +1,18 @@
 @REQ_ID:1070683
-Feature: Library - Units (Part 2)
+Feature: Library - Concepts - Units (part 2)
     As a user, I want to manage the Unit feature in the Library Concept, 
     for Unit Conversion and Conversion Factor Management functionalities.
 
     Background: User must be logged in
         Given The user is logged in
 
-    Scenario: Verify Toggle Off for Complex Unit Conversion
+    Scenario: [Complex Unit Conversion][Toggle][Off] Verify Toggle Off for Complex Unit Conversion
         Given The '/library/units' page is opened
         When Add unit button is clicked
         Then A form for unit creation is opened
         And The Use complex unit conversion toggle is set to false
 
-    Scenario: Verify Toggle On for Complex Unit Conversion
+    Scenario: [Create][Toggle][On] Verify Toggle On for Complex Unit Conversion
         Given The '/library/units' page is opened
         When Add unit button is clicked
         Then A form for unit creation is opened
@@ -20,7 +20,7 @@ Feature: Library - Units (Part 2)
         Then Use complex unit conversion option is enabled
         And Unit creation is saved without errors
 
-    Scenario: Enable/Disable Complex Unit Conversion for Existing Unit
+    Scenario: [Actions][Edit][Toggle][On/Off] Enable/Disable Complex Unit Conversion for Existing Unit
         Given The '/library/units' page is opened
         When [API] Unit in status Draft exists
         And Unit is found
@@ -35,7 +35,7 @@ Feature: Library - Units (Part 2)
         And The 'Edit' option is clicked from the three dot menu list
         And The Use complex unit conversion toggle is set to false
 
-    Scenario: Verify empty Conversion Factor to Master for New Unit
+    Scenario: [Create][Empty conversion factor] Verify empty Conversion Factor to Master for New Unit
         Given The '/library/units' page is opened
         When Add unit button is clicked
         Then A form for unit creation is opened
@@ -44,7 +44,7 @@ Feature: Library - Units (Part 2)
         Then Unit creation is saved without errors
         And The created unit is found in table  
 
-    Scenario: Enter Numeric Value for Conversion Factor to Master for Existing Unit
+    Scenario: [Actions][Edit][Numeric conversion factor] Enter Numeric Value for Conversion Factor to Master for Existing Unit
         Given The '/library/units' page is opened
         When [API] Unit in status Draft exists
         And Unit is found
@@ -53,7 +53,7 @@ Feature: Library - Units (Part 2)
         When Conversion factor to master is filled with numeric value
         And Unit editon is saved without errors  
 
-    Scenario: Verify numeric Conversion Factor to Master for New Unit
+    Scenario: [Create][Numeric conversion factor] Verify numeric Conversion Factor to Master for New Unit
         Given The '/library/units' page is opened
         When Add unit button is clicked
         Then A form for unit creation is opened
@@ -61,7 +61,7 @@ Feature: Library - Units (Part 2)
         And Conversion factor to master is filled with numeric value
         Then Unit creation is saved without errors
   
-    Scenario: Verify Error for Non-Numeric Conversion Factor to Master for Existing Unit
+    Scenario: [Actions][Edit][Non-numeric conversion factor] Verify Error for Non-Numeric Conversion Factor to Master for Existing Unit
         Given The '/library/units' page is opened
         When [API] Unit in status Draft exists
         And Unit is found
@@ -70,7 +70,7 @@ Feature: Library - Units (Part 2)
         When Conversion factor to master is filled with text value
         Then An error message appears when I save the unit
 
-    Scenario: Verify Error for Non-Numeric Conversion Factor to Master for New Unit
+    Scenario: [Create][Non-numeric conversion factor] Verify Error for Non-Numeric Conversion Factor to Master for New Unit
         Given The '/library/units' page is opened
         And Add unit button is clicked
         Then A form for unit creation is opened

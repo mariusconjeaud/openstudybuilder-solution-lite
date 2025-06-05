@@ -129,7 +129,7 @@ export default {
             this.studiesGeneralStore.selectedStudy.uid,
             this.form
           )
-          this.studiesGeneralStore.selectStudy(resp.data)
+          await this.studiesGeneralStore.selectStudy(resp.data)
           this.eventBusEmit('notification', {
             msg: this.$t('StudyStatusForm.lock_success'),
             type: 'success',

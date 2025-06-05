@@ -9,7 +9,7 @@ from clinical_mdr_api.models.utils import BaseModel, PostInputModel
 class Brand(BaseModel):
     uid: Annotated[str, Field(description="The unique id of the Brand.")]
 
-    name: str
+    name: Annotated[str, Field()]
 
     @classmethod
     def from_uid(

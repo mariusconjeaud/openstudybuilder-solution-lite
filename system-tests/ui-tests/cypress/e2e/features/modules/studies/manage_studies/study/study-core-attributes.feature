@@ -1,5 +1,5 @@
 @REQ_ID:987736 @pending_implementation
-Feature: Studies - Manage the study definition core attributes
+Feature: Studies - Manage Study - Study Core Attributes
 
     Background: User must be logged in
         Given The user is logged in
@@ -68,6 +68,7 @@ Feature: Studies - Manage the study definition core attributes
     @manual_test    
     Scenario: User must be able to read change history of selected element
         Given The '/studies/Study_000001/core_attributes' page is opened
+        And The 'Show history' option is clicked from the three dot menu list
         When The user clicks on History for particular element
         Then The user is presented with history of changes for that element
         And The history contains timestamps and usernamesv

@@ -27,7 +27,6 @@ OdmMethodUID = Path(description="The unique id of the ODM Method.")
     "",
     dependencies=[rbac.LIBRARY_READ],
     summary="Return every variable related to the selected status and version of the ODM Methods",
-    response_model=CustomPage[OdmMethod],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -63,7 +62,7 @@ def get_all_odm_methods(
     total_count: Annotated[
         bool | None, Query(description=_generic_descriptions.TOTAL_COUNT)
     ] = False,
-):
+) -> CustomPage[OdmMethod]:
     odm_method_service = OdmMethodService()
     results = odm_method_service.get_all_concepts(
         library=library_name,
@@ -85,7 +84,6 @@ def get_all_odm_methods(
     summary="Returns possible values from the database for a given header",
     description="""Allowed parameters include : field name for which to get possible
     values, search string to provide filtering for the field name, additional filters to apply on other fields""",
-    response_model=list[Any],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -116,7 +114,7 @@ def get_distinct_values_for_header(
     page_size: Annotated[
         int | None, Query(description=_generic_descriptions.HEADER_PAGE_SIZE)
     ] = config.DEFAULT_HEADER_PAGE_SIZE,
-):
+) -> list[Any]:
     odm_method_service = OdmMethodService()
     return odm_method_service.get_distinct_values_for_header(
         library=library_name,
@@ -132,14 +130,13 @@ def get_distinct_values_for_header(
     "/{odm_method_uid}",
     dependencies=[rbac.LIBRARY_READ],
     summary="Get details on a specific ODM Method (in a specific version)",
-    response_model=OdmMethod,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
         404: _generic_descriptions.ERROR_404,
     },
 )
-def get_odm_method(odm_method_uid: Annotated[str, OdmMethodUID]):
+def get_odm_method(odm_method_uid: Annotated[str, OdmMethodUID]) -> OdmMethod:
     odm_method_service = OdmMethodService()
     return odm_method_service.get_by_uid(uid=odm_method_uid)
 
@@ -148,14 +145,13 @@ def get_odm_method(odm_method_uid: Annotated[str, OdmMethodUID]):
     "/{odm_method_uid}/relationships",
     dependencies=[rbac.LIBRARY_READ],
     summary="Get UIDs of a specific ODM Method's relationships",
-    response_model=dict,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
         404: _generic_descriptions.ERROR_404,
     },
 )
-def get_active_relationships(odm_method_uid: Annotated[str, OdmMethodUID]):
+def get_active_relationships(odm_method_uid: Annotated[str, OdmMethodUID]) -> dict:
     odm_method_service = OdmMethodService()
     return odm_method_service.get_active_relationships(uid=odm_method_uid)
 
@@ -178,7 +174,6 @@ State after:
 Possible errors:
  - Invalid uid.
     """,
-    response_model=list[OdmMethod],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -188,7 +183,9 @@ Possible errors:
         },
     },
 )
-def get_odm_method_versions(odm_method_uid: Annotated[str, OdmMethodUID]):
+def get_odm_method_versions(
+    odm_method_uid: Annotated[str, OdmMethodUID],
+) -> list[OdmMethod]:
     odm_method_service = OdmMethodService()
     return odm_method_service.get_version_history(uid=odm_method_uid)
 
@@ -197,7 +194,6 @@ def get_odm_method_versions(odm_method_uid: Annotated[str, OdmMethodUID]):
     "",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Creates a new Method in 'Draft' status with version 0.1",
-    response_model=OdmMethod,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -213,7 +209,7 @@ def get_odm_method_versions(odm_method_uid: Annotated[str, OdmMethodUID]):
 )
 def create_odm_method(
     odm_method_create_input: Annotated[OdmMethodPostInput, Body()],
-):
+) -> OdmMethod:
     odm_method_service = OdmMethodService()
     return odm_method_service.create_with_relations(
         concept_input=odm_method_create_input
@@ -224,7 +220,6 @@ def create_odm_method(
     "/{odm_method_uid}",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Update ODM Method",
-    response_model=OdmMethod,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -246,7 +241,7 @@ def create_odm_method(
 def edit_odm_method(
     odm_method_uid: Annotated[str, OdmMethodUID],
     odm_method_edit_input: Annotated[OdmMethodPatchInput, Body()],
-):
+) -> OdmMethod:
     odm_method_service = OdmMethodService()
     return odm_method_service.update_with_relations(
         uid=odm_method_uid, concept_edit_input=odm_method_edit_input
@@ -271,7 +266,6 @@ State after:
 Possible errors:
  - Invalid uid or status not Final.
 """,
-    response_model=OdmMethod,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -289,7 +283,9 @@ Possible errors:
         },
     },
 )
-def create_odm_method_version(odm_method_uid: Annotated[str, OdmMethodUID]):
+def create_odm_method_version(
+    odm_method_uid: Annotated[str, OdmMethodUID],
+) -> OdmMethod:
     odm_method_service = OdmMethodService()
     return odm_method_service.create_new_version(
         uid=odm_method_uid, cascade_new_version=True
@@ -300,7 +296,6 @@ def create_odm_method_version(odm_method_uid: Annotated[str, OdmMethodUID]):
     "/{odm_method_uid}/approvals",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Approve draft version of ODM Method",
-    response_model=OdmMethod,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -317,7 +312,7 @@ def create_odm_method_version(odm_method_uid: Annotated[str, OdmMethodUID]):
         },
     },
 )
-def approve_odm_method(odm_method_uid: Annotated[str, OdmMethodUID]):
+def approve_odm_method(odm_method_uid: Annotated[str, OdmMethodUID]) -> OdmMethod:
     odm_method_service = OdmMethodService()
     return odm_method_service.approve(uid=odm_method_uid, cascade_edit_and_approve=True)
 
@@ -326,7 +321,6 @@ def approve_odm_method(odm_method_uid: Annotated[str, OdmMethodUID]):
     "/{odm_method_uid}/activations",
     dependencies=[rbac.LIBRARY_WRITE],
     summary=" Inactivate final version of ODM Method",
-    response_model=OdmMethod,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -342,7 +336,7 @@ def approve_odm_method(odm_method_uid: Annotated[str, OdmMethodUID]):
         },
     },
 )
-def inactivate_odm_method(odm_method_uid: Annotated[str, OdmMethodUID]):
+def inactivate_odm_method(odm_method_uid: Annotated[str, OdmMethodUID]) -> OdmMethod:
     odm_method_service = OdmMethodService()
     return odm_method_service.inactivate_final(
         uid=odm_method_uid, cascade_inactivate=True
@@ -353,7 +347,6 @@ def inactivate_odm_method(odm_method_uid: Annotated[str, OdmMethodUID]):
     "/{odm_method_uid}/activations",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Reactivate retired version of a ODM Method",
-    response_model=OdmMethod,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -369,7 +362,7 @@ def inactivate_odm_method(odm_method_uid: Annotated[str, OdmMethodUID]):
         },
     },
 )
-def reactivate_odm_method(odm_method_uid: Annotated[str, OdmMethodUID]):
+def reactivate_odm_method(odm_method_uid: Annotated[str, OdmMethodUID]) -> OdmMethod:
     odm_method_service = OdmMethodService()
     return odm_method_service.reactivate_retired(
         uid=odm_method_uid, cascade_reactivate=True
@@ -380,7 +373,6 @@ def reactivate_odm_method(odm_method_uid: Annotated[str, OdmMethodUID]):
     "/{odm_method_uid}",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Delete draft version of ODM Method",
-    response_model=None,
     status_code=204,
     responses={
         403: _generic_descriptions.ERROR_403,

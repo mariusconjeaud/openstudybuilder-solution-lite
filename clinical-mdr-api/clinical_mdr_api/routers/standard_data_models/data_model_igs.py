@@ -38,7 +38,6 @@ State after:
 
 {_generic_descriptions.DATA_EXPORTS_HEADER}
 """,
-    response_model=CustomPage[DataModelIG],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -86,7 +85,7 @@ def get_data_model_igs(
     total_count: Annotated[
         bool | None, Query(description=_generic_descriptions.TOTAL_COUNT)
     ] = False,
-):
+) -> CustomPage[DataModelIG]:
     data_model_ig_service = DataModelIGService()
     results = data_model_ig_service.get_all_items(
         sort_by=sort_by,
@@ -107,7 +106,6 @@ def get_data_model_igs(
     summary="Returns possible values from the database for a given header",
     description="Allowed parameters include : field name for which to get possible values, "
     "search string to provide filtering for the field name, additional filters to apply on other fields",
-    response_model=list[Any],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -137,7 +135,7 @@ def get_distinct_values_for_header(
     page_size: Annotated[
         int | None, Query(description=_generic_descriptions.HEADER_PAGE_SIZE)
     ] = config.DEFAULT_HEADER_PAGE_SIZE,
-):
+) -> list[Any]:
     data_model_ig_service = DataModelIGService()
     return data_model_ig_service.get_distinct_values_for_header(
         field_name=field_name,
@@ -164,13 +162,12 @@ State after:
 Possible errors:
  - Invalid uid.
  """,
-    response_model=DataModelIG,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
         404: _generic_descriptions.ERROR_404,
     },
 )
-def get_data_model(data_model_ig_uid: Annotated[str, DataModelIGUID]):
+def get_data_model(data_model_ig_uid: Annotated[str, DataModelIGUID]) -> DataModelIG:
     data_model_ig_service = DataModelIGService()
     return data_model_ig_service.get_by_uid(uid=data_model_ig_uid)

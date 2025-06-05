@@ -1,51 +1,15 @@
-import { objectVersion, objectName } from "../../support/front_end_commands/table_commands"
 const { Given, When, Then } = require("@badeball/cypress-cucumber-preprocessor");
 
-let defaultActivityName, newActivityNameUpdated, indicationSelected, version
+let defaultActivityName, indicationSelected
 
-Given("The activity template exists with a status as {string}", (status) => {
-    cy.searchAndGetData(status, 'Parent template').then(() => {
-        version = objectVersion
-        defaultActivityName = objectName
-    })
-})
+Then('The Activity Instruction template is visible in the table', () => cy.checkRowByIndex(0, 'Parent template', defaultActivityName))
 
-Then("The new Activity is visible in the Activity Templates Table", () => checkTemplateInTable(defaultActivityName, 'Draft', '0.1'))
+When("The new activity is added in the library", () => addTemplate(true, false))
 
-Then("The updated Activity is visible within the table", () => {
-  checkTemplateInTable(newActivityNameUpdated, 'Draft', '0.2')
-  cy.checkRowByIndex(0, "Activity", "Not Applicable")
-})
+When("The new Activity is added in the library with not applicable for indexes", () => addTemplate(true, false))
 
-Then("The new Activity is visible with Not Applicable indexes in the Activity Templates Table", () => {
-  checkTemplateInTable(defaultActivityName, 'Draft', '0.1')
-  cy.checkRowByIndex(0, "Activity", "Not Applicable")
-})
-
-When("The new activity is added in the library", () => {
-  defaultActivityName = `${Date.now()}default`
-  addTemplate(defaultActivityName)
-  cy.searchAndCheckResults(defaultActivityName)
-})
-
-When("The second activity is added with the same template text", () => addTemplate(defaultActivityName))
-
-When("The new Activity is added in the library with not applicable for indexes", () => {
-  defaultActivityName = `${Date.now()}default`
-  cy.clickButton('add-template');
-  fillTemplateNameAndCountinue(defaultActivityName)
-  cy.selectFirstVSelect('template-activity-group')
-  cy.selectFirstVSelect('template-activity-sub-group')
-  cy.checkAllCheckboxes()
-  cy.clickFormActionButton('save')
-})
-
-When("The activity metadata is updated", () => {
-  newActivityNameUpdated = `${Date.now()}Updated`
-  fillTemplateNameAndCountinue(newActivityNameUpdated)
-  cy.checkAllCheckboxes()
-  cy.clickFormActionButton('continue')
-  cy.fillInput("template-change-description", "updated for test");
+When("The second activity is added with the same template text", () => {
+  addTemplate(false, false)
   cy.clickFormActionButton('save')
 })
 
@@ -79,28 +43,39 @@ When("The created activity template is edited without change description provide
   cy.clickFormActionButton('save')
 })
 
-Then("The parent activity is no longer available", () => cy.confirmItemNotAvailable(defaultActivityName))
+When("The activity metadata is updated", () => {
+  defaultActivityName = `${Date.now()}Updated`
+  fillTemplateNameAndCountinue(defaultActivityName)
+  cy.clickFormActionButton('continue')
+  cy.fillInput("template-change-description", "updated for test")
+  saveActivityInstructionAndSearch()
+})
 
 When("The indexing is updated for the Activity Template", () => {
   cy.selectLastVSelect("template-indication-dropdown")
   cy.get('[data-cy="template-indication-dropdown"] .v-field__input').invoke("text").then(text => indicationSelected = text)
   cy.clickButton("save-button")
   cy.checkSnackbarMessage('Indexing properties updated')
-  cy.searchAndCheckResults(defaultActivityName)
+  cy.searchAndCheckPresence(defaultActivityName, true)
 })
 
 Then("The indexes in activity template are updated", () => {
   cy.get('[data-cy="template-indication-dropdown"] .v-field__input').should('contain', indicationSelected.split(',')[0])
   cy.get('[data-cy="template-indication-dropdown"] .v-field__input').should('contain', indicationSelected.split(',')[1])
 })
+Then("The parent activity is no longer available", () => cy.searchAndCheckPresence(defaultActivityName, false))
 
-Then("The activity template has status Draft and version incremented by 0.1", () => cy.checkStatusAndVersion("Draft", version + 0.1))
+Then('[API] Activity Instruction in status Draft exists', () => createActivityInstructionViaApi())
 
-Then("The activity template has status Retired and the same version as before", () => cy.checkStatusAndVersion("Retired", version))
+Then('[API] Activity Instruction is approved', () => cy.approveActivityInstruction())
 
-Then("The activity template has status Final and version 1.0", () => cy.checkStatusAndVersion('Final', '1.0'))
+Then('[API] Activity Instruction is inactivated', () => cy.inactivateActivityInstruction())
 
-Then("The activity template has status Final and the same version as before", () => cy.checkStatusAndVersion("Final", version))
+Then('Activity Instruction is searched for', () => {
+    cy.intercept('/api/activity-instruction-templates?page_number=1&*').as('getTemplate')
+    cy.wait('@getTemplate', {timeout: 20000})
+    cy.searchAndCheckPresence(defaultActivityName, true)
+})
 
 function fillTemplateNameAndCountinue(name) {
   cy.wait(1500)
@@ -109,14 +84,18 @@ function fillTemplateNameAndCountinue(name) {
   cy.clickFormActionButton('continue')
 }
 
-function addTemplate(name) {
+function addTemplate(uniqueName, notApplicableIndexes) {
+  defaultActivityName = uniqueName ? `ActivityInstruction${Date.now()}` : defaultActivityName 
   cy.clickButton('add-template');
-  fillTemplateNameAndCountinue(name)
+  fillTemplateNameAndCountinue(defaultActivityName)
+  if (notApplicableIndexes) cy.checkAllCheckboxes()
+    else {
+      cy.selectFirstVSelect('template-activity-group')
+      cy.selectFirstVSelect('template-activity-sub-group')
+  }
   cy.selectFirstVSelect('template-indication-dropdown')
-  cy.selectFirstVSelect('template-activity-group')
-  cy.selectFirstVSelect('template-activity-sub-group')
   cy.selectFirstVSelect('template-activity-activity')
-  cy.clickFormActionButton('save')
+  if (uniqueName) saveActivityInstructionAndSearch()
 }
 
 function addTemplateWithoutMandatoryData(selectIndication, selectActivityGroup, selectSubGroup) {
@@ -128,9 +107,16 @@ function addTemplateWithoutMandatoryData(selectIndication, selectActivityGroup, 
   cy.clickFormActionButton('save')
 }
 
-function checkTemplateInTable(name, status, version) {
-  cy.wait(1000)
-  cy.searchAndCheckResults(name)
-  cy.checkRowByIndex(0, "Parent template", name);
-  cy.checkStatusAndVersion(status, version)
+function createActivityInstructionViaApi(customName = '') {
+  cy.getInidicationUid()
+  cy.createActivityInstruction(customName)
+  cy.getActivityInstructionName().then(name => defaultActivityName = name.replace('<p>', '').replace('</p>', '').trim())
+}
+
+function saveActivityInstructionAndSearch() {
+  cy.intercept('/api/activity-instruction-templates?page_number=1&*').as('getTemplate')
+  cy.clickFormActionButton('save')
+  cy.wait('@getTemplate', {timeout: 20000})
+  cy.waitForTable()
+  cy.searchAndCheckPresence(defaultActivityName, true)
 }

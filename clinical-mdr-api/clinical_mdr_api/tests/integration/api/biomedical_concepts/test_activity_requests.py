@@ -390,11 +390,12 @@ def test_edit_activity_request(api_client):
         approve=False,
         library_name=REQUESTED_LIBRARY_NAME,
     )
-    response = api_client.patch(
+    response = api_client.put(
         f"/concepts/activities/activities/{activity_request.uid}",
         json={
             "name": "new name",
             "name_sentence_case": "new name",
+            "change_description": "Change",
         },
     )
     res = response.json()

@@ -1,5 +1,7 @@
 const { Given, When, Then } = require("@badeball/cypress-cucumber-preprocessor");
 
+let study_uid, studyNumber, studyAcronym
+
 Given('A test study is selected', () => {
     cy.selectTestStudy('Study_000001')
 })
@@ -35,18 +37,29 @@ Given('A study in locked status with defined study number and study title is sel
 })
 
 When('A new study is added', () => {
+    studyAcronym = `AutomationTestStudy${Date.now()}`
+    studyNumber = `${Math.floor(1000 + Math.random() * 9000)}`
     cy.waitForTable()
     cy.clickButton('add-study')
     cy.selectAutoComplete('project-id', 'CDISC DEV')
-    cy.fillInput('study-number', '5555')
-    cy.fillInput('study-acronym', 'AutomationTest')
+    cy.fillInput('study-number', studyNumber)
+    cy.fillInput('study-acronym', studyAcronym)
     cy.clickButton('save-button')
+    cy.wait(2500)
+    cy.waitForTable()
 })
 
 Then('The study is visible within the table', () => {
-    cy.waitForTableData()
-    cy.wait(500)
-    cy.checkRowValueByColumnName('CDISC DEV-5555', 'Study acronym', 'AutomationTest')
-    cy.checkRowValueByColumnName('CDISC DEV-5555', 'Study number', '5555')
-    cy.checkRowValueByColumnName('CDISC DEV-5555', 'Project ID', 'CDISC DEV')
+    cy.checkRowByIndex(0, 'Study acronym', studyAcronym)
+    cy.checkRowByIndex(0, 'Study number', studyNumber)
+    cy.checkRowByIndex(0, 'Project ID', 'CDISC DEV')
+})
+
+When('Study is found', () => cy.searchAndCheckPresence(studyAcronym, true))
+
+When('[API] Study uid is fetched', () => cy.getStudyUid(studyNumber).then(id => study_uid = id))
+
+When('Go to created study', () => {
+    cy.visit(`/studies/${study_uid}/activities/soa`)
+    cy.waitForPage()
 })

@@ -17,17 +17,17 @@ class TemplateParameter(BaseModel):
         ),
     ]
 
-    terms: Annotated[
-        list[TemplateParameterTerm],
-        Field(description="The possible terms of the template parameter."),
-    ] = []
+    terms: list[TemplateParameterTerm] = Field(
+        description="The possible terms of the template parameter.",
+        default_factory=list,
+    )
 
 
 class ComplexTemplateParameter(BaseModel):
-    name: str | None = None
-    format: str | None = None
-    parameters: Annotated[list[TemplateParameter], Field()] = []
-    terms: Annotated[
-        list[TemplateParameterTerm],
-        Field(description="The possible terms of the template parameter."),
-    ] = []
+    name: Annotated[str | None, Field()] = None
+    format: Annotated[str | None, Field()] = None
+    parameters: list[TemplateParameter] = Field(default_factory=list)
+    terms: list[TemplateParameterTerm] = Field(
+        description="The possible terms of the template parameter.",
+        default_factory=list,
+    )

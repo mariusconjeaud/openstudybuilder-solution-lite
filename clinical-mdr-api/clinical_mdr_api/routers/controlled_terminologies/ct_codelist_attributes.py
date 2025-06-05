@@ -32,7 +32,6 @@ CTCodelistUID = Path(description="The unique id of the CTCodelistAttributes")
     "/codelists/attributes",
     dependencies=[rbac.LIBRARY_READ],
     summary="Returns all codelists attributes.",
-    response_model=CustomPage[CTCodelistAttributes],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -85,7 +84,7 @@ def get_codelists(
     total_count: Annotated[
         bool | None, Query(description=_generic_descriptions.TOTAL_COUNT)
     ] = False,
-):
+) -> CustomPage[CTCodelistAttributes]:
     ct_codelist_attribute_service = CTCodelistAttributesService()
     results = ct_codelist_attribute_service.get_all_ct_codelists(
         catalogue_name=catalogue_name,
@@ -109,7 +108,6 @@ def get_codelists(
     summary="Returns possibles values from the database for a given header",
     description="""Allowed parameters include : field name for which to get possible
     values, search string to provide filtering for the field name, additional filters to apply on other fields""",
-    response_model=list[Any],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -153,7 +151,7 @@ def get_distinct_values_for_header(
     page_size: Annotated[
         int | None, Query(description=_generic_descriptions.HEADER_PAGE_SIZE)
     ] = config.DEFAULT_HEADER_PAGE_SIZE,
-):
+) -> list[Any]:
     ct_codelist_attribute_service = CTCodelistAttributesService()
     return ct_codelist_attribute_service.get_distinct_values_for_header(
         catalogue_name=catalogue_name,
@@ -171,7 +169,6 @@ def get_distinct_values_for_header(
     "/codelists/{codelist_uid}/attributes",
     dependencies=[rbac.LIBRARY_READ],
     summary="Returns the latest/newest version of a specific codelist identified by 'codelist_uid'",
-    response_model=CTCodelistAttributes,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -207,7 +204,7 @@ def get_codelist_attributes(
             "<major>.<minor> where <major> and <minor> are digits. E.g. '0.1', '0.2', '1.0',",
         ),
     ] = None,
-):
+) -> CTCodelistAttributes:
     ct_codelist_attribute_service = CTCodelistAttributesService()
     return ct_codelist_attribute_service.get_by_uid(
         codelist_uid=codelist_uid,
@@ -223,7 +220,6 @@ def get_codelist_attributes(
     summary="Returns the version history of a specific CTCodelistAttributes identified by 'codelist_uid'.",
     description="The returned versions are ordered by\n"
     "0. start_date descending (newest entries first)",
-    response_model=list[CTCodelistAttributesVersion],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -235,7 +231,7 @@ def get_codelist_attributes(
 )
 def get_versions(
     codelist_uid: Annotated[str, CTCodelistUID],
-):
+) -> list[CTCodelistAttributesVersion]:
     ct_codelist_attribute_service = CTCodelistAttributesService()
     return ct_codelist_attribute_service.get_version_history(codelist_uid=codelist_uid)
 
@@ -252,7 +248,6 @@ If the request succeeds:
 * The 'version' property will be increased automatically by +0.1.
 * The status will remain in 'Draft'.
 """,
-    response_model=CTCodelistAttributes,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -278,7 +273,7 @@ def edit(
             description="The new parameter terms for the codelist including the change description.",
         ),
     ],
-):
+) -> CTCodelistAttributes:
     ct_codelist_attribute_service = CTCodelistAttributesService()
     return ct_codelist_attribute_service.edit_draft(
         codelist_uid=codelist_uid, codelist_input=codelist_input
@@ -298,7 +293,6 @@ If the request succeeds:
 * The 'change_description' property will be set automatically to 'new-version'.
 * The 'version' property will be increased by '0.1'.
 """,
-    response_model=CTCodelistAttributes,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -318,7 +312,7 @@ If the request succeeds:
 )
 def create(
     codelist_uid: Annotated[str, CTCodelistUID],
-):
+) -> CTCodelistAttributes:
     ct_codelist_attribute_service = CTCodelistAttributesService()
     return ct_codelist_attribute_service.create_new_version(codelist_uid=codelist_uid)
 
@@ -336,7 +330,6 @@ If the request succeeds:
 * The 'change_description' property will be set automatically to 'Approved version'.
 * The 'version' property will be increased automatically to the next major version.
     """,
-    response_model=CTCodelistAttributes,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -355,6 +348,6 @@ If the request succeeds:
 )
 def approve(
     codelist_uid: Annotated[str, CTCodelistUID],
-):
+) -> CTCodelistAttributes:
     ct_codelist_attribute_service = CTCodelistAttributesService()
     return ct_codelist_attribute_service.approve(codelist_uid=codelist_uid)

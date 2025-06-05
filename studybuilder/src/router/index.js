@@ -1083,7 +1083,7 @@ async function saveStudyUid(studyUid) {
   ) {
     try {
       const resp = await study.getStudy(studyUid)
-      store.selectStudy(resp.data)
+      await store.selectStudy(resp.data)
     } catch (_err) {
       store.unselectStudy
       store.studyId = null

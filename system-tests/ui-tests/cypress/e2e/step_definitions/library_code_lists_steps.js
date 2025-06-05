@@ -1,13 +1,6 @@
 const { Given, When, Then } = require("@badeball/cypress-cucumber-preprocessor");
 
 let codelistName, termSponsorName, termSentanceName, termName, termSubmissionValue, termNciValue, termDefinition
-let iterator = 1
-
-//To be removed once ct-catalogues tests stop crashing
-Then('Log that step was executed', () => {
-    console.log(`Step ${iterator} was executed`)
-    iterator += iterator
-})
 
 Given('CT data is loaded', () => {
   cy.intercept('/api/ct/codelists?*').as('getData')

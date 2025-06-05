@@ -14,12 +14,9 @@ from clinical_mdr_api.models.concepts.activities.activity import (
     ActivityHierarchySimpleModel,
     SimpleActivity,
 )
-from clinical_mdr_api.models.concepts.concept import (
-    ExtendedConceptPatchInput,
-    ExtendedConceptPostInput,
-)
+from clinical_mdr_api.models.concepts.concept import ExtendedConceptPostInput
 from clinical_mdr_api.models.libraries.library import Library
-from clinical_mdr_api.models.utils import BaseModel
+from clinical_mdr_api.models.utils import BaseModel, EditInputModel
 
 
 class ActivitySubGroup(ActivityBase):
@@ -55,17 +52,24 @@ class ActivitySubGroup(ActivityBase):
             ),
         )
 
-    activity_groups: list[ActivityHierarchySimpleModel]
-
-
-class ActivitySubGroupEditInput(ExtendedConceptPatchInput):
-    activity_groups: list[str] | None = None
-    change_description: Annotated[str | None, Field(min_length=1)] = None
+    activity_groups: Annotated[list[ActivityHierarchySimpleModel], Field()]
 
 
 class ActivitySubGroupCreateInput(ExtendedConceptPostInput):
-    activity_groups: list[str] | None = None
+    name: Annotated[
+        str,
+        Field(
+            description="The name or the actual value. E.g. 'Systolic Blood Pressure', 'Body Temperature', 'Metformin', ...",
+            min_length=1,
+        ),
+    ]
+    name_sentence_case: Annotated[str, Field(min_length=1)]
+    activity_groups: Annotated[list[str] | None, Field()] = None
     library_name: Annotated[str, Field(min_length=1)]
+
+
+class ActivitySubGroupEditInput(ActivitySubGroupCreateInput, EditInputModel):
+    pass
 
 
 class ActivitySubGroupVersion(ActivitySubGroup):
@@ -73,34 +77,29 @@ class ActivitySubGroupVersion(ActivitySubGroup):
     Class for storing ActivitySubGroup and calculation of differences
     """
 
-    changes: Annotated[
-        list[str],
-        Field(
-            description=CHANGES_FIELD_DESC,
-        ),
-    ] = []
+    changes: list[str] = Field(description=CHANGES_FIELD_DESC, default_factory=list)
 
 
 class ActivityGroup(BaseModel):
-    uid: str
-    name: str
-    version: str | None = None
-    status: str | None = None
+    uid: Annotated[str, Field()]
+    name: Annotated[str, Field()]
+    version: Annotated[str | None, Field()] = None
+    status: Annotated[str | None, Field()] = None
 
 
 class ActivitySubGroupDetail(BaseModel):
-    name: str | None = None
-    name_sentence_case: str | None = None
-    library_name: str | None = None
-    definition: str | None = None
-    start_date: datetime | None = None
-    end_date: datetime | None = None
-    status: str | None = None
-    version: str | None = None
-    possible_actions: list[str] | None = None
-    change_description: str | None = None
-    author_username: str | None = None
-    activity_groups: list[ActivityGroup]
+    name: Annotated[str | None, Field()] = None
+    name_sentence_case: Annotated[str | None, Field()] = None
+    library_name: Annotated[str | None, Field()] = None
+    definition: Annotated[str | None, Field()] = None
+    start_date: Annotated[datetime | None, Field()] = None
+    end_date: Annotated[datetime | None, Field()] = None
+    status: Annotated[str | None, Field()] = None
+    version: Annotated[str | None, Field()] = None
+    possible_actions: Annotated[list[str] | None, Field()] = None
+    change_description: Annotated[str | None, Field()] = None
+    author_username: Annotated[str | None, Field()] = None
+    activity_groups: Annotated[list[ActivityGroup], Field()]
 
 
 class ActivitySubGroupOverview(BaseModel):

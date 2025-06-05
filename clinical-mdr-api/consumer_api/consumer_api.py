@@ -152,7 +152,7 @@ at paths described in the OpenID Connect Discovery metadata document (whose URL 
 Microsoft Identity Platform documentation can be read 
 ([here](https://docs.microsoft.com/en-us/azure/active-directory/develop/v2-oauth2-auth-code-flow)).
 
-## System information:
+## System information
 
 System information is provided by a separate [System Information](./system/docs) sub-app which doesn't require authentication.
 """,

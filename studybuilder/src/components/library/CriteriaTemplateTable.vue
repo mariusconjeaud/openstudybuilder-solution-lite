@@ -36,7 +36,7 @@
       />
     </template>
     <template #[`item.guidance_text`]="{ item }">
-      <div v-html="item.guidance_text" />
+      <div v-html="sanitizeHTML(item.guidance_text)" />
     </template>
     <template #[`item.categories.name.sponsor_preferred_name`]="{ item }">
       <template v-if="item.categories && item.categories.length">
@@ -96,6 +96,7 @@ import dataFormating from '@/utils/dataFormating'
 import StudybuilderTemplateTable from '@/components/library/StudybuilderTemplateTable.vue'
 import TemplateIndexingDialog from './TemplateIndexingDialog.vue'
 import { useStudiesGeneralStore } from '@/stores/studies-general'
+import { sanitizeHTML } from '@/utils/sanitize'
 
 const props = defineProps({
   criteriaType: {

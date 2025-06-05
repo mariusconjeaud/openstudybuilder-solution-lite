@@ -24,6 +24,7 @@
                 "
                 :key="pos"
                 size="small"
+                variant="outlined"
                 :title="action.label"
                 class="ml-2"
                 :color="action.iconColor"
@@ -122,6 +123,7 @@ import activities from '@/api/activities'
 import exportLoader from '@/utils/exportLoader'
 import HistoryTable from '@/components/tools/HistoryTable.vue'
 import YamlViewer from '@/components/tools/YamlViewer.vue'
+import statuses from '@/constants/statuses'
 
 export default {
   components: {
@@ -189,6 +191,7 @@ export default {
           iconColor: 'success',
           condition:
             this.item &&
+            this.item.status === statuses.DRAFT &&
             this.item.possible_actions.find((action) => action === 'approve'),
           accessRole: this.$roles.LIBRARY_WRITE,
           click: this.approveItem,
@@ -196,7 +199,7 @@ export default {
         {
           label: this.$t('_global.edit'),
           icon: 'mdi-pencil-outline',
-          iconColor: 'primary',
+          iconColor: 'nnActionBlue',
           condition:
             this.item &&
             this.item.possible_actions.find((action) => action === 'edit'),
@@ -206,7 +209,7 @@ export default {
         {
           label: this.$t('_global.new_version'),
           icon: 'mdi-plus-circle-outline',
-          iconColor: 'primary',
+          iconColor: 'nnActionBlue',
           condition:
             this.item &&
             this.item.possible_actions.find(
@@ -218,7 +221,7 @@ export default {
         {
           label: this.$t('_global.inactivate'),
           icon: 'mdi-close-octagon-outline',
-          iconColor: 'primary',
+          iconColor: 'nnActionBlue',
           condition:
             this.item &&
             this.item.possible_actions.find(
@@ -230,7 +233,7 @@ export default {
         {
           label: this.$t('_global.reactivate'),
           icon: 'mdi-undo-variant',
-          iconColor: 'primary',
+          iconColor: 'nnActionBlue',
           condition:
             this.item &&
             this.item.possible_actions.find(
@@ -251,6 +254,7 @@ export default {
         },
         {
           label: this.$t('_global.history'),
+          iconColor: 'nnActionBlue',
           icon: 'mdi-history',
           condition: true,
           accessRole: this.$roles.LIBRARY_READ,
@@ -258,6 +262,7 @@ export default {
         },
         {
           label: this.$t('_global.close'),
+          iconColor: 'nnActionBlue',
           icon: 'mdi-close',
           condition: true,
           accessRole: this.$roles.LIBRARY_READ,

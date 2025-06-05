@@ -25,8 +25,8 @@ class CompoundAlias(Concept):
         ),
     ]
 
-    compound: SimpleCompound
-    is_preferred_synonym: bool = False
+    compound: Annotated[SimpleCompound, Field()]
+    is_preferred_synonym: Annotated[bool, Field()] = False
 
     @classmethod
     def from_ar(
@@ -61,19 +61,14 @@ class CompoundAlias(Concept):
 
 class CompoundAliasCreateInput(ExtendedConceptPostInput):
     compound_uid: Annotated[str, Field(min_length=1)]
-    is_preferred_synonym: bool = False
+    is_preferred_synonym: Annotated[bool, Field()] = False
 
 
 class CompoundAliasEditInput(ExtendedConceptPatchInput):
     compound_uid: Annotated[str, Field(min_length=1)]
-    is_preferred_synonym: bool = False
+    is_preferred_synonym: Annotated[bool, Field()] = False
     change_description: Annotated[str, Field(min_length=1)]
 
 
 class CompoundAliasVersion(CompoundAlias):
-    changes: Annotated[
-        list[str],
-        Field(
-            description=CHANGES_FIELD_DESC,
-        ),
-    ] = []
+    changes: list[str] = Field(description=CHANGES_FIELD_DESC, default_factory=list)

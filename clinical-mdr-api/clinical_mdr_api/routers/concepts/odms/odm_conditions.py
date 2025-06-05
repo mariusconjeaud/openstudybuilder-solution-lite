@@ -27,7 +27,6 @@ OdmConditionUID = Path(description="The unique id of the ODM Condition.")
     "",
     dependencies=[rbac.LIBRARY_READ],
     summary="Return every variable related to the selected status and version of the ODM Conditions",
-    response_model=CustomPage[OdmCondition],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -63,7 +62,7 @@ def get_all_odm_conditions(
     total_count: Annotated[
         bool | None, Query(description=_generic_descriptions.TOTAL_COUNT)
     ] = False,
-):
+) -> CustomPage[OdmCondition]:
     odm_condition_service = OdmConditionService()
     results = odm_condition_service.get_all_concepts(
         library=library_name,
@@ -85,7 +84,6 @@ def get_all_odm_conditions(
     summary="Returns possible values from the database for a given header",
     description="""Allowed parameters include : field name for which to get possible
     values, search string to provide filtering for the field name, additional filters to apply on other fields""",
-    response_model=list[Any],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -116,7 +114,7 @@ def get_distinct_values_for_header(
     page_size: Annotated[
         int | None, Query(description=_generic_descriptions.HEADER_PAGE_SIZE)
     ] = config.DEFAULT_HEADER_PAGE_SIZE,
-):
+) -> list[Any]:
     odm_condition_service = OdmConditionService()
     return odm_condition_service.get_distinct_values_for_header(
         library=library_name,
@@ -132,14 +130,15 @@ def get_distinct_values_for_header(
     "/{odm_condition_uid}",
     dependencies=[rbac.LIBRARY_READ],
     summary="Get details on a specific ODM Condition (in a specific version)",
-    response_model=OdmCondition,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
         404: _generic_descriptions.ERROR_404,
     },
 )
-def get_odm_condition(odm_condition_uid: Annotated[str, OdmConditionUID]):
+def get_odm_condition(
+    odm_condition_uid: Annotated[str, OdmConditionUID],
+) -> OdmCondition:
     odm_condition_service = OdmConditionService()
     return odm_condition_service.get_by_uid(uid=odm_condition_uid)
 
@@ -148,14 +147,15 @@ def get_odm_condition(odm_condition_uid: Annotated[str, OdmConditionUID]):
     "/{odm_condition_uid}/relationships",
     dependencies=[rbac.LIBRARY_READ],
     summary="Get UIDs of a specific ODM Condition's relationships",
-    response_model=dict,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
         404: _generic_descriptions.ERROR_404,
     },
 )
-def get_active_relationships(odm_condition_uid: Annotated[str, OdmConditionUID]):
+def get_active_relationships(
+    odm_condition_uid: Annotated[str, OdmConditionUID],
+) -> dict:
     odm_condition_service = OdmConditionService()
     return odm_condition_service.get_active_relationships(uid=odm_condition_uid)
 
@@ -178,7 +178,6 @@ State after:
 Possible errors:
  - Invalid uid.
     """,
-    response_model=list[OdmCondition],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -188,7 +187,9 @@ Possible errors:
         },
     },
 )
-def get_odm_condition_versions(odm_condition_uid: Annotated[str, OdmConditionUID]):
+def get_odm_condition_versions(
+    odm_condition_uid: Annotated[str, OdmConditionUID],
+) -> list[OdmCondition]:
     odm_condition_service = OdmConditionService()
     return odm_condition_service.get_version_history(uid=odm_condition_uid)
 
@@ -197,7 +198,6 @@ def get_odm_condition_versions(odm_condition_uid: Annotated[str, OdmConditionUID
     "",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Creates a new Condition in 'Draft' status with version 0.1",
-    response_model=OdmCondition,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -213,7 +213,7 @@ def get_odm_condition_versions(odm_condition_uid: Annotated[str, OdmConditionUID
 )
 def create_odm_condition(
     odm_condition_create_input: Annotated[OdmConditionPostInput, Body()],
-):
+) -> OdmCondition:
     odm_condition_service = OdmConditionService()
     return odm_condition_service.create_with_relations(
         concept_input=odm_condition_create_input
@@ -224,7 +224,6 @@ def create_odm_condition(
     "/{odm_condition_uid}",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Update ODM Condition",
-    response_model=OdmCondition,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -246,7 +245,7 @@ def create_odm_condition(
 def edit_odm_condition(
     odm_condition_uid: Annotated[str, OdmConditionUID],
     odm_condition_edit_input: Annotated[OdmConditionPatchInput, Body()],
-):
+) -> OdmCondition:
     odm_condition_service = OdmConditionService()
     return odm_condition_service.update_with_relations(
         uid=odm_condition_uid, concept_edit_input=odm_condition_edit_input
@@ -271,7 +270,6 @@ State after:
 Possible errors:
  - Invalid uid or status not Final.
 """,
-    response_model=OdmCondition,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -289,7 +287,9 @@ Possible errors:
         },
     },
 )
-def create_odm_condition_version(odm_condition_uid: Annotated[str, OdmConditionUID]):
+def create_odm_condition_version(
+    odm_condition_uid: Annotated[str, OdmConditionUID],
+) -> OdmCondition:
     odm_condition_service = OdmConditionService()
     return odm_condition_service.create_new_version(
         uid=odm_condition_uid, cascade_new_version=True
@@ -300,7 +300,6 @@ def create_odm_condition_version(odm_condition_uid: Annotated[str, OdmConditionU
     "/{odm_condition_uid}/approvals",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Approve draft version of ODM Condition",
-    response_model=OdmCondition,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -317,7 +316,9 @@ def create_odm_condition_version(odm_condition_uid: Annotated[str, OdmConditionU
         },
     },
 )
-def approve_odm_condition(odm_condition_uid: Annotated[str, OdmConditionUID]):
+def approve_odm_condition(
+    odm_condition_uid: Annotated[str, OdmConditionUID],
+) -> OdmCondition:
     odm_condition_service = OdmConditionService()
     return odm_condition_service.approve(
         uid=odm_condition_uid, cascade_edit_and_approve=True
@@ -328,7 +329,6 @@ def approve_odm_condition(odm_condition_uid: Annotated[str, OdmConditionUID]):
     "/{odm_condition_uid}/activations",
     dependencies=[rbac.LIBRARY_WRITE],
     summary=" Inactivate final version of ODM Condition",
-    response_model=OdmCondition,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -344,7 +344,9 @@ def approve_odm_condition(odm_condition_uid: Annotated[str, OdmConditionUID]):
         },
     },
 )
-def inactivate_odm_condition(odm_condition_uid: Annotated[str, OdmConditionUID]):
+def inactivate_odm_condition(
+    odm_condition_uid: Annotated[str, OdmConditionUID],
+) -> OdmCondition:
     odm_condition_service = OdmConditionService()
     return odm_condition_service.inactivate_final(
         uid=odm_condition_uid, cascade_inactivate=True
@@ -355,7 +357,6 @@ def inactivate_odm_condition(odm_condition_uid: Annotated[str, OdmConditionUID])
     "/{odm_condition_uid}/activations",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Reactivate retired version of a ODM Condition",
-    response_model=OdmCondition,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -371,7 +372,9 @@ def inactivate_odm_condition(odm_condition_uid: Annotated[str, OdmConditionUID])
         },
     },
 )
-def reactivate_odm_condition(odm_condition_uid: Annotated[str, OdmConditionUID]):
+def reactivate_odm_condition(
+    odm_condition_uid: Annotated[str, OdmConditionUID],
+) -> OdmCondition:
     odm_condition_service = OdmConditionService()
     return odm_condition_service.reactivate_retired(
         uid=odm_condition_uid, cascade_reactivate=True
@@ -382,7 +385,6 @@ def reactivate_odm_condition(odm_condition_uid: Annotated[str, OdmConditionUID])
     "/{odm_condition_uid}",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Delete draft version of ODM Condition",
-    response_model=None,
     status_code=204,
     responses={
         403: _generic_descriptions.ERROR_403,

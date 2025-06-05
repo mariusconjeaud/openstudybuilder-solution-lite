@@ -1,94 +1,42 @@
 const { Given, When, Then } = require("@badeball/cypress-cucumber-preprocessor");
 
-let programmeName;
-let timestamp
-let update_programmeName
+let programmeName, projectName
 
-When('Click on the + button to create a new clinical programme', () => {
-    cy.get('.mt-3').find('[data-cy="add-clinical-programme"]').click();    
-})
+When('Clinical programme is found', () => cy.searchAndCheckPresence(programmeName, true))
 
-Then('The pop-up window is opened to indicate to add a new clinical programme', () => {
-    cy.get('[data-cy="form-body"]').should('be.visible');
-});
+When('Clinical programme is no longer available', () => cy.searchAndCheckPresence(programmeName, false))
 
-Then('The pop-up window is opened to indicate to update the clicnical programme name', () => {
-    cy.get('[data-cy="form-body"]').should('be.visible');
-});
+When('Click on the + button to create a new clinical programme', () => cy.clickButton('add-clinical-programme'))
 
-Then('The pop-up window is opened to indicate that this clinical programme will be deleted', () => {
-    cy.get('.v-overlay__content').should('be.visible');
-});
-
-When('Input a clinical programme name', () => {
-    timestamp = new Date().toISOString(); // Generate a timestamp
-    programmeName = `Test Programme ${timestamp}`; // Create the programme name with the timestamp
-    cy.get('#name').type(programmeName); 
-})
-
-When('The SAVE button is clicked', () => {
-    cy.clickButton('save-button')
-})
-
-When('The CONTINUE button is clicked', () => {
-    cy.clickButton('continue-popup')
-})
-
-Then('The newly created clinical programme is shown in the table', () => {
-    // Wait for the table to load
-    cy.get('[data-cy="data-table"] tbody.v-data-table__tbody', { timeout: 20000 }).should('exist');
-
-    // Verify that the newly created programme is visible in the table
-    cy.get('[data-cy="data-table"] tbody.v-data-table__tbody')
-        .contains('div', programmeName, { timeout: 20000 })
-        .should('be.visible');
-});
+When('Input a clinical programme name', () => fillName())
 
 Given ('A test clinical programme exists and is not linked to any project', () => {
-    cy.get('.mt-3').find('[data-cy="add-clinical-programme"]').click();  
-    cy.get('[data-cy="form-body"]').should('be.visible');
-    timestamp = new Date().toISOString(); // Generate a timestamp
-    programmeName = `Test Programme ${timestamp}`; // Create the programme name with the timestamp
-    cy.get('#name').type(programmeName); 
+    fillName()
     cy.clickButton('save-button')
-    cy.get('[data-cy="data-table"] tbody.v-data-table__tbody', { timeout: 20000 }).should('exist');
-    cy.get('[data-cy="data-table"] tbody.v-data-table__tbody')
-        .contains('div', programmeName, { timeout: 20000 })
-        .should('be.visible');
-});
-
-When('Click on {string} option from the three dot menu beside this test clinical programme', (option) => {
-   cy.rowActionsByValue(programmeName, option)
 })
 
-When('Update the clinical programme name to a new one', () => {
-    timestamp = new Date().toISOString(); // Generate a timestamp
-    update_programmeName = `Update Programme ${timestamp}`; // Create the programme name with the timestamp
-    cy.get('#name').clear().type(update_programmeName); 
+When('Update the clinical programme name to a new one', () => fillName(true))
+
+When('User tries to update programme name', () => cy.fillInput('clinical-programme-name', 'Update'))
+
+Given ('Create project and link it to the programme', () => {
+    projectName = `Test project ${Date.now()}` 
+    cy.selectAutoComplete('template-activity-group', programmeName)
+    cy.fillInput('project-name', projectName)
+    cy.fillInput('project-number', Date.now())
+    cy.fillInput('project-description', `Test description ${Date.now()}`)
+    cy.clickButton('save-button')
+});
+
+Then('The error message displays that this clinical programme can not be updated due to linked project', () => {
+    cy.checkSnackbarMessage('Cannot update Clinical Programme')
  })
 
-Then('The updated clinical programme is shown in the table', () => {
-    // Wait for the table to load
-    cy.get('[data-cy="data-table"] tbody.v-data-table__tbody', { timeout: 20000 }).should('exist');
+Then('The error message shows that this clinical programme can not be deleted due to linked project', () => {
+    cy.checkSnackbarMessage('Cannot delete Clinical Programme')
+ })
 
-    // Verify that the updated programme is visible in the table
-    cy.get('[data-cy="data-table"] tbody.v-data-table__tbody')
-        .contains('div', update_programmeName, { timeout: 20000 })
-        .should('be.visible');
-});
-
-Then('The deleted clinical programme is not shown anymore in the table', () => {
-    // Wait for the table to load
-    cy.get('[data-cy="data-table"] tbody.v-data-table__tbody', { timeout: 20000 }).should('exist');
-
-    // Verify that the deleted programme is Not visible in the table
-    cy.get('[data-cy="data-table"] tbody.v-data-table__tbody')
-        .contains('div', programmeName, { timeout: 20000 })
-        .should('not.exist');
-});
-
- 
-
-
-
-
+function fillName(update = false) {
+    programmeName = update ? `Update ${programmeName}}` : `Test Programme ${Date.now()}`
+    cy.fillInput('clinical-programme-name', programmeName) 
+}

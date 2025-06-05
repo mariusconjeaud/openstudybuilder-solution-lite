@@ -1,5 +1,5 @@
 @REQ_ID:1074254 @manual_test
-Feature: Studies - Study Design Cell
+Feature: Studies - Define Study - Study Structure - Design Matrix
 
    As a system user,
    I want the system to ensure to [Scenario],

@@ -67,7 +67,7 @@ export const useStudiesGeneralStore = defineStore('studiesGeneral', {
       const selectedStudy = localStorage.getItem('selectedStudy')
       if (selectedStudy) {
         const parsedStudy = JSON.parse(selectedStudy)
-        this.selectStudy(parsedStudy)
+        await this.selectStudy(parsedStudy)
         try {
           await study.getStudy(parsedStudy.uid, true)
         } catch (error) {
@@ -75,23 +75,21 @@ export const useStudiesGeneralStore = defineStore('studiesGeneral', {
         }
       }
     },
-    selectStudy(studyObj, forceReload) {
+    async selectStudy(studyObj, forceReload) {
       this.selectedStudy = studyObj
       this.selectedStudyVersion =
         studyObj.current_metadata.version_metadata.version_number
       localStorage.setItem('selectedStudy', JSON.stringify(studyObj))
+      let resp
+      resp = await study.getStudyPreferredTimeUnit(studyObj.uid)
+      this.studyPreferredTimeUnit = resp.data
+      resp = await study.getSoAPreferredTimeUnit(studyObj.uid)
+      this.soaPreferredTimeUnit = resp.data
+      resp = await study.getSoAPreferences(studyObj.uid)
+      this.soaPreferences = resp.data
       if (forceReload) {
         document.location.reload()
       }
-      study.getStudyPreferredTimeUnit(studyObj.uid).then((resp) => {
-        this.studyPreferredTimeUnit = resp.data
-      })
-      study.getSoAPreferredTimeUnit(studyObj.uid).then((resp) => {
-        this.soaPreferredTimeUnit = resp.data
-      })
-      study.getSoAPreferences(studyObj.uid).then((resp) => {
-        this.soaPreferences = resp.data
-      })
     },
     setStudyPreferredTimeUnit({ timeUnitUid, protocolSoa }) {
       const data = { unit_definition_uid: timeUnitUid }

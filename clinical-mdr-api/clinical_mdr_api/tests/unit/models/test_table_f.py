@@ -131,13 +131,13 @@ EXPECTED_HTML = """<!DOCTYPE html>
     <table>
       <thead>
         <tr>
-          <th class="hi hi">hi&nbsp;<sup>a</sup></th>
+          <th class="hi hi">hi<sup><b>a</b></sup></th>
           <th class="hi" colspan="2">Hello</th>
           <th>Hi World</th>
         </tr>
         <tr>
-          <th class="head">some Text&nbsp;<sup>hello</sup>&nbsp;<sup>z13</sup></th>
-          <th colspan="2">More Head&nbsp;<sup>z</sup></th>
+          <th class="head">some Text<sup><b>hello&nbsp;z13</b></sup></th>
+          <th colspan="2">More Head<sup><b>z</b></sup></th>
           <th>also a head</th>
         </tr>
       </thead>
@@ -151,29 +151,24 @@ EXPECTED_HTML = """<!DOCTYPE html>
         <tr>
           <th>more Data th</th>
           <th colspan="2"></th>
-          <td>foo&nbsp;<sup>z13</sup>&nbsp;<sup>hello</sup></td>
+          <td>foo<sup><b>z13&nbsp;hello</b></sup></td>
         </tr>
         <tr>
-          <th colspan="2">foo-Bar&nbsp;<sup>c</sup>&nbsp;<sup>X</sup></th>
+          <th colspan="2">foo-Bar<sup><b>c&nbsp;X</b></sup></th>
           <td></td>
-          <td>X&nbsp;<sup>z13</sup>&nbsp;<sup>hello</sup></td>
+          <td>X<sup><b>z13&nbsp;hello</b></sup></td>
         </tr>
         <tr>
           <th>even more data</th>
           <th>second th row</th>
-          <td class="data">X&nbsp;<sup>a</sup></td>
+          <td class="data">X<sup><b>a</b></sup></td>
           <td>data</td>
         </tr>
       </tbody>
     </table>
-    <dl class="footnotes">
-      <dt>a</dt>
-      <dd>Footnote ej</dd>
-      <dt>hello</dt>
-      <dd>Hello footnotes here and there</dd>
-      <dt>z13</dt>
-      <dd>More footnotes after numbering</dd>
-    </dl>
+    <p class="footnote"><sup><b>a</b></sup>Footnote ej</p>
+    <p class="footnote"><sup><b>hello</b></sup>Hello footnotes here and there</p>
+    <p class="footnote"><sup><b>z13</b></sup>More footnotes after numbering</p>
   </body>
 </html>"""
 
@@ -284,12 +279,11 @@ def compare_html_table(table: bs4.element.Tag, test_table: TableWithFootnotes):
             if cell.footnotes:
                 # THEN footnote symbols found in cell as superscript
                 assert (
-                    sups := td.find_all("sup")
-                ), f"cell missing <sup> for footnotes in row {r} column {c}"
-
-                sup_texts = [sup.text.strip() for sup in sups]
+                    len(sups := td.find_all("sup")) == 1
+                ), f"expected one <sup> for footnotes in row {r} column {c}"
+                symbols = sups[0].get_text(strip=True).split("\xa0")
                 assert (
-                    sup_texts == cell.footnotes
+                    symbols == cell.footnotes
                 ), f"unexpected superscript text of footnote symbols in row {r} column {c}"
 
 
@@ -297,26 +291,26 @@ def compare_html_table(table: bs4.element.Tag, test_table: TableWithFootnotes):
 def compare_html_footnotes(doc: bs4.BeautifulSoup, test_table: TableWithFootnotes):
     """Compares footnote <dl> with footnotes of TableWithFootnotes"""
 
-    assert (
-        dl := doc.find("dl", class_="footnotes")
-    ), "no <DL> tag found with .footnotes class"
-
-    assert len(dts := dl.find_all("dt")) == len(
-        dds := dl.find_all("dd")
-    ), "number of <DT> and <DD> tags mismatch"
-
     # THEN number of footnotes match with footnotes list
-    assert len(dts) == len(test_table.footnotes), "number of footnotes mismatch"
+    assert (paras := doc.find_all("p", class_="footnote")), "no P.footnote tags found"
+    assert len(paras) == len(test_table.footnotes), "number of footnotes mismatch"
 
-    for r, (dt, dd, symbol) in enumerate(zip(dts, dds, test_table.footnotes.keys())):
-        footnote = test_table.footnotes[symbol]
+    for r, (para, (symbol, footnote)) in enumerate(
+        zip(paras, test_table.footnotes.items())
+    ):
+        # THEN footnote symbol is super bold
+        assert (supr := para.find("sup")), f"footnote symbol is not super in row {r}"
+        assert (bold := supr.find("b")), f"footnote symbol is not bold in row {r}"
 
-        # THEN footnote symbols match with footnotes list
-        assert dt.text == symbol, f"<dt> text doesn't match symbol in footnote row {r}"
-        # Then footnote text matches with footnote list
+        # THEN footnote symbols matches
         assert (
-            dd.text == footnote.text_plain
-        ), f"<dd> text doesn't match plain text in footnote row {r}"
+            bold.get_text() == symbol
+        ), f"<dt> text doesn't match symbol in footnote row {r}"
+
+        # THEN footnote text matches
+        assert (
+            para.get_text() == f"{symbol}{footnote.text_plain}"
+        ), f"footnote plain-text doesn't match in row {r}"
 
 
 @pytest.mark.parametrize("test_table", [TEST_TABLE])
@@ -400,20 +394,19 @@ def compare_docx_table(
                 ), f"cell style doesn't match in row {row_idx} column {col_idx}"
 
             if cell.footnotes:
-                # THEN number of footnote symbols appended to cell text matches
-                assert len(parax0.runs[1:]) == len(
-                    cell.footnotes
-                ), f"runber of runs doesn't match number of footnotes in row {row_idx} column {col_idx}"
-
                 # THEN footnote symbols match
-                assert [
-                    runx.text.strip() for runx in parax0.runs[1:]
-                ] == cell.footnotes, f"unexpected superscript text of footnote symbols in row {row_idx} column {col_idx}"
+                symbols = parax0.runs[1].text.split("\u00A0")
+                assert (
+                    symbols == cell.footnotes
+                ), f"footnote symbols don't match in {row_idx} column {col_idx}"
 
-                # THEN footnote symbols are in superscript
+                # THEN footnote symbols are in bold superscript
                 assert all(
                     runx.font.superscript for runx in parax0.runs[1:]
-                ), f"not all footnote symbols are superscript in row {row_idx} column {col_idx}"
+                ), f"footnote symbols are not superscript in row {row_idx} column {col_idx}"
+                assert all(
+                    runx.font.bold for runx in parax0.runs[1:]
+                ), f"footnote symbols are not bold in row {row_idx} column {col_idx}"
 
 
 def compare_docx_footnotes(
@@ -442,13 +435,14 @@ def compare_docx_footnotes(
         textx = parax.runs[0].text
         assert textx == symbol, f"footnote symbol doesn't match in row {row_idx}"
 
-        # THEN footnote symbols are in superscript
+        # THEN footnote symbols are bold superscript
         assert parax.runs[
             0
         ].font.superscript, f"footnote symbol is not superscript in row {row_idx}"
+        assert parax.runs[0].font.bold, f"footnote symbol is not bold in row {row_idx}"
 
         # Then footnote text matches with footnotes list
-        textx = parax.runs[1].text.lstrip(": ")
+        textx = parax.runs[1].text
         assert (
             textx == footnote.text_plain
         ), f"footnote text doesn't match in row {row_idx}"

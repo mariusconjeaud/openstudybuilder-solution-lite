@@ -23,10 +23,10 @@
           @filter="getItems"
         >
           <template #[`item.desc`]="{ item }">
-            <div v-html="getDescription(item)" />
+            <div v-html="sanitizeHTMLHandler(getDescription(item))" />
           </template>
           <template #[`item.notes`]="{ item }">
-            <div v-html="getNotes(item)" />
+            <div v-html="sanitizeHTMLHandler(getNotes(item))" />
           </template>
           <template #[`item.add`]="{ item }">
             <v-btn
@@ -59,6 +59,7 @@ import crfs from '@/api/crfs'
 import constants from '@/constants/parameters'
 import NNTable from '@/components/tools/NNTable.vue'
 import filteringParameters from '@/utils/filteringParameters'
+import { sanitizeHTML } from '@/utils/sanitize'
 
 export default {
   components: {
@@ -109,6 +110,9 @@ export default {
     this.initForm()
   },
   methods: {
+    sanitizeHTMLHandler(html) {
+      return sanitizeHTML(html)
+    },
     getDescription(item) {
       const engDesc = item.descriptions.find(
         (el) => el.language === constants.ENG

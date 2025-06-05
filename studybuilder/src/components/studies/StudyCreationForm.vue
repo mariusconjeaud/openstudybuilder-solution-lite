@@ -145,7 +145,6 @@
 
 <script setup>
 import { computed, inject, ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/stores/app'
 import { useStudiesGeneralStore } from '@/stores/studies-general'
@@ -157,7 +156,6 @@ import studyApi from '@/api/study'
 
 const eventBusEmit = inject('eventBusEmit')
 const formRules = inject('formRules')
-const router = useRouter()
 const { t } = useI18n()
 const appStore = useAppStore()
 const studiesGeneralStore = useStudiesGeneralStore()
@@ -215,12 +213,9 @@ async function submit() {
   if (createFromScratch.value) {
     const data = JSON.parse(JSON.stringify(studyForm.value))
     data.project_number = project.value.project_number
-    return studiesManageStore.addStudy(data).then((resp) => {
-      eventBusEmit('notification', { msg: t('StudyForm.add_success') })
-      studiesGeneralStore.selectStudy(resp.data)
-      router.push({ name: 'SelectOrAddStudy' })
-      router.go()
-    })
+    const resp = await studiesManageStore.addStudy(data)
+    eventBusEmit('notification', { msg: t('StudyForm.add_success') })
+    await studiesGeneralStore.selectStudy(resp.data, true)
   } else {
     if (!copyForm.value.selectionMade) {
       eventBusEmit('notification', {
@@ -245,12 +240,11 @@ async function submit() {
     delete data.study
     try {
       const resp = await studyApi.cloneStudy(studyUid, data)
-      studiesGeneralStore.selectStudy(resp.data)
+      eventBusEmit('notification', { msg: t('StudyForm.add_success') })
+      await studiesGeneralStore.selectStudy(resp.data, true)
     } finally {
       stepper.value.loading = false
     }
-    eventBusEmit('notification', { msg: t('StudyForm.add_success') })
-    close()
   }
 }
 

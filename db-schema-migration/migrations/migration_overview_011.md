@@ -1,4 +1,4 @@
-# Release: 1.11.0 (post-December 2024)
+# Release: 1.12.0 (post-April 2025)
 
 ## Common migrations
 

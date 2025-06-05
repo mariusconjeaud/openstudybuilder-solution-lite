@@ -34,23 +34,26 @@ def test__activity_group_repository__get_linked_activity_subgroup_uids(
     result = repository.get_linked_activity_subgroup_uids(group_uid, version)
 
     # Assert
-    assert len(result) == 1
-    assert result[0]["uid"] == "test-subgroup-id"
-    assert result[0]["name"] == "Test Subgroup"
-    assert result[0]["version"] == "1.0"
-    assert result[0]["status"] == "Final"
-    assert result[0]["definition"] == "Test definition"
+    assert len(result["subgroups"]) == 1
+    assert result["subgroups"][0]["uid"] == "test-subgroup-id"
+    assert result["subgroups"][0]["name"] == "Test Subgroup"
+    assert result["subgroups"][0]["version"] == "1.0"
+    assert result["subgroups"][0]["status"] == "Final"
+    assert result["subgroups"][0]["definition"] == "Test definition"
 
     # Test that the mock was called with the right parameters
     mock_cypher_query.assert_called_once()
 
     # Using a simple string check to verify the correct relationship pattern
     assert mock_cypher_query.called
-    assert any(
-        "(gv)-[:IN_GROUP]-(avg:ActivityValidGroup)-[:HAS_GROUP]-(sgv:ActivitySubGroupValue)"
-        in str(call)
-        for call in mock_cypher_query.call_args_list
-    )
+    # Check for the exact query patterns as they appear in the repository
+    query_string = str(mock_cypher_query.call_args_list[0])
+    assert (
+        "(avg:ActivityValidGroup)-[:IN_GROUP]->(gv)" in query_string
+    ), "ActivityValidGroup relationship pattern not found"
+    assert (
+        "(sgv:ActivitySubGroupValue)-[:HAS_GROUP]->(avg)" in query_string
+    ), "ActivitySubGroupValue relationship pattern not found"
     assert any(
         f"'group_uid': '{group_uid}'" in str(call)
         for call in mock_cypher_query.call_args_list
@@ -76,7 +79,7 @@ def test__activity_group_repository__get_linked_activity_subgroup_uids__no_resul
     result = repository.get_linked_activity_subgroup_uids(group_uid, version)
 
     # Assert
-    assert result == []
+    assert result["subgroups"] == []
 
 
 @patch("neomodel.db.cypher_query")

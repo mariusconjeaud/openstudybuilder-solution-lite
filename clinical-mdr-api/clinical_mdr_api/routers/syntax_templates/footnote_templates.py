@@ -2,8 +2,7 @@
 
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Body, Path, Query, Request, Response
-from fastapi import status as fast_api_status
+from fastapi import APIRouter, Body, Path, Query, Request
 from pydantic.types import Json
 
 from clinical_mdr_api.domains.versioned_object_aggregate import LibraryItemStatus
@@ -70,7 +69,6 @@ Allowed parameters include : filter on fields, sort by field name with sort dire
 
 {_generic_descriptions.DATA_EXPORTS_HEADER}
 """,
-    response_model=CustomPage[FootnoteTemplate],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -195,7 +193,6 @@ def get_footnote_templates(
     summary="Returns possible values from the database for a given header",
     description="""Allowed parameters include : field name for which to get possible
     values, search string to provide filtering for the field name, additional filters to apply on other fields""",
-    response_model=list[Any],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -236,7 +233,7 @@ def get_distinct_values_for_header(
     page_size: Annotated[
         int | None, Query(description=_generic_descriptions.HEADER_PAGE_SIZE)
     ] = config.DEFAULT_HEADER_PAGE_SIZE,
-):
+) -> list[Any]:
     return Service().get_distinct_values_for_header(
         status=status,
         field_name=field_name,
@@ -250,7 +247,6 @@ def get_distinct_values_for_header(
 @router.get(
     "/audit-trail",
     dependencies=[rbac.LIBRARY_READ],
-    response_model=CustomPage[FootnoteTemplate],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -282,7 +278,7 @@ def retrieve_audit_trail(
     total_count: Annotated[
         bool | None, Query(description=_generic_descriptions.TOTAL_COUNT)
     ] = False,
-):
+) -> CustomPage[FootnoteTemplate]:
     results = Service().get_all(
         page_number=page_number,
         page_size=page_size,
@@ -303,7 +299,6 @@ def retrieve_audit_trail(
     summary="Returns the latest/newest version of a specific footnote template identified by 'footnote_template_uid'.",
     description="""If multiple request query parameters are used, then they need to
     match all at the same time (they are combined with the AND operation).""",
-    response_model=FootnoteTemplateWithCount | None,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -315,7 +310,7 @@ def retrieve_audit_trail(
 )
 def get_footnote_template(
     footnote_template_uid: Annotated[str, FootnoteTemplateUID],
-):
+) -> FootnoteTemplateWithCount:
     return Service().get_by_uid(uid=footnote_template_uid)
 
 
@@ -328,7 +323,6 @@ The returned versions are ordered by `start_date` descending (newest entries fir
 
 {_generic_descriptions.DATA_EXPORTS_HEADER}
 """,
-    response_model=list[FootnoteTemplateVersion],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -400,7 +394,7 @@ The returned versions are ordered by `start_date` descending (newest entries fir
 def get_footnote_template_versions(
     request: Request,  # request is actually required by the allow_exports decorator
     footnote_template_uid: Annotated[str, FootnoteTemplateUID],
-):
+) -> list[FootnoteTemplateVersion]:
     return Service().get_version_history(uid=footnote_template_uid)
 
 
@@ -413,7 +407,6 @@ def get_footnote_template_versions(
     "This is due to the fact, that the version number remains the same when inactivating or reactivating an footnote template "
     "(switching between 'Final' and 'Retired' status). \n\n"
     "In that case the latest/newest representation is returned.",
-    response_model=FootnoteTemplate,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -433,7 +426,7 @@ def get_footnote_template_version(
             "E.g. '0.1', '0.2', '1.0', ...",
         ),
     ],
-):
+) -> FootnoteTemplate:
     return Service().get_specific_version(uid=footnote_template_uid, version=version)
 
 
@@ -441,7 +434,6 @@ def get_footnote_template_version(
     "/{footnote_template_uid}/releases",
     dependencies=[rbac.LIBRARY_READ],
     summary="List all final versions of a template identified by 'footnote_template_uid', including number of studies using a specific version",
-    response_model=list[FootnoteTemplate],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -452,8 +444,8 @@ def get_footnote_template_version(
     },
 )
 def get_footnote_template_releases(
-    footnote_template_uid: Annotated[str, FootnoteTemplateUID]
-):
+    footnote_template_uid: Annotated[str, FootnoteTemplateUID],
+) -> list[FootnoteTemplate]:
     return Service().get_releases(uid=footnote_template_uid, return_study_count=False)
 
 
@@ -472,7 +464,6 @@ If the request succeeds:
 
 """
     + PARAMETERS_NOTE,
-    response_model=FootnoteTemplate,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -497,7 +488,7 @@ def create_footnote_template(
         FootnoteTemplateCreateInput,
         Body(description="The footnote template that shall be created."),
     ],
-):
+) -> FootnoteTemplate:
     return Service().create(footnote_template)
 
 
@@ -518,7 +509,6 @@ Once the footnote template has been approved, only the surrounding text (excludi
 
 """
     + PARAMETERS_NOTE,
-    response_model=FootnoteTemplate,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -545,7 +535,7 @@ def edit(
             description="The new content of the footnote template including the change description.",
         ),
     ],
-):
+) -> FootnoteTemplate:
     return Service().edit_draft(uid=footnote_template_uid, template=footnote_template)
 
 
@@ -558,7 +548,6 @@ def edit(
     
     This is version independent : it won't trigger a status or a version change.
     """,
-    response_model=FootnoteTemplate,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -599,7 +588,6 @@ If the request succeeds:
 Parameters in the 'name' property cannot be changed with this request.
 Only the surrounding text (excluding the parameters) can be changed.
 """,
-    response_model=FootnoteTemplate,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -625,7 +613,7 @@ def create_new_version(
             description="The content of the footnote template for the new 'Draft' version including the change description.",
         ),
     ],
-):
+) -> FootnoteTemplate:
     return Service().create_new_version(
         uid=footnote_template_uid, template=footnote_template
     )
@@ -644,7 +632,6 @@ If the request succeeds:
 * The 'change_description' property will be set automatically.
 * The 'version' property will be increased automatically to the next major version.
     """,
-    response_model=FootnoteTemplate,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -668,7 +655,7 @@ If the request succeeds:
 def approve(
     footnote_template_uid: Annotated[str, FootnoteTemplateUID],
     cascade: bool = False,
-):
+) -> FootnoteTemplate:
     """
     Approves footnote template. Fails with 409 if there is some footnote created
     from this template and cascade is false
@@ -690,7 +677,6 @@ If the request succeeds:
 * The 'change_description' property will be set automatically. 
 * The 'version' property will remain the same as before.
     """,
-    response_model=FootnoteTemplate,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -706,7 +692,9 @@ If the request succeeds:
         },
     },
 )
-def inactivate(footnote_template_uid: Annotated[str, FootnoteTemplateUID]):
+def inactivate(
+    footnote_template_uid: Annotated[str, FootnoteTemplateUID],
+) -> FootnoteTemplate:
     return Service().inactivate_final(uid=footnote_template_uid)
 
 
@@ -722,7 +710,6 @@ If the request succeeds:
 * The 'change_description' property will be set automatically. 
 * The 'version' property will remain the same as before.
     """,
-    response_model=FootnoteTemplate,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -738,7 +725,9 @@ If the request succeeds:
         },
     },
 )
-def reactivate(footnote_template_uid: Annotated[str, FootnoteTemplateUID]):
+def reactivate(
+    footnote_template_uid: Annotated[str, FootnoteTemplateUID],
+) -> FootnoteTemplate:
     return Service().reactivate_retired(uid=footnote_template_uid)
 
 
@@ -751,7 +740,6 @@ def reactivate(footnote_template_uid: Annotated[str, FootnoteTemplateUID]):
 * the footnote template has never been in 'Final' status and
 * the footnote template has no references to any footnote and
 * the footnote template belongs to a library that allows deleting (the 'is_editable' property of the library needs to be true).""",
-    response_model=None,
     status_code=204,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -772,10 +760,9 @@ def reactivate(footnote_template_uid: Annotated[str, FootnoteTemplateUID]):
     },
 )
 def delete_footnote_template(
-    footnote_template_uid: Annotated[str, FootnoteTemplateUID]
+    footnote_template_uid: Annotated[str, FootnoteTemplateUID],
 ):
     Service().soft_delete(footnote_template_uid)
-    return Response(status_code=fast_api_status.HTTP_204_NO_CONTENT)
 
 
 # TODO this endpoint potentially returns duplicated entries (intentionally, currently).
@@ -793,14 +780,15 @@ Per parameter, the parameter.terms are ordered by
 Note that parameters may be used multiple times in templates.
 In that case, the same parameter (with the same terms) is included multiple times in the response.
     """,
-    response_model=list[TemplateParameter],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
         404: _generic_descriptions.ERROR_404,
     },
 )
-def get_parameters(footnote_template_uid: Annotated[str, FootnoteTemplateUID]):
+def get_parameters(
+    footnote_template_uid: Annotated[str, FootnoteTemplateUID],
+) -> list[TemplateParameter]:
     return Service().get_parameters(uid=footnote_template_uid)
 
 
@@ -843,7 +831,6 @@ def pre_validate(
     "/{footnote_template_uid}/pre-instances",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Create a Pre-Instance",
-    response_model=FootnotePreInstance,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -866,7 +853,7 @@ def pre_validate(
 def create_pre_instance(
     footnote_template_uid: Annotated[str, FootnoteTemplateUID],
     pre_instance: Annotated[FootnotePreInstanceCreateInput, Body()],
-) -> FootnoteTemplate:
+) -> FootnotePreInstance:
     return FootnotePreInstanceService().create(
         template=pre_instance,
         template_uid=footnote_template_uid,

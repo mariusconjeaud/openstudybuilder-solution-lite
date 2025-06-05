@@ -72,7 +72,7 @@ class CTTermAttributes(BaseModel):
         str | None, Field(json_schema_extra={"nullable": True})
     ] = None
 
-    codelists: Annotated[list[CTTermCodelist], Field()] = []
+    codelists: list[CTTermCodelist] = Field(default_factory=list)
 
     concept_id: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = (
         None
@@ -109,15 +109,13 @@ class CTTermAttributes(BaseModel):
     author_username: Annotated[
         str | None, Field(json_schema_extra={"nullable": True})
     ] = None
-    possible_actions: Annotated[
-        list[str],
-        Field(
-            description=(
-                "Holds those actions that can be performed on the CTTermAttributes. "
-                "Actions are: 'approve', 'edit', 'new_version'."
-            )
+    possible_actions: list[str] = Field(
+        description=(
+            "Holds those actions that can be performed on the CTTermAttributes. "
+            "Actions are: 'approve', 'edit', 'new_version'."
         ),
-    ] = []
+        default_factory=list,
+    )
 
 
 class CTTermAttributesVersion(CTTermAttributes):
@@ -125,12 +123,7 @@ class CTTermAttributesVersion(CTTermAttributes):
     Class for storing CTTermAttributes and calculation of differences
     """
 
-    changes: Annotated[
-        list[str],
-        Field(
-            description=CHANGES_FIELD_DESC,
-        ),
-    ] = []
+    changes: list[str] = Field(description=CHANGES_FIELD_DESC, default_factory=list)
 
 
 class CTTermAttributesEditInput(PatchInputModel):

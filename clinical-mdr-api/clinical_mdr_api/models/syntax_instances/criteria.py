@@ -23,12 +23,14 @@ from clinical_mdr_api.models.utils import BaseModel, PatchInputModel, PostInputM
 
 
 class CriteriaTemplateWithType(CriteriaTemplateNameUidLibrary):
-    type: SimpleCTTermNameAndAttributes | None
+    type: Annotated[SimpleCTTermNameAndAttributes | None, Field()]
 
 
 class Criteria(BaseModel):
-    uid: str
-    name: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = None
+    uid: Annotated[str, Field()]
+    name: Annotated[
+        str | None, Field(json_schema_extra={"nullable": True, "format": "html"})
+    ] = None
     name_plain: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = (
         None
     )
@@ -58,7 +60,7 @@ class Criteria(BaseModel):
         ),
     ] = None
 
-    template: CriteriaTemplateNameUidLibrary | None = None
+    template: Annotated[CriteriaTemplateNameUidLibrary | None, Field()] = None
     parameter_terms: Annotated[
         list[MultiTemplateParameterTerm] | None,
         Field(
@@ -66,7 +68,7 @@ class Criteria(BaseModel):
             json_schema_extra={"nullable": True},
         ),
     ] = None
-    library: Library | None = None
+    library: Annotated[Library | None, Field()] = None
 
     study_count: Annotated[
         int, Field(description="Count of studies referencing criteria")
@@ -123,7 +125,7 @@ class Criteria(BaseModel):
 
 
 class CriteriaWithType(Criteria):
-    template: CriteriaTemplateWithType | None
+    template: Annotated[CriteriaTemplateWithType | None, Field()]
 
     @classmethod
     def from_criteria_ar(cls, criteria_ar: CriteriaAR) -> Self:
@@ -178,12 +180,7 @@ class CriteriaVersion(CriteriaWithType):
     Class for storing Criteria and calculation of differences
     """
 
-    changes: Annotated[
-        list[str],
-        Field(
-            description=CHANGES_FIELD_DESC,
-        ),
-    ] = []
+    changes: list[str] = Field(description=CHANGES_FIELD_DESC, default_factory=list)
 
 
 class CriteriaEditInput(PatchInputModel):

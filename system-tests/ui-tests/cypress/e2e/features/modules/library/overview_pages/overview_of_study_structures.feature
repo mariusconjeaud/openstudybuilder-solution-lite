@@ -1,17 +1,17 @@
 @REQ_ID:2866926
-Feature: Library - Overview of Study Structures
+Feature: Library - Overview Pages - Study Structures
 
     As a user, I want to see the overview page of Study Structure for existing studies
 
     Background: User must be logged in
         Given The user is logged in
 
-    Scenario: User must be able to navigate to the Study Structures page in the Library Overview Pages
+    Scenario: [Navigation] User must be able to navigate to the Study Structures page in the Library Overview Pages
         Given The '/library' page is opened
         When The 'Study Structures' submenu is clicked in the 'Overview Pages' section
         Then The current URL is '/library/overviews/study_structures'
 
-    Scenario: User must be able to see the columns list on the main page as below
+    Scenario: [Table][Columns][Names] User must be able to see the columns list on the main page as below
         Given The '/library/overviews/study_structures' page is opened
         Then A table is visible with following headers
             | headers                     |
@@ -25,7 +25,7 @@ Feature: Library - Overview of Study Structures
             | Cohorts in study            |
             | Study ID(s)                 |
 
-    Scenario Outline: User must be able to filter the table by text fields
+    Scenario Outline: [Table][Filtering] User must be able to filter the table by text fields
         Given The '/library/overviews/study_structures' page is opened
         When The user filters field '<name>'
         Then The table is filtered correctly

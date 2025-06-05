@@ -1,6 +1,6 @@
 from typing import Annotated, Any
 
-from fastapi import Body, Path, Query, Request, Response, status
+from fastapi import Body, Path, Query, Request
 from pydantic.types import Json
 
 from clinical_mdr_api.models.study_selections import study_disease_milestone
@@ -51,7 +51,6 @@ Possible errors:
 
 {_generic_descriptions.DATA_EXPORTS_HEADER}
 """,
-    response_model=CustomPage[study_disease_milestone.StudyDiseaseMilestone],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -140,7 +139,6 @@ def get_all(
     summary="Returns possible values from the database for a given header",
     description="""Allowed parameters include : field name for which to get possible
     values, search string to provide filtering for the field name, additional filters to apply on other fields""",
-    response_model=list[Any],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -175,7 +173,7 @@ def get_distinct_values_for_header(
     page_size: Annotated[
         int | None, Query(description=_generic_descriptions.HEADER_PAGE_SIZE)
     ] = config.DEFAULT_HEADER_PAGE_SIZE,
-):
+) -> list[Any]:
     service = StudyDiseaseMilestoneService()
     return service.get_distinct_values_for_header(
         field_name=field_name,
@@ -204,7 +202,6 @@ State after:
 Possible errors:
  - Invalid study-uid.
      """,
-    response_model=list[study_disease_milestone.StudyDiseaseMilestoneVersion],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -245,7 +242,6 @@ State after:
 Possible errors:
  - Invalid study-uid or study_disease_milestone Uid.
     """,
-    response_model=study_disease_milestone.StudyDiseaseMilestone,
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -285,7 +281,6 @@ State after:
 Possible errors:
  - Invalid study-uid.
      """,
-    response_model=list[study_disease_milestone.StudyDiseaseMilestoneVersion],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -327,7 +322,6 @@ State after:
 Possible errors:
  - Invalid study-uid or DiseaseMilestone CT Term uid.
     """,
-    response_model=study_disease_milestone.StudyDiseaseMilestone,
     response_model_exclude_unset=True,
     status_code=201,
     responses={
@@ -375,7 +369,6 @@ State after:
 Possible errors:
 - Invalid study-uid or study_disease_milestone_uid.
     """,
-    response_model=None,
     status_code=204,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -397,7 +390,6 @@ def delete_study_disease_milestone(
     service = StudyDiseaseMilestoneService()
 
     service.delete(study_disease_milestone_uid=study_disease_milestone_uid)
-    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.patch(
@@ -430,7 +422,6 @@ Possible errors:
  - Decrease order number for the first study disease_milestone on the list
  - Increase order number for the last study disease_milestone on the list
     """,
-    response_model=study_disease_milestone.StudyDiseaseMilestone,
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -481,7 +472,6 @@ State after:
 Possible errors:
  - Invalid study-uid or study_disease_milestone_uid .
     """,
-    response_model=study_disease_milestone.StudyDiseaseMilestone,
     response_model_exclude_unset=True,
     status_code=200,
     responses={

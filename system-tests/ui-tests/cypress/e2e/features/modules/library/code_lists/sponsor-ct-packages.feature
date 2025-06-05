@@ -1,10 +1,10 @@
 @REQ_ID:1070679
-Feature: Library - Sponsor CT Packages
+Feature: Library - Code Lists - Sponsor CT Packages
 
     Background: User must be logged in
         Given The user is logged in
 
-    Scenario: User must be able to navigate to the Sponsor CT Packages page
+    Scenario: [Navigation] User must be able to navigate to the Sponsor CT Packages page
         Given The '/library' page is opened
         When The 'Sponsor CT Packages' submenu is clicked in the 'Code Lists' section
         Then The current URL is 'library/sponsor-ct-packages'
@@ -16,7 +16,7 @@ Feature: Library - Sponsor CT Packages
     #     And The Sponsor CT Package form is populated and saved
     #     Then The table presents created Sponsor CT Package
 
-    Scenario: User must be able to see the columns list of Sponsor CT Package for a selected CDISC CT Package
+    Scenario: [Table][Columns][Names] User must be able to see the columns list of Sponsor CT Package for a selected CDISC CT Package
         Given The '/library/sponsor-ct-packages' page is opened
         Then A table is visible with following options
             | options                                                         |
@@ -39,7 +39,7 @@ Feature: Library - Sponsor CT Packages
             | Attributes status      |
             | Attributes modified    |
 
-Scenario: User must not be able to create multiple Sponsor CT Packages for the same date
+Scenario: [Create][Negative case] User must not be able to create multiple Sponsor CT Packages for the same date
     Given The '/library/sponsor-ct-packages' page is opened
     When Sponsor CT Package is created for the same date as already existing one
     Then The pop up displays 'A sponsor CTPackage already exists for this date'

@@ -76,7 +76,7 @@ class CTTermName(BaseModel):
         str | None, Field(json_schema_extra={"nullable": True})
     ] = None
 
-    codelists: Annotated[list[CTTermCodelist], Field()] = []
+    codelists: list[CTTermCodelist] = Field(default_factory=list)
 
     sponsor_preferred_name: Annotated[str, Field()]
 
@@ -112,15 +112,13 @@ class CTTermName(BaseModel):
             description="Indicates if the term had a date conflict upon retrieval. If True, then the Latest Final was returned.",
         ),
     ] = False
-    possible_actions: Annotated[
-        list[str],
-        Field(
-            description=(
-                "Holds those actions that can be performed on the CTTermName. "
-                "Actions are: 'approve', 'edit', 'new_version'."
-            )
+    possible_actions: list[str] = Field(
+        description=(
+            "Holds those actions that can be performed on the CTTermName. "
+            "Actions are: 'approve', 'edit', 'new_version'."
         ),
-    ] = []
+        default_factory=list,
+    )
 
 
 class CTTermNameSimple(BaseModel):
@@ -133,12 +131,7 @@ class CTTermNameVersion(CTTermName):
     Class for storing CTTermName and calculation of differences
     """
 
-    changes: Annotated[
-        list[str],
-        Field(
-            description=CHANGES_FIELD_DESC,
-        ),
-    ] = []
+    changes: list[str] = Field(description=CHANGES_FIELD_DESC, default_factory=list)
 
 
 class CTTermNameEditInput(PatchInputModel):

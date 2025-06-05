@@ -62,7 +62,7 @@ from common.utils import booltostr
 
 
 class OdmItemGroup(ConceptModel):
-    oid: str | None
+    oid: Annotated[str | None, Field()]
     repeating: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = None
     is_reference_data: Annotated[
         str | None, Field(json_schema_extra={"nullable": True})
@@ -73,15 +73,17 @@ class OdmItemGroup(ConceptModel):
     origin: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = None
     purpose: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = None
     comment: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = None
-    descriptions: list[OdmDescriptionSimpleModel]
-    aliases: list[OdmAliasSimpleModel]
-    sdtm_domains: list[SimpleCTTermAttributes]
-    activity_subgroups: list[ActivityHierarchySimpleModel]
-    items: list[OdmItemRefModel]
-    vendor_elements: list[OdmVendorElementRelationModel]
-    vendor_attributes: list[OdmVendorAttributeRelationModel]
-    vendor_element_attributes: list[OdmVendorElementAttributeRelationModel]
-    possible_actions: list[str]
+    descriptions: Annotated[list[OdmDescriptionSimpleModel], Field()]
+    aliases: Annotated[list[OdmAliasSimpleModel], Field()]
+    sdtm_domains: Annotated[list[SimpleCTTermAttributes], Field()]
+    activity_subgroups: Annotated[list[ActivityHierarchySimpleModel], Field()]
+    items: Annotated[list[OdmItemRefModel], Field()]
+    vendor_elements: Annotated[list[OdmVendorElementRelationModel], Field()]
+    vendor_attributes: Annotated[list[OdmVendorAttributeRelationModel], Field()]
+    vendor_element_attributes: Annotated[
+        list[OdmVendorElementAttributeRelationModel], Field()
+    ]
+    possible_actions: Annotated[list[str], Field()]
 
     _validate_string_represents_boolean = field_validator(
         "repeating", "is_reference_data", mode="before"
@@ -289,14 +291,14 @@ class OdmItemGroupRefModel(BaseModel):
 class OdmItemGroupPostInput(ConceptPostInput):
     oid: Annotated[str | None, Field(min_length=1)] = None
     repeating: Annotated[str, Field(min_length=1)]
-    is_reference_data: str | None = None
-    sas_dataset_name: str | None = None
-    origin: str | None = None
-    purpose: str | None = None
-    comment: str | None = None
-    descriptions: list[OdmDescriptionPostInput | str]
-    alias_uids: list[str]
-    sdtm_domain_uids: list[str]
+    is_reference_data: Annotated[str | None, Field()] = None
+    sas_dataset_name: Annotated[str | None, Field()] = None
+    origin: Annotated[str | None, Field()] = None
+    purpose: Annotated[str | None, Field()] = None
+    comment: Annotated[str | None, Field()] = None
+    descriptions: Annotated[list[OdmDescriptionPostInput | str], Field()]
+    alias_uids: Annotated[list[str], Field()]
+    sdtm_domain_uids: Annotated[list[str], Field()]
 
     _validate_string_represents_boolean = field_validator(
         "repeating", "is_reference_data", mode="before"
@@ -305,15 +307,17 @@ class OdmItemGroupPostInput(ConceptPostInput):
 
 class OdmItemGroupPatchInput(ConceptPatchInput):
     oid: Annotated[str | None, Field(min_length=1)]
-    repeating: str | None
-    is_reference_data: str | None
-    sas_dataset_name: str | None
-    origin: str | None
-    purpose: str | None
-    comment: str | None
-    descriptions: list[OdmDescriptionBatchPatchInput | OdmDescriptionPostInput | str]
-    alias_uids: list[str]
-    sdtm_domain_uids: list[str]
+    repeating: Annotated[str | None, Field()]
+    is_reference_data: Annotated[str | None, Field()]
+    sas_dataset_name: Annotated[str | None, Field()]
+    origin: Annotated[str | None, Field()]
+    purpose: Annotated[str | None, Field()]
+    comment: Annotated[str | None, Field()]
+    descriptions: Annotated[
+        list[OdmDescriptionBatchPatchInput | OdmDescriptionPostInput | str], Field()
+    ]
+    alias_uids: Annotated[list[str], Field()]
+    sdtm_domain_uids: Annotated[list[str], Field()]
 
     _validate_string_represents_boolean = field_validator(
         "repeating", "is_reference_data", mode="before"
@@ -327,14 +331,14 @@ class OdmItemGroupActivitySubGroupPostInput(PostInputModel):
 class OdmItemGroupItemPostInput(PostInputModel):
     uid: Annotated[str, Field(min_length=1)]
     order_number: Annotated[int, Field(lt=config.MAX_INT_NEO4J)]
-    mandatory: str
-    key_sequence: str
-    method_oid: str | None = None
-    imputation_method_oid: str
-    role: str
-    role_codelist_oid: str
-    collection_exception_condition_oid: str | None = None
-    vendor: OdmRefVendorPostInput
+    mandatory: Annotated[str, Field()]
+    key_sequence: Annotated[str, Field()]
+    method_oid: Annotated[str | None, Field()] = None
+    imputation_method_oid: Annotated[str, Field()]
+    role: Annotated[str, Field()]
+    role_codelist_oid: Annotated[str, Field()]
+    collection_exception_condition_oid: Annotated[str | None, Field()] = None
+    vendor: Annotated[OdmRefVendorPostInput, Field()]
 
 
 class OdmItemGroupVersion(OdmItemGroup):
@@ -342,9 +346,4 @@ class OdmItemGroupVersion(OdmItemGroup):
     Class for storing OdmItemGroup and calculation of differences
     """
 
-    changes: Annotated[
-        list[str],
-        Field(
-            description=CHANGES_FIELD_DESC,
-        ),
-    ] = []
+    changes: list[str] = Field(description=CHANGES_FIELD_DESC, default_factory=list)

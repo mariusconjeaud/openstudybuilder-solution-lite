@@ -46,7 +46,6 @@ Possible errors:
 
 {_generic_descriptions.DATA_EXPORTS_HEADER}
 """,
-    response_model=CustomPage[CompoundAlias],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -105,7 +104,7 @@ def get_all(
     total_count: Annotated[
         bool | None, Query(description=_generic_descriptions.TOTAL_COUNT)
     ] = False,
-):
+) -> CustomPage[CompoundAlias]:
     service = CompoundAliasService()
     results = service.get_all_concepts(
         library=library_name,
@@ -141,7 +140,6 @@ Possible errors:
 
 {_generic_descriptions.DATA_EXPORTS_HEADER}
 """,
-    response_model=CustomPage[CompoundAlias],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -197,7 +195,7 @@ def get_compounds_versions(
     total_count: Annotated[
         bool | None, Query(description=_generic_descriptions.TOTAL_COUNT)
     ] = False,
-):
+) -> CustomPage[CompoundAlias]:
     service = CompoundAliasService()
     results = service.get_all_concept_versions(
         library=library_name,
@@ -219,7 +217,6 @@ def get_compounds_versions(
     summary="Returns possible values from the database for a given header",
     description="Allowed parameters include : field name for which to get possible values, "
     "search string to provide filtering for the field name, additional filters to apply on other fields",
-    response_model=list[Any],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -250,7 +247,7 @@ def get_distinct_values_for_header(
     page_size: Annotated[
         int | None, Query(description=_generic_descriptions.HEADER_PAGE_SIZE)
     ] = config.DEFAULT_HEADER_PAGE_SIZE,
-):
+) -> list[Any]:
     service = CompoundAliasService()
     return service.get_distinct_values_for_header(
         library=library_name,
@@ -281,14 +278,13 @@ State after:
 Possible errors:
  - Invalid uid, at_specified_date_time, status or version.
  """,
-    response_model=CompoundAlias,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
         404: _generic_descriptions.ERROR_404,
     },
 )
-def get(compound_alias_uid: Annotated[str, CompoundAliasUID]):
+def get(compound_alias_uid: Annotated[str, CompoundAliasUID]) -> CompoundAlias:
     service = CompoundAliasService()
     return service.get_by_uid(uid=compound_alias_uid)
 
@@ -311,7 +307,6 @@ State after:
 Possible errors:
  - Invalid uid.
     """,
-    response_model=list[CompoundAlias],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -321,7 +316,9 @@ Possible errors:
         },
     },
 )
-def get_versions(compound_alias_uid: Annotated[str, CompoundAliasUID]):
+def get_versions(
+    compound_alias_uid: Annotated[str, CompoundAliasUID]
+) -> list[CompoundAlias]:
     service = CompoundAliasService()
     return service.get_version_history(uid=compound_alias_uid)
 
@@ -350,7 +347,6 @@ State after:
 Possible errors:
  - Invalid library or control terminology uid's specified.
 """,
-    response_model=CompoundAlias,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -365,7 +361,7 @@ Possible errors:
 )
 def create(
     compound_create_input: Annotated[CompoundAliasCreateInput, Body()],
-):
+) -> CompoundAlias:
     service = CompoundAliasService()
     return service.create(concept_input=compound_create_input)
 
@@ -392,7 +388,6 @@ Possible errors:
  - Invalid uid.
 
 """,
-    response_model=CompoundAlias,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -413,7 +408,7 @@ Possible errors:
 def edit(
     compound_alias_uid: Annotated[str, CompoundAliasUID],
     compound_edit_input: Annotated[CompoundAliasEditInput, Body()],
-):
+) -> CompoundAlias:
     service = CompoundAliasService()
     return service.edit_draft(
         uid=compound_alias_uid, concept_edit_input=compound_edit_input
@@ -441,7 +436,6 @@ State after:
 Possible errors:
  - Invalid uid or status not Draft.
     """,
-    response_model=CompoundAlias,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -458,7 +452,7 @@ Possible errors:
         },
     },
 )
-def approve(compound_alias_uid: Annotated[str, CompoundAliasUID]):
+def approve(compound_alias_uid: Annotated[str, CompoundAliasUID]) -> CompoundAlias:
     service = CompoundAliasService()
     return service.approve(uid=compound_alias_uid)
 
@@ -481,7 +475,6 @@ State after:
 Possible errors:
  - Invalid uid or status not Final.
 """,
-    response_model=CompoundAlias,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -499,7 +492,9 @@ Possible errors:
         },
     },
 )
-def create_new_version(compound_alias_uid: Annotated[str, CompoundAliasUID]):
+def create_new_version(
+    compound_alias_uid: Annotated[str, CompoundAliasUID]
+) -> CompoundAlias:
     service = CompoundAliasService()
     return service.create_new_version(uid=compound_alias_uid)
 
@@ -525,7 +520,6 @@ State after:
 Possible errors:
  - Invalid uid or status not Final.
     """,
-    response_model=CompoundAlias,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -541,7 +535,7 @@ Possible errors:
         },
     },
 )
-def inactivate(compound_alias_uid: Annotated[str, CompoundAliasUID]):
+def inactivate(compound_alias_uid: Annotated[str, CompoundAliasUID]) -> CompoundAlias:
     service = CompoundAliasService()
     return service.inactivate_final(uid=compound_alias_uid)
 
@@ -567,7 +561,6 @@ State after:
 Possible errors:
  - Invalid uid or status not Retired.
     """,
-    response_model=CompoundAlias,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -583,7 +576,7 @@ Possible errors:
         },
     },
 )
-def reactivate(compound_alias_uid: Annotated[str, CompoundAliasUID]):
+def reactivate(compound_alias_uid: Annotated[str, CompoundAliasUID]) -> CompoundAlias:
     service = CompoundAliasService()
     return service.reactivate_retired(uid=compound_alias_uid)
 
@@ -607,7 +600,6 @@ State after:
 Possible errors:
  - Invalid uid or status not Draft or exist in version 1.0 or above (previously been approved) or not in an editable library.
     """,
-    response_model=None,
     status_code=204,
     responses={
         403: _generic_descriptions.ERROR_403,

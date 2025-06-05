@@ -17,10 +17,10 @@ from clinical_mdr_api.models.utils import (
 
 
 class OdmFormalExpression(NoLibraryConceptModelNoName):
-    library_name: str
-    context: str | None
-    expression: str | None
-    possible_actions: list[str]
+    library_name: Annotated[str, Field()]
+    context: Annotated[str | None, Field()]
+    expression: Annotated[str | None, Field()]
+    possible_actions: Annotated[list[str], Field()]
 
     @classmethod
     def from_odm_formal_expression_ar(
@@ -104,9 +104,4 @@ class OdmFormalExpressionVersion(OdmFormalExpression):
     Class for storing OdmFormalExpression and calculation of differences
     """
 
-    changes: Annotated[
-        list[str],
-        Field(
-            description=CHANGES_FIELD_DESC,
-        ),
-    ] = []
+    changes: list[str] = Field(description=CHANGES_FIELD_DESC, default_factory=list)

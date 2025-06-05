@@ -15,7 +15,7 @@ from clinical_mdr_api.models.utils import BaseModel, PatchInputModel, PostInputM
 
 
 class ActiveSubstance(VersionProperties):
-    uid: str
+    uid: Annotated[str, Field()]
 
     analyte_number: Annotated[
         str | None, Field(json_schema_extra={"nullable": True})
@@ -30,7 +30,7 @@ class ActiveSubstance(VersionProperties):
     external_id: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = (
         None
     )
-    library_name: str
+    library_name: Annotated[str, Field()]
     unii: Annotated[
         CompoundSubstance | None, Field(json_schema_extra={"nullable": True})
     ] = None
@@ -102,16 +102,11 @@ class ActiveSubstanceEditInput(PatchInputModel):
 
 
 class ActiveSubstanceVersion(ActiveSubstance):
-    changes: Annotated[
-        list[str],
-        Field(
-            description=CHANGES_FIELD_DESC,
-        ),
-    ] = []
+    changes: list[str] = Field(description=CHANGES_FIELD_DESC, default_factory=list)
 
 
 class SimpleActiveSubstance(BaseModel):
-    uid: str
+    uid: Annotated[str, Field()]
     analyte_number: Annotated[
         str | None, Field(json_schema_extra={"nullable": True})
     ] = None

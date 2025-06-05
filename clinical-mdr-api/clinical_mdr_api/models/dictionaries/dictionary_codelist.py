@@ -48,7 +48,7 @@ class DictionaryCodelist(BaseModel):
         ),
     ]
 
-    library_name: str
+    library_name: Annotated[str, Field()]
     start_date: Annotated[
         datetime | None, Field(json_schema_extra={"nullable": True})
     ] = None
@@ -67,13 +67,13 @@ class DictionaryCodelist(BaseModel):
 
 class DictionaryCodelistEditInput(PatchInputModel):
     name: Annotated[str | None, Field(min_length=1)] = None
-    template_parameter: bool | None = None
+    template_parameter: Annotated[bool | None, Field()] = None
     change_description: Annotated[str | None, Field(min_length=1)] = None
 
 
 class DictionaryCodelistCreateInput(PostInputModel):
     name: Annotated[str | None, Field(min_length=1)] = None
-    template_parameter: bool | None = None
+    template_parameter: Annotated[bool | None, Field()] = None
     library_name: Annotated[str, Field(min_length=1)]
 
 
@@ -86,9 +86,4 @@ class DictionaryCodelistVersion(DictionaryCodelist):
     Class for storing DictionaryCodelist and calculation of differences
     """
 
-    changes: Annotated[
-        list[str],
-        Field(
-            description=CHANGES_FIELD_DESC,
-        ),
-    ] = []
+    changes: list[str] = Field(description=CHANGES_FIELD_DESC, default_factory=list)

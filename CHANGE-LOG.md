@@ -1,4 +1,74 @@
-# OpenStudyBuilder Commits changelog
+# OpenStudyBuilder (OSB) Commits changelog
+
+## V 0.16.1
+
+### Fixes and Enhancements
+
+- More than one special visit can now be created per epoch. The purpose of this feature is to update user guidelines and online help to reflect how special visits can be utilized in studies.
+
+Solved Bug
+============
+
+### Studies
+
+ **Define Study -> Study Activities -> Schedule of Activities -> Operational** 
+
+- Request never completes for Operational SoA
+
+
+## V 0.16
+
+New Features and Enhancements
+============
+
+### New Features
+
+- The new guided flow (wizard stepper) for creating Activity Instances has been updated in the application to cover additional activity instance classes.
+- We will now be able to add more than one special visit (e.g. Early discontinuation visit) per epoch.
+
+### Fixes and Enhancements
+
+- The formatting of the Protocol SoA preview in OpenStudyBuilder has been updated so it aligns with how the format looks in the Protocol document.
+- The Activity and Activity Groups overview pages in the Library module has gotten an visual overhaul as well as new functionality to make it easier for standards developers to view and manage the existing content of Activities and Activity Groups.
+- Marked HTML properties of data models with format="html" in OpenAPI schema and added an HTML cleaner to input validator of those properties, allowing only a subset of HTML tags pass. (See the documentation for a complete list of supported HTML.) Fixed XSS vulnerabilities in the UI by adding missing HTML escaping or otherwise applying HTML sanitizer on data for rendering.
+- Full text search for Activities. Auto scroll that "returns" to last edited Activity, Group etc.  Empty state for SoA table with redirect options to Study Activities and Study Visits pages. Various UI improvements and bug fixes.
+- Updated existing DDF USDM adapter mappings to USDM version 3.11.0.
+- Renamed prefix of DDF endpoints to USDM Add Registry Identifiers to USDM studies extracted from OpenStudyBuilder.
+- Added Registry Identifiers to M11 study protocol extracted from OpenStudyBuilder. 
+- Added Control Type to M11 study protocol extracted from Open StudyBuilder.
+- Added Intervention Type to M11 study protocol extracted from OpenStudyBuilder.
+- Added Population Type to M11 study protocol extracted from OpenStudyBuilder.
+- Added Population Condition to M11 study protocol extracted from OpenStudyBuilder.
+- Added units to Population age  to M11 study protocol extracted from OpenStudyBuilder.
+- Updated Trial Phase code with human-readable decode meaning in M11 study protocol extracted from OpenStudyBuilder.
+- The logic in the API for updating existing activity related content has been simplified to accept a full definition instead of changes. This will make the API easier to maintain and test.
+- Neodash page UIs have been cleaned up to give the user a more polished and consistent experience.
+- Consumer API endpoints updated to clearly indicate retrieved study version. Fixed issues with retrieval of study visits, activities, detailed and operational SoA.
+- Improved performance of GET /study-activities and /study-activity-instances endpoints.
+
+# End-to-End Automated test enhancements
+ 
+- Various code improvements to ensure easier maintenance and overall tests stability
+- Improvements to features and scenarios naming to enhance the way test results are grouped
+- Studies & Library: Added tests for Online help
+- Studies > Define Study > Study Structure > Study Visits: Added tests for Special Visits
+- Studies > Define Study > Study Activities > Schedule of Activities > Detailed: Added tests for searching activity
+- Studies > Study List > Study List: Added tests for Copy Study
+- Studies > View Listings > Analysis Study Metadata (New): Added gherkin specifications
+- Library > Concepts > Activity > Activity Instances: Extended scope of tests for New wizard stepper
+- Library > Concepts > Activity > Activity: Extended scope of tests for overview page
+- Library > Concepts > Activity > Activity Groups: Added gherkin specifications for overview page
+- Library > Concepts > Activity > Activity Subgroups: Added gherkin specifications for overview page
+- Library > Code Lists > Terms: Added gherkin specifications for CT terms
+- Library > Admin Definitions > Clinical Programmes: Extended tests scope
+- Library > Admin Definitions > Clinical Projects: Extended tests scope
+
+Solved Bugs
+============
+
+There are no Bugs listed or resolved for this Release.
+
+
 
 ## V 0.15
 

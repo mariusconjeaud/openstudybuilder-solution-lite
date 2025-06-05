@@ -570,7 +570,7 @@ def test_get_specific_status_final3(api_client):
     assert res["type"] == "NotFoundException"
     assert (
         res["message"]
-        == "Unit Definition with UID 'UnitDefinition_000002' doesn't exist."
+        == "UnitDefinitionAR with UID 'UnitDefinition_000002' doesn't exist or there's no version with requested status or version number."
     )
 
 
@@ -586,7 +586,7 @@ def test_get_specific_version_0_2_11(api_client):
     assert res["type"] == "NotFoundException"
     assert (
         res["message"]
-        == "Unit Definition with UID 'UnitDefinition_000002' doesn't exist."
+        == "UnitDefinitionAR with UID 'UnitDefinition_000002' doesn't exist or there's no version with requested status or version number."
     )
 
 
@@ -602,7 +602,7 @@ def test_get_specific_status_retired2(api_client):
     assert res["type"] == "NotFoundException"
     assert (
         res["message"]
-        == "Unit Definition with UID 'UnitDefinition_000002' doesn't exist."
+        == "UnitDefinitionAR with UID 'UnitDefinition_000002' doesn't exist or there's no version with requested status or version number."
     )
 
 
@@ -888,7 +888,7 @@ def test_get_specific_status_final4(api_client):
     assert res["type"] == "NotFoundException"
     assert (
         res["message"]
-        == "Unit Definition with UID 'UnitDefinition_000002' doesn't exist."
+        == "UnitDefinitionAR with UID 'UnitDefinition_000002' doesn't exist or there's no version with requested status or version number."
     )
 
 
@@ -904,7 +904,7 @@ def test_get_specific_status_retired3(api_client):
     assert res["type"] == "NotFoundException"
     assert (
         res["message"]
-        == "Unit Definition with UID 'UnitDefinition_000002' doesn't exist."
+        == "UnitDefinitionAR with UID 'UnitDefinition_000002' doesn't exist or there's no version with requested status or version number."
     )
 
 

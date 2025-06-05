@@ -1,19 +1,14 @@
-Before submitting this PR, please make sure to address the following checklist:
+Before submitting/completing this PR, address the following checklist:
 
 ## Basics
-- [ ] Main branch is merged into your PR branch
-- [ ] There are no merge conflicts
+- [ ] Main branch is merged into your feature branch
 - [ ] Links to related PRs are included
-- [ ] Are you including new dependencies? 
-- [ ] Are they in a stable state and widely used?
-- [ ] Are their licenses appropriate?
+- [ ] Are new dependencies in a stable state, widely used and have appropriate licenses?
 
 ## Quality  
-- [ ] Code builds clean without any errors or warnings
+- [ ] Code builds without any `warnings` (e.g. about deprecated features/libraries)
 - [ ] API endpoints follow [Zalando API Guidelines](https://opensource.zalando.com/restful-api-guidelines/) naming conventions and best practices
 - [ ] No issues reported by SonarQube
-- [ ] No issues reported by schemathesis
-- [ ] No warnings reported by pytest
 - [ ] Tests cover the implemented functionality/code sufficiently
 - [ ] Consider refactoring code that needs it, e.g. remove duplicate lines by adding reusable methods
 - [ ] Relevant GET endpoints added to the list of [API checks](https://orgremoved.visualstudio.com/Clinical-MDR/_git/verifications?path=/tests/test_api.py) performed by the [verifications pipeline](https://orgremoved.visualstudio.com/Clinical-MDR/_build?definitionId=6184)
@@ -21,24 +16,27 @@ Before submitting this PR, please make sure to address the following checklist:
 
 ## Performance
 - [ ] Relevant GET endpoints are covered by [load tests](https://orgremoved.visualstudio.com/Clinical-MDR/_git/studybuilder-load-test?path=/tests/endpoints.py) (executed by [this](https://orgremoved.visualstudio.com/Clinical-MDR/_build?definitionId=6964) pipeline)
-- [ ] Performance of endpoints is satisfactory
-- [ ] Are API calls paginated where appropriate?
-- [ ] Is there a simpler and faster API endpoint that provides only the needed data?
-- [ ] If filtering is applied, can we include it in the database query instead of applying it after retrieving all instances?
-- [ ] Can many small calls be replaced by fewer larger ones?
+- [ ] Performance is satisfactory, i.e. endpoints return in less than 1s for any realistic number of entities (e.g. SoA with 100 visits * 100 activities)
+    - Tips
+        - Can many small DB calls be replaced by fewer larger ones?
+        - Can the response size be decreased, e.g. by including only a minimal set of relevant fields?
+        - If filtering is applied, can we include it in the database query instead of applying it after retrieving all instances?
+        - Are API calls paginated where appropriate?
 
 ## Documentation
-- [ ] API documentation (OpenAPI specification) is sufficient and in accordance with the implemented functionality
-- [ ] Descriptions/examples of API endpoints/parameters are grammatically and semantically correct, and easy to use by API consumers
-- [ ] Default/example values of API query parameters do not produce errors when consumer tries to send a request via SwaggerUI
+- [ ] API specification is sufficient and in accordance with the implemented functionality
+    - [ ] Descriptions/examples of API endpoints/parameters are grammatically and semantically correct, and easy to use by API consumers
+    - [ ] Default/example values of API query parameters do not produce errors when consumer tries to send a request via SwaggerUI
 - [ ] [Physical data model](https://orgremoved.visualstudio.com/Clinical-MDR/_git/neo4j-mdr-db?path=/model/physical_data_model) is in sync with our neomodel data model (defined in `domain_repositories/models` folder)
-- [ ] Relationship cardinalities in the physical data model are the same as defined in the `domain_repositories/models` folder
+    - Nodes/relations names and fields
+    - Relationship cardinalities
+
 - [ ] `README` file is up-to-date
 
 ## Other
-- [ ] Are there any breaking changes to existing API endpoints that affect other systems?
-- [ ] If yes, we need to inform client applications to synchronize with the changes (e.g. Word add-in)
-- [ ] In case of breaking API and/or DB model changes, create work items (or related PR's) covering the needed changes in other repositories, e.g. [frontend](https://orgremoved.visualstudio.com/Clinical-MDR/_git/studybuilder), [studybuilder-import](https://orgremoved.visualstudio.com/Clinical-MDR/_git/studybuilder-import), [db-schema-migration](https://orgremoved.visualstudio.com/Clinical-MDR/_git/db-schema-migration), [verifications](https://orgremoved.visualstudio.com/Clinical-MDR/_git/verifications?path=/tests). 
+- [ ] If breaking changes to existing API endpoints or data model are introduced:
+    - Inform the affected consuming systems (e.g. Word add-in).
+    - Create related PR's or/and work items covering the needed changes in other repositories, e.g. [frontend](https://orgremoved.visualstudio.com/Clinical-MDR/_git/studybuilder), [studybuilder-import](https://orgremoved.visualstudio.com/Clinical-MDR/_git/studybuilder-import), [db-schema-migration](https://orgremoved.visualstudio.com/Clinical-MDR/_git/db-schema-migration), [verifications](https://orgremoved.visualstudio.com/Clinical-MDR/_git/verifications?path=/tests). 
 
 ---
 

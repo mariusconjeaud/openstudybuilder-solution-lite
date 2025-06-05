@@ -27,7 +27,6 @@ StudyUID = Path(description="The unique id of the study.")
         403: _generic_descriptions.ERROR_403,
         404: _generic_descriptions.ERROR_404,
     },
-    response_model=TableWithFootnotes,
 )
 def get_study_interventions(
     study_uid: Annotated[str, StudyUID],

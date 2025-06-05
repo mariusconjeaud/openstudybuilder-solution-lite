@@ -58,7 +58,7 @@ class CTCodelist(BaseModel):
         str | None, Field(json_schema_extra={"nullable": True})
     ] = None
 
-    child_codelist_uids: Annotated[list[str], Field()] = []
+    child_codelist_uids: list[str] = Field(default_factory=list)
 
     name: Annotated[str, Field()]
 
@@ -76,16 +76,14 @@ class CTCodelist(BaseModel):
 
     template_parameter: Annotated[bool, Field()]
 
-    library_name: str
-    possible_actions: Annotated[
-        list[str],
-        Field(
-            description=(
-                "Holds those actions that can be performed on the CTCodelistAttributes. "
-                "Actions are: 'approve', 'edit', 'new_version'."
-            )
+    library_name: Annotated[str, Field()]
+    possible_actions: list[str] = Field(
+        description=(
+            "Holds those actions that can be performed on the CTCodelistAttributes. "
+            "Actions are: 'approve', 'edit', 'new_version'."
         ),
-    ] = []
+        default_factory=list,
+    )
 
 
 class CTCodelistTermInput(PostInputModel):
@@ -102,11 +100,11 @@ class CTCodelistCreateInput(PostInputModel):
     submission_value: Annotated[str, Field(min_length=1)]
     nci_preferred_name: Annotated[str | None, Field(min_length=1)] = None
     definition: Annotated[str, Field(min_length=1)]
-    extensible: bool
+    extensible: Annotated[bool, Field()]
     sponsor_preferred_name: Annotated[str, Field(min_length=1)]
-    template_parameter: bool
+    template_parameter: Annotated[bool, Field()]
     parent_codelist_uid: Annotated[str | None, Field(min_length=1)] = None
-    terms: list[CTCodelistTermInput]
+    terms: Annotated[list[CTCodelistTermInput], Field()]
     library_name: Annotated[str, Field(min_length=1)]
 
 
@@ -143,7 +141,7 @@ class CTCodelistNameAndAttributes(BaseModel):
         str | None, Field(json_schema_extra={"nullable": True})
     ] = None
 
-    child_codelist_uids: Annotated[list[Any], Field()] = []
+    child_codelist_uids: list[Any] = Field(default_factory=list)
 
     library_name: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = (
         None

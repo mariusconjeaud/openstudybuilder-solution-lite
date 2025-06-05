@@ -77,15 +77,13 @@ class CTCodelistName(BaseModel):
     author_username: Annotated[
         str | None, Field(json_schema_extra={"nullable": True})
     ] = None
-    possible_actions: Annotated[
-        list[str],
-        Field(
-            description=(
-                "Holds those actions that can be performed on the CTCodelistName. "
-                "Actions are: 'approve', 'edit', 'new_version'."
-            )
+    possible_actions: list[str] = Field(
+        description=(
+            "Holds those actions that can be performed on the CTCodelistName. "
+            "Actions are: 'approve', 'edit', 'new_version'."
         ),
-    ] = []
+        default_factory=list,
+    )
 
 
 class CTCodelistNameVersion(CTCodelistName):
@@ -93,15 +91,10 @@ class CTCodelistNameVersion(CTCodelistName):
     Class for storing CTCodelistAttributes and calculation of differences
     """
 
-    changes: Annotated[
-        list[str],
-        Field(
-            description=CHANGES_FIELD_DESC,
-        ),
-    ] = []
+    changes: list[str] = Field(description=CHANGES_FIELD_DESC, default_factory=list)
 
 
 class CTCodelistNameEditInput(PatchInputModel):
     name: Annotated[str | None, Field(min_length=1)] = None
-    template_parameter: bool | None = None
+    template_parameter: Annotated[bool | None, Field()] = None
     change_description: Annotated[str | None, Field(min_length=1)] = None

@@ -24,19 +24,21 @@ from clinical_mdr_api.models.utils import BaseModel, PatchInputModel
 
 
 class CriteriaPreInstance(BaseModel):
-    uid: str
+    uid: Annotated[str, Field()]
     sequence_id: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = (
         None
     )
-    template_uid: str
-    template_name: str
+    template_uid: Annotated[str, Field()]
+    template_name: Annotated[str, Field()]
     template_type_uid: Annotated[
         str | None, Field(json_schema_extra={"nullable": True})
     ] = None
     guidance_text: Annotated[
-        str | None, Field(json_schema_extra={"nullable": True})
+        str | None, Field(json_schema_extra={"nullable": True, "format": "html"})
     ] = None
-    name: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = None
+    name: Annotated[
+        str | None, Field(json_schema_extra={"nullable": True, "format": "html"})
+    ] = None
     name_plain: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = (
         None
     )
@@ -54,30 +56,26 @@ class CriteriaPreInstance(BaseModel):
     author_username: Annotated[
         str | None, Field(json_schema_extra={"nullable": True})
     ] = None
-    parameter_terms: Annotated[
-        list[MultiTemplateParameterTerm],
-        Field(
-            description="Holds the parameter terms that are used within the criteria. The terms are ordered as they occur in the criteria name.",
-        ),
-    ] = []
-    indications: Annotated[
-        list[SimpleTermModel],
-        Field(
-            description="The study indications, conditions, diseases or disorders in scope for the pre-instance.",
-        ),
-    ] = []
-    categories: Annotated[
-        list[SimpleCTTermNameAndAttributes],
-        Field(description="A list of categories the pre-instance belongs to."),
-    ] = []
-    sub_categories: Annotated[
-        list[SimpleCTTermNameAndAttributes],
-        Field(description="A list of sub-categories the pre-instance belongs to."),
-    ] = []
+    parameter_terms: list[MultiTemplateParameterTerm] = Field(
+        description="Holds the parameter terms that are used within the criteria. The terms are ordered as they occur in the criteria name.",
+        default_factory=list,
+    )
+    indications: list[SimpleTermModel] = Field(
+        description="The study indications, conditions, diseases or disorders in scope for the pre-instance.",
+        default_factory=list,
+    )
+    categories: list[SimpleCTTermNameAndAttributes] = Field(
+        description="A list of categories the pre-instance belongs to.",
+        default_factory=list,
+    )
+    sub_categories: list[SimpleCTTermNameAndAttributes] = Field(
+        description="A list of sub-categories the pre-instance belongs to.",
+        default_factory=list,
+    )
     library: Annotated[Library | None, Field(json_schema_extra={"nullable": True})] = (
         None
     )
-    possible_actions: Annotated[list[str], Field()] = []
+    possible_actions: list[str] = Field(default_factory=list)
 
     @classmethod
     def from_criteria_pre_instance_ar(
@@ -153,9 +151,9 @@ class CriteriaPreInstanceIndexingsInput(PatchInputModel):
 
 
 class CriteriaPreInstanceCreateInput(PreInstancePostInput):
-    indication_uids: list[str]
-    category_uids: list[str]
-    sub_category_uids: list[str]
+    indication_uids: Annotated[list[str], Field()]
+    category_uids: Annotated[list[str], Field()]
+    sub_category_uids: Annotated[list[str], Field()]
 
 
 class CriteriaPreInstanceEditInput(PreInstancePatchInput):
@@ -163,7 +161,7 @@ class CriteriaPreInstanceEditInput(PreInstancePatchInput):
         str | None,
         Field(
             description="Guidance text or None. If None is provided then the value will be inherited from the parent template.",
-            json_schema_extra={"nullable": True},
+            json_schema_extra={"nullable": True, "format": "html"},
             min_length=1,
         ),
     ] = None
@@ -181,9 +179,4 @@ class CriteriaPreInstanceVersion(CriteriaPreInstance):
     Class for storing Criteria Pre-Instances and calculation of differences
     """
 
-    changes: Annotated[
-        list[str],
-        Field(
-            description=CHANGES_FIELD_DESC,
-        ),
-    ] = []
+    changes: list[str] = Field(description=CHANGES_FIELD_DESC, default_factory=list)

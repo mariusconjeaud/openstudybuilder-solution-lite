@@ -6,7 +6,7 @@ Cypress.Commands.add('sendPostRequest', (url, body) => {
 })
 
 Cypress.Commands.add('sendDeleteRequest', (url) => {
-    cy.request('DELETE', Cypress.env('API') + url, {}).then((response) => expect(response.status).to.eq(200))
+    cy.request('DELETE', Cypress.env('API') + url, {}).then((response) => expect(response.status).to.be.oneOf([200, 204]))
 })
 
 Cypress.Commands.add('sendGetRequest', (url) => {

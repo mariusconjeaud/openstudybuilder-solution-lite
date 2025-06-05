@@ -53,7 +53,17 @@
       </template>
     </template>
     <template #[`item.referenced_items`]="{ item }">
-      <div v-if="item.referenced_items.length > 0 && activeFootnote !== item">
+      <div
+        v-if="item.referenced_items.length > 0 && activeFootnote !== item"
+        :class="checkIfAnyItemHidden(item) ? 'warning' : ''"
+      >
+        <v-icon
+          v-if="checkIfAnyItemHidden(item)"
+          v-tooltip:top="$t('StudyFootnoteTable.hidden_activity_warning')"
+          class="mr-2"
+        >
+          mdi-eye-off-outline
+        </v-icon>
         {{ $filters.itemNames(item.referenced_items) }}
       </div>
       <div
@@ -235,6 +245,16 @@ onMounted(() => {
   })
 })
 
+function checkIfAnyItemHidden(item) {
+  let returnValue = false
+  item.referenced_items.forEach((item) => {
+    if (!item.visible_in_protocol_soa) {
+      returnValue = true
+    }
+  })
+  return returnValue
+}
+
 function enableFootnoteMode(footnote) {
   emit('enableFootnoteMode', footnote)
   activeFootnote.value = footnote
@@ -378,13 +398,14 @@ async function updateFootnoteVersion(item) {
   }
   const message =
     t('StudyFootnoteTable.update_version_alert') +
-    '</br>' +
+    '\n' +
     t('StudyFootnoteTable.old_version') +
-    item.footnote.name +
-    ' ' +
+    '\n' +
+    item.footnote.name_plain +
+    '\n' +
     t('StudyFootnoteTable.new_version') +
-    ' ' +
-    item.latest_footnote.name
+    '\n' +
+    item.latest_footnote.name_plain
 
   if (await confirm.value.open(message, options)) {
     footnotesStore
@@ -417,7 +438,8 @@ async function updateFootnoteVersion(item) {
 .warning {
   background-color: rgb(var(--v-theme-nnGoldenSun200));
   height: 30px;
-  width: 320px;
+  width: max-content;
+  padding-inline: 10px;
   align-content: center;
   text-align: center;
   border-radius: 5px;

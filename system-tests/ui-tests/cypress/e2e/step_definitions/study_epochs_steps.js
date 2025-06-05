@@ -1,50 +1,34 @@
 const { Given, When, Then } = require("@badeball/cypress-cucumber-preprocessor");
 
-let epochIndex
 let epochDescription = `Epoch ${Date.now()}`
-let epochEditedDescription = `Edited epoch ${Date.now()}`
+
+When('Study Epoch is found', () => cy.searchAndCheckPresence(epochDescription, true))
+
+When('Study Epoch is not available', () => cy.searchAndCheckPresence(epochDescription, false))
 
 When('A new Study Epoch is added', () => {
     cy.waitForData('study-epochs')
     cy.clickButton('create-epoch')
     cy.selectAutoComplete('epoch-type', 'Post Treatment')
     cy.selectAutoComplete('epoch-subtype', 'Elimination')
-    cy.fillInput('description', epochDescription)
-    cy.fillInput('epoch-start-rule', 'D10')
-    cy.fillInput('epoch-end-rule', 'D99')
-    cy.clickButton('save-button')
-    cy.waitForFormSave()
+    fillRulesAndDecscription('D10', 'D99')
+    save()
 })
 
 Then('The new Study Epoch is available within the table', () => {
-    cy.waitForData('study-epochs')
-    cy.checkLastRow('Epoch name', 'Elimination')
-    cy.checkLastRow('Epoch type', 'Post Treatment')
-    cy.checkLastRow('Epoch subtype', 'Elimination')
-    cy.checkLastRow('Start rule', 'D10')
-    cy.checkLastRow('End rule', 'D99')
-    cy.checkLastRow('Description', epochDescription)
-})
-
-Given('The Study Epoch exists in the Study', () => {
-    cy.waitForTableData()
-    cy.get('[data-cy="table-item-action-button"]').first().parentsUntil('tr').invoke('index').then((epoch) => {
-        epochIndex = epoch
-    })
+    cy.checkRowByIndex(0, 'Epoch name', 'Elimination')
+    cy.checkRowByIndex(0, 'Epoch type', 'Post Treatment')
+    cy.checkRowByIndex(0, 'Epoch subtype', 'Elimination')
+    cy.checkRowByIndex(0, 'Start rule', 'D10')
+    cy.checkRowByIndex(0, 'End rule', 'D99')
+    cy.checkRowByIndex(0, 'Description', epochDescription)
 })
 
 When('The Study Epoch is edited', () => {
-    cy.tableRowActions(epochIndex, 'Edit')
+    epochDescription = `Edited epoch ${Date.now()}`
     cy.wait(1000)
-    cy.fillInput('epoch-start-rule', 'D22')
-    cy.fillInput('epoch-end-rule', 'D33')
-    cy.fillInput('description', epochEditedDescription)
-    cy.clickButton('save-button')
-    cy.waitForFormSave()
-})
-
-When('The Epoch edit form is opened', () => {
-    cy.tableRowActions(epochIndex, 'Edit')
+    fillRulesAndDecscription('D22', 'D33')
+    save()
 })
 
 Then('The Type and Subtype fields are disabled', () => {
@@ -53,21 +37,19 @@ Then('The Type and Subtype fields are disabled', () => {
 })
 
 Then('The edited Study Epoch with updated values is available within the table', () => {
-    cy.checkRowByIndex(epochIndex, 'Description', epochEditedDescription)
-    cy.checkRowByIndex(epochIndex, 'Start rule', 'D22')
-    cy.checkRowByIndex(epochIndex, 'End rule', 'D33')
+    cy.checkRowByIndex(0, 'Description', epochDescription)
+    cy.checkRowByIndex(0, 'Start rule', 'D22')
+    cy.checkRowByIndex(0, 'End rule', 'D33')
 })
 
-When('The Study Epoch is deleted', () => {
-    cy.waitForTableData()
-    cy.getCellValue(epochIndex, 'Description').as('deletedEpoch')
-    cy.get('@deletedEpoch').then((epoch) => { cy.log(epoch) })
-    cy.tableRowActions(epochIndex, 'Delete')
-})
+function save() {
+    cy.clickButton('save-button')
+    cy.waitForFormSave()
+    cy.waitForData('study-epochs')
+}
 
-Then('The Epoch is not visible in the table', () => {
-    cy.waitForTableData()
-    cy.get('@deletedEpoch').then((epoch) => {
-        cy.get('tbody').should('not.contain', epoch)
-    })
-})
+function fillRulesAndDecscription(startRule, endRule) {
+    cy.fillInput('description', epochDescription)
+    cy.fillInput('epoch-start-rule', startRule)
+    cy.fillInput('epoch-end-rule', endRule)
+}

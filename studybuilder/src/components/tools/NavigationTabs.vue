@@ -5,6 +5,7 @@
         v-for="item of props.tabs"
         :key="item[props.tabKey]"
         :value="item[props.tabKey]"
+        :loading="item.loading ? item.loading() : false"
       >
         {{ item[props.tabTitle] }}
       </v-tab>
@@ -55,14 +56,14 @@ const updateTabKey = (value) => {
 }
 
 onMounted(() => {
-  tab.value = route.params.tab || props.tabs[0].tab
+  tab.value = route.params.tab || props.tabs[0][props.tabKey]
 })
 
 watch(tab, (newValue) => {
   emit('tabChanged', newValue)
   const tabName = newValue
-    ? props.tabs.find((el) => el.tab === newValue).name
-    : props.tabs[0].name
+    ? props.tabs.find((el) => el.tab === newValue)[props.tabTitle]
+    : props.tabs[0][props.tabTitle]
   router.push({
     name: route.name,
     params: { ...route.params, tab: newValue },
@@ -82,7 +83,7 @@ watch(tab, (newValue) => {
 watch(
   () => route.params.tab,
   (newValue) => {
-    tab.value = newValue || props.tabs[0].tab
+    tab.value = newValue || props.tabs[0][props.tabKey]
   }
 )
 

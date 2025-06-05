@@ -20,7 +20,6 @@ router = APIRouter()
     "/stats",
     dependencies=[rbac.LIBRARY_READ],
     summary="Returns stats about Catalogues, Packages and Terms",
-    response_model=CTStats,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -31,7 +30,7 @@ def get_stats(
     latest_count: Annotated[
         int | None, Query(description="Optional, number of latest codelists to return")
     ] = 3,
-):
+) -> CTStats:
     ct_stats_service = CTStatsService()
 
     # Get latest codelists from codelist service

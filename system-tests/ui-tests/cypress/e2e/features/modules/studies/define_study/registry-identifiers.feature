@@ -1,34 +1,34 @@
 @REQ_ID:1074253
-Feature: Studies - Registry Identifiers
+Feature: Studies - Define Study - Registry Identifiers
 
    Background: User is logged in and study has been selected
       Given The user is logged in
       And A test study is selected
 
-   Scenario: User must be able to navigate to the Registry Identifiers page
+   Scenario: [Navigation] User must be able to navigate to the Registry Identifiers page
       Given The '/studies' page is opened
       When The 'Registry Identifiers' submenu is clicked in the 'Define Study' section
       Then The current URL is '/studies/Study_000001/registry_identifiers'
 
-   Scenario: User must be able to see the page table with correct columns
+   Scenario: [Table][Data] User must be able to see the page table with correct columns
       Given The '/studies/Study_000001/registry_identifiers' page is opened
       Then The table display following predefined data
-         | column | row | value                                             |
-         | 0      | 0   | ClinicalTrials.gov ID                             |
-         | 0      | 1   | EUDRACT ID                                        |
-         | 0      | 2   | Universal Trial Number (UTN)                      |
-         | 0      | 3   | Japanese Trial Registry ID (JAPIC)                |
-         | 0      | 4   | Investigational New Drug Application (IND) Number |
-         | 0      | 5   | EU Trial Number                                   |
-         | 0      | 6   | CID ID SIN Number                                 |
-         | 0      | 7   | National Clinical Trial Number                    |
-         | 0      | 8   | Japanese Trial Registry Number                    |
-         | 0      | 9  | NMPA Number                                       |
-         | 0      | 10  | EUDAMED number                                    |
-         | 0      | 11  | Investigational Device Exemption Number           |
+         | row | column                | value                                             |
+         | 0   | Registry identifiers  | ClinicalTrials.gov ID                             |
+         | 1   | Registry identifiers  | EUDRACT ID                                        |
+         | 2   | Registry identifiers  | Universal Trial Number (UTN)                      |
+         | 3   | Registry identifiers  | Japanese Trial Registry ID (JAPIC)                |
+         | 4   | Registry identifiers  | Investigational New Drug Application (IND) Number |
+         | 5   | Registry identifiers  | EU Trial Number                                   |
+         | 6   | Registry identifiers  | CID ID SIN Number                                 |
+         | 7   | Registry identifiers  | National Clinical Trial Number                    |
+         | 8   | Registry identifiers  | Japanese Trial Registry Number                    |
+         | 9   | Registry identifiers  | NMPA Number                                       |
+         | 10  | Registry identifiers  | EUDAMED number                                    |
+         | 11  | Registry identifiers  | Investigational Device Exemption Number           |
 
 
-   Scenario: User must be able to provide informations for Registry Identifiers
+   Scenario: [Actions][Edit] User must be able to provide informations for Registry Identifiers
       Given The '/studies/Study_000001/registry_identifiers' page is opened
       When The identifiers are set with following data
          | identifier                                        | value      |
@@ -61,7 +61,7 @@ Feature: Studies - Registry Identifiers
          | Investigational Device Exemption Number           | Azerty1111 |
 
 
-   Scenario: User must be able to select not applicable for Registry Identifiers
+   Scenario: [Actions][Edit][N/A] User must be able to select not applicable for Registry Identifiers
       Given The '/studies/Study_000001/registry_identifiers' page is opened
       When The not applicable is checked for all identifiers
          | identifier                                        |
@@ -103,6 +103,7 @@ Feature: Studies - Registry Identifiers
    @manual_test
    Scenario: User must be able to read change history of selected element
       Given The '/studies/Study_000001/registry_identifiers' page is opened
+      And The 'Show history' option is clicked from the three dot menu list
       When The user clicks on History for particular element
       Then The user is presented with history of changes for that element
       And The history contains timestamps and usernames

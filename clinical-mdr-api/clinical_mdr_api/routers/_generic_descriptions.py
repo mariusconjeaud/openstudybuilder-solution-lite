@@ -184,6 +184,7 @@ STUDY_VALUE_VERSION_QUERY = Query(
 ERROR_400 = {"model": ErrorResponse, "description": "Error"}
 ERROR_403 = {"model": ErrorResponse, "description": "Forbidden"}
 ERROR_404 = {"model": ErrorResponse, "description": "Entity not found"}
+ERROR_405 = {"model": ErrorResponse, "description": "Unsupported method"}
 ERROR_409 = {
     "model": ErrorResponse,
     "description": "The request could not be completed due to a conflict with the current state of the target resource. "

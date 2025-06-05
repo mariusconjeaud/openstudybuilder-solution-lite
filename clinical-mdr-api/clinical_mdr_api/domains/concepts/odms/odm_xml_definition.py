@@ -46,7 +46,7 @@ class TranslatedText:
     _string: str
     lang: Attribute
 
-    def __init__(self, _string, lang, **kwargs):
+    def __init__(self, _string: str, lang: Attribute, **kwargs):
         self._string = _string
         self.lang = lang
 
@@ -63,7 +63,7 @@ class CodeListItem:
     coded_value: Attribute
     decode: Decode
 
-    def __init__(self, coded_value, decode, **kwargs):
+    def __init__(self, coded_value: Attribute, decode: Decode, **kwargs):
         self.coded_value = coded_value
         self.decode = decode
 
@@ -79,7 +79,15 @@ class CodeList:
     sas_format_name: Attribute
     codelist_items: list[CodeListItem]
 
-    def __init__(self, oid, name, datatype, sas_format_name, codelist_items, **kwargs):
+    def __init__(
+        self,
+        oid: Attribute,
+        name: Attribute,
+        datatype: Attribute,
+        sas_format_name: Attribute,
+        codelist_items: list[CodeListItem],
+        **kwargs,
+    ):
         self.oid = oid
         self.name = name
         self.datatype = datatype
@@ -94,7 +102,7 @@ class Alias:
     name: Attribute
     context: Attribute
 
-    def __init__(self, name, context, **kwargs):
+    def __init__(self, name: Attribute, context: Attribute, **kwargs):
         self.name = name
         self.context = context
 
@@ -126,7 +134,7 @@ class FormalExpression:
     _string: str
     context: Attribute
 
-    def __init__(self, _string, context, **kwargs):
+    def __init__(self, _string: str, context: Attribute, **kwargs):
         self._string = _string
         self.context = context
 
@@ -141,12 +149,23 @@ class ConditionDef:
     aliases: list[Alias]
     formal_expressions: list[FormalExpression]
 
-    def __init__(self, oid, name, description, aliases, formal_expressions, **kwargs):
+    def __init__(
+        self,
+        oid: Attribute,
+        name: Attribute,
+        description: Description,
+        aliases: list[Alias],
+        formal_expressions: list[FormalExpression],
+        **kwargs,
+    ):
         self.oid = oid
         self.name = name
         self.description = description
         self.aliases = aliases
         self.formal_expressions = formal_expressions
+
+        if not self.description.translated_text:
+            del self.description
 
         for key, val in kwargs.items():
             setattr(self, key, val)
@@ -161,7 +180,14 @@ class MethodDef:
     formal_expressions: list[FormalExpression]
 
     def __init__(
-        self, oid, name, method_type, description, aliases, formal_expressions, **kwargs
+        self,
+        oid: Attribute,
+        name: Attribute,
+        method_type: Attribute,
+        description: Description,
+        aliases: list[Alias],
+        formal_expressions: list[FormalExpression],
+        **kwargs,
     ):
         self.oid = oid
         self.name = name
@@ -169,6 +195,9 @@ class MethodDef:
         self.description = description
         self.aliases = aliases
         self.formal_expressions = formal_expressions
+
+        if not self.description.translated_text:
+            del self.description
 
         for key, val in kwargs.items():
             setattr(self, key, val)
@@ -190,18 +219,18 @@ class ItemDef:
 
     def __init__(
         self,
-        oid,
-        name,
-        origin,
-        datatype,
-        length,
-        sas_field_name,
-        sds_var_name,
-        question,
-        description,
-        aliases,
-        codelist_ref,
-        measurement_unit_refs,
+        oid: Attribute,
+        name: Attribute,
+        origin: Attribute,
+        datatype: Attribute,
+        length: Attribute,
+        sas_field_name: Attribute,
+        sds_var_name: Attribute,
+        question: Question,
+        description: Description,
+        aliases: list[Alias],
+        codelist_ref: CodeListRef,
+        measurement_unit_refs: list[MeasurementUnitRef],
         **kwargs,
     ):
         self.oid = oid
@@ -219,6 +248,10 @@ class ItemDef:
 
         if not self.codelist_ref.codelist_oid.value:
             del self.codelist_ref
+        if not self.description.translated_text:
+            del self.description
+        if not self.question.translated_text:
+            del self.question
 
         for key, val in kwargs.items():
             setattr(self, key, val)
@@ -234,11 +267,11 @@ class ItemRef:
 
     def __init__(
         self,
-        item_oid,
-        mandatory,
-        order_number,
-        method_oid,
-        collection_exception_condition_oid,
+        item_oid: Attribute,
+        mandatory: Attribute,
+        order_number: Attribute,
+        method_oid: Attribute,
+        collection_exception_condition_oid: Attribute,
         **kwargs,
     ):
         self.item_oid = item_oid
@@ -277,16 +310,16 @@ class ItemGroupDef:
 
     def __init__(
         self,
-        oid,
-        name,
-        repeating,
-        purpose,
-        sas_dataset_name,
-        domain,
-        osb_domain_colors,
-        description,
-        aliases,
-        item_refs,
+        oid: Attribute,
+        name: Attribute,
+        repeating: Attribute,
+        purpose: Attribute,
+        sas_dataset_name: Attribute,
+        domain: Attribute,
+        osb_domain_colors: list[OsbDomainColor],
+        description: Description,
+        aliases: list[Alias],
+        item_refs: list[ItemRef],
         **kwargs,
     ):
         self.oid = oid
@@ -300,6 +333,9 @@ class ItemGroupDef:
         self.aliases = aliases
         self.item_refs = item_refs
 
+        if not self.description.translated_text:
+            del self.description
+
         for key, val in kwargs.items():
             setattr(self, key, val)
 
@@ -312,10 +348,10 @@ class ItemGroupRef:
 
     def __init__(
         self,
-        item_group_oid,
-        mandatory,
-        order_number,
-        collection_exception_condition_oid,
+        item_group_oid: Attribute,
+        mandatory: Attribute,
+        order_number: Attribute,
+        collection_exception_condition_oid: Attribute,
         **kwargs,
     ):
         self.item_group_oid = item_group_oid
@@ -339,7 +375,14 @@ class FormDef:
     item_group_refs: list[ItemGroupRef]
 
     def __init__(
-        self, oid, name, repeating, description, aliases, item_group_refs, **kwargs
+        self,
+        oid: Attribute,
+        name: Attribute,
+        repeating: Attribute,
+        description: Description,
+        aliases: list[Alias],
+        item_group_refs: list[ItemGroupRef],
+        **kwargs,
     ):
         self.oid = oid
         self.name = name
@@ -347,6 +390,9 @@ class FormDef:
         self.description = description
         self.aliases = aliases
         self.item_group_refs = item_group_refs
+
+        if not self.description.translated_text:
+            del self.description
 
         for key, val in kwargs.items():
             setattr(self, key, val)
@@ -363,7 +409,7 @@ class MeasurementUnit:
     name: Attribute
     symbol: Symbol
 
-    def __init__(self, oid, name, symbol, **kwargs):
+    def __init__(self, oid: Attribute, name: Attribute, symbol: Symbol, **kwargs):
         self.oid = oid
         self.name = name
         self.symbol = symbol
@@ -432,13 +478,13 @@ class ODM:
 
     def __init__(
         self,
-        odm_ns,
-        odm_version,
-        file_type,
-        file_oid,
-        creation_date_time,
-        granularity,
-        study,
+        odm_ns: Attribute,
+        odm_version: Attribute,
+        file_type: Attribute,
+        file_oid: Attribute,
+        creation_date_time: Attribute,
+        granularity: Attribute,
+        study: Study,
         **kwargs,
     ):
         self.odm_ns = odm_ns

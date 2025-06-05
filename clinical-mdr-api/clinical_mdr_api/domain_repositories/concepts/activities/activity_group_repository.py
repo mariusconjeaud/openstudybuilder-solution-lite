@@ -221,8 +221,13 @@ class ActivityGroupRepository(ConceptGenericRepository[ActivityGroupAR]):
         return overview_dict
 
     def get_linked_activity_subgroup_uids(
-        self, group_uid: str, version: str
-    ) -> list[dict[str, str]]:
+        self,
+        group_uid: str,
+        version: str,
+        skip: int = 0,
+        limit: int = None,
+        count_total: bool = False,
+    ) -> dict:
         """
         Get the UIDs of all activity subgroups linked to a specific activity group version.
         Will return the latest version of each subgroup connected to this activity group version.
@@ -230,44 +235,143 @@ class ActivityGroupRepository(ConceptGenericRepository[ActivityGroupAR]):
         Args:
             group_uid: The UID of the activity group
             version: The version of the activity group
+            skip: Number of records to skip (for pagination)
+            limit: Maximum number of records to return (for pagination)
+            count_total: Whether to count the total number of records
 
         Returns:
-            A list of dictionaries containing the subgroup uid, name, status and version
+            A dictionary containing the subgroups list and optionally the total count
         """
-        # Find all subgroups connected to this specific group version and collect all their versions
         query = """
-        // 1. Find the specific activity group version
-        MATCH (agr:ActivityGroupRoot {uid: $group_uid})-[:HAS_VERSION {version: $version}]-(gv:ActivityGroupValue)
-        
-        // 2. Find subgroups directly connected to this group version through the valid relationship path
-        MATCH (gv)-[:IN_GROUP]-(avg:ActivityValidGroup)-[:HAS_GROUP]-(sgv:ActivitySubGroupValue)
-        
-        // 3. Get the subgroup roots and their Final version relationships
-        MATCH (sgr:ActivitySubGroupRoot)-[sgv_rel:HAS_VERSION {status: "Final"}]-(sgv)
-        
-        // 4. Group by subgroup root and collect all version relationships
-        WITH DISTINCT agr, gv, sgr, sgv, collect(sgv_rel) as versions
-        
-        // 5. Sort results by subgroup name
-        ORDER BY sgv.name
-        
-        // 6. Return the result with all necessary fields
+        // 1. Find a specific activity group version
+        MATCH (gr:ActivityGroupRoot {uid: $group_uid})-[gv_rel:HAS_VERSION {version: $version}]->(gv:ActivityGroupValue)
+
+        // 2. Find when this version's validity ends (either its end_date or the start of the next version)
+        OPTIONAL MATCH (gr)-[next_rel:HAS_VERSION]->(next_gv:ActivityGroupValue)
+        WHERE toFloat(next_rel.version) > toFloat(gv_rel.version)
+        WITH gv, gr, gv_rel, 
+             CASE WHEN gv_rel.end_date IS NULL 
+                  THEN min(next_rel.start_date) 
+                  ELSE gv_rel.end_date 
+             END as version_end_date
+
+        // 3. Find all subgroup versions connected to this group with correct relationship direction
+        MATCH (avg:ActivityValidGroup)-[:IN_GROUP]->(gv)
+        MATCH (sgv:ActivitySubGroupValue)-[:HAS_GROUP]->(avg)
+        MATCH (sgr:ActivitySubGroupRoot)-[sgv_rel:HAS_VERSION]->(sgv)
+
+        // Filter subgroup versions created before the group's next version/end date
+        // Only include Final status subgroups
+        WHERE sgv_rel.start_date <= COALESCE(version_end_date, datetime())
+        AND sgv_rel.status = "Final"
+
+        // 4. Group by subgroup for processing
+        WITH 
+            gr.uid as group_uid, 
+            gv_rel.version as group_version,
+            sgr.uid as subgroup_uid, 
+            sgv_rel.version as subgroup_version,
+            sgv.name as subgroup_name,
+            sgv.definition as subgroup_definition,
+            sgv_rel.status as subgroup_status,
+            toInteger(SPLIT(sgv_rel.version, '.')[0]) as sg_major_version,
+            toInteger(SPLIT(sgv_rel.version, '.')[1]) as sg_minor_version
+
+        // 5. Collect all versions by subgroup
+        WITH 
+            subgroup_uid, 
+            collect({
+                sg_major: sg_major_version, 
+                sg_minor: sg_minor_version,
+                subgroup_version: subgroup_version, 
+                subgroup_name: subgroup_name,
+                subgroup_definition: subgroup_definition,
+                subgroup_status: subgroup_status
+            }) as versions
+
+        // 6. Find highest major version
+        WITH 
+            subgroup_uid, 
+            versions,
+            reduce(max_sg_major = 0, v IN versions | 
+                CASE WHEN v.sg_major > max_sg_major THEN v.sg_major ELSE max_sg_major END
+            ) as max_sg_major
+
+        // 7. Filter to only include versions with the maximum major version
+        WITH 
+            subgroup_uid, 
+            [v in versions WHERE v.sg_major = max_sg_major] as sg_max_major_versions,
+            max_sg_major
+
+        // 8. Find highest minor version
+        WITH 
+            subgroup_uid, 
+            max_sg_major,
+            reduce(max_sg_minor = -1, v IN sg_max_major_versions | 
+                CASE WHEN v.sg_minor > max_sg_minor THEN v.sg_minor ELSE max_sg_minor END
+            ) as max_sg_minor,
+            sg_max_major_versions
+
+        // 9. Extract the specific version information
+        WITH 
+            subgroup_uid, 
+            max_sg_major, 
+            max_sg_minor,
+            [v in sg_max_major_versions WHERE v.sg_minor = max_sg_minor][0] as sg_version_info
+
+        // 10. Return data in the required format
         RETURN {
-            uid: sgr.uid,
-            name: sgv.name,
-            version: head([v in versions | v.version]),
-            status: head([v in versions | v.status]),
-            definition: sgv.definition
+            uid: subgroup_uid,
+            name: sg_version_info.subgroup_name,
+            version: sg_version_info.subgroup_version,
+            status: sg_version_info.subgroup_status,
+            definition: sg_version_info.subgroup_definition
         } as result
         """
 
-        results, _ = db.cypher_query(
-            query,
-            {
-                "group_uid": group_uid,
-                "version": version,
-            },
-        )
-        if not results:
-            return []
-        return [dict(result[0]) for result in results]
+        # Add pagination if needed
+        if limit is not None:
+            query += " SKIP $skip LIMIT $limit"
+
+        # Prepare parameters
+        params = {
+            "group_uid": group_uid,
+            "version": version,
+        }
+
+        if limit is not None:
+            params["skip"] = skip
+            params["limit"] = limit
+
+        # Execute query to get paginated subgroups
+        results, _ = db.cypher_query(query, params)
+
+        # Get total count if requested
+        total = None
+        if count_total:
+            count_query = """
+            // Same query as above but only count the results
+            MATCH (gr:ActivityGroupRoot {uid: $group_uid})-[gv_rel:HAS_VERSION {version: $version}]->(gv:ActivityGroupValue)
+            OPTIONAL MATCH (gr)-[next_rel:HAS_VERSION]->(next_gv:ActivityGroupValue)
+            WHERE toFloat(next_rel.version) > toFloat(gv_rel.version)
+            WITH gv, gr, gv_rel, 
+                 CASE WHEN gv_rel.end_date IS NULL 
+                      THEN min(next_rel.start_date) 
+                      ELSE gv_rel.end_date 
+                 END as version_end_date
+            MATCH (avg:ActivityValidGroup)-[:IN_GROUP]->(gv)
+            MATCH (sgv:ActivitySubGroupValue)-[:HAS_GROUP]->(avg)
+            MATCH (sgr:ActivitySubGroupRoot)-[sgv_rel:HAS_VERSION]->(sgv)
+            WHERE sgv_rel.start_date <= COALESCE(version_end_date, datetime())
+            AND sgv_rel.status = "Final"
+            RETURN count(DISTINCT sgr.uid) as total
+            """
+            count_result, _ = db.cypher_query(
+                count_query, {"group_uid": group_uid, "version": version}
+            )
+            total = count_result[0][0] if count_result else 0
+
+        # Return results
+        subgroups = [dict(result[0]) for result in results] if results else []
+
+        return {"subgroups": subgroups, "total": total}

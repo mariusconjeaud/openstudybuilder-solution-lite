@@ -366,18 +366,23 @@ class ConceptGenericService(Generic[_AggregateRootType], ABC):
         return self._transform_aggregate_root_to_pydantic_model(item)
 
     @ensure_transaction(db)
-    def edit_draft(self, uid: str, concept_edit_input: BaseModel) -> BaseModel:
-        return self.non_transactional_edit(uid, concept_edit_input)
+    def edit_draft(
+        self, uid: str, concept_edit_input: BaseModel, patch_mode: bool = True
+    ) -> BaseModel:
+        return self.non_transactional_edit(uid, concept_edit_input, patch_mode)
 
     def non_transactional_edit(
-        self, uid: str, concept_edit_input: BaseModel
+        self, uid: str, concept_edit_input: BaseModel, patch_mode: bool = True
     ) -> BaseModel:
         item = self._find_by_uid_or_raise_not_found(uid=uid, for_update=True)
-        self._fill_missing_values_in_base_model_from_reference_base_model(
-            base_model_with_missing_values=concept_edit_input,
-            reference_base_model=self._transform_aggregate_root_to_pydantic_model(item),
-        )
-        self.fill_in_additional_fields(concept_edit_input, item)
+        if patch_mode:
+            self._fill_missing_values_in_base_model_from_reference_base_model(
+                base_model_with_missing_values=concept_edit_input,
+                reference_base_model=self._transform_aggregate_root_to_pydantic_model(
+                    item
+                ),
+            )
+            self.fill_in_additional_fields(concept_edit_input, item)
         item = self._edit_aggregate(item=item, concept_edit_input=concept_edit_input)
         self.repository.save(item)
         return self._transform_aggregate_root_to_pydantic_model(item)
@@ -388,15 +393,16 @@ class ConceptGenericService(Generic[_AggregateRootType], ABC):
 
     def generate_default_name(self, response_model):
         param_specific_item_classes = {}
-
+        current_activity_item_ctterms = set()
         # fetching ct_term data and unit definition data
         for item in response_model.activity_items:
+            activity_class = self._repos.activity_item_class_repository.find_by_uid_2(
+                item.activity_item_class.uid
+            )
+            activity_class_vo = (
+                activity_class.activity_item_class_vo if activity_class else None
+            )
             if item.is_adam_param_specific:
-                activity_class_vo = (
-                    self._repos.activity_item_class_repository.find_by_uid_2(
-                        item.activity_item_class.uid
-                    ).activity_item_class_vo
-                )
                 lower_activity_item_class_name_lower = activity_class_vo.name.lower()
 
                 if item.ct_terms:
@@ -416,6 +422,52 @@ class ConceptGenericService(Generic[_AggregateRootType], ABC):
                         find_term_by_uid=self._repos.ct_term_name_repository.find_by_uid,
                         find_dictionary_term_by_uid=self._repos.dictionary_term_generic_repository.find_by_uid,
                     ).name
+            for ct_term in item.ct_terms:
+                if (
+                    activity_class_vo
+                    and activity_class_vo.name != "unit_dimension"
+                    and activity_class_vo.name != "standard_unit"
+                ):
+                    current_activity_item_ctterms.add(ct_term.uid)
+        cypher_terms_filering = " AND ".join(
+            f"'{item}' in ct_term_uid_collected"
+            for item in sorted(current_activity_item_ctterms)
+        )
+        cypher_counting_filtering = (
+            f" AND counting = {len(current_activity_item_ctterms)}"
+            if cypher_terms_filering
+            else ""
+        )
+        cypher_activity_filtering = (
+            f"AND act_root.uid = '{response_model.activity_groupings[0].activity.uid}'"
+        )
+        cypher_expression = f"""
+            MATCH (act_inst_root:ActivityInstanceRoot)--(act_inst_val:ActivityInstanceValue)--(activity_item:ActivityItem)-[:HAS_CT_TERM]-(ct_term:CTTermRoot)
+            MATCH (act_inst_val)--(act_group:ActivityGrouping)-[:HAS_GROUPING]-(act_val:ActivityValue)--(act_root:ActivityRoot)
+            // CHECK THAT THE ACTIVITY INSTANCE BELONGS TO NUMERIC FINDGS LVL 2
+            MATCH (act_inst_val)--(act_inst_class_root:ActivityInstanceClassRoot)--(act_inst_class_val:ActivityInstanceClassValue)
+                WHERE act_inst_class_val.name = "NumericFindings" 
+            // CHECK THAT THE ACTIVITY ITEMS are connected to an activity_item_class_root and activity_instance_class_root
+            match (:ActivityInstanceClassRoot)--(act_item_class_root:ActivityItemClassRoot)--(activity_item)
+            // filter those activity items that are connected to unit_dimention activity_item_class
+            MATCH (act_item_class_root:ActivityItemClassRoot)--(act_item_class_val:ActivityItemClassValue)
+                WHERE act_item_class_val.name <> "unit_dimension"
+            WITH act_root,act_inst_root,act_inst_val, collect(distinct ct_term.uid) as ct_term_uid_collected
+            WITH act_root,act_inst_root,act_inst_val, ct_term_uid_collected,  size(ct_term_uid_collected) as counting
+            WHERE 
+                {cypher_terms_filering}
+                {cypher_counting_filtering}
+                {cypher_activity_filtering}
+            return act_inst_val
+        """
+        if cypher_terms_filering and cypher_activity_filtering:
+            existent_equal_instances, _ = db.cypher_query(
+                cypher_expression,
+                resolve_objects=True,
+            )
+        else:
+            existent_equal_instances = []
+        if_exists = bool(len(list(existent_equal_instances)) > 0)
         activity_item_classes_order = [
             "location",
             "laterality",
@@ -428,16 +480,16 @@ class ConceptGenericService(Generic[_AggregateRootType], ABC):
             "standard_unit",
         ]
 
-        param_names = [
-            param_specific_item_classes[cls]
-            for cls in activity_item_classes_order
-            if cls in param_specific_item_classes and cls != "standard_unit"
-        ]
         standard_unit_suffix = (
             f" ({param_specific_item_classes['standard_unit']})"
             if "standard_unit" in param_specific_item_classes
             else ""
         )
+        param_names = [
+            param_specific_item_classes[cls]
+            for cls in activity_item_classes_order
+            if cls in param_specific_item_classes and cls != "standard_unit"
+        ]
         name_parts = [
             item.activity.name
             for item in response_model.activity_groupings
@@ -445,8 +497,15 @@ class ConceptGenericService(Generic[_AggregateRootType], ABC):
         ] + param_names
 
         generated_name = " ".join(name_parts).strip()
+        # research_flag
+        if response_model.is_research_lab:
+            generated_name += " Research"
         activity_sequence_number = 0
-        final_generated_name = f"{generated_name}{standard_unit_suffix}"
+        final_generated_name = (
+            f"{generated_name}{standard_unit_suffix}"
+            if if_exists
+            else f"{generated_name}"
+        )
         while self.repository.exists_by("name", final_generated_name, False):
             activity_sequence_number += 1
             final_generated_name = (
@@ -456,9 +515,12 @@ class ConceptGenericService(Generic[_AggregateRootType], ABC):
 
     def generate_default_topic_code(self, response_model):
         without_special_characters = "".join(
-            re.findall(r"[a-zA-Z0-9 ]+", response_model.name)
+            re.findall(r"[a-zA-Z0-9_\-\/ ]+", response_model.name)
         )
         final_topic_code = "_".join(without_special_characters.upper().split(" "))
+        final_topic_code = "_".join(final_topic_code.split(r"-"))
+        final_topic_code = "_".join(final_topic_code.upper().split(r"/"))
+        final_topic_code = re.sub(r"_+", "_", final_topic_code)
         return final_topic_code
 
     def generate_default_name_sentence_case(self, response_model):
@@ -487,42 +549,74 @@ class ConceptGenericService(Generic[_AggregateRootType], ABC):
             "--ANMETH",
             "--FAST",
         ]
-        param_param_cd_ctterm_list = []
+
+        param_param_cd_ctterm_dict = {}
         # fetching ct_term data and unit definition data
         for item in response_model.activity_items:
-            activity_class_vo = (
-                self._repos.activity_item_class_repository.find_by_uid_2(
-                    item.activity_item_class.uid
-                ).activity_item_class_vo
+            activity_class = self._repos.activity_item_class_repository.find_by_uid_2(
+                item.activity_item_class.uid
             )
-            # variable_class_uid = activity_class_vo.variable_class_uids[0]
-            if activity_class_vo.name == "test_code" and item.ct_terms:
+            activity_class_vo = (
+                activity_class.activity_item_class_vo if activity_class else None
+            )
+            if (
+                activity_class_vo
+                and activity_class_vo.name == "test_code"
+                and item.ct_terms
+            ):
                 ct_attribute = SimpleCTTermAttributes.from_term_uid(
                     uid=item.ct_terms[0].uid,
                     find_term_by_uid=self._repos.ct_term_attributes_repository.find_by_uid,
                 )
-                ct_code_submission_value = ct_attribute.code_submission_value
-                adam_initial_4 = "".join(ct_code_submission_value[:4]).upper()
-
+                ct_code_submission_value = (
+                    ct_attribute.code_submission_value if ct_attribute else None
+                )
+                if not ct_attribute:
+                    break
+                adam_initial_4 = (
+                    "".join(ct_code_submission_value[:4]).upper()
+                    if ct_code_submission_value
+                    else ""
+                )
             if (
-                activity_class_vo.variable_class_uids
+                activity_class_vo
+                and activity_class_vo.variable_class_uids
                 and activity_class_vo.variable_class_uids[0] in param_param_cd_list
                 and item.ct_terms
             ):
                 for ct_term in item.ct_terms:
-                    param_param_cd_ctterm_list.append(
-                        SimpleTermModel.from_ct_code(
-                            ct_term.uid, self._repos.ct_term_name_repository.find_by_uid
-                        ).name[0]
+                    simple_term = SimpleTermModel.from_ct_code(
+                        ct_term.uid, self._repos.ct_term_name_repository.find_by_uid
                     )
-        adam_final4 = "".join(param_param_cd_ctterm_list).strip()
+                    if simple_term and simple_term.name:
+                        param_param_cd_ctterm_dict[
+                            activity_class_vo.variable_class_uids[0]
+                        ] = simple_term.name[0]
+        param_param_cd_ctterm_dict_list = [
+            param_param_cd_ctterm_dict[i]
+            for i in param_param_cd_list
+            if i in param_param_cd_ctterm_dict
+        ]
+        adam_final4 = "".join(param_param_cd_ctterm_dict_list).strip()
 
         adam_final = adam_initial_4 + "".join(adam_final4[:4]).upper()
         activity_sequence_number = 0
-        final_generated_name = adam_final
+        # if research lab
+        if (
+            response_model.is_research_lab
+            and not self.repository.exists_by("adam_param_code", adam_final, False)
+            and adam_final != ""
+        ):
+            final_generated_name = adam_final[:7] + "X"
+        else:
+            final_generated_name = adam_final
         while self.repository.exists_by("adam_param_code", final_generated_name, False):
             activity_sequence_number += 1
-            final_generated_name = f"{adam_final}{activity_sequence_number}"
+            # add research flag
+            if response_model.is_research_lab and len(adam_final) <= 6:
+                final_generated_name = f"{adam_final+"X"}{activity_sequence_number}"
+            else:
+                final_generated_name = f"{adam_final}{activity_sequence_number}"
             number_of_letters_to_remove = 0
             while len(final_generated_name) > 8:
                 number_of_letters_to_remove += 1

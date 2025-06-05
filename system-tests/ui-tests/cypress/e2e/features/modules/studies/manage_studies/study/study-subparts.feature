@@ -1,5 +1,5 @@
 @REQ_ID:2866190
-Feature: Studies - Study Subparts
+Feature: Studies - Manage Study - Study Subparts
 
     Background: User must be logged in
         Given The user is logged in
@@ -12,7 +12,7 @@ Feature: Studies - Study Subparts
         And The 'Study Subparts' tab is selected
         Then The current URL is '/studies/Study_000001/study_status/subparts'
 
-    Scenario: User must be able to see the Study Subpart table with correct columns
+    Scenario: [Table][Columns][Names] User must be able to see the Study Subpart table with correct columns
         Given A test study is selected
         Given The '/studies/Study_000001/study_status/subparts' page is opened
         And A table is visible with following headers
@@ -24,30 +24,30 @@ Feature: Studies - Study Subparts
             | Modified        |
             | Modified by     |
 
-    Scenario: User must be able to use column selection option
+    Scenario: [Table][Columns][Visiblity] User must be able to use column selection option
         Given The '/studies/Study_000001/study_status/subparts' page is opened
         When The first column is selected from Select Columns option for table with actions
         Then The table contain only selected column and actions column
 
-    Scenario: User must be able to export the data in CSV format
+    Scenario: [Export][CSV] User must be able to export the data in CSV format
         Given The '/studies/Study_000001/study_status/subparts' page is opened
         And The user exports the data in 'CSV' format
-        Then The 'StudySubparts' file is downloaded in 'csv' format
+        Then The study specific 'StudySubparts' file is downloaded in 'csv' format
 
-    Scenario: User must be able to export the data in JSON format
+    Scenario: [Export][Json] User must be able to export the data in JSON format
         Given The '/studies/Study_000001/study_status/subparts' page is opened
         And The user exports the data in 'JSON' format
-        Then The 'StudySubparts' file is downloaded in 'json' format
+        Then The study specific 'StudySubparts' file is downloaded in 'json' format
 
-    Scenario: User must be able to export the data in XML format
+    Scenario: [Export][Xml] User must be able to export the data in XML format
         Given The '/studies/Study_000001/study_status/subparts' page is opened
         And The user exports the data in 'XML' format
-        Then The 'StudySubparts' file is downloaded in 'xml' format
+        Then The study specific 'StudySubparts' file is downloaded in 'xml' format
 
-    Scenario: User must be able to export the data in EXCEL format
+    Scenario: [Export][Excel] User must be able to export the data in EXCEL format
         Given The '/studies/Study_000001/study_status/subparts' page is opened
         And The user exports the data in 'EXCEL' format
-        Then The 'StudySubparts' file is downloaded in 'xlsx' format
+        Then The study specific 'StudySubparts' file is downloaded in 'xlsx' format
 
     @pending_implementation
     Scenario: User must be able to add an existing study as a study subpart to a parent study

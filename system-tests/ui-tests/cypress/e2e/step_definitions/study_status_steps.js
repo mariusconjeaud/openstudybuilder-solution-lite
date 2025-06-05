@@ -10,7 +10,7 @@ let released_date
 
 When('The study is released with description provided', () => {
   released_date = getCurrentDateFormatted()
-  cy.getValueFromCellsWithIndex(0, 2).then((current_version) => {
+  cy.getCellValue(0, 'Version').then((current_version) => {
     new_version = current_version == NaN ? 0 : parseFloat(current_version)
   })
   cy.clickButton('release-study')
@@ -21,7 +21,7 @@ When('The study is released with description provided', () => {
 
 When('The study is locked with description provided', () => {
   locked_date = getCurrentDateFormatted()
-  cy.getValueFromCellsWithIndex(0, 2).then((current_version) => {
+  cy.getCellValue(0, 'Version').then((current_version) => {
     new_version = current_version == NaN ? 0 : parseFloat(current_version)
   })
   cy.clickButton('lock-study')

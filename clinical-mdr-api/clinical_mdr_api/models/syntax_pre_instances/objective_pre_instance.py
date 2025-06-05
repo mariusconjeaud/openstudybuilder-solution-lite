@@ -28,13 +28,15 @@ IS_CONFIRMATORY_TESTING_DESC = (
 
 
 class ObjectivePreInstance(BaseModel):
-    uid: str
+    uid: Annotated[str, Field()]
     sequence_id: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = (
         None
     )
-    template_uid: str
-    template_name: str
-    name: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = None
+    template_uid: Annotated[str, Field()]
+    template_name: Annotated[str, Field()]
+    name: Annotated[
+        str | None, Field(json_schema_extra={"nullable": True, "format": "html"})
+    ] = None
     name_plain: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = (
         None
     )
@@ -55,26 +57,22 @@ class ObjectivePreInstance(BaseModel):
     is_confirmatory_testing: Annotated[
         bool, Field(description=IS_CONFIRMATORY_TESTING_DESC)
     ] = False
-    parameter_terms: Annotated[
-        list[MultiTemplateParameterTerm],
-        Field(
-            description="Holds the parameter terms that are used within the objective. The terms are ordered as they occur in the objective name.",
-        ),
-    ] = []
-    indications: Annotated[
-        list[SimpleTermModel],
-        Field(
-            description="The study indications, conditions, diseases or disorders in scope for the pre-instance.",
-        ),
-    ] = []
-    categories: Annotated[
-        list[SimpleCTTermNameAndAttributes],
-        Field(description="A list of categories the pre-instance belongs to."),
-    ] = []
+    parameter_terms: list[MultiTemplateParameterTerm] = Field(
+        description="Holds the parameter terms that are used within the objective. The terms are ordered as they occur in the objective name.",
+        default_factory=list,
+    )
+    indications: list[SimpleTermModel] = Field(
+        description="The study indications, conditions, diseases or disorders in scope for the pre-instance.",
+        default_factory=list,
+    )
+    categories: list[SimpleCTTermNameAndAttributes] = Field(
+        description="A list of categories the pre-instance belongs to.",
+        default_factory=list,
+    )
     library: Annotated[Library | None, Field(json_schema_extra={"nullable": True})] = (
         None
     )
-    possible_actions: list[str] = []
+    possible_actions: list[str] = Field(default_factory=list)
 
     @classmethod
     def from_objective_pre_instance_ar(
@@ -132,8 +130,8 @@ class ObjectivePreInstanceCreateInput(PreInstancePostInput):
     is_confirmatory_testing: Annotated[
         bool, Field(description=IS_CONFIRMATORY_TESTING_DESC)
     ] = False
-    indication_uids: list[str]
-    category_uids: list[str]
+    indication_uids: Annotated[list[str], Field()]
+    category_uids: Annotated[list[str], Field()]
 
 
 class ObjectivePreInstanceEditInput(PreInstancePatchInput):
@@ -169,9 +167,4 @@ class ObjectivePreInstanceVersion(ObjectivePreInstance):
     Class for storing Objective Pre-Instances and calculation of differences
     """
 
-    changes: Annotated[
-        list[str],
-        Field(
-            description=CHANGES_FIELD_DESC,
-        ),
-    ] = []
+    changes: list[str] = Field(description=CHANGES_FIELD_DESC, default_factory=list)

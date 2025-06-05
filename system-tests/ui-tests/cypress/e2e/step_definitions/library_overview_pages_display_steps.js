@@ -68,11 +68,6 @@ Then('The test group, the test subgroup and the test activity should be displaye
     cy.checkRowByIndex(0, 'Activity', apiActivityName)  
 })
 
-Then('The activity instance overview page can be opened by clicking the activity instance link in the instance overview page', () => {
-    cy.get('.v-table__wrapper').contains('a', apiInstanceName).click();
-    verifyOverviewPage(apiInstanceName)
-})
-
 When('I click on the COSMoS YAML tab', () => cy.get('button.v-btn.v-tab[value="cosmos"]').click())
 
 Then('The COSMoS YAML page should be opened with Download button and Close button displayed', () => {
@@ -103,7 +98,7 @@ function verifyOverviewPage(pageName){
 
 function goToPageSearchAndClickLink(endpoint, searchFor, clickOn) {
     cy.visit(`/library/activities/${endpoint}`)
-    cy.searchAndCheckResults(searchFor)
+    cy.searchAndCheckPresence(searchFor, true)
     cy.get('table tbody tr td').contains(clickOn).click()
 }
 

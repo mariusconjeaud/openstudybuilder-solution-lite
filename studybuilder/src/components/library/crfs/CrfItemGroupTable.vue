@@ -60,7 +60,10 @@
       <template #[`item.description`]="{ item }">
         <v-tooltip bottom>
           <template #activator="{ props }">
-            <div v-bind="props" v-html="getDescription(item, true)" />
+            <div
+              v-bind="props"
+              v-html="sanitizeHTMLHandler(getDescription(item, true))"
+            />
           </template>
           <span>{{ getDescription(item, false) }}</span>
         </v-tooltip>
@@ -68,7 +71,10 @@
       <template #[`item.notes`]="{ item }">
         <v-tooltip bottom>
           <template #activator="{ props }">
-            <div v-bind="props" v-html="getNotes(item, true)" />
+            <div
+              v-bind="props"
+              v-html="sanitizeHTMLHandler(getNotes(item, true))"
+            />
           </template>
           <span>{{ getNotes(item, false) }}</span>
         </v-tooltip>
@@ -135,6 +141,7 @@ import parameters from '@/constants/parameters'
 import { useAccessGuard } from '@/composables/accessGuard'
 import { useCrfsStore } from '@/stores/crfs'
 import { computed } from 'vue'
+import { sanitizeHTML } from '@/utils/sanitize'
 
 export default {
   components: {
@@ -311,6 +318,9 @@ export default {
     this.constants = constants
   },
   methods: {
+    sanitizeHTMLHandler(html) {
+      return sanitizeHTML(html)
+    },
     getDescription(item, short) {
       const engDesc = item.descriptions.find(
         (el) => el.language === parameters.ENG

@@ -113,7 +113,6 @@
 <script setup>
 import { computed, onMounted, inject, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useRouter } from 'vue-router'
 import SimpleFormDialog from '@/components/tools/SimpleFormDialog.vue'
 import { useAppStore } from '@/stores/app'
 import { useStudiesGeneralStore } from '@/stores/studies-general'
@@ -130,7 +129,6 @@ const props = defineProps({
 })
 
 const { t } = useI18n()
-const router = useRouter()
 const eventBusEmit = inject('eventBusEmit')
 const formRules = inject('formRules')
 const emit = defineEmits(['close', 'updated'])
@@ -211,15 +209,12 @@ function updateProject(value) {
   project.value = value
 }
 
-function addStudy() {
+async function addStudy() {
   const data = JSON.parse(JSON.stringify(form.value))
   data.project_number = project.value.project_number
-  return studiesManageStore.addStudy(data).then((resp) => {
-    eventBusEmit('notification', { msg: t('StudyForm.add_success') })
-    studiesGeneralStore.selectStudy(resp.data)
-    router.push({ name: 'SelectOrAddStudy' })
-    router.go()
-  })
+  const resp = await studiesManageStore.addStudy(data)
+  eventBusEmit('notification', { msg: t('StudyForm.add_success') })
+  await studiesGeneralStore.selectStudy(resp.data, true)
 }
 
 function updateStudy() {

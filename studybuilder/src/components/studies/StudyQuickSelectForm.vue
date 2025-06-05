@@ -41,7 +41,7 @@ async function select() {
   if (!valid) {
     return
   }
-  studiesGeneralStore.selectStudy(selectedStudy.value)
+  await studiesGeneralStore.selectStudy(selectedStudy.value)
   emit('selected')
   close()
 }

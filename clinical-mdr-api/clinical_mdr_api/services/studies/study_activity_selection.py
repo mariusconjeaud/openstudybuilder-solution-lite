@@ -1,7 +1,7 @@
 import dataclasses
 from collections import defaultdict
 from datetime import datetime
-from typing import Callable
+from typing import Callable, Mapping, Sequence
 
 from fastapi import status
 from neomodel import db
@@ -44,14 +44,15 @@ from clinical_mdr_api.models.concepts.activities.activity import (
     ActivityForStudyActivity,
     ActivityHierarchySimpleModel,
 )
-from clinical_mdr_api.models.controlled_terminologies.ct_term_name import CTTermName
 from clinical_mdr_api.models.error import BatchErrorResponse
 from clinical_mdr_api.models.study_selections.study_selection import (
     DetailedSoAHistory,
     StudyActivityReplaceActivityInput,
     StudySelectionActivity,
+    StudySelectionActivityBatchDeleteInput,
     StudySelectionActivityBatchInput,
     StudySelectionActivityBatchOutput,
+    StudySelectionActivityBatchUpdateInput,
     StudySelectionActivityCore,
     StudySelectionActivityCreateInput,
     StudySelectionActivityInput,
@@ -62,7 +63,6 @@ from clinical_mdr_api.models.study_selections.study_selection import (
     UpdateActivityPlaceholderToSponsorActivity,
 )
 from clinical_mdr_api.models.utils import BaseModel, GenericFilteringReturn
-from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.services._meta_repository import MetaRepository
 from clinical_mdr_api.services._utils import (
     ensure_transaction,
@@ -94,6 +94,7 @@ from clinical_mdr_api.services.studies.study_activity_subgroup import (
 )
 from clinical_mdr_api.services.studies.study_soa_footnote import StudySoAFootnoteService
 from clinical_mdr_api.services.studies.study_soa_group import StudySoAGroupService
+from common.auth.user import user
 from common.config import REQUESTED_LIBRARY_NAME
 from common.exceptions import (
     BusinessLogicException,
@@ -126,23 +127,23 @@ class StudyActivitySelectionService(StudyActivitySelectionBaseService):
         self,
         study_uid: str,
         specific_selection: StudySelectionActivityVO,
-        terms_at_specific_datetime: datetime | None,
+        terms_at_specific_datetime: datetime | None = None,
         accepted_version: bool = False,
         study_value_version: str | None = None,
-        soa_groups: list[CTTermName] | None = None,
-        activity_for_study_activities: list[ActivityForStudyActivity] | None = None,
+        activity_versions_by_uid: (
+            Mapping[str, Sequence[ActivityForStudyActivity]] | None
+        ) = None,
     ) -> StudySelectionActivity:
         return StudySelectionActivity.from_study_selection_activity_vo_and_order(
             study_uid=study_uid,
-            specific_selection=specific_selection,
+            study_selection=specific_selection,
             accepted_version=accepted_version,
             get_activity_by_uid_callback=self._transform_latest_activity_model,
             get_activity_by_uid_version_callback=self._transform_activity_model,
             get_ct_term_flowchart_group=self._find_by_uid_or_raise_not_found,
-            study_value_version=study_value_version,
             terms_at_specific_datetime=terms_at_specific_datetime,
-            soa_groups=soa_groups,
-            activity_for_study_activities=activity_for_study_activities,
+            study_value_version=study_value_version,
+            activity_versions_by_uid=activity_versions_by_uid,
         )
 
     def get_default_sorting(
@@ -429,126 +430,33 @@ class StudyActivitySelectionService(StudyActivitySelectionBaseService):
         study_selection: StudySelectionActivityAR,
         study_value_version: str | None = None,
     ) -> list[StudySelectionActivity]:
-        result = []
-        terms_at_specific_datetime = self._extract_study_standards_effective_date(
-            study_uid=study_selection.study_uid,
-            study_value_version=study_value_version,
-        )
-        soa_groups = self._get_objects(
-            study_selection=study_selection,
-            att_name="soa_group_term_uid",
-            terms_at_specific_datetime=terms_at_specific_datetime,
-            include_retired_versions=True,
+        activity_versions_by_uid: dict[str, list[ActivityForStudyActivity]] = (
+            defaultdict(list)
         )
 
-        activities = []
-        activities = self._get_objects(
-            study_selection=study_selection, att_name="activity_uid"
-        )
-
-        activity_subgroups_uids = set()
-        for activity in activities:
-            for activity_grouping in activity.concept_vo.activity_groupings:
-                activity_subgroups_uids.add(activity_grouping.activity_subgroup_uid)
-
-        activity_subgroups = [
-            ActivityHierarchySimpleModel.from_activity_ar_object(
-                activity_ar=activity_subgroup,
-            )
-            for activity_subgroup in (
-                self._repos.activity_subgroup_repository.get_all_optimized(
-                    filter_by={"uid": {"v": activity_subgroups_uids, "op": "eq"}},
-                    filter_operator=FilterOperator.OR,
-                    include_retired_versions=True,
-                )[0]
-                if activity_subgroups_uids
-                else []
-            )
-        ]
-
-        activity_groups_uids = set()
-        for activity in activities:
-            for activity_grouping in activity.concept_vo.activity_groupings:
-                activity_groups_uids.add(activity_grouping.activity_group_uid)
-
-        activity_groups = [
-            ActivityHierarchySimpleModel.from_activity_ar_object(
-                activity_ar=activity_group,
-            )
-            for activity_group in (
-                self._repos.activity_group_repository.get_all_optimized(
-                    filter_by={"uid": {"v": activity_groups_uids, "op": "eq"}},
-                    filter_operator=FilterOperator.OR,
-                    include_retired_versions=True,
-                )[0]
-                if activity_groups_uids
-                else []
-            )
-        ]
-
-        activity_for_study_activities = []
-        for activity in activities:
-            activity_grouping_uids = set()
-            for activity_grouping in activity.concept_vo.activity_groupings:
-                activity_grouping_uids.add(activity_grouping.activity_subgroup_uid)
-                activity_grouping_uids.add(activity_grouping.activity_group_uid)
-            activity_for_study_activities.append(
+        for activity in self._get_linked_activities(
+            study_selection.study_objects_selection
+        ):
+            activity_versions_by_uid[activity.uid].append(
                 ActivityForStudyActivity.from_activity_ar_objects(
                     activity,
-                    activity_subgroup_ars=[
-                        activity_subgroup
-                        for activity_subgroup in activity_subgroups
-                        if activity_subgroup.uid in activity_grouping_uids
-                    ],
-                    activity_group_ars=[
-                        activity_group
-                        for activity_group in activity_groups
-                        if activity_group.uid in activity_grouping_uids
+                    activity_instance_ars=[
+                        ActivityHierarchySimpleModel(**item)
+                        for item in activity.concept_vo.activity_instances
                     ],
                 )
             )
 
-        for _, selection in enumerate(study_selection.study_objects_selection, start=1):
-            result.append(
-                self._transform_from_vo_to_response_model(
-                    study_uid=study_selection.study_uid,
-                    specific_selection=selection,
-                    accepted_version=selection.accepted_version,
-                    study_value_version=study_value_version,
-                    terms_at_specific_datetime=terms_at_specific_datetime,
-                    soa_groups=soa_groups,
-                    activity_for_study_activities=activity_for_study_activities,
-                )
+        return [
+            self._transform_from_vo_to_response_model(
+                study_uid=selection.study_uid,
+                specific_selection=selection,
+                accepted_version=selection.accepted_version,
+                study_value_version=study_value_version,
+                activity_versions_by_uid=activity_versions_by_uid,
             )
-        return result
-
-    def _get_objects(
-        self,
-        study_selection: StudySelectionActivityAR,
-        att_name: str,
-        terms_at_specific_datetime: datetime | None = None,
-        include_retired_versions: bool = True,
-    ) -> CTTermName | ActivityAR | None:
-        if att_name == "activity_uid":
-            version_specific_uids = defaultdict(set)
-            for selection in study_selection.study_objects_selection:
-                version_specific_uids[getattr(selection, att_name)].add(
-                    selection.activity_version
-                )
-                version_specific_uids[getattr(selection, att_name)].add("LATEST")
-            return self._repos.activity_repository.get_all_optimized(
-                version_specific_uids=version_specific_uids,
-            )[0]
-        if att_name == "soa_group_term_uid":
-            return self._find_terms_by_uids(
-                term_uids=[
-                    getattr(selection, att_name)
-                    for selection in study_selection.study_objects_selection
-                ],
-                at_specific_date=terms_at_specific_datetime,
-                include_retired_versions=include_retired_versions,
-            )
-        return None
+            for selection in study_selection.study_objects_selection
+        ]
 
     def _transform_history_to_response_model(
         self,
@@ -1707,7 +1615,8 @@ class StudyActivitySelectionService(StudyActivitySelectionBaseService):
             activity_group_uid=activity_group_uid,
             activity_group_name=activity_group_name,
             show_activity_in_protocol_flowchart=request_object.show_activity_in_protocol_flowchart,
-            author_id=self.author,
+            author_id=user().id(),
+            author_username=user().username,
             activity_library_name=current_object.activity_library_name,
         )
 
@@ -1724,19 +1633,25 @@ class StudyActivitySelectionService(StudyActivitySelectionBaseService):
             result = {}
             item = None
             try:
-                if operation.method == "PATCH":
+                if operation.method == "PATCH" and isinstance(
+                    operation.content, StudySelectionActivityBatchUpdateInput
+                ):
                     item = self.patch_selection(
                         study_uid,
                         operation.content.study_activity_uid,
                         operation.content.content,
                     )
                     response_code = status.HTTP_200_OK
-                elif operation.method == "DELETE":
+                elif operation.method == "DELETE" and isinstance(
+                    operation.content, StudySelectionActivityBatchDeleteInput
+                ):
                     self.delete_selection(
                         study_uid, operation.content.study_activity_uid
                     )
                     response_code = status.HTTP_204_NO_CONTENT
-                elif operation.method == "POST":
+                elif operation.method == "POST" and isinstance(
+                    operation.content, StudySelectionActivityCreateInput
+                ):
                     item = self.make_selection(study_uid, operation.content)
                     response_code = status.HTTP_201_CREATED
                 else:

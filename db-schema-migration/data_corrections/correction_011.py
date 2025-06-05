@@ -5,6 +5,7 @@ import os
 from data_corrections.utils.utils import (
     capture_changes,
     get_db_driver,
+    print_counters_table,
     run_cypher_query,
     save_md_title,
 )
@@ -25,6 +26,7 @@ def main(run_label="correction"):
     remove_empty_strings_or_replace_them_with_not_provided_text(
         DB_DRIVER, LOGGER, run_label
     )
+    migrate_study_selection_metadata_merge(DB_DRIVER, LOGGER, run_label)
 
 
 @capture_changes(
@@ -44,7 +46,7 @@ def correct_study_visit_timing_related_nodes(db_driver, log, run_label):
     ### Nodes and relationships affected
     - `StudyVisit` nodes where timinig related relationships
         (`HAS_STUDY_DAY`, `HAS_STUDY_DURATION_DAYS`, `HAS_STUDY_WEEK`, `HAS_STUDY_DURATION_WEEKS`, `HAS_WEEK_IN_STUDY`) were pointing wrong timing values.
-    - Expected changes: 270 nodes created or updated.
+    - Expected changes: 58 StudyVisits affected, for each StudyVisit updated 5 different timing related relationships.
     """
 
     studies, _ = run_cypher_query(
@@ -454,6 +456,335 @@ def remove_empty_strings_or_replace_them_with_not_provided_text(
         contains_updates.append(counters.contains_updates)
 
     return contains_updates
+
+
+@capture_changes(task_level=1)
+def migrate_study_soa_groups(db_driver, log, study_uid):
+    log.info(
+        "Merging StudySoAGroup nodes for the following Study (%s)",
+        study_uid,
+    )
+    # StudySoAGroup
+    _, summary = run_cypher_query(
+        db_driver,
+        """
+        MATCH (study_root:StudyRoot {uid: $study_uid})-[]->(study_value:StudyValue)
+        WITH DISTINCT study_root, study_value
+        MATCH (study_value)-[:HAS_STUDY_ACTIVITY]->(study_activity:StudyActivity)-[:STUDY_ACTIVITY_HAS_STUDY_SOA_GROUP]->
+            (study_soa_group:StudySoAGroup)-[:HAS_FLOWCHART_GROUP]->(flowchart_group_term_root:CTTermRoot)
+        WHERE NOT (study_soa_group)<-[:BEFORE]-() AND NOT (study_soa_group)<-[]-(:Delete)
+        WITH  
+            flowchart_group_term_root,
+            count(distinct flowchart_group_term_root) AS distinct_flowchart_group_count, 
+            count(distinct study_soa_group) AS distinct_study_soa_group_count, 
+            any(vis IN collect(study_soa_group.show_soa_group_in_protocol_flowchart) WHERE vis=true) AS is_visible,
+            // picking min order as if study_soa_group nodes are duplicated the first order number will describe the real order it should have
+            min(study_soa_group.order) as order_number
+        // condition to not perform migration twice
+        WHERE distinct_flowchart_group_count <> distinct_study_soa_group_count
+
+        // leave only a few rows that will represent distinct CTTermRoots that represent chosen SoA/Flowchart group
+        WITH DISTINCT flowchart_group_term_root, is_visible, order_number
+
+        // CREATE new StudySoAGroup node for each row of a distinct flowchart_group_term_root 
+        CREATE (study_soa_group_new:StudySoAGroup:StudySelection)
+        MERGE (study_soa_group_counter:Counter {counterId:'StudySoAGroupCounter'})
+        ON CREATE SET study_soa_group_counter:StudySoAGroupCounter, study_soa_group_counter.count=1
+        WITH flowchart_group_term_root,study_soa_group_new,study_soa_group_counter, is_visible, order_number
+        CALL apoc.atomic.add(study_soa_group_counter,'count',1,1) yield oldValue, newValue
+        WITH flowchart_group_term_root,study_soa_group_new, toInteger(newValue) as uid_number_study_sog, is_visible, order_number
+        SET study_soa_group_new.uid = "StudySoAGroup_"+apoc.text.lpad(""+(uid_number_study_sog), 6, "0")
+        SET study_soa_group_new.order=order_number
+        WITH flowchart_group_term_root, study_soa_group_new, is_visible
+
+        // MATCH all StudyActivity nodes that had 'old' StudySoAGroups that were using a flowchart_group_term_root
+        MATCH (flowchart_group_term_root)<-[:HAS_FLOWCHART_GROUP]-(study_soa_group_to_reassign)<-[:STUDY_ACTIVITY_HAS_STUDY_SOA_GROUP]-
+            (study_activity:StudyActivity)<-[:HAS_STUDY_ACTIVITY]-(study_value)--(study_root:StudyRoot {uid:$study_uid})
+        WITH *
+        ORDER BY study_activity.order ASC
+        WHERE NOT (study_soa_group_to_reassign)<-[:BEFORE]-() AND NOT (study_soa_group_to_reassign)<-[]-(:Delete)
+
+        // MERGE audit-trail entry for the newly create StudySoAGroup node that will be reused
+        MERGE (study_root)-[:AUDIT_TRAIL]->(:Create:StudyAction {user_initials:$migration_desc, date:datetime()})-[:AFTER]->(study_soa_group_new)
+        MERGE (study_value)-[:HAS_STUDY_SOA_GROUP]->(study_soa_group_new)
+
+        // MERGE StudyActivity node with new StudySoAGroup node that will be reused between different StudyActivities
+        MERGE (study_activity)-[:STUDY_ACTIVITY_HAS_STUDY_SOA_GROUP]->(study_soa_group_new)
+        WITH *
+        CALL apoc.do.case([
+            study_soa_group_new.show_soa_group_in_protocol_flowchart IS NULL,
+            'SET study_soa_group_new.show_soa_group_in_protocol_flowchart = is_visible RETURN *'
+            ],
+            'RETURN *',
+            {
+                study_soa_group_new: study_soa_group_new,
+                study_activity:study_activity,
+                is_visible:is_visible
+            })
+        YIELD value
+
+        // MERGE newly create StudySoAGroup node with distinct flowchart_group_term_root
+        MERGE (study_soa_group_new)-[:HAS_FLOWCHART_GROUP]->(flowchart_group_term_root)
+
+        WITH study_soa_group_new, study_soa_group_to_reassign,
+
+        // Copy StudySoAFootnotes relationships from the old StudySoAGroup nodes
+        apoc.coll.toSet([(study_soa_footnote:StudySoAFootnote)-[ref:REFERENCES_STUDY_SOA_GROUP]->(study_soa_group_to_reassign) | 
+        study_soa_footnote]) as footnotes
+        FOREACH (footnote in footnotes | MERGE (footnote)-[:REFERENCES_STUDY_SOA_GROUP]->(study_soa_group_new))
+        WITH study_soa_group_to_reassign, study_soa_group_new
+        MATCH (study_activity:StudyActivity)-[:STUDY_ACTIVITY_HAS_STUDY_SOA_GROUP]->(study_soa_group_to_reassign)
+        MERGE (study_activity)-[:STUDY_ACTIVITY_HAS_STUDY_SOA_GROUP]->(study_soa_group_new)
+        DETACH DELETE study_soa_group_to_reassign
+        """,
+        params={"study_uid": study_uid, "migration_desc": CORRECTION_DESC},
+    )
+    counters = summary.counters
+    print_counters_table(counters)
+    return counters.contains_updates
+
+
+@capture_changes(task_level=1)
+def migrate_study_activity_groups(db_driver, log, study_uid):
+    log.info(
+        "Merging StudyActivityGroup nodes for the following Study (%s)",
+        study_uid,
+    )
+    # StudyActivityGroup
+    _, summary = run_cypher_query(
+        db_driver,
+        """
+        MATCH (study_root:StudyRoot {uid: $study_uid})-[]->(study_value:StudyValue)
+        WITH DISTINCT study_root, study_value
+        MATCH (study_value)-[:HAS_STUDY_ACTIVITY]->(study_activity:StudyActivity)-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_GROUP]->
+            (study_activity_group:StudyActivityGroup)-[:HAS_SELECTED_ACTIVITY_GROUP]->(:ActivityGroupValue)<-[:HAS_VERSION]-(activity_group_root:ActivityGroupRoot)
+        MATCH (study_activity)-[:STUDY_ACTIVITY_HAS_STUDY_SOA_GROUP]->(study_soa_group:StudySoAGroup)
+        WHERE NOT (study_activity_group)<-[:BEFORE]-() AND NOT (study_activity_group)<-[]-(:Delete)
+
+        WITH DISTINCT
+            activity_group_root,
+            study_soa_group.uid AS study_soa_group_uid,
+            collect(distinct activity_group_root) AS distinct_activity_group_root, 
+            collect(distinct study_activity_group) AS distinct_study_activity_group,
+            any(vis IN collect(study_activity_group.show_activity_group_in_protocol_flowchart) WHERE vis=true) AS is_visible,
+            // picking min order as if study_activity_group nodes are duplicated the first order number will describe the real order it should have
+            min(study_activity_group.order) AS order_number
+        // condition to not perform migration twice
+        WHERE size(distinct_activity_group_root) <> size(distinct_study_activity_group)
+
+        // leave only a few rows that will represent distinct ActivityGroups in a specific StudySoAGroup
+        WITH DISTINCT activity_group_root, study_soa_group_uid, is_visible, order_number
+
+        // CREATE new StudyActivityGroup node for each row of a distinct activity_group_root 
+        CREATE (study_activity_group_new:StudyActivityGroup:StudySelection)
+        MERGE (study_activity_group_counter:Counter {counterId:'StudyActivityGroupCounter'})
+        ON CREATE SET study_activity_group_counter:StudyActivityGroupCounter, study_activity_group_counter.count=1
+        WITH activity_group_root,study_soa_group_uid, study_activity_group_new,study_activity_group_counter, is_visible, order_number
+        CALL apoc.atomic.add(study_activity_group_counter,'count',1,1) yield oldValue, newValue
+        WITH activity_group_root, study_soa_group_uid, study_activity_group_new, toInteger(newValue) as uid_number_study_sag, is_visible, order_number
+        SET study_activity_group_new.uid = "StudyActivityGroup_"+apoc.text.lpad(""+(uid_number_study_sag), 6, "0")
+        SET study_activity_group_new.order=order_number
+        WITH activity_group_root, study_soa_group_uid, study_activity_group_new, is_visible
+
+        // MATCH all StudyActivity nodes that had 'old' StudyActivityGroup inside specific StudySoAGroup that were using a activity_group_root
+        MATCH (activity_group_root)-[:HAS_VERSION]->(:ActivityGroupValue)<-[:HAS_SELECTED_ACTIVITY_GROUP]-(study_activity_group_to_reassign)
+            <-[old_rel:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_GROUP]-(study_activity:StudyActivity)
+            <-[:HAS_STUDY_ACTIVITY]-(study_value)--(study_root:StudyRoot {uid:$study_uid})
+        WITH *
+        ORDER BY study_activity.order ASC
+        MATCH (study_activity)-[:STUDY_ACTIVITY_HAS_STUDY_SOA_GROUP]->(study_soa_group:StudySoAGroup {uid:study_soa_group_uid})
+        WHERE NOT (study_soa_group)-[:BEFORE]-()
+
+        // MERGE audit-trail entry for the newly create StudyActivityGroup node that will be reused
+        MERGE (study_root)-[:AUDIT_TRAIL]->(:Create:StudyAction {user_initials:$migration_desc, date:datetime()})-[:AFTER]->(study_activity_group_new)
+        MERGE (study_value)-[:HAS_STUDY_ACTIVITY_GROUP]->(study_activity_group_new)
+
+        // MERGE StudyActivity node with new StudyActivityGroup node that will be reused between different StudyActivities inside same StudySoAGroup
+        MERGE (study_activity)-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_GROUP]->(study_activity_group_new)
+        WITH *
+        CALL apoc.do.case([
+            study_activity_group_new.show_activity_group_in_protocol_flowchart IS NULL,
+            'SET study_activity_group_new.show_activity_group_in_protocol_flowchart = is_visible RETURN *'
+            ],
+            'RETURN *',
+            {
+                study_activity_group_new: study_activity_group_new,
+                study_activity:study_activity,
+                is_visible:is_visible
+            })
+        YIELD value
+
+        // MERGE newly create StudyActivityGroup node with distinct activity_group_value
+        MATCH (activity_group_root)-[:LATEST]->(latest_activity_group_value:ActivityGroupValue)
+        MERGE (study_activity_group_new)-[:HAS_SELECTED_ACTIVITY_GROUP]->(latest_activity_group_value)
+
+        WITH study_activity_group_new, study_activity_group_to_reassign, study_activity, old_rel,
+
+        // Copy StudySoAFootnotes relationships from the old StudyActivityGroup nodes
+        apoc.coll.toSet([(study_soa_footnote:StudySoAFootnote)-[ref:REFERENCES_STUDY_ACTIVITY_GROUP]->(study_activity_group_to_reassign) | 
+        study_soa_footnote]) as footnotes
+        FOREACH (footnote in footnotes | MERGE (footnote)-[:REFERENCES_STUDY_ACTIVITY_GROUP]->(study_activity_group_new))
+        WITH study_activity_group_to_reassign, study_activity_group_new, study_activity, old_rel
+        MERGE (study_activity)-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_GROUP]->(study_activity_group_new)
+        DETACH DELETE old_rel
+        """,
+        params={"study_uid": study_uid, "migration_desc": CORRECTION_DESC},
+    )
+    counters = summary.counters
+    print_counters_table(counters)
+    return counters.contains_updates
+
+
+@capture_changes(task_level=1)
+def migrate_study_activity_subgroups(db_driver, log, study_uid):
+    log.info(
+        "Merging StudyActivitySubGroup nodes for the following Study (%s)",
+        study_uid,
+    )
+    # StudyActivitySubGroup
+    _, summary = run_cypher_query(
+        db_driver,
+        """
+        MATCH (study_root:StudyRoot {uid: $study_uid})-[]->(study_value:StudyValue)
+        WITH DISTINCT study_root, study_value
+        MATCH (study_value)-[:HAS_STUDY_ACTIVITY]->(study_activity:StudyActivity)-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_SUBGROUP]->
+            (study_activity_subgroup:StudyActivitySubGroup)-[:HAS_SELECTED_ACTIVITY_SUBGROUP]->(:ActivitySubGroupValue)<-[:HAS_VERSION]-(activity_subgroup_root:ActivitySubGroupRoot)
+        MATCH (study_activity_group:StudyActivityGroup)<-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_GROUP]-(study_activity)
+            -[:STUDY_ACTIVITY_HAS_STUDY_SOA_GROUP]->(study_soa_group:StudySoAGroup)
+        WHERE NOT (study_activity_subgroup)<-[:BEFORE]-() AND NOT (study_activity_subgroup)<-[]-(:Delete)
+
+        WITH DISTINCT
+            activity_subgroup_root,
+            study_activity_group.uid AS study_activity_group_uid,
+            study_soa_group.uid AS study_soa_group_uid,
+            collect(distinct activity_subgroup_root) AS distinct_activity_subgroup_root, 
+            collect(distinct study_activity_subgroup) AS distinct_study_activity_subgroup,
+            any(vis IN collect(study_activity_subgroup.show_activity_subgroup_in_protocol_flowchart) WHERE vis=true) AS is_visible,
+            // picking min order as if study_activity_subgroup nodes are duplicated the first order number will describe the real order it should have
+            min(study_activity_subgroup.order) AS order_number
+        // condition to not perform migration twice
+        WHERE size(distinct_activity_subgroup_root) <> size(distinct_study_activity_subgroup)
+        // leave only a few rows that will represent distinct ActivitySubGroups in a specific StudySoAGroup and StudyActivityGroup
+        WITH DISTINCT activity_subgroup_root, study_soa_group_uid, study_activity_group_uid, is_visible, order_number
+
+        // CREATE new StudyActivitySubGroup node for each row of a distinct activity_subgroup_root 
+        CREATE (study_activity_subgroup_new:StudyActivitySubGroup:StudySelection)
+        MERGE (study_activity_subgroup_counter:Counter {counterId:'StudyActivitySubGroupCounter'})
+        ON CREATE SET study_activity_subgroup_counter:StudyActivitySubGroupCounter, study_activity_subgroup_counter.count=1
+        WITH activity_subgroup_root, study_soa_group_uid, study_activity_group_uid, study_activity_subgroup_new,study_activity_subgroup_counter, is_visible, order_number
+        CALL apoc.atomic.add(study_activity_subgroup_counter,'count',1,1) yield oldValue, newValue
+        WITH activity_subgroup_root, study_soa_group_uid, study_activity_group_uid, study_activity_subgroup_new, toInteger(newValue) as uid_number_study_sasg, is_visible, order_number
+        SET study_activity_subgroup_new.uid = "StudyActivitySubGroup_"+apoc.text.lpad(""+(uid_number_study_sasg), 6, "0")
+        SET study_activity_subgroup_new.order=order_number
+        WITH activity_subgroup_root, study_soa_group_uid, study_activity_group_uid, study_activity_subgroup_new, is_visible
+
+        // MATCH all StudyActivity nodes that had 'old' StudyActivitySubGroup inside specific StudySoAGroup and StudyActivityGroup
+        MATCH (activity_subgroup_root)-[:HAS_VERSION]->(:ActivitySubGroupValue)<-[:HAS_SELECTED_ACTIVITY_SUBGROUP]-(study_activity_subgroup_to_reassign)
+            <-[old_rel:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_SUBGROUP]-(study_activity:StudyActivity)
+            <-[:HAS_STUDY_ACTIVITY]-(study_value)--(study_root:StudyRoot {uid:$study_uid})
+        WITH *
+        ORDER BY study_activity.order ASC
+        MATCH (study_activity_group:StudyActivityGroup {uid:study_activity_group_uid})<-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_GROUP]-(study_activity)
+            -[:STUDY_ACTIVITY_HAS_STUDY_SOA_GROUP]->(study_soa_group:StudySoAGroup {uid:study_soa_group_uid})
+        WHERE NOT (study_activity_group)-[:BEFORE]-() AND NOT (study_soa_group)-[:BEFORE]-()
+
+        // MERGE audit-trail entry for the newly create StudyActivitySubGroup node that will be reused
+        MERGE (study_root)-[:AUDIT_TRAIL]->(:Create:StudyAction {user_initials:$migration_desc, date:datetime()})-[:AFTER]->(study_activity_subgroup_new)
+        MERGE (study_value)-[:HAS_STUDY_ACTIVITY_SUBGROUP]->(study_activity_subgroup_new)
+
+        // MERGE StudyActivity node with new StudyActivitySubGroup node that will be reused between different StudyActivities inside same StudySoAGroup and StudyActivityGroup
+        MERGE (study_activity)-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_SUBGROUP]->(study_activity_subgroup_new)
+        WITH *
+        CALL apoc.do.case([
+            study_activity_subgroup_new.show_activity_subgroup_in_protocol_flowchart IS NULL,
+            'SET study_activity_subgroup_new.show_activity_subgroup_in_protocol_flowchart = is_visible RETURN *'
+            ],
+            'RETURN *',
+            {
+                study_activity_subgroup_new: study_activity_subgroup_new,
+                study_activity:study_activity,
+                is_visible:is_visible
+            })
+        YIELD value
+
+        // MERGE newly create StudyActivitySubGroup node with distinct activity_subgroup_value
+        MATCH (activity_subgroup_root)-[:LATEST]->(latest_activity_subgroup_value:ActivitySubGroupValue)
+        MERGE (study_activity_subgroup_new)-[:HAS_SELECTED_ACTIVITY_SUBGROUP]->(latest_activity_subgroup_value)
+
+        WITH study_activity_subgroup_new, study_activity_subgroup_to_reassign, study_activity, old_rel,
+        // Copy StudySoAFootnotes relationships from the old StudyActivitySubGroup nodes
+        apoc.coll.toSet([(study_soa_footnote:StudySoAFootnote)-[ref:REFERENCES_STUDY_ACTIVITY_SUBGROUP]->(study_activity_subgroup_to_reassign) | 
+        study_soa_footnote]) as footnotes
+        FOREACH (footnote in footnotes | MERGE (footnote)-[:REFERENCES_STUDY_ACTIVITY_SUBGROUP]->(study_activity_subgroup_new))
+        WITH study_activity_subgroup_to_reassign, study_activity_subgroup_new, study_activity, old_rel
+        MERGE (study_activity)-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_SUBGROUP]->(study_activity_subgroup_new)
+        DETACH DELETE old_rel
+        """,
+        params={"study_uid": study_uid, "migration_desc": CORRECTION_DESC},
+    )
+    counters = summary.counters
+    print_counters_table(counters)
+    return counters.contains_updates
+
+
+@capture_changes(
+    verify_func=correction_verification_011.test_migrate_study_selection_metadata_merge
+)
+def migrate_study_selection_metadata_merge(db_driver, log, run_label):
+    """
+    ### Problem description
+    Some StudySoAGroup/StudyActivityGroups or StudyActivitySubGroups can be duplicated in a single Study.
+    This means that there exists duplicated StudySoAGroup/StudyActivityGroups or StudyActivitySubGroups in scope of the same parent.
+
+    ### Change description
+    - If some StudySoAGroup/StudyActivityGroups or StudyActivitySubGroups is duplicated, it should be merged.
+    The visitbility flag is set to true if any of the duplicated nodes had it initialized to true.
+    This is how API algorithm currently works so it ensures the visibility remains the same in the Protocol SoA.
+
+    ### Nodes and relationships affected
+    - Nodes with the following labels and properties will have the property removed if its value is an empty string:
+        - StudySoAGroup
+        - StudyActivityGroup
+        - StudyActivitySubGroup
+        - StudyActivity
+        - STUDY_ACTIVITY_HAS_STUDY_SOA_GROUP
+        - STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_GROUP
+        - STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_SUBGROUP
+        - HAS_STUDY_SOA_GROUP
+        - HAS_STUDY_ACTIVITY_GROUP
+        - HAS_STUDY_ACTIVITY_SUBGROUP
+    """
+
+    desc = "Merge duplicated StudySoAGroup/StudyActivityGroup or StudyActivitySubGroup"
+    log.info(f"Run: {run_label}, {desc}")
+
+    studies, _ = run_cypher_query(
+        db_driver,
+        """
+        MATCH (study_root:StudyRoot)-[:LATEST]->(study_value:StudyValue)
+        WHERE NOT (study_root)-[:LATEST_LOCKED]->(study_value)
+        RETURN study_root.uid
+        """,
+    )
+    contains_updates = []
+    for study in studies:
+        study_uid = study[0]
+        study_activity_soa_group_changes = migrate_study_soa_groups(
+            db_driver, log, study_uid
+        )
+        contains_updates.append(study_activity_soa_group_changes)
+
+        study_activity_group_changes = migrate_study_activity_groups(
+            db_driver, log, study_uid
+        )
+        contains_updates.append(study_activity_group_changes)
+
+        study_activity_subgroup_changes = migrate_study_activity_subgroups(
+            db_driver, log, study_uid
+        )
+        contains_updates.append(study_activity_subgroup_changes)
+
+    return any(contains_updates)
 
 
 if __name__ == "__main__":

@@ -1,3 +1,35 @@
+const ctTermsTimeReferenceUrl = '/ct/terms?page_size=100&sort_by={"name.sponsor_preferred_name":true}&codelist_name=Time+Point+Reference'
+const studiesInfoUrl = '/studies?include_sections=study_description&sort_by[current_metadata.identification_metadata.study_id]=true&page_size=0'
+const studyMetadataUrl = (study_uid) => `studies/${study_uid}/study-visits?page_number=1&page_size=10&total_count=true`
+const studyVisitUrl = (study_uid, studyVisit_uid) => `/studies/${study_uid}/study-visits/${studyVisit_uid}`
+
+Cypress.Commands.add('getStudyUid', (study_number) => {
+  cy.sendGetRequest(studiesInfoUrl).then((response) => {
+            return response.body.items
+                .find(study => study.current_metadata.identification_metadata.study_number == study_number)
+                .uid
+  })
+})
+
+Cypress.Commands.add('getGlobalAnchorUid', () => {
+  cy.sendGetRequest(ctTermsTimeReferenceUrl).then((response) => {
+            return response.body.items
+                .find(term => term.name.sponsor_preferred_name == 'Global anchor visit')
+                .term_uid
+  })
+})
+
+Cypress.Commands.add('getStudyVisits', (study_uid) => {
+  cy.sendGetRequest(studyMetadataUrl(study_uid)).then((response) => {
+    let uid_array = []
+    response.body.items.forEach(item => uid_array.push(item.uid))
+    return uid_array
+  })
+})
+
+Cypress.Commands.add('deleteStudyVisitByUid', (study_uid, studyVisit_uid) => {
+  cy.sendDeleteRequest(studyVisitUrl(study_uid, studyVisit_uid))
+})
 
 Cypress.Commands.add('nullRegistryIdentifiersForStudy', () => {
   cy.request({

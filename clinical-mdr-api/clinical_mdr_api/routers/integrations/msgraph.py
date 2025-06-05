@@ -21,7 +21,6 @@ router = APIRouter()
     description="Lists all users whose name, initials or email match the optional `search` parameter (regex)"
     " and who are members of relevant AD groups.",
     status_code=200,
-    response_model=list[msgraph_model.GraphUser],
     response_model_by_alias=False,
     response_model_exclude_none=True,
     responses={
@@ -33,8 +32,8 @@ async def get_users(
         str | None,
         StringConstraints(strip_whitespace=True, min_length=2, max_length=255),
         Query(title="Filter users by name or initials"),
-    ] = None
-):
+    ] = None,
+) -> list[msgraph_model.GraphUser]:
     if msgraph.service:
         return await msgraph.service.search_all_group_direct_member_users(search)
     return []

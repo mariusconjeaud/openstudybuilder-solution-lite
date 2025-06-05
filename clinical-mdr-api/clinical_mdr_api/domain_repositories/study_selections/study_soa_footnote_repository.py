@@ -50,51 +50,63 @@ class StudySoAFootnoteRepository:
     def with_query(self):
         return """
             WITH DISTINCT sr, sf, sa,
-            [(sf)-[:REFERENCES_STUDY_ACTIVITY]->(study_activity:StudyActivity)<-[:HAS_STUDY_ACTIVITY]-(sv) | 
+            [(sf)-[:REFERENCES_STUDY_ACTIVITY]->(study_activity:StudyActivity)<-[:HAS_STUDY_ACTIVITY]-(sv)
+                WHERE NOT (study_activity)-[:BEFORE]-() | 
                 {
                     uid:study_activity.uid, 
-                    name:head([(study_activity)-[:HAS_SELECTED_ACTIVITY]->(activity_value:ActivityValue) | activity_value.name])
+                    name:head([(study_activity)-[:HAS_SELECTED_ACTIVITY]->(activity_value:ActivityValue) | activity_value.name]),
+                    visible_in_protocol_soa: study_activity.show_activity_in_protocol_flowchart
                 }] AS referenced_study_activities,
             [(sf)-[:REFERENCES_STUDY_ACTIVITY_SUBGROUP]->(study_activity_subgroup:StudyActivitySubGroup)
-                <-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_SUBGROUP]-(:StudyActivity)<-[:HAS_STUDY_ACTIVITY]-(sv) | 
+                <-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_SUBGROUP]-(:StudyActivity)<-[:HAS_STUDY_ACTIVITY]-(sv) 
+                WHERE NOT (study_activity_subgroup)-[:BEFORE]-() | 
                 {
                     uid:study_activity_subgroup.uid, 
-                    name:head([(study_activity_subgroup)-[:HAS_SELECTED_ACTIVITY_SUBGROUP]->(activity_subgroup_value:ActivitySubGroupValue) | activity_subgroup_value.name])
+                    name:head([(study_activity_subgroup)-[:HAS_SELECTED_ACTIVITY_SUBGROUP]->(activity_subgroup_value:ActivitySubGroupValue) | activity_subgroup_value.name]),
+                    visible_in_protocol_soa: study_activity_subgroup.show_activity_subgroup_in_protocol_flowchart
                 }] AS referenced_study_activity_subgroups,
             [(sf)-[:REFERENCES_STUDY_ACTIVITY_GROUP]->(study_activity_group:StudyActivityGroup)
-                <-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_GROUP]-(:StudyActivity)<-[:HAS_STUDY_ACTIVITY]-(sv) | 
+                <-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_GROUP]-(:StudyActivity)<-[:HAS_STUDY_ACTIVITY]-(sv)
+                WHERE NOT (study_activity_group)-[:BEFORE]-() | 
                 {
                     uid:study_activity_group.uid, 
-                    name:head([(study_activity_group)-[:HAS_SELECTED_ACTIVITY_GROUP]->(activity_group_value:ActivityGroupValue) | activity_group_value.name])
+                    name:head([(study_activity_group)-[:HAS_SELECTED_ACTIVITY_GROUP]->(activity_group_value:ActivityGroupValue) | activity_group_value.name]),
+                    visible_in_protocol_soa: study_activity_group.show_activity_group_in_protocol_flowchart
                 }] AS referenced_study_activity_groups,
-            [(sf)-[:REFERENCES_STUDY_SOA_GROUP]->(study_soa_group:StudySoAGroup)<-[:STUDY_ACTIVITY_HAS_STUDY_SOA_GROUP]-(:StudyActivity)<-[:HAS_STUDY_ACTIVITY]-(sv) |
+            [(sf)-[:REFERENCES_STUDY_SOA_GROUP]->(study_soa_group:StudySoAGroup)<-[:STUDY_ACTIVITY_HAS_STUDY_SOA_GROUP]-(:StudyActivity)<-[:HAS_STUDY_ACTIVITY]-(sv)
+                WHERE NOT (study_soa_group)-[:BEFORE]-() |
                 {
                     uid:study_soa_group.uid, 
                     name:head([(study_soa_group)-[:HAS_FLOWCHART_GROUP]->(:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-
-                        [:LATEST]->(term_name_value:CTTermNameValue) | term_name_value.name])
+                        [:LATEST]->(term_name_value:CTTermNameValue) | term_name_value.name]),
+                    visible_in_protocol_soa: study_soa_group.show_soa_group_in_protocol_flowchart
                 }] AS referenced_study_soa_groups,
             [(sf)-[:REFERENCES_STUDY_EPOCH]->(study_epoch:StudyEpoch)<-[:HAS_STUDY_EPOCH]-(sv) | 
                 {
                     uid:study_epoch.uid, 
-                    name:head([(study_epoch)-[:HAS_EPOCH]-(:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(term_value:CTTermNameValue) | term_value.name])
+                    name:head([(study_epoch)-[:HAS_EPOCH]-(:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(term_value:CTTermNameValue) | term_value.name]),
+                    visible_in_protocol_soa: true
                 }] AS referenced_study_epochs,
             [(sf)-[:REFERENCES_STUDY_VISIT]->(study_visit:StudyVisit)<-[:HAS_STUDY_VISIT]-(sv) | 
                 {
                     uid:study_visit.uid, 
-                    name:study_visit.short_visit_label
+                    name:study_visit.short_visit_label,
+                    visible_in_protocol_soa: study_visit.show_visit
                 }] AS referenced_study_visits,
-            [(sf)-[:REFERENCES_STUDY_ACTIVITY_SCHEDULE]->(study_activity_schedule:StudyActivitySchedule)<-[:HAS_STUDY_ACTIVITY_SCHEDULE]-(sv) | 
+            [(sf)-[:REFERENCES_STUDY_ACTIVITY_SCHEDULE]->(study_activity_schedule:StudyActivitySchedule)<-[:HAS_STUDY_ACTIVITY_SCHEDULE]-(sv)
+              -[:HAS_STUDY_VISIT]->(study_visit:StudyVisit)-[:STUDY_VISIT_HAS_SCHEDULE]->(study_activity_schedule)
+              <-[:STUDY_ACTIVITY_HAS_SCHEDULE]-(study_activity:StudyActivity)-[:HAS_SELECTED_ACTIVITY]->(activity_value:ActivityValue)
+              WHERE (sv)-[:HAS_STUDY_ACTIVITY]->(study_activity) | 
                 {
                     uid:study_activity_schedule.uid, 
-                    name:head([(activity_value:ActivityValue)<-[:HAS_SELECTED_ACTIVITY]-(:StudyActivity)-[STUDY_ACTIVITY_HAS_SCHEDULE]->
-                        (study_activity_schedule)<-[:STUDY_VISIT_HAS_SCHEDULE]-(study_visit:StudyVisit)<-[:HAS_STUDY_VISIT]-(sv) 
-                        | activity_value.name + ' ' + study_visit.short_visit_label])
+                    name: activity_value.name + ' ' + study_visit.short_visit_label,
+                    visible_in_protocol_soa: study_activity.show_activity_in_protocol_flowchart AND study_visit.show_visit
                 }] AS referenced_study_activity_schedules,
             head([(sf)<-[:BEFORE]-(before_action:StudyAction) | before_action.date]) AS end_date
             CALL {
                 WITH sf
                 OPTIONAL MATCH (sf)-[:HAS_SELECTED_FOOTNOTE]->(:FootnoteValue)<-[ver:HAS_VERSION]-(fr:FootnoteRoot)
-                WHERE ver.status = "Final"
+                WHERE ver.status = 'Final'
                 RETURN {uid:fr.uid, version: ver.version} as footnote
                 ORDER BY ver.start_date DESC
                 LIMIT 1
@@ -102,7 +114,7 @@ class StudySoAFootnoteRepository:
             CALL{
                 WITH sf
                 OPTIONAL MATCH (sf)-[:HAS_SELECTED_FOOTNOTE_TEMPLATE]->(:FootnoteTemplateValue)<-[ver:HAS_VERSION]-(ftv:FootnoteTemplateRoot)
-                WHERE ver.status = "Final"
+                WHERE ver.status = 'Final'
                 RETURN {uid:ftv.uid, version: ver.version} as footnote_template
                 ORDER BY ver.start_date DESC
                 LIMIT 1
@@ -127,7 +139,8 @@ class StudySoAFootnoteRepository:
                 apoc.coll.toSet(referenced_study_soa_groups) AS referenced_study_soa_groups,
                 apoc.coll.toSet(referenced_study_epochs) AS referenced_study_epochs,
                 apoc.coll.toSet(referenced_study_visits) AS referenced_study_visits,
-                apoc.coll.toSet(referenced_study_activity_schedules) AS referenced_study_activity_schedules
+                apoc.coll.toSet(referenced_study_activity_schedules) AS referenced_study_activity_schedules,
+                coalesce(head([(user:User)-[*0]-() WHERE user.user_id=sa.author_id | user.username]), sa.author_id) AS author_username
             """
 
     def order_by_footnote_number(self):
@@ -138,75 +151,84 @@ class StudySoAFootnoteRepository:
 
     def get_referenced_items_from_selection(self, selection: dict):
         referenced_items = []
-        selected_study_activities = selection.get("referenced_study_activities")
-        for activity in selected_study_activities:
+
+        for activity in selection.get("referenced_study_activities", []):
             referenced_items.append(
                 ReferencedItemVO(
                     item_uid=activity.get("uid"),
                     item_type=SoAItemType.STUDY_ACTIVITY,
                     item_name=activity.get("name"),
+                    visible_in_protocol_soa=activity.get("visible_in_protocol_soa"),
                 )
             )
-        selected_study_activity_subgroups = selection.get(
-            "referenced_study_activity_subgroups"
-        )
-        for activity_subgroup in selected_study_activity_subgroups:
+
+        for activity_subgroup in selection.get(
+            "referenced_study_activity_subgroups", []
+        ):
             referenced_items.append(
                 ReferencedItemVO(
                     item_uid=activity_subgroup.get("uid"),
                     item_type=SoAItemType.STUDY_ACTIVITY_SUBGROUP,
                     item_name=activity_subgroup.get("name"),
+                    visible_in_protocol_soa=activity_subgroup.get(
+                        "visible_in_protocol_soa"
+                    ),
                 )
             )
-        selected_study_activity_groups = selection.get(
-            "referenced_study_activity_groups"
-        )
-        for activity_group in selected_study_activity_groups:
+
+        for activity_group in selection.get("referenced_study_activity_groups", []):
             referenced_items.append(
                 ReferencedItemVO(
                     item_uid=activity_group.get("uid"),
                     item_type=SoAItemType.STUDY_ACTIVITY_GROUP,
                     item_name=activity_group.get("name"),
+                    visible_in_protocol_soa=activity_group.get(
+                        "visible_in_protocol_soa"
+                    ),
                 )
             )
-        selected_study_soa_groups = selection.get("referenced_study_soa_groups")
-        for soa_group in selected_study_soa_groups:
+
+        for soa_group in selection.get("referenced_study_soa_groups", []):
             referenced_items.append(
                 ReferencedItemVO(
                     item_uid=soa_group.get("uid"),
                     item_type=SoAItemType.STUDY_SOA_GROUP,
                     item_name=soa_group.get("name"),
+                    visible_in_protocol_soa=soa_group.get("visible_in_protocol_soa"),
                 )
             )
-        selected_study_epochs = selection.get("referenced_study_epochs")
-        for study_epoch in selected_study_epochs:
+
+        for study_epoch in selection.get("referenced_study_epochs", []):
             referenced_items.append(
                 ReferencedItemVO(
                     item_uid=study_epoch.get("uid"),
                     item_type=SoAItemType.STUDY_EPOCH,
                     item_name=study_epoch.get("name"),
+                    visible_in_protocol_soa=study_epoch.get("visible_in_protocol_soa"),
                 )
             )
-        selected_study_visits = selection.get("referenced_study_visits")
-        for study_visit in selected_study_visits:
+
+        for study_visit in selection.get("referenced_study_visits", []):
             referenced_items.append(
                 ReferencedItemVO(
                     item_uid=study_visit.get("uid"),
                     item_type=SoAItemType.STUDY_VISIT,
                     item_name=study_visit.get("name"),
+                    visible_in_protocol_soa=study_visit.get("visible_in_protocol_soa"),
                 )
             )
-        selected_study_activity_schedules = selection.get(
-            "referenced_study_activity_schedules"
-        )
-        for sas in selected_study_activity_schedules:
+
+        for sas in selection.get("referenced_study_activity_schedules", []):
             referenced_items.append(
                 ReferencedItemVO(
                     item_uid=sas.get("uid"),
                     item_type=SoAItemType.STUDY_ACTIVITY_SCHEDULE,
                     item_name=sas.get("name"),
+                    visible_in_protocol_soa=sas.get("visible_in_protocol_soa"),
                 )
             )
+
+        referenced_items.sort(key=lambda ref_item: ref_item.item_name)
         return referenced_items
 
     def create_vo_from_db_output(self, selection: dict) -> StudySoAFootnoteVO:
@@ -225,6 +247,7 @@ class StudySoAFootnoteRepository:
             author_id=selection.get("author_id"),
             status=StudyStatus(selection.get("status")),
             accepted_version=selection.get("accepted_version"),
+            author_username=selection.get("author_username"),
         )
         return selection_vo
 
@@ -255,6 +278,7 @@ class StudySoAFootnoteRepository:
             author_id=selection.get("author_id"),
             status=StudyStatus(selection.get("status")),
             accepted_version=selection.get("accepted_version"),
+            author_username=selection.get("author_username"),
         )
         return selection_vo
 
@@ -532,7 +556,7 @@ class StudySoAFootnoteRepository:
             # disconnect old StudyValue node to only keep StudyValue connection to the Latest value of StudySoAFootnote
             previous_item.study_value.disconnect(study_value)
 
-    def get_all_versions_for_specific_visit(
+    def get_all_versions_for_specific_footnote(
         self, uid: str, study_uid: str
     ) -> list[StudySoAFootnoteVOHistory]:
         query_parameters = {}

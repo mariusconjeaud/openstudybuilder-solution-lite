@@ -26,6 +26,7 @@
       <v-stepper
         v-model="currentStep"
         bg-color="white"
+        alt-labels
         :items="stepTitles"
         :non-linear="editable"
         :editable="editable"

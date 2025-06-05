@@ -3,6 +3,12 @@ const { Given, When, Then } = require("@badeball/cypress-cucumber-preprocessor")
 
 let activity_placeholder_name, activity_library, activity_soa_group, activity_group, activity_sub_group, activity_activity
 
+When('Activity placeholder is found', () => cy.searchAndCheckPresence(activity_placeholder_name, true))
+
+Given('Study Activity is found', () => cy.searchAndCheckPresence(apiActivityName, true))
+
+Then('The Study Activity Placeholder is no longer available', () => cy.searchAndCheckPresence(activity_placeholder_name, false))
+
 Given('Study activities for Study_000001 are loaded', () => {
     cy.intercept('/api/studies/Study_000001/study-activities?*').as('getData')
     cy.wait('@getData', {timeout: 30000})
@@ -11,8 +17,6 @@ Given('Study activities for Study_000001 are loaded', () => {
 Given('The activity exists in the library', () => {
     cy.log('Handled by import script')
 })
-
-Given('Study Activity is found', () => cy.searchFor(apiActivityName))
 
 When('The Study Activity is added from an existing study by study id', () => {
     createActivity('id', '999-3000')
@@ -58,8 +62,7 @@ Then('The Study Activity copied from existing study is visible within the Study 
 Then('The Activity in Draft status is not found', () => cy.contains('.v-sheet table tbody tr', 'No data available'))
 
 Then('The new Study Activity added from Library is visible in table', () => {  
-    cy.searchFor(activity_activity)
-    cy.tableContains(activity_activity)
+    cy.searchAndCheckPresence(activity_activity, true)
 })
 
 When('The Study Activity is added as a placeholder for new activity request', () => {
@@ -82,26 +85,11 @@ Then('The Study Activity placeholder is visible within the Study Activities tabl
     cy.tableContains('INFORMED CONSENT')
     cy.tableContains('General')
     cy.tableContains(activity_placeholder_name)
-    cy.rowActionsByValue('INFORMED CONSENT', 'Remove Activity')
 })
-
-When('Study Activity edition is initiated', () => {
-    cy.reload()
-    cy.rowActionsByValue('INFORMED CONSENT', 'Edit')
-})
-
-When('Study Activity Placeholder edition is initiated', () => cy.rowActionsByValue(activity_placeholder_name, 'Edit'))
 
 Then('The edited Study Activity data is reflected within the Study Activity table', () => {
     cy.tableContains('EFFICACY')
 })
-
-When('The Study Activity Placeholder is deleted', () => {
-    cy.rowActionsByValue(activity_placeholder_name, 'Remove Activity')
-    cy.clickButton('continue-popup')
-})
-
-Then('The Study Activity Placeholder is no longer available', () => cy.tableNotContains(activity_placeholder_name))
 
 When('The Study Activity select from study form is opened on second step', () => {
     cy.clickButton('add-study-activity', true)
@@ -209,7 +197,7 @@ function selectActivityAndGetItsData(activity_soa_group = null) {
     cy.get('.v-data-table__td--select-row input').each((el, index) => {
         if (el.is(':enabled')) {
             cy.wrap(el).check()
-            if(activity_soa_group) {
+            if (activity_soa_group) {
                 cy.get('[data-cy="flowchart-group"]').eq(index).click()
                 cy.contains('.v-overlay .v-list-item-title', activity_soa_group).click({force: true})
             }

@@ -24,7 +24,6 @@ service = NotificationService()
     "",
     dependencies=[rbac.ADMIN_READ],
     summary="Returns all notifications.",
-    response_model=list[Notification],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -39,7 +38,6 @@ def get_all_notifications() -> list[Notification]:
     "/{serial_number}",
     dependencies=[rbac.ADMIN_READ],
     summary="Returns the notification identified by the provided Serial Number.",
-    response_model=Notification,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -55,7 +53,6 @@ def get_notification(serial_number: Annotated[int, SN]) -> Notification:
     "",
     dependencies=[rbac.ADMIN_WRITE],
     summary="Creates a notification.",
-    response_model=Notification,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -72,7 +69,6 @@ def create_notification(
     "/{serial_number}",
     dependencies=[rbac.ADMIN_WRITE],
     summary="Updates the notification identified by the provided Serial Number.",
-    response_model=Notification,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,

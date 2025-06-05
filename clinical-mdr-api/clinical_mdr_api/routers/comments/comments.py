@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Body, Path, Query, Response, status
+from fastapi import APIRouter, Body, Path, Query
 
 from clinical_mdr_api.domains.comments.comments import CommentThreadStatus
 from clinical_mdr_api.models.comments.comments import (
@@ -30,7 +30,6 @@ Service = CommentsService
     "/comment-topics",
     dependencies=[rbac.ANY],
     summary="Returns all comment topics",
-    response_model=CustomPage[CommentTopic],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -79,7 +78,6 @@ def get_comment_topics(
     "/comment-threads",
     dependencies=[rbac.ANY],
     summary="Returns all comment threads",
-    response_model=CustomPage[CommentThread],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -135,7 +133,6 @@ def get_comment_threads(
     "/comment-threads/{comment_thread_uid}",
     dependencies=[rbac.ANY],
     summary="Returns the comment thread identified by the specified 'comment_thread_uid'.",
-    response_model=CommentThread,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -152,7 +149,6 @@ def get_comment_thread(
     "/comment-threads",
     dependencies=[rbac.ANY],
     summary="Creates a new comment thread",
-    response_model=CommentThread,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -172,7 +168,6 @@ def create_comment_thread(
     "/comment-threads/{comment_thread_uid}",
     dependencies=[rbac.ANY],
     summary="Edits a comment thread's 'text' and/or 'status' properties",
-    response_model=CommentThread,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -194,25 +189,20 @@ def edit_comment_thread(
     "/comment-threads/{comment_thread_uid}",
     dependencies=[rbac.ANY],
     summary="Deletes the comment thread identified by 'comment_thread_uid'.",
-    response_model=None,
     status_code=204,
     responses={
         403: _generic_descriptions.ERROR_403,
         204: {"description": "No Content - The item was successfully deleted."},
     },
 )
-def delete_comment_thread(
-    comment_thread_uid: Annotated[str, CommentThreadUID]
-) -> Response:
+def delete_comment_thread(comment_thread_uid: Annotated[str, CommentThreadUID]):
     Service().delete_comment_thread(comment_thread_uid)
-    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.post(
     "/comment-threads/{comment_thread_uid}/replies",
     dependencies=[rbac.ANY],
     summary="Creates a reply to a comment thread",
-    response_model=CommentReply,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -233,7 +223,6 @@ def create_comment_reply(
     "/comment-threads/{comment_thread_uid}/replies",
     dependencies=[rbac.ANY],
     summary="Returns all replies to the specified comment thread",
-    response_model=list[CommentReply],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -250,7 +239,6 @@ def get_comment_thread_replies(
     "/comment-threads/{comment_thread_uid}/replies/{reply_uid}",
     dependencies=[rbac.ANY],
     summary="Returns the comment thread reply identified by the specified 'reply_uid'.",
-    response_model=CommentReply,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -261,7 +249,7 @@ def get_comment_thread_replies(
 def get_comment_thread_reply(
     comment_thread_uid: Annotated[str, CommentThreadUID],
     reply_uid: Annotated[str, CommentReplyUID],
-) -> CommentThread:
+) -> CommentReply:
     return Service().get_comment_thread_reply(reply_uid)
 
 
@@ -269,7 +257,6 @@ def get_comment_thread_reply(
     "/comment-threads/{comment_thread_uid}/replies/{reply_uid}",
     dependencies=[rbac.ANY],
     summary="Edits the specified comment reply's text",
-    response_model=CommentReply,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -292,7 +279,6 @@ def edit_comment_thread_reply(
     "/comment-threads/{comment_thread_uid}/replies/{reply_uid}",
     dependencies=[rbac.ANY],
     summary="Deletes the comment reply identified by 'reply_uid'.",
-    response_model=None,
     status_code=204,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -305,4 +291,3 @@ def delete_comment_reply(
     reply_uid: Annotated[str, CommentReplyUID],
 ):
     Service().delete_comment_reply(reply_uid)
-    return Response(status_code=status.HTTP_204_NO_CONTENT)

@@ -2,7 +2,7 @@
 
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Body, Path, Query, Response, status
+from fastapi import APIRouter, Body, Path, Query
 from pydantic.types import Json
 from starlette.requests import Request
 
@@ -51,7 +51,6 @@ Possible errors:
 
 {_generic_descriptions.DATA_EXPORTS_HEADER}
 """,
-    response_model=CustomPage[DictionaryTerm],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -115,7 +114,7 @@ def get_terms(
     total_count: Annotated[
         bool | None, Query(description=_generic_descriptions.TOTAL_COUNT)
     ] = False,
-):
+) -> CustomPage[DictionaryTerm]:
     dictionary_term_service = DictionaryTermGenericService()
     results = dictionary_term_service.get_all_dictionary_terms(
         codelist_uid=codelist_uid,
@@ -137,7 +136,6 @@ def get_terms(
     summary="Returns possibles values from the database for a given header",
     description="Allowed parameters include : field name for which to get possible values, "
     "search string to provide filtering for the field name, additional filters to apply on other fields",
-    response_model=list[Any],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -170,7 +168,7 @@ def get_distinct_values_for_header(
     page_size: Annotated[
         int | None, Query(description=_generic_descriptions.HEADER_PAGE_SIZE)
     ] = config.DEFAULT_HEADER_PAGE_SIZE,
-):
+) -> list[Any]:
     dictionary_term_service = DictionaryTermGenericService()
     return dictionary_term_service.get_distinct_values_for_header(
         codelist_uid=codelist_uid,
@@ -190,7 +188,6 @@ def get_distinct_values_for_header(
   * DictionaryTermRoot
   * DictionaryTermValue
 """,
-    response_model=DictionaryTerm,
     response_model_exclude_unset=True,
     status_code=201,
     responses={
@@ -209,7 +206,7 @@ def create(
         DictionaryTermCreateInput,
         Body(description="Properties to create DictionaryTermValue node."),
     ],
-):
+) -> DictionaryTerm:
     dictionary_term_service = DictionaryTermGenericService()
     return dictionary_term_service.create(dictionary_term_input)
 
@@ -230,7 +227,6 @@ State after:
  
 Possible errors:
  - Invalid codelist""",
-    response_model=DictionaryTerm,
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -238,7 +234,9 @@ Possible errors:
         404: _generic_descriptions.ERROR_404,
     },
 )
-def get_codelists(dictionary_term_uid: Annotated[str, DictionaryTermUID]):
+def get_codelists(
+    dictionary_term_uid: Annotated[str, DictionaryTermUID],
+) -> DictionaryTerm:
     dictionary_term_service = DictionaryTermGenericService()
     return dictionary_term_service.get_by_uid(term_uid=dictionary_term_uid)
 
@@ -261,7 +259,6 @@ State after:
 Possible errors:
  - Invalid uid.
     """,
-    response_model=list[DictionaryTermVersion],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -271,7 +268,9 @@ Possible errors:
         },
     },
 )
-def get_versions(dictionary_term_uid: Annotated[str, DictionaryTermUID]):
+def get_versions(
+    dictionary_term_uid: Annotated[str, DictionaryTermUID],
+) -> list[DictionaryTermVersion]:
     dictionary_term_service = DictionaryTermGenericService()
     return dictionary_term_service.get_version_history(term_uid=dictionary_term_uid)
 
@@ -300,7 +299,6 @@ State after:
 Possible errors:
  - Invalid uid.
 """,
-    response_model=DictionaryTerm,
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -327,7 +325,7 @@ def edit(
             description="The new parameter terms for the dictionary term including the change description.",
         ),
     ],
-):
+) -> DictionaryTerm:
     dictionary_term_service = DictionaryTermGenericService()
     return dictionary_term_service.edit_draft(
         term_uid=dictionary_term_uid, term_input=dictionary_term_input
@@ -355,7 +353,6 @@ State after:
 Possible errors:
  - Invalid uid or status not Final.
 """,
-    response_model=DictionaryTerm,
     response_model_exclude_unset=True,
     status_code=201,
     responses={
@@ -374,7 +371,9 @@ Possible errors:
         },
     },
 )
-def create_new_version(dictionary_term_uid: Annotated[str, DictionaryTermUID]):
+def create_new_version(
+    dictionary_term_uid: Annotated[str, DictionaryTermUID],
+) -> DictionaryTerm:
     dictionary_term_service = DictionaryTermGenericService()
     return dictionary_term_service.create_new_version(term_uid=dictionary_term_uid)
 
@@ -400,7 +399,6 @@ State after:
 Possible errors:
  - Invalid uid or status not Draft.
     """,
-    response_model=DictionaryTerm,
     response_model_exclude_unset=True,
     status_code=201,
     responses={
@@ -418,7 +416,7 @@ Possible errors:
         },
     },
 )
-def approve(dictionary_term_uid: Annotated[str, DictionaryTermUID]):
+def approve(dictionary_term_uid: Annotated[str, DictionaryTermUID]) -> DictionaryTerm:
     dictionary_term_service = DictionaryTermGenericService()
     return dictionary_term_service.approve(term_uid=dictionary_term_uid)
 
@@ -444,7 +442,6 @@ State after:
 Possible errors:
  - Invalid uid or status not Final.
     """,
-    response_model=DictionaryTerm,
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -461,7 +458,9 @@ Possible errors:
         },
     },
 )
-def inactivate(dictionary_term_uid: Annotated[str, DictionaryTermUID]):
+def inactivate(
+    dictionary_term_uid: Annotated[str, DictionaryTermUID],
+) -> DictionaryTerm:
     dictionary_term_service = DictionaryTermGenericService()
     return dictionary_term_service.inactivate_final(term_uid=dictionary_term_uid)
 
@@ -487,7 +486,6 @@ State after:
 Possible errors:
  - Invalid uid or status not Retired.
     """,
-    response_model=DictionaryTerm,
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -504,7 +502,9 @@ Possible errors:
         },
     },
 )
-def reactivate(dictionary_term_uid: Annotated[str, DictionaryTermUID]):
+def reactivate(
+    dictionary_term_uid: Annotated[str, DictionaryTermUID],
+) -> DictionaryTerm:
     dictionary_term_service = DictionaryTermGenericService()
     return dictionary_term_service.reactivate_retired(term_uid=dictionary_term_uid)
 
@@ -527,7 +527,6 @@ State after:
 Possible errors:
  - Invalid uid or status not Draft or exist in version 1.0 or above (previoulsy been approved) or not in an editable library.
     """,
-    response_model=None,
     status_code=204,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -548,7 +547,6 @@ Possible errors:
 def delete_ct_term(dictionary_term_uid: Annotated[str, DictionaryTermUID]):
     dictionary_term_service = DictionaryTermGenericService()
     dictionary_term_service.soft_delete(term_uid=dictionary_term_uid)
-    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.post(
@@ -559,7 +557,6 @@ def delete_ct_term(dictionary_term_uid: Annotated[str, DictionaryTermUID]):
   * DictionaryTermRoot/UNIITermRoot
   * DictionaryTermValue/UNIITermValue
 """,
-    response_model=DictionaryTermSubstance,
     response_model_exclude_unset=True,
     status_code=201,
     responses={
@@ -578,7 +575,7 @@ def create_substance(
         DictionaryTermSubstanceCreateInput,
         Body(description="Properties to create DictionaryTermValue node."),
     ],
-):
+) -> DictionaryTermSubstance:
     dictionary_term_service = DictionaryTermSubstanceService()
     return dictionary_term_service.create(dictionary_term_input)
 
@@ -599,7 +596,6 @@ State after:
  
 Possible errors:
  - Invalid uid""",
-    response_model=DictionaryTermSubstance,
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -607,7 +603,9 @@ Possible errors:
         404: _generic_descriptions.ERROR_404,
     },
 )
-def get_substance_by_id(dictionary_term_uid: Annotated[str, DictionaryTermUID]):
+def get_substance_by_id(
+    dictionary_term_uid: Annotated[str, DictionaryTermUID],
+) -> DictionaryTermSubstance:
     dictionary_term_service = DictionaryTermSubstanceService()
     return dictionary_term_service.get_by_uid(term_uid=dictionary_term_uid)
 
@@ -625,7 +623,6 @@ State after:
  
 Possible errors:
  - """,
-    response_model=CustomPage[DictionaryTermSubstance],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -661,7 +658,7 @@ def get_substances(
     total_count: Annotated[
         bool | None, Query(description=_generic_descriptions.TOTAL_COUNT)
     ] = False,
-):
+) -> CustomPage[DictionaryTermSubstance]:
     dictionary_term_service = DictionaryTermSubstanceService()
     results = dictionary_term_service.get_all_dictionary_terms(
         codelist_name=config.LIBRARY_SUBSTANCES_CODELIST_NAME,
@@ -699,7 +696,6 @@ State after:
 Possible errors:
  - Invalid uid.
 """,
-    response_model=DictionaryTermSubstance,
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -726,7 +722,7 @@ def edit_substance(
             description="The new parameter terms for the dictionary term including the change description.",
         ),
     ],
-):
+) -> DictionaryTermSubstance:
     dictionary_term_service = DictionaryTermSubstanceService()
     return dictionary_term_service.edit_draft(
         term_uid=dictionary_term_uid, term_input=dictionary_term_input

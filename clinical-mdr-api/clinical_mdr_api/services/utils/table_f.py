@@ -140,9 +140,7 @@ class TableCell(BaseModel):
 
 
 class TableRow(BaseModel):
-    cells: Annotated[
-        list[TableCell], Field(default_factory=list, title="Table cells in the row")
-    ]
+    cells: list[TableCell] = Field(default_factory=list, title="Table cells in the row")
     hide: Annotated[bool, Field(title="Hide row from display")] = False
     order: Annotated[
         int | None,
@@ -161,14 +159,14 @@ class TableRow(BaseModel):
 
 class SimpleFootnote(BaseModel):
     uid: Annotated[str, Field(title="StudySoAFootnote.uid")]
-    text_html: Annotated[str, Field(title="HTML text of footnote")]
+    text_html: Annotated[
+        str, Field(title="HTML text of footnote", json_schema_extra={"format": "html"})
+    ]
     text_plain: Annotated[str, Field(title="Plain text of footnote")]
 
 
 class TableWithFootnotes(BaseModel):
-    rows: Annotated[
-        list[TableRow], Field(default_factory=list, title="List of table rows")
-    ]
+    rows: list[TableRow] = Field(default_factory=list, title="List of table rows")
     footnotes: Annotated[
         dict[str, SimpleFootnote] | None,
         Field(
@@ -261,9 +259,10 @@ def table_to_docx(
             if t_cell.vertical:
                 docx.set_vertical_cell_direction(x_cell, "btLr")
 
-            # add a new run (like <span>) within the paragraph for each footnote symbol, with spacing in the run
-            for symbol in t_cell.footnotes or []:
-                run = x_para.add_run(f" {symbol}")
+            # add footnote symbols to a run within the paragraph
+            if t_cell.footnotes:
+                run = x_para.add_run("\u00A0".join(t_cell.footnotes))
+                run.font.bold = True
                 run.font.superscript = True
 
     # add footnotes
@@ -276,10 +275,11 @@ def table_to_docx(
 
             # footnote symbols into a run (like <span>) with superscript
             run = x_para.add_run(symbol)
+            run.font.bold = True
             run.font.superscript = True
 
             # footnote text with glue and spacing into a distinct run
-            x_para.add_run(f": {footnote.text_plain}")
+            x_para.add_run(footnote.text_plain)
 
     return docx
 
@@ -298,6 +298,16 @@ def table_to_html(table: TableWithFootnotes, css_style: str | None = None) -> st
     :return: The rendered HTML document as a string.
     :rtype: str
     """
+
+    def add_footnote_symbols(symbols):
+        if not symbols:
+            return
+        with tag("sup"):
+            with tag("b"):
+                for i, symbol in enumerate(symbols):
+                    if i:
+                        doc.asis("&nbsp;")
+                    text(symbol)
 
     doc, tag, text, line = yattag.Doc().ttl()
     doc.asis("<!DOCTYPE html>")
@@ -325,9 +335,7 @@ def table_to_html(table: TableWithFootnotes, css_style: str | None = None) -> st
 
                                 with tag("th", **_cell_to_attrs(cell)):
                                     text(cell.text)
-                                    for symbol in cell.footnotes or []:
-                                        doc.asis("&nbsp;")
-                                        line("sup", symbol)
+                                    add_footnote_symbols(cell.footnotes)
 
                 with tag("tbody"):
                     for row in table.rows[table.num_header_rows :]:
@@ -344,16 +352,13 @@ def table_to_html(table: TableWithFootnotes, css_style: str | None = None) -> st
                                     **_cell_to_attrs(cell),
                                 ):
                                     text(cell.text)
-                                    for symbol in cell.footnotes or []:
-                                        doc.asis("&nbsp;")
-                                        line("sup", symbol)
+                                    add_footnote_symbols(cell.footnotes)
 
             if table.footnotes:
-                with tag("dl", klass="footnotes"):
-                    for symbol, footnote in table.footnotes.items():
-                        line("dt", symbol)
-                        with tag("dd"):
-                            text(footnote.text_plain)
+                for symbol, footnote in table.footnotes.items():
+                    with tag("p", klass="footnote"):
+                        add_footnote_symbols([symbol])
+                        text(footnote.text_plain)
 
     return yattag.indent(doc.getvalue())
 

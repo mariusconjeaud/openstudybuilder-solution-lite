@@ -213,6 +213,7 @@ study_design_endpoints = [
     "studies/{study_uid}/study-endpoints",
     "studies/{study_uid}/study-criteria",
     "studies/{study_uid}/study-activities",
+    "studies/{study_uid}/study-activity-instances",
     "studies/{study_uid}/study-objectives",
     "studies/{study_uid}/study-activity-schedules",
     "studies/{study_uid}/study-compounds",

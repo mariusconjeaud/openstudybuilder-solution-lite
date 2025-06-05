@@ -35,7 +35,7 @@ Then('The user is not able to save activity with already existing synonym and er
 })
 
 Then('The newly added activity is added in the table', () => {  
-    cy.searchFor(activityName, false)
+    cy.searchAndCheckPresence(activityName, true)
     cy.checkRowByIndex(0, 'Activity name', activityName)
     cy.checkRowByIndex(0, 'Sentence case name', activityName.toLowerCase())
     cy.checkRowByIndex(0, 'Synonyms', synonym)
@@ -43,7 +43,6 @@ Then('The newly added activity is added in the table', () => {
     cy.checkRowByIndex(0, 'NCI Concept Name', nciconceptname)
     cy.checkRowByIndex(0, 'Abbreviation', abbreviation)
     cy.checkRowByIndex(0, 'Data collection', "Yes")
-    cy.checkStatusAndVersion('Draft', '0.1')
 })
 
 Then('The user is not able to save the acitivity', () => {   
@@ -99,23 +98,27 @@ When('The activity edition form is filled with data', () => {
     editActivity()
 })
 
-Then('The activity is no longer available', () => cy.confirmItemNotAvailable(apiActivityName))
+Then('The activity is no longer available', () => cy.searchAndCheckPresence(apiActivityName, false))
 
-Then('The activity is not created', () => cy.confirmItemNotAvailable(activityName))
+Then('The activity is not created', () => cy.searchAndCheckPresence(activityName, false))
 
-Then('The activity is not edited', () => cy.confirmItemNotAvailable(activityName))
+Then('The activity is not edited', () => cy.searchAndCheckPresence(activityName, false))
 
 When('I search and select activity', () => {
     cy.intercept('/api/concepts/activities/activities?page_number=1&page_size=0&total_count=true&filters=%7B%7D').as('getData')
     cy.wait('@getData', {timeout: 20000})
     cy.wait(1000)
-    cy.searchFor(activityName, false)
+    cy.searchAndCheckPresence(activityName, true)
     cy.get('table tbody tr td').contains(activityName).click()
 })
 
-Then('One activity is found after performing full name search', () => cy.searchAndCheckResults(apiActivityName))
+Then('One activity is found after performing full name search', () => cy.searchAndCheckPresence(apiActivityName, true))
 
-When('Activity is found', () => cy.searchFor(apiActivityName, false))
+When('Activity is found', () => cy.searchAndCheckPresence(apiActivityName, true))
+
+When('[API] Activity in status Final with Final group and subgroub exists', () => {
+    if (!apiActivityName) createActivityViaApi(true)
+})
 
 Then('[API] Study Activity is created and group is drafted', () => {
     createAndChangeStatusOfLinkedItemViaApi(() => cy.groupNewVersion())

@@ -1,8 +1,7 @@
 from datetime import datetime
 from typing import Annotated
 
-from fastapi import APIRouter, Body, Depends, Path, Query, Request, Response
-from fastapi import status as fast_api_status
+from fastapi import APIRouter, Body, Depends, Path, Query, Request
 
 from clinical_mdr_api.domains.versioned_object_aggregate import LibraryItemStatus
 from clinical_mdr_api.models.controlled_terminologies.configuration import (
@@ -21,8 +20,6 @@ from common.models.error import ErrorResponse
 # Prefixed with "/configurations"
 router = APIRouter()
 
-Service = CTConfigService
-
 
 # Argument definitions
 CodelistConfigUID = Path(description="The unique id of configuration.")
@@ -32,7 +29,6 @@ CodelistConfigUID = Path(description="The unique id of configuration.")
     "",
     dependencies=[rbac.LIBRARY_READ],
     summary="Returns all configurations in their latest/newest version.",
-    response_model=list[CTConfigOGM],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -77,7 +73,7 @@ CodelistConfigUID = Path(description="The unique id of configuration.")
 # pylint: disable=unused-argument
 def get_all(
     request: Request,  # request is actually required by the allow_exports decorator
-    service: Annotated[Service, Depends(Service)],
+    service: Annotated[CTConfigService, Depends(CTConfigService)],
 ) -> list[CTConfigOGM]:
     return service.get_all()
 
@@ -88,7 +84,6 @@ def get_all(
     summary="Returns the latest/newest version of a specific configuration identified by 'configuration_uid'.",
     description="""If multiple request query parameters are used, then they need to
     match all at the same time (they are combined with the AND operation).""",
-    response_model=CTConfigModel,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -100,7 +95,7 @@ def get_all(
     },
 )
 def get_by_uid(
-    service: Annotated[Service, Depends(Service)],
+    service: Annotated[CTConfigService, Depends(CTConfigService)],
     configuration_uid: Annotated[str, CodelistConfigUID],
     at_specified_date_time: Annotated[
         datetime | None,
@@ -145,7 +140,6 @@ def get_by_uid(
     summary="Returns the version history of a specific configuration identified by 'configuration_uid'.",
     description="The returned versions are ordered by\n"
     "0. start_date descending (newest entries first)",
-    response_model=list[CTConfigModel],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -194,7 +188,7 @@ def get_by_uid(
 #  pylint: disable=unused-argument
 def get_versions(
     request: Request,  # request is actually required by the allow_exports decorator
-    service: Annotated[Service, Depends(Service)],
+    service: Annotated[CTConfigService, Depends(CTConfigService)],
     configuration_uid: Annotated[str, CodelistConfigUID],
 ) -> list[CTConfigModel]:
     return service.get_versions(configuration_uid)
@@ -203,7 +197,6 @@ def get_versions(
 @router.post(
     "",
     dependencies=[rbac.LIBRARY_WRITE],
-    response_model=CTConfigModel,
     summary="Creates a new configuration in 'Draft' status.",
     description="""
 
@@ -225,7 +218,7 @@ If the request succeeds:
     },
 )
 def post(
-    service: Annotated[Service, Depends(Service)],
+    service: Annotated[CTConfigService, Depends(CTConfigService)],
     post_input: Annotated[
         CTConfigPostInput, Body(description="The configuration that shall be created.")
     ],
@@ -245,7 +238,6 @@ If the request succeeds:
 * The status will remain in 'Draft'.
 
 """,
-    response_model=CTConfigModel,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -262,7 +254,7 @@ If the request succeeds:
     },
 )
 def patch(
-    service: Annotated[Service, Depends(Service)],
+    service: Annotated[CTConfigService, Depends(CTConfigService)],
     configuration_uid: Annotated[str, CodelistConfigUID],
     patch_input: Annotated[
         CTConfigPatchInput,
@@ -287,7 +279,6 @@ If the request succeeds:
 * The 'version' property of the new version will be automatically set to the version of the latest 'Final' or 'Retired' version increased by +0.1.
 
 """,
-    response_model=CTConfigModel,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -304,7 +295,7 @@ If the request succeeds:
     },
 )
 def new_version(
-    service: Annotated[Service, Depends(Service)],
+    service: Annotated[CTConfigService, Depends(CTConfigService)],
     configuration_uid: Annotated[str, CodelistConfigUID],
 ) -> CTConfigModel:
     return service.new_version(configuration_uid)
@@ -322,7 +313,6 @@ If the request succeeds:
 * The 'change_description' property will be set automatically.
 * The 'version' property will be increased automatically to the next major version.
     """,
-    response_model=CTConfigModel,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -339,7 +329,7 @@ If the request succeeds:
     },
 )
 def approve(
-    service: Annotated[Service, Depends(Service)],
+    service: Annotated[CTConfigService, Depends(CTConfigService)],
     configuration_uid: Annotated[str, CodelistConfigUID],
 ) -> CTConfigModel:
     return service.approve(configuration_uid)
@@ -357,7 +347,6 @@ If the request succeeds:
 * The 'change_description' property will be set automatically.
 * The 'version' property will remain the same as before.
     """,
-    response_model=CTConfigModel,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -374,7 +363,7 @@ If the request succeeds:
     },
 )
 def inactivate(
-    service: Annotated[Service, Depends(Service)],
+    service: Annotated[CTConfigService, Depends(CTConfigService)],
     configuration_uid: Annotated[str, CodelistConfigUID],
 ) -> CTConfigModel:
     return service.inactivate(configuration_uid)
@@ -392,7 +381,6 @@ If the request succeeds:
 * The 'change_description' property will be set automatically.
 * The 'version' property will remain the same as before.
     """,
-    response_model=CTConfigModel,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -409,7 +397,7 @@ If the request succeeds:
     },
 )
 def reactivate(
-    service: Annotated[Service, Depends(Service)],
+    service: Annotated[CTConfigService, Depends(CTConfigService)],
     configuration_uid: Annotated[str, CodelistConfigUID],
 ) -> CTConfigModel:
     return service.reactivate(configuration_uid)
@@ -423,7 +411,6 @@ def reactivate(
 * the configuration is in 'Draft' status and
 * the configuration has never been in 'Final' status.
 """,
-    response_model=None,
     status_code=204,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -443,8 +430,7 @@ def reactivate(
     },
 )
 def delete(
-    service: Annotated[Service, Depends(Service)],
+    service: Annotated[CTConfigService, Depends(CTConfigService)],
     configuration_uid: Annotated[str, CodelistConfigUID],
-) -> Response:
+):
     service.delete(configuration_uid)
-    return Response(status_code=fast_api_status.HTTP_204_NO_CONTENT)

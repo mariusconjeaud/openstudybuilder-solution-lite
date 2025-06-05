@@ -530,7 +530,7 @@ app.include_router(
     prefix="/integrations/ms-graph",
     tags=["MS Graph API integrations"],
 )
-app.include_router(routers.ddf_router, prefix="/ddf/v3", tags=["DDF endpoints"])
+app.include_router(routers.ddf_router, prefix="/usdm/v3", tags=["USDM endpoints"])
 
 system_app = FastAPI(
     middleware=None,

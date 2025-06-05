@@ -1,7 +1,6 @@
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Body, Path, Query, Request, Response
-from fastapi import status as fast_api_status
+from fastapi import APIRouter, Body, Path, Query, Request
 from pydantic.types import Json
 
 from clinical_mdr_api.domain_repositories.models.syntax import EndpointValue
@@ -42,7 +41,6 @@ EndpointUID = Path(description="The unique id of the endpoint.")
     dependencies=[rbac.LIBRARY_READ],
     summary="Returns all final versions of endpoints referenced by any study.",
     description=_generic_descriptions.DATA_EXPORTS_HEADER,
-    response_model=CustomPage[Endpoint],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -134,7 +132,7 @@ def get_all(
     total_count: Annotated[
         bool | None, Query(description=_generic_descriptions.TOTAL_COUNT)
     ] = False,
-):
+) -> CustomPage[Endpoint]:
     all_items = EndpointService().get_all(
         status=LibraryItemStatus.FINAL.value,
         page_number=page_number,
@@ -156,7 +154,6 @@ def get_all(
     summary="Returns possible values from the database for a given header",
     description="""Allowed parameters include : field name for which to get possible
     values, search string to provide filtering for the field name, additional filters to apply on other fields""",
-    response_model=list[Any],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -197,7 +194,7 @@ def get_distinct_values_for_header(
     page_size: Annotated[
         int | None, Query(description=_generic_descriptions.HEADER_PAGE_SIZE)
     ] = config.DEFAULT_HEADER_PAGE_SIZE,
-):
+) -> list[Any]:
     return Service().get_distinct_values_for_header(
         status=status,
         field_name=field_name,
@@ -211,7 +208,6 @@ def get_distinct_values_for_header(
 @router.get(
     "/audit-trail",
     dependencies=[rbac.LIBRARY_READ],
-    response_model=CustomPage[Endpoint],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -243,7 +239,7 @@ def retrieve_audit_trail(
     total_count: Annotated[
         bool | None, Query(description=_generic_descriptions.TOTAL_COUNT)
     ] = False,
-):
+) -> CustomPage[Endpoint]:
     results = Service().get_all(
         page_number=page_number,
         page_size=page_size,
@@ -264,7 +260,6 @@ def retrieve_audit_trail(
     summary="Returns the latest/newest version of a specific endpoint identified by 'endpoint_uid'.",
     description="""If multiple request query parameters are used, then they need to
     match all at the same time (they are combined with the AND operation).""",
-    response_model=Endpoint | None,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -274,9 +269,7 @@ def retrieve_audit_trail(
         },
     },
 )
-def get(
-    endpoint_uid: Annotated[str, EndpointUID],
-):
+def get(endpoint_uid: Annotated[str, EndpointUID]) -> Endpoint:
     return EndpointService().get_by_uid(uid=endpoint_uid)
 
 
@@ -289,7 +282,6 @@ The returned versions are ordered by `start_date` descending (newest entries fir
 
 {_generic_descriptions.DATA_EXPORTS_HEADER}
 """,
-    response_model=list[EndpointVersion],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -379,14 +371,13 @@ The returned versions are ordered by `start_date` descending (newest entries fir
 def get_versions(
     request: Request,  # request is actually required by the allow_exports decorator
     endpoint_uid: Annotated[str, EndpointUID],
-):
+) -> list[EndpointVersion]:
     return EndpointService().get_version_history(endpoint_uid)
 
 
 @router.get(
     "/{endpoint_uid}/studies",
     dependencies=[rbac.STUDY_READ],
-    response_model=list[Study],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -406,7 +397,7 @@ def get_studies(
         list[StudyComponentEnum] | None,
         Query(description=study_section_description("exclude")),
     ] = None,
-):
+) -> list[Study]:
     return Service().get_referencing_studies(
         uid=endpoint_uid,
         node_type=EndpointValue,
@@ -430,7 +421,6 @@ If the request succeeds:
 * The 'change_description' property will be set automatically.
 * The 'version' property will be set to '0.1'.
 """,
-    response_model=Endpoint,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -456,7 +446,7 @@ def create(
         EndpointCreateInput,
         Body(description="Related parameters of the endpoint that shall be created."),
     ],
-):
+) -> Endpoint:
     return EndpointService().create(endpoint)
 
 
@@ -472,7 +462,6 @@ def create(
 If the request succeeds:
 * No endpoint will be created, but the result of the request will show what the endpoint will look like.
 """,
-    response_model=Endpoint,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -497,7 +486,7 @@ def preview(
         EndpointCreateInput,
         Body(description="Related parameters of the endpoint that shall be previewed."),
     ],
-):
+) -> Endpoint:
     return EndpointService().create(endpoint, preview=True)
 
 
@@ -514,7 +503,6 @@ If the request succeeds:
 * The status will remain in 'Draft'.
 * The link to the objective will remain as is.
 """,
-    response_model=Endpoint,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -542,7 +530,7 @@ def edit(
             description="The new parameter terms for the endpoint including the change description.",
         ),
     ],
-):
+) -> Endpoint:
     return EndpointService().edit_draft(uid=endpoint_uid, template=endpoint)
 
 
@@ -559,7 +547,6 @@ If the request succeeds:
 * The 'change_description' property will be set automatically.
 * The 'version' property will be increased automatically to the next major version.
     """,
-    response_model=Endpoint,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -576,7 +563,7 @@ If the request succeeds:
         },
     },
 )
-def approve(endpoint_uid: Annotated[str, EndpointUID]):
+def approve(endpoint_uid: Annotated[str, EndpointUID]) -> Endpoint:
     return EndpointService().approve(endpoint_uid)
 
 
@@ -592,7 +579,6 @@ If the request succeeds:
 * The 'change_description' property will be set automatically. 
 * The 'version' property will remain the same as before.
     """,
-    response_model=Endpoint,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -608,7 +594,7 @@ If the request succeeds:
         },
     },
 )
-def inactivate(endpoint_uid: Annotated[str, EndpointUID]):
+def inactivate(endpoint_uid: Annotated[str, EndpointUID]) -> Endpoint:
     return EndpointService().inactivate_final(endpoint_uid)
 
 
@@ -625,7 +611,6 @@ If the request succeeds:
 * The 'change_description' property will be set automatically. 
 * The 'version' property will remain the same as before.
     """,
-    response_model=Endpoint,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -641,7 +626,7 @@ If the request succeeds:
         },
     },
 )
-def reactivate(endpoint_uid: Annotated[str, EndpointUID]):
+def reactivate(endpoint_uid: Annotated[str, EndpointUID]) -> Endpoint:
     return EndpointService().reactivate_retired(endpoint_uid)
 
 
@@ -653,7 +638,6 @@ def reactivate(endpoint_uid: Annotated[str, EndpointUID]):
 * the endpoint is in 'Draft' status and
 * the endpoint has never been in 'Final' status and
 * the endpoint belongs to a library that allows deleting (the 'is_editable' property of the library needs to be true).""",
-    response_model=None,
     status_code=204,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -672,7 +656,6 @@ def reactivate(endpoint_uid: Annotated[str, EndpointUID]):
 )
 def delete(endpoint_uid: Annotated[str, EndpointUID]):
     EndpointService().soft_delete(endpoint_uid)
-    return Response(status_code=fast_api_status.HTTP_204_NO_CONTENT)
 
 
 # TODO this endpoint potentially returns duplicated entries (by intention, currently).
@@ -694,12 +677,13 @@ Per parameter, the parameter.values are ordered by
 Note that parameters may be used multiple times in templates.
 In that case, the same parameter (with the same values) is included multiple times in the response.
     """,
-    response_model=list[TemplateParameter],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
         404: _generic_descriptions.ERROR_404,
     },
 )
-def get_parameters(endpoint_uid: Annotated[str, EndpointUID]):
+def get_parameters(
+    endpoint_uid: Annotated[str, EndpointUID]
+) -> list[TemplateParameter]:
     return EndpointService().get_parameters(endpoint_uid)

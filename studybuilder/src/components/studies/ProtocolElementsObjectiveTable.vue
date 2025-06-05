@@ -18,7 +18,11 @@
         </v-btn>
       </div>
     </div>
-    <div id="ProtocolElementsObjective" class="mt-4" v-html="document" />
+    <div
+      id="ProtocolElementsObjective"
+      class="mt-4"
+      v-html="sanitizeHTMLHandler(document)"
+    />
   </div>
   <div v-else>
     <UnderConstruction :message="$t('UnderConstruction.not_supported')" />
@@ -31,6 +35,7 @@ import exportLoader from '@/utils/exportLoader'
 import UnderConstruction from '@/components/layout/UnderConstruction.vue'
 import { useStudiesGeneralStore } from '@/stores/studies-general'
 import { computed } from 'vue'
+import { sanitizeHTML } from '@/utils/sanitize'
 
 export default {
   components: {
@@ -69,6 +74,9 @@ export default {
     this.updateDocument()
   },
   methods: {
+    sanitizeHTMLHandler(html) {
+      return sanitizeHTML(html)
+    },
     updateDocument() {
       this.loadingMessage = this.$t('ProtocolElementsObjectiveTable.loading')
       study

@@ -62,93 +62,84 @@ class StudySelectionActivityRepository(
     def _create_value_object_from_repository(
         self, selection: dict, acv: bool
     ) -> StudySelectionActivityVO:
-        study_activity_subgroup = selection.get("study_activity_subgroup", {})
-        study_activity_group = selection.get("study_activity_group", {})
-        study_soa_group = selection.get("study_soa_group", {})
+        study_activity_subgroup = selection.get("study_activity_subgroup") or {}
+        study_activity_group = selection.get("study_activity_group") or {}
+        study_soa_group = selection.get("study_soa_group") or {}
         return StudySelectionActivityVO.from_input_values(
             study_selection_uid=selection["study_selection_uid"],
-            study_activity_subgroup_uid=(
-                study_activity_subgroup.get("selection_uid")
-                if study_activity_subgroup
-                else None
+            study_activity_subgroup_uid=study_activity_subgroup.get("selection_uid"),
+            study_activity_subgroup_order=study_activity_subgroup.get("order"),
+            activity_subgroup_uid=study_activity_subgroup.get("activity_subgroup_uid"),
+            activity_subgroup_name=study_activity_subgroup.get(
+                "activity_subgroup_name"
             ),
-            study_activity_subgroup_order=(
-                study_activity_subgroup.get("order")
-                if study_activity_subgroup
-                else None
-            ),
-            activity_subgroup_uid=(
-                study_activity_subgroup.get("activity_subgroup_uid")
-                if study_activity_subgroup
-                else None
-            ),
-            activity_subgroup_name=(
-                study_activity_subgroup.get("activity_subgroup_name")
-                if study_activity_subgroup
-                else None
-            ),
-            study_activity_group_uid=(
-                study_activity_group.get("selection_uid")
-                if study_activity_group
-                else None
-            ),
-            study_activity_group_order=(
-                study_activity_group.get("order") if study_activity_group else None
-            ),
-            activity_group_uid=(
-                study_activity_group.get("activity_group_uid")
-                if study_activity_group
-                else None
-            ),
-            activity_group_name=(
-                study_activity_group.get("activity_group_name")
-                if study_activity_group
-                else None
-            ),
+            study_activity_group_uid=study_activity_group.get("selection_uid"),
+            study_activity_group_order=study_activity_group.get("order"),
+            activity_group_uid=study_activity_group.get("activity_group_uid"),
+            activity_group_name=study_activity_group.get("activity_group_name"),
             study_uid=selection["study_uid"],
             activity_uid=selection["activity_uid"],
             activity_name=selection["activity_name"],
             activity_version=selection["activity_version"],
             activity_library_name=selection["activity_library_name"],
-            soa_group_term_uid=(
-                study_soa_group.get("soa_group_term_uid") if study_soa_group else None
-            ),
-            study_soa_group_uid=(
-                study_soa_group.get("selection_uid") if study_soa_group else None
-            ),
-            study_soa_group_order=(
-                study_soa_group.get("order") if study_soa_group else None
-            ),
+            soa_group_term_uid=study_soa_group.get("soa_group_term_uid"),
+            soa_group_term_name=study_soa_group.get("soa_group_term_name"),
+            study_soa_group_uid=study_soa_group.get("selection_uid"),
+            study_soa_group_order=study_soa_group.get("order"),
             order=selection["order"],
             show_activity_in_protocol_flowchart=selection[
                 "show_activity_in_protocol_flowchart"
             ],
-            show_activity_group_in_protocol_flowchart=(
-                study_activity_group.get("show_activity_group_in_protocol_flowchart")
-                if study_activity_group
-                else None
+            show_activity_group_in_protocol_flowchart=study_activity_group.get(
+                "show_activity_group_in_protocol_flowchart"
             ),
-            show_activity_subgroup_in_protocol_flowchart=(
-                study_activity_subgroup.get(
-                    "show_activity_subgroup_in_protocol_flowchart"
-                )
-                if study_activity_subgroup
-                else None
+            show_activity_subgroup_in_protocol_flowchart=study_activity_subgroup.get(
+                "show_activity_subgroup_in_protocol_flowchart"
             ),
-            show_soa_group_in_protocol_flowchart=(
-                study_soa_group.get("show_soa_group_in_protocol_flowchart")
-                if study_soa_group
-                else None
+            show_soa_group_in_protocol_flowchart=study_soa_group.get(
+                "show_soa_group_in_protocol_flowchart"
             ),
             start_date=convert_to_datetime(value=selection["start_date"]),
             author_id=selection["author_id"],
+            author_username=selection["author_username"],
             accepted_version=acv,
         )
 
     def _additional_match(self) -> str:
         return """
             WITH sr, sv
+            
+            CALL {
+                WITH sr, sv 
+                OPTIONAL MATCH (sv)-[:HAS_STUDY_STANDARD_VERSION]->(study_standard_version:StudyStandardVersion)<-[:AFTER]-(:StudyAction)<-[:AUDIT_TRAIL]-(sr)
+                OPTIONAL MATCH (study_standard_version)-[:HAS_CT_PACKAGE]->(ct_package:CTPackage)
+                WHERE ct_package.uid CONTAINS "SDTM CT"
+                RETURN datetime(ct_package.effective_date + 'T23:59:59.999999000Z') AS terms_at_specific_datetime
+                ORDER BY study_standard_version.uid //sic
+                LIMIT 1
+            }
+            
             MATCH (sv)-[:HAS_STUDY_ACTIVITY]->(sa:StudyActivity)-[:HAS_SELECTED_ACTIVITY]->(av:ActivityValue)<-[ver:HAS_VERSION]-(ar:ActivityRoot)<-[:CONTAINS_CONCEPT]-(lib:Library)
+            
+            WITH DISTINCT *
+            
+            CALL {
+                WITH sa, terms_at_specific_datetime
+                MATCH (sa)-[:STUDY_ACTIVITY_HAS_STUDY_SOA_GROUP]->(soa_group:StudySoAGroup)-[:HAS_FLOWCHART_GROUP]->(soa_group_term_root:CTTermRoot)
+                MATCH (soa_group)<-[:AFTER]-(after_action:StudyAction)
+                WITH *
+                ORDER BY after_action.date DESC
+                LIMIT 1
+            
+                WITH soa_group_term_root, terms_at_specific_datetime, soa_group
+                MATCH (:Library)-[:CONTAINS_TERM]->(soa_group_term_root)-[:HAS_NAME_ROOT]->(term_name_root:CTTermNameRoot)-[term_version:HAS_VERSION]->(term_name_value:CTTermNameValue)
+                WHERE term_version.status IN ['Final', 'Retired'] AND ( terms_at_specific_datetime IS NULL
+                      OR term_version.start_date <= datetime(terms_at_specific_datetime)
+                      AND (term_version.end_date IS NULL OR term_version.end_date > datetime(terms_at_specific_datetime)) )
+                RETURN {uid: soa_group_term_root.uid, name: term_name_value.name} AS soa_group_term, soa_group
+                ORDER BY term_version.start_date DESC
+                LIMIT 1
+            }
         """
 
     def _filter_clause(self, query_parameters: dict, **kwargs) -> str:
@@ -168,7 +159,7 @@ class StudySelectionActivityRepository(
             or study_activity_subgroup_uid is not None
             or study_soa_group_uid is not None
         ):
-            filter_query += " WHERE "
+            filter_query += "\nWITH *\nWHERE\n"
             filter_list = []
             if activity_names is not None:
                 filter_list.append("av.name IN $activity_names")
@@ -177,14 +168,14 @@ class StudySelectionActivityRepository(
                 filter_list.append(
                     "size([(sa)-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_SUBGROUP]->(sas:StudyActivitySubGroup)-"
                     "[:HAS_SELECTED_ACTIVITY_SUBGROUP]->(activity_subgroup_value:ActivitySubGroupValue)"
-                    "WHERE activity_subgroup_value.name IN $activity_subgroup_names | activity_subgroup_value.name]) > 0"
+                    " WHERE activity_subgroup_value.name IN $activity_subgroup_names | activity_subgroup_value.name]) > 0"
                 )
                 query_parameters["activity_subgroup_names"] = activity_subgroup_names
             if activity_group_names is not None:
                 filter_list.append(
                     "size([(sa)-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_GROUP]->(sas:StudyActivityGroup)-"
                     "[:HAS_SELECTED_ACTIVITY_GROUP]->(activity_group_value:ActivityGroupValue)"
-                    "WHERE activity_group_value.name IN $activity_group_names | activity_group_value.name]) > 0"
+                    " WHERE activity_group_value.name IN $activity_group_names | activity_group_value.name]) > 0"
                 )
                 query_parameters["activity_group_names"] = activity_group_names
             if study_activity_subgroup_uid is not None:
@@ -215,16 +206,15 @@ class StudySelectionActivityRepository(
                 sa.order AS order,
                 sa.uid AS study_selection_uid,
                 sa.show_activity_in_protocol_flowchart AS show_activity_in_protocol_flowchart,
-                head(apoc.coll.sortMulti([(sa)-[:STUDY_ACTIVITY_HAS_STUDY_SOA_GROUP]->(soa_group:StudySoAGroup)-[:HAS_FLOWCHART_GROUP]->(elr:CTTermRoot) | 
-                    {
-                        selection_uid: soa_group.uid, 
-                        soa_group_term_uid:elr.uid,
-                        show_soa_group_in_protocol_flowchart:coalesce(soa_group.show_soa_group_in_protocol_flowchart, false),
-                        order: soa_group.order,
-                        date: head([(soa_group)<-[:AFTER]-(after_action:StudyAction) | after_action.date])
-                    }], ['date'])) AS study_soa_group,
-                head(apoc.coll.sortMulti([(sa)-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_SUBGROUP]->(study_activity_subgroup_selection:StudyActivitySubGroup)
-                -[:HAS_SELECTED_ACTIVITY_SUBGROUP]->(activity_subgroup_value:ActivitySubGroupValue)<-[:HAS_VERSION]-(activity_subgroup_root:ActivitySubGroupRoot) | 
+                {
+                    selection_uid: soa_group.uid, 
+                    soa_group_term_uid: soa_group_term.uid,
+                    soa_group_term_name: soa_group_term.name,
+                    show_soa_group_in_protocol_flowchart: coalesce(soa_group.show_soa_group_in_protocol_flowchart, false),
+                    order: soa_group.order
+                } AS study_soa_group,
+               head(apoc.coll.sortMulti([(sa)-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_SUBGROUP]->(study_activity_subgroup_selection:StudyActivitySubGroup)
+                -[:HAS_SELECTED_ACTIVITY_SUBGROUP]->(activity_subgroup_value:ActivitySubGroupValue)<-[:HAS_VERSION]-(activity_subgroup_root:ActivitySubGroupRoot) |
                     {
                         selection_uid: study_activity_subgroup_selection.uid, 
                         activity_subgroup_uid:activity_subgroup_root.uid,
@@ -238,7 +228,7 @@ class StudySelectionActivityRepository(
                     {
                         selection_uid: study_activity_group_selection.uid, 
                         activity_group_uid: activity_group_root.uid,
-                        activity_group_name:activity_group_value.name,
+                        activity_group_name: activity_group_value.name,
                         show_activity_group_in_protocol_flowchart: study_activity_group_selection.show_activity_group_in_protocol_flowchart,
                         order: study_activity_group_selection.order,
                         date: head([(study_activity_group_selection)<-[:AFTER]-(after_action:StudyAction) | after_action.date])
@@ -248,6 +238,7 @@ class StudySelectionActivityRepository(
                 av.name AS activity_name,
                 sac.date AS start_date,
                 sac.author_id AS author_id,
+                COALESCE(head([(user:User)-[*0]-() WHERE user.user_id=sac.author_id | user.username]), sac.author_id) AS author_username,
                 hv_ver.version AS activity_version,
                 lib.name as activity_library_name
             """
@@ -255,73 +246,37 @@ class StudySelectionActivityRepository(
     def get_selection_history(
         self, selection: dict, change_type: str, end_date: datetime
     ):
-        study_activity_subgroup = selection.get("study_activity_subgroup", {})
-        study_activity_group = selection.get("study_activity_group", {})
-        study_soa_group = selection.get("study_soa_group", {})
+        study_activity_subgroup = selection.get("study_activity_subgroup") or {}
+        study_activity_group = selection.get("study_activity_group") or {}
+        study_soa_group = selection.get("study_soa_group") or {}
         return SelectionHistory(
             study_selection_uid=selection["study_selection_uid"],
-            study_activity_subgroup_uid=(
-                study_activity_subgroup.get("selection_uid")
-                if study_activity_subgroup
-                else None
-            ),
-            study_activity_subgroup_order=(
-                study_activity_subgroup.get("order")
-                if study_activity_subgroup
-                else None
-            ),
-            activity_subgroup_uid=(
-                study_activity_subgroup.get("activity_subgroup_uid")
-                if study_activity_subgroup
-                else None
-            ),
-            study_activity_group_uid=(
-                study_activity_group.get("selection_uid")
-                if study_activity_group
-                else None
-            ),
-            study_activity_group_order=(
-                study_activity_group.get("order") if study_activity_group else None
-            ),
-            activity_group_uid=(
-                study_activity_group.get("activity_group_uid")
-                if study_activity_group
-                else None
-            ),
+            study_activity_subgroup_uid=study_activity_subgroup.get("selection_uid"),
+            study_activity_subgroup_order=study_activity_subgroup.get("order"),
+            activity_subgroup_uid=study_activity_subgroup.get("activity_subgroup_uid"),
+            study_activity_group_uid=study_activity_group.get("selection_uid"),
+            study_activity_group_order=study_activity_group.get("order"),
+            activity_group_uid=study_activity_group.get("activity_group_uid"),
             activity_uid=selection["activity_uid"],
             order=selection["order"],
             activity_version=selection["activity_version"],
-            soa_group_term_uid=(
-                study_soa_group.get("soa_group_term_uid") if study_soa_group else None
-            ),
-            study_soa_group_uid=(
-                study_soa_group.get("selection_uid") if study_soa_group else None
-            ),
-            study_soa_group_order=(
-                study_soa_group.get("order") if study_soa_group else None
-            ),
+            soa_group_term_uid=study_soa_group.get("soa_group_term_uid"),
+            study_soa_group_uid=study_soa_group.get("selection_uid"),
+            study_soa_group_order=study_soa_group.get("order"),
             author_id=selection["author_id"],
             change_type=change_type,
             start_date=convert_to_datetime(value=selection["start_date"]),
             show_activity_in_protocol_flowchart=selection[
                 "show_activity_in_protocol_flowchart"
             ],
-            show_activity_group_in_protocol_flowchart=(
-                study_activity_group.get("show_activity_group_in_protocol_flowchart")
-                if study_activity_group
-                else None
+            show_activity_group_in_protocol_flowchart=study_activity_group.get(
+                "show_activity_group_in_protocol_flowchart"
             ),
-            show_activity_subgroup_in_protocol_flowchart=(
-                study_activity_subgroup.get(
-                    "show_activity_subgroup_in_protocol_flowchart"
-                )
-                if study_activity_subgroup
-                else None
+            show_activity_subgroup_in_protocol_flowchart=study_activity_subgroup.get(
+                "show_activity_subgroup_in_protocol_flowchart"
             ),
-            show_soa_group_in_protocol_flowchart=(
-                study_soa_group.get("show_soa_group_in_protocol_flowchart")
-                if study_soa_group
-                else None
+            show_soa_group_in_protocol_flowchart=study_soa_group.get(
+                "show_soa_group_in_protocol_flowchart"
             ),
             end_date=end_date,
         )
@@ -360,11 +315,11 @@ class StudySelectionActivityRepository(
                         all_sa.order AS order,
                         all_sa.uid AS study_selection_uid,
                         all_sa.show_activity_in_protocol_flowchart AS show_activity_in_protocol_flowchart,
-                        head(apoc.coll.sortMulti([(all_sa)-[:STUDY_ACTIVITY_HAS_STUDY_SOA_GROUP]->(soa_group:StudySoAGroup)-[:HAS_FLOWCHART_GROUP]->(elr:CTTermRoot) | 
+                        head(apoc.coll.sortMulti([(all_sa)-[:STUDY_ACTIVITY_HAS_STUDY_SOA_GROUP]->(soa_group:StudySoAGroup)-[:HAS_FLOWCHART_GROUP]->(soa_group_term_root:CTTermRoot) | 
                         {
                             selection_uid: soa_group.uid, 
-                            soa_group_term_uid:elr.uid,
-                            show_soa_group_in_protocol_flowchart:coalesce(soa_group.show_soa_group_in_protocol_flowchart, false),
+                            soa_group_term_uid: soa_group_term_root.uid,
+                            show_soa_group_in_protocol_flowchart: coalesce(soa_group.show_soa_group_in_protocol_flowchart, false),
                             order: soa_group.order,
                             date: head([(soa_group)<-[:AFTER]-(after_action:StudyAction) | after_action.date])
                         }], ['date'])) AS study_soa_group,

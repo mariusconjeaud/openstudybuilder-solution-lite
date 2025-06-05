@@ -397,6 +397,7 @@ class ConceptGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType]
             wildcard_properties_list=list_concept_wildcard_properties(
                 self.return_model
             ),
+            format_filter_sort_keys=self.format_filter_sort_keys,
         )
 
         query.parameters.update(filter_query_parameters)

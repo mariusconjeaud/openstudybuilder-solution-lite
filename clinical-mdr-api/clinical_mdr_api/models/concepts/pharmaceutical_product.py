@@ -37,14 +37,14 @@ class Ingredient(BaseModel):
     formulation_name: Annotated[
         str | None, Field(json_schema_extra={"nullable": True})
     ] = None
-    active_substance: SimpleActiveSubstance
+    active_substance: Annotated[SimpleActiveSubstance, Field()]
     strength: Annotated[
         SimpleNumericValueWithUnit | None, Field(json_schema_extra={"nullable": True})
     ] = None
     half_life: Annotated[
         SimpleNumericValueWithUnit | None, Field(json_schema_extra={"nullable": True})
     ] = None
-    lag_times: list[SimpleLagTime] = []
+    lag_times: list[SimpleLagTime] = Field(default_factory=list)
 
 
 class IngredientCreateInput(PostInputModel):
@@ -53,7 +53,7 @@ class IngredientCreateInput(PostInputModel):
     external_id: Annotated[str | None, Field(min_length=1)] = None
     strength_uid: Annotated[str | None, Field(min_length=1)] = None
     half_life_uid: Annotated[str | None, Field(min_length=1)] = None
-    lag_time_uids: list[str] = []
+    lag_time_uids: list[str] = Field(default_factory=list)
 
 
 class IngredientEditInput(PatchInputModel):
@@ -62,37 +62,37 @@ class IngredientEditInput(PatchInputModel):
     external_id: Annotated[str | None, Field(min_length=1)] = None
     strength_uid: Annotated[str | None, Field(min_length=1)] = None
     half_life_uid: Annotated[str | None, Field(min_length=1)] = None
-    lag_time_uids: list[str] | None = None
+    lag_time_uids: Annotated[list[str] | None, Field()] = None
 
 
 class Formulation(BaseModel):
     external_id: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = (
         None
     )
-    ingredients: list[Ingredient] = []
+    ingredients: list[Ingredient] = Field(default_factory=list)
 
 
 class FormulationCreateInput(PostInputModel):
     external_id: Annotated[str | None, Field(min_length=1)] = None
-    ingredients: list[IngredientCreateInput] | None = None
+    ingredients: Annotated[list[IngredientCreateInput] | None, Field()] = None
 
 
 class FormulationEditInput(PatchInputModel):
     external_id: Annotated[str | None, Field(min_length=1)] = None
-    ingredients: list[IngredientEditInput] = []
+    ingredients: list[IngredientEditInput] = Field(default_factory=list)
 
 
 class PharmaceuticalProduct(VersionProperties):
-    uid: str
+    uid: Annotated[str, Field()]
 
     external_id: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = (
         None
     )
-    library_name: str
+    library_name: Annotated[str, Field()]
 
-    dosage_forms: list[SimpleTermModel] | None
-    routes_of_administration: list[SimpleTermModel] | None
-    formulations: list[Formulation]
+    dosage_forms: Annotated[list[SimpleTermModel] | None, Field()]
+    routes_of_administration: Annotated[list[SimpleTermModel] | None, Field()]
+    formulations: Annotated[list[Formulation], Field()]
 
     possible_actions: Annotated[
         list[str],
@@ -242,24 +242,19 @@ class SimplePharmaceuticalProduct(BaseModel):
 class PharmaceuticalProductCreateInput(PostInputModel):
     external_id: Annotated[str | None, Field(min_length=1)] = None
     library_name: Annotated[str, Field(min_length=1)]
-    dosage_form_uids: list[str] = []
-    route_of_administration_uids: list[str] = []
-    formulations: list[FormulationCreateInput] = []
+    dosage_form_uids: list[str] = Field(default_factory=list)
+    route_of_administration_uids: list[str] = Field(default_factory=list)
+    formulations: list[FormulationCreateInput] = Field(default_factory=list)
 
 
 class PharmaceuticalProductEditInput(PatchInputModel):
     external_id: Annotated[str | None, Field(min_length=1)] = None
     library_name: Annotated[str | None, Field(min_length=1)] = None
-    dosage_form_uids: list[str] = []
-    route_of_administration_uids: list[str] = []
-    formulations: list[FormulationEditInput] = []
+    dosage_form_uids: list[str] = Field(default_factory=list)
+    route_of_administration_uids: list[str] = Field(default_factory=list)
+    formulations: list[FormulationEditInput] = Field(default_factory=list)
     change_description: Annotated[str, Field(min_length=1)]
 
 
 class PharmaceuticalProductVersion(PharmaceuticalProduct):
-    changes: Annotated[
-        list[str],
-        Field(
-            description=CHANGES_FIELD_DESC,
-        ),
-    ] = []
+    changes: list[str] = Field(description=CHANGES_FIELD_DESC, default_factory=list)

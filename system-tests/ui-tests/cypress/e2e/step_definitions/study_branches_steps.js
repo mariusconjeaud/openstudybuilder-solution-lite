@@ -5,6 +5,10 @@ let branchShortName = "BA Test Short Name"
 let branchRandGroup = "BA Randomisation"
 let branchCode = "BA Test Branch Code"
 
+When('The Study Branch is found', () => cy.searchAndCheckPresence(branchName, true))
+
+When('The Study Branch is no longer available', () => cy.searchAndCheckPresence(branchName, false))
+
 Given('A study without Study Arms has been selected', () => {
     cy.selectTestStudy('Study_000004')
 })
@@ -17,6 +21,7 @@ Given('A study with Study Arms has been selected', () => {
 
 When('The form for new study branch arm is filled and saved', () => {
     cy.fixture('studyBranchArm').then((branch_arm) => {
+        branchName = branch_arm.name
         cy.wait(2500)
         cy.clickButton('add-study-branch-arm')
         cy.selectFirstVSelect('study-arm')
@@ -31,20 +36,19 @@ When('The form for new study branch arm is filled and saved', () => {
 })
 
 Then('The study branch arm is visible within the table', () => {
-    cy.wait(2000)
     cy.fixture('studyBranchArm').then((branch_arm) => {
-        cy.checkRowValueByColumnName(branch_arm.name, 'Branch arm name', branch_arm.name)
-        cy.checkRowValueByColumnName(branch_arm.name, 'Branch arm short name', branch_arm.short_name)
-        cy.checkRowValueByColumnName(branch_arm.name, 'Branch Code', branch_arm.code)
-        cy.checkRowValueByColumnName(branch_arm.name, 'Randomisation group', branch_arm.randomisation_group)
-        cy.checkRowValueByColumnName(branch_arm.name, 'Number of subjects', branch_arm.no_of_subjects)
-        cy.checkRowValueByColumnName(branch_arm.name, 'Description', branch_arm.description)
+        cy.checkRowByIndex(0, 'Branch arm name', branch_arm.name)
+        cy.checkRowByIndex(0, 'Branch arm short name', branch_arm.short_name)
+        cy.checkRowByIndex(0, 'Branch Code', branch_arm.code)
+        cy.checkRowByIndex(0, 'Randomisation group', branch_arm.randomisation_group)
+        cy.checkRowByIndex(0, 'Number of subjects', branch_arm.no_of_subjects)
+        cy.checkRowByIndex(0, 'Description', branch_arm.description)
     })
 })
 
 When('The study branch arm is edited', () => {
     cy.fixture('studyBranchArm').then((branch_arm) => {
-        cy.rowActionsByValue(branch_arm.name, 'Edit')
+        branchName = branch_arm.edit_name
         cy.fillInput('study-branch-arm-name', branch_arm.edit_name)
         cy.fillInput('study-branch-arm-short-name', branch_arm.edit_short_name)
         cy.fillInput('study-branch-arm-description', branch_arm.edit_description)
@@ -56,12 +60,12 @@ When('The study branch arm is edited', () => {
 
 Then('The study branch arm with updated values is visible within the table', () => {
     cy.fixture('studyBranchArm').then((branch_arm) => {
-        cy.checkRowValueByColumnName(branch_arm.edit_name, 'Branch arm name', branch_arm.edit_name)
-        cy.checkRowValueByColumnName(branch_arm.edit_name, 'Branch arm short name', branch_arm.edit_short_name)
-        cy.checkRowValueByColumnName(branch_arm.edit_name, 'Branch Code', branch_arm.code)
-        cy.checkRowValueByColumnName(branch_arm.edit_name, 'Randomisation group', branch_arm.randomisation_group)
-        cy.checkRowValueByColumnName(branch_arm.edit_name, 'Number of subjects', branch_arm.no_of_subjects)
-        cy.checkRowValueByColumnName(branch_arm.edit_name, 'Description', branch_arm.edit_description)
+        cy.checkRowByIndex(0, 'Branch arm name', branch_arm.edit_name)
+        cy.checkRowByIndex(0, 'Branch arm short name', branch_arm.edit_short_name)
+        cy.checkRowByIndex(0, 'Branch Code', branch_arm.code)
+        cy.checkRowByIndex(0, 'Randomisation group', branch_arm.randomisation_group)
+        cy.checkRowByIndex(0, 'Number of subjects', branch_arm.no_of_subjects)
+        cy.checkRowByIndex(0, 'Description', branch_arm.edit_description)
     })
 })
 
@@ -136,6 +140,7 @@ When('The Branch Arm short name field is not populated', () => {
 })
 
 When('The Study Branch Arm is created with given branch arm name', () => {
+    branchName = "BA Test Arm Name"
     cy.wait(2500)
     cy.clickButton('add-study-branch-arm')
     cy.wait(1500)

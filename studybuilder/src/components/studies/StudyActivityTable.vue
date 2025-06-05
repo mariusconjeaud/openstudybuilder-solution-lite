@@ -141,7 +141,7 @@ import libConstants from '@/constants/libraries'
 import { useAccessGuard } from '@/composables/accessGuard'
 import { useStudiesGeneralStore } from '@/stores/studies-general'
 import { useStudyActivitiesStore } from '@/stores/studies-activities'
-import { computed, inject, ref } from 'vue'
+import { computed, inject, ref, onMounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
@@ -253,6 +253,31 @@ const activityHistoryTitle = computed(() => {
   }
   return ''
 })
+
+const props = defineProps({
+  update: {
+    type: Number,
+    default: null,
+  },
+})
+
+watch(
+  () => props.update,
+  () => {
+    checkIfFormOpen()
+  }
+)
+
+onMounted(() => {
+  checkIfFormOpen()
+})
+
+function checkIfFormOpen() {
+  if (localStorage.getItem('open-form')) {
+    showActivityForm.value = true
+    localStorage.removeItem('open-form')
+  }
+}
 
 function checkIfActivityRequestIsEditable(activity) {
   if (activity.activity.library_name === 'Requested') {

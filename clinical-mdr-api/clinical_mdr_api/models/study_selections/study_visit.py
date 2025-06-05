@@ -11,11 +11,11 @@ from common import config
 
 
 class StudyVisitCreateInput(PostInputModel):
-    study_epoch_uid: Annotated[str, Field(alias="study_epoch_uid")]
+    study_epoch_uid: Annotated[str, Field()]
     visit_type_uid: Annotated[
         str, Field(json_schema_extra={"source": "has_visit_type.uid"})
     ]
-    time_reference_uid: str | None = None
+    time_reference_uid: Annotated[str | None, Field()] = None
     time_value: Annotated[
         int | None,
         Field(
@@ -24,10 +24,10 @@ class StudyVisitCreateInput(PostInputModel):
             lt=config.MAX_INT_NEO4J,
         ),
     ] = None
-    time_unit_uid: str | None = None
-    visit_sublabel_reference: str | None = None
-    consecutive_visit_group: str | None = None
-    show_visit: Annotated[bool, Field(alias="show_visit")]
+    time_unit_uid: Annotated[str | None, Field()] = None
+    visit_sublabel_reference: Annotated[str | None, Field()] = None
+    consecutive_visit_group: Annotated[str | None, Field()] = None
+    show_visit: Annotated[bool, Field()]
     min_visit_window_value: Annotated[
         int | None,
         Field(
@@ -44,19 +44,19 @@ class StudyVisitCreateInput(PostInputModel):
             lt=config.MAX_INT_NEO4J,
         ),
     ] = 9999
-    visit_window_unit_uid: str | None = None
-    description: str | None = None
-    start_rule: str | None = None
-    end_rule: str | None = None
-    visit_contact_mode_uid: str
-    epoch_allocation_uid: str | None = None
-    visit_class: str
-    visit_subclass: str | None = None
-    is_global_anchor_visit: bool
-    is_soa_milestone: bool = False
-    visit_name: str | None = None
-    visit_short_name: str | None = None
-    visit_number: float | None = None
+    visit_window_unit_uid: Annotated[str | None, Field()] = None
+    description: Annotated[str | None, Field()] = None
+    start_rule: Annotated[str | None, Field()] = None
+    end_rule: Annotated[str | None, Field()] = None
+    visit_contact_mode_uid: Annotated[str, Field()]
+    epoch_allocation_uid: Annotated[str | None, Field()] = None
+    visit_class: Annotated[str, Field()]
+    visit_subclass: Annotated[str | None, Field()] = None
+    is_global_anchor_visit: Annotated[bool, Field()]
+    is_soa_milestone: Annotated[bool, Field()] = False
+    visit_name: Annotated[str | None, Field()] = None
+    visit_short_name: Annotated[str | None, Field()] = None
+    visit_number: Annotated[float | None, Field()] = None
     unique_visit_number: Annotated[
         int | None,
         Field(
@@ -72,11 +72,11 @@ class StudyVisitCreateInput(PostInputModel):
 
 class StudyVisitEditInput(PatchInputModel):
     uid: Annotated[str, Field(description="Uid of the Visit")]
-    study_epoch_uid: Annotated[str, Field(alias="study_epoch_uid")]
+    study_epoch_uid: Annotated[str, Field()]
     visit_type_uid: Annotated[
         str, Field(json_schema_extra={"source": "has_visit_type.uid"})
     ]
-    time_reference_uid: str | None = None
+    time_reference_uid: Annotated[str | None, Field()] = None
     time_value: Annotated[
         int | None,
         Field(
@@ -85,10 +85,10 @@ class StudyVisitEditInput(PatchInputModel):
             lt=config.MAX_INT_NEO4J,
         ),
     ]
-    time_unit_uid: str | None = None
-    visit_sublabel_reference: str | None = None
-    consecutive_visit_group: str | None = None
-    show_visit: Annotated[bool, Field(alias="show_visit")]
+    time_unit_uid: Annotated[str | None, Field()] = None
+    visit_sublabel_reference: Annotated[str | None, Field()] = None
+    consecutive_visit_group: Annotated[str | None, Field()] = None
+    show_visit: Annotated[bool, Field()]
     min_visit_window_value: Annotated[
         int | None,
         Field(
@@ -105,19 +105,19 @@ class StudyVisitEditInput(PatchInputModel):
             lt=config.MAX_INT_NEO4J,
         ),
     ] = 9999
-    visit_window_unit_uid: str | None = None
-    description: str | None = None
-    start_rule: str | None = None
-    end_rule: str | None = None
-    visit_contact_mode_uid: str
-    epoch_allocation_uid: str | None = None
-    visit_class: str
-    visit_subclass: str | None = None
-    is_global_anchor_visit: bool
-    is_soa_milestone: bool = False
-    visit_name: str | None = None
-    visit_short_name: str | None = None
-    visit_number: float | None = None
+    visit_window_unit_uid: Annotated[str | None, Field()] = None
+    description: Annotated[str | None, Field()] = None
+    start_rule: Annotated[str | None, Field()] = None
+    end_rule: Annotated[str | None, Field()] = None
+    visit_contact_mode_uid: Annotated[str, Field()]
+    epoch_allocation_uid: Annotated[str | None, Field()] = None
+    visit_class: Annotated[str, Field()]
+    visit_subclass: Annotated[str | None, Field()] = None
+    is_global_anchor_visit: Annotated[bool, Field()]
+    is_soa_milestone: Annotated[bool, Field()] = False
+    visit_name: Annotated[str | None, Field()] = None
+    visit_short_name: Annotated[str | None, Field()] = None
+    visit_number: Annotated[float | None, Field()] = None
     unique_visit_number: Annotated[
         int | None,
         Field(
@@ -159,7 +159,7 @@ class StudyVisit(BaseModel):
     model_config = ConfigDict(populate_by_name=True, from_attributes=True)
 
     uid: Annotated[str, Field(description="Uid of the Visit")]
-    study_epoch_uid: Annotated[str, Field(alias="study_epoch_uid")]
+    study_epoch_uid: Annotated[str, Field()]
     visit_type_uid: Annotated[
         str, Field(json_schema_extra={"source": "has_visit_type.uid"})
     ]
@@ -169,7 +169,7 @@ class StudyVisit(BaseModel):
     consecutive_visit_group: Annotated[
         str | None, Field(json_schema_extra={"nullable": True})
     ] = None
-    show_visit: Annotated[bool, Field(alias="show_visit")]
+    show_visit: Annotated[bool, Field()]
     min_visit_window_value: Annotated[
         int | None, Field(json_schema_extra={"nullable": True})
     ] = -9999
@@ -186,7 +186,7 @@ class StudyVisit(BaseModel):
         None
     )
     end_rule: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = None
-    study_uid: str
+    study_uid: Annotated[str, Field()]
     study_id: Annotated[
         str | None,
         Field(
@@ -202,13 +202,13 @@ class StudyVisit(BaseModel):
             json_schema_extra={"nullable": True},
         ),
     ] = None
-    study_epoch: SimpleCTTermNameWithConflictFlag
+    study_epoch: Annotated[SimpleCTTermNameWithConflictFlag, Field()]
     # study_epoch_name can be calculated from uid
     epoch_uid: Annotated[str, Field(description="The uid of the study epoch")]
 
-    order: int
-    visit_type: SimpleCTTermNameWithConflictFlag
-    visit_type_name: str
+    order: Annotated[int, Field()]
+    visit_type: Annotated[SimpleCTTermNameWithConflictFlag, Field()]
+    visit_type_name: Annotated[str, Field()]
 
     time_reference_uid: Annotated[
         str | None, Field(json_schema_extra={"nullable": True})
@@ -233,8 +233,8 @@ class StudyVisit(BaseModel):
         SimpleCTTermNameWithConflictFlag | None,
         Field(json_schema_extra={"nullable": True}),
     ] = None
-    visit_contact_mode_uid: str
-    visit_contact_mode: SimpleCTTermNameWithConflictFlag
+    visit_contact_mode_uid: Annotated[str, Field()]
+    visit_contact_mode: Annotated[SimpleCTTermNameWithConflictFlag, Field()]
     epoch_allocation_uid: Annotated[
         str | None, Field(json_schema_extra={"nullable": True})
     ] = None
@@ -286,24 +286,24 @@ class StudyVisit(BaseModel):
         str | None, Field(json_schema_extra={"nullable": True})
     ] = None
 
-    visit_number: Annotated[float, Field(alias="visit_number")]
-    visit_subnumber: int
+    visit_number: Annotated[float, Field()]
+    visit_subnumber: Annotated[int, Field()]
 
-    unique_visit_number: Annotated[int, Field(alias="unique_visit_number")]
-    visit_subname: str
+    unique_visit_number: Annotated[int, Field()]
+    visit_subname: Annotated[str, Field()]
 
-    visit_name: str
-    visit_short_name: str
+    visit_name: Annotated[str, Field()]
+    visit_short_name: Annotated[str, Field()]
 
     visit_window_unit_name: Annotated[
         str | None, Field(json_schema_extra={"nullable": True})
     ] = None
-    visit_class: str
+    visit_class: Annotated[str, Field()]
     visit_subclass: Annotated[
         str | None, Field(json_schema_extra={"nullable": True})
     ] = None
-    is_global_anchor_visit: bool
-    is_soa_milestone: bool
+    is_global_anchor_visit: Annotated[bool, Field()]
+    is_soa_milestone: Annotated[bool, Field()]
     status: Annotated[str, Field(description="Study Visit status")]
     start_date: Annotated[datetime, Field(description="Study Visit creation date")]
     end_date: Annotated[
@@ -334,12 +334,12 @@ class StudyVisit(BaseModel):
 
 
 class StudyVisitVersion(StudyVisit):
-    changes: list[str]
+    changes: Annotated[list[str], Field()]
 
 
 class AllowedTimeReferences(BaseModel):
-    time_reference_uid: str
-    time_reference_name: str
+    time_reference_uid: Annotated[str, Field()]
+    time_reference_name: Annotated[str, Field()]
 
 
 class VisitConsecutiveGroupInput(PostInputModel):

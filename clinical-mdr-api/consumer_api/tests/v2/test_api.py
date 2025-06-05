@@ -61,7 +61,7 @@ def test_get_studies(api_client):
     assert_response_status_code(response, 200)
     res = response.json()
 
-    assert res.keys() == {"self", "prev", "next", "items"}
+    TestUtils.assert_paginated_response_shape_ok(res, False)
 
     for item in res["items"]:
         TestUtils.assert_response_shape_ok(

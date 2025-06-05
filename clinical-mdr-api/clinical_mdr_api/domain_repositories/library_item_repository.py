@@ -1427,7 +1427,7 @@ class LibraryItemRepositoryImplBase(
         filter_operator: FilterOperator | None = FilterOperator.AND,
         total_count: bool = False,
         for_audit_trail: bool = False,
-        version_specific_uids: dict | None = None,
+        version_specific_uids: dict[str, Iterable[str]] | None = None,
         at_specific_date: datetime | None = None,
         include_retired_versions: bool = False,
         get_latest_final: bool = False,
@@ -1811,7 +1811,7 @@ class LibraryItemRepositoryImplBase(
         self,
         filter_by: dict | None = None,
         filter_operator: FilterOperator = FilterOperator.AND,
-        version_specific_uids: dict | None = None,
+        version_specific_uids: dict[str, Iterable[str]] | None = None,
     ):
         def date_stmt(name: str):
             if name in filter_by:
@@ -1937,18 +1937,22 @@ END
 
         version_spec_uids_where_stmt_list = []
         if version_specific_uids:
-            for uid, versions in version_specific_uids.items():
-                specific_versions = []
-                for version in versions:
+            for i, (uid, versions) in enumerate(version_specific_uids.items()):
+                params[uid_param := f"_uid_{i}"] = uid
+
+                version_params = []
+                for j, version in enumerate(versions):
                     if version == "LATEST":
-                        version_spec_uids_where_stmt_list.append(
-                            f""" (root.uid = "{uid}" AND ver_rel.version = latest_version.version ) """
-                        )
+                        version_params.append("latest_version.version")
+
                     else:
-                        specific_versions.append(version)
-                if specific_versions:
+                        param = f"_ver_{i}_{j}"
+                        version_params.append(f"${param}")
+                        params[param] = version
+
+                if version_params:
                     version_spec_uids_where_stmt_list.append(
-                        f""" (root.uid = "{uid}" AND ver_rel.version in {list(specific_versions)}  ) """
+                        f""" (root.uid = ${uid_param} AND ver_rel.version in [{", ".join(version_params)}]  ) """
                     )
 
         if version_spec_uids_where_stmt_list:
@@ -2166,8 +2170,8 @@ END
                     MATCH (root)-[ver_rel:HAS_VERSION]->()
                     WITH * ORDER BY ver_rel.start_date DESC LIMIT 1
                     {"""
-                        WHERE 
-                            $status <> "Final"                                      // WHEN THE USER DOESN'T ASK FOR FINAL --THEN--> PASS EVERYTHING 
+                        WHERE
+                            $status <> "Final"                                      // WHEN THE USER DOESN'T ASK FOR FINAL --THEN--> PASS EVERYTHING
                             OR (ver_rel.status <> 'Retired' AND $status = 'Final')  // WHEN USER ASKS FOR FINAL --THEN--> THE LATEST SHOULD NOT BE RETIRED"""
                     if not include_retired_versions
                     else ""}
@@ -2477,24 +2481,27 @@ END
                 WITH *, 
                  [(root)-[ver_rel]->(activity_instance_value)-[:HAS_ACTIVITY]->(activity_instance_grouping:ActivityGrouping)-[:IN_SUBGROUP]->(activity_valid_group:ActivityValidGroup) | 
                     {
-                        activity: head(apoc.coll.sortMulti([(activity_instance_grouping)-[:HAS_GROUPING]-(:ActivityValue)<-[has_version:HAS_VERSION]-
+                        activity: head(apoc.coll.sortMulti([(activity_instance_grouping)-[:HAS_GROUPING]-(activity_value:ActivityValue)<-[has_version:HAS_VERSION]-
                             (activity_root:ActivityRoot) | 
                             {
-                                uid:activity_root.uid,
+                                uid: activity_root.uid,
+                                name: activity_value.name,
                                 major_version: toInteger(split(has_version.version,'.')[0]),
                                 minor_version: toInteger(split(has_version.version,'.')[1])
                             }], ['major_version', 'minor_version'])),
-                        activity_subgroup: head(apoc.coll.sortMulti([(activity_valid_group)<-[:HAS_GROUP]-(:ActivitySubGroupValue)<-[has_version:HAS_VERSION]-
+                        activity_subgroup: head(apoc.coll.sortMulti([(activity_valid_group)<-[:HAS_GROUP]-(activity_subgroup_value:ActivitySubGroupValue)<-[has_version:HAS_VERSION]-
                             (activity_subgroup_root:ActivitySubGroupRoot) | 
                             {
-                                uid:activity_subgroup_root.uid,
+                                uid: activity_subgroup_root.uid,
+                                name: activity_subgroup_value.name,
                                 major_version: toInteger(split(has_version.version,'.')[0]),
                                 minor_version: toInteger(split(has_version.version,'.')[1])
                             }], ['major_version', 'minor_version'])), 
-                        activity_group: head(apoc.coll.sortMulti([(activity_valid_group)-[:IN_GROUP]-(:ActivityGroupValue)<-[has_version:HAS_VERSION]-
+                        activity_group: head(apoc.coll.sortMulti([(activity_valid_group)-[:IN_GROUP]-(activity_group_value:ActivityGroupValue)<-[has_version:HAS_VERSION]-
                             (activity_group_root:ActivityGroupRoot) | 
                             {
-                                uid:activity_group_root.uid,
+                                uid: activity_group_root.uid,
+                                name: activity_group_value.name,
                                 major_version: toInteger(split(has_version.version,'.')[0]),
                                 minor_version: toInteger(split(has_version.version,'.')[1])
                             }], ['major_version', 'minor_version']))
@@ -2553,13 +2560,17 @@ END
         match_stmt = """
             MATCH (root)-[ver_rel]->(activity_value:ActivityValue)
             OPTIONAL MATCH (activity_value)-[:REPLACED_BY_ACTIVITY]->(replaced_by_activity:ActivityRoot)
-            CALL
-            {
+            /* CALL { // gets latest version of each activity instance 
                 WITH activity_value
-                WITH *, [(activity_value)-[:HAS_GROUPING]->(activity_grouping:ActivityGrouping)<-[:HAS_ACTIVITY]-(activity_instance_value:ActivityInstanceValue)
-                <-[:HAS_VERSION]-(activity_instance_root:ActivityInstanceRoot) | {uid: activity_instance_root.uid, name: activity_instance_value.name}] AS activity_instances
-                RETURN activity_instances
-            }
+                MATCH (activity_value)-[:HAS_GROUPING]->(activity_grouping:ActivityGrouping)
+                      <-[:HAS_ACTIVITY]-(activity_instance_value:ActivityInstanceValue)
+                      <-[activity_instance_version:HAS_VERSION]-(activity_instance_root:ActivityInstanceRoot)
+                WHERE activity_instance_version.status IN ['Final', 'Retired']
+                WITH *
+                ORDER BY activity_instance_root.uid, activity_instance_version.start_date DESC
+                WITH activity_instance_root.uid AS uid, HEAD(COLLECT({uid: activity_instance_root.uid, name: activity_instance_value.name, version: activity_instance_version.version, status: activity_instance_version.status})) AS latest_activity_instance
+                RETURN COLLECT(latest_activity_instance) AS activity_instances
+            } */
             CALL
             {
                 WITH root,activity_value,ver_rel
@@ -2583,7 +2594,7 @@ END
                             }], ['major_version', 'minor_version']))
                     }
                     ] as activity_groupings,
-                    head([(library:Library)--(activity_root)--(activity_value)<-[:HAS_SELECTED_ACTIVITY]-(:StudyActivity)<-[:HAS_STUDY_ACTIVITY]-(study_value:StudyValue) WHERE library.name="Requested" | study_value.study_id_prefix + "-" + study_value.study_number]) AS requester_study_id
+                    head([(library:Library)--(root)--(activity_value)<-[:HAS_SELECTED_ACTIVITY]-(:StudyActivity)<-[:HAS_STUDY_ACTIVITY]-(study_value:StudyValue) WHERE library.name="Requested" | study_value.study_id_prefix + "-" + study_value.study_number]) AS requester_study_id
                 RETURN activity_groupings, requester_study_id
             }
         """
@@ -2591,7 +2602,7 @@ END
         activity_root_return = """,
             {
                 activity_groupings: activity_groupings,
-                activity_instances: activity_instances,
+                // activity_instances: activity_instances,
                 replaced_activity_uid: replaced_by_activity.uid,
                 requester_study_id: requester_study_id
             } as activity_root

@@ -28,7 +28,6 @@ CTCodelistUid = Path(description="The unique id of the CTCodelist")
     "/packages",
     dependencies=[rbac.LIBRARY_READ],
     summary="Returns all controlled terminology packages.",
-    response_model=list[CTPackage],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -54,7 +53,7 @@ def get_packages(
             description="If set to True, only sponsor packages are returned.",
         ),
     ] = False,
-):
+) -> list[CTPackage]:
     ct_package_service = CTPackageService()
 
     return ct_package_service.get_all_ct_packages(
@@ -68,7 +67,6 @@ def get_packages(
     "/packages/changes",
     dependencies=[rbac.LIBRARY_READ],
     summary="Returns changes between codelists and terms inside two different packages.",
-    response_model=CTPackageChanges,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -91,7 +89,7 @@ def get_packages_changes_between_codelists_and_terms(
             "\n_the possible dates for given catalogue_name can be retrieved by the /ct/packages/dates endpoint",
         ),
     ],
-):
+) -> CTPackageChanges:
     ct_package_service = CTPackageService()
     return ct_package_service.get_ct_packages_changes(
         catalogue_name=catalogue_name,
@@ -104,7 +102,6 @@ def get_packages_changes_between_codelists_and_terms(
     "/packages/{codelist_uid}/changes",
     dependencies=[rbac.LIBRARY_READ],
     summary="Returns changes from given codelist and all associated terms inside two different packages.",
-    response_model=CTPackageChangesSpecificCodelist,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -128,7 +125,7 @@ def get_packages_changes_between_codelist_and_all_associated_terms(
             "\n_the possible dates for given catalogue_name can be retrieved by the /ct/packages/dates endpoint",
         ),
     ],
-):
+) -> CTPackageChangesSpecificCodelist:
     ct_package_service = CTPackageService()
     return ct_package_service.get_ct_packages_codelist_changes(
         catalogue_name=catalogue_name,
@@ -142,14 +139,13 @@ def get_packages_changes_between_codelist_and_all_associated_terms(
     "/packages/dates",
     dependencies=[rbac.LIBRARY_READ],
     summary="Returns all effective dates for packages in a given catalogue.",
-    response_model=CTPackageDates,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
         404: _generic_descriptions.ERROR_404,
     },
 )
-def get_package_dates(catalogue_name: str):
+def get_package_dates(catalogue_name: str) -> CTPackageDates:
     ct_package_service = CTPackageService()
     return ct_package_service.get_all_effective_dates(catalogue_name=catalogue_name)
 
@@ -158,7 +154,6 @@ def get_package_dates(catalogue_name: str):
     "/packages/sponsor",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Creates a sponsor CT package, in the context of a study.",
-    response_model=CTPackage,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -187,6 +182,6 @@ def create(
             description="The effective date of the package, for instance '2020-09-27'"
         ),
     ],
-):
+) -> CTPackage:
     ct_package_service = CTPackageService()
     return ct_package_service.create_sponsor_ct_package(extends_package, effective_date)

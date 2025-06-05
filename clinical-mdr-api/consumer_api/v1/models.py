@@ -34,12 +34,11 @@ class Study(BaseModel):
             ),
         ] = None
         version_started_at: Annotated[
-            datetime | None,
+            datetime,
             Field(
                 description="Study Version Start Time",
-                json_schema_extra={"nullable": True},
             ),
-        ] = None
+        ]
         version_ended_at: Annotated[
             datetime | None,
             Field(
@@ -120,10 +119,9 @@ class SortByStudyVisits(Enum):
 
 class StudyVisit(BaseModel):
     study_uid: Annotated[str, Field(description="Study UID")]
-    study_version_number: Annotated[str, Field(description="Study Version Number")]
     uid: Annotated[str, Field(description="Study Visit UID")]
     visit_name: Annotated[str, Field(description="Study Visit Name")]
-    visit_order: Annotated[int, Field(description="Study Visit Order")]
+    visit_order: Annotated[float, Field(description="Study Visit Order")]
     unique_visit_number: Annotated[
         int, Field(description="Study Visit Unique Visit Number")
     ]
@@ -201,13 +199,12 @@ class StudyVisit(BaseModel):
         log.debug("Create Study Visit from input: %s", val)
         return cls(
             study_uid=val["study_uid"],
-            study_version_number=val["study_version_number"],
             uid=val["uid"],
             visit_name=val["visit_name"],
             unique_visit_number=val["unique_visit_number"],
             visit_number=val["visit_number"],
             visit_order=val["visit_number"],
-            visit_short_name=val["visit_short_name"],
+            visit_short_name=str(val["visit_short_name"]),
             visit_window_min=val["visit_window_min"],
             visit_window_max=val["visit_window_max"],
             is_global_anchor_visit=val["is_global_anchor_visit"],
@@ -231,12 +228,17 @@ class SortByStudyActivities(Enum):
 
 class StudyActivity(BaseModel):
     study_uid: Annotated[str, Field(description="Study UID")]
-    study_version_number: Annotated[str, Field(description="Study Version Number")]
     uid: Annotated[str, Field(description="Study Activity UID")]
     study_activity_subgroup: Annotated[
-        dict, Field(description="Study Activity Subgroup")
+        dict | None,
+        Field(
+            description="Study Activity Subgroup", json_schema_extra={"nullable": True}
+        ),
     ]
-    study_activity_group: Annotated[dict, Field(description="Study Activity Group")]
+    study_activity_group: Annotated[
+        dict | None,
+        Field(description="Study Activity Group", json_schema_extra={"nullable": True}),
+    ]
     soa_group: Annotated[dict, Field(description="SoA Group")]
     activity_uid: Annotated[str, Field(description="Activity UID")]
     activity_name: Annotated[str, Field(description="Activity Name")]
@@ -247,7 +249,6 @@ class StudyActivity(BaseModel):
         log.debug("Create Study Visit from input: %s", val)
         return cls(
             study_uid=val["study_uid"],
-            study_version_number=val["study_version_number"],
             uid=val["uid"],
             study_activity_subgroup=val["study_activity_subgroup"],
             study_activity_group=val["study_activity_group"],
@@ -259,7 +260,7 @@ class StudyActivity(BaseModel):
 
 
 class SortByStudyDetailedSoA(Enum):
-    VISIT_NAME = "visit_name"
+    VISIT_NAME = "visit_short_name"
     EPOCH_NAME = "epoch_name"
     ACTIVITY_NAME = "activity_name"
     ACTIVITY_GROUP_NAME = "activity_group_name"
@@ -269,22 +270,27 @@ class SortByStudyDetailedSoA(Enum):
 
 class StudyDetailedSoA(BaseModel):
     study_uid: Annotated[str, Field(description="Study UID")]
-    study_version_number: Annotated[str, Field(description="Study Version Number")]
-    visit_name: Annotated[str, Field(description="Study Visit Name")]
+    visit_short_name: Annotated[str, Field(description="Study Visit Short Name")]
     epoch_name: Annotated[str, Field(description="Study Epoch Name")]
     activity_name: Annotated[str, Field(description="Activity Name")]
-    activity_subgroup_name: Annotated[str, Field(description="Activity Subgroup Name")]
-    activity_group_name: Annotated[str, Field(description="Activity Group Name")]
+    activity_subgroup_name: Annotated[
+        str | None,
+        Field(
+            description="Activity Subgroup Name", json_schema_extra={"nullable": True}
+        ),
+    ]
+    activity_group_name: Annotated[
+        str | None,
+        Field(description="Activity Group Name", json_schema_extra={"nullable": True}),
+    ]
     soa_group_name: Annotated[str, Field(description="SoA Group Name")]
     is_data_collected: Annotated[bool, Field(description="Activity Is Data Collected")]
 
     @classmethod
     def from_input(cls, val: dict):
-        log.debug("Create Study Visit from input: %s", val)
         return cls(
             study_uid=val["study_uid"],
-            study_version_number=val["study_version_number"],
-            visit_name=val["visit_name"],
+            visit_short_name=str(val["visit_short_name"]),
             epoch_name=val["epoch_name"],
             activity_name=val["activity_name"],
             activity_subgroup_name=val["activity_subgroup_name"],
@@ -297,6 +303,7 @@ class StudyDetailedSoA(BaseModel):
 class SortByStudyOperationalSoA(Enum):
     ACTIVITY_NAME = "activity_name"
     VISIT_UID = "visit_uid"
+    VISIT_NAME = "visit_short_name"
 
 
 class StudyOperationalSoA(BaseModel):
@@ -305,10 +312,6 @@ class StudyOperationalSoA(BaseModel):
     ]
     study_id: Annotated[
         str | None, Field(description="Study ID", json_schema_extra={"nullable": True})
-    ]
-    study_version_number: Annotated[
-        str | None,
-        Field(description="Study Version Number", json_schema_extra={"nullable": True}),
     ]
     activity_name: Annotated[
         str | None,
@@ -380,7 +383,6 @@ class StudyOperationalSoA(BaseModel):
         return cls(
             study_uid=val["study_uid"],
             study_id=val["study_id"],
-            study_version_number=val["study_version_number"],
             activity_name=val["activity_name"],
             activity_uid=val["activity_uid"],
             activity_group_name=val["activity_group_name"],
@@ -393,6 +395,6 @@ class StudyOperationalSoA(BaseModel):
             param_code=val["param_code"],
             soa_group_name=val["soa_group_name"],
             topic_code=val["topic_code"],
-            visit_short_name=val["visit_short_name"],
+            visit_short_name=str(val["visit_short_name"]),
             visit_uid=val["visit_uid"],
         )

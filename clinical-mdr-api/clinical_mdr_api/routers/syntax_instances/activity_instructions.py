@@ -1,7 +1,6 @@
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Body, Path, Query, Request, Response
-from fastapi import status as fast_api_status
+from fastapi import APIRouter, Body, Path, Query, Request
 from pydantic.types import Json
 
 from clinical_mdr_api.domain_repositories.models.syntax import ActivityInstructionValue
@@ -44,7 +43,6 @@ ActivityInstructionUID = Path(description="The unique id of the objective.")
     dependencies=[rbac.LIBRARY_READ],
     summary="Returns all final versions of objectives referenced by any study.",
     description=_generic_descriptions.DATA_EXPORTS_HEADER,
-    response_model=CustomPage[ActivityInstruction],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -113,7 +111,7 @@ def get_all(
     total_count: Annotated[
         bool | None, Query(description=_generic_descriptions.TOTAL_COUNT)
     ] = False,
-):
+) -> CustomPage[ActivityInstruction]:
     all_items = Service().get_all(
         return_study_count=True,
         page_number=page_number,
@@ -138,7 +136,6 @@ def get_all(
     summary="Returns possible values from the database for a given header",
     description="""Allowed parameters include : field name for which to get possible
     values, search string to provide filtering for the field name, additional filters to apply on other fields""",
-    response_model=list[Any],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -179,7 +176,7 @@ def get_distinct_values_for_header(
     page_size: Annotated[
         int | None, Query(description=_generic_descriptions.HEADER_PAGE_SIZE)
     ] = config.DEFAULT_HEADER_PAGE_SIZE,
-):
+) -> list[Any]:
     return Service().get_distinct_values_for_header(
         status=status,
         field_name=field_name,
@@ -193,7 +190,6 @@ def get_distinct_values_for_header(
 @router.get(
     "/audit-trail",
     dependencies=[rbac.LIBRARY_READ],
-    response_model=CustomPage[ActivityInstruction],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -225,7 +221,7 @@ def retrieve_audit_trail(
     total_count: Annotated[
         bool, Query(description=_generic_descriptions.TOTAL_COUNT)
     ] = False,
-):
+) -> CustomPage[ActivityInstruction]:
     results = Service().get_all(
         page_number=page_number,
         page_size=page_size,
@@ -246,7 +242,6 @@ def retrieve_audit_trail(
     summary="Returns the latest/newest version of a specific objective identified by 'activity_instruction_uid'.",
     description="""If multiple request query parameters are used, then they need to
     match all at the same time (they are combined with the AND operation).""",
-    response_model=ActivityInstruction | None,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -278,7 +273,7 @@ def get(
             r"E.g. '0.1', '0.2', '1.0', ...",
         ),
     ] = None,
-):
+) -> ActivityInstruction | None:
     return Service().get_by_uid(
         uid=activity_instruction_uid, version=version, status=status
     )
@@ -290,7 +285,6 @@ def get(
     summary="Returns the version history of a specific objective identified by 'activity_instruction_uid'.",
     description="The returned versions are ordered by\n"
     "0. start_date descending (newest entries first)",
-    response_model=list[ActivityInstructionVersion],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -302,14 +296,13 @@ def get(
 )
 def get_versions(
     activity_instruction_uid: Annotated[str, ActivityInstructionUID],
-):
+) -> list[ActivityInstructionVersion]:
     return Service().get_version_history(uid=activity_instruction_uid)
 
 
 @router.get(
     "/{activity_instruction_uid}/studies",
     dependencies=[rbac.STUDY_READ],
-    response_model=list[Study],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -329,7 +322,7 @@ def get_studies(
         list[StudyComponentEnum] | None,
         Query(description=study_section_description("exclude")),
     ] = None,
-):
+) -> list[Study]:
     return Service().get_referencing_studies(
         uid=activity_instruction_uid,
         node_type=ActivityInstructionValue,
@@ -352,7 +345,6 @@ If the request succeeds:
 * The 'change_description' property will be set automatically.
 * The 'version' property will be set to '0.1'.
 """,
-    response_model=ActivityInstruction,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -377,7 +369,7 @@ def create(
         ActivityInstructionCreateInput,
         Body(description="Related parameters of the objective that shall be created."),
     ],
-):
+) -> ActivityInstruction:
     return Service().create(objective)
 
 
@@ -393,7 +385,6 @@ def create(
 If the request succeeds:
 * No objective will be created, but the result of the request will show what the objective will look like.
 """,
-    response_model=ActivityInstruction,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -420,7 +411,7 @@ def preview(
             description="Related parameters of the objective that shall be previewed."
         ),
     ],
-):
+) -> ActivityInstruction:
     return Service().create(objective, preview=True)
 
 
@@ -436,7 +427,6 @@ If the request succeeds:
 * The 'version' property will be increased automatically by +0.1.
 * The status will remain in 'Draft'.
 """,
-    response_model=ActivityInstruction,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -464,7 +454,7 @@ def edit(
             description="The new parameter terms for the objective including the change description.",
         ),
     ],
-):
+) -> ActivityInstruction:
     return Service().edit_draft(activity_instruction_uid, objective)
 
 
@@ -481,7 +471,6 @@ If the request succeeds:
 * The 'change_description' property will be set automatically.
 * The 'version' property will be increased automatically to the next major version.
     """,
-    response_model=ActivityInstruction,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -500,7 +489,7 @@ If the request succeeds:
 )
 def approve(
     activity_instruction_uid: Annotated[str, ActivityInstructionUID],
-):
+) -> ActivityInstruction:
     return Service().approve(activity_instruction_uid)
 
 
@@ -516,7 +505,6 @@ If the request succeeds:
 * The 'change_description' property will be set automatically. 
 * The 'version' property will remain the same as before.
     """,
-    response_model=ActivityInstruction,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -534,7 +522,7 @@ If the request succeeds:
 )
 def inactivate(
     activity_instruction_uid: Annotated[str, ActivityInstructionUID],
-):
+) -> ActivityInstruction:
     return Service().inactivate_final(uid=activity_instruction_uid)
 
 
@@ -550,7 +538,6 @@ If the request succeeds:
 * The 'change_description' property will be set automatically. 
 * The 'version' property will remain the same as before.
     """,
-    response_model=ActivityInstruction,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -568,7 +555,7 @@ If the request succeeds:
 )
 def reactivate(
     activity_instruction_uid: Annotated[str, ActivityInstructionUID],
-):
+) -> ActivityInstruction:
     return Service().reactivate_retired(activity_instruction_uid)
 
 
@@ -580,7 +567,6 @@ def reactivate(
 * the objective is in 'Draft' status and
 * the objective has never been in 'Final' status and
 * the objective belongs to a library that allows deleting (the 'is_editable' property of the library needs to be true).""",
-    response_model=None,
     status_code=204,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -601,7 +587,6 @@ def delete(
     activity_instruction_uid: Annotated[str, ActivityInstructionUID],
 ):
     Service().soft_delete(activity_instruction_uid)
-    return Response(status_code=fast_api_status.HTTP_204_NO_CONTENT)
 
 
 @router.get(
@@ -611,7 +596,6 @@ def delete(
     description="Returns all template parameters used in the objective template "
     "that is the basis for the objective identified by 'activity_instruction_uid'. "
     "Includes the available values per parameter.",
-    response_model=list[TemplateParameter],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -628,7 +612,7 @@ def get_parameters(
             description="Optionally, the uid of the study to subset the parameters to (e.g. for StudyEndpoints parameters)",
         ),
     ] = None,
-):
+) -> list[TemplateParameter]:
     return Service().get_parameters(
         uid=activity_instruction_uid, study_uid=study_uid, include_study_endpoints=True
     )

@@ -20,10 +20,10 @@ When("The study disclosure page for CDISC DEV-0 is accessed", () => cy.visitStud
 
 Then('The correct study values are presented for Identification', () => {
     cy.wait('@specification_data').then((data) => {
-        cy.checkRowValueByColumnName('Study ID', 'Values', data.response.body.unique_protocol_identification_number)
-        cy.checkRowValueByColumnName('Study Short Title', 'Values', data.response.body.brief_title)
-        cy.checkRowValueByColumnName('Study Acronym', 'Values', data.response.body.acronym)
-        cy.checkRowValueByColumnName('Study Title', 'Values', data.response.body.official_title)
+        cy.getRowIndex('Study ID').then(index => cy.checkRowByIndex(index, 'Values', data.response.body.unique_protocol_identification_number))
+        cy.getRowIndex('Study Short Title').then(index => cy.checkRowByIndex(index, 'Values', data.response.body.brief_title))
+        cy.getRowIndex('Study Acronym').then(index => cy.checkRowByIndex(index, 'Values', data.response.body.acronym))
+        cy.getRowIndex('Study Title').then(index => cy.checkRowByIndex(index, 'Values', data.response.body.official_title))
     })
 })
 
@@ -51,12 +51,12 @@ Then('The correct study values are presented for Secondary IDs', () => {
 
 Then('The correct study values are presented for Design', () => {
     cy.wait('@specification_data').then((data) => {
-        cy.checkRowValueByColumnName('Study Type', 'Values', data.response.body.study_type)
-        cy.checkRowValueByColumnName('Study Intent Type', 'Values', data.response.body.intervention_type)
-        cy.checkRowValueByColumnName('Study Phase Classification', 'Values', data.response.body.study_phase)
-        cy.checkRowValueByColumnName('Intervention Model', 'Values', data.response.body.interventional_study_model)
-        cy.checkRowValueByColumnName('Number of Arms', 'Values', data.response.body.number_of_arms)
-        cy.checkRowValueByColumnName('Study is randomised', 'Values', data.response.body.allocation)
+        cy.getRowIndex('Study Type').then(index => cy.checkRowByIndex(index, 'Values', data.response.body.study_type))
+        cy.getRowIndex('Study Intent Type').then(index => cy.checkRowByIndex(index, 'Values', data.response.body.intervention_type))
+        cy.getRowIndex('Study Phase Classification').then(index => cy.checkRowByIndex(index, 'Values', data.response.body.study_phase))
+        cy.getRowIndex('Intervention Model').then(index => cy.checkRowByIndex(index, 'Values', data.response.body.interventional_study_mode))
+        cy.getRowIndex('Number of Arms').then(index => cy.checkRowByIndex(index, 'Values', data.response.body.number_of_arms))
+        cy.getRowIndex('Study is randomised').then(index => cy.checkRowByIndex(index, 'Values', data.response.body.allocation))
     })
 })
 

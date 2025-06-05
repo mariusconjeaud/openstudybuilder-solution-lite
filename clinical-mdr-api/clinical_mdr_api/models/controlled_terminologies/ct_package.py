@@ -53,10 +53,10 @@ class CTPackage(BaseModel):
 
 
 class CodelistChangeItem(BaseModel):
-    uid: str
-    value_node: dict
-    change_date: datetime
-    is_change_of_codelist: bool
+    uid: Annotated[str, Field()]
+    value_node: Annotated[dict, Field()]
+    change_date: Annotated[datetime, Field()]
+    is_change_of_codelist: Annotated[bool, Field()]
 
     @classmethod
     def from_repository_output(cls, query_output) -> Self:
@@ -69,10 +69,10 @@ class CodelistChangeItem(BaseModel):
 
 
 class TermChangeItem(BaseModel):
-    uid: str
-    value_node: dict
-    change_date: datetime
-    codelists: list[Any]
+    uid: Annotated[str, Field()]
+    value_node: Annotated[dict, Field()]
+    change_date: Annotated[datetime, Field()]
+    codelists: Annotated[list[Any], Field()]
 
     @classmethod
     def from_repository_output(cls, query_output) -> Self:
@@ -85,15 +85,15 @@ class TermChangeItem(BaseModel):
 
 
 class CTPackageChanges(BaseModel):
-    from_package: str
-    to_package: str
-    new_codelists: list[CodelistChangeItem]
-    deleted_codelists: list[CodelistChangeItem]
-    updated_codelists: list[CodelistChangeItem]
+    from_package: Annotated[str, Field()]
+    to_package: Annotated[str, Field()]
+    new_codelists: Annotated[list[CodelistChangeItem], Field()]
+    deleted_codelists: Annotated[list[CodelistChangeItem], Field()]
+    updated_codelists: Annotated[list[CodelistChangeItem], Field()]
 
-    new_terms: list[TermChangeItem]
-    deleted_terms: list[TermChangeItem]
-    updated_terms: list[TermChangeItem]
+    new_terms: Annotated[list[TermChangeItem], Field()]
+    deleted_terms: Annotated[list[TermChangeItem], Field()]
+    updated_terms: Annotated[list[TermChangeItem], Field()]
 
     @classmethod
     def from_repository_output(
@@ -130,7 +130,7 @@ class CTPackageChanges(BaseModel):
 
 
 class CTPackageChangesSpecificCodelist(CTPackageChanges):
-    not_modified_terms: list[TermChangeItem]
+    not_modified_terms: Annotated[list[TermChangeItem], Field()]
 
     @classmethod
     def from_repository_output(

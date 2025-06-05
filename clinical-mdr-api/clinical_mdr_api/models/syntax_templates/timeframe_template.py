@@ -22,6 +22,7 @@ class TimeframeTemplateName(BaseModel):
             The actual value/content. It may include parameters
             referenced by simple strings in square brackets [].
             """,
+            json_schema_extra={"format": "html"},
         ),
     ]
     name_plain: Annotated[
@@ -34,7 +35,7 @@ class TimeframeTemplateName(BaseModel):
         str | None,
         Field(
             description="Optional guidance text for using the template.",
-            json_schema_extra={"nullable": True},
+            json_schema_extra={"nullable": True, "format": "html"},
         ),
     ] = None
 
@@ -54,7 +55,6 @@ class TimeframeTemplate(TimeframeTemplateNameUid):
     start_date: Annotated[
         datetime | None,
         Field(
-            default_factory=datetime.utcnow,
             description="""
             Part of the metadata: The point in time when the
             (version of the) timeframe template was created.
@@ -67,7 +67,6 @@ class TimeframeTemplate(TimeframeTemplateNameUid):
     end_date: Annotated[
         datetime | None,
         Field(
-            default_factory=datetime.utcnow,
             description="Part of the metadata: The point in time when the version of the timeframe template was closed (and a new one was created). "
             "The format is ISO 8601 in UTC±0, e.g.: '2020-10-31T16:00:00+00:00' for October 31, 2020 at 6pm in UTC+2 timezone.",
             json_schema_extra={"nullable": True},
@@ -102,19 +101,17 @@ class TimeframeTemplate(TimeframeTemplateNameUid):
             json_schema_extra={"nullable": True},
         ),
     ] = None
-    possible_actions: Annotated[
-        list[str],
-        Field(
-            description=(
-                "Holds those actions that can be performed on the timeframe template. "
-                "Actions are: 'approve', 'edit', 'new_version', 'inactivate', 'reactivate' and 'delete'."
-            )
+    possible_actions: list[str] = Field(
+        description=(
+            "Holds those actions that can be performed on the timeframe template. "
+            "Actions are: 'approve', 'edit', 'new_version', 'inactivate', 'reactivate' and 'delete'."
         ),
-    ] = []
-    parameters: Annotated[
-        list[TemplateParameter],
-        Field(description="Those parameters that are used by the timeframe template."),
-    ] = []
+        default_factory=list,
+    )
+    parameters: list[TemplateParameter] = Field(
+        description="Those parameters that are used by the timeframe template.",
+        default_factory=list,
+    )
     library: Annotated[
         Library | None,
         Field(
@@ -179,12 +176,7 @@ class TimeframeTemplateVersion(TimeframeTemplate):
     Class for storing Timeframe Templates and calculation of differences
     """
 
-    changes: Annotated[
-        list[str],
-        Field(
-            description=CHANGES_FIELD_DESC,
-        ),
-    ] = []
+    changes: list[str] = Field(description=CHANGES_FIELD_DESC, default_factory=list)
 
 
 class TimeframeTemplatePreValidateInput(PostInputModel):
@@ -193,12 +185,15 @@ class TimeframeTemplatePreValidateInput(PostInputModel):
         Field(
             description="The actual value/content. It may include parameters referenced by simple strings in square brackets [].",
             min_length=1,
+            json_schema_extra={"format": "html"},
         ),
     ]
     guidance_text: Annotated[
         str | None,
         Field(
-            description="Optional guidance text for using the template.", min_length=1
+            description="Optional guidance text for using the template.",
+            min_length=1,
+            json_schema_extra={"format": "html"},
         ),
     ] = None
 
@@ -209,12 +204,15 @@ class TimeframeTemplateCreateInput(PostInputModel):
         Field(
             description="The actual value/content. It may include parameters referenced by simple strings in square brackets [].",
             min_length=1,
+            json_schema_extra={"format": "html"},
         ),
     ]
     guidance_text: Annotated[
         str | None,
         Field(
-            description="Optional guidance text for using the template.", min_length=1
+            description="Optional guidance text for using the template.",
+            min_length=1,
+            json_schema_extra={"format": "html"},
         ),
     ] = None
     library_name: Annotated[
@@ -234,12 +232,15 @@ class TimeframeTemplateEditInput(PatchInputModel):
         Field(
             description="The actual value/content. It may include parameters referenced by simple strings in square brackets [].",
             min_length=1,
+            json_schema_extra={"format": "html"},
         ),
     ]
     guidance_text: Annotated[
         str | None,
         Field(
-            description="Optional guidance text for using the template.", min_length=1
+            description="Optional guidance text for using the template.",
+            min_length=1,
+            json_schema_extra={"format": "html"},
         ),
     ] = None
     change_description: Annotated[

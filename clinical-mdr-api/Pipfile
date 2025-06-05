@@ -35,12 +35,14 @@ usdm = "==0.59.0"
 annotated-types = "~=0.6.0"
 jinja2 = "*"
 neomodel = "~=5.4.5"
+nh3 = "~=0.2.21"
 
 [dev-packages]
 pytest = "~=8.3.3"
 pytest-bdd = "~=7.3.0"
 pytest-cov = "~=6.0.0"
 pylint = "~=3.3.1"
+rich = "~=14.0.0"
 flake8 = "~=7.1.1"
 pep8 = "~=1.7.1"
 autopep8 = "~=2.3.1"
@@ -71,7 +73,8 @@ testauth = "pytest -s --cov-report html:reports/coverage-auth-html --cov-report 
 test-telemetry = "pytest -s --cov-report html:reports/coverage-telemetry-html --cov-report xml:reports/coverage.xml --cov-append --cov --junitxml=reports/telemetry_report.xml clinical_mdr_api/tests/telemetry/"
 testunitallure = "pytest -s --cov-report html:reports/coverage-unit --cov-report xml:reports/coverage.xml --cov-append --cov=clinical_mdr_api  --junitxml=reports/unit_report.xml --alluredir reports/allure-results clinical_mdr_api/tests/unit/"
 testintallure = "pytest -s -n 4 --dist loadfile --cov-report html:reports/coverage-int --cov-report xml:reports/coverage.xml --cov-append --cov=clinical_mdr_api --junitxml=reports/int_report.xml --alluredir reports/allure-results clinical_mdr_api/tests/integration/"
-lint = "pylint clinical_mdr_api consumer_api common"
+lint = "pylint -j 0 clinical_mdr_api consumer_api common"
+sblint = "python -m sblint.main clinical_mdr_api consumer_api common"
 black = "python -m black clinical_mdr_api consumer_api common"
 isort = "python -m isort clinical_mdr_api consumer_api common"
 format = """sh -c "
@@ -95,7 +98,7 @@ schemathesis = """
         --show-trace
         openapi.json
 """
-build-sbom = "pipelines/scripts/build-sbom.sh"
+build-sbom = "python generate_sbom.py"
 schemathesis-help = "schemathesis run --help"
 consumer-api-dev = "uvicorn --host=0.0.0.0 --port=8008 consumer_api.consumer_api:app --reload"
 consumer-api-lint = "pylint consumer_api common"
@@ -108,7 +111,7 @@ consumer-api-schemathesis = """
         --checks=all
         --base-url=http://localhost:8008
         --request-timeout=30000
-        --hypothesis-max-examples=50
+        --hypothesis-max-examples=100
         --hypothesis-verbosity=normal
         --hypothesis-deadline=None
         --hypothesis-suppress-health-check=too_slow,filter_too_much,data_too_large

@@ -4,13 +4,13 @@ Feature: Library - Compound Aliases
   Background: User must be logged in
     Given The user is logged in
 
-  Scenario: User must be able to navigate to the Library Compound Aliases page
+  Scenario: [Navigation] User must be able to navigate to the Library Compound Aliases page
     Given The '/library/compounds/aliases' page is opened
     When The 'Compounds' submenu is clicked in the 'Concepts' section
     And The 'Compound Aliases' tab is selected
     Then The current URL is '/library/compounds/aliases'
 
-  Scenario: User must be able to see the Compound Aliases table with with options as defined in this scenario
+  Scenario: [Table][Columns][Names] User must be able to see the Compound Aliases table with with options as defined in this scenario
     Given The '/library/compounds/aliases' page is opened
     Then A table is visible with following options
       | options                |

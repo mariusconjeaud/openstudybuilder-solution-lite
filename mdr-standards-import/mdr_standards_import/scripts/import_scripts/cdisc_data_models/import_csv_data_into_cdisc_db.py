@@ -1,11 +1,11 @@
-import json, time, traceback, csv
+import time, traceback, csv
+from os import path, environ
 from mdr_standards_import.scripts.entities.cdisc_data_models.data_model_import import (
     DataModelImport,
     DataModelType,
 )
 from mdr_standards_import.scripts.entities.cdisc_data_models.version import Version
 
-from os import listdir, path
 
 from mdr_standards_import.scripts.repositories.repository import (
     await_indexes,
@@ -14,7 +14,13 @@ from mdr_standards_import.scripts.repositories.repository import (
     create_data_model_import,
 )
 from mdr_standards_import.scripts.exceptions.version_exists import VersionExists
-from mdr_standards_import.scripts.utils import get_classes_csv_filename, get_variables_csv_filename
+from mdr_standards_import.scripts.utils import (
+    get_classes_csv_filename,
+    get_variables_csv_filename,
+)
+
+NEO4J_MDR_DATABASE = environ.get("NEO4J_MDR_DATABASE", "neo4j")
+
 
 def print_summary(tx, import_id, start_time):
     result = tx.run(
@@ -52,34 +58,36 @@ def finish_import(tx, import_id):
 
 
 def process_model(
-        data_directory:str, 
-        filename: str, 
-        dm_import: DataModelImport, 
-        data_model_type: DataModelType, 
-        catalogue: str, 
-        version_number: str,
-        ig_catalogue: str = None
-    ):
+    data_directory: str,
+    filename: str,
+    dm_import: DataModelImport,
+    data_model_type: DataModelType,
+    catalogue: str,
+    version_number: str,
+    ig_catalogue: str = None,
+):
     print(f"==  * Processing file: '{filename}'.")
     with open(filename, "r") as version_file:
         class_reader = csv.DictReader(version_file)
         version_csv_data = next(class_reader)
-        version_csv_data["href"] = f"/mdr/{ig_catalogue.lower() if ig_catalogue else catalogue.lower()}/{version_number}"
+        version_csv_data["href"] = (
+            f"/mdr/{ig_catalogue.lower() if ig_catalogue else catalogue.lower()}/{version_number}"
+        )
         version_csv_data["source"] = "Sponsor Lab Data Specifications"
         version = Version(dm_import, version_number=version_number)
-        version.load_from_csv_data(catalogue=catalogue, version_csv_data=version_csv_data, data_model_type=data_model_type)
+        version.load_from_csv_data(
+            catalogue=catalogue,
+            version_csv_data=version_csv_data,
+            data_model_type=data_model_type,
+        )
         dm_import.set_type(data_model_type)
         dm_import.set_implements_data_model(version.get_implements_data_model())
         dm_import.add_version(version)
-        class_filename = get_classes_csv_filename(
-            version.data_model_type
-        )
+        class_filename = get_classes_csv_filename(version.data_model_type)
         class_filepath = path.join(
             data_directory, catalogue, version_number, class_filename
         )
-        variable_filename = get_variables_csv_filename(
-            version.data_model_type
-        )
+        variable_filename = get_variables_csv_filename(version.data_model_type)
         variable_filepath = path.join(
             data_directory, catalogue, version_number, variable_filename
         )
@@ -91,20 +99,34 @@ def process_model(
                     variable_reader = csv.DictReader(variable_file)
                     all_variables = [row for row in variable_reader]
                 for class_csv_data in class_reader:
-                    class_suffix = "classes" if version.data_model_type == DataModelType.FOUNDATIONAL else "datasets"
-                    class_header = "dataset_class" if version.data_model_type == DataModelType.FOUNDATIONAL else "dataset"
-                    class_csv_data["href"] = "/".join([
-                        "/mdr", 
-                        ig_catalogue.lower() if ig_catalogue else catalogue.lower(),
-                        version_number,
-                        class_suffix, 
-                        class_csv_data['name'],
-                    ])
+                    class_suffix = (
+                        "classes"
+                        if version.data_model_type == DataModelType.FOUNDATIONAL
+                        else "datasets"
+                    )
+                    class_header = (
+                        "dataset_class"
+                        if version.data_model_type == DataModelType.FOUNDATIONAL
+                        else "dataset"
+                    )
+                    class_csv_data["href"] = "/".join(
+                        [
+                            "/mdr",
+                            ig_catalogue.lower() if ig_catalogue else catalogue.lower(),
+                            version_number,
+                            class_suffix,
+                            class_csv_data["name"],
+                        ]
+                    )
                     version.load_class_from_csv_data(
                         class_csv_data=class_csv_data,
                         data_model_type=version.data_model_type,
                         catalogue=ig_catalogue if ig_catalogue else catalogue,
-                        variables_csv_data=[variable for variable in all_variables if variable[class_header] == class_csv_data["name"]]
+                        variables_csv_data=[
+                            variable
+                            for variable in all_variables
+                            if variable[class_header] == class_csv_data["name"]
+                        ],
                     )
         else:
             print(
@@ -139,10 +161,14 @@ def import_data_model_csv_data_into_cdisc_db(
     try:
         start_time = time.time()
 
-        with cdisc_import_neo4j_driver.session(database="system") as session:
-            session.run(
-                "CREATE DATABASE $database IF NOT EXISTS", database=cdisc_import_db_name
-            )
+        # If using a staging database, it might not exist yet
+        # so we need to create it first
+        if cdisc_import_db_name != NEO4J_MDR_DATABASE:
+            with cdisc_import_neo4j_driver.session(database="system") as session:
+                session.run(
+                    "CREATE DATABASE $database IF NOT EXISTS",
+                    database=cdisc_import_db_name,
+                )
 
         with cdisc_import_neo4j_driver.session(
             database=cdisc_import_db_name
@@ -158,13 +184,13 @@ def import_data_model_csv_data_into_cdisc_db(
             )
             process_model(
                 data_directory=data_directory,
-                filename = path.join(
+                filename=path.join(
                     data_directory, catalogue, version_number, "data_model.csv"
                 ),
                 dm_import=dm_import,
-                data_model_type = DataModelType.FOUNDATIONAL,
+                data_model_type=DataModelType.FOUNDATIONAL,
                 catalogue=catalogue,
-                version_number=version_number
+                version_number=version_number,
             )
             if "-" in catalogue:
                 ig_catalogue_name = f"{catalogue}-IG"
@@ -178,14 +204,14 @@ def import_data_model_csv_data_into_cdisc_db(
             )
             process_model(
                 data_directory=data_directory,
-                filename = path.join(
+                filename=path.join(
                     data_directory, catalogue, version_number, "data_modelIG.csv"
                 ),
                 dm_import=dm_import_ig,
-                data_model_type = DataModelType.IMPLEMENTATION,
+                data_model_type=DataModelType.IMPLEMENTATION,
                 catalogue=catalogue,
                 ig_catalogue=ig_catalogue_name,
-                version_number=version_number
+                version_number=version_number,
             )
 
             import_id = session.write_transaction(

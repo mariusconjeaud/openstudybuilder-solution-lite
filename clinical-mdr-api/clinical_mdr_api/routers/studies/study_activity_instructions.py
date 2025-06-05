@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import Body, Query, Response, status
+from fastapi import Body, Query
 from pydantic.types import Json
 
 from clinical_mdr_api.models.study_selections.study_selection import (
@@ -25,7 +25,6 @@ from common.models.error import ErrorResponse
     "/study-activity-instructions",
     dependencies=[rbac.STUDY_READ],
     summary="Returns all study activity instructions currently selected",
-    response_model=CustomPage[StudyActivityInstruction],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -83,7 +82,6 @@ def get_all_activity_instructions_for_all_studies(
     "/studies/{study_uid}/study-activity-instructions",
     dependencies=[rbac.STUDY_READ],
     summary="List all study activity instructions currently defined for the study",
-    response_model=list[StudyActivityInstruction],
     response_model_exclude_unset=True,
     status_code=200,
     responses={
@@ -110,7 +108,6 @@ def get_all_selected_instructions(
     "/studies/{study_uid}/study-activity-instructions/{study_activity_instruction_uid}",
     dependencies=[rbac.STUDY_WRITE],
     summary="Delete a study activity instruction",
-    response_model=None,
     status_code=204,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -129,14 +126,12 @@ def delete_activity_instruction(
 ):
     service = StudyActivityInstructionService()
     service.delete(study_uid=study_uid, instruction_uid=study_activity_instruction_uid)
-    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.post(
     "/studies/{study_uid}/study-activity-instructions/batch",
     dependencies=[rbac.STUDY_WRITE],
     summary="Batch operations (create, delete) for study activity instructions",
-    response_model=list[StudyActivityInstructionBatchOutput],
     status_code=207,
     responses={
         403: _generic_descriptions.ERROR_403,

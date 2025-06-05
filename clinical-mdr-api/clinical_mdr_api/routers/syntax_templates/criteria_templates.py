@@ -2,8 +2,7 @@
 
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Body, Path, Query, Request, Response
-from fastapi import status as fast_api_status
+from fastapi import APIRouter, Body, Path, Query, Request
 from pydantic.types import Json
 
 from clinical_mdr_api.domains.versioned_object_aggregate import LibraryItemStatus
@@ -70,7 +69,6 @@ Allowed parameters include : filter on fields, sort by field name with sort dire
 
 {_generic_descriptions.DATA_EXPORTS_HEADER}
 """,
-    response_model=CustomPage[CriteriaTemplate],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -196,7 +194,6 @@ def get_criteria_templates(
     summary="Returns possible values from the database for a given header",
     description="""Allowed parameters include : field name for which to get possible
     values, search string to provide filtering for the field name, additional filters to apply on other fields""",
-    response_model=list[Any],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -237,7 +234,7 @@ def get_distinct_values_for_header(
     page_size: Annotated[
         int | None, Query(description=_generic_descriptions.HEADER_PAGE_SIZE)
     ] = config.DEFAULT_HEADER_PAGE_SIZE,
-):
+) -> list[Any]:
     return Service().get_distinct_values_for_header(
         status=status,
         field_name=field_name,
@@ -251,7 +248,6 @@ def get_distinct_values_for_header(
 @router.get(
     "/audit-trail",
     dependencies=[rbac.LIBRARY_READ],
-    response_model=CustomPage[CriteriaTemplate],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -283,7 +279,7 @@ def retrieve_audit_trail(
     total_count: Annotated[
         bool | None, Query(description=_generic_descriptions.TOTAL_COUNT)
     ] = False,
-):
+) -> CustomPage[CriteriaTemplate]:
     results = Service().get_all(
         page_number=page_number,
         page_size=page_size,
@@ -304,7 +300,6 @@ def retrieve_audit_trail(
     summary="Returns the latest/newest version of a specific criteria template identified by 'criteria_template_uid'.",
     description="""If multiple request query parameters are used, then they need to
     match all at the same time (they are combined with the AND operation).""",
-    response_model=CriteriaTemplateWithCount | None,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -316,7 +311,7 @@ def retrieve_audit_trail(
 )
 def get_criteria_template(
     criteria_template_uid: Annotated[str, CriteriaTemplateUID],
-):
+) -> CriteriaTemplateWithCount:
     return Service().get_by_uid(uid=criteria_template_uid)
 
 
@@ -329,7 +324,6 @@ The returned versions are ordered by `start_date` descending (newest entries fir
 
 {_generic_descriptions.DATA_EXPORTS_HEADER}
 """,
-    response_model=list[CriteriaTemplateVersion],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -401,7 +395,7 @@ The returned versions are ordered by `start_date` descending (newest entries fir
 def get_criteria_template_versions(
     request: Request,  # request is actually required by the allow_exports decorator
     criteria_template_uid: Annotated[str, CriteriaTemplateUID],
-):
+) -> list[CriteriaTemplateVersion]:
     return Service().get_version_history(uid=criteria_template_uid)
 
 
@@ -414,7 +408,6 @@ def get_criteria_template_versions(
     "This is due to the fact, that the version number remains the same when inactivating or reactivating an criteria template "
     "(switching between 'Final' and 'Retired' status). \n\n"
     "In that case the latest/newest representation is returned.",
-    response_model=CriteriaTemplate,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -434,7 +427,7 @@ def get_criteria_template_version(
             "E.g. '0.1', '0.2', '1.0', ...",
         ),
     ],
-):
+) -> CriteriaTemplate:
     return Service().get_specific_version(uid=criteria_template_uid, version=version)
 
 
@@ -442,7 +435,6 @@ def get_criteria_template_version(
     "/{criteria_template_uid}/releases",
     dependencies=[rbac.LIBRARY_READ],
     summary="List all final versions of a template identified by 'criteria_template_uid', including number of studies using a specific version",
-    response_model=list[CriteriaTemplate],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -453,8 +445,8 @@ def get_criteria_template_version(
     },
 )
 def get_criteria_template_releases(
-    criteria_template_uid: Annotated[str, CriteriaTemplateUID]
-):
+    criteria_template_uid: Annotated[str, CriteriaTemplateUID],
+) -> list[CriteriaTemplate]:
     return Service().get_releases(uid=criteria_template_uid, return_study_count=False)
 
 
@@ -473,7 +465,6 @@ If the request succeeds:
 
 """
     + PARAMETERS_NOTE,
-    response_model=CriteriaTemplate,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -498,7 +489,7 @@ def create_criteria_template(
         CriteriaTemplateCreateInput,
         Body(description="The criteria template that shall be created."),
     ],
-):
+) -> CriteriaTemplate:
     return Service().create(criteria_template)
 
 
@@ -519,7 +510,6 @@ Once the criteria template has been approved, only the surrounding text (excludi
 
 """
     + PARAMETERS_NOTE,
-    response_model=CriteriaTemplate,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -546,7 +536,7 @@ def edit(
             description="The new content of the criteria template including the change description.",
         ),
     ],
-):
+) -> CriteriaTemplate:
     return Service().edit_draft(uid=criteria_template_uid, template=criteria_template)
 
 
@@ -559,7 +549,6 @@ def edit(
     
     This is version independent : it won't trigger a status or a version change.
     """,
-    response_model=CriteriaTemplate,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -600,7 +589,6 @@ If the request succeeds:
 Parameters in the 'name' property cannot be changed with this request.
 Only the surrounding text (excluding the parameters) can be changed.
 """,
-    response_model=CriteriaTemplate,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -626,7 +614,7 @@ def create_new_version(
             description="The content of the criteria template for the new 'Draft' version including the change description.",
         ),
     ],
-):
+) -> CriteriaTemplate:
     return Service().create_new_version(
         uid=criteria_template_uid, template=criteria_template
     )
@@ -645,7 +633,6 @@ If the request succeeds:
 * The 'change_description' property will be set automatically.
 * The 'version' property will be increased automatically to the next major version.
     """,
-    response_model=CriteriaTemplate,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -669,7 +656,7 @@ If the request succeeds:
 def approve(
     criteria_template_uid: Annotated[str, CriteriaTemplateUID],
     cascade: bool = False,
-):
+) -> CriteriaTemplate:
     """
     Approves criteria template. Fails with 409 if there is some criteria created
     from this template and cascade is false
@@ -691,7 +678,6 @@ If the request succeeds:
 * The 'change_description' property will be set automatically. 
 * The 'version' property will remain the same as before.
     """,
-    response_model=CriteriaTemplate,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -707,7 +693,9 @@ If the request succeeds:
         },
     },
 )
-def inactivate(criteria_template_uid: Annotated[str, CriteriaTemplateUID]):
+def inactivate(
+    criteria_template_uid: Annotated[str, CriteriaTemplateUID],
+) -> CriteriaTemplate:
     return Service().inactivate_final(uid=criteria_template_uid)
 
 
@@ -723,7 +711,6 @@ If the request succeeds:
 * The 'change_description' property will be set automatically. 
 * The 'version' property will remain the same as before.
     """,
-    response_model=CriteriaTemplate,
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -739,7 +726,9 @@ If the request succeeds:
         },
     },
 )
-def reactivate(criteria_template_uid: Annotated[str, CriteriaTemplateUID]):
+def reactivate(
+    criteria_template_uid: Annotated[str, CriteriaTemplateUID],
+) -> CriteriaTemplate:
     return Service().reactivate_retired(uid=criteria_template_uid)
 
 
@@ -752,7 +741,6 @@ def reactivate(criteria_template_uid: Annotated[str, CriteriaTemplateUID]):
 * the criteria template has never been in 'Final' status and
 * the criteria template has no references to any criteria and
 * the criteria template belongs to a library that allows deleting (the 'is_editable' property of the library needs to be true).""",
-    response_model=None,
     status_code=204,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -773,10 +761,9 @@ def reactivate(criteria_template_uid: Annotated[str, CriteriaTemplateUID]):
     },
 )
 def delete_criteria_template(
-    criteria_template_uid: Annotated[str, CriteriaTemplateUID]
+    criteria_template_uid: Annotated[str, CriteriaTemplateUID],
 ):
     Service().soft_delete(criteria_template_uid)
-    return Response(status_code=fast_api_status.HTTP_204_NO_CONTENT)
 
 
 # TODO this endpoint potentially returns duplicated entries (intentionally, currently).
@@ -794,14 +781,15 @@ Per parameter, the parameter.terms are ordered by
 Note that parameters may be used multiple times in templates.
 In that case, the same parameter (with the same terms) is included multiple times in the response.
     """,
-    response_model=list[TemplateParameter],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
         404: _generic_descriptions.ERROR_404,
     },
 )
-def get_parameters(criteria_template_uid: Annotated[str, CriteriaTemplateUID]):
+def get_parameters(
+    criteria_template_uid: Annotated[str, CriteriaTemplateUID],
+) -> list[TemplateParameter]:
     return Service().get_parameters(uid=criteria_template_uid)
 
 
@@ -844,7 +832,6 @@ def pre_validate(
     "/{criteria_template_uid}/pre-instances",
     dependencies=[rbac.LIBRARY_WRITE],
     summary="Create a Pre-Instance",
-    response_model=CriteriaPreInstance,
     status_code=201,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -867,7 +854,7 @@ def pre_validate(
 def create_pre_instance(
     criteria_template_uid: Annotated[str, CriteriaTemplateUID],
     pre_instance: Annotated[CriteriaPreInstanceCreateInput, Body()],
-) -> CriteriaTemplate:
+) -> CriteriaPreInstance:
     return CriteriaPreInstanceService().create(
         template=pre_instance,
         template_uid=criteria_template_uid,

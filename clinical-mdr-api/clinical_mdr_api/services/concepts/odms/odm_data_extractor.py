@@ -73,9 +73,8 @@ class OdmDataExtractor:
         target_uid: str,
         target_type: TargetType,
         status: str,
-        unit_definition_service,
     ):
-        self.unit_definition_service = unit_definition_service
+        self.unit_definition_service = UnitDefinitionService()
         self.vendor_namespace_service = OdmVendorNamespaceService()
         self.vendor_element_service = OdmVendorElementService()
         self.vendor_attribute_service = OdmVendorAttributeService()

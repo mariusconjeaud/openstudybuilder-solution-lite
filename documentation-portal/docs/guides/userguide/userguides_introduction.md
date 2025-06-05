@@ -129,3 +129,35 @@ General actions are listed in the table ribbon:
 The current export options include CSV, XML, JSON and Excel.
 
 
+## Working with formatted text
+
+Some data-models (usually Templates, ODM descriptions, guidance texts) allow 
+users to input HTML formatted data.
+
+The UI displays a simple rich-text formatting tools for such fields,
+and it's also possible to paste HTML formatted text from other applications.
+
+The back-end runs an HTML sanitizer on such input, and only allows a small 
+subset of HTML tags to pass through, and none of the attributes.
+
+| HTML tag   | description      |
+|------------|------------------|
+| ABBR       | abbreviation     |
+| ACRONYM    | acronym          |
+| B          | bold             |
+| BLOCKQUOTE | block quote      |
+| BR         | line break       |
+| CODE       | code-styled text |
+| EM         | emphasis         |
+| I          | italic           |
+| LI         | list item        |
+| OL         | ordered list     |
+| P          | paragraph        |
+| STRONG     | strong emphasis  |
+| SUB        | subscript        |
+| SUP        | superscript      |
+| U          | underline        |
+| UL         | unordered list   |
+
+
+

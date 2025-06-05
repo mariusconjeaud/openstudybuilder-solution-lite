@@ -26,7 +26,7 @@
               <div :class="getCellClasses(header, item)">
                 <span
                   v-if="htmlFields && htmlFields.indexOf(header.key) !== -1"
-                  v-html="getDisplay(item, header)"
+                  v-html="sanitizeHTML(getDisplay(item, header))"
                 />
                 <span v-else>{{ getDisplay(item, header) }}</span>
               </div>
@@ -91,6 +91,7 @@ import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import DataTableExportButton from '@/components/tools/DataTableExportButton.vue'
 import { DateTime } from 'luxon'
+import { sanitizeHTML } from '@/utils/sanitize'
 
 const { t } = useI18n()
 const props = defineProps({

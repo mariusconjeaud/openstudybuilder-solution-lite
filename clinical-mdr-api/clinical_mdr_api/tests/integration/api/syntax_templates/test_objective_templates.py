@@ -35,6 +35,8 @@ from clinical_mdr_api.tests.integration.utils.api import (
 from clinical_mdr_api.tests.integration.utils.utils import TestUtils
 from clinical_mdr_api.tests.utils.checks import assert_response_status_code
 
+USER_DEFINED_LIBRAY = "User Defined"
+
 log = logging.getLogger(__name__)
 
 # Global variables shared between fixtures and tests
@@ -62,6 +64,7 @@ def test_data():
     """Initialize test data"""
     inject_and_clear_db(URL + ".api")
     inject_base_data()
+    TestUtils.create_library(USER_DEFINED_LIBRAY)
 
     global objective_templates
     global ct_term_inclusion
@@ -1090,11 +1093,10 @@ def test_objective_template_audit_trail(api_client):
 
 
 def test_objective_template_sequence_id_generation(api_client):
-    lib = TestUtils.create_library("User Defined")
     data = {
         "name": "user defined [TextValue]",
         "guidance_text": "user_defined_guidance_text",
-        "library_name": lib["name"],
+        "library_name": USER_DEFINED_LIBRAY,
         "is_confirmatory_testing": True,
         "indication_uids": [dictionary_term_indication.term_uid],
         "category_uids": [ct_term_category.term_uid],
@@ -1248,3 +1250,30 @@ def test_pre_validate_invalid_objective_template_name(api_client):
             }
         ]
     }
+
+
+def test_create_multiple_objective_templates(api_client):
+    data1 = {
+        "name": "hello name",
+        "library_name": USER_DEFINED_LIBRAY,
+    }
+    response = api_client.post(URL, json=data1)
+    assert_response_status_code(response, 201)
+    res = response.json()
+    assert res["name"] == data1["name"]
+    uid1 = res["uid"]
+
+    data2 = {
+        "name": "hello",
+        "library_name": USER_DEFINED_LIBRAY,
+    }
+    response = api_client.post(URL, json=data2)
+    assert_response_status_code(response, 201)
+    res = response.json()
+    assert res["uid"] != uid1 and res["name"] == data2["name"]
+
+    response = api_client.post(URL, json=data1)
+
+    assert_response_status_code(response, 201)
+    res = response.json()
+    assert res["uid"] == uid1 and res["name"] == data1["name"]

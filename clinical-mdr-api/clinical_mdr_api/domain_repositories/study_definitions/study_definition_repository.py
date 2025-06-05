@@ -282,14 +282,14 @@ RETURN
 WITH $study_src_uid as study_src, $study_target_uid as study_target, $to_copy_labels as to_copy_labels
 with study_src, study_target, apoc.text.join(to_copy_labels, '|') AS to_copy_labels_text
 
-MATCH (sr_src:StudyRoot)-[:LATEST]-(sv_src:StudyValue)
+MATCH (sr_src:StudyRoot)-[:LATEST]->(sv_src:StudyValue)
     WHERE sr_src.uid = study_src
-MATCH (sr_target:StudyRoot)-[:LATEST]-(sv_target:StudyValue)
+MATCH (sr_target:StudyRoot)-[:LATEST]->(sv_target:StudyValue)
     WHERE sr_target.uid = study_target
 
 
 CALL apoc.cypher.run("
-    MATCH path = ((sr_src)--(saction_src:StudyAction)--(selection_src:StudySelection&(" + to_copy_labels_text + "))--(sv_src))
+    MATCH path = ((sr_src)-[:AUDIT_TRAIL]->(saction_src:StudyAction)--(selection_src:StudySelection&(" + to_copy_labels_text + "))<--(sv_src))
         WHERE {exclusions}
     return sr_src, sv_src,collect(path) as paths ", 
 {{sr_src:sr_src, sv_src:sv_src }})
@@ -323,12 +323,12 @@ RETURN rel
         query = """
 WITH $study_src_uid as study_src, $study_target_uid as study_target, $to_copy_labels as to_copy_labels
 
-MATCH (sr_from:StudyRoot)-[:LATEST]-(sv_from:StudyValue)--(selection_src_from:StudySelection)-[r_ext_src]->(selection_src_to:StudySelection)
+MATCH (sr_from:StudyRoot)-[:LATEST]->(sv_from:StudyValue)-->(selection_src_from:StudySelection)-[r_ext_src]->(selection_src_to:StudySelection)
     where sr_from.uid = study_src
 WITH selection_src_from.uid as from_uid, type(r_ext_src) AS from_rel_type_to, selection_src_to.uid as to_uid, study_target, to_copy_labels
-match (sr_to:StudyRoot)-[:LATEST]-(sv_to:StudyValue)--(a:StudySelection)
+match (sr_to:StudyRoot)-[:LATEST]->(sv_to:StudyValue)-->(a:StudySelection)
     where sr_to.uid = study_target
-match (sr_to)-[:LATEST]-(sv_to)--(b:StudySelection) 
+match (sr_to)-[:LATEST]->(sv_to)-->(b:StudySelection) 
 WITH a,b, from_rel_type_to
     where a.uid = from_uid
     and b.uid = to_uid
@@ -354,11 +354,13 @@ return *
 
 WITH $study_src_uid as study_src, $study_target_uid as study_target, $to_copy_labels as to_copy_labels, $date as date, $author_id as author_id
 
+// GO ONE BY ONE LABEL TO COPY
 unwind to_copy_labels as to_copy_labels_unw
 
-MATCH (sr_target:StudyRoot)-[:LATEST]-(sv_target:StudyValue)--(selection_target:StudySelection)
+MATCH (sr_target:StudyRoot)-[:LATEST]->(sv_target:StudyValue)--(selection_target:StudySelection)
     where sr_target.uid = study_target
 
+// Update the counter value and generate new UID and 
 CALL {
     WITH to_copy_labels_unw, selection_target
     WITH to_copy_labels_unw, selection_target
@@ -368,12 +370,31 @@ CALL {
     CALL apoc.atomic.add(m,'count',1,1) yield oldValue, newValue
     WITH toInteger(newValue) as uid_number,to_copy_labels_unw, selection_target
     with to_copy_labels_unw+"_"+apoc.text.lpad(""+(uid_number), 6, "0") as new_uid, selection_target
+    SET selection_target.old_uid = selection_target.uid
     SET selection_target.uid = new_uid
+}
+
+// find the visit_anchor
+CALL {
+    WITH to_copy_labels_unw, selection_target
+    WITH to_copy_labels_unw, selection_target
+        WHERE "StudyVisit" in labels(selection_target) and selection_target.visit_sublabel_reference IS NOT NULL
+    MATCH (ref_svis:StudyVisit:TEMP{old_uid:selection_target.visit_sublabel_reference})
+    set selection_target.visit_sublabel_reference = ref_svis.uid
+}
+
+// remove TEMP label, remove old_uid
+CALL {
+    WITH to_copy_labels_unw, selection_target
+    WITH to_copy_labels_unw, selection_target
+        WHERE to_copy_labels_unw in labels(selection_target)
+    SET selection_target.old_uid = NULL
     REMOVE selection_target:TEMP
 }
 
 WITH $study_src_uid as study_src, $study_target_uid as study_target, $to_copy_labels as to_copy_labels, $date as date, $author_id as author_id
 
+// Update action metadata and clean up temp labels
 MATCH (sr_target)--(saction:StudyAction:TEMP)
     where sr_target.uid = study_target
     and "TEMP" in labels(saction)

@@ -30,12 +30,11 @@ Cypress.Commands.add('clickTab', (tabName, optionForce = 'true') => {
 })
 
 Cypress.Commands.add('checkAllCheckboxes', () => {
-    cy.wait(1000)
-    cy.get('[data-cy="not-applicable-checkbox"]').each((btn) => {
-        cy.get(btn).within(() => {
-            cy.get('[type="checkbox"]').click({ force: true })
-        })
-    })
+    cy.get('[data-cy="not-applicable-checkbox"] input').each((btn) => cy.wrap(btn).check({ force: true }))
+})
+
+Cypress.Commands.add('uncheckAllCheckboxes', () => {
+    cy.get('[data-cy="not-applicable-checkbox"] input').each((btn) => cy.wrap(btn).uncheck({ force: true }))
 })
 
 Cypress.Commands.add('checkbox', (button, optionForce = true, optionMultiple = false) => {

@@ -21,12 +21,11 @@ When('Approved Group can be linked to subgroup', () => {
 When('The test activity subgroup container is filled with data', () => fillSubGroupData())
 
 Then('The newly added activity subgroup is visible in the the table', () => {  
-    cy.searchAndCheckResults(activitysubgroup)
+    cy.searchAndCheckPresence(activitysubgroup, true)
     cy.checkRowByIndex(0, 'Activity subgroup', activitysubgroup)
     cy.checkRowByIndex(0,'Sentence case name', activitysubgroup.toLowerCase())
     cy.checkRowByIndex(0, 'Abbreviation', abbreviation)
     cy.checkRowByIndex(0, 'Definition', definition)
-    cy.checkStatusAndVersion('Draft', '0.1')
 })
 
 When('The Activity groups, Subgroup name, Sentence case name and Definition fields are not filled with data', () => {
@@ -69,13 +68,13 @@ When('The activity subgroup is edited', () => {
 
 When('The activity subgroup edition form is filled with data', () => editSubGroup())
 
-Then('The activity subgroup is no longer available', () => cy.confirmItemNotAvailable(apiActivitySubGroupName))
+Then('The activity subgroup is no longer available', () => cy.searchAndCheckPresence(apiActivitySubGroupName, false))
 
-Then('The activity subgroup is not created', () => cy.confirmItemNotAvailable(activitysubgroup))
+Then('The activity subgroup is not created', () => cy.searchAndCheckPresence(activitysubgroup, false))
 
-Then('The activity subgroup is not edited', () => cy.confirmItemNotAvailable(activitysubgroup))
+Then('The activity subgroup is not edited', () => cy.searchAndCheckPresence(activitysubgroup, false))
 
-Then('One activity subgroup is found after performing full name search', () => cy.searchAndCheckResults(activitysubgroup))
+Then('One activity subgroup is found after performing full name search', () => cy.searchAndCheckPresence(apiActivitySubGroupName, true))
 
 When('[API] Activity subgroup in status Draft exists', () => createSubGroupViaApi())
 
@@ -93,7 +92,7 @@ Given('[API] Second activity subgroup for search test is created', () => cy.crea
 
 Given('[API] Activity subgroup is created', () => cy.createSubGroup())
 
-When('Activity subgroup is found', () => cy.searchFor(apiActivitySubGroupName))
+When('Activity subgroup is found', () => cy.searchAndCheckPresence(apiActivitySubGroupName, true))
 
 When('Drafted or Retired group is not available during subgroup creation', () => selectCustomGroup(apiGroupName))
 
@@ -124,7 +123,7 @@ function saveSubGroup(action = 'created') {
     cy.clickButton('save-button')
     cy.get('.v-snackbar__content').contains(`Subgroup ${action}`).should('be.visible')
     cy.wait('@getData', {timeout: 20000}) 
-    cy.searchFor(activitysubgroup)
+    cy.searchAndCheckPresence(activitysubgroup, true)
 }
 
 function createSubGroupViaApi(customName = '') {

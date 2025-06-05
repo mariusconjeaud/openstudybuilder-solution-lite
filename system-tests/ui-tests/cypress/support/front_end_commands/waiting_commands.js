@@ -1,6 +1,6 @@
 Cypress.Commands.add('waitForTable', () => waitForTableToStopLoading(10000))
 
-Cypress.Commands.add('longWaitForTable', () => waitForTableToStopLoading(30000))
+Cypress.Commands.add('longWaitForTable', (timeout = 30000) => waitForTableToStopLoading(timeout))
 
 Cypress.Commands.add('waitForTableData', () => {
     cy.get('.v-table__wrapper')

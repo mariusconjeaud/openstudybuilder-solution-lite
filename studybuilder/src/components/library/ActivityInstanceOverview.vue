@@ -69,14 +69,7 @@
             }}
           </v-col>
         </v-row>
-        <v-row>
-          <v-col cols="2" class="font-weight-bold">
-            {{ $t('_global.definition') }}
-          </v-col>
-          <v-col cols="10">
-            {{ itemOverview.activity_instance.definition }}
-          </v-col>
-        </v-row>
+
         <v-row>
           <v-col cols="2" class="font-weight-bold">
             {{ $t('ActivityInstanceOverview.class') }}
@@ -422,7 +415,6 @@ export default {
           title: this.$t('ActivityTable.molecular_weight'),
           key: 'molecular_weight',
         },
-        { title: this.$t('_global.definition'), key: 'definition' },
         { title: this.$t('ActivityTable.topic_code'), key: 'topic_code' },
         { title: this.$t('ActivityTable.adam_code'), key: 'adam_param_code' },
         {
