@@ -27,7 +27,7 @@ from mdr_standards_import.scripts.entities.cdisc_data_models.data_model_type imp
 )
 
 
-CDISC_IMPORT_DATABASE = environ.get("NEO4J_CDISC_IMPORT_DATABASE", "cdisc")
+CDISC_IMPORT_DATABASE = environ.get("NEO4J_CDISC_IMPORT_DATABASE", "neo4j")
 MDR_DATABASE = environ.get("NEO4J_MDR_DATABASE", "neo4j")
 
 
@@ -121,4 +121,6 @@ def _get_data_model_types(tx):
 
 
 if __name__ == "__main__":
-    wrapper_import_cdisc_data_models_from_cdisc_db_into_mdr(get_author_id(1), get_directory_name(2))
+    wrapper_import_cdisc_data_models_from_cdisc_db_into_mdr(
+        get_author_id(1), get_directory_name(2)
+    )

@@ -1,11 +1,11 @@
-ARG NEO4J_IMAGE=neo4j:5.19.0-enterprise
+ARG NEO4J_IMAGE=neo4j:5.19.0-community
 ARG PYTHON_IMAGE=python:3.13.0-slim
 
 # --- Build stage ----
 FROM $PYTHON_IMAGE AS build-stage
 
-ARG NEO4J_DOWNLOAD_URL=https://dist.neo4j.org/neo4j-enterprise-5.19.0-unix.tar.gz
-ARG NEO4J_CHECKSUM=6dc5af32f8e01f1cb8f8618d1314d91713172db14f53c695b77ca733ff504356
+ARG NEO4J_DOWNLOAD_URL=https://dist.neo4j.org/neo4j-community-5.19.0-unix.tar.gz
+ARG NEO4J_CHECKSUM=30f4eb3156ebdd7905ce2775146c802b9b1104c08c331b1d6ca126aaff5a00d9
 
 ## Install required system packages, for clinical-mdr-api as well
 RUN apt-get update \
@@ -27,9 +27,9 @@ RUN apt-get update \
 
 WORKDIR /neo4j
 
-ARG NEO4J_server_memory_heap_initial__size="3G"
-ARG NEO4J_server_memory_heap_max__size="3G"
-ARG NEO4J_server_memory_pagecache_size="2G"
+ARG NEO4J_server_memory_heap_initial__size="6G"
+ARG NEO4J_server_memory_heap_max__size="8G"
+ARG NEO4J_server_memory_pagecache_size="4G"
 
 ARG reportDate="2024-01-05 14:54:32 +0100"
 
@@ -42,13 +42,13 @@ ENV NEO4J_MDR_BOLT_PORT=7687 \
     NEO4J_MDR_HTTPS_PORT=7473 \
     NEO4J_MDR_HOST=localhost \
     NEO4J_MDR_AUTH_USER=neo4j \
-    NEO4J_MDR_DATABASE=mdrdb \
-    NEO4J_MDR_DATABASE_DBNAME=mdrdockerdb \
+    NEO4J_MDR_DATABASE=neo4j \
+    NEO4J_MDR_DATABASE_DBNAME=neo4j \
     NEO4J_CDISC_IMPORT_BOLT_PORT=7687 \
     NEO4J_CDISC_IMPORT_HOST=localhost \
     NEO4J_CDISC_IMPORT_AUTH_USER=neo4j \
     NEO4J_CDISC_IMPORT_AUTH_PASSWORD=$NEO4J_MDR_AUTH_PASSWORD \
-    NEO4J_CDISC_IMPORT_DATABASE=cdisc-import \
+    NEO4J_CDISC_IMPORT_DATABASE=neo4j \
     NEO4J_ACCEPT_LICENSE_AGREEMENT=yes
 
 # Install Neo4j from tarball
@@ -96,7 +96,7 @@ COPY ./clinical-mdr-api clinical-mdr-api
 
 # Environment variables for api
 ENV NEO4J_DSN="bolt://${NEO4J_MDR_AUTH_USER}:${NEO4J_MDR_AUTH_PASSWORD}@localhost:7687/" \
-    NEO4J_DATABASE=mdrdb \
+    NEO4J_DATABASE=neo4j \
     OAUTH_ENABLED=false \
     ALLOW_ORIGIN_REGEX=".*" \
     TRACING_DISABLED="true" \
@@ -135,17 +135,19 @@ RUN /neo4j/bin/neo4j-admin dbms set-initial-password "$NEO4J_MDR_AUTH_PASSWORD" 
     && sleep 10 && cd ../studybuilder-import && pipenv run import_all && pipenv run import_dummydata && pipenv run import_feature_flags && pipenv run activities \
     # stop the api
     && sleep 10 && kill -INT $api_pid && wait $api_pid \
-    # get database name
-    && dbName=$(/neo4j/bin/cypher-shell -u "$NEO4J_MDR_AUTH_USER" -p "$NEO4J_MDR_AUTH_PASSWORD" -a "neo4j://localhost:$NEO4J_MDR_BOLT_PORT" "SHOW ALIASES FOR DATABASE YIELD * WHERE name=\"$NEO4J_MDR_DATABASE\" RETURN database;" | tail -n 1 | tr -d '"') && echo $dbName \
-    # run backup of database
-    && mkdir -p /neo4j/data/backup/ \
-    && sleep 10 && /neo4j/bin/neo4j-admin database backup --to-path=/neo4j/data/backup/ --type=FULL $dbName --compress=false \
-    && sleep 10 && find /neo4j/data/backup/ -type f -name '*.backup' -exec sh -c 'x="{}"; mv "$x" "/neo4j/data/backup/mdrdockerdb.backup"' \; \
+    # cleanup the database
+    && /neo4j/bin/cypher-shell -u "$NEO4J_MDR_AUTH_USER" -p "$NEO4J_MDR_AUTH_PASSWORD" -a "neo4j://localhost:$NEO4J_MDR_BOLT_PORT" "MATCH (n:Term|Codelist|DataModelVariable|InconsistentAttributes|ResolvedInconsistency|DataModelClass|InconsistentSubmissionValue|Inconsistency|Package|DataModelImport|Version|Import) CALL { WITH n DETACH DELETE n} IN TRANSACTIONS OF 5000 ROWS" \
     # stop neo4j server gently, but first wait a little for recent transactions to finish
     && sleep 10 && /neo4j/bin/neo4j stop && sleep 10 \
-    # run consistency-check on mdrdb
-    && sleep 10 && /neo4j/bin/neo4j-admin database check $dbName \
+    # run consistency-check on neo4j database
+    && /neo4j/bin/neo4j-admin database check neo4j \
+    # run dump of database
+    && mkdir -p /neo4j/data/backup/ \
+    && sleep 10 && /neo4j/bin/neo4j-admin database dump neo4j --to-path=/neo4j/data/backup/ \
+    && sleep 10 && find /neo4j/data/backup/ -type f -name '*.dump' -exec sh -c 'x="{}"; mv "$x" "/neo4j/data/backup/neo4j.dump"' \; \
     && trap EXIT
+
+
 
 # --- Prod stage ----
 # Copy database directory from build-stage to the official neo4j docker image
@@ -156,7 +158,6 @@ ARG USER=neo4j
 ARG GROUP=neo4j
 
 # Match id of neo4j user with the current user on the host for correct premissions of db dumps mounted folder
-ARG UID=1000
 RUN [ "x$UID" = "x1000" ] || { \
     echo "Changing uid & gid of neo4j user to $UID" \
     && usermod --uid "$UID" "neo4j" \
@@ -174,16 +175,12 @@ COPY --from=build-stage --chown=$USER:$GROUP /neo4j/data/backup /data/backup
 ENV NEO4J_AUTH=neo4j/changeme1234 \
     NEO4J_apoc_trigger_enabled="true" \
     NEO4J_apoc_import_file_enabled="true" \
-    NEO4J_apoc_export_file_enabled="true" \
-    NEO4J_dbms_security_procedures_unrestricted="apoc.*" \
-    NEO4J_dbms_databases_seed__from__uri__providers="URLConnectionSeedProvider" \
-    NEO4J_apoc_initializer_system_1="CREATE DATABASE mdrdb OPTIONS {existingData: 'use', seedURI:'file:///data/backup/mdrdockerdb.backup'} WAIT 60 SECONDS"
-
-# Volume attachment point: if an empty volume is mounted, it gets populated with the pre-built database from the image
-VOLUME /data
+    NEO4J_apoc_export_file_enabled="true"
 
 # run as non root user
 USER $USER
+
+RUN /var/lib/neo4j/bin/neo4j-admin database load --from-path=/data/backup neo4j --overwrite-destination=true
 
 HEALTHCHECK --start-period=60s --timeout=3s --interval=10s --retries=3 \
     CMD wget --quiet --spider --timeout 2 --tries 1 "http://localhost:7474/" || exit 1

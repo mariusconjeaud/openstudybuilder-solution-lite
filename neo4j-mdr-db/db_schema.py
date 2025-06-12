@@ -5,7 +5,7 @@ Contains all statements definining the db schema, such as:
 """
 
 SCHEMA_CLEAR_QUERY = "CALL apoc.schema.assert({}, {})"
-CONSTRAINT_TYPE_NODE_KEY = "NODE KEY"
+CONSTRAINT_TYPE_NODE_KEY = "UNIQUE"
 CONSTRAINT_TYPE_UNIQUE = "UNIQUE"
 CONSTRAINT_TYPE_NOT_NULL = "NOT NULL"
 

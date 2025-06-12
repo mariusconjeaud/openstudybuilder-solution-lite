@@ -25,7 +25,7 @@ from neo4j.exceptions import ServiceUnavailable
 
 
 NEO4J_MDR_DATABASE = environ.get("NEO4J_MDR_DATABASE", "neo4j")
-CDISC_IMPORT_DATABASE = environ.get("NEO4J_CDISC_IMPORT_DATABASE", "cdisc")
+CDISC_IMPORT_DATABASE = environ.get("NEO4J_CDISC_IMPORT_DATABASE", "neo4j")
 AUTH_TOKEN = environ.get("CDISC_AUTH_TOKEN")
 HEADERS = {"api-key": AUTH_TOKEN, "Accept": "application/json"}
 BASE_URL = environ.get("CDISC_BASE_URL")

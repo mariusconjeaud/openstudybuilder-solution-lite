@@ -6,7 +6,7 @@ services:
   database:
     build:
       args:
-        NEO4J_IMAGE: ${NEO4J_IMAGE:-neo4j:5.19.0-enterprise}
+        NEO4J_IMAGE: ${NEO4J_IMAGE:-neo4j:5.19.0-community}
         PYTHON_IMAGE: ${PYTHON_IMAGE:-python:3.13.0-slim}
         NEO4J_server_memory_heap_initial__size: "3G"
         NEO4J_server_memory_heap_max__size: "3G"
@@ -32,8 +32,6 @@ services:
       - type: volume
         source: data
         target: /data
-      # For database dumps, you can mount a folder into the container ex.:
-      #- ./neo4j-dumps:/data/dumps
 
   # API image & service, distinct build stages for production and development
   api:
@@ -47,7 +45,7 @@ services:
       database:
         condition: service_healthy
     environment:
-      NEO4J_DSN: "${NEO4J_DSN:-bolt://neo4j:changeme1234@database:7687/mdrdb}"
+      NEO4J_DSN: "${NEO4J_DSN:-bolt://neo4j:changeme1234@database:7687/neo4j}"
       ALLOW_ORIGIN_REGEX: "${ALLOW_ORIGIN_REGEX:-.*}"
       OAUTH_ENABLED: "${OAUTH_ENABLED:-False}"
       OAUTH_RBAC_ENABLED: "${OAUTH_RBAC_ENABLED:-False}"
@@ -77,7 +75,7 @@ services:
       database:
         condition: service_healthy
     environment:
-      NEO4J_DSN: "${NEO4J_DSN:-bolt://neo4j:changeme1234@database:7687/mdrdb}"
+      NEO4J_DSN: "${NEO4J_DSN:-bolt://neo4j:changeme1234@database:7687/neo4j}"
       ALLOW_ORIGIN_REGEX: "${ALLOW_ORIGIN_REGEX:-.*}"
       OAUTH_ENABLED: "${OAUTH_ENABLED:-False}"
       OAUTH_RBAC_ENABLED: "${OAUTH_RBAC_ENABLED:-False}"
@@ -149,10 +147,10 @@ services:
       - standaloneProtocol=neo4j
       - standaloneHost=localhost
       - standalonePort=5002
-      - standaloneDatabase=mdrdb
+      - standaloneDatabase=neo4j
       - standaloneAllowLoad=true
       - standaloneDashboardName=Activity Library Dashboard
-      - standaloneDashboardDatabase=mdrdb
+      - standaloneDashboardDatabase=neo4j
       - standaloneUsername=neo4j
       - standalonePassword=${NEO4J_PASSWORD:-changeme1234}
 
@@ -160,4 +158,4 @@ services:
 volumes:
   # Volume for storing the database on a local development environment
   data:
-    name: studybuilder_database
+    name: studybuilder_database_ce

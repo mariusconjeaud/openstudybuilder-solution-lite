@@ -26,7 +26,7 @@ from mdr_standards_import.scripts.utils import (
 )
 
 
-CDISC_IMPORT_DATABASE = environ.get("NEO4J_CDISC_IMPORT_DATABASE", "cdisc")
+CDISC_IMPORT_DATABASE = environ.get("NEO4J_CDISC_IMPORT_DATABASE", "neo4j")
 
 
 def wrapper_import_cdisc_ct_into_cdisc_db(
@@ -57,4 +57,6 @@ def wrapper_import_cdisc_ct_into_cdisc_db(
 
 
 if __name__ == "__main__":
-    wrapper_import_cdisc_ct_into_cdisc_db(get_author_id(1), get_directory_name(2, "cdisc_ct"))
+    wrapper_import_cdisc_ct_into_cdisc_db(
+        get_author_id(1), get_directory_name(2, "cdisc_ct")
+    )

@@ -91,6 +91,12 @@ for more information.
 
 There have been reports of issues when running the Dockerfiles on ARM64 architecture. Recent updates have resolved these problems on several ARM64 machines. If you encounter any other issues, please refer to the following link for more information and to report the inconvenience: [GitLab Issues](https://gitlab.com/Novo-Nordisk/nn-public/openstudybuilder/OpenStudyBuilder-Solution/-/issues).
 
+# Neo4j Community Edition
+
+Please read the [licensing section](https://neo4j.com/licensing/) of the Neo4j website to understand the scope of Community Edition, and the differences with Enterprise Edition. Mostly, Community Edition does not come with a commercial license, so it excludes support and is not recommended for production purposes.
+
+Enabling the use of Community Edition required some changes to the codebase, hence the need for a fork. These changes have very low impact as of OSB version 0.11; but forking means that this repository will need to be synced regularly in the future.
+
 
 # Using the preview environment
 

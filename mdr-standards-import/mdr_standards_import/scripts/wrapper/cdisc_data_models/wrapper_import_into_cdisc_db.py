@@ -32,7 +32,7 @@ from mdr_standards_import.scripts.utils import (
 )
 
 
-CDISC_IMPORT_DATABASE = environ.get("NEO4J_CDISC_IMPORT_DATABASE", "cdisc")
+CDISC_IMPORT_DATABASE = environ.get("NEO4J_CDISC_IMPORT_DATABASE", "neo4j")
 
 print(f"============================================")
 print(f"=====The database name is '{CDISC_IMPORT_DATABASE}'=")
@@ -86,4 +86,6 @@ def wrapper_import_cdisc_data_models_into_cdisc_db(
 
 
 if __name__ == "__main__":
-    wrapper_import_cdisc_data_models_into_cdisc_db(get_author_id(1), get_directory_name(2, "cdisc_data_models"))
+    wrapper_import_cdisc_data_models_into_cdisc_db(
+        get_author_id(1), get_directory_name(2, "cdisc_data_models")
+    )
