@@ -6,56 +6,96 @@ When('The Study Arm is found', () => cy.searchAndCheckPresence(armName, true))
 
 When('The Study Arm is no longer available', () => cy.searchAndCheckPresence(armName, false))
 
+Given('[API] Uid of study type {string} is fetched', (studyType) => cy.getArmTypeUidRefactored(studyType))
+
 Given('The Study Arm exists within the study', () => {
-    cy.createTestArm('Study_000001')
+    cy.createTestArm(Cypress.env('TEST_STUDY_UID'))
     cy.reload()
 })
 
 When('The new study arm form is filled and saved', () => {
-    cy.fixture('studyArm').then((arm) => {
-        armName = arm.name
-        cy.clickButton('add-study-arm')
-        cy.selectAutoComplete('arm-type', arm.type)
-        cy.fillInput('arm-name', arm.name)
-        cy.fillInput('arm-short-name', arm.short_name)
-        cy.fillInput('arm-randomisation-group', arm.randomisation_group)
-        cy.fillInput('arm-planned-number-of-subjects', arm.no_of_subjects)
-        cy.fillInput('arm-description', arm.description)
+    cy.intercept('**/study-design-classes').as('designClass')
+    cy.wait('@designClass').then((req) => {
+        expect(req.response.statusCode).to.eq(200)
     })
-    cy.clickButton('save-button')
-    cy.waitForFormSave()
-    cy.checkSnackbarMessage('Study Arm created')
+    cy.get('.mdi-plus').click()
+    cy.clickButton('manual-study')
+    cy.clickButton('continue-stepper')
+    cy.selectVSelect('arm-type', 'Placebo Arm')
+    cy.fillInput('arm-name', 'Test Placebo Arm')
+    cy.fillInput('arm-short-name', 'PArm')
+    cy.fillInput('randomization-group', 'RA')
+    cy.fillInput('arm-code', 'A')
+    cy.fillInput('arm-description', 'Test Arm A')
+    cy.clickButton('arm-push')
+
+    cy.get('[data-cy="arm-type"]').eq(1).click()
+    cy.get('.v-list')
+        .filter(':visible')
+        .should('not.contain', 'No data available')
+        .within(() => cy.get('.v-list-item').first().click())
+    cy.get('[data-cy="arm-name"]').eq(1).type('Test Arm Two')
+    cy.get('[data-cy="arm-short-name"]').eq(1).type('CArm')
+    cy.get('[data-cy="randomization-group"]').eq(1).type('RB')
+    cy.get('[data-cy="arm-code"]').eq(1).type('B')
+    cy.get('[data-cy="arm-description"]').eq(1).type('Test Arm B')
+    cy.clickButton('arm-push')
+    cy.get('[data-cy="arm-type"]').eq(2).click()
+    cy.get('.v-list')
+        .filter(':visible')
+        .should('not.contain', 'No data available')
+        .within(() => cy.get('.v-list-item').last().click())
+    cy.get('[data-cy="arm-name"]').eq(2).type('Test Arm Three')
+    cy.get('[data-cy="arm-short-name"]').eq(2).type('CArmX')
+    cy.get('[data-cy="randomization-group"]').eq(2).type('RBX')
+    cy.get('[data-cy="arm-code"]').eq(2).type('BX')
+    cy.get('[data-cy="arm-description"]').eq(2).type('Test Arm BX')
+    cy.clickButton('save-close-stepper')
+    cy.wait(2000)
+
 })
 
 Then('The new study arm is visible within the study arms table', () => {
-    cy.fixture('studyArm').then((arm) => {
-        cy.tableContains(arm.type)
-        cy.tableContains(arm.name)
-        cy.tableContains(arm.randomisation_group)
-        cy.tableContains(arm.randomisation_group)
-        cy.tableContains(arm.no_of_subjects)
-        cy.tableContains(arm.description)
-    })
+    cy.tableContains('Test Placebo Arm')
+    cy.tableContains('PArm')
+    cy.tableContains('RA')
+    cy.tableContains('Test Arm A')
+    cy.tableContains('Test Arm Two')
+    cy.tableContains('CArm')
+    cy.tableContains('RB')
+    cy.tableContains('Test Arm B')
 })
 
 When('The arm data is edited and saved', () => {
-    cy.fixture('studyArm').then((arm) => {
-        armName = arm.edit_name
-        cy.fillInput('arm-name', arm.edit_name)
-        cy.fillInput('arm-short-name', arm.edit_short_name)
-        cy.fillInput('arm-description', arm.edit_description)
+    cy.intercept('**/study-design-classes').as('designClass')
+    cy.wait('@designClass').then((req) => {
+        expect(req.response.statusCode).to.eq(200)
     })
-    cy.clickButton('save-button')
-    cy.waitForFormSave()
-    cy.checkSnackbarMessage('Study Arm updated')
+    cy.get('.mdi-pencil').click()
+    cy.get('[data-cy="arm-name"]').eq(0).clear().type('Test Arm Two 2')
+    cy.get('[data-cy="arm-short-name"]').eq(0).clear().type('CArm2')
+    cy.get('[data-cy="randomization-group"]').eq(0).clear().type('RB2')
+    cy.get('[data-cy="arm-code"]').eq(0).clear().type('B2')
+    cy.get('[data-cy="arm-description"]').eq(0).clear().type('Test Arm B2')
+
+    cy.get('[data-cy="arm-name"]').eq(1).clear().type('Test Arm Two 1')
+    cy.get('[data-cy="arm-short-name"]').eq(1).clear().type('BArm1')
+    cy.get('[data-cy="randomization-group"]').eq(1).clear().type('RA1')
+    cy.get('[data-cy="arm-code"]').eq(1).clear().type('A1')
+    cy.get('[data-cy="arm-description"]').eq(1).clear().type('Test Arm A1')
+    cy.clickButton('save-close-stepper')
+    cy.wait(2000)
 })
 
 Then('The study arm with updated values is visible within the study arms table', () => {
-    cy.fixture('studyArm').then((arm) => {
-        cy.tableContains(arm.edit_name)
-        cy.tableContains(arm.edit_short_name)
-        cy.tableContains(arm.edit_description)
-    })
+    cy.tableContains('Test Arm Two 2')
+    cy.tableContains('CArm2')
+    cy.tableContains('RB2')
+    cy.tableContains('B2')
+    cy.tableContains('Test Arm B2')
+    cy.tableContains('Test Arm Two 1')
+    cy.tableContains('BArm1')
+    cy.tableContains('A1')
 })
 
 When('The Randomisation Group is populated in the Add New Arm form', () => {
@@ -73,102 +113,79 @@ Then('The Arm code field is populated with value from Randomisation group field'
     })
 })
 
-When('The value {string} is entered for the field Number of subjects in the Study Arms form', (example) => {
-    cy.clickButton('add-study-arm')
-    cy.get('[data-cy="arm-planned-number-of-subjects"]').type(example)
+When('The value {string} is entered for the field Number of subjects in the Study Arms form', (value) => {
+    cy.intercept('**/study-design-classes').as('designClass')
+    cy.wait('@designClass').then((req) => expect(req.response.statusCode).to.eq(200))
+    cy.get('.mdi-pencil').click()
+    cy.wait(1000)
+    cy.get('[data-cy="number-of-subjects"] input').eq(0).clear().type(value)
+    cy.clickButton('save-close-stepper')
 })
 
-Then('The validation appears under the field in the Study Arms form', () => {
-    cy.get('.v-messages__message').should('contain', 'Value can\'t be less than 1')
-})
-
-When('The Arm name field is not populated', () => {
-    cy.clickButton('add-study-arm')
+When('The study arm type, arm name and arm short name is not populated', () => {
+    cy.intercept('**/study-design-classes').as('designClass')
+    cy.wait('@designClass').then((req) => {
+        expect(req.response.statusCode).to.eq(200)
+    })
+    cy.get('.mdi-pencil').click()
+    cy.wait(1000)
     cy.get('[data-cy="arm-name"]').clear()
-})
-
-When('The Arm short name field is not populated', () => {
+    cy.get('[aria-label="Clear Study arm type"]').eq(0).click()
     cy.get('[data-cy="arm-short-name"]').clear()
+
+    
 })
 
 Then('The required field validation appears for the {string} empty fields', (count) => {
-    cy.clickButton('save-button')
     cy.get('.v-messages__message').should('contain', 'This field is required').and('have.length', count)
 })
 
-When('The Study Arm is created with given name', () => {
-    cy.clickButton('add-study-arm')
-    cy.selectFirstVSelect('arm-type')
-    cy.fillInput('arm-name', 'Test Arm Name')
-    cy.fillInput('arm-short-name', 'TESTOFNAME')
-    cy.fillInput('arm-randomisation-group', 'TESTOFNAMERG')
-    cy.clickButton('save-button')
-    cy.waitForFormSave()
+When('The two study arms are defined with the same name', () => {
+    cy.intercept('**/study-design-classes').as('designClass')
+    cy.wait('@designClass').then((req) => {
+        expect(req.response.statusCode).to.eq(200)
+    })
+    cy.get('.mdi-pencil').click()
+    cy.wait(1000)
+    cy.get('[data-cy="arm-name"]').eq(0).clear().type('UV1')
+    cy.get('[data-cy="arm-name"]').eq(1).clear().type('UV1')
+    cy.clickButton('save-close-stepper')
+
 })
 
-When('Another Study Arm is created with the same arm name', () => {
-    cy.clickButton('add-study-arm')
-    cy.selectFirstVSelect('arm-type')
-    cy.fillInput('arm-name', 'Test Arm Name')
-    cy.fillInput('arm-short-name', 'TESTOFNAME1')
-    cy.fillInput('arm-randomisation-group', 'TESTOFNAMERG1')
-    cy.clickButton('save-button')
+When('The two study arms are defined with the same short name', () => {
+    cy.intercept('**/study-design-classes').as('designClass')
+    cy.wait('@designClass').then((req) => {
+        expect(req.response.statusCode).to.eq(200)
+    })
+    cy.get('.mdi-pencil').click()
+    cy.wait(1000)
+    cy.get('[data-cy="arm-short-name"]').eq(0).clear().type('UV2')
+    cy.get('[data-cy="arm-short-name"]').eq(1).clear().type('UV2')
+    cy.clickButton('save-close-stepper')
+
 })
 
-When('The Study Arm is created with given short name', () => {
-    cy.clickButton('add-study-arm')
-    cy.selectFirstVSelect('arm-type')
-    cy.fillInput('arm-name', 'TESTOFSHORTNAME')
-    cy.fillInput('arm-short-name', 'Test Short Name')
-    cy.fillInput('arm-randomisation-group', 'TESTOFSHORTNAMERG')
-    cy.clickButton('save-button')
-    cy.waitForFormSave()
-})
-
-When('Another Study Arm is created with the same arm short name', () => {
-    cy.clickButton('add-study-arm')
-    cy.selectFirstVSelect('arm-type')
-    cy.fillInput('arm-name', 'TESTOFSHORTNAME1')
-    cy.fillInput('arm-short-name', 'Test Short Name')
-    cy.fillInput('arm-randomisation-group', 'TESTOFSHORTNAMERG1')
-    cy.clickButton('save-button')
-})
-
-When('The Study Arm is created with given randomisation group', () => {
-    cy.clickButton('add-study-arm')
-    cy.selectFirstVSelect('arm-type')
-    cy.fillInput('arm-name', 'TESTOFRGN')
-    cy.fillInput('arm-short-name', 'TESTOFRGSN')
-    cy.fillInput('arm-randomisation-group', 'Test Randomisation Group')
-    cy.fillInput('arm-code', 'TESTOFRGSN')
-    cy.clickButton('save-button')
-    cy.waitForFormSave()
-})
-
-When('Another Study Arm is created with the same randomisation group', () => {
-    cy.clickButton('add-study-arm')
-    cy.selectFirstVSelect('arm-type')
-    cy.fillInput('arm-name', 'TESTOFRGN1')
-    cy.fillInput('arm-short-name', 'TESTOFRGSN1')
-    cy.fillInput('arm-randomisation-group', 'Test Randomisation Group')
-    cy.fillInput('arm-code', 'TESTOFRGSN1')
-    cy.clickButton('save-button')
-})
-
-When('For the {string} a text longer than {string} is provided in the Study Arms form', (field, length) => {
-    let textLen = parseInt(length) + 1
-    cy.clickButton('add-study-arm')
-    cy.get('[data-cy="' + field + '"]').clear().invoke('value', 'a'.repeat(textLen)).trigger('input')
-})
-
-When('In the Study Arms form randomistaion group is provided', () => {
-    cy.clickButton('add-study-arm')
-    cy.get('[data-cy="arm-randomisation-group"]').type('abc')
+When('The two study arms are defined with the same randomisation group', () => {
+    cy.intercept('**/study-design-classes').as('designClass')
+    cy.wait('@designClass').then((req) => {
+        expect(req.response.statusCode).to.eq(200)
+    })
+    cy.get('.mdi-pencil').click()
+    cy.wait(1000)
+    cy.get('[data-cy="randomization-group"]').eq(0).clear().type('UV3')
+    cy.get('[data-cy="randomization-group"]').eq(1).clear().type('UV3')
+    cy.clickButton('save-close-stepper')
 })
 
 When('The study arm code is updated to exceed 20 characters', () => {
-    cy.get('[data-cy="form-body"]').click()
-    cy.get('[data-cy="arm-code"] input').clear().type('a'.repeat(21), { delay: 0.1, force: true })
+    cy.intercept('**/study-design-classes').as('designClass')
+    cy.wait('@designClass').then((req) => {
+        expect(req.response.statusCode).to.eq(200)
+    })
+    cy.get('.mdi-pencil').click()
+    cy.wait(1000)
+    cy.get('[data-cy="arm-code"] input').eq(0).clear().type('a'.repeat(21), { delay: 0.1, force: true })
 })
 
 Then('The system displays the message {string}', (message) => {

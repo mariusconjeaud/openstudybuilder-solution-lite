@@ -7,7 +7,7 @@ from neomodel.sync_.core import NodeMeta, db
 from neomodel.sync_.match import Collect, NodeNameResolver, Optional, Size
 
 from clinical_mdr_api.domain_repositories.generic_repository import (
-    RepositoryClosureData,  # type: ignore
+    RepositoryClosureData,
 )
 from clinical_mdr_api.domain_repositories.models.study import StudyRoot, StudyValue
 from clinical_mdr_api.domain_repositories.models.study_field import StudyBooleanField
@@ -25,6 +25,8 @@ from clinical_mdr_api.models.study_selections.study import (
 from clinical_mdr_api.models.utils import GenericFilteringReturn
 from clinical_mdr_api.repositories._utils import FilterOperator
 from common import exceptions
+from common.telemetry import trace_calls
+from common.utils import convert_to_datetime
 
 
 class StudyDefinitionRepository(ABC):
@@ -83,6 +85,7 @@ class StudyDefinitionRepository(ABC):
         """
         return self.__audit_info
 
+    @trace_calls
     def find_by_uid(
         self,
         uid: str,
@@ -150,12 +153,12 @@ WHERE sv.study_id_prefix IS NOT NULL AND sv.study_number IS NOT NULL
 CALL {
     WITH sv
     OPTIONAL MATCH (sv)-[:HAS_STUDY_ARM]->(arm:StudyArm)
-    OPTIONAL MATCH (sv)-[:HAS_STUDY_EPOCH]->(pre_treatment_epoch:StudyEpoch)-[:HAS_EPOCH_TYPE]->(:CTTermRoot)-[:HAS_ATTRIBUTES_ROOT]-(:CTTermAttributesRoot)-[:LATEST]-(:CTTermAttributesValue {code_submission_value: "PRE TREATMENT EPOCH TYPE"})
-    OPTIONAL MATCH (sv)-[:HAS_STUDY_EPOCH]->(treatment_epoch:StudyEpoch)-[:HAS_EPOCH_TYPE]->(:CTTermRoot)-[:HAS_ATTRIBUTES_ROOT]-(:CTTermAttributesRoot)-[:LATEST]-(:CTTermAttributesValue {code_submission_value: "TREATMENT"})
-    OPTIONAL MATCH (sv)-[:HAS_STUDY_EPOCH]->(no_treatment_epoch:StudyEpoch)-[:HAS_EPOCH_TYPE]->(:CTTermRoot)-[:HAS_ATTRIBUTES_ROOT]-(:CTTermAttributesRoot)-[:LATEST]-(:CTTermAttributesValue {code_submission_value: "NO TREATMENT EPOCH TYPE"})
-    OPTIONAL MATCH (sv)-[:HAS_STUDY_EPOCH]->(post_treatment_epoch:StudyEpoch)-[:HAS_EPOCH_TYPE]->(:CTTermRoot)-[:HAS_ATTRIBUTES_ROOT]-(:CTTermAttributesRoot)-[:LATEST]-(:CTTermAttributesValue {code_submission_value: "POST TREATMENT EPOCH TYPE"})
-    OPTIONAL MATCH (sv)-[:HAS_STUDY_ELEMENT]->(treatment_element:StudyElement)-[:HAS_ELEMENT_SUBTYPE]->(:CTTermRoot)-[:HAS_PARENT_TYPE]->(:CTTermRoot)-[:HAS_ATTRIBUTES_ROOT]-(:CTTermAttributesRoot)-[:LATEST]-(:CTTermAttributesValue {code_submission_value: "TREATMENT ELEMENT TYPE"})
-    OPTIONAL MATCH (sv)-[:HAS_STUDY_ELEMENT]->(no_treatment_element:StudyElement)-[:HAS_ELEMENT_SUBTYPE]->(:CTTermRoot)-[:HAS_PARENT_TYPE]->(:CTTermRoot)-[:HAS_ATTRIBUTES_ROOT]-(:CTTermAttributesRoot)-[:LATEST]-(:CTTermAttributesValue {code_submission_value: "NO TREATMENT ELEMENT TYPE"})
+    OPTIONAL MATCH (sv)-[:HAS_STUDY_EPOCH]->(pre_treatment_epoch:StudyEpoch)-[:HAS_EPOCH_TYPE]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(:CTTermRoot)<-[:HAS_TERM_ROOT]-(:CTCodelistTerm {submission_value: "PRE TREATMENT EPOCH TYPE"})
+    OPTIONAL MATCH (sv)-[:HAS_STUDY_EPOCH]->(treatment_epoch:StudyEpoch)-[:HAS_EPOCH_TYPE]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(:CTTermRoot)<-[:HAS_TERM_ROOT]-(:CTCodelistTerm {submission_value: "TREATMENT"})
+    OPTIONAL MATCH (sv)-[:HAS_STUDY_EPOCH]->(no_treatment_epoch:StudyEpoch)-[:HAS_EPOCH_TYPE]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(:CTTermRoot)<-[:HAS_TERM_ROOT]-(:CTCodelistTerm {submission_value: "NO TREATMENT EPOCH TYPE"})
+    OPTIONAL MATCH (sv)-[:HAS_STUDY_EPOCH]->(post_treatment_epoch:StudyEpoch)-[:HAS_EPOCH_TYPE]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(:CTTermRoot)<-[:HAS_TERM_ROOT]-(:CTCodelistTerm {submission_value: "POST TREATMENT EPOCH TYPE"})
+    OPTIONAL MATCH (sv)-[:HAS_STUDY_ELEMENT]->(treatment_element:StudyElement)-[:HAS_ELEMENT_SUBTYPE]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(:CTTermRoot)-[:HAS_PARENT_TYPE]->(:CTTermRoot)<-[:HAS_TERM_ROOT]-(:CTCodelistTerm {submission_value: "TREATMENT ELEMENT TYPE"})
+    OPTIONAL MATCH (sv)-[:HAS_STUDY_ELEMENT]->(no_treatment_element:StudyElement)-[:HAS_ELEMENT_SUBTYPE]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(:CTTermRoot)-[:HAS_PARENT_TYPE]->(:CTTermRoot)<-[:HAS_TERM_ROOT]-(:CTCodelistTerm {submission_value: "NO TREATMENT ELEMENT TYPE"})
     OPTIONAL MATCH (sv)-[:HAS_STUDY_COHORT]->(cohort:StudyCohort)
     WITH
         COUNT(DISTINCT arm) AS arm_count,
@@ -251,9 +254,10 @@ RETURN
         self,
         study_src_uid: str,
         study_target_uid: str,
-        list_of_items_to_copy: list[bool],
+        list_of_items_to_copy: list[str],
         author_id: str,
     ) -> dict[str, int] | None:
+        parameters: dict[str, str | list[str] | datetime.datetime] = {}
         exclusions = """
             NOT EXISTS((selection_src)--(:StudyActivity))
             AND NOT EXISTS((selection_src)--(:StudyActivitySubGroup))
@@ -267,14 +271,14 @@ RETURN
             and "StudyVisit" not in list_of_items_to_copy
         ):
             exclusions += """
-            AND NOT EXISTS((selection_src:StudySoAFootnote)--(:StudyVisit))
+            AND NOT ((selection_src:StudySoAFootnote)--(:StudyVisit) AND NOT (selection_src:StudySoAFootnote)--(:StudyVisit)--(:Delete))
         """
         if (
             "StudySoAFootnote" in list_of_items_to_copy
             and "StudyEpoch" not in list_of_items_to_copy
         ):
             exclusions += """
-            AND NOT EXISTS((selection_src:StudySoAFootnote)--(:StudyEpoch))
+            AND NOT ((selection_src:StudySoAFootnote)--(:StudyEpoch) AND NOT (selection_src:StudySoAFootnote)--(:StudyEpoch)--(:Delete))
         """
 
         # COPY NODES AND OUTBOUND RELATIONSHIPS
@@ -357,8 +361,8 @@ WITH $study_src_uid as study_src, $study_target_uid as study_target, $to_copy_la
 // GO ONE BY ONE LABEL TO COPY
 unwind to_copy_labels as to_copy_labels_unw
 
-MATCH (sr_target:StudyRoot)-[:LATEST]->(sv_target:StudyValue)--(selection_target:StudySelection)
-    where sr_target.uid = study_target
+MATCH (sr_target:StudyRoot)-[:LATEST]->(sv_target:StudyValue)-[relationship]-(selection_target:StudySelection)
+    where sr_target.uid = study_target AND type(relationship) <> "HAS_PROTOCOL_SOA_CELL" AND type(relationship) <> "HAS_PROTOCOL_SOA_FOOTNOTE"
 
 // Update the counter value and generate new UID and 
 CALL {
@@ -554,6 +558,81 @@ return *
             not_for_update=True, repository=self, additional_closure=None
         )
 
+    def get_studies_list(self, deleted: bool = False) -> list[dict[str, Any]]:
+        """
+        Public method to retrieve a list of all studies in the repository.
+        Returns a list of dictionaries.
+        """
+        self._check_not_closed()
+        query = f"""
+            MATCH (sr:StudyRoot)-[:LATEST]->(sv:StudyValue)-[:HAS_PROJECT]-(:StudyProjectField)<-[:HAS_FIELD]-(p:Project)<-[:HOLDS_PROJECT]-(cp:ClinicalProgramme)
+            WHERE {'' if deleted else 'NOT'} EXISTS((sv)<-[:BEFORE]-(:Delete))
+
+            WITH sr,sv,p,cp
+            OPTIONAL MATCH (sv)-[:HAS_TEXT_FIELD]->(stf:StudyTextField {{field_name: 'study_title'}})
+            WITH sr, sv, p, cp, stf, COLLECT {{
+                MATCH (sr)-[ver:HAS_VERSION|LATEST_DRAFT|LATEST_LOCKED|LATEST_RELEASED]->(sv)
+                RETURN ver
+                order by ver.start_date desc
+                limit 1
+            }} as versions,
+            COLLECT {{
+                MATCH (sr)-[ver:LATEST_RELEASED]->(:StudyValue)
+                RETURN {{version_number: ver.version, change_description: ver.change_description}}
+            }} as latest_released,
+            COLLECT {{
+                MATCH (sr)-[ver:LATEST_LOCKED]->(:StudyValue)
+                RETURN {{version_number: ver.version, change_description: ver.change_description}}
+            }} as latest_locked
+            WITH sr, sv, p, cp, stf,
+                head(versions) as current_version,
+                head(latest_released) as latest_released_version,
+                head(latest_locked) as latest_locked_version
+            OPTIONAL MATCH (author:User {{user_id: current_version.author_id}})
+            RETURN  sr.uid AS uid,
+                sv.study_acronym,
+                sv.study_id_prefix + '-' + sv.study_number + COALESCE(nullif('-' + sv.subpart_id, '-'), '') as id,
+                sv.study_number,
+                sv.subpart_id,
+                sv.study_subpart_acronym,
+                stf.value as study_title,
+                cp.name as clinical_progamme,
+                p.project_number as project_number,
+                p.name as project_name,
+                current_version.author_id as version_author_id,
+                current_version.status as version_status,
+                current_version.start_date as version_start_date,
+                current_version.version as version_number,
+                COALESCE(author.username, current_version.author_id) as author,
+                latest_locked_version,
+                latest_released_version
+            ORDER BY uid
+        """
+        rs = db.cypher_query(query)
+        return [
+            {
+                "uid": row[0],
+                "acronym": row[1],
+                "id": row[2],
+                "study_number": row[3],
+                "subpart_id": row[4],
+                "subpart_acronym": row[5],
+                "title": row[6],
+                "clinical_programme_name": row[7],
+                "project_number": row[8],
+                "project_name": row[9],
+                "version_author_id": row[10],
+                "version_status": row[11],
+                "version_start_date": convert_to_datetime(row[12]),
+                "version_number": row[13],
+                "version_author": row[14],
+                "latest_locked_version": row[15],
+                "latest_released_version": row[16],
+            }
+            for row in rs[0]
+        ]
+
+    @trace_calls
     def find_all(
         self,
         has_study_footnote: bool | None = None,
@@ -562,11 +641,11 @@ return *
         has_study_criteria: bool | None = None,
         has_study_activity: bool | None = None,
         has_study_activity_instruction: bool | None = None,
-        sort_by: dict | None = None,
+        sort_by: dict[str, bool] | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: dict | None = None,
-        filter_operator: FilterOperator | None = FilterOperator.AND,
+        filter_by: dict[str, dict[str, Any]] | None = None,
+        filter_operator: FilterOperator = FilterOperator.AND,
         total_count: bool = False,
         deleted: bool = False,
     ) -> GenericFilteringReturn[StudyDefinitionAR]:
@@ -635,16 +714,16 @@ return *
             study.repository_closure_data = repository_closure_data
 
         # and we are done
-        return GenericFilteringReturn.create(items=studies, total=snapshots.total)
+        return GenericFilteringReturn(items=studies, total=snapshots.total)
 
     def find_study_snapshot_history(
         self,
         study_uid: str,
-        sort_by: dict | None = None,
+        sort_by: dict[str, bool] | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: dict | None = None,
-        filter_operator: FilterOperator | None = FilterOperator.AND,
+        filter_by: dict[str, dict[str, Any]] | None = None,
+        filter_operator: FilterOperator = FilterOperator.AND,
         total_count: bool = False,
     ) -> GenericFilteringReturn[StudyDefinitionAR]:
         study_snapshots = self._retrieve_study_snapshot_history(
@@ -661,17 +740,16 @@ return *
             StudyDefinitionAR.from_snapshot(s) for s in study_snapshots.items
         ]
 
-        study_snapshots.items = studies
-        return study_snapshots
+        return GenericFilteringReturn(items=studies, total=study_snapshots.total)
 
     def _retrieve_study_snapshot_history(
         self,
         study_uid: str,
-        sort_by: dict | None = None,
+        sort_by: dict[str, bool] | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: dict | None = None,
-        filter_operator: FilterOperator | None = FilterOperator.AND,
+        filter_by: dict[str, dict[str, Any]] | None = None,
+        filter_operator: FilterOperator = FilterOperator.AND,
         total_count: bool = False,
     ) -> GenericFilteringReturn[StudyDefinitionSnapshot]:
         raise NotImplementedError
@@ -700,11 +778,11 @@ return *
         self,
         uid: str,
         library_item_type: NodeMeta,
-        sort_by: dict | None = None,
+        sort_by: dict[str, bool] | None = None,
         page_number: int = 1,
         page_size: int = 50,
-        filter_by: dict | None = None,
-        filter_operator: FilterOperator | None = FilterOperator.AND,
+        filter_by: dict[str, dict[str, Any]] | None = None,
+        filter_operator: FilterOperator = FilterOperator.AND,
     ) -> GenericFilteringReturn[StudyDefinitionAR]:
         """
         Public method which is to retrieve the list of studies having selected the library item with provided uid
@@ -742,7 +820,7 @@ return *
             study.repository_closure_data = repository_closure_data
 
         # Return output
-        return GenericFilteringReturn.create(items=studies, total=0)
+        return GenericFilteringReturn(items=studies, total=0)
 
     def close(self) -> None:
         """
@@ -838,13 +916,13 @@ return *
         has_study_criteria: bool | None = None,
         has_study_activity: bool | None = None,
         has_study_activity_instruction: bool | None = None,
-        sort_by: dict | None = None,
+        sort_by: dict[str, bool] | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: dict | None = None,
-        filter_operator: FilterOperator | None = FilterOperator.AND,
+        filter_by: dict[str, dict[str, Any]] | None = None,
+        filter_operator: FilterOperator = FilterOperator.AND,
         total_count: bool = False,
-        study_selection_object_node_id: int | None = None,
+        study_selection_object_node_id: int | str | None = None,
         study_selection_object_node_type: NodeMeta | None = None,
         deleted: bool = False,
     ) -> GenericFilteringReturn[StudyDefinitionSnapshot]:
@@ -904,7 +982,7 @@ return *
 
     def get_subpart_audit_trail_by_uid(
         self, uid: str, is_subpart: bool = False, study_value_version: str | None = None
-    ) -> list:
+    ) -> list[Any]:
         """
         Public method which is to retrieve the audit trail for a given study identified by UID.
         :return: A list of retrieved data in a form StudyAuditTrailAR instances.

@@ -11,6 +11,7 @@ Tests for /ct/codelists and /ct/terms endpoints
 import json
 import logging
 from functools import reduce
+from typing import Any
 
 import pytest
 from fastapi.testclient import TestClient
@@ -90,19 +91,18 @@ def test_data():
         pytest.param("/ct/terms", 20, '{"term_uid": true}'),
         pytest.param("/ct/terms/names", 20, '{"term_uid": true}'),
         pytest.param("/ct/terms/attributes", 20, '{"term_uid": true}'),
-        pytest.param("/ct/terms", 20, '{"codelist_uid": true}'),  # "term_uid": false
         pytest.param("/ct/terms/names", 20, '{"sponsor_preferred_name": true}'),
-        pytest.param("/ct/terms/attributes", 20, '{"code_submission_value": true}'),
         pytest.param("/ct/terms", 20, '{"term_uid": false}'),
         pytest.param("/ct/terms/names", 20, '{"term_uid": false}'),
         pytest.param("/ct/terms/attributes", 20, '{"term_uid": false}'),
     ],
 )
 def test_get_ct_terms_pagination(api_client, base_url, page_size, sort_by):
-    results_paginated: dict = {}
+    results_paginated: dict[Any, Any] = {}
     for page_number in range(1, 4):
         url = f"{base_url}?page_number={page_number}&page_size={page_size}&sort_by={sort_by}"
         response = api_client.get(url)
+        assert response.status_code == 200, response.text
         res = response.json()
         res_names = list(map(lambda x: x["term_uid"], res["items"]))
         results_paginated[page_number] = res_names
@@ -110,7 +110,7 @@ def test_get_ct_terms_pagination(api_client, base_url, page_size, sort_by):
 
     # Some CTTerm uids may be duplicated as same CTTerm exists in a few CTCodelists
     results_paginated_merged = list(
-        reduce(lambda a, b: a + b, list(results_paginated.values()))
+        reduce(lambda a, b: list(a) + list(b), list(results_paginated.values()))
     )
     log.info("All rows returned by pagination: %s", results_paginated_merged)
 
@@ -195,7 +195,7 @@ def test_retire_unused_term(api_client):
 
     # fetch the term to be removed, ensure it's part of only the expected codelist
     response = api_client.get(
-        f"ct/terms/{term_to_remove_and_retire.term_uid}/attributes"
+        f"ct/terms/{term_to_remove_and_retire.term_uid}/codelists"
     )
     res = response.json()
     assert_response_status_code(response, 200)
@@ -206,11 +206,11 @@ def test_retire_unused_term(api_client):
     response = api_client.delete(
         f"/ct/codelists/{codelist.codelist_uid}/terms/{term_to_remove_and_retire.term_uid}"
     )
-    assert_response_status_code(response, 201)
+    assert_response_status_code(response, 200)
 
     # fetch the removed term, ensure it's not part of any codelist
     response = api_client.get(
-        f"ct/terms/{term_to_remove_and_retire.term_uid}/attributes"
+        f"ct/terms/{term_to_remove_and_retire.term_uid}/codelists"
     )
     res = response.json()
     assert_response_status_code(response, 200)
@@ -247,3 +247,44 @@ def test_retire_unused_term(api_client):
     res = response.json()
     assert_response_status_code(response, 200)
     assert len(res["items"]) == 1
+
+
+@pytest.mark.parametrize(
+    "field_name, search_string",
+    [
+        ("library_name", "Sponsor"),
+        ("name.start_date", "20"),
+        ("name.version", "1.0"),
+        ("name.status", "Final"),
+        ("name.author_username", "unknown-user"),
+        ("attributes.start_date", "20"),
+        ("attributes.version", "1.0"),
+        ("attributes.status", "Final"),
+        ("attributes.author_username", "unknown-user"),
+        ("attributes.concept_id", "CID"),
+        ("attributes.nci_preferred_name", "nci"),
+        ("attributes.definition", ""),
+        ("codelists.codelist_name", ""),
+        ("codelists.codelist_submission_value", ""),
+        ("codelists.submission_value", "a"),
+    ],
+)
+def test_get_ct_terms_headers(api_client, field_name, search_string):
+    responses = {}
+
+    for lite in [True, False]:
+        query_params = {
+            "field_name": field_name,
+            "search_string": search_string,
+            "lite": lite,
+        }
+        response = api_client.get("/ct/terms/headers", params=query_params)
+        assert_response_status_code(response, 200)
+        assert len(response.json()) >= 1
+        for res in response.json():
+            assert str(search_string).lower() in str(res).lower()
+
+        responses[lite] = response.json()
+
+    # Assert that `?lite=true` returns the same data as `?lite=false`
+    assert responses[True] == responses[False]

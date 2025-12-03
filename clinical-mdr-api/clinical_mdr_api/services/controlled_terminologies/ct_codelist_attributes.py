@@ -37,7 +37,7 @@ class CTCodelistAttributesService(CTCodelistGenericService[CTCodelistAttributesA
                 name=self.get_input_or_previous_property(
                     codelist_input.name, item.ct_codelist_vo.name
                 ),
-                catalogue_name=item.ct_codelist_vo.catalogue_name,
+                catalogue_names=item.ct_codelist_vo.catalogue_names,
                 parent_codelist_uid=item.ct_codelist_vo.parent_codelist_uid,
                 child_codelist_uids=item.ct_codelist_vo.child_codelist_uids,
                 submission_value=self.get_input_or_previous_property(
@@ -53,6 +53,9 @@ class CTCodelistAttributesService(CTCodelistGenericService[CTCodelistAttributesA
                 ),
                 extensible=self.get_input_or_previous_property(
                     codelist_input.extensible, item.ct_codelist_vo.extensible
+                ),
+                ordinal=self.get_input_or_previous_property(
+                    codelist_input.ordinal, item.ct_codelist_vo.ordinal
                 ),
                 # passing always True callbacks, as we can't change catalogue
                 # in scope of CodelistName or CodelistAttributes, it can be only changed via CTCodelistRoot

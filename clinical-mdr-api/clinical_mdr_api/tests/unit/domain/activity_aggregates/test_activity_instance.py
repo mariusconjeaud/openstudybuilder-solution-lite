@@ -16,7 +16,7 @@ from clinical_mdr_api.domains.concepts.activities.activity_instance import (
 )
 from clinical_mdr_api.domains.concepts.activities.activity_item import (
     ActivityItemVO,
-    LibraryItem,
+    CTTermItem,
 )
 from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryItemMetadataVO,
@@ -24,7 +24,9 @@ from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryVO,
 )
 from clinical_mdr_api.models.concepts.activities.activity_item import (
+    CompactOdmForm,
     CompactOdmItem,
+    CompactOdmItemGroup,
     CompactUnitDefinition,
 )
 from clinical_mdr_api.tests.unit.domain.utils import (
@@ -74,34 +76,38 @@ def create_random_activity_instance_vo() -> ActivityInstanceVO:
             ActivityItemVO.from_repository_values(
                 activity_item_class_uid=random_str(),
                 activity_item_class_name=random_str(),
-                ct_terms=[LibraryItem(uid=random_str(), name=random_str())],
+                ct_terms=[
+                    CTTermItem(
+                        uid=random_str(), name=random_str(), codelist_uid=random_str()
+                    )
+                ],
                 unit_definitions=[
                     CompactUnitDefinition(
                         uid=random_str(), name=random_str(), dimension_name=random_str()
                     )
                 ],
                 is_adam_param_specific=False,
-                odm_items=[
-                    CompactOdmItem(
-                        uid=random_str(), odm=random_str(), name=random_str()
-                    )
-                ],
+                odm_form=None,
+                odm_item_group=None,
+                odm_item=None,
             ),
             ActivityItemVO.from_repository_values(
                 activity_item_class_uid=random_str(),
                 activity_item_class_name=random_str(),
-                ct_terms=[LibraryItem(uid=random_str(), name=random_str())],
+                ct_terms=[
+                    CTTermItem(
+                        uid=random_str(), name=random_str(), codelist_uid=random_str()
+                    )
+                ],
                 unit_definitions=[
                     CompactUnitDefinition(
                         uid=random_str(), name=random_str(), dimension_name=random_str()
                     )
                 ],
                 is_adam_param_specific=False,
-                odm_items=[
-                    CompactOdmItem(
-                        uid=random_str(), odm=random_str(), name=random_str()
-                    )
-                ],
+                odm_form=None,
+                odm_item_group=None,
+                odm_item=None,
             ),
         ],
     )
@@ -130,7 +136,9 @@ def create_random_activity_instance_ar(
         unit_definition_exists_by_uid_callback=lambda _: True,
         find_activity_item_class_by_uid_callback=lambda _: _get_activity_item_class_mock(),
         find_activity_instance_class_by_uid_callback=lambda _: _get_activity_instance_class_mock(),
-        odm_item_exists_by_uid_callback=lambda _: True,
+        get_odm_form_by_uid_callback=lambda _: None,
+        get_odm_item_group_by_uid_callback=lambda _: None,
+        get_odm_item_by_uid_callback=lambda _: None,
         get_dimension_names_by_unit_definition_uids=lambda _: [],
     )
 
@@ -157,12 +165,9 @@ def _get_activity_item_class_mock():
             nci_concept_id=None,
             order=1,
             activity_instance_classes=[],
-            data_type_uid="xyz",
-            data_type_name="xyz",
-            role_uid="xyz",
-            role_name="xyz",
+            data_type={"uid": "xyz", "codelist_uid": "xyz"},
+            role={"uid": "xyz", "codelist_uid": "xyz"},
             variable_class_uids=[],
-            codelist_uids=[],
         ),
     )
 
@@ -182,7 +187,6 @@ def _get_activity_instance_class_mock():
             _author_username="xyz",
         ),
         _activity_instance_class_vo=ActivityInstanceClassVO(
-            parent_uid="xyz",
             name="xyz",
             order=1,
             definition="xyz",
@@ -194,7 +198,6 @@ def _get_activity_instance_class_mock():
                 #     uid="xyz", mandatory=True, is_adam_param_specific_enabled=True
                 # )
             ],
-            data_domain_uids=[],
         ),
     )
 
@@ -323,31 +326,55 @@ class TestActivityInstanceNegative(unittest.TestCase):
                             activity_item_class_uid=random_str(),
                             activity_item_class_name=random_str(),
                             ct_terms={"name": random_str(), "uid": random_str()},
-                            unit_definitions={
-                                "name": random_str(),
-                                "uid": random_str(),
-                            },
+                            unit_definitions=[
+                                CompactUnitDefinition(
+                                    name=random_str(),
+                                    uid=random_str(),
+                                )
+                            ],
                             is_adam_param_specific=False,
-                            odm_items={
-                                "uid": random_str(),
-                                "oid": random_str(),
-                                "name": random_str(),
-                            },
+                            odm_form=CompactOdmForm(
+                                uid=random_str(),
+                                oid=random_str(),
+                                name=random_str(),
+                            ),
+                            odm_item_group=CompactOdmItemGroup(
+                                uid=random_str(),
+                                oid=random_str(),
+                                name=random_str(),
+                            ),
+                            odm_item=CompactOdmItem(
+                                uid=random_str(),
+                                oid=random_str(),
+                                name=random_str(),
+                            ),
                         ),
                         ActivityItemVO.from_repository_values(
                             activity_item_class_uid=random_str(),
                             activity_item_class_name=random_str(),
                             ct_terms={"name": random_str(), "uid": random_str()},
-                            unit_definitions={
-                                "name": random_str(),
-                                "uid": random_str(),
-                            },
+                            unit_definitions=[
+                                CompactUnitDefinition(
+                                    name=random_str(),
+                                    uid=random_str(),
+                                )
+                            ],
                             is_adam_param_specific=False,
-                            odm_items={
-                                "uid": random_str(),
-                                "oid": random_str(),
-                                "name": random_str(),
-                            },
+                            odm_form=CompactOdmForm(
+                                uid=random_str(),
+                                oid=random_str(),
+                                name=random_str(),
+                            ),
+                            odm_item_group=CompactOdmItemGroup(
+                                uid=random_str(),
+                                oid=random_str(),
+                                name=random_str(),
+                            ),
+                            odm_item=CompactOdmItem(
+                                uid=random_str(),
+                                oid=random_str(),
+                                name=random_str(),
+                            ),
                         ),
                     ],
                 ),
@@ -366,6 +393,9 @@ class TestActivityInstanceNegative(unittest.TestCase):
                 ct_term_exists_by_uid_callback=lambda _: True,
                 unit_definition_exists_by_uid_callback=lambda _: True,
                 get_dimension_names_by_unit_definition_uids=lambda _: [],
+                get_odm_form_by_uid_callback=lambda _: None,
+                get_odm_item_group_by_uid_callback=lambda _: None,
+                get_odm_item_by_uid_callback=lambda _: None,
             )
 
         assert (

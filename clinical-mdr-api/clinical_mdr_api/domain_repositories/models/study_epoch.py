@@ -7,7 +7,7 @@ from neomodel import (
 )
 
 from clinical_mdr_api.domain_repositories.models.controlled_terminology import (
-    CTTermRoot,
+    CTTermContext,
 )
 from clinical_mdr_api.domain_repositories.models.generic import ClinicalMdrRel
 from clinical_mdr_api.domain_repositories.models.study import StudyValue
@@ -23,13 +23,13 @@ class StudyEpoch(StudySelection):
         StudyValue, "HAS_STUDY_EPOCH", model=ClinicalMdrRel, cardinality=ZeroOrMore
     )
     has_epoch = RelationshipTo(
-        CTTermRoot, "HAS_EPOCH", model=ClinicalMdrRel, cardinality=ZeroOrOne
+        CTTermContext, "HAS_EPOCH", model=ClinicalMdrRel, cardinality=ZeroOrOne
     )
     has_epoch_subtype = RelationshipTo(
-        CTTermRoot, "HAS_EPOCH_SUB_TYPE", model=ClinicalMdrRel, cardinality=ZeroOrOne
+        CTTermContext, "HAS_EPOCH_SUB_TYPE", model=ClinicalMdrRel, cardinality=ZeroOrOne
     )
     has_epoch_type = RelationshipTo(
-        CTTermRoot, "HAS_EPOCH_TYPE", model=ClinicalMdrRel, cardinality=ZeroOrOne
+        CTTermContext, "HAS_EPOCH_TYPE", model=ClinicalMdrRel, cardinality=ZeroOrOne
     )
     name = StringProperty()
     short_name = StringProperty()

@@ -224,8 +224,12 @@ export default {
       if (this.form.confirmed_response_minimum_duration_null_value_code) {
         this.form.confirmed_response_minimum_duration_null_value_code = null
       } else {
+        const termUid = this.studiesGeneralStore.nullValues.find(
+          (el) =>
+            el.submission_value === studyConstants.TERM_NOT_APPLICABLE_SUBMVAL
+        ).term_uid
         this.form.confirmed_response_minimum_duration_null_value_code = {
-          term_uid: this.$t('_global.na_uid'),
+          term_uid: termUid,
           name: this.$t('_global.not_applicable_full_name'),
         }
       }

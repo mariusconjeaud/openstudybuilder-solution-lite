@@ -45,7 +45,7 @@ def test_post_time_point_which_is_a_tp(api_client):
         "library_name": "Sponsor",
         "numeric_value_uid": "NumericValue_000001",
         "unit_definition_uid": "UnitDefinition_000001",
-        "time_reference_uid": "term_root_final",
+        "time_reference_uid": "CTTermRoot_000001",
     }
     response = api_client.post("/concepts/time-points", json=data)
 
@@ -68,7 +68,7 @@ def test_post_time_point_which_is_a_tp(api_client):
     assert res["end_date"] is None
     assert res["numeric_value_uid"] == "NumericValue_000001"
     assert res["unit_definition_uid"] == "UnitDefinition_000001"
-    assert res["time_reference_uid"] == "term_root_final"
+    assert res["time_reference_uid"] == "CTTermRoot_000001"
 
 
 def test_post_time_point_which_is_a_tp_existing_time_point_is_returned(api_client):
@@ -80,7 +80,7 @@ def test_post_time_point_which_is_a_tp_existing_time_point_is_returned(api_clien
         "library_name": "Sponsor",
         "numeric_value_uid": "NumericValue_000001",
         "unit_definition_uid": "UnitDefinition_000001",
-        "time_reference_uid": "term_root_final",
+        "time_reference_uid": "CTTermRoot_000001",
     }
     response = api_client.post("/concepts/time-points", json=data)
 
@@ -103,7 +103,7 @@ def test_post_time_point_which_is_a_tp_existing_time_point_is_returned(api_clien
     assert res["end_date"] is None
     assert res["numeric_value_uid"] == "NumericValue_000001"
     assert res["unit_definition_uid"] == "UnitDefinition_000001"
-    assert res["time_reference_uid"] == "term_root_final"
+    assert res["time_reference_uid"] == "CTTermRoot_000001"
 
 
 def test_post_time_point_which_is_not_tp(api_client):
@@ -115,7 +115,7 @@ def test_post_time_point_which_is_not_tp(api_client):
         "library_name": "Sponsor",
         "numeric_value_uid": "NumericValue_000002",
         "unit_definition_uid": "UnitDefinition_000001",
-        "time_reference_uid": "term_root_final",
+        "time_reference_uid": "CTTermRoot_000001",
     }
     response = api_client.post("/concepts/time-points", json=data)
 
@@ -138,7 +138,7 @@ def test_post_time_point_which_is_not_tp(api_client):
     assert res["end_date"] is None
     assert res["numeric_value_uid"] == "NumericValue_000002"
     assert res["unit_definition_uid"] == "UnitDefinition_000001"
-    assert res["time_reference_uid"] == "term_root_final"
+    assert res["time_reference_uid"] == "CTTermRoot_000001"
 
 
 def test_get_all_time_points(api_client):
@@ -163,7 +163,7 @@ def test_get_all_time_points(api_client):
     assert res["items"][0]["end_date"] is None
     assert res["items"][0]["numeric_value_uid"] == "NumericValue_000001"
     assert res["items"][0]["unit_definition_uid"] == "UnitDefinition_000001"
-    assert res["items"][0]["time_reference_uid"] == "term_root_final"
+    assert res["items"][0]["time_reference_uid"] == "CTTermRoot_000001"
     assert res["items"][1]["uid"] == "TimePoint_000002"
     assert res["items"][1]["name"] == "3.21 name_1 after term_value_name1"
     assert res["items"][1]["name_sentence_case"] == "time_point_name_sentence_case2"
@@ -179,4 +179,4 @@ def test_get_all_time_points(api_client):
     assert res["items"][1]["end_date"] is None
     assert res["items"][1]["numeric_value_uid"] == "NumericValue_000002"
     assert res["items"][1]["unit_definition_uid"] == "UnitDefinition_000001"
-    assert res["items"][1]["time_reference_uid"] == "term_root_final"
+    assert res["items"][1]["time_reference_uid"] == "CTTermRoot_000001"

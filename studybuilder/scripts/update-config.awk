@@ -1,50 +1,41 @@
 #!/usr/bin/awk -f
 # Usage: $0 SRC.json > DST.json
-# Update JSON document from SRC to stdout overwriting properties from environment variables
-# if an env var with same name is set and not empty
-
+# Overwrite JSON properties from env vars of the same name (if set and non-empty),
+# while preserving ALL original formatting (commas, spaces, blank lines).
 
 BEGIN {
-    FS = "[[:space:]]*:[[:space:]]*"
-    RS = "[[:space:]]*[{,}]\n*"
-    ORS = ""
+    FS  = "[[:space:]]*:[[:space:]]*"
+    RS  = "[[:space:]]*[{,}]\n*"   # separators we want to re-emit
+    ORS = ""                       # we’ll print RT ourselves
     OFS = ": "
-    printf "{\n"
 }
 
 {
-    if (match($0, /^[[:space:]]*["'][A-Z0-9a-z_]+["'][[:space:]]*:/)) {
+    out = $0
 
-        if (recount > 0) {
-            # omit tailing comma on last record by printing the separator before the record #
-            print ",\n"
-        }
-
-        property = variable = $1
-
-        # clean up property name#
+    # Is this record a "key: value" pair?
+    if (match($0, /^[[:space:]]*["'][A-Za-z0-9_]+["'][[:space:]]*:/)) {
+        property = $1
+        variable = property
         gsub(/^[[:space:]]*["']|["'][[:space:]]*$/, "", variable)
 
-        value = ENVIRON[variable]
-
-        if (value) {
-            # replace with environment variable if set
-            gsub(/"/, "\\\"", value)
-            value = sprintf("\"%s\"", value)
-
+        # Consider env var set even if it's "0"
+        if ((variable in ENVIRON) && ENVIRON[variable] != "") {
+            val = ENVIRON[variable]
+            gsub(/"/, "\\\"", val)
+            out = property OFS "\"" val "\""
         } else {
-            # value is all fields but the first (ex. there was a : in the value)
-            sub($1 FS, "")
-            value = $0
+            # Keep original value (handles colons inside the value)
+            tmp = $0
+            sub($1 FS, "", tmp)
+            out = property OFS tmp
         }
-
-        # property still have the original quoting and spacing
-        print property, value
-
-        recount++
     }
+
+    # Re-emit the exact separator (comma/brace + spaces/newlines)
+    printf "%s%s", out, RT
 }
 
 END {
-    printf "\n}\n"
+    # nothing: last RT (possibly empty) already handled
 }

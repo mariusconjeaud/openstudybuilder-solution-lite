@@ -17,7 +17,7 @@
                 :label="$t('StudyActivityForm.flowchart_group')"
                 data-cy="flowchart-group"
                 :items="flowchartGroups"
-                item-title="name.sponsor_preferred_name"
+                item-title="sponsor_preferred_name"
                 item-value="term_uid"
                 :rules="[formRules.required]"
                 :hint="$t('_help.StudyActivityForm.flowchart_group')"
@@ -79,12 +79,13 @@
               <v-row>
                 <v-checkbox
                   v-model="form.is_data_collected"
-                  class="mt-2 mr-2"
+                  class="mr-2"
                   :label="$t('ActivityForms.is_data_collected')"
                 />
                 <v-switch
                   v-model="form.is_request_final"
                   :label="$t('ActivityForms.submit_request')"
+                  class="mt-n5"
                   hide-details
                   color="primary"
                 />
@@ -178,7 +179,7 @@ export default {
     },
   },
   mounted() {
-    terms.getByCodelist('flowchartGroups').then((resp) => {
+    terms.getTermsByCodelist('flowchartGroups').then((resp) => {
       this.flowchartGroups = resp.data.items
     })
     this.getGroups()

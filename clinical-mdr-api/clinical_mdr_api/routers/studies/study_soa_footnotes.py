@@ -18,14 +18,15 @@ from clinical_mdr_api.routers import _generic_descriptions, decorators
 from clinical_mdr_api.routers import study_router as router
 from clinical_mdr_api.routers.studies import utils
 from clinical_mdr_api.services.studies.study_soa_footnote import StudySoAFootnoteService
-from common import config
 from common.auth import rbac
+from common.auth.dependencies import security
+from common.config import settings
 from common.models.error import ErrorResponse
 
 
 @router.get(
     "/study-soa-footnotes",
-    dependencies=[rbac.STUDY_READ],
+    dependencies=[security, rbac.STUDY_READ],
     summary="List all study soa footnotes defined for all studies",
     status_code=200,
     responses={
@@ -37,16 +38,16 @@ def get_all_study_soa_footnotes_from_all_studies(
         Json | None, Query(description=_generic_descriptions.SORT_BY)
     ] = None,
     page_number: Annotated[
-        int | None, Query(ge=1, description=_generic_descriptions.PAGE_NUMBER)
-    ] = config.DEFAULT_PAGE_NUMBER,
+        int, Query(ge=1, description=_generic_descriptions.PAGE_NUMBER)
+    ] = settings.default_page_number,
     page_size: Annotated[
-        int | None,
+        int,
         Query(
             ge=0,
-            le=config.MAX_PAGE_SIZE,
+            le=settings.max_page_size,
             description=_generic_descriptions.PAGE_SIZE,
         ),
-    ] = config.DEFAULT_PAGE_SIZE,
+    ] = settings.default_page_size,
     filters: Annotated[
         Json | None,
         Query(
@@ -55,10 +56,10 @@ def get_all_study_soa_footnotes_from_all_studies(
         ),
     ] = None,
     operator: Annotated[
-        str | None, Query(description=_generic_descriptions.FILTER_OPERATOR)
-    ] = config.DEFAULT_FILTER_OPERATOR,
+        str, Query(description=_generic_descriptions.FILTER_OPERATOR)
+    ] = settings.default_filter_operator,
     total_count: Annotated[
-        bool | None, Query(description=_generic_descriptions.TOTAL_COUNT)
+        bool, Query(description=_generic_descriptions.TOTAL_COUNT)
     ] = False,
 ) -> CustomPage[StudySoAFootnote]:
     service = StudySoAFootnoteService()
@@ -70,7 +71,7 @@ def get_all_study_soa_footnotes_from_all_studies(
         filter_operator=FilterOperator.from_str(operator),
         sort_by=sort_by,
     )
-    return CustomPage.create(
+    return CustomPage(
         items=all_footnotes.items,
         total=all_footnotes.total,
         page=page_number,
@@ -80,9 +81,10 @@ def get_all_study_soa_footnotes_from_all_studies(
 
 @router.get(
     "/studies/{study_uid}/study-soa-footnotes",
-    dependencies=[rbac.STUDY_READ],
+    dependencies=[security, rbac.STUDY_READ],
     summary="List all study soa footnotes currently defined for the study",
     status_code=200,
+    response_model_exclude_unset=True,
     responses={
         403: _generic_descriptions.ERROR_403,
         404: {
@@ -97,16 +99,16 @@ def get_all_study_soa_footnotes(
         Json | None, Query(description=_generic_descriptions.SORT_BY)
     ] = None,
     page_number: Annotated[
-        int | None, Query(ge=1, description=_generic_descriptions.PAGE_NUMBER)
-    ] = config.DEFAULT_PAGE_NUMBER,
+        int, Query(ge=1, description=_generic_descriptions.PAGE_NUMBER)
+    ] = settings.default_page_number,
     page_size: Annotated[
-        int | None,
+        int,
         Query(
             ge=0,
-            le=config.MAX_PAGE_SIZE,
+            le=settings.max_page_size,
             description=_generic_descriptions.PAGE_SIZE,
         ),
-    ] = config.DEFAULT_PAGE_SIZE,
+    ] = settings.default_page_size,
     filters: Annotated[
         Json | None,
         Query(
@@ -115,14 +117,20 @@ def get_all_study_soa_footnotes(
         ),
     ] = None,
     operator: Annotated[
-        str | None, Query(description=_generic_descriptions.FILTER_OPERATOR)
-    ] = config.DEFAULT_FILTER_OPERATOR,
+        str, Query(description=_generic_descriptions.FILTER_OPERATOR)
+    ] = settings.default_filter_operator,
     total_count: Annotated[
-        bool | None, Query(description=_generic_descriptions.TOTAL_COUNT)
+        bool, Query(description=_generic_descriptions.TOTAL_COUNT)
     ] = False,
     study_value_version: Annotated[
         str | None, _generic_descriptions.STUDY_VALUE_VERSION_QUERY
     ] = None,
+    minimal_response: Annotated[
+        bool,
+        Query(
+            description="Specifies whether minimal version of SoAFootnote should be returned"
+        ),
+    ] = False,
 ) -> CustomPage[StudySoAFootnote]:
     service = StudySoAFootnoteService()
     all_footnotes = service.get_all_by_study_uid(
@@ -134,8 +142,9 @@ def get_all_study_soa_footnotes(
         filter_operator=FilterOperator.from_str(operator),
         sort_by=sort_by,
         study_value_version=study_value_version,
+        minimal_response=minimal_response,
     )
-    return CustomPage.create(
+    return CustomPage(
         items=all_footnotes.items,
         total=all_footnotes.total,
         page=page_number,
@@ -145,7 +154,7 @@ def get_all_study_soa_footnotes(
 
 @router.get(
     "/studies/{study_uid}/study-soa-footnotes/headers",
-    dependencies=[rbac.STUDY_READ],
+    dependencies=[security, rbac.STUDY_READ],
     summary="Returns possible values from the database for a given header",
     description="Allowed parameters include : field name for which to get possible values, "
     "search string to provide filtering for the field name, additional filters to apply on other fields",
@@ -164,7 +173,7 @@ def get_distinct_values_for_header(
         str, Query(description=_generic_descriptions.HEADER_FIELD_NAME)
     ],
     search_string: Annotated[
-        str | None, Query(description=_generic_descriptions.HEADER_SEARCH_STRING)
+        str, Query(description=_generic_descriptions.HEADER_SEARCH_STRING)
     ] = "",
     filters: Annotated[
         Json | None,
@@ -174,11 +183,11 @@ def get_distinct_values_for_header(
         ),
     ] = None,
     operator: Annotated[
-        str | None, Query(description=_generic_descriptions.FILTER_OPERATOR)
-    ] = config.DEFAULT_FILTER_OPERATOR,
+        str, Query(description=_generic_descriptions.FILTER_OPERATOR)
+    ] = settings.default_filter_operator,
     page_size: Annotated[
-        int | None, Query(description=_generic_descriptions.HEADER_PAGE_SIZE)
-    ] = config.DEFAULT_HEADER_PAGE_SIZE,
+        int, Query(description=_generic_descriptions.HEADER_PAGE_SIZE)
+    ] = settings.default_header_page_size,
     study_value_version: Annotated[
         str | None, _generic_descriptions.STUDY_VALUE_VERSION_QUERY
     ] = None,
@@ -197,7 +206,7 @@ def get_distinct_values_for_header(
 
 @router.get(
     "/study-soa-footnotes/headers",
-    dependencies=[rbac.STUDY_READ],
+    dependencies=[security, rbac.STUDY_READ],
     summary="Returns possible values from the database for a given header",
     description="Allowed parameters include : field name for which to get possible values, "
     "search string to provide filtering for the field name, additional filters to apply on other fields",
@@ -215,7 +224,7 @@ def get_distinct_values_for_header_top_level(
         str, Query(description=_generic_descriptions.HEADER_FIELD_NAME)
     ],
     search_string: Annotated[
-        str | None, Query(description=_generic_descriptions.HEADER_SEARCH_STRING)
+        str, Query(description=_generic_descriptions.HEADER_SEARCH_STRING)
     ] = "",
     filters: Annotated[
         Json | None,
@@ -225,11 +234,11 @@ def get_distinct_values_for_header_top_level(
         ),
     ] = None,
     operator: Annotated[
-        str | None, Query(description=_generic_descriptions.FILTER_OPERATOR)
-    ] = config.DEFAULT_FILTER_OPERATOR,
+        str, Query(description=_generic_descriptions.FILTER_OPERATOR)
+    ] = settings.default_filter_operator,
     page_size: Annotated[
-        int | None, Query(description=_generic_descriptions.HEADER_PAGE_SIZE)
-    ] = config.DEFAULT_HEADER_PAGE_SIZE,
+        int, Query(description=_generic_descriptions.HEADER_PAGE_SIZE)
+    ] = settings.default_header_page_size,
 ) -> list[Any]:
     service = StudySoAFootnoteService()
     return service.get_distinct_values_for_header(
@@ -244,7 +253,7 @@ def get_distinct_values_for_header_top_level(
 
 @router.get(
     "/studies/{study_uid}/study-soa-footnotes/{study_soa_footnote_uid}",
-    dependencies=[rbac.STUDY_READ],
+    dependencies=[security, rbac.STUDY_READ],
     summary="List a specific study soa footnote defined for a study",
     status_code=200,
     responses={
@@ -265,13 +274,15 @@ def get_study_soa_footnote(
 ) -> StudySoAFootnote:
     service = StudySoAFootnoteService()
     return service.get_by_uid(
-        uid=study_soa_footnote_uid, study_value_version=study_value_version
+        study_uid=study_uid,
+        uid=study_soa_footnote_uid,
+        study_value_version=study_value_version,
     )
 
 
 @router.post(
     "/studies/{study_uid}/study-soa-footnotes",
-    dependencies=[rbac.STUDY_WRITE],
+    dependencies=[security, rbac.STUDY_WRITE],
     summary="Add a study soa footnote to a study",
     status_code=201,
     responses={
@@ -308,7 +319,7 @@ def post_new_soa_footnote(
 
 @router.post(
     "/studies/{study_uid}/study-soa-footnotes/batch-select",
-    dependencies=[rbac.STUDY_WRITE],
+    dependencies=[security, rbac.STUDY_WRITE],
     summary="Batch create Study SoA footnotes to a given Study",
     status_code=201,
     responses={
@@ -333,7 +344,7 @@ def post_new_soa_footnotes_batch_select(
 
 @router.patch(
     "/studies/{study_uid}/study-soa-footnotes/batch-edit",
-    dependencies=[rbac.STUDY_WRITE],
+    dependencies=[security, rbac.STUDY_WRITE],
     summary="Edit a batch of study soa footnotes",
     status_code=207,
     responses={
@@ -358,7 +369,7 @@ def batch_edit_study_soa_footnote(
 
 @router.patch(
     "/studies/{study_uid}/study-soa-footnotes/{study_soa_footnote_uid}",
-    dependencies=[rbac.STUDY_WRITE],
+    dependencies=[security, rbac.STUDY_WRITE],
     summary="Edit a study soa footnote",
     status_code=200,
     responses={
@@ -391,7 +402,7 @@ def edit_study_soa_footnote(
 
 @router.delete(
     "/studies/{study_uid}/study-soa-footnotes/{study_soa_footnote_uid}",
-    dependencies=[rbac.STUDY_WRITE],
+    dependencies=[security, rbac.STUDY_WRITE],
     summary="Delete a study soa footnote",
     status_code=204,
     responses={
@@ -416,7 +427,7 @@ def delete_study_soa_footnote(
 
 @router.post(
     "/studies/{study_uid}/study-soa-footnotes/preview",
-    dependencies=[rbac.STUDY_WRITE],
+    dependencies=[security, rbac.STUDY_WRITE],
     summary="Preview creating a study soa footnote selection based on the input data",
     response_model_exclude_unset=True,
     status_code=200,
@@ -450,7 +461,7 @@ def preview_new_soa_footnote(
 
 @router.get(
     "/studies/{study_uid}/study-soa-footnotes/{study_soa_footnote_uid}/audit-trail",
-    dependencies=[rbac.STUDY_READ],
+    dependencies=[security, rbac.STUDY_READ],
     summary="List full audit trail related to definition of all study soa footnotes.",
     description="""
 The following values should be returned for all study soa footnotes:
@@ -479,7 +490,7 @@ def get_specific_soa_footnotes_audit_trail(
 
 @router.get(
     "/studies/{study_uid}/study-soa-footnote/audit-trail",
-    dependencies=[rbac.STUDY_READ],
+    dependencies=[security, rbac.STUDY_READ],
     summary="List full audit trail related to definition of all study soa footnotes within a specific study",
     description="""
 The following values should be returned for all study soa footnotes:
@@ -505,7 +516,7 @@ def get_all_soa_footnotes_audit_trail(
 
 @router.post(
     "/studies/{study_uid}/study-soa-footnotes/{study_soa_footnote_uid}/accept-version",
-    dependencies=[rbac.STUDY_WRITE],
+    dependencies=[security, rbac.STUDY_WRITE],
     summary="accept StudySoAFootnote selection's footnote version",
     description="""
     State before:
@@ -549,7 +560,7 @@ def patch_footnote_accept_version(
 
 @router.post(
     "/studies/{study_uid}/study-soa-footnotes/{study_soa_footnote_uid}/sync-latest-version",
-    dependencies=[rbac.STUDY_WRITE],
+    dependencies=[security, rbac.STUDY_WRITE],
     summary="update to latest footnote version study selection",
     description="""
     State before:

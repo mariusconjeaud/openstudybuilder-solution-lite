@@ -10,9 +10,7 @@ from clinical_mdr_api.main import app
 from clinical_mdr_api.tests.integration.utils.api import drop_db, inject_and_clear_db
 from clinical_mdr_api.tests.integration.utils.data_library import (
     STARTUP_CT_TERM,
-    STARTUP_ODM_ALIASES,
     STARTUP_ODM_CONDITIONS,
-    STARTUP_ODM_FORMAL_EXPRESSIONS,
     STARTUP_ODM_FORMS,
     STARTUP_ODM_ITEM_GROUPS,
     STARTUP_ODM_ITEMS,
@@ -36,10 +34,8 @@ def api_client(test_data):
 @pytest.fixture(scope="module")
 def test_data():
     inject_and_clear_db("old.json.test.odm.csv.exporter")
-    db.cypher_query(STARTUP_ODM_FORMAL_EXPRESSIONS)
     db.cypher_query(STARTUP_ODM_CONDITIONS)
     db.cypher_query(STARTUP_ODM_METHODS)
-    db.cypher_query(STARTUP_ODM_ALIASES)
     db.cypher_query(STARTUP_CT_TERM)
     db.cypher_query(STARTUP_UNIT_DEFINITIONS)
     db.cypher_query(STARTUP_ODM_ITEMS)
@@ -61,12 +57,11 @@ def test_get_odm_study_event(api_client):
         headers=HEADERS,
     )
 
-    print(response.text)
     assert_response_status_code(response, 200)
     assert (
         response.text
         # pylint: disable=line-too-long
-        == '"StudyEvent_Name","StudyEvent_Version","Form_Name","Form_Repeating","Form_Version","ItemGroup_Name","ItemGroup_Version","Item_Name","Item_Datatype","Item_Version","Item_Units","Item_Codelist","Item_Terms"\n"name1","1.0","name1","yes","1.0","name1","1.0","name1","datatype1","1.0","name1","name1","code_submission_value1"\n'
+        == '"StudyEvent_Name","StudyEvent_Version","Form_Name","Form_Repeating","Form_Version","ItemGroup_Name","ItemGroup_Version","Item_Name","Item_Datatype","Item_Version","Item_Units","Item_Codelist","Item_Terms"\n"name1","1.0","name1","yes","1.0","name1","1.0","name1","string","1.0","name1","name1","submission_value1"\n'
     )
 
 
@@ -80,7 +75,7 @@ def test_get_odm_form(api_client):
     assert (
         response.text
         # pylint: disable=line-too-long
-        == '"Form_Name","Form_Repeating","Form_Version","ItemGroup_Name","ItemGroup_Version","Item_Name","Item_Datatype","Item_Version","Item_Units","Item_Codelist","Item_Terms"\n"name1","yes","1.0","name1","1.0","name1","datatype1","1.0","name1","name1","code_submission_value1"\n'
+        == '"Form_Name","Form_Repeating","Form_Version","ItemGroup_Name","ItemGroup_Version","Item_Name","Item_Datatype","Item_Version","Item_Units","Item_Codelist","Item_Terms"\n"name1","yes","1.0","name1","1.0","name1","string","1.0","name1","name1","submission_value1"\n'
     )
 
 
@@ -94,7 +89,7 @@ def test_get_odm_item_group(api_client):
     assert (
         response.text
         # pylint: disable=line-too-long
-        == '"ItemGroup_Name","ItemGroup_Version","Item_Name","Item_Datatype","Item_Version","Item_Units","Item_Codelist","Item_Terms"\n"name1","1.0","name1","datatype1","1.0","name1","name1","code_submission_value1"\n'
+        == '"ItemGroup_Name","ItemGroup_Version","Item_Name","Item_Datatype","Item_Version","Item_Units","Item_Codelist","Item_Terms"\n"name1","1.0","name1","string","1.0","name1","name1","submission_value1"\n'
     )
 
 
@@ -108,7 +103,7 @@ def test_get_odm_item(api_client):
     assert (
         response.text
         # pylint: disable=line-too-long
-        == '"Item_Name","Item_Datatype","Item_Version","Item_Units","Item_Codelist","Item_Terms"\n"name1","datatype1","1.0","name1","name1","code_submission_value1"\n'
+        == '"Item_Name","Item_Datatype","Item_Version","Item_Units","Item_Codelist","Item_Terms"\n"name1","string","1.0","name1","name1","submission_value1"\n'
     )
 
 

@@ -118,6 +118,7 @@ class CriteriaTemplate(CriteriaTemplateNameUid):
     ] = None
 
     # Template indexings
+    # TODO change to SimpleCodelistTermModel
     type: Annotated[
         SimpleCTTermNameAndAttributes | None,
         Field(description="The criteria type.", json_schema_extra={"nullable": True}),

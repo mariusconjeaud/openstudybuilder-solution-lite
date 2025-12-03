@@ -29,7 +29,7 @@
     "end_date": null,
     "guidance_text": null,
     "indications": null,
-    "is_confirmatory_testing": null,
+    "is_confirmatory_testing": false,
     "library": {
       "is_editable": true,
       "name": "Sponsor"
@@ -95,7 +95,7 @@
     "end_date": null,
     "guidance_text": null,
     "indications": null,
-    "is_confirmatory_testing": null,
+    "is_confirmatory_testing": false,
     "library": {
       "is_editable": true,
       "name": "Sponsor"

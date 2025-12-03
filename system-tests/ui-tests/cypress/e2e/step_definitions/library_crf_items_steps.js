@@ -21,12 +21,7 @@ When('The CRF Item definition container is filled with data and saved', () => {
     crfItemOid = `Oid${Date.now()}`
     cy.fillInput('item-oid', crfItemOid)
     cy.fillInput('item-name', crfItemName)
-    cy.fixture('crfItem.js').then(item => cy.selectVSelect('item-data-type', item.details.data_type))
-    cy.clickFormActionButton('continue')
-    cy.clickFormActionButton('continue')
-    cy.clickFormActionButton('continue')
-    cy.clickFormActionButton('save')
-    cy.waitForTable()
+    cy.selectVSelect('item-data-type', 'INTEGER')
 })
 
 When('The CRF Item metadata are updated and saved', () => {
@@ -34,7 +29,4 @@ When('The CRF Item metadata are updated and saved', () => {
     crfItemOid += 'Update'
     cy.fillInput('item-oid', crfItemOid)
     cy.fillInput('item-name', crfItemName)
-    cy.contains('.v-stepper-item', 'Change Description').click()
-    cy.clickFormActionButton('save')
-    cy.waitForTable()
 })

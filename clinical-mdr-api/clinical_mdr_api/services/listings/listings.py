@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Callable
+from typing import Any, Callable
 
 from neomodel import db
 
@@ -28,11 +28,11 @@ class ListingsService:
     def list_topic_cd(
         self,
         at_specified_datetime: datetime | None = None,
-        sort_by: dict | None = None,
+        sort_by: dict[str, bool] | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: dict | None = None,
-        filter_operator: FilterOperator | None = FilterOperator.AND,
+        filter_by: dict[str, dict[str, Any]] | None = None,
+        filter_operator: FilterOperator = FilterOperator.AND,
         total_count: bool = False,
     ) -> GenericFilteringReturn[TopicCdDef]:
         data = self._query_service.get_topic_codes(
@@ -52,17 +52,17 @@ class ListingsService:
     def list_metadata(
         self,
         dataset_name: str | None = None,
-        sort_by: dict | None = None,
+        sort_by: dict[str, bool] | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: dict | None = None,
-        filter_operator: FilterOperator | None = FilterOperator.AND,
+        filter_by: dict[str, dict[str, Any]] | None = None,
+        filter_operator: FilterOperator = FilterOperator.AND,
         total_count: bool = False,
     ) -> GenericFilteringReturn[MetaData]:
         data = self._query_service.get_metadata(dataset_name=dataset_name)
         result = list(map(MetaData.from_query, data))
 
-        filtered_items = service_level_generic_filtering(
+        return service_level_generic_filtering(
             items=result,
             filter_by=filter_by,
             filter_operator=filter_operator,
@@ -72,18 +72,16 @@ class ListingsService:
             page_size=page_size,
         )
 
-        return filtered_items
-
     @db.transaction
     def list_cdisc_ct_ver(
         self,
         catalogue_name: str | None = None,
         after_date: str | None = None,
-        sort_by: dict | None = None,
+        sort_by: dict[str, bool] | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: dict | None = None,
-        filter_operator: FilterOperator | None = FilterOperator.AND,
+        filter_by: dict[str, dict[str, Any]] | None = None,
+        filter_operator: FilterOperator = FilterOperator.AND,
         total_count: bool = False,
     ) -> GenericFilteringReturn[CDISCCTList]:
         data = self._query_service.get_cdisc_ct_ver(
@@ -105,11 +103,11 @@ class ListingsService:
         self,
         catalogue_name: str | None = None,
         after_date: str | None = None,
-        sort_by: dict | None = None,
+        sort_by: dict[str, bool] | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: dict | None = None,
-        filter_operator: FilterOperator | None = FilterOperator.AND,
+        filter_by: dict[str, dict[str, Any]] | None = None,
+        filter_operator: FilterOperator = FilterOperator.AND,
         total_count: bool = False,
     ) -> GenericFilteringReturn[CDISCCTList]:
         data = self._query_service.get_cdisc_ct_pkg(
@@ -132,11 +130,11 @@ class ListingsService:
         catalogue_name: str | None = None,
         package: str | None = None,
         after_date: str | None = None,
-        sort_by: dict | None = None,
+        sort_by: dict[str, bool] | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: dict | None = None,
-        filter_operator: FilterOperator | None = FilterOperator.AND,
+        filter_by: dict[str, dict[str, Any]] | None = None,
+        filter_operator: FilterOperator = FilterOperator.AND,
         total_count: bool = False,
     ) -> GenericFilteringReturn[CDISCCTList]:
         data = self._query_service.get_cdisc_ct_list(
@@ -161,11 +159,11 @@ class ListingsService:
         catalogue_name: str | None = None,
         package: str | None = None,
         after_date: str | None = None,
-        sort_by: dict | None = None,
+        sort_by: dict[str, bool] | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: dict | None = None,
-        filter_operator: FilterOperator | None = FilterOperator.AND,
+        filter_by: dict[str, dict[str, Any]] | None = None,
+        filter_operator: FilterOperator = FilterOperator.AND,
         total_count: bool = False,
     ) -> GenericFilteringReturn[CDISCCTVal]:
         data = self._query_service.get_cdisc_ct_val(
@@ -187,9 +185,9 @@ class ListingsService:
         self,
         action: Callable,
         field_name: str,
-        search_string: str | None = "",
-        filter_by: dict | None = None,
-        filter_operator: FilterOperator | None = FilterOperator.AND,
+        search_string: str = "",
+        filter_by: dict[str, dict[str, Any]] | None = None,
+        filter_operator: FilterOperator = FilterOperator.AND,
         page_size: int = 10,
     ):
         all_items = action()

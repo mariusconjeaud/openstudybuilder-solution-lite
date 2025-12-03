@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from typing import Annotated, Generic, Self, TypeVar
+from typing import Annotated, Any, Generic, Self, TypeVar
 
 from fastapi import Request
 from pydantic import BaseModel, Field
@@ -43,8 +43,8 @@ class StudyVersionSimple(BaseModel):
     @classmethod
     def from_input(
         cls,
-        version_status: str,
-        version_number: str,
+        version_status: str | None,
+        version_number: str | None,
         version_started_at: datetime,
         version_ended_at: datetime | None = None,
     ) -> Self:
@@ -110,7 +110,7 @@ class PaginatedResponse(BaseModel, Generic[T]):
         )
 
 
-class PaginatedResponseWithStudyVersion(PaginatedResponse):
+class PaginatedResponseWithStudyVersion(PaginatedResponse, Generic[T]):
     """
     Paginated response model with study version
     """
@@ -124,7 +124,7 @@ class PaginatedResponseWithStudyVersion(PaginatedResponse):
     def from_input(
         cls,
         request: Request,
-        study_version: dict,
+        study_version: dict[str, Any],
         sort_by: str,
         sort_order: str,
         page_size: int,
@@ -145,9 +145,7 @@ class PaginatedResponseWithStudyVersion(PaginatedResponse):
         it.study_version = StudyVersionSimple.from_input(
             version_status=study_version.get("version_status", None),
             version_number=study_version.get("version_number", None),
-            version_started_at=convert_to_datetime(
-                study_version.get("version_started_at", None)
-            ),
+            version_started_at=convert_to_datetime(study_version["version_started_at"]),
             version_ended_at=convert_to_datetime(
                 study_version.get("version_ended_at", None)
             ),

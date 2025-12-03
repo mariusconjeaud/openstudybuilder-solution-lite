@@ -5,6 +5,7 @@ Tests for /concepts/activities/activities endpoints
 import logging
 from functools import reduce
 from operator import itemgetter
+from typing import Any
 
 import pytest
 import yaml
@@ -35,7 +36,10 @@ from clinical_mdr_api.tests.integration.utils.api import (
     inject_base_data,
 )
 from clinical_mdr_api.tests.integration.utils.utils import TestUtils
-from clinical_mdr_api.tests.utils.checks import assert_response_status_code
+from clinical_mdr_api.tests.utils.checks import (
+    assert_response_status_code,
+    parse_json_response,
+)
 
 # pylint: disable=unused-argument
 # pylint: disable=redefined-outer-name
@@ -75,7 +79,7 @@ def test_data():
     """Initialize test data"""
     db_name = "activities.api"
     inject_and_clear_db(db_name)
-    inject_base_data()
+    inject_base_data(inject_unit_dimension=True)
 
     global activity_group
     activity_group = TestUtils.create_activity_group(name="activity_group")
@@ -108,12 +112,20 @@ def test_data():
         TestUtils.create_activity(
             name="name-AAA",
             synonyms=["name1", "AAA"],
+            definition="def-AAA",
+            abbreviation="abbr-AAA",
+            nci_concept_id="nci-id-AAA",
+            nci_concept_name="nci-name-AAA",
             activity_subgroups=[activity_subgroup.uid],
             activity_groups=[activity_group.uid],
         ),
         TestUtils.create_activity(
             name="name-BBB",
             synonyms=["name2", "BBB"],
+            definition="def-BBB",
+            abbreviation="abbr-BBB",
+            nci_concept_id="nci-id-BBB",
+            nci_concept_name="nci-name-BBB",
             activity_subgroups=[activity_subgroup.uid],
             activity_groups=[activity_group.uid],
         ),
@@ -122,6 +134,11 @@ def test_data():
             synonyms=["name3", "CCC"],
             activity_subgroups=[activity_subgroup.uid],
             activity_groups=[activity_group.uid],
+            definition="def-CCC",
+            abbreviation="abbr-CCC",
+            nci_concept_id="nci-id-CCC",
+            nci_concept_name="nci-name-CCC",
+            is_data_collected=True,
         ),
         activity_with_multiple_groupings,
     ]
@@ -145,10 +162,20 @@ def test_data():
     global activity_item_classes
     global data_type_term
     global role_term
-    data_type_term = TestUtils.create_ct_term(
-        nci_preferred_name="Data type", sponsor_preferred_name="Data type"
+    data_type_codelist = TestUtils.create_ct_codelist(
+        name="DATATYPE", submission_value="DATATYPE", extensible=True, approve=True
     )
-    role_term = TestUtils.create_ct_term(sponsor_preferred_name="Role")
+    data_type_term = TestUtils.create_ct_term(
+        nci_preferred_name="Data type",
+        sponsor_preferred_name="Data type",
+        codelist_uid=data_type_codelist.codelist_uid,
+    )
+    role_codelist = TestUtils.create_ct_codelist(
+        name="ROLE", submission_value="ROLE", extensible=True, approve=True
+    )
+    role_term = TestUtils.create_ct_term(
+        sponsor_preferred_name="Role", codelist_uid=role_codelist.codelist_uid
+    )
     activity_item_classes = [
         TestUtils.create_activity_item_class(
             name="Activity Item Class name1",
@@ -207,24 +234,49 @@ def test_data():
     activity_items = [
         {
             "activity_item_class_uid": activity_item_classes[0].uid,
-            "ct_term_uids": [ct_terms[0].term_uid],
+            "ct_terms": [
+                {
+                    "term_uid": ct_terms[0].term_uid,
+                    "codelist_uid": codelist.codelist_uid,
+                }
+            ],
             "unit_definition_uids": [],
             "is_adam_param_specific": False,
-            "odm_item_uids": [],
+            "odm_form_uid": None,
+            "odm_item_group_uid": None,
+            "odm_item_uid": None,
         },
         {
             "activity_item_class_uid": activity_item_classes[1].uid,
-            "ct_term_uids": [ct_terms[1].term_uid],
+            "ct_terms": [
+                {
+                    "term_uid": ct_terms[1].term_uid,
+                    "codelist_uid": codelist.codelist_uid,
+                }
+            ],
             "unit_definition_uids": [],
             "is_adam_param_specific": False,
-            "odm_item_uids": [],
+            "odm_form_uid": None,
+            "odm_item_group_uid": None,
+            "odm_item_uid": None,
         },
         {
             "activity_item_class_uid": activity_item_classes[2].uid,
-            "ct_term_uids": [ct_terms[0].term_uid, ct_terms[1].term_uid],
+            "ct_terms": [
+                {
+                    "term_uid": ct_terms[0].term_uid,
+                    "codelist_uid": codelist.codelist_uid,
+                },
+                {
+                    "term_uid": ct_terms[1].term_uid,
+                    "codelist_uid": codelist.codelist_uid,
+                },
+            ],
             "unit_definition_uids": [],
             "is_adam_param_specific": False,
-            "odm_item_uids": [],
+            "odm_form_uid": None,
+            "odm_item_group_uid": None,
+            "odm_item_uid": None,
         },
     ]
     global activity_instances_all
@@ -388,7 +440,7 @@ def test_get_activity(api_client):
     assert_response_status_code(response, 200)
 
     # Check fields included in the response
-    assert set(list(res.keys())) == set(ACTIVITY_FIELDS_ALL)
+    assert set(res.keys()) == set(ACTIVITY_FIELDS_ALL)
     for key in ACTIVITY_FIELDS_NOT_NULL:
         assert res[key] is not None
 
@@ -418,7 +470,8 @@ def test_get_activity(api_client):
     assert res["activity_instances"][4]["name"] == activity_instances_all[2].name
 
     assert res["library_name"] == "Sponsor"
-    assert res["definition"] is None
+    assert res["definition"] == "def-AAA"
+    assert res["abbreviation"] == "abbr-AAA"
     assert res["is_multiple_selection_allowed"] is True
     assert res["is_finalized"] is False
     assert res["version"] == "1.0"
@@ -427,26 +480,28 @@ def test_get_activity(api_client):
 
 
 def test_get_activity_pagination(api_client):
-    results_paginated: dict = {}
+    results_paginated: dict[Any, Any] = {}
     sort_by = '{"name": true}'
     for page_number in range(1, 4):
         url = f"/concepts/activities/activities?page_number={page_number}&page_size=3&sort_by={sort_by}"
-        response = api_client.get(url)
-        res = response.json()
-        res_names = list(map(lambda x: x["name"], res["items"]))
+        res = parse_json_response(api_client.get(url))
+        res_names = [item["name"] for item in res["items"]]
         results_paginated[page_number] = res_names
         log.info("Page %s: %s", page_number, res_names)
 
     log.info("All pages: %s", results_paginated)
 
     results_paginated_merged = list(
-        list(reduce(lambda a, b: a + b, list(results_paginated.values())))
+        reduce(lambda a, b: list(a) + list(b), list(results_paginated.values()))
     )
+
     log.info("All rows returned by pagination: %s", results_paginated_merged)
 
-    res_all = api_client.get(
-        f"/concepts/activities/activities?page_number=1&page_size=100&sort_by={sort_by}"
-    ).json()
+    res_all = parse_json_response(
+        api_client.get(
+            f"/concepts/activities/activities?page_number=1&page_size=100&sort_by={sort_by}"
+        )
+    )
     results_all_in_one_page = list(map(lambda x: x["name"], res_all["items"]))
     log.info("All rows in one page: %s", results_all_in_one_page)
     assert len(results_all_in_one_page) == len(results_paginated_merged)
@@ -455,9 +510,11 @@ def test_get_activity_pagination(api_client):
 
     # Assert sorting by ActivityGroup works fine
     sort_by = '{"activity_groupings[0].activity_group_name":true}'
-    res_all = api_client.get(
-        f"/concepts/activities/activities?page_number=1&page_size=100&sort_by={sort_by}"
-    ).json()
+    res_all = parse_json_response(
+        api_client.get(
+            f"/concepts/activities/activities?page_number=1&page_size=100&sort_by={sort_by}"
+        )
+    )
     all_results = list(
         map(
             lambda x: x["activity_groupings"][0]["activity_group_name"],
@@ -468,9 +525,11 @@ def test_get_activity_pagination(api_client):
         all_results
     ), "Results should be returned by ActivityGroup name ascending order"
     sort_by = '{"activity_groupings[0].activity_group_name":false}'
-    res_all = api_client.get(
-        f"/concepts/activities/activities?page_number=1&page_size=100&sort_by={sort_by}"
-    ).json()
+    res_all = parse_json_response(
+        api_client.get(
+            f"/concepts/activities/activities?page_number=1&page_size=100&sort_by={sort_by}"
+        )
+    )
     all_results = list(
         map(
             lambda x: x["activity_groupings"][0]["activity_group_name"],
@@ -483,9 +542,11 @@ def test_get_activity_pagination(api_client):
 
     # Assert sorting by ActivitySubGroup works fine
     sort_by = '{"activity_groupings[0].activity_subgroup_name":true}'
-    res_all = api_client.get(
-        f"/concepts/activities/activities?page_number=1&page_size=100&sort_by={sort_by}"
-    ).json()
+    res_all = parse_json_response(
+        api_client.get(
+            f"/concepts/activities/activities?page_number=1&page_size=100&sort_by={sort_by}"
+        )
+    )
     all_results = list(
         map(
             lambda x: x["activity_groupings"][0]["activity_subgroup_name"],
@@ -496,12 +557,101 @@ def test_get_activity_pagination(api_client):
         all_results
     ), "Results should be returned by ActivitySubGroup name ascending order"
     sort_by = '{"activity_groupings[0].activity_subgroup_name":false}'
-    res_all = api_client.get(
-        f"/concepts/activities/activities?page_number=1&page_size=100&sort_by={sort_by}"
-    ).json()
+    res_all = parse_json_response(
+        api_client.get(
+            f"/concepts/activities/activities?page_number=1&page_size=100&sort_by={sort_by}"
+        )
+    )
     all_results = list(
         map(
             lambda x: x["activity_groupings"][0]["activity_subgroup_name"],
+            res_all["items"],
+        )
+    )
+    assert all_results == sorted(
+        all_results, reverse=True
+    ), "Results should be returned by ActivitySubGroup name descending order"
+
+
+def test_get_activities_with_split_groupings_pagination(api_client):
+    results_paginated: dict[int, str] = {}
+    sort_by = '{"name": true}'
+    for page_number in range(1, 5):
+        url = f"/concepts/activities/activities?page_number={page_number}&page_size=3&sort_by={sort_by}&split_activity_by_groupings=true"
+        response = api_client.get(url)
+        res = response.json()
+        res_names = [item["name"] for item in res["items"]]
+        results_paginated[page_number] = res_names
+        log.info("Page %s: %s", page_number, res_names)
+
+    log.info("All pages: %s", results_paginated)
+
+    results_paginated_merged = list(
+        reduce(lambda a, b: list(a) + list(b), list(results_paginated.values()))
+    )
+    log.info("All rows returned by pagination: %s", results_paginated_merged)
+
+    res_all = api_client.get(
+        f"/concepts/activities/activities?page_number=1&page_size=100&sort_by={sort_by}&split_activity_by_groupings=true"
+    ).json()
+    results_all_in_one_page = list(map(lambda x: x["name"], res_all["items"]))
+    log.info("All rows in one page: %s", results_all_in_one_page)
+    assert len(results_all_in_one_page) == len(results_paginated_merged)
+    activities_len_with_splitted_groupings = 0
+    for activity in activities_all:
+        activities_len_with_splitted_groupings += len(activity.activity_groupings)
+    assert activities_len_with_splitted_groupings == len(results_paginated_merged)
+    assert results_all_in_one_page == sorted(results_all_in_one_page)
+
+    # Assert sorting by ActivityGroup works fine
+    sort_by = '{"activity_group_name":true}'
+    res_all = api_client.get(
+        f"/concepts/activities/activities?page_number=1&page_size=100&sort_by={sort_by}&split_activity_by_groupings=true"
+    ).json()
+    all_results = list(
+        map(
+            lambda x: x["activity_group_name"],
+            res_all["items"],
+        )
+    )
+    assert all_results == sorted(
+        all_results
+    ), "Results should be returned by ActivityGroup name ascending order"
+    sort_by = '{"activity_group_name":false}'
+    res_all = api_client.get(
+        f"/concepts/activities/activities?page_number=1&page_size=100&sort_by={sort_by}&split_activity_by_groupings=true"
+    ).json()
+    all_results = list(
+        map(
+            lambda x: x["activity_group_name"],
+            res_all["items"],
+        )
+    )
+    assert all_results == sorted(
+        all_results, reverse=True
+    ), "Results should be returned by ActivityGroup name descending order"
+
+    # Assert sorting by ActivitySubGroup works fine
+    sort_by = '{"activity_subgroup_name":true}'
+    res_all = api_client.get(
+        f"/concepts/activities/activities?page_number=1&page_size=100&sort_by={sort_by}&split_activity_by_groupings=true"
+    ).json()
+    all_results = list(
+        map(
+            lambda x: x["activity_subgroup_name"],
+            res_all["items"],
+        )
+    )
+    assert all_results == sorted(
+        all_results
+    ), "Results should be returned by ActivitySubGroup name ascending order"
+    sort_by = '{"activity_subgroup_name":false}'
+    res_all = api_client.get(
+        f"/concepts/activities/activities?page_number=1&page_size=100&sort_by={sort_by}&split_activity_by_groupings=true"
+    ).json()
+    all_results = list(
+        map(
+            lambda x: x["activity_subgroup_name"],
             res_all["items"],
         )
     )
@@ -524,7 +674,7 @@ def test_get_activity_versions(api_client):
     assert_response_status_code(response, 200)
 
     # Check fields included in the response
-    assert set(list(res.keys())) == set(["items", "total", "page", "size"])
+    assert set(res.keys()) == set(["items", "total", "page", "size"])
 
     assert len(res["items"]) == len(activities_all) * 2 + 1
     for item in res["items"]:
@@ -699,6 +849,10 @@ def test_explicit_filtering_by_activity_subgroup_and_group_uid(api_client):
 
 def test_groupped_groupings_payload_flag(api_client):
     url = "/concepts/activities/activities"
+
+    response = api_client.get(url)
+    assert_response_status_code(response, 200)
+
     response = api_client.get(
         url,
         params={
@@ -712,7 +866,7 @@ def test_groupped_groupings_payload_flag(api_client):
         res[1]["activity_groupings"][0]["activity_group_name"]
         == "different activity_group"
     )
-    url = "/concepts/activities/activities"
+
     response = api_client.get(
         url,
         params={
@@ -927,11 +1081,11 @@ def test_update_activity(api_client):
             "name_sentence_case": activity.name_sentence_case,
             "synonyms": ["new name", "CCC"],
             "activity_groupings": [
-                activity.activity_groupings[0].dict(),
+                activity.activity_groupings[0].model_dump(),
                 ActivityGrouping(
                     activity_group_uid=different_activity_group.uid,
                     activity_subgroup_uid=different_activity_subgroup.uid,
-                ).dict(),
+                ).model_dump(),
             ],
             "change_description": "Updated synonyms and groupings",
         },
@@ -1025,3 +1179,38 @@ def test_cannot_update_activity_with_non_unique_synonyms(api_client):
         res["message"]
         == f"Following Activities already have the provided synonyms: {{'{new_activity1.uid}': ['non_unique1'], '{new_activity2.uid}': ['non_unique2']}}"
     )
+
+
+@pytest.mark.parametrize(
+    "field_name, search_string",
+    [
+        ("name", "name-CCC"),
+        ("name_sentence_case", "name-CCC"),
+        # ("synonyms", "CCC"),
+        ("library_name", "Sponsor"),
+        ("definition", "def"),
+        ("abbreviation", "ab"),
+        ("nci_concept_id", "nci"),
+        ("nci_concept_name", "nci"),
+        ("is_data_collected", "t"),
+        ("is_used_by_legacy_instances", "f"),
+        ("start_date", "20"),
+        ("version", "1.0"),
+        ("status", "Final"),
+        ("author_username", "unknown-user"),
+    ],
+)
+def test_get_activities_headers(api_client, field_name, search_string):
+    for lite in [True, False]:
+        query_params = {
+            "field_name": field_name,
+            "search_string": search_string,
+            "lite": lite,
+        }
+        response = api_client.get(
+            "/concepts/activities/activities/headers", params=query_params
+        )
+        assert_response_status_code(response, 200)
+        assert len(response.json()) >= 1
+        for res in response.json():
+            assert str(search_string).lower() in str(res).lower()

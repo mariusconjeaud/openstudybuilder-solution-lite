@@ -10,14 +10,14 @@ from clinical_mdr_api.domains.study_selections.study_disease_milestone import (
     StudyDiseaseMilestoneVO,
 )
 from clinical_mdr_api.models.utils import BaseModel, PatchInputModel, PostInputModel
-from common import config
+from common.config import settings
 
 
 class StudyDiseaseMilestoneEditInput(PatchInputModel):
     disease_milestone_type: Annotated[
         str | None, Field(description="Study Disease Milestone Type uid")
     ] = None
-    repetition_indicator: Annotated[bool | None, Field()] = None
+    repetition_indicator: Annotated[bool, Field()] = False
 
 
 class StudyDiseaseMilestoneCreateInput(PostInputModel):
@@ -30,7 +30,7 @@ class StudyDiseaseMilestoneCreateInput(PostInputModel):
         Field(
             json_schema_extra={"nullable": True},
             gt=0,
-            lt=config.MAX_INT_NEO4J,
+            lt=settings.max_int_neo4j,
             description="The ordering of the selection",
         ),
     ] = None
@@ -51,7 +51,7 @@ class StudyDiseaseMilestoneOGM(BaseModel, StudyDiseaseMilestoneVO):
             description="The ordering of the selection",
             json_schema_extra={"source": "order", "nullable": True},
         ),
-    ] = None
+    ] = None  # type: ignore[assignment]
     status: Annotated[
         StudyStatus,
         Field(
@@ -66,7 +66,7 @@ class StudyDiseaseMilestoneOGM(BaseModel, StudyDiseaseMilestoneVO):
         return StudyStatus[value]
 
     start_date: Annotated[
-        datetime | None,
+        datetime,
         Field(
             description="The most recent point in time when the study disease_milestone was edited."
             "The format is ISO 8601 in UTC±0, e.g.: '2020-10-31T16:00:00+00:00' for October 31, 2020 at 6pm in UTC+2 timezone.",
@@ -74,19 +74,21 @@ class StudyDiseaseMilestoneOGM(BaseModel, StudyDiseaseMilestoneVO):
         ),
     ]
     author_id: Annotated[
-        str | None,
+        str,
         Field(
             description="ID of user that created last modification",
             json_schema_extra={"source": "has_after.author_id", "nullable": True},
         ),
     ]
-    author_username: Annotated[str | None, Field(json_schema_extra={"nullable": True})]
+    author_username: Annotated[str | None, Field(json_schema_extra={"nullable": True})]  # type: ignore[assignment]
 
     disease_milestone_type: Annotated[
         str,
         Field(
             description="Name of the disease_milestone type based on CT term",
-            json_schema_extra={"source": "has_disease_milestone_type.uid"},
+            json_schema_extra={
+                "source": "has_disease_milestone_type.has_selected_term.uid"
+            },
         ),
     ]
 
@@ -95,7 +97,7 @@ class StudyDiseaseMilestoneOGM(BaseModel, StudyDiseaseMilestoneVO):
         Field(
             description="Name of the disease_milestone type based on CT term",
             json_schema_extra={
-                "source": "has_disease_milestone_type.has_attributes_root.latest_final.definition"
+                "source": "has_disease_milestone_type.has_selected_term.has_attributes_root.latest_final.definition"
             },
         ),
     ]
@@ -105,7 +107,7 @@ class StudyDiseaseMilestoneOGM(BaseModel, StudyDiseaseMilestoneVO):
         Field(
             description="Name of the disease_milestone type based on CT term",
             json_schema_extra={
-                "source": "has_disease_milestone_type.has_name_root.latest_final.name"
+                "source": "has_disease_milestone_type.has_selected_term.has_name_root.latest_final.name"
             },
         ),
     ]
@@ -113,6 +115,8 @@ class StudyDiseaseMilestoneOGM(BaseModel, StudyDiseaseMilestoneVO):
     repetition_indicator: Annotated[
         bool, Field(json_schema_extra={"source": "repetition_indicator"})
     ]
+
+    accepted_version: Annotated[bool, Field()] = False
 
 
 class StudyDiseaseMilestoneOGMVer(StudyDiseaseMilestoneOGM):
@@ -140,7 +144,6 @@ class StudyDiseaseMilestone(StudyDiseaseMilestoneCreateInput):
     study_version: Annotated[
         str | None,
         Field(
-            title="study version or date information",
             description="Study version number, if specified, otherwise None.",
             json_schema_extra={"nullable": True},
         ),
@@ -176,7 +179,7 @@ class StudySelectionDiseaseMilestoneNewOrder(BaseModel):
         int,
         Field(
             description="new order of the selected disease milestones",
-            gt=-config.MAX_INT_NEO4J,
-            lt=config.MAX_INT_NEO4J,
+            gt=-settings.max_int_neo4j,
+            lt=settings.max_int_neo4j,
         ),
     ]

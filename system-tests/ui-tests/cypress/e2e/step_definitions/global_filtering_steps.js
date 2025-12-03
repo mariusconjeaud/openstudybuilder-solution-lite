@@ -11,6 +11,26 @@ When('The user filters field {string}', (fieldName) => {
     cy.wait(500)
 })
 
+When('The user filters study list by field {string}', (fieldName) => {
+    cy.longWaitForTable()
+    cy.get('button[title="Filters"]').click()
+    cy.contains('.filterAutocompleteLabel [role="combobox"]', fieldName).click().then(() => {
+        cy.get('.v-overlay__content .v-list').filter(':visible').should('not.contain', 'No data available')
+        cy.get('.v-overlay__content .v-list').filter(':visible').find('.v-list-item-title').first().then((element) => {
+            cy.wrap(element).invoke('text').then(value => {
+                cy.wrap(element).click()
+                cy.longWaitForTable()
+                cy.checkRowByIndex(0, fieldName, value.slice(0, 60))
+            })
+        })
+    })
+})
+
+When('The status filter is not available when expanding available filters', () => {
+    cy.clickButton("filters-button", false)
+    cy.contains('[data-cy="filter-field"]', 'Status').should('not.exist')
+})
+
 When('The user filters table by status {string}', (statusValue) => filterByStatus(statusValue, true))
 
 When('The user changes status filter value to {string}', (statusValue) => filterByStatus(statusValue, false))
@@ -31,7 +51,7 @@ function filterByText() {
     cy.get('.v-overlay__content .v-list').filter(':visible').within(() => {
         cy.get('.v-list-item-title').first().then((element) => {
             cy.wrap(element).invoke('text').then(value => filterValue =  value.slice(0, 60))
-            cy.intercept('**/headers**').as('filterRequest')
+            cy.intercept('**filters=**').as('filterRequest')
             cy.wrap(element).click()
         })
     })

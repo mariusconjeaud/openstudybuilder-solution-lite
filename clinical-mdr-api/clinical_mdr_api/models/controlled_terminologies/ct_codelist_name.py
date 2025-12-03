@@ -15,7 +15,7 @@ class CTCodelistName(BaseModel):
     @classmethod
     def from_ct_codelist_ar(cls, ct_codelist_ar: CTCodelistNameAR) -> Self:
         return cls(
-            catalogue_name=ct_codelist_ar.ct_codelist_vo.catalogue_name,
+            catalogue_names=ct_codelist_ar.ct_codelist_vo.catalogue_names,
             codelist_uid=ct_codelist_ar.uid,
             name=ct_codelist_ar.name,
             template_parameter=ct_codelist_ar.ct_codelist_vo.is_template_parameter,
@@ -49,9 +49,9 @@ class CTCodelistName(BaseModel):
             ),
         )
 
-    catalogue_name: Annotated[
-        str | None, Field(json_schema_extra={"nullable": True})
-    ] = None
+    catalogue_names: Annotated[
+        list[str], Field(json_schema_extra={"remove_from_wildcard": True})
+    ] = []
 
     codelist_uid: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = (
         None
@@ -96,5 +96,5 @@ class CTCodelistNameVersion(CTCodelistName):
 
 class CTCodelistNameEditInput(PatchInputModel):
     name: Annotated[str | None, Field(min_length=1)] = None
-    template_parameter: Annotated[bool | None, Field()] = None
-    change_description: Annotated[str | None, Field(min_length=1)] = None
+    template_parameter: Annotated[bool, Field()] = False
+    change_description: Annotated[str, Field(min_length=1)]

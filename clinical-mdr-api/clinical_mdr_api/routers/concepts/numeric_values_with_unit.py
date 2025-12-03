@@ -15,8 +15,9 @@ from clinical_mdr_api.routers import _generic_descriptions
 from clinical_mdr_api.services.concepts.simple_concepts.numeric_value_with_unit import (
     NumericValueWithUnitService,
 )
-from common import config
 from common.auth import rbac
+from common.auth.dependencies import security
+from common.config import settings
 from common.models.error import ErrorResponse
 
 # Prefixed with "/concepts/numeric-values-with-unit"
@@ -27,7 +28,7 @@ NumericValueUID = Path(description="The unique id of the numeric value")
 
 @router.get(
     "",
-    dependencies=[rbac.LIBRARY_READ],
+    dependencies=[security, rbac.LIBRARY_READ],
     summary="List all numeric values with unit (for a given library)",
     description="""
 State before:
@@ -53,16 +54,16 @@ def get_numeric_values(
         Json | None, Query(description=_generic_descriptions.SORT_BY)
     ] = None,
     page_number: Annotated[
-        int | None, Query(ge=1, description=_generic_descriptions.PAGE_NUMBER)
-    ] = config.DEFAULT_PAGE_NUMBER,
+        int, Query(ge=1, description=_generic_descriptions.PAGE_NUMBER)
+    ] = settings.default_page_number,
     page_size: Annotated[
-        int | None,
+        int,
         Query(
             ge=0,
-            le=config.MAX_PAGE_SIZE,
+            le=settings.max_page_size,
             description=_generic_descriptions.PAGE_SIZE,
         ),
-    ] = config.DEFAULT_PAGE_SIZE,
+    ] = settings.default_page_size,
     filters: Annotated[
         Json | None,
         Query(
@@ -71,10 +72,10 @@ def get_numeric_values(
         ),
     ] = None,
     operator: Annotated[
-        str | None, Query(description=_generic_descriptions.FILTER_OPERATOR)
-    ] = config.DEFAULT_FILTER_OPERATOR,
+        str, Query(description=_generic_descriptions.FILTER_OPERATOR)
+    ] = settings.default_filter_operator,
     total_count: Annotated[
-        bool | None, Query(description=_generic_descriptions.TOTAL_COUNT)
+        bool, Query(description=_generic_descriptions.TOTAL_COUNT)
     ] = False,
 ) -> CustomPage[NumericValueWithUnit]:
     numeric_value_service = NumericValueWithUnitService()
@@ -87,14 +88,14 @@ def get_numeric_values(
         filter_by=filters,
         filter_operator=FilterOperator.from_str(operator),
     )
-    return CustomPage.create(
+    return CustomPage(
         items=results.items, total=results.total, page=page_number, size=page_size
     )
 
 
 @router.get(
     "/headers",
-    dependencies=[rbac.LIBRARY_READ],
+    dependencies=[security, rbac.LIBRARY_READ],
     summary="Returns possible values from the database for a given header",
     description="Allowed parameters include : field name for which to get possible values, "
     "search string to provide filtering for the field name, additional filters to apply on other fields",
@@ -113,7 +114,7 @@ def get_distinct_values_for_header(
     ],
     library_name: Annotated[str | None, Query()] = None,
     search_string: Annotated[
-        str | None, Query(description=_generic_descriptions.HEADER_SEARCH_STRING)
+        str, Query(description=_generic_descriptions.HEADER_SEARCH_STRING)
     ] = "",
     filters: Annotated[
         Json | None,
@@ -123,11 +124,11 @@ def get_distinct_values_for_header(
         ),
     ] = None,
     operator: Annotated[
-        str | None, Query(description=_generic_descriptions.FILTER_OPERATOR)
-    ] = config.DEFAULT_FILTER_OPERATOR,
+        str, Query(description=_generic_descriptions.FILTER_OPERATOR)
+    ] = settings.default_filter_operator,
     page_size: Annotated[
-        int | None, Query(description=_generic_descriptions.HEADER_PAGE_SIZE)
-    ] = config.DEFAULT_HEADER_PAGE_SIZE,
+        int, Query(description=_generic_descriptions.HEADER_PAGE_SIZE)
+    ] = settings.default_header_page_size,
 ) -> list[Any]:
     numeric_value_service = NumericValueWithUnitService()
     return numeric_value_service.get_distinct_values_for_header(
@@ -142,7 +143,7 @@ def get_distinct_values_for_header(
 
 @router.get(
     "/{numeric_value_uid}",
-    dependencies=[rbac.LIBRARY_READ],
+    dependencies=[security, rbac.LIBRARY_READ],
     summary="Get details on a specific numeric value with unit",
     description="""
 State before:
@@ -169,7 +170,7 @@ def get_numeric_value(
 
 @router.post(
     "",
-    dependencies=[rbac.LIBRARY_WRITE_OR_STUDY_WRITE],
+    dependencies=[security, rbac.LIBRARY_WRITE_OR_STUDY_WRITE],
     summary="Creates new numeric value or returns already existing numeric value.",
     description="""
 State before:

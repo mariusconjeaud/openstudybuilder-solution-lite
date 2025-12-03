@@ -59,7 +59,7 @@ def tst_study(request, temp_database) -> Study:
     """fixture creates and returns a test study, with static id-s"""
 
     log.info("%s: injecting test study: inject_base_data", request.fixturename)
-    study = inject_base_data()
+    study, _test_data_dict = inject_base_data()
 
     StudyRoot.generate_node_uids_if_not_present()
 
@@ -118,13 +118,15 @@ def study_arms(request, tst_study) -> list[StudySelectionArm]:
         "%s fixture: creating study arm type codelist and terms", request.fixturename
     )
 
-    catalogue_name, library_name = get_catalogue_name_library_name(True)
+    _catalogue_name, library_name = get_catalogue_name_library_name()
+    catalogue_name = "SDTM CT"
 
     arm_type_codelist = create_codelist(
         name="Arm Type",
         uid="CTCodelist_ArmType",
         catalogue=catalogue_name,
         library=library_name,
+        submission_value="ARMTTP",
     )
 
     log.info("%s fixture: creating study arms", request.fixturename)
@@ -136,7 +138,6 @@ def study_arms(request, tst_study) -> list[StudySelectionArm]:
             short_name=f"Arm_Short_Name_{i}",
             code=f"Arm_code_{i}",
             description="desc...",
-            arm_colour="colour...",
             randomization_group=f"Randomization_Group_{i}",
             number_of_subjects=7 * i,
             arm_type_uid=TestUtils.create_ct_term(
@@ -156,10 +157,15 @@ def study_elements(request, tst_study) -> list[StudySelectionElement]:
         request.fixturename,
     )
 
-    catalogue_name, library_name = get_catalogue_name_library_name(True)
+    _catalogue_name, library_name = get_catalogue_name_library_name()
+    catalogue_name = "SDTM CT"
 
-    element_type_codelist = create_codelist(
-        "Element Type", "CTCodelist_ElementType", catalogue_name, library_name
+    element_subtype_codelist = create_codelist(
+        "Element SubType",
+        "CTCodelist_ElementSubType",
+        catalogue_name,
+        library_name,
+        submission_value="ELEMSTP",
     )
 
     log.info("%s fixture: creating study elements", request.fixturename)
@@ -172,7 +178,7 @@ def study_elements(request, tst_study) -> list[StudySelectionElement]:
             code=f"Element_code_{i}",
             description="desc...",
             element_subtype_uid=TestUtils.create_ct_term(
-                codelist_uid=element_type_codelist.codelist_uid
+                codelist_uid=element_subtype_codelist.codelist_uid
             ).term_uid,
         )
         for i in range(1, 6)
@@ -205,14 +211,18 @@ def study_activities(request, tst_study) -> list[StudySelectionActivity]:
     db.cypher_query(data_library.STARTUP_ACTIVITY_GROUPS)
     db.cypher_query(data_library.STARTUP_ACTIVITY_SUB_GROUPS)
     db.cypher_query(data_library.STARTUP_ACTIVITIES)
-    db.cypher_query(
-        data_library.get_codelist_with_term_cypher("EFFICACY", "Flowchart Group")
-    )
+
     db.cypher_query(data_library.STARTUP_STUDY_ACTIVITY_CYPHER)
-    db.cypher_query(
-        get_codelist_with_term_cypher(
-            "EFFICACY", "Flowchart Group", term_uid="term_efficacy_uid"
-        )
+    fl_grp_codelist = TestUtils.create_ct_codelist(
+        name="Flowchart Group",
+        submission_value="FLWCRTGRP",
+        extensible=True,
+        approve=True,
+    )
+    _efficacy_term = TestUtils.create_ct_term(
+        sponsor_preferred_name="Efficacy",
+        codelist_uid=fl_grp_codelist.codelist_uid,
+        term_uid="term_efficacy_uid",
     )
 
     activity_group = TestUtils.create_activity_group(name="activity_group_test")

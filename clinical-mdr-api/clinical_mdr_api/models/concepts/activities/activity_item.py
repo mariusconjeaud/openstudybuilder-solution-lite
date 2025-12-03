@@ -27,13 +27,27 @@ class CompactCTTerm(BaseModel):
 
     uid: Annotated[
         str | None,
-        Field(json_schema_extra={"source": "has_ct_term.uid", "nullable": True}),
+        Field(
+            json_schema_extra={
+                "source": "has_ct_term.has_selected_term.uid",
+                "nullable": True,
+            }
+        ),
+    ] = None
+    codelist_uid: Annotated[
+        str | None,
+        Field(
+            json_schema_extra={
+                "source": "has_ct_term.has_selected_codelist.uid",
+                "nullable": True,
+            }
+        ),
     ] = None
     name: Annotated[
         str | None,
         Field(
             json_schema_extra={
-                "source": "has_ct_term.has_name_root.has_latest_value.name",
+                "source": "has_ct_term.has_selected_term.has_name_root.has_latest_value.name",
                 "nullable": True,
             },
         ),
@@ -63,6 +77,60 @@ class CompactUnitDefinition(BaseModel):
         Field(
             json_schema_extra={
                 "source": "has_unit_definition.has_latest_value.has_ct_dimension.has_name_root.has_latest_value.name",
+                "nullable": True,
+            },
+        ),
+    ] = None
+
+
+class CompactOdmForm(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    uid: Annotated[
+        str | None,
+        Field(json_schema_extra={"source": "has_odm_form.uid", "nullable": True}),
+    ] = None
+    oid: Annotated[
+        str | None,
+        Field(
+            json_schema_extra={
+                "source": "has_odm_form.has_latest_value.oid",
+                "nullable": True,
+            },
+        ),
+    ] = None
+    name: Annotated[
+        str | None,
+        Field(
+            json_schema_extra={
+                "source": "has_odm_form.has_latest_value.name",
+                "nullable": True,
+            },
+        ),
+    ] = None
+
+
+class CompactOdmItemGroup(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    uid: Annotated[
+        str | None,
+        Field(json_schema_extra={"source": "has_odm_item_group.uid", "nullable": True}),
+    ] = None
+    oid: Annotated[
+        str | None,
+        Field(
+            json_schema_extra={
+                "source": "has_odm_item_group.has_latest_value.oid",
+                "nullable": True,
+            },
+        ),
+    ] = None
+    name: Annotated[
+        str | None,
+        Field(
+            json_schema_extra={
+                "source": "has_odm_item_group.has_latest_value.name",
                 "nullable": True,
             },
         ),
@@ -103,12 +171,26 @@ class ActivityItem(BaseModel):
     ct_terms: list[CompactCTTerm] = Field(default_factory=list)
     unit_definitions: list[CompactUnitDefinition] = Field(default_factory=list)
     is_adam_param_specific: Annotated[bool, Field()]
-    odm_items: list[CompactOdmItem] = Field(default_factory=list)
+    odm_form: Annotated[
+        CompactOdmForm | None, Field(json_schema_extra={"nullable": True})
+    ] = None
+    odm_item_group: Annotated[
+        CompactOdmItemGroup | None, Field(json_schema_extra={"nullable": True})
+    ] = None
+    odm_item: Annotated[
+        CompactOdmItem | None, Field(json_schema_extra={"nullable": True})
+    ] = None
 
 
 class ActivityItemCreateInput(PostInputModel):
+    class CTTermsInput(PostInputModel):
+        term_uid: Annotated[str, Field(min_length=1)]
+        codelist_uid: Annotated[str, Field(min_length=1)]
+
     activity_item_class_uid: Annotated[str, Field(min_length=1)]
-    ct_term_uids: Annotated[list[str], Field()]
+    ct_terms: Annotated[list[CTTermsInput], Field()]
     unit_definition_uids: Annotated[list[str], Field()]
     is_adam_param_specific: Annotated[bool, Field()]
-    odm_item_uids: Annotated[list[str], Field()]
+    odm_form_uid: Annotated[str | None, Field()] = None
+    odm_item_group_uid: Annotated[str | None, Field()] = None
+    odm_item_uid: Annotated[str | None, Field()] = None

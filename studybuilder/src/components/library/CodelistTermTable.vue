@@ -10,10 +10,10 @@
     export-data-url="ct/terms"
     :export-data-url-params="exportUrlParams"
     export-object-label="Terms"
-    item-value="term_uid"
     class="mt-4"
-    column-data-resource="ct/terms"
+    column-data-resource="ct/codelists/terms"
     :codelist-uid="codelistUid"
+    :column-data-parameters="{ include_removed: showRemoved }"
     @filter="fetchTerms"
   >
     <template #actions>
@@ -30,20 +30,37 @@
         @click.stop="showCreationForm = true"
       />
     </template>
-    <template #[`item.name.status`]="{ item }">
-      <StatusChip :status="item.name.status" />
+    <template #[`item.start_date`]="{ item }">
+      {{ $filters.date(item.start_date) }}
     </template>
-    <template #[`item.name.start_date`]="{ item }">
-      {{ $filters.date(item.name.start_date) }}
+    <template #[`item.end_date`]="{ item }">
+      {{
+        item.end_date ? $filters.date(item.end_date) : $t('_global.date_null')
+      }}
     </template>
-    <template #[`item.attributes.status`]="{ item }">
-      <StatusChip :status="item.attributes.status" />
+    <template #[`item.name_status`]="{ item }">
+      <StatusChip :status="item.name_status" />
     </template>
-    <template #[`item.attributes.start_date`]="{ item }">
-      {{ $filters.date(item.attributes.start_date) }}
+    <template #[`item.name_date`]="{ item }">
+      {{ $filters.date(item.name_date) }}
+    </template>
+    <template #[`item.attributes_status`]="{ item }">
+      <StatusChip :status="item.attributes_status" />
+    </template>
+    <template #[`item.attributes_date`]="{ item }">
+      {{ $filters.date(item.attributes_date) }}
     </template>
     <template #[`item.actions`]="{ item }">
       <ActionsMenu :actions="actions" :item="item" />
+    </template>
+    <template #afterSwitches>
+      <v-switch
+        v-model="showRemoved"
+        :label="$t('CodelistTermsView.show_removed')"
+        hide-details
+        color="primary"
+        @update:model-value="fetchTerms()"
+      />
     </template>
   </NNTable>
   <v-dialog
@@ -53,8 +70,9 @@
     content-class="top-dialog"
   >
     <CodelistTermCreationForm
-      :catalogue-name="codelistNames.catalogue_name"
+      :catalogue-names="codelistNames.catalogue_names"
       :codelist-uid="codelistNames.codelist_uid"
+      :codelist-name="codelistNames.name"
       @close="closeForm"
       @created="goToTerm"
     />
@@ -79,7 +97,7 @@ import { computed, inject, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import controlledTerminology from '@/api/controlledTerminology'
-import termsApi from '@/api/controlledTerminology/terms'
+import codelistApi from '@/api/controlledTerminology/codelists'
 import ActionsMenu from '@/components/tools/ActionsMenu.vue'
 import CodelistSummary from '@/components/library/CodelistSummary.vue'
 import CodelistTermCreationForm from '@/components/library/CodelistTermCreationForm.vue'
@@ -112,7 +130,7 @@ const props = defineProps({
 
 const actions = [
   {
-    label: t('_global.edit'),
+    label: t('CodelistTermTable.edit'),
     icon: 'mdi-pencil-outline',
     iconColor: 'primary',
     accessRole: roles.LIBRARY_WRITE,
@@ -140,40 +158,59 @@ const actions = [
 
 const codelistNames = ref({})
 const codelistAttributes = ref({})
+const showRemoved = ref(false)
 
 const headers = [
   { title: '', key: 'actions', width: '1%' },
-  { title: t('_global.library'), key: 'library_name' },
+  { title: t('_global.order'), key: 'order', width: '4%' },
+  {
+    title: t('CodelistTermsView.submission_value'),
+    key: 'submission_value',
+    width: '5%',
+  },
+  {
+    title: t('CodelistTermsView.added_date'),
+    key: 'start_date',
+    width: '5%',
+  },
+  {
+    title: t('CodelistTermsView.removed_date'),
+    key: 'end_date',
+    width: '5%',
+  },
+  { title: t('_global.library'), key: 'library_name', width: '7%' },
   {
     title: t('CodelistTermsView.sponsor_name'),
-    key: 'name.sponsor_preferred_name',
+    key: 'sponsor_preferred_name',
+    width: '10%',
   },
-  { title: t('CodelistTermsView.name_status'), key: 'name.status' },
+  {
+    title: t('CodelistTermsView.name_status'),
+    key: 'name_status',
+    width: '5%',
+  },
   {
     title: t('CodelistTermsView.name_date'),
-    key: 'name.start_date',
+    key: 'name_date',
+    width: '5%',
   },
-  { title: t('CtCatalogueTable.concept_id'), key: 'attributes.concept_id' },
-  {
-    title: t('CodelistTermsView.code_submission_value'),
-    key: 'attributes.code_submission_value',
-  },
-  {
-    title: t('CodelistTermsView.name_submission_value'),
-    key: 'attributes.name_submission_value',
-  },
+  { title: t('CtCatalogueTable.concept_id'), key: 'concept_id', width: '5%' },
+
   {
     title: t('CtCatalogueTable.nci_pref_name'),
-    key: 'attributes.nci_preferred_name',
+    key: 'nci_preferred_name',
+    width: '10%',
   },
-  { title: t('_global.definition'), key: 'attributes.definition' },
+  { title: t('_global.definition'), key: 'definition', width: '10%' },
   {
     title: t('CodelistTermsView.attr_status'),
-    key: 'attributes.status',
+    key: 'attributes_status',
+    width: '5%',
   },
   {
     title: t('CodelistTermsView.attr_date'),
-    key: 'attributes.start_date',
+    key: 'attributes_date',
+    width: '5%',
   },
 ]
 const historyItems = ref([])
@@ -224,22 +261,21 @@ function fetchTerms(filters, options, filtersUpdated) {
     filters,
     filtersUpdated
   )
+  params.include_removed = showRemoved.value
   if (props.package) {
     params.package = props.package.name
   }
-  params.codelist_uid = props.codelistUid
-  termsApi.getAll(params).then((resp) => {
+  codelistApi.getCodelistTerms(props.codelistUid, params).then((resp) => {
     terms.value = resp.data.items
     total.value = resp.data.total
     // Sponsor terms do not have a concept id.
     // Show the term uid for these.
     for (const term of terms.value) {
-      if (term.attributes.concept_id === null) {
+      if (term.concept_id === null) {
         term._concept_id = term.term_uid
       } else {
-        term._concept_id = term.attributes.concept_id
+        term._concept_id = term.concept_id
       }
-      term._order = codelists.getTermOrderInCodelist(term, props.codelistUid)
     }
   })
 }
@@ -315,14 +351,6 @@ async function openCTValuesHistory(term) {
   historyType = 'termAttributes'
   historyHeaders.value = [
     { title: t('CodelistTermDetail.concept_id'), key: 'concept_id' },
-    {
-      title: t('CodelistTermDetail.term_name'),
-      key: 'name_submission_value',
-    },
-    {
-      title: t('CodelistTermDetail.submission_value'),
-      key: 'code_submission_value',
-    },
     {
       title: t('CodeListDetail.nci_pref_name'),
       key: 'nci_preferred_name',

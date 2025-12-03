@@ -10,7 +10,7 @@ from clinical_mdr_api.domain_repositories.models.concepts import (
     NumericValueWithUnitRoot,
 )
 from clinical_mdr_api.domain_repositories.models.controlled_terminology import (
-    CTTermRoot,
+    CTTermContext,
 )
 from clinical_mdr_api.domain_repositories.models.generic import (
     ClinicalMdrNode,
@@ -59,10 +59,10 @@ class PharmaceuticalProductValue(ConceptValue):
         model=ClinicalMdrRel,
     )
     has_dosage_form = RelationshipTo(
-        CTTermRoot, "HAS_DOSAGE_FORM", cardinality=ZeroOrMore, model=ClinicalMdrRel
+        CTTermContext, "HAS_DOSAGE_FORM", cardinality=ZeroOrMore, model=ClinicalMdrRel
     )
     has_route_of_administration = RelationshipTo(
-        CTTermRoot,
+        CTTermContext,
         "HAS_ROUTE_OF_ADMINISTRATION",
         cardinality=ZeroOrMore,
         model=ClinicalMdrRel,

@@ -16,7 +16,7 @@
             :label="$t('EndpointTemplateForm.endpoint_category')"
             data-cy="template-endpoint-category"
             :items="endpointCategories"
-            item-title="name.sponsor_preferred_name"
+            item-title="sponsor_preferred_name"
             item-value="term_uid"
             :disabled="notApplicable"
             :rules="[
@@ -35,7 +35,7 @@
             :label="$t('EndpointTemplateForm.endpoint_sub_category')"
             data-cy="template-endpoint-sub-category"
             :items="endpointSubCategories"
-            item-title="name.sponsor_preferred_name"
+            item-title="sponsor_preferred_name"
             item-value="term_uid"
             :disabled="notApplicable"
             :rules="[
@@ -80,10 +80,27 @@ export default {
     }
   },
   mounted() {
-    terms.getByCodelist('endpointCategories').then((resp) => {
+    // We get the large term model with name and attributes,
+    // add sponsor_preferred_name on the root.
+    if (this.localForm.categories) {
+      for (const category of this.localForm.categories) {
+        if (Object.prototype.hasOwnProperty.call(category, 'name')) {
+          category.sponsor_preferred_name = category.name.sponsor_preferred_name
+        }
+      }
+    }
+    if (this.localForm.sub_categories) {
+      for (const subcategory of this.localForm.sub_categories) {
+        if (Object.prototype.hasOwnProperty.call(subcategory, 'name')) {
+          subcategory.sponsor_preferred_name =
+            subcategory.name.sponsor_preferred_name
+        }
+      }
+    }
+    terms.getTermsByCodelist('endpointCategories').then((resp) => {
       this.endpointCategories = resp.data.items
     })
-    terms.getByCodelist('endpointSubCategories').then((resp) => {
+    terms.getTermsByCodelist('endpointSubCategories').then((resp) => {
       this.endpointSubCategories = resp.data.items
     })
   },

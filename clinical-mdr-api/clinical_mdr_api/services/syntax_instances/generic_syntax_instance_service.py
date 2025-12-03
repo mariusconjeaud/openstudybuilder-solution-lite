@@ -9,16 +9,8 @@ from clinical_mdr_api.domain_repositories._generic_repository_interface import (
     GenericRepository,
 )
 from clinical_mdr_api.domain_repositories.models.syntax import SyntaxTemplateRoot
-from clinical_mdr_api.domain_repositories.syntax_instances.template_parameters_repository import (
-    TemplateParameterRepository,
-)
-from clinical_mdr_api.domains.libraries.object import (
-    ParametrizedTemplateARBase,
-    ParametrizedTemplateVO,
-)
+from clinical_mdr_api.domains.libraries.object import ParametrizedTemplateVO
 from clinical_mdr_api.domains.libraries.parameter_term import (
-    ComplexParameterTerm,
-    NumericParameterTermVO,
     ParameterTermEntryVO,
     SimpleParameterTermVO,
 )
@@ -34,13 +26,9 @@ from clinical_mdr_api.models.study_selections.study import Study
 from clinical_mdr_api.models.syntax_templates.template_parameter_multi_select_input import (
     TemplateParameterMultiSelectInput,
 )
-from clinical_mdr_api.services._utils import (
-    is_library_editable,
-    process_complex_parameters,
-)
+from clinical_mdr_api.services._utils import is_library_editable, process_parameters
 from clinical_mdr_api.services.generic_syntax_service import GenericSyntaxService
 from clinical_mdr_api.services.studies.study import StudyService
-from clinical_mdr_api.utils import extract_parameters
 from common.exceptions import (
     AlreadyExistsException,
     NotFoundException,
@@ -92,13 +80,11 @@ class GenericSyntaxInstanceService(GenericSyntaxService[_AggregateRootType], abc
     def create_ar_from_input_values(
         self,
         template,
+        next_available_sequence_id_callback: Callable[..., str] = lambda _: "",
         generate_uid_callback=None,
-        next_available_sequence_id_callback: Callable[[str], str | None] = (
-            lambda _: None
-        ),
         study_uid: str | None = None,
         template_uid: str | None = None,
-        include_study_endpoints: bool | None = False,
+        include_study_endpoints: bool = False,
     ) -> _AggregateRootType:
         parameter_terms = self._create_parameter_entries(
             template,
@@ -185,9 +171,7 @@ class GenericSyntaxInstanceService(GenericSyntaxService[_AggregateRootType], abc
         """
         Supports edit draft action
         """
-        item: ParametrizedTemplateARBase = self.repository.find_by_uid(
-            uid, for_update=True
-        )
+        item = self.repository.find_by_uid(uid, for_update=True)
         parameter_terms = self._create_parameter_entries(
             template, template_uid=item.template_uid
         )
@@ -220,17 +204,16 @@ class GenericSyntaxInstanceService(GenericSyntaxService[_AggregateRootType], abc
         self,
         uid: str,
         study_uid: str | None = None,
-        include_study_endpoints: bool | None = False,
+        include_study_endpoints: bool = False,
     ):
         try:
-            parameter_repository = TemplateParameterRepository()
             item = self.repository.find_by_uid(uid)
             parameters = self.template_repository.get_parameters_including_terms(
                 item.template_uid,
                 study_uid=study_uid,
                 include_study_endpoints=include_study_endpoints,
             )
-            return process_complex_parameters(parameters, parameter_repository)
+            return process_parameters(parameters)
         except core.DoesNotExist as exc:
             raise NotFoundException(field_value=uid) from exc
 
@@ -239,7 +222,7 @@ class GenericSyntaxInstanceService(GenericSyntaxService[_AggregateRootType], abc
         template,
         template_uid: str | None = None,
         study_uid: str | None = None,
-        include_study_endpoints: bool | None = False,
+        include_study_endpoints: bool = False,
     ) -> list[ParameterTermEntryVO]:
         """
         Creates list of Parameter Term Entries that is used in aggregate. These contain:
@@ -247,12 +230,22 @@ class GenericSyntaxInstanceService(GenericSyntaxService[_AggregateRootType], abc
         """
         if template_uid is None:
             template_uid = getattr(template, self.template_uid_property)
+
+        if template.parameter_terms is None:
+            template.parameter_terms = []
+        template_parameter_terms = [
+            term.uid
+            for parameter in template.parameter_terms
+            for term in parameter.terms
+        ]
+
         parameter_terms = []
         self._allowed_parameters = (
             self.template_repository.get_parameters_including_terms(
                 template_uid,
                 study_uid=study_uid,
                 include_study_endpoints=include_study_endpoints,
+                parameter_term_uids_to_fetch=template_parameter_terms,
             )
         )
 
@@ -264,86 +257,61 @@ class GenericSyntaxInstanceService(GenericSyntaxService[_AggregateRootType], abc
         parameter: TemplateParameterMultiSelectInput
         idx = 0
         for _, allowed_parameter in enumerate(self._allowed_parameters):
-            if allowed_parameter.get(
-                "definition"
-            ):  # What is this check? Is this a different way of writing allowed_parameter != CTTerm?
-                param_names = extract_parameters(allowed_parameter["template"])
-                params = []
-                for param_name in param_names:
-                    parameter = template.parameter_terms[idx]
-                    if param_name != "NumericValue":
-                        parameter_term_vo = SimpleParameterTermVO(
-                            uid=parameter.terms[0].uid, value=parameter.terms[0].name
+            if not template.parameter_terms:
+                continue
+
+            parameter = template.parameter_terms[idx]
+            uids: list[SimpleParameterTermVO] = []
+
+            if len(parameter.terms or []) == 0:
+                # If we have an empty parameter value selection, send an empty list with default type fro the allowed parameters.
+                pve = ParameterTermEntryVO.from_input_values(
+                    parameter_exists_callback=self._repos.parameter_repository.parameter_name_exists,
+                    conjunction_exists_callback=lambda _: True,  # TODO: provide proper callback here
+                    parameter_term_uid_exists_for_parameter_callback=(
+                        lambda p_name, v_uid, _: (
+                            self._repos.parameter_repository.is_parameter_term_uid_valid_for_parameter_name(
+                                parameter_term_uid=v_uid,
+                                parameter_name=p_name,
+                            )
                         )
-                    else:
-                        parameter_term_vo = NumericParameterTermVO(
-                            uid="", value=template.parameter_terms[idx].value
-                        )
-                    idx += 1
-                    params.append(parameter_term_vo)
-                parameter_terms.append(
-                    ComplexParameterTerm(
-                        uid=allowed_parameter.get("definition"),
-                        parameter_template=allowed_parameter["template"],
-                        parameters=params,
-                    )
+                    ),
+                    parameter_name=allowed_parameter[
+                        "name"
+                    ],  # Item is used out of context of the for-loop
+                    conjunction=parameter.conjunction,  # type: ignore[arg-type]
+                    labels=parameter.labels or [],
+                    parameters=uids,
                 )
+                parameter_terms.append(pve)
+                idx += 1
             else:
-                if not template.parameter_terms:
-                    continue
-
-                parameter = template.parameter_terms[idx]
-                uids = []
-
-                if len(parameter.terms) == 0:
-                    # If we have an empty parameter value selection, send an empty list with default type fro the allowed parameters.
-                    pve = ParameterTermEntryVO.from_input_values(
-                        parameter_exists_callback=self._repos.parameter_repository.parameter_name_exists,
-                        conjunction_exists_callback=lambda _: True,  # TODO: provide proper callback here
-                        parameter_term_uid_exists_for_parameter_callback=(
-                            lambda p_name, v_uid, _: (
-                                self._repos.parameter_repository.is_parameter_term_uid_valid_for_parameter_name(
-                                    parameter_term_uid=v_uid,
-                                    parameter_name=p_name,
-                                )
-                            )
-                        ),
-                        parameter_name=allowed_parameter[
-                            "name"
-                        ],  # Item is used out of context of the for-loop
-                        conjunction=parameter.conjunction,
-                        labels=parameter.labels,
-                        parameters=uids,
+                # Else, iterate over the provided values, store them and their type dynamically.
+                for item in parameter.terms:
+                    parameter_term_vo = SimpleParameterTermVO.from_input_values(
+                        parameter_term_by_uid_lookup_callback=self._get_parameter_term,
+                        uid=item.uid,
                     )
-                    parameter_terms.append(pve)
-                    idx += 1
-                else:
-                    # Else, iterate over the provided values, store them and their type dynamically.
-                    for item in parameter.terms:
-                        parameter_term_vo = SimpleParameterTermVO.from_input_values(
-                            parameter_term_by_uid_lookup_callback=self._get_parameter_term,
-                            uid=item.uid,
+                    uids.append(parameter_term_vo)
+                pve = ParameterTermEntryVO.from_input_values(
+                    parameter_exists_callback=self._repos.parameter_repository.parameter_name_exists,
+                    conjunction_exists_callback=lambda _: True,  # TODO: provide proper callback here
+                    parameter_term_uid_exists_for_parameter_callback=(
+                        lambda p_name, v_uid, _: (
+                            self._repos.parameter_repository.is_parameter_term_uid_valid_for_parameter_name(
+                                parameter_term_uid=v_uid,
+                                parameter_name=p_name,
+                            )
                         )
-                        uids.append(parameter_term_vo)
-                    pve = ParameterTermEntryVO.from_input_values(
-                        parameter_exists_callback=self._repos.parameter_repository.parameter_name_exists,
-                        conjunction_exists_callback=lambda _: True,  # TODO: provide proper callback here
-                        parameter_term_uid_exists_for_parameter_callback=(
-                            lambda p_name, v_uid, _: (
-                                self._repos.parameter_repository.is_parameter_term_uid_valid_for_parameter_name(
-                                    parameter_term_uid=v_uid,
-                                    parameter_name=p_name,
-                                )
-                            )
-                        ),
-                        # pylint: disable=undefined-loop-variable
-                        parameter_name=item.type,
-                        conjunction=parameter.conjunction,
-                        labels=parameter.labels,
-                        parameters=uids,
-                    )
-                    parameter_terms.append(pve)
-                    idx += 1
+                    ),
+                    # pylint: disable=undefined-loop-variable
+                    parameter_name=item.type,  # type: ignore[arg-type]
+                    conjunction=parameter.conjunction,  # type: ignore[arg-type]
+                    labels=parameter.labels or [],
+                    parameters=uids,
+                )
+                parameter_terms.append(pve)
+                idx += 1
         return parameter_terms
 
     @db.transaction

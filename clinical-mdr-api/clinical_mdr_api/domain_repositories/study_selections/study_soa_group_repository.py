@@ -1,8 +1,12 @@
 import datetime
 from dataclasses import dataclass
+from typing import Any
 
 from neomodel import db
 
+from clinical_mdr_api.domain_repositories.controlled_terminologies.ct_codelist_attributes_repository import (
+    CTCodelistAttributesRepository,
+)
 from clinical_mdr_api.domain_repositories.generic_repository import (
     manage_previous_connected_study_selection_relationships,
 )
@@ -23,6 +27,7 @@ from clinical_mdr_api.domains.study_selections.study_soa_group_selection import 
     StudySoAGroupVO,
 )
 from clinical_mdr_api.utils import unpack_list_of_lists
+from common.config import settings
 from common.utils import convert_to_datetime
 
 
@@ -34,7 +39,7 @@ class SelectionHistory:
     soa_group_term_uid: str
     soa_group_term_name: str | None
     show_soa_group_in_protocol_flowchart: bool
-    author_id: str | None
+    author_id: str
     change_type: str
     order: int | None
     study_activity_group_uids: list[str] | None
@@ -46,7 +51,7 @@ class StudySoAGroupRepository(StudySelectionActivityBaseRepository[StudySoAGroup
     _aggregate_root_type = StudySoAGroupAR
 
     def _create_value_object_from_repository(
-        self, selection: dict, acv: bool
+        self, selection: dict[str, Any], acv: bool
     ) -> StudySoAGroupVO:
         return StudySoAGroupVO.from_input_values(
             study_selection_uid=selection["study_selection_uid"],
@@ -56,9 +61,7 @@ class StudySoAGroupRepository(StudySelectionActivityBaseRepository[StudySoAGroup
                 "show_soa_group_in_protocol_flowchart"
             ],
             study_activity_group_uids=(
-                selection["study_activity_group_uids"]
-                if selection["study_activity_group_uids"]
-                else None
+                selection.get("study_activity_group_uids") or None
             ),
             order=selection["order"],
             study_uid=selection["study_uid"],
@@ -73,37 +76,49 @@ class StudySoAGroupRepository(StudySelectionActivityBaseRepository[StudySoAGroup
     def _additional_match(self) -> str:
         return """
             WITH sr, sv
-            MATCH (sv)-[:HAS_STUDY_ACTIVITY]->(study_activity:StudyActivity)-[:STUDY_ACTIVITY_HAS_STUDY_SOA_GROUP]->
-                (sa:StudySoAGroup)-[:HAS_FLOWCHART_GROUP]->(elr:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(soa_group_term_name:CTTermNameValue)
+            
+            MATCH (sv)-[:HAS_STUDY_ACTIVITY]->(sa:StudyActivity)
+                -[:STUDY_ACTIVITY_HAS_STUDY_SOA_GROUP]->(soag:StudySoAGroup)
+            WHERE NOT (soag)<-[:BEFORE]-()
+            
+            OPTIONAL MATCH (sa)-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_GROUP]->(sag:StudyActivityGroup)
+            WHERE NOT (sag)<-[:BEFORE]-()
+            
+            WITH DISTINCT sr, soag, collect(DISTINCT sag.uid) AS study_activity_group_uids
+            
+            MATCH (soag)-[:HAS_FLOWCHART_GROUP]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(cttr:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(ctnv:CTTermNameValue)
+            MATCH (soag)<-[:AFTER]-(sac:StudyAction)
         """
 
-    def _filter_clause(self, query_parameters: dict, **kwargs) -> str:
-        filter_query = "WHERE NOT (sa)<-[:BEFORE]-()"
-        return filter_query
+    def _filter_clause(self, query_parameters: dict[Any, Any], **kwargs) -> str:
+        return ""
 
     def _order_by_query(self):
         return """
             WITH DISTINCT *
-            ORDER BY sa.order ASC
-            MATCH (sa)<-[:AFTER]-(sac:StudyAction)
+            ORDER BY soag.order
         """
 
     def _return_clause(self) -> str:
-        return """RETURN DISTINCT
+        return """
+            RETURN
                 sr.uid AS study_uid,
-                sa.uid AS study_selection_uid,
-                coalesce(sa.show_soa_group_in_protocol_flowchart, false) AS show_soa_group_in_protocol_flowchart,
-                elr.uid AS soa_group_term_uid,
-                soa_group_term_name.name AS soa_group_term_name,
-                apoc.coll.toSet([(sa)<-[:STUDY_ACTIVITY_HAS_STUDY_SOA_GROUP]-(:StudyActivity)-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_GROUP]->(study_activity_group:StudyActivityGroup) 
-                    | study_activity_group.uid]) AS study_activity_group_uids,
-                sa.order AS order,
-                sa.accepted_version AS accepted_version,
+                soag.uid AS study_selection_uid,
+                COALESCE(soag.show_soa_group_in_protocol_flowchart, false) AS show_soa_group_in_protocol_flowchart,
+                cttr.uid AS soa_group_term_uid,
+                ctnv.name AS soa_group_term_name,
+                study_activity_group_uids,
+                soag.order AS order,
+                soag.accepted_version AS accepted_version,
                 sac.date AS start_date,
-                sac.author_id AS author_id"""
+                sac.author_id AS author_id
+        """
 
     def get_selection_history(
-        self, selection: dict, change_type: str, end_date: datetime
+        self,
+        selection: dict[str, Any],
+        change_type: str,
+        end_date: datetime.datetime | None,
     ):
         return SelectionHistory(
             study_selection_uid=selection["study_selection_uid"],
@@ -114,9 +129,7 @@ class StudySoAGroupRepository(StudySelectionActivityBaseRepository[StudySoAGroup
                 "show_soa_group_in_protocol_flowchart"
             ],
             study_activity_group_uids=(
-                selection["study_activity_group_uids"]
-                if selection["study_activity_group_uids"]
-                else None
+                selection.get("study_activity_group_uids") or None
             ),
             order=selection["order"],
             change_type=change_type,
@@ -124,7 +137,7 @@ class StudySoAGroupRepository(StudySelectionActivityBaseRepository[StudySoAGroup
             end_date=end_date,
         )
 
-    def get_audit_trail_query(self, study_selection_uid: str):
+    def get_audit_trail_query(self, study_selection_uid: str | None):
         if study_selection_uid:
             audit_trail_cypher = """
             MATCH (sr:StudyRoot { uid: $study_uid})-[:AUDIT_TRAIL]->(:StudyAction)-[:BEFORE|AFTER]->(sa:StudySoAGroup {uid: $study_selection_uid})
@@ -142,7 +155,7 @@ class StudySoAGroupRepository(StudySelectionActivityBaseRepository[StudySoAGroup
         audit_trail_cypher += """
 
                     WITH DISTINCT all_sa, study_activity
-                    OPTIONAL MATCH (all_sa)-[:HAS_FLOWCHART_GROUP]->(fgr:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(soa_group_term_name:CTTermNameValue)
+                    OPTIONAL MATCH (all_sa)-[:HAS_FLOWCHART_GROUP]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(fgr:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(soa_group_term_name:CTTermNameValue)
                     WITH DISTINCT all_sa, fgr, soa_group_term_name, study_activity
                     ORDER BY study_activity.order ASC
                     MATCH (all_sa)<-[:AFTER]-(asa:StudyAction)
@@ -197,7 +210,14 @@ class StudySoAGroupRepository(StudySelectionActivityBaseRepository[StudySoAGroup
         audit_node.has_after.connect(study_soa_group_node)
         # Set flowchart group
         ct_term_root = CTTermRoot.nodes.get(uid=selection.soa_group_term_uid)
-        study_soa_group_node.has_flowchart_group.connect(ct_term_root)
+        selected_term_node = (
+            CTCodelistAttributesRepository().get_or_create_selected_term(
+                ct_term_root,
+                codelist_submission_value=settings.flowchart_group_cl_submval,
+                allow_removed_terms=True,
+            )
+        )
+        study_soa_group_node.has_flowchart_group.connect(selected_term_node)
         if last_study_selection_node:
             manage_previous_connected_study_selection_relationships(
                 previous_item=last_study_selection_node,
@@ -238,7 +258,7 @@ class StudySoAGroupRepository(StudySelectionActivityBaseRepository[StudySoAGroup
         self, study_uid: str, soa_group_term_uid: str
     ) -> StudySoAGroup | None:
         query = """
-            MATCH (flowchart_group_term:CTTermRoot)<-[:HAS_FLOWCHART_GROUP]-(study_soa_group:StudySoAGroup)<-[:STUDY_ACTIVITY_HAS_STUDY_SOA_GROUP]
+            MATCH (flowchart_group_term:CTTermRoot)<-[:HAS_SELECTED_TERM]-(:CTTermContext)<-[:HAS_FLOWCHART_GROUP]-(study_soa_group:StudySoAGroup)<-[:STUDY_ACTIVITY_HAS_STUDY_SOA_GROUP]
                 -(:StudyActivity)<-[:HAS_STUDY_ACTIVITY]-(:StudyValue)<-[:LATEST]-(:StudyRoot {uid:$study_uid})
             WHERE NOT (study_soa_group)<-[:BEFORE]-() AND NOT (study_soa_group)<-[]-(:Delete)
                 AND flowchart_group_term.uid=$soa_group_term_uid

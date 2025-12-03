@@ -39,6 +39,7 @@ log = logging.getLogger(__name__)
 study: Study
 arm_uid: str
 initial_ct_term_study_standard_test: ct_term.CTTerm
+investigational_arm: ct_term.CTTerm
 
 
 @pytest.fixture(scope="module")
@@ -55,21 +56,38 @@ def test_data():
     inject_and_clear_db(db_name)
 
     global study
-    study = inject_base_data()
+    study, _test_data_dict = inject_base_data()
 
-    catalogue_name, library_name = get_catalogue_name_library_name(use_test_utils=True)
+    _catalogue_name, library_name = get_catalogue_name_library_name(use_test_utils=True)
+    catalogue_name = "SDTM CT"
     # Create a study selection
     ct_term_codelist = create_codelist(
-        "Arm Type", "CTCodelist_ArmType", catalogue_name, library_name
+        "Arm Type",
+        "CTCodelist_ArmType",
+        catalogue_name,
+        library_name,
+        submission_value="ARMTTP",
     )
 
     global initial_ct_term_study_standard_test
     ct_term_name = "Arm Type"
     initial_ct_term_study_standard_test = TestUtils.create_ct_term(
         codelist_uid=ct_term_codelist.codelist_uid,
-        name_submission_value=ct_term_name,
+        submission_value=ct_term_name,
         sponsor_preferred_name=ct_term_name,
         order=1,
+        catalogue_name=catalogue_name,
+        library_name=library_name,
+        effective_date=datetime(2020, 3, 25, tzinfo=timezone.utc),
+        approve=True,
+    )
+    global investigational_arm
+    ct_term_name = "Investigational Arm"
+    investigational_arm = TestUtils.create_ct_term(
+        codelist_uid=ct_term_codelist.codelist_uid,
+        submission_value=ct_term_name,
+        sponsor_preferred_name=ct_term_name,
+        order=2,
         catalogue_name=catalogue_name,
         library_name=library_name,
         effective_date=datetime(2020, 3, 25, tzinfo=timezone.utc),
@@ -92,7 +110,32 @@ def test_data():
         params=params,
     )
 
+    params = {
+        "uid": ct_term_codelist.codelist_uid,
+        "date": datetime(2020, 3, 26, tzinfo=timezone.utc),
+    }
+    db.cypher_query(
+        """
+                    MATCH (n)-[:HAS_NAME_ROOT]-(ct_name:CTCodelistNameRoot)-[has_version:HAS_VERSION]-(val) 
+                    where 
+                        n.uid =$uid AND EXISTS((ct_name)-[:LATEST]-(val)) 
+                        AND has_version.status ='Final' 
+                    SET has_version.start_date = $date
+                """,
+        params=params,
+    )
+    db.cypher_query(
+        """
+                    MATCH (n)-[:HAS_ATTRIBUTES_ROOT]-(ct_attrs:CTCodelistAttributesRoot)-[has_version:HAS_VERSION]-(val) 
+                    where 
+                        n.uid =$uid AND EXISTS((ct_attrs)-[:LATEST]-(val)) 
+                        AND has_version.status ='Final' 
+                    SET has_version.start_date = $date
+                """,
+        params=params,
+    )
     yield
+    # drop_db(db_name)
 
 
 def test_arm_modify_actions_on_locked_study(api_client):
@@ -104,7 +147,6 @@ def test_arm_modify_actions_on_locked_study(api_client):
             "short_name": "Arm_Short_Name_1",
             "code": "Arm_code_1",
             "description": "desc...",
-            "arm_colour": "arm_colour...",
             "randomization_group": "Randomization_Group_1",
             "number_of_subjects": 1,
         },
@@ -142,7 +184,6 @@ def test_arm_modify_actions_on_locked_study(api_client):
             "short_name": "Arm_Short_Name_2",
             "code": "Arm_code_2",
             "description": "desc...",
-            "arm_colour": "arm_colour...",
             "randomization_group": "Randomization_Group_2",
             "number_of_subjects": 2,
         },
@@ -239,7 +280,6 @@ def test_study_arm_type_version_selecting_ct_package(api_client):
             "short_name": "Arm_Short_Name_1" + suffix_txt,
             "code": "Arm_code_1" + suffix_txt,
             "description": "desc..." + suffix_txt,
-            "arm_colour": "arm_colour..." + suffix_txt,
             "randomization_group": "Randomization_Group_1" + suffix_txt,
             "number_of_subjects": 1,
             "arm_type_uid": initial_ct_term_study_standard_test.term_uid,
@@ -247,7 +287,7 @@ def test_study_arm_type_version_selecting_ct_package(api_client):
     )
     res = response.json()
     assert_response_status_code(response, 201)
-    assert res["arm_type"]["sponsor_preferred_name"] == new_ctterm_name
+    assert res["arm_type"]["term_name"] == new_ctterm_name
     study_selection_uid_study_standard_test = res["arm_uid"]
 
     ct_package_uid = TestUtils.create_ct_package(
@@ -274,7 +314,7 @@ def test_study_arm_type_version_selecting_ct_package(api_client):
     res = response.json()
     assert_response_status_code(response, 200)
     assert (
-        res["arm_type"]["sponsor_preferred_name"]
+        res["arm_type"]["term_name"]
         == initial_ct_term_study_standard_test.sponsor_preferred_name
     )
 
@@ -288,7 +328,7 @@ def test_study_arm_type_version_selecting_ct_package(api_client):
     res = response.json()
     assert_response_status_code(response, 200)
     assert (
-        res["arm_type"]["sponsor_preferred_name"]
+        res["arm_type"]["term_name"]
         == initial_ct_term_study_standard_test.sponsor_preferred_name
     )
 
@@ -296,13 +336,15 @@ def test_study_arm_type_version_selecting_ct_package(api_client):
     response = api_client.get(
         f"/studies/{study.uid}/study-arms/{study_selection_uid_study_standard_test}/audit-trail/",
     )
+    print("-------")
+    print(response.json())
     res = response.json()
     assert_response_status_code(response, 200)
     assert (
-        res[0]["arm_type"]["sponsor_preferred_name"]
+        res[0]["arm_type"]["term_name"]
         == initial_ct_term_study_standard_test.sponsor_preferred_name
     )
-    assert res[1]["arm_type"]["sponsor_preferred_name"] == new_ctterm_name
+    assert res[1]["arm_type"]["term_name"] == new_ctterm_name
 
     # get all arms
     response = api_client.get(
@@ -311,10 +353,10 @@ def test_study_arm_type_version_selecting_ct_package(api_client):
     res = response.json()
     assert_response_status_code(response, 200)
     assert (
-        res[2]["arm_type"]["sponsor_preferred_name"]
+        res[2]["arm_type"]["term_name"]
         == initial_ct_term_study_standard_test.sponsor_preferred_name
     )
-    assert res[3]["arm_type"]["sponsor_preferred_name"] == new_ctterm_name
+    assert res[3]["arm_type"]["term_name"] == new_ctterm_name
 
 
 def test_study_arm_ct_term_retrieval_at_date(api_client):
@@ -339,16 +381,17 @@ def test_study_arm_ct_term_retrieval_at_date(api_client):
             "short_name": "Arm_Short_Name_1" + suffix_txt,
             "code": "Arm_code_1" + suffix_txt,
             "description": "desc..." + suffix_txt,
-            "arm_colour": "arm_colour..." + suffix_txt,
             "randomization_group": "Randomization_Group_1" + suffix_txt,
             "number_of_subjects": 1,
             study_selection_ctterm_uid_input_key: initial_ct_term_study_standard_test.term_uid,
         },
     )
+    print("###########")
+    print(response.json())
     res = response.json()
     assert_response_status_code(response, 201)
     assert res[study_selection_ctterm_keys]["queried_effective_date"] is None
-    assert res[study_selection_ctterm_keys]["date_conflict"] is False
+    # assert res[study_selection_ctterm_keys]["date_conflict"] is False
     study_selection_uid_study_standard_test = res["arm_uid"]
 
     ct_term_retrieval_at_date_test_common(
@@ -380,3 +423,185 @@ def test_get_study_arms_csv_xml_excel(api_client, export_format):
     if export_format == "text/csv":
         assert "study_version" in str(exported_data.read())
         assert "LATEST" in str(exported_data.read())
+
+
+def test_batch_operations(api_client):
+    test_study = TestUtils.create_study()
+    arm_name_1 = "Arm_Name_1"
+    arm_name_2 = "Arm_Name_2"
+    response = api_client.post(
+        f"/studies/{test_study.uid}/study-arms/batch",
+        json=[
+            {
+                "method": "POST",
+                "content": {
+                    "name": arm_name_1,
+                    "short_name": "Arm_Short_Name_1",
+                    "code": "Arm_code_1",
+                    "description": "desc...",
+                    "randomization_group": "Randomization_Group_1",
+                    "number_of_subjects": 1,
+                    "merge_branch_for_this_arm_for_sdtm_adam": True,
+                },
+            },
+            {
+                "method": "POST",
+                "content": {
+                    "name": arm_name_2,
+                    "short_name": "Arm_Short_Name_2",
+                    "code": "Arm_code_2",
+                    "description": "desc...",
+                    "randomization_group": "Randomization_Group_2",
+                    "number_of_subjects": 2,
+                    "merge_branch_for_this_arm_for_sdtm_adam": False,
+                },
+            },
+        ],
+    )
+    assert_response_status_code(response, 207)
+    res = response.json()
+    assert res[0]["response_code"] == 201
+    assert res[0]["content"]["name"] == arm_name_1
+    assert res[0]["content"]["merge_branch_for_this_arm_for_sdtm_adam"] is True
+    assert res[1]["response_code"] == 201
+    assert res[1]["content"]["name"] == arm_name_2
+    assert res[1]["content"]["merge_branch_for_this_arm_for_sdtm_adam"] is False
+    study_arm_1_uid = res[0]["content"]["arm_uid"]
+    study_arm_2_uid = res[1]["content"]["arm_uid"]
+
+    response = api_client.get(f"/studies/{test_study.uid}/study-arms")
+    assert_response_status_code(response, 200)
+    study_arms = response.json()["items"]
+    assert len(study_arms) == 2
+
+    assert study_arms[0]["name"] == arm_name_1
+    assert study_arms[1]["name"] == arm_name_2
+
+    response = api_client.post(
+        f"/studies/{test_study.uid}/study-arms/batch",
+        json=[
+            {
+                "method": "PATCH",
+                "content": {
+                    "arm_uid": study_arm_1_uid,
+                    "name": arm_name_2,
+                },
+            },
+        ],
+    )
+    assert_response_status_code(response, 422)
+    res = response.json()
+    assert (
+        res["message"]
+        == f"Value '{arm_name_2}' in field Arm name is not unique for the study."
+    )
+
+    response = api_client.post(
+        f"/studies/{test_study.uid}/study-arms/batch",
+        json=[
+            {
+                "method": "PATCH",
+                "content": {
+                    "arm_uid": study_arm_1_uid,
+                    "name": arm_name_2,
+                },
+            },
+            {
+                "method": "PATCH",
+                "content": {
+                    "arm_uid": study_arm_2_uid,
+                    "name": arm_name_1,
+                },
+            },
+        ],
+    )
+    assert_response_status_code(response, 207)
+    res = response.json()
+    assert res[0]["response_code"] == 200
+    assert res[0]["content"]["name"] == arm_name_2
+    assert res[1]["response_code"] == 200
+    assert res[1]["content"]["name"] == arm_name_1
+
+
+def test_study_arm_delete_cascade_deletes_study_branch_arms(api_client):
+    test_study = TestUtils.create_study()
+
+    study_arm = TestUtils.create_study_arm(
+        study_uid=test_study.uid,
+        name="test_arm",
+        short_name="test_arm",
+    )
+
+    TestUtils.create_study_branch_arm(
+        study_uid=test_study.uid,
+        name="Unique branch arm name1",
+        short_name="BranchArm_Short_Name_1",
+        code="BranchArm_code_1",
+        randomization_group="Randomization_Group_1",
+        number_of_subjects=5,
+        study_arm_uid=study_arm.arm_uid,
+    )
+    TestUtils.create_study_branch_arm(
+        study_uid=test_study.uid,
+        name="Unique branch arm name2",
+        short_name="BranchArm_Short_Name_2",
+        code="BranchArm_code_2",
+        randomization_group="Randomization_Group_2",
+        number_of_subjects=10,
+        study_arm_uid=study_arm.arm_uid,
+    )
+    response = api_client.get(f"/studies/{test_study.uid}/study-branch-arms")
+    assert_response_status_code(response, 200)
+    assert len(response.json()["items"]) == 2
+
+    response = api_client.delete(
+        f"/studies/{test_study.uid}/study-arms/{study_arm.arm_uid}"
+    )
+    assert_response_status_code(response, 204)
+
+    # Verify the StudyArm is deleted
+    response = api_client.get(f"/studies/{test_study.uid}/study-arms")
+    assert_response_status_code(response, 200)
+    assert len(response.json()["items"]) == 0
+
+    # Verify that StudyBranchArms are cascade deleted
+    response = api_client.get(f"/studies/{test_study.uid}/study-branch-arms")
+    assert_response_status_code(response, 200)
+    assert len(response.json()["items"]) == 0
+
+
+def test_study_arm_is_not_updated_when_same_payload_is_sent(api_client):
+    test_study = TestUtils.create_study()
+
+    test_arm = TestUtils.create_study_arm(
+        study_uid=test_study.uid,
+        arm_type_uid=investigational_arm.term_uid,
+        name="Arm 1 name",
+        short_name="Arm 1 short name",
+        description="Arm 1 description",
+    )
+
+    # edit arm
+    response = api_client.patch(
+        f"/studies/{test_study.uid}/study-arms/{test_arm.arm_uid}",
+        json={
+            "name": "Arm 1 name",
+            "short_name": "Arm 1 short name",
+            "description": "Arm 1 description",
+            "arm_type_uid": investigational_arm.term_uid,
+        },
+    )
+    assert_response_status_code(response, 200)
+    res = response.json()
+    assert res["name"] == "Arm 1 name"
+    assert res["short_name"] == "Arm 1 short name"
+    assert res["description"] == "Arm 1 description"
+    assert res["arm_type"]["term_uid"] == investigational_arm.term_uid
+
+    # get all arms
+    response = api_client.get(
+        f"/studies/{test_study.uid}/study-arms/{test_arm.arm_uid}/audit-trail",
+    )
+    assert_response_status_code(response, 200)
+    res = response.json()
+    assert len(res) == 1

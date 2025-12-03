@@ -17,7 +17,7 @@
               :label="$t('DiseaseMilestone.disease_milestone_type')"
               data-cy="disease-milestone-type"
               :items="diseaseMilestoneTypes"
-              item-title="name.sponsor_preferred_name"
+              item-title="sponsor_preferred_name"
               item-value="term_uid"
               :rules="[formRules.required]"
               clearable
@@ -101,7 +101,7 @@ export default {
     },
   },
   mounted() {
-    terms.getByCodelist('diseaseMilestoneTypes').then((resp) => {
+    terms.getTermsByCodelist('diseaseMilestoneTypes').then((resp) => {
       this.diseaseMilestoneTypes = resp.data.items
     })
   },

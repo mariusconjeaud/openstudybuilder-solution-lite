@@ -6,6 +6,7 @@
           :headers="selectedExtensionsHeaders"
           item-value="uid"
           :items="selectedExtensions"
+          :items-length="selectedExtensions.length"
           hide-export-button
           disable-filtering
           :modifiable-table="false"
@@ -35,12 +36,11 @@
                     @click="toggleExpand(internalItem)"
                   />
                   <v-btn v-else icon variant="text" class="hide" />
-                  <ActionsMenu :actions="actions" :item="item" />
                   <div class="mt-3">
                     {{
                       item.type
-                        ? $t('CrfExtensions.attribute')
-                        : $t('CrfExtensions.element')
+                        ? $t('CRFExtensions.attribute')
+                        : $t('CRFExtensions.element')
                     }}
                   </div>
                 </v-row>
@@ -95,9 +95,8 @@
                     <td width="25%">
                       <v-row>
                         <v-btn icon variant="text" class="hide" />
-                        <ActionsMenu :actions="actions" :item="props.item" />
                         <div class="mt-3">
-                          {{ $t('CrfExtensions.attribute') }}
+                          {{ $t('CRFExtensions.attribute') }}
                         </div>
                       </v-row>
                     </td>
@@ -164,12 +163,11 @@
                     @click="toggleExpand(internalItem)"
                   />
                   <v-btn v-else icon variant="text" class="hide" />
-                  <ActionsMenu :actions="actions" :item="item" />
                   <div class="mt-3">
                     {{
                       item.type
-                        ? $t('CrfExtensions.attribute')
-                        : $t('CrfExtensions.element')
+                        ? $t('CRFExtensions.attribute')
+                        : $t('CRFExtensions.element')
                     }}
                   </div>
                 </v-row>
@@ -214,9 +212,8 @@
                     <td width="25%">
                       <v-row>
                         <v-btn icon variant="text" class="hide" />
-                        <ActionsMenu :actions="actions" :item="item" />
                         <div class="mt-3">
-                          {{ $t('CrfExtensions.attribute') }}
+                          {{ $t('CRFExtensions.attribute') }}
                         </div>
                       </v-row>
                     </td>
@@ -271,15 +268,15 @@ const selectedExtensions = ref([])
 const extensionsHeaders = [
   { title: t('_global.type'), key: 'type' },
   { title: t('_global.name'), key: 'name' },
-  { title: t('CrfExtensions.namespace'), key: 'vendor_namespace.name' },
-  { title: t('CrfExtensions.data_type'), key: 'data_type' },
+  { title: t('CRFExtensions.namespace'), key: 'vendor_namespace.name' },
+  { title: t('CRFExtensions.data_type'), key: 'data_type' },
   { title: '', key: 'add' },
 ]
 const selectedExtensionsHeaders = [
   { title: t('_global.type'), key: 'type' },
   { title: t('_global.name'), key: 'name' },
-  { title: t('CrfExtensions.namespace'), key: 'vendor_namespace.name' },
-  { title: t('CrfExtensions.data_type'), key: 'data_type' },
+  { title: t('CRFExtensions.namespace'), key: 'vendor_namespace.name' },
+  { title: t('CRFExtensions.data_type'), key: 'data_type' },
   { title: t('_global.value'), key: 'value' },
   { title: '', key: 'delete' },
 ]
@@ -299,27 +296,6 @@ onMounted(async () => {
 function setExtensions() {
   if (props.editExtensions) {
     selectedExtensions.value = props.editExtensions
-    selectedExtensions.value.forEach((ex, index) => {
-      const extension = elements.value.find((el) => el.uid === ex.uid)
-      if (extension) {
-        const value = selectedExtensions.value[index].value
-        selectedExtensions.value[index] = extension
-        if (value) {
-          selectedExtensions.value[index].value = value
-        }
-      }
-    })
-    selectedExtensions.value.forEach((ex, index) => {
-      if (ex.vendor_attributes) {
-        selectedExtensions.value[index].vendor_attributes.forEach((attr, i) => {
-          selectedExtensions.value[index].vendor_attributes[i].value =
-            selectedExtensions.value.find((ex) => ex.uid === attr.uid).value
-        })
-      }
-    })
-    selectedExtensions.value = selectedExtensions.value.filter((ex) => {
-      return ex.library_name
-    })
   }
 }
 

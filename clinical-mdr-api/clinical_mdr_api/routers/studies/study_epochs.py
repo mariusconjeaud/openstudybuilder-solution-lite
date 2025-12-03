@@ -11,8 +11,9 @@ from clinical_mdr_api.routers import _generic_descriptions, decorators
 from clinical_mdr_api.routers import study_router as router
 from clinical_mdr_api.services.studies.study_epoch import StudyEpochService
 from clinical_mdr_api.services.studies.study_visit import StudyVisitService
-from common import config
 from common.auth import rbac
+from common.auth.dependencies import security
+from common.config import settings
 from common.models.error import ErrorResponse
 
 studyUID = Path(description="The unique id of the study.")
@@ -29,7 +30,7 @@ study_visit_uid_description = Path(description="The unique id of the study visit
 
 @router.get(
     "/studies/{study_uid}/study-epochs",
-    dependencies=[rbac.STUDY_READ],
+    dependencies=[security, rbac.STUDY_READ],
     summary="List all study epochs currently selected for the study.",
     description=f"""
 State before:
@@ -90,16 +91,16 @@ def get_all(
         Json | None, Query(description=_generic_descriptions.SORT_BY)
     ] = None,
     page_number: Annotated[
-        int | None, Query(ge=1, description=_generic_descriptions.PAGE_NUMBER)
-    ] = config.DEFAULT_PAGE_NUMBER,
+        int, Query(ge=1, description=_generic_descriptions.PAGE_NUMBER)
+    ] = settings.default_page_number,
     page_size: Annotated[
-        int | None,
+        int,
         Query(
             ge=0,
-            le=config.MAX_PAGE_SIZE,
+            le=settings.max_page_size,
             description=_generic_descriptions.PAGE_SIZE,
         ),
-    ] = config.DEFAULT_PAGE_SIZE,
+    ] = settings.default_page_size,
     filters: Annotated[
         Json | None,
         Query(
@@ -108,20 +109,16 @@ def get_all(
         ),
     ] = None,
     operator: Annotated[
-        str | None, Query(description=_generic_descriptions.FILTER_OPERATOR)
-    ] = config.DEFAULT_FILTER_OPERATOR,
+        str, Query(description=_generic_descriptions.FILTER_OPERATOR)
+    ] = settings.default_filter_operator,
     total_count: Annotated[
-        bool | None, Query(description=_generic_descriptions.TOTAL_COUNT)
+        bool, Query(description=_generic_descriptions.TOTAL_COUNT)
     ] = False,
     study_value_version: Annotated[
         str | None, _generic_descriptions.STUDY_VALUE_VERSION_QUERY
     ] = None,
 ) -> CustomPage[study_epoch.StudyEpoch]:
-    service = StudyEpochService(
-        study_uid=study_uid, study_value_version=study_value_version
-    )
-
-    all_items = service.get_all_epochs(
+    all_items = StudyEpochService.get_all_epochs(
         study_uid=study_uid,
         page_number=page_number,
         page_size=page_size,
@@ -132,7 +129,7 @@ def get_all(
         study_value_version=study_value_version,
     )
 
-    return CustomPage.create(
+    return CustomPage(
         items=all_items.items,
         total=all_items.total,
         page=page_number,
@@ -142,7 +139,7 @@ def get_all(
 
 @router.get(
     "/studies/{study_uid}/study-epochs/headers",
-    dependencies=[rbac.STUDY_READ],
+    dependencies=[security, rbac.STUDY_READ],
     summary="Returns possible values from the database for a given header",
     description="""Allowed parameters include : field name for which to get possible
     values, search string to provide filtering for the field name, additional filters to apply on other fields""",
@@ -161,7 +158,7 @@ def get_distinct_values_for_header(
         str, Query(description=_generic_descriptions.HEADER_FIELD_NAME)
     ],
     search_string: Annotated[
-        str | None, Query(description=_generic_descriptions.HEADER_SEARCH_STRING)
+        str, Query(description=_generic_descriptions.HEADER_SEARCH_STRING)
     ] = "",
     filters: Annotated[
         Json | None,
@@ -171,11 +168,11 @@ def get_distinct_values_for_header(
         ),
     ] = None,
     operator: Annotated[
-        str | None, Query(description=_generic_descriptions.FILTER_OPERATOR)
-    ] = config.DEFAULT_FILTER_OPERATOR,
+        str, Query(description=_generic_descriptions.FILTER_OPERATOR)
+    ] = settings.default_filter_operator,
     page_size: Annotated[
-        int | None, Query(description=_generic_descriptions.HEADER_PAGE_SIZE)
-    ] = config.DEFAULT_HEADER_PAGE_SIZE,
+        int, Query(description=_generic_descriptions.HEADER_PAGE_SIZE)
+    ] = settings.default_header_page_size,
     study_value_version: Annotated[
         str | None, _generic_descriptions.STUDY_VALUE_VERSION_QUERY
     ] = None,
@@ -196,7 +193,7 @@ def get_distinct_values_for_header(
 
 @router.get(
     "/studies/{study_uid}/study-epochs/audit-trail",
-    dependencies=[rbac.STUDY_READ],
+    dependencies=[security, rbac.STUDY_READ],
     summary="List audit trail related to all study epochs within the specified study-uid",
     description="""
 State before:
@@ -231,7 +228,7 @@ def get_study_epochs_all_audit_trail(
 
 @router.get(
     "/studies/{study_uid}/study-epochs/{study_epoch_uid}",
-    dependencies=[rbac.STUDY_READ],
+    dependencies=[security, rbac.STUDY_READ],
     summary="List all definitions for a specific study epoch",
     description="""
 State before:
@@ -270,10 +267,7 @@ def get_study_epoch(
         str | None, _generic_descriptions.STUDY_VALUE_VERSION_QUERY
     ] = None,
 ) -> study_epoch.StudyEpoch:
-    service = StudyEpochService(
-        study_uid=study_uid, study_value_version=study_value_version
-    )
-    return service.find_by_uid(
+    return StudyEpochService.find_by_uid(
         uid=study_epoch_uid,
         study_uid=study_uid,
         study_value_version=study_value_version,
@@ -282,7 +276,7 @@ def get_study_epoch(
 
 @router.get(
     "/studies/{study_uid}/study-epochs/{study_epoch_uid}/audit-trail",
-    dependencies=[rbac.STUDY_READ],
+    dependencies=[security, rbac.STUDY_READ],
     summary="List audit trail related to definition of a specific study epoch",
     description="""
 State before:
@@ -318,7 +312,7 @@ def get_study_epoch_audit_trail(
 
 @router.post(
     "/studies/{study_uid}/study-epochs",
-    dependencies=[rbac.STUDY_WRITE],
+    dependencies=[security, rbac.STUDY_WRITE],
     summary="Add a study epoch to a study",
     description="""
 State before:
@@ -363,7 +357,7 @@ def post_new_epoch_create(
 
 @router.post(
     "/studies/{study_uid}/study-epochs/preview",
-    dependencies=[rbac.STUDY_WRITE],
+    dependencies=[security, rbac.STUDY_WRITE],
     summary="Preview a study epoch",
     response_model_exclude_unset=True,
     status_code=200,
@@ -389,7 +383,7 @@ def post_preview_epoch(
 
 @router.delete(
     "/studies/{study_uid}/study-epochs/{study_epoch_uid}",
-    dependencies=[rbac.STUDY_WRITE],
+    dependencies=[security, rbac.STUDY_WRITE],
     summary="Delete a study epoch.",
     description="""
 State before:
@@ -430,7 +424,7 @@ def delete_study_epoch(
 
 @router.patch(
     "/studies/{study_uid}/study-epochs/{study_epoch_uid}/order/{new_order}",
-    dependencies=[rbac.STUDY_WRITE],
+    dependencies=[security, rbac.STUDY_WRITE],
     summary="Change display order of study epoch",
     description="""
 State before:
@@ -483,7 +477,7 @@ def patch_reorder(
 
 @router.patch(
     "/studies/{study_uid}/study-epochs/{study_epoch_uid}",
-    dependencies=[rbac.STUDY_WRITE],
+    dependencies=[security, rbac.STUDY_WRITE],
     summary="Edit a study epoch",
     description="""
 State before:
@@ -532,7 +526,7 @@ def patch_update_epoch(
 
 @router.get(
     "/epochs/allowed-configs",
-    dependencies=[rbac.STUDY_READ],
+    dependencies=[security, rbac.STUDY_READ],
     summary="Returns all allowed config sets",
     response_model_exclude_unset=True,
     status_code=200,
@@ -543,7 +537,7 @@ def patch_update_epoch(
 )
 def get_all_configs(
     terms_at_specific_date: Annotated[
-        date,
+        date | None,
         Query(
             description="""If specified, allowed configurations with specified date is returned.
 
@@ -560,7 +554,7 @@ def get_all_configs(
 
 @router.get(
     "/studies/{study_uid}/allowed-consecutive-groups",
-    dependencies=[rbac.STUDY_READ],
+    dependencies=[security, rbac.STUDY_READ],
     summary="Returns all consecutive groups",
     response_model_exclude_unset=True,
     status_code=200,

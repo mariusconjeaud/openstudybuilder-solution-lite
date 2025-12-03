@@ -1,3 +1,4 @@
+import json
 from contextlib import contextmanager
 from functools import wraps
 from typing import Callable, Generator, Sequence
@@ -74,8 +75,8 @@ def trace_calls(
                 pass
 
         2. Specifying args and/or kwargs: will trace the first two positional arguments `name` and `age`,
-           and the keyword arguments `age` and `gender`. `age` can get traced either way,
-           depending on the function call.
+        and the keyword arguments `age` and `gender`. `age` can get traced either way,
+        depending on the function call.
 
             @trace_calls(args=[0, 1], kwargs=['age', 'gender'])
             def my_function(name, age, gender):
@@ -109,18 +110,42 @@ def trace_calls(
 
                 if args:
                     l = len(_args)
-                    span.add_attribute("call.args", [_args[i] for i in args if i < l])
+                    span.add_attribute(
+                        "call.args",
+                        json.dumps(
+                            [
+                                (
+                                    str(_args[i])
+                                    if isinstance(_args[i], object)
+                                    else _args[i]
+                                )
+                                for i in args
+                                if i < l
+                            ]
+                        ),
+                    )
 
                 if kwargs:
                     span.add_attribute(
-                        "call.kwargs", {k: _kwargs[k] for k in kwargs if k in _kwargs}
+                        "call.kwargs",
+                        json.dumps(
+                            {
+                                str(k): (
+                                    str(_kwargs[k])
+                                    if isinstance(_kwargs[k], object)
+                                    else _kwargs[k]
+                                )
+                                for k in kwargs
+                                if k in _kwargs
+                            }
+                        ),
                     )
 
                 return func(*_args, **_kwargs)
 
         return wrapper
 
-    if isinstance(args, Callable):
+    if callable(args):
         # Called as @trace_calls without arguments or empty parenthesis
         func = args
         args = []

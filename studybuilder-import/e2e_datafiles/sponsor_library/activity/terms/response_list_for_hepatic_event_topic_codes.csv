@@ -1,0 +1,6 @@
+CODELIST_SUBMVAL,SPONSOR_NAME,SPONSOR_NAME_SENTENCE_CASE,TERM_SUBMVAL,DEFINITION,ORDER,CONCEPT_ID,NCI_PREFERRED_NAME,CATALOGUES
+HEP_CQ,Abdominal Pain,abdominal pain,ABDOMINAL PAIN,Abdominal pain,1,,Abdominal pain,
+HEP_CQ,Fever,fever,FEVER,Fever,2,,Fever,
+HEP_CQ,Fatigue,fatigue,FATIGUE,Fatigue,3,,Fatigue,
+HEP_CQ,Nausea,nausea,NAUSEA,Nausea,4,,Nausea,
+HEP_CQ,Vomiting,vomiting,VOMITING,Vomiting,5,,Vomiting,

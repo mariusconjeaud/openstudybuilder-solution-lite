@@ -54,7 +54,7 @@ Then('The correct study values are presented for Design', () => {
         cy.getRowIndex('Study Type').then(index => cy.checkRowByIndex(index, 'Values', data.response.body.study_type))
         cy.getRowIndex('Study Intent Type').then(index => cy.checkRowByIndex(index, 'Values', data.response.body.intervention_type))
         cy.getRowIndex('Study Phase Classification').then(index => cy.checkRowByIndex(index, 'Values', data.response.body.study_phase))
-        cy.getRowIndex('Intervention Model').then(index => cy.checkRowByIndex(index, 'Values', data.response.body.interventional_study_mode))
+        cy.getRowIndex('Intervention Model').then(index => cy.checkRowByIndex(index, 'Values', data.response.body.interventional_study_model))
         cy.getRowIndex('Number of Arms').then(index => cy.checkRowByIndex(index, 'Values', data.response.body.number_of_arms))
         cy.getRowIndex('Study is randomised').then(index => cy.checkRowByIndex(index, 'Values', data.response.body.allocation))
     })

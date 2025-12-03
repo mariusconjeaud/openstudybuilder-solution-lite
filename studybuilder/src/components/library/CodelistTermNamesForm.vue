@@ -22,13 +22,6 @@
             :rules="[formRules.required]"
             clearable
           />
-          <v-text-field
-            v-model="form.order"
-            data-cy="term-order"
-            :label="$t('CodelistTermCreationForm.order')"
-            :rules="[formRules.required]"
-            clearable
-          />
           <v-textarea
             v-model="form.change_description"
             data-cy="change-description"
@@ -61,7 +54,6 @@
 <script>
 import controlledTerminology from '@/api/controlledTerminology'
 import HelpButtonWithPanels from '@/components/tools/HelpButtonWithPanels.vue'
-import codelists from '@/utils/codelists'
 
 export default {
   components: {
@@ -73,24 +65,14 @@ export default {
       type: Object,
       default: null,
     },
-    codelistUid: {
-      type: String,
-      default: null,
-    },
   },
   emits: ['close', 'update:modelValue'],
-  setup() {
-    return {
-      getTermOrderInCodelist: codelists.getTermOrderInCodelist,
-    }
-  },
   data() {
     return {
       form: {},
       helpItems: [
         'CodelistTermCreationForm.sponsor_pref_name',
         'CodelistTermCreationForm.sponsor_sentence_case_name',
-        'CodelistTermCreationForm.order',
       ],
       working: false,
     }
@@ -106,7 +88,6 @@ export default {
                 sponsor_preferred_name: resp.data.sponsor_preferred_name,
                 sponsor_preferred_name_sentence_case:
                   resp.data.sponsor_preferred_name_sentence_case,
-                order: this.getTermOrderInCodelist(resp.data, this.codelistUid),
               }
             })
         }
@@ -134,14 +115,6 @@ export default {
         let resp = await controlledTerminology.updateCodelistTermNames(
           this.modelValue.term_uid,
           this.form
-        )
-        const orderData = {
-          codelist_uid: this.codelistUid,
-          new_order: this.form.order,
-        }
-        resp = await controlledTerminology.updateCodelistTermOrder(
-          this.modelValue.term_uid,
-          orderData
         )
         resp = await controlledTerminology.getCodelistTermNames(
           this.modelValue.term_uid

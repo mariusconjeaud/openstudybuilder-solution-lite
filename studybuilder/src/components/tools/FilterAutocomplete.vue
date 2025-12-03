@@ -12,7 +12,7 @@
             prepend-inner-icon="mdi-calendar-outline"
             data-cy="filter-field"
             readonly
-            class="select filterAutocompleteLabel ml-1"
+            class="filterAutocompleteLabel ml-1"
             density="compact"
             rounded="lg"
             hide-details
@@ -48,7 +48,8 @@
         :items="items"
         hide-details
         single-line
-        class="select filterAutocompleteLabel ml-1"
+        class="filterAutocompleteLabel ml-1"
+        :loading="loading"
         @input="getColumnData(item.key)"
         @update:model-value="filterTable"
       >
@@ -155,6 +156,11 @@ const props = defineProps({
     required: false,
     default: null,
   },
+  fixedData: {
+    type: Array,
+    required: false,
+    default: null,
+  },
   selectedData: {
     type: Array,
     required: false,
@@ -165,6 +171,10 @@ const props = defineProps({
     required: true,
     default: null,
   },
+  loadFilters: {
+    type: Boolean,
+    default: false,
+  },
 })
 const emit = defineEmits(['filter'])
 
@@ -174,6 +184,7 @@ const searchString = ref('')
 const select = ref()
 const timeout = ref(null)
 const adapter = useDate()
+const loading = ref(false)
 
 watch(searchString, () => {
   if (timeout.value) clearTimeout(timeout.value)
@@ -188,7 +199,7 @@ watch(
   }
 )
 watch(
-  () => props.tableItems,
+  () => props.loadFilters,
   () => {
     getColumnData(props.item.key)
   }
@@ -200,12 +211,18 @@ function clear() {
   filterTable()
 }
 
-function isDate() {
-  if (Date.parse(new Date(items.value[0])) && items.value[0].length > 20) {
-    return true
-  } else {
-    return false
-  }
+function isDate(key) {
+  // Check if the column key indicates it's a date field
+  // Date columns typically end with '_date' or are named 'modified' or 'created'
+  if (!key) return false
+
+  return (
+    key.includes('_date') ||
+    key.includes('_at') ||
+    key === 'modified' ||
+    key === 'created' ||
+    key === 'updated'
+  )
 }
 
 function getColumnData(value) {
@@ -215,6 +232,10 @@ function getColumnData(value) {
   if (value === 'actions') {
     return []
   }
+  if (value === 'add') {
+    return []
+  }
+  loading.value = true
   let jsonFilter = JSON.parse(props.filters)
   delete jsonFilter[value]
   if (props.item.exludeFromHeader) {
@@ -248,7 +269,7 @@ function getColumnData(value) {
   if (!_isEmpty(jsonFilter)) {
     params.filters = jsonFilter
   }
-  if (props.resource[1] !== undefined) {
+  if (props.resource[1] && props.resource[1] !== undefined) {
     params.codelist_uid = props.resource[1]
   }
   if (props.library) {
@@ -264,6 +285,9 @@ function getColumnData(value) {
   if (props.item.disableColumnFilters) {
     params.filters = {}
   }
+  if (props.item.split_activity_by_groupings) {
+    params.split_activity_by_groupings = true
+  }
   columnData.getHeaderData(params, externalFilter).then((resp) => {
     items.value = booleanValidator(resp.data)
     items.value = items.value.filter((element) => {
@@ -272,15 +296,20 @@ function getColumnData(value) {
     if (typeof items.value[0] === 'object') {
       const deconstructedItems = []
       items.value.forEach((item) => {
-        if (item.length > 1) {
-          item.forEach((i) => {
-            deconstructedItems.push(i.name)
-          })
-        } else if (item.length !== 0) {
-          deconstructedItems.push(item[0].name)
+        if (item) {
+          if (item.length > 1) {
+            item.forEach((i) => {
+              deconstructedItems.push(i.name)
+            })
+          } else if (item.length !== 0) {
+            deconstructedItems.push(item[0].name)
+          }
         }
       })
       items.value = Array.from(new Set(deconstructedItems))
+    }
+    if (props.fixedData) {
+      items.value = props.fixedData.concat(items.value)
     }
     if (props.initialData) {
       items.value = items.value.filter(
@@ -288,6 +317,7 @@ function getColumnData(value) {
       )
     }
   })
+  loading.value = false
 }
 
 function filterDate() {
@@ -364,9 +394,6 @@ if (props.selectedData) {
 <style scoped lang="scss">
 .v-list {
   max-width: 300px !important;
-}
-.select {
-  min-width: 200px !important;
 }
 .fixed-width {
   max-width: 250px !important;

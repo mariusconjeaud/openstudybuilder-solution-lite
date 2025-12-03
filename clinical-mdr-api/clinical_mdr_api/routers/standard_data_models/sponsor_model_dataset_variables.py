@@ -16,8 +16,9 @@ from clinical_mdr_api.routers import _generic_descriptions, decorators
 from clinical_mdr_api.services.standard_data_models.sponsor_model_dataset_variable import (
     SponsorModelDatasetVariableService,
 )
-from common import config
 from common.auth import rbac
+from common.auth.dependencies import security
+from common.config import settings
 from common.models.error import ErrorResponse
 
 # Prefixed with "/standards/sponsor-models/variable-classes"
@@ -30,7 +31,7 @@ SponsorModelDatasetVariableUID = Path(
 
 @router.get(
     "",
-    dependencies=[rbac.LIBRARY_READ],
+    dependencies=[security, rbac.LIBRARY_READ],
     summary="List all sponsor model dataset variables",
     description="""
 State before:
@@ -66,16 +67,16 @@ def get_sponsor_model_dataset_variables(
         Json | None, Query(description=_generic_descriptions.SORT_BY)
     ] = None,
     page_number: Annotated[
-        int | None, Query(ge=1, description=_generic_descriptions.PAGE_NUMBER)
-    ] = config.DEFAULT_PAGE_NUMBER,
+        int, Query(ge=1, description=_generic_descriptions.PAGE_NUMBER)
+    ] = settings.default_page_number,
     page_size: Annotated[
-        int | None,
+        int,
         Query(
             ge=0,
-            le=config.MAX_PAGE_SIZE,
+            le=settings.max_page_size,
             description=_generic_descriptions.PAGE_SIZE,
         ),
-    ] = config.DEFAULT_PAGE_SIZE,
+    ] = settings.default_page_size,
     filters: Annotated[
         Json | None,
         Query(
@@ -84,10 +85,10 @@ def get_sponsor_model_dataset_variables(
         ),
     ] = None,
     operator: Annotated[
-        str | None, Query(description=_generic_descriptions.FILTER_OPERATOR)
-    ] = config.DEFAULT_FILTER_OPERATOR,
+        str, Query(description=_generic_descriptions.FILTER_OPERATOR)
+    ] = settings.default_filter_operator,
     total_count: Annotated[
-        bool | None, Query(description=_generic_descriptions.TOTAL_COUNT)
+        bool, Query(description=_generic_descriptions.TOTAL_COUNT)
     ] = False,
 ) -> CustomPage[SponsorModelDatasetVariable]:
     sponsor_model_dataset_variable_service = SponsorModelDatasetVariableService()
@@ -99,14 +100,14 @@ def get_sponsor_model_dataset_variables(
         filter_by=filters,
         filter_operator=FilterOperator.from_str(operator),
     )
-    return CustomPage.create(
+    return CustomPage(
         items=results.items, total=results.total, page=page_number, size=page_size
     )
 
 
 @router.get(
     "/headers",
-    dependencies=[rbac.LIBRARY_READ],
+    dependencies=[security, rbac.LIBRARY_READ],
     summary="Returns possible values from the database for a given header",
     description="Allowed parameters include : field name for which to get possible values, "
     "search string to provide filtering for the field name, additional filters to apply on other fields",
@@ -124,7 +125,7 @@ def get_distinct_values_for_header(
         str, Query(description=_generic_descriptions.HEADER_FIELD_NAME)
     ],
     search_string: Annotated[
-        str | None, Query(description=_generic_descriptions.HEADER_SEARCH_STRING)
+        str, Query(description=_generic_descriptions.HEADER_SEARCH_STRING)
     ] = "",
     filters: Annotated[
         Json | None,
@@ -134,11 +135,11 @@ def get_distinct_values_for_header(
         ),
     ] = None,
     operator: Annotated[
-        str | None, Query(description=_generic_descriptions.FILTER_OPERATOR)
-    ] = config.DEFAULT_FILTER_OPERATOR,
+        str, Query(description=_generic_descriptions.FILTER_OPERATOR)
+    ] = settings.default_filter_operator,
     page_size: Annotated[
-        int | None, Query(description=_generic_descriptions.HEADER_PAGE_SIZE)
-    ] = config.DEFAULT_HEADER_PAGE_SIZE,
+        int, Query(description=_generic_descriptions.HEADER_PAGE_SIZE)
+    ] = settings.default_header_page_size,
 ) -> list[Any]:
     sponsor_model_dataset_variable_service = SponsorModelDatasetVariableService()
     return sponsor_model_dataset_variable_service.get_distinct_values_for_header(
@@ -152,7 +153,7 @@ def get_distinct_values_for_header(
 
 @router.post(
     "",
-    dependencies=[rbac.LIBRARY_WRITE],
+    dependencies=[security, rbac.LIBRARY_WRITE],
     summary="Create a new version of the sponsor model dataset variable.",
     description="""
     State before:

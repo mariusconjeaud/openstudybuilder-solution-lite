@@ -1,12 +1,9 @@
-from typing import Annotated, Callable, Self
+from typing import Annotated, Callable, Self, overload
 
-from pydantic import Field
+from pydantic import Field, field_validator, model_validator
 
 from clinical_mdr_api.descriptions.general import CHANGES_FIELD_DESC
-from clinical_mdr_api.domains.concepts.activities.activity import ActivityAR
 from clinical_mdr_api.domains.concepts.concept_base import ConceptARBase
-from clinical_mdr_api.domains.concepts.odms.alias import OdmAliasAR
-from clinical_mdr_api.domains.concepts.odms.description import OdmDescriptionAR
 from clinical_mdr_api.domains.concepts.odms.item import (
     OdmItemAR,
     OdmItemRefVO,
@@ -30,23 +27,16 @@ from clinical_mdr_api.domains.controlled_terminologies.ct_codelist_attributes im
 )
 from clinical_mdr_api.domains.controlled_terminologies.ct_term_name import CTTermNameAR
 from clinical_mdr_api.domains.dictionaries.dictionary_term import DictionaryTermAR
-from clinical_mdr_api.models.concepts.activities.activity import (
-    ActivityHierarchySimpleModel,
-)
 from clinical_mdr_api.models.concepts.concept import (
     ConceptModel,
     ConceptPatchInput,
     ConceptPostInput,
 )
-from clinical_mdr_api.models.concepts.odms.odm_alias import OdmAliasSimpleModel
 from clinical_mdr_api.models.concepts.odms.odm_common_models import (
+    OdmAliasModel,
+    OdmDescriptionModel,
     OdmRefVendor,
     OdmRefVendorAttributeModel,
-)
-from clinical_mdr_api.models.concepts.odms.odm_description import (
-    OdmDescriptionBatchPatchInput,
-    OdmDescriptionPostInput,
-    OdmDescriptionSimpleModel,
 )
 from clinical_mdr_api.models.concepts.odms.odm_vendor_attribute import (
     OdmVendorAttributeRelationModel,
@@ -62,21 +52,45 @@ from clinical_mdr_api.models.controlled_terminologies.ct_term import (
     SimpleDictionaryTermModel,
     SimpleTermModel,
 )
-from clinical_mdr_api.models.utils import BaseModel, InputModel, PostInputModel
-from common import config
+from clinical_mdr_api.models.utils import BaseModel, InputModel
+from clinical_mdr_api.models.validators import has_english_description
+from common.config import settings
 
 
 class OdmItemTermRelationshipModel(BaseModel):
+    @overload
     @classmethod
     def from_odm_item_uid(
         cls,
         uid: str,
         term_uid: str,
-        find_term_with_item_relation_by_item_uid: Callable[[str], OdmItemTermVO | None],
+        find_term_with_item_relation_by_item_uid: Callable[
+            [str, str], OdmItemTermVO | None
+        ],
+    ) -> Self: ...
+    @overload
+    @classmethod
+    def from_odm_item_uid(
+        cls,
+        uid: str,
+        term_uid: None,
+        find_term_with_item_relation_by_item_uid: Callable[
+            [str, str], OdmItemTermVO | None
+        ],
+    ) -> None: ...
+    @classmethod
+    def from_odm_item_uid(
+        cls,
+        uid: str,
+        term_uid: str | None,
+        find_term_with_item_relation_by_item_uid: Callable[
+            [str, str], OdmItemTermVO | None
+        ],
     ) -> Self | None:
         simple_term_model = None
+
         if term_uid is not None:
-            term = find_term_with_item_relation_by_item_uid(uid=uid, term_uid=term_uid)
+            term = find_term_with_item_relation_by_item_uid(uid, term_uid)
 
             if term is not None:
                 simple_term_model = cls(
@@ -86,33 +100,35 @@ class OdmItemTermRelationshipModel(BaseModel):
                     order=term.order,
                     display_text=term.display_text,
                     version=term.version,
+                    submission_value=term.submission_value,
                 )
             else:
                 simple_term_model = cls(
                     term_uid=term_uid,
                     name=None,
-                    mandatory=None,
+                    mandatory=False,
                     order=None,
                     display_text=None,
                     version=None,
+                    submission_value=None,
                 )
-        else:
-            simple_term_model = None
         return simple_term_model
 
     term_uid: Annotated[str, Field()]
     name: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = None
-    mandatory: Annotated[bool | None, Field(json_schema_extra={"nullable": True})] = (
-        None
-    )
+    mandatory: Annotated[bool, Field()] = False
     order: Annotated[int | None, Field(json_schema_extra={"nullable": True})] = None
     display_text: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = (
         None
     )
     version: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = None
+    submission_value: Annotated[
+        str | None, Field(json_schema_extra={"nullable": True})
+    ] = None
 
 
 class OdmItemUnitDefinitionWithRelationship(BaseModel):
+    @overload
     @classmethod
     def from_unit_definition_uid(
         cls,
@@ -124,7 +140,34 @@ class OdmItemUnitDefinitionWithRelationship(BaseModel):
         ],
         find_dictionary_term_by_uid: Callable[[str], DictionaryTermAR | None],
         find_term_by_uid: Callable[[str], CTTermNameAR | None],
+    ) -> Self: ...
+    @overload
+    @classmethod
+    def from_unit_definition_uid(
+        cls,
+        uid: None,
+        unit_definition_uid: str,
+        find_unit_definition_by_uid: Callable[[str], ConceptARBase | None],
+        find_unit_definition_with_item_relation_by_item_uid: Callable[
+            [str, str], OdmItemUnitDefinitionVO | None
+        ],
+        find_dictionary_term_by_uid: Callable[[str], DictionaryTermAR | None],
+        find_term_by_uid: Callable[[str], CTTermNameAR | None],
+    ) -> None: ...
+    @classmethod
+    def from_unit_definition_uid(
+        cls,
+        uid: str | None,
+        unit_definition_uid: str,
+        find_unit_definition_by_uid: Callable[[str], ConceptARBase | None],
+        find_unit_definition_with_item_relation_by_item_uid: Callable[
+            [str, str], OdmItemUnitDefinitionVO | None
+        ],
+        find_dictionary_term_by_uid: Callable[[str], DictionaryTermAR | None],
+        find_term_by_uid: Callable[[str], CTTermNameAR | None],
     ) -> Self | None:
+        simple_unit_definition_model = None
+
         if uid is not None:
             unit_definition_rel = find_unit_definition_with_item_relation_by_item_uid(
                 uid, unit_definition_uid
@@ -167,20 +210,16 @@ class OdmItemUnitDefinitionWithRelationship(BaseModel):
                 simple_unit_definition_model = cls(
                     uid=unit_definition_uid,
                     name=None,
-                    mandatory=None,
+                    mandatory=False,
                     order=None,
                     ucum=None,
                     ct_units=[],
                 )
-        else:
-            simple_unit_definition_model = None
         return simple_unit_definition_model
 
     uid: Annotated[str, Field()]
     name: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = None
-    mandatory: Annotated[bool | None, Field(json_schema_extra={"nullable": True})] = (
-        None
-    )
+    mandatory: Annotated[bool, Field()] = False
     order: Annotated[int | None, Field(json_schema_extra={"nullable": True})] = None
     ucum: Annotated[
         SimpleTermModel | SimpleDictionaryTermModel | None,
@@ -205,17 +244,14 @@ class OdmItem(ConceptModel):
     )
     origin: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = None
     comment: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = None
-    descriptions: Annotated[list[OdmDescriptionSimpleModel], Field()]
-    aliases: Annotated[list[OdmAliasSimpleModel], Field()]
+    descriptions: Annotated[list[OdmDescriptionModel], Field()]
+    aliases: Annotated[list[OdmAliasModel], Field()]
     unit_definitions: Annotated[list[OdmItemUnitDefinitionWithRelationship], Field()]
     codelist: Annotated[
         CTCodelistAttributesSimpleModel | None,
         Field(json_schema_extra={"nullable": True}),
     ] = None
     terms: Annotated[list[OdmItemTermRelationshipModel], Field()]
-    activity: Annotated[
-        ActivityHierarchySimpleModel | None, Field(json_schema_extra={"nullable": True})
-    ] = None
     vendor_elements: Annotated[list[OdmVendorElementRelationModel], Field()]
     vendor_attributes: Annotated[list[OdmVendorAttributeRelationModel], Field()]
     vendor_element_attributes: Annotated[
@@ -227,8 +263,6 @@ class OdmItem(ConceptModel):
     def from_odm_item_ar(
         cls,
         odm_item_ar: OdmItemAR,
-        find_odm_description_by_uid: Callable[[str], OdmDescriptionAR | None],
-        find_odm_alias_by_uid: Callable[[str], OdmAliasAR | None],
         find_unit_definition_by_uid: Callable[[str], UnitDefinitionAR | None],
         find_unit_definition_with_item_relation_by_item_uid: Callable[
             [str, str], OdmItemUnitDefinitionVO | None
@@ -241,19 +275,18 @@ class OdmItem(ConceptModel):
         find_term_with_item_relation_by_item_uid: Callable[
             [str, str], OdmItemTermVO | None
         ],
-        find_activity_by_uid: Callable[[str], ActivityAR | None],
         find_odm_vendor_element_by_uid_with_odm_element_relation: Callable[
-            [str, str, RelationType], OdmVendorElementRelationVO | None
+            [str, str, str, RelationType], OdmVendorElementRelationVO
         ],
         find_odm_vendor_attribute_by_uid_with_odm_element_relation: Callable[
-            [str, str, RelationType, bool],
-            OdmVendorAttributeRelationVO | OdmVendorElementAttributeRelationVO | None,
+            [str, str, str, RelationType, bool],
+            OdmVendorAttributeRelationVO | OdmVendorElementAttributeRelationVO,
         ],
     ) -> Self:
         return cls(
             uid=odm_item_ar._uid,
             oid=odm_item_ar.concept_vo.oid,
-            name=odm_item_ar.concept_vo.name,
+            name=odm_item_ar.name,
             prompt=odm_item_ar.concept_vo.prompt,
             datatype=odm_item_ar.concept_vo.datatype,
             length=odm_item_ar.concept_vo.length,
@@ -270,25 +303,9 @@ class OdmItem(ConceptModel):
             change_description=odm_item_ar.item_metadata.change_description,
             author_username=odm_item_ar.item_metadata.author_username,
             descriptions=sorted(
-                [
-                    OdmDescriptionSimpleModel.from_odm_description_uid(
-                        uid=description_uid,
-                        find_odm_description_by_uid=find_odm_description_by_uid,
-                    )
-                    for description_uid in odm_item_ar.concept_vo.description_uids
-                ],
-                key=lambda item: item.name,
+                odm_item_ar.concept_vo.descriptions, key=lambda item: item.name
             ),
-            aliases=sorted(
-                [
-                    OdmAliasSimpleModel.from_odm_alias_uid(
-                        uid=alias_uid,
-                        find_odm_alias_by_uid=find_odm_alias_by_uid,
-                    )
-                    for alias_uid in odm_item_ar.concept_vo.alias_uids
-                ],
-                key=lambda item: item.name,
-            ),
+            aliases=sorted(odm_item_ar.concept_vo.aliases, key=lambda item: item.name),
             unit_definitions=sorted(
                 [
                     OdmItemUnitDefinitionWithRelationship.from_unit_definition_uid(
@@ -318,46 +335,45 @@ class OdmItem(ConceptModel):
                 ],
                 key=lambda item: (item.order is not None, item.order),
             ),
-            activity=ActivityHierarchySimpleModel.from_activity_uid(
-                uid=odm_item_ar.concept_vo.activity_uid,
-                find_activity_by_uid=find_activity_by_uid,
-            ),
             vendor_elements=sorted(
                 [
                     OdmVendorElementRelationModel.from_uid(
                         uid=vendor_element_uid,
                         odm_element_uid=odm_item_ar._uid,
+                        odm_element_version=odm_item_ar.item_metadata.version,
                         odm_element_type=RelationType.ITEM,
                         find_by_uid_with_odm_element_relation=find_odm_vendor_element_by_uid_with_odm_element_relation,
                     )
                     for vendor_element_uid in odm_item_ar.concept_vo.vendor_element_uids
                 ],
-                key=lambda item: item.name,
+                key=lambda item: item.name or "",
             ),
             vendor_attributes=sorted(
                 [
                     OdmVendorAttributeRelationModel.from_uid(
                         uid=vendor_attribute_uid,
                         odm_element_uid=odm_item_ar._uid,
+                        odm_element_version=odm_item_ar.item_metadata.version,
                         odm_element_type=RelationType.ITEM,
-                        find_by_uid_with_odm_element_relation=find_odm_vendor_attribute_by_uid_with_odm_element_relation,
+                        find_by_uid_with_odm_element_relation=find_odm_vendor_attribute_by_uid_with_odm_element_relation,  # type: ignore[arg-type]
                         vendor_element_attribute=False,
                     )
                     for vendor_attribute_uid in odm_item_ar.concept_vo.vendor_attribute_uids
                 ],
-                key=lambda item: item.name,
+                key=lambda item: item.name or "",
             ),
             vendor_element_attributes=sorted(
                 [
                     OdmVendorElementAttributeRelationModel.from_uid(
                         uid=vendor_element_attribute_uid,
                         odm_element_uid=odm_item_ar._uid,
+                        odm_element_version=odm_item_ar.item_metadata.version,
                         odm_element_type=RelationType.ITEM,
-                        find_by_uid_with_odm_element_relation=find_odm_vendor_attribute_by_uid_with_odm_element_relation,
+                        find_by_uid_with_odm_element_relation=find_odm_vendor_attribute_by_uid_with_odm_element_relation,  # type: ignore[arg-type]
                     )
                     for vendor_element_attribute_uid in odm_item_ar.concept_vo.vendor_element_attribute_uids
                 ],
-                key=lambda item: item.name,
+                key=lambda item: item.name or "",
             ),
             possible_actions=sorted(
                 [_.value for _ in odm_item_ar.get_possible_actions()]
@@ -366,19 +382,46 @@ class OdmItem(ConceptModel):
 
 
 class OdmItemRefModel(BaseModel):
+    @overload
     @classmethod
     def from_odm_item_uid(
         cls,
         uid: str,
         item_group_uid: str,
+        item_group_version: str,
         find_odm_item_by_uid_with_item_group_relation: Callable[
-            [str, str], OdmItemRefVO | None
+            [str, str, str], OdmItemRefVO
+        ],
+        find_odm_vendor_attribute_by_uid: Callable[[str], OdmVendorAttributeAR | None],
+    ) -> Self: ...
+    @overload
+    @classmethod
+    def from_odm_item_uid(
+        cls,
+        uid: None,
+        item_group_uid: str,
+        item_group_version: str,
+        find_odm_item_by_uid_with_item_group_relation: Callable[
+            [str, str, str], OdmItemRefVO
+        ],
+        find_odm_vendor_attribute_by_uid: Callable[[str], OdmVendorAttributeAR | None],
+    ) -> None: ...
+    @classmethod
+    def from_odm_item_uid(
+        cls,
+        uid: str | None,
+        item_group_uid: str,
+        item_group_version: str,
+        find_odm_item_by_uid_with_item_group_relation: Callable[
+            [str, str, str], OdmItemRefVO
         ],
         find_odm_vendor_attribute_by_uid: Callable[[str], OdmVendorAttributeAR | None],
     ) -> Self | None:
+        odm_item_ref_model = None
+
         if uid is not None:
             odm_item_ref_vo = find_odm_item_by_uid_with_item_group_relation(
-                uid, item_group_uid
+                uid, item_group_uid, item_group_version
             )
 
             if odm_item_ref_vo is not None:
@@ -386,6 +429,7 @@ class OdmItemRefModel(BaseModel):
                     uid=uid,
                     oid=odm_item_ref_vo.oid,
                     name=odm_item_ref_vo.name,
+                    version=odm_item_ref_vo.version,
                     order_number=odm_item_ref_vo.order_number,
                     mandatory=odm_item_ref_vo.mandatory,
                     key_sequence=odm_item_ref_vo.key_sequence,
@@ -414,6 +458,7 @@ class OdmItemRefModel(BaseModel):
                     uid=uid,
                     oid=None,
                     name=None,
+                    version=None,
                     order_number=None,
                     mandatory=None,
                     key_sequence=None,
@@ -424,13 +469,12 @@ class OdmItemRefModel(BaseModel):
                     collection_exception_condition_oid=None,
                     vendor=OdmRefVendor(attributes=[]),
                 )
-        else:
-            odm_item_ref_model = None
         return odm_item_ref_model
 
     uid: Annotated[str, Field()]
     oid: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = None
     name: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = None
+    version: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = None
     order_number: Annotated[int | None, Field(json_schema_extra={"nullable": True})] = (
         None
     )
@@ -467,58 +511,83 @@ class OdmItemUnitDefinitionRelationshipInput(InputModel):
     order: Annotated[int | None, Field()] = 999999
 
 
+def check_length_and_significant_digits(model):
+    _datatype = (
+        model.datatype.casefold() if isinstance(model.datatype, str) else model.datatype
+    )
+
+    if model.length is not None and _datatype not in [
+        "text",
+        "string",
+        "integer",
+        "float",
+    ]:
+        raise ValueError(
+            "When datatype is not 'text', 'string', 'integer' or 'float', length must be null."
+        )
+    if model.length is None and _datatype in ["text", "string"]:
+        raise ValueError(
+            "When datatype is 'text' or 'string', length must be provided."
+        )
+
+    if _datatype == "float" and (
+        bool(model.length is not None) ^ bool(model.significant_digits is not None)
+    ):
+        raise ValueError(
+            "When datatype is 'float', both length and significant_digits must be provided together, or both must be null."
+        )
+    return model
+
+
 class OdmItemPostInput(ConceptPostInput):
     oid: Annotated[str | None, Field(min_length=1)] = None
     datatype: Annotated[str, Field(min_length=1)]
     prompt: Annotated[str | None, Field()] = None
-    length: Annotated[
-        int | None,
-        Field(json_schema_extra={"nullable": True}, ge=0, lt=config.MAX_INT_NEO4J),
-    ] = None
+    length: Annotated[int | None, Field(ge=0, lt=settings.max_int_neo4j)] = None
     significant_digits: Annotated[
-        int | None,
-        Field(json_schema_extra={"nullable": True}, ge=0, lt=config.MAX_INT_NEO4J),
+        int | None, Field(ge=0, lt=settings.max_int_neo4j)
     ] = None
     sas_field_name: Annotated[str | None, Field()] = None
     sds_var_name: Annotated[str | None, Field()] = None
     origin: Annotated[str | None, Field()] = None
     comment: Annotated[str | None, Field()] = None
-    descriptions: Annotated[list[OdmDescriptionPostInput | str], Field()]
-    alias_uids: Annotated[list[str], Field()]
+    descriptions: list[OdmDescriptionModel] = Field(default_factory=list)
+    aliases: list[OdmAliasModel] = Field(default_factory=list)
     codelist_uid: Annotated[str | None, Field(min_length=1)] = None
     unit_definitions: list[OdmItemUnitDefinitionRelationshipInput] = Field(
         default_factory=list
     )
     terms: list[OdmItemTermRelationshipInput] = Field(default_factory=list)
 
+    _ = model_validator(mode="after")(check_length_and_significant_digits)
+    _english_description_validator = field_validator("descriptions")(
+        has_english_description
+    )
+
 
 class OdmItemPatchInput(ConceptPatchInput):
+    name: Annotated[str, Field(min_length=1)]
     oid: Annotated[str | None, Field(min_length=1)]
-    datatype: Annotated[str | None, Field()]
+    datatype: Annotated[str | None, Field(min_length=1)]
     prompt: Annotated[str | None, Field()]
-    length: Annotated[
-        int | None,
-        Field(json_schema_extra={"nullable": True}, ge=0, lt=config.MAX_INT_NEO4J),
-    ]
-    significant_digits: Annotated[
-        int | None,
-        Field(json_schema_extra={"nullable": True}, ge=0, lt=config.MAX_INT_NEO4J),
-    ]
+    length: Annotated[int | None, Field(ge=0, lt=settings.max_int_neo4j)]
+    significant_digits: Annotated[int | None, Field(ge=0, lt=settings.max_int_neo4j)]
     sas_field_name: Annotated[str | None, Field()]
     sds_var_name: Annotated[str | None, Field()]
     origin: Annotated[str | None, Field()]
     comment: Annotated[str | None, Field()]
-    descriptions: Annotated[
-        list[OdmDescriptionBatchPatchInput | OdmDescriptionPostInput | str], Field()
-    ]
-    alias_uids: Annotated[list[str], Field()]
-    unit_definitions: Annotated[list[OdmItemUnitDefinitionRelationshipInput], Field()]
+    descriptions: list[OdmDescriptionModel] = Field(default_factory=list)
+    aliases: list[OdmAliasModel] = Field(default_factory=list)
+    unit_definitions: list[OdmItemUnitDefinitionRelationshipInput] = Field(
+        default_factory=list
+    )
     codelist_uid: Annotated[str | None, Field(min_length=1)]
     terms: Annotated[list[OdmItemTermRelationshipInput], Field()]
 
-
-class OdmItemActivityPostInput(PostInputModel):
-    uid: Annotated[str, Field(min_length=1)]
+    _ = model_validator(mode="after")(check_length_and_significant_digits)
+    _english_description_validator = field_validator("descriptions")(
+        has_english_description
+    )
 
 
 class OdmItemVersion(OdmItem):

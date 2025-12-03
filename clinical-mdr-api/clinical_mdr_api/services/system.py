@@ -1,5 +1,4 @@
 import os
-import urllib.parse
 
 from neomodel import config as neomodel_config
 
@@ -27,4 +26,4 @@ def get_build_id() -> str:
 
 def get_database_name() -> str:
     """Returns database name part of neomodel config database URL"""
-    return urllib.parse.urlparse(neomodel_config.DATABASE_URL).path.split("/", 1)[-1]
+    return neomodel_config.DATABASE_NAME

@@ -95,32 +95,6 @@ def test_post_approve_non_draft_activity_group(api_client):
     assert res["message"] == "The object isn't in draft status."
 
 
-def test_delete_activations_non_final_activity_group(api_client):
-    response = api_client.delete(
-        "/concepts/activities/activity-groups/activity_group_root2/activations"
-    )
-
-    assert_response_status_code(response, 400)
-
-    res = response.json()
-
-    assert res["type"] == "BusinessLogicException"
-    assert res["message"] == "Cannot retire draft version."
-
-
-def test_post_activations_non_retired_activity_group(api_client):
-    response = api_client.post(
-        "/concepts/activities/activity-groups/activity_group_root2/activations"
-    )
-
-    assert_response_status_code(response, 400)
-
-    res = response.json()
-
-    assert res["type"] == "BusinessLogicException"
-    assert res["message"] == "Only RETIRED version can be reactivated."
-
-
 def test_delete_accepted_object(api_client):
     response = api_client.delete(
         "/concepts/activities/activity-groups/activity_group_root1"

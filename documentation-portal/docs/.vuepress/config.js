@@ -1,7 +1,7 @@
 module.exports = {
     base: '/doc/',
-    title: 'StudyBuilder Documentation Portal',
-    description: 'The scope and purpose of the StudyBuilder is to support the clinical study process from planning, study design, study specification, study set-up to drive downstream automation',
+    title: 'OpenStudyBuilder Documentation Portal',
+    description: 'The scope and purpose of the OpenStudyBuilder is to support the clinical study process from planning, study design, study specification, study set-up to drive downstream automation',
     themeConfig: {
         logo: '/NN-logo-whitebackground.png',
         // docsDir: '',

@@ -12,10 +12,10 @@ Tests for activity-instructions activity_instructions
 import json
 import logging
 from functools import reduce
+from typing import Any
 
 import pytest
 from fastapi.testclient import TestClient
-from neomodel import db
 
 from clinical_mdr_api.main import app
 from clinical_mdr_api.models.concepts.activities.activity import Activity
@@ -50,9 +50,6 @@ from clinical_mdr_api.services.studies.study_activity_selection import (
 from clinical_mdr_api.tests.integration.utils.api import (
     inject_and_clear_db,
     inject_base_data,
-)
-from clinical_mdr_api.tests.integration.utils.data_library import (
-    get_codelist_with_term_cypher,
 )
 from clinical_mdr_api.tests.integration.utils.utils import TestUtils
 from clinical_mdr_api.tests.utils.checks import assert_response_status_code
@@ -243,16 +240,14 @@ def test_data():
         )
 
     flowchart_group_codelist = TestUtils.create_ct_codelist(
-        sponsor_preferred_name="Flowchart Group", extensible=True, approve=True
+        sponsor_preferred_name="Flowchart Group",
+        extensible=True,
+        approve=True,
+        submission_value="FLWCRTGRP",
     )
     ct_term_soa_group = TestUtils.create_ct_term(
         sponsor_preferred_name="SoA Group",
         codelist_uid=flowchart_group_codelist.codelist_uid,
-    )
-    db.cypher_query(
-        get_codelist_with_term_cypher(
-            "EFFICACY", "Flowchart Group", term_uid="term_efficacy_uid"
-        )
     )
 
     study_activity = StudyActivitySelectionService().make_selection(
@@ -310,7 +305,7 @@ def test_get_activity_instruction(api_client):
 
     # Check fields included in the response
     fields_all_set = set(ACTIVITY_INSTRUCTION_FIELDS_ALL)
-    assert set(list(res.keys())) == fields_all_set
+    assert set(res.keys()) == fields_all_set
     for key in ACTIVITY_INSTRUCTION_FIELDS_NOT_NULL:
         assert res[key] is not None
 
@@ -328,28 +323,28 @@ def test_get_activity_instruction(api_client):
 
 
 def test_get_activity_instructions_pagination(api_client):
-    results_paginated: dict = {}
+    results_paginated: dict[Any, Any] = {}
     sort_by = '{"uid": true}'
     for page_number in range(1, 4):
         response = api_client.get(
             f"{URL}?page_number={page_number}&page_size=10&sort_by={sort_by}"
         )
         res = response.json()
-        res_uids = list(map(lambda x: x["uid"], res["items"]))
+        res_uids = [item["uid"] for item in res["items"]]
         results_paginated[page_number] = res_uids
         log.info("Page %s: %s", page_number, res_uids)
 
     log.info("All pages: %s", results_paginated)
 
     results_paginated_merged = list(
-        list(reduce(lambda a, b: a + b, list(results_paginated.values())))
+        reduce(lambda a, b: list(a) + list(b), list(results_paginated.values()))
     )
     log.info("All rows returned by pagination: %s", results_paginated_merged)
 
     res_all = api_client.get(
         f"{URL}?page_number=1&page_size=100&sort_by={sort_by}"
     ).json()
-    results_all_in_one_page = list(map(lambda x: x["uid"], res_all["items"]))
+    results_all_in_one_page = [item["uid"] for item in res_all["items"]]
     log.info("All rows in one page: %s", results_all_in_one_page)
     assert len(results_all_in_one_page) == len(results_paginated_merged)
     assert len(
@@ -584,7 +579,7 @@ def test_create_activity_instruction(api_client):
     assert res["parameter_terms"][0]["terms"][0]["type"] == "TextValue"
     assert res["version"] == "0.1"
     assert res["status"] == "Draft"
-    assert set(list(res.keys())) == set(ACTIVITY_INSTRUCTION_FIELDS_ALL)
+    assert set(res.keys()) == set(ACTIVITY_INSTRUCTION_FIELDS_ALL)
     for key in ACTIVITY_INSTRUCTION_FIELDS_NOT_NULL:
         assert res[key] is not None
 
@@ -665,7 +660,7 @@ def test_update_activity_instruction(api_client):
     assert res["parameter_terms"][0]["terms"][0]["type"] == "TextValue"
     assert res["version"] == "0.2"
     assert res["status"] == "Draft"
-    assert set(list(res.keys())) == set(ACTIVITY_INSTRUCTION_FIELDS_ALL)
+    assert set(res.keys()) == set(ACTIVITY_INSTRUCTION_FIELDS_ALL)
     for key in ACTIVITY_INSTRUCTION_FIELDS_NOT_NULL:
         assert res[key] is not None
 
@@ -743,7 +738,7 @@ def test_preview_activity_instruction(api_client):
     assert res["parameter_terms"][0]["terms"][0]["type"] == "TextValue"
     assert res["version"] == "0.1"
     assert res["status"] == "Draft"
-    assert set(list(res.keys())) == set(ACTIVITY_INSTRUCTION_FIELDS_ALL)
+    assert set(res.keys()) == set(ACTIVITY_INSTRUCTION_FIELDS_ALL)
     for key in ACTIVITY_INSTRUCTION_FIELDS_NOT_NULL:
         assert res[key] is not None
 
@@ -861,7 +856,6 @@ def test_cannot_update_activity_instruction_without_change_description(api_clien
 
 def test_cannot_update_activity_instruction_in_final_status(api_client):
     data = {
-        "name": "test name [TextValue]",
         "parameter_terms": [
             {
                 "position": 1,

@@ -56,6 +56,7 @@ def test_data():
     type_codelist = TestUtils.create_ct_codelist(
         name="Disease Milestone Type",
         sponsor_preferred_name="Disease Milestone Type",
+        submission_value="MIDSTYPE",
         extensible=True,
         approve=True,
     )

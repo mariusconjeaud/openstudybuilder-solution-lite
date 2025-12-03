@@ -1,3 +1,5 @@
+
+import { fillTemplateNameAndContinue } from './library_syntax_templates_common'
 const { Given, When, Then } = require('@badeball/cypress-cucumber-preprocessor')
 
 let nameSufix
@@ -12,10 +14,7 @@ When('Objective template for pre-instantiation is found', () => cy.searchAndChec
 When('The new objective to be used as pre-instantiation is added in the library', () => {
   nameSufix = `template ${Date.now()}`
   objectivePreInstanceName = `Test [Activity] and [ActivityGroup] ${nameSufix}`
-  cy.clickButton('add-template');
-  cy.fillTextArea('template-text-field', objectivePreInstanceName)
-  cy.clickFormActionButton('continue')
-  cy.clickFormActionButton('continue')
+  fillTemplateNameAndContinue(objectivePreInstanceName)
   cy.get('[data-cy="not-applicable-checkbox"] input').eq(0).check()
   cy.get('[data-cy="not-applicable-checkbox"] input').eq(1).check()
   cy.clickButton('radio-Yes')
@@ -37,15 +36,14 @@ When('The pre-instantiation is created from that objective template', () => {
 
 Then('The newly added Objective Template Pre-instantiation is visible as a new row in the table', () => {
   cy.clickTab('Pre-instance')
-  cy.searchAndCheckPresence(preInstanceName, true)
+  cy.waitForTable()
+  cy.get(`[data-cy="search-field"] input`).eq(1).type(preInstanceName)
   cy.checkRowByIndex(0, 'Parent template', preInstanceName)
 })
 
 When('The objective pre-instantiation metadata is updated', () => {
-  cy.fillTextArea('template-text-field', newObjectiveNameUpdated)
-  cy.clickFormActionButton('continue')
-  cy.clickFormActionButton('continue')
-  cy.selectLastMultipleSelect('template-indication-dropdown')
+  fillTemplateNameAndContinue(newObjectiveNameUpdated)
+  cy.checkLastMultipleSelect('template-indication-dropdown')
   cy.selectRadioGroup('template-confirmatory-testing', 'Yes')
   cy.clickFormActionButton('continue')
   cy.fillInput('template-change-description', 'updated for test')

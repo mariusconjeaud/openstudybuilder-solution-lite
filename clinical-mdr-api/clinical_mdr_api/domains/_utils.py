@@ -1,33 +1,37 @@
-from enum import Enum
-from typing import Any
+from typing import Literal, overload
 
 from clinical_mdr_api.domains.iso_languages import LANGUAGES_INDEXED_BY
+from clinical_mdr_api.domains.libraries.parameter_term import ParameterTermEntryVO
 from common import exceptions
 
 
-class ObjectStatus(Enum):
-    """
-    Enum for object status.
-
-    Possible values:
-    - LATEST_FINAL: The latest final version of the object.
-    - LATEST_RETIRED: The latest retired version of the object.
-    - LATEST_DRAFT: The latest draft version of the object.
-    - LATEST: The latest version of the object, regardless of the status.
-    """
-
-    LATEST_FINAL = "final"
-    LATEST_RETIRED = "retired"
-    LATEST_DRAFT = "draft"
-    LATEST = "latest"
-
-
+@overload
 def get_iso_lang_data(
     query: str,
-    key: str = "639-3",
-    return_key: str | None = None,
+    key: Literal["names", "639-1", "639-2/T", "639-2/B", "639-3"] = "639-3",
+    return_key: None = None,
     ignore_case: bool = True,
-) -> str | dict[Any] | list[Any]:
+) -> dict[str, str | list[str]]: ...
+@overload
+def get_iso_lang_data(
+    query: str,
+    key: Literal["names", "639-1", "639-2/T", "639-2/B", "639-3"] = "639-3",
+    return_key: Literal["names", "639-3"] = "names",
+    ignore_case: bool = True,
+) -> list[str]: ...
+@overload
+def get_iso_lang_data(
+    query: str,
+    key: Literal["names", "639-1", "639-2/T", "639-2/B", "639-3"] = "639-3",
+    return_key: Literal["639-1", "639-2/T", "639-2/B"] = "639-1",
+    ignore_case: bool = True,
+) -> str: ...
+def get_iso_lang_data(
+    query: str,
+    key: Literal["names", "639-1", "639-2/T", "639-2/B", "639-3"] = "639-3",
+    return_key: Literal["names", "639-1", "639-2/T", "639-2/B", "639-3"] | None = None,
+    ignore_case: bool = True,
+) -> str | dict[str, str | list[str]] | list[str]:
     """
     Returns ISO language data based on the provided query string and key.
 
@@ -38,7 +42,7 @@ def get_iso_lang_data(
         ignore_case (bool, optional): Whether to ignore case when searching for the query string. Defaults to True.
 
     Returns:
-        str | dict[Any] | list[Any]: The value of the found language data, or the entire language data if return_key is None.
+        str | dict[str, str, list[str]] | list[Any]: The value of the found language data, or the entire language data if return_key is None.
 
     Raises:
         TypeError: If the query string is not a string.
@@ -120,7 +124,7 @@ def is_syntax_of_template_name_correct(name: str) -> bool:
 def capitalize_first_letter_if_template_parameter(
     name: str,
     template_plain_name: str,
-    parameters: list["ParameterTermEntryVO"] | None = None,
+    parameters: list[ParameterTermEntryVO] | None = None,
 ) -> str:
     """
     Capitalizes the first letter of `name` if the letter is part of a template parameter which is not a Unit Definition.

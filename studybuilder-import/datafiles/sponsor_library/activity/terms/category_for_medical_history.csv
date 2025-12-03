@@ -1,0 +1,6 @@
+CODELIST_SUBMVAL,SPONSOR_NAME,SPONSOR_NAME_SENTENCE_CASE,TERM_SUBMVAL,DEFINITION,ORDER,CONCEPT_ID,NCI_PREFERRED_NAME,CATALOGUES
+MHCAT,Eye Disorders,eye disorders,EYE DISORDERS,Eye Disorders,1,,Eye Disorders,
+MHCAT,Cardiovascular Disease,cardiovascular disease,CARDIOVASCULAR DISEASE,Cardiovascular Disease,2,,Cardiovascular Disease,
+MHCAT,Gastrointestinal Disorders,gastrointestinal disorders,GASTROINTESTINAL DISORDERS,Gastrointestinal Disorders,3,,Gastrointestinal Disorders,
+MHCAT,Psychiatric Disorder,psychiatric disorder,PSYCHIATRIC DISORDER,Psychiatric Disorder,4,,Psychiatric Disorder,
+MHCAT,Breast Neoplasms,breast neoplasms,BREAST NEOPLASMS,Breast Neoplasms,5,,Breast Neoplasms,

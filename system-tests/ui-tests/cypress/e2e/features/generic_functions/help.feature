@@ -1,3 +1,4 @@
+@REQ_ID:xxx
 Feature: Topbar help menu
 
     As a system user I want to have possibility to open supporting documentation and help pages as well as have options to be redirected to related information pages.

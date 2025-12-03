@@ -4,9 +4,9 @@ The CDISC CT data is imported into the _intermediate_ CDISC CT
 <a href="https://neo4j.com" target="_blank">Neo4j</a> Graph DB.
 
 During that first import phase, most of the CDISC CT structure is taken over and directly transformed into
-the graph structure.
-However, it is important to note that the CDISC CT term structure is transformed/adjusted so that it
-reflects the differentiation between code and name submission value for the terms.
+the graph structure. Following the initial import, the terms defined in the different codelists
+are merged into a single versioned definition for each term concept id.
+Similarly codelist definitions are merged into a single versioned definition for each codelist concept id.
 
 Inconsistencies are automatically detected and - if possible - automatically resolved.
 The (remaining) inconsistencies and the resolved inconsistencies are stored in the CDISC CT Neo4j Graph DB

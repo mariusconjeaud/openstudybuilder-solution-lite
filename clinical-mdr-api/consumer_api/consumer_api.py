@@ -1,24 +1,44 @@
-# RESTful API endpoints used by consumers that want to extract data from StudyBuilder
+"""RESTful API endpoints used by consumers that want to extract data from StudyBuilder"""
+
+# Placed at the top to ensure logging is configured before anything else is loaded
+from typing import Any
+
+from opencensus.trace.print_exporter import PrintExporter
+
+from common.config import settings
+from common.database import configure_database
+from common.logger import default_logging_config, log_exception
+from common.telemetry.request_metrics import patch_neomodel_database
+from common.telemetry.tracing_middleware import TracingMiddleware
+
+default_logging_config()
+
+configure_database(
+    settings.neo4j_dsn,
+    max_connection_lifetime=settings.neo4j_connection_lifetime,
+    liveness_check_timeout=settings.neo4j_liveness_check_timeout,
+)
+
+# pylint: disable=wrong-import-position,wrong-import-order,ungrouped-imports
 import logging
 import os
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, Request, Security, status
+from fastapi import FastAPI, Request, status
 from fastapi.encoders import jsonable_encoder
 from fastapi.middleware import Middleware
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.openapi.utils import get_openapi
 from fastapi.responses import JSONResponse
 from fastapi.routing import APIRoute
-from neomodel import config as neomodel_config
 from opencensus.ext.azure.trace_exporter import AzureExporter
 from opencensus.trace.samplers import AlwaysOnSampler
 from pydantic import ValidationError
 from starlette_context.middleware import RawContextMiddleware
 
-from common import config, exceptions
-from common.auth.config import OAUTH_ENABLED, SWAGGER_UI_INIT_OAUTH
-from common.auth.dependencies import dummy_user_auth, validate_token
+from common.auth.dependencies import security
 from common.auth.discovery import reconfigure_with_openid_discovery
+from common.exceptions import MDRApiBaseException
 from common.models.error import ErrorResponse
 from common.telemetry.traceback_middleware import ExceptionTracebackMiddleware
 from consumer_api.shared.common import get_api_version
@@ -30,72 +50,54 @@ from consumer_api.v1.main import router as v1_router
 log = logging.getLogger(__name__)
 
 
-def default_logging_config():
-    """Configure logging if it has not been configured already."""
-
-    loglevel = os.environ.get("LOG_LEVEL", "INFO")
-
-    numeric_level = getattr(logging, loglevel.upper(), None)
-    if not isinstance(numeric_level, int):
-        raise ValueError(f"Invalid log level: {loglevel}")
-
-    # logging.basicConfig() does nothing if the root logger already has handlers configured
-    logging.basicConfig(
-        level=numeric_level,
-        format="%(asctime)s - %(name)-17s - %(levelname)s - %(message)s",
-    )
-
-
-# Set logging defaults once at start-app if it was not already configured ex. UVICORN_LOG_CONFIG
-default_logging_config()
-
-
-# Configure Neo4J connection on startup
-neo4j_dsn = os.getenv("NEO4J_DSN")
-if neo4j_dsn:
-    neomodel_config.DATABASE_URL = neo4j_dsn
-    log.info("Neo4j DSN set to: %s", neo4j_dsn.split("@")[-1])
-
-
-# Global dependencies, in order of execution
-global_dependencies = []
-if OAUTH_ENABLED:
-    global_dependencies.append(Security(validate_token))
-else:
-    global_dependencies.append(Security(dummy_user_auth))
-    log.warning(
-        "WARNING: Authentication is disabled. "
-        "See OAUTH_ENABLED and OAUTH_RBAC_ENABLED environment variables."
-    )
-
-
 # Middlewares - please don't use app.add_middleware() as that inserts them to the beginning of the list
-middlewares = [
-    # Context middleware - must come before TracingMiddleware
-    Middleware(RawContextMiddleware)
-]
+middlewares = []
 
-
-# Azure Application Insights integration for tracing
-if config.APPINSIGHTS_CONNECTION:
-    _EXPORTER = AzureExporter(
-        connection_string=config.APPINSIGHTS_CONNECTION, enable_local_storage=False
+# gzip compress responses
+if settings.gzip_response_min_size:
+    middlewares.append(
+        Middleware(
+            GZipMiddleware,
+            minimum_size=settings.gzip_response_min_size,
+            compresslevel=settings.gzip_level,
+        )
     )
-else:
-    _EXPORTER = None
+
+# Context middleware - must come before TracingMiddleware
+middlewares.append(Middleware(RawContextMiddleware))
 
 # Tracing middleware
-if not config.TRACING_DISABLED:
-    # pylint: disable=wrong-import-position,ungrouped-imports
-    from common.telemetry.request_metrics import patch_neomodel_database
-    from common.telemetry.tracing_middleware import TracingMiddleware
+if settings.tracing_enabled:
+
+    # Azure Application Insights integration for tracing
+    if settings.appinsights_connection:
+        tracing_exporter = AzureExporter(
+            connection_string=settings.appinsights_connection,
+            enable_local_storage=False,
+        )
+
+    elif settings.zipkin_host:
+        # opencensus-ext-zipkin is a dev-only package dependency
+        from opencensus.ext.zipkin.trace_exporter import ZipkinExporter
+
+        tracing_exporter = ZipkinExporter(
+            service_name="consumer-api",
+            host_name=settings.zipkin_host,
+            port=settings.zipkin_port,
+            endpoint=settings.zipkin_endpoint,
+            protocol=settings.zipkin_protocol,
+        )
+
+    else:
+        tracing_exporter = PrintExporter()
 
     middlewares.append(
         Middleware(
             TracingMiddleware,
             sampler=AlwaysOnSampler(),
-            exporter=_EXPORTER,
-            exclude_paths=["/system/healthcheck"],
+            exporter=tracing_exporter,
+            exclude_paths={"*/system/healthcheck"},
+            exclude_clients={"127.0.0.1", "::1"},
         )
     )
 
@@ -103,27 +105,23 @@ if not config.TRACING_DISABLED:
 
 
 # Convert all uncaught exceptions to response before returning to TracingMiddleware
-# All other exceptions (except Exception) can be caught by ExceptionMiddleware
-# provided that an exception handler is defined below with @app.exception_handler()
-# Refer to: fastapi.applications.FastAPI.build_middleware_stack()
 middlewares.append(Middleware(ExceptionTracebackMiddleware))
 
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
-    if OAUTH_ENABLED:
+    if settings.oauth_enabled:
         # Reconfiguring Swagger UI settings with OpenID Connect discovery
         await reconfigure_with_openid_discovery()
     yield
 
 
 app = FastAPI(
-    version=get_api_version(),
     title="StudyBuilder Consumer API",
-    dependencies=global_dependencies,
-    lifespan=lifespan,
-    swagger_ui_init_oauth=SWAGGER_UI_INIT_OAUTH,
+    version=get_api_version(),
     middleware=middlewares,
+    lifespan=lifespan,
+    swagger_ui_init_oauth=settings.swagger_ui_init_oauth,
     swagger_ui_parameters={"docExpansion": "none"},
     description="""
 ## NOTICE
@@ -132,7 +130,7 @@ This license information is applicable to the swagger documentation of the clini
 
 ## License Terms (MIT)
 
-Copyright (C) 2022 Novo Nordisk A/S, Danish company registration no. 24256790
+Copyright (C) 2025 Novo Nordisk A/S, Danish company registration no. 24256790
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
@@ -151,10 +149,6 @@ at paths described in the OpenID Connect Discovery metadata document (whose URL 
 
 Microsoft Identity Platform documentation can be read 
 ([here](https://docs.microsoft.com/en-us/azure/active-directory/develop/v2-oauth2-auth-code-flow)).
-
-## System information
-
-System information is provided by a separate [System Information](./system/docs) sub-app which doesn't require authentication.
 """,
 )
 
@@ -162,13 +156,15 @@ System information is provided by a separate [System Information](./system/docs)
 app.openapi_version = "3.0.2"
 
 
-@app.exception_handler(exceptions.MDRApiBaseException)
-def consumer_api_exception_handler(
-    request: Request, exception: exceptions.MDRApiBaseException
+@app.exception_handler(MDRApiBaseException)
+async def consumer_api_exception_handler(
+    request: Request, exception: MDRApiBaseException
 ):
     """Returns an HTTP error code associated to given exception."""
 
-    log.info("Error response %s: %s", exception.status_code, exception.msg)
+    await log_exception(request, exception)
+
+    ExceptionTracebackMiddleware.add_traceback_attributes(exception)
 
     return JSONResponse(
         status_code=exception.status_code,
@@ -178,9 +174,15 @@ def consumer_api_exception_handler(
 
 
 @app.exception_handler(ValidationError)
-def pydantic_validation_error_handler(request: Request, exception: ValidationError):
+async def pydantic_validation_error_handler(
+    request: Request, exception: ValidationError
+):
     """Returns `400 Bad Request` http error status code in case Pydantic detects validation issues
     with supplied payloads or parameters."""
+
+    await log_exception(request, exception)
+
+    ExceptionTracebackMiddleware.add_traceback_attributes(exception)
 
     return JSONResponse(
         status_code=status.HTTP_400_BAD_REQUEST,
@@ -188,8 +190,10 @@ def pydantic_validation_error_handler(request: Request, exception: ValidationErr
     )
 
 
-app.include_router(v1_router, prefix="/v1", tags=["V1"])
-# app.include_router(v2_router, prefix="/v2", tags=["V2"])
+app.include_router(system_router, tags=["System"])
+
+app.include_router(v1_router, prefix="/v1")
+# app.include_router(v2_router, prefix="/v2")
 
 
 def custom_openapi():
@@ -204,9 +208,9 @@ def custom_openapi():
         routes=app.routes,
     )
 
-    openapi_schema["servers"] = [{"url": config.OPENAPI_SCHEMA_API_ROOT_PATH}]
+    openapi_schema["servers"] = [{"url": settings.openapi_schema_api_root_path}]
 
-    if OAUTH_ENABLED:
+    if settings.oauth_enabled:
         if "components" not in openapi_schema:
             openapi_schema["components"] = {}
 
@@ -223,14 +227,26 @@ def custom_openapi():
             "description": "Access token that will be sent as `Authorization: Bearer {token}` header in all requests",
         }
 
+        openapi_schema["components"]["securitySchemes"][
+            "OAuth2AuthorizationCodeBearer"
+        ]["flows"]["authorizationCode"]["scopes"] = {
+            "api:///API.call": "Make calls to the API"
+        }
+
         # Add 'BearerJwtAuth' security method to all endpoints
         api_router = [route for route in app.routes if isinstance(route, APIRoute)]
         for route in api_router:
+            if not any(
+                dependency
+                for dependency in route.dependencies
+                if dependency == security
+            ):
+                continue
             path = getattr(route, "path")
             methods = [method.lower() for method in getattr(route, "methods")]
 
             for method in methods:
-                endpoint_security: list[any] = openapi_schema["paths"][path][
+                endpoint_security: list[Any] = openapi_schema["paths"][path][
                     method
                 ].get("security", [])
                 endpoint_security.append({"BearerJwtAuth": []})
@@ -255,19 +271,7 @@ def custom_openapi():
     return app.openapi_schema
 
 
-app.openapi = custom_openapi
-
-
-system_app = FastAPI(
-    middleware=None,
-    title="System info sub-application",
-    version="1.0",
-    description="Sub-application of system-info related endpoints that are exempt from authentication requirements.",
-)
-
-system_app.include_router(system_router, tags=["System"])
-
-app.mount("/system", system_app)
+setattr(app, "openapi", custom_openapi)
 
 
 if __name__ == "__main__":

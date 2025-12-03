@@ -1,5 +1,6 @@
 import datetime
 from dataclasses import dataclass
+from typing import Any
 
 from neomodel import db
 
@@ -50,7 +51,7 @@ class StudySelectionActivitySubGroupRepository(
     _aggregate_root_type = StudySelectionActivitySubGroupAR
 
     def _create_value_object_from_repository(
-        self, selection: dict, acv: bool
+        self, selection: dict[Any, Any], acv: bool
     ) -> StudySelectionActivitySubGroupVO:
         return StudySelectionActivitySubGroupVO.from_input_values(
             study_selection_uid=selection["study_selection_uid"],
@@ -72,47 +73,78 @@ class StudySelectionActivitySubGroupRepository(
     def _additional_match(self) -> str:
         return """
             WITH sr, sv
-            MATCH (sv)-[:HAS_STUDY_ACTIVITY]->(study_activity:StudyActivity)-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_SUBGROUP]->
-                (sa:StudyActivitySubGroup)-[:HAS_SELECTED_ACTIVITY_SUBGROUP]->(av:ActivitySubGroupValue)<-[:HAS_VERSION]-(ar:ActivitySubGroupRoot)
-            MATCH (study_activity_group:StudyActivityGroup)<-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_GROUP]-(study_activity)
-                -[:STUDY_ACTIVITY_HAS_STUDY_SOA_GROUP]->(study_soa_group:StudySoAGroup)
+            
+            MATCH (sv)-[:HAS_STUDY_ACTIVITY]->(sa:StudyActivity)
+                -[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_SUBGROUP]->(sasg:StudyActivitySubGroup)
+            WHERE NOT (sasg)<-[:BEFORE]-()
+            
+            OPTIONAL MATCH (sa)-[:STUDY_ACTIVITY_HAS_STUDY_SOA_GROUP]->(soag:StudySoAGroup)
+            WHERE NOT (soag)<-[:BEFORE]-()
+            
+            OPTIONAL MATCH (sa)-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_GROUP]->(sag:StudyActivityGroup)
+            WHERE NOT (sag)<-[:BEFORE]-()
+            
+            WITH DISTINCT sr, sasg, soag, sag, collect(DISTINCT sa.uid) AS study_activity_uids
+            
+            MATCH (sasg)-[:HAS_SELECTED_ACTIVITY_SUBGROUP]->(asgv:ActivitySubGroupValue)<-[:HAS_VERSION]-(asgr:ActivitySubGroupRoot)
+            WITH DISTINCT *
+            
+            MATCH (sasg)<-[:AFTER]-(sac:StudyAction)
         """
 
-    def _filter_clause(self, query_parameters: dict, **kwargs) -> str:
-        filter_query = "WHERE NOT (sa)<-[:BEFORE]-()"
+    def _filter_clause(self, query_parameters: dict[Any, Any], **kwargs) -> str:
+        filter_query = []
 
-        study_activity_group_uid = kwargs.get("study_activity_group_uid")
-        if study_activity_group_uid is not None:
-            filter_query += "AND study_activity_group.uid=$study_activity_group_uid"
+        if study_activity_group_uid := kwargs.get("study_activity_group_uid"):
+            filter_query.append("sag.uid = $study_activity_group_uid")
             query_parameters["study_activity_group_uid"] = study_activity_group_uid
 
-        return filter_query
+        if filter_query:
+            return "WHERE " + " AND ".join(filter_query)
+        return ""
+
+    def _versioning_query(self):
+        return """
+            CALL {
+                WITH asgr, asgv
+                MATCH (asgr)-[version:HAS_VERSION]-(asgv)
+                WHERE version.status in ['Final', 'Retired']
+                WITH version
+                ORDER BY [i IN split(version.version, '.') | toInteger(i)] DESC,
+                         version.end_date DESC, version.start_date DESC
+                LIMIT 1
+                RETURN version.version AS activity_subgroup_version
+            }
+        """
 
     def _order_by_query(self):
         return """
             WITH DISTINCT *
-            ORDER BY study_soa_group.order, study_activity_group.order, sa.order, study_activity.order ASC
-            WITH DISTINCT sr, sa, ar, av, study_activity_group.uid as study_activity_group_uid, collect(distinct study_activity.uid) as study_activity_uids, hv_ver
-            MATCH (sa)<-[:AFTER]-(sac:StudyAction)
+            ORDER BY soag.order, sag.order, sasg.order
         """
 
     def _return_clause(self) -> str:
-        return """RETURN DISTINCT
+        return """
+            RETURN
                 sr.uid AS study_uid,
-                sa.uid AS study_selection_uid,
-                sa.accepted_version AS accepted_version,
-                coalesce(sa.show_activity_subgroup_in_protocol_flowchart, false) AS show_activity_subgroup_in_protocol_flowchart,
-                ar.uid AS activity_subgroup_uid,
-                av.name AS activity_subgroup_name,
-                study_activity_group_uid,
+                sasg.uid AS study_selection_uid,
+                sasg.accepted_version AS accepted_version,
+                COALESCE(sasg.show_activity_subgroup_in_protocol_flowchart, false) AS show_activity_subgroup_in_protocol_flowchart,
+                asgr.uid AS activity_subgroup_uid,
+                asgv.name AS activity_subgroup_name,
+                sag.uid AS study_activity_group_uid,
                 study_activity_uids,
-                sa.order AS order,
+                sasg.order AS order,
                 sac.date AS start_date,
                 sac.author_id AS author_id,
-                hv_ver.version AS activity_subgroup_version"""
+                activity_subgroup_version
+        """
 
     def get_selection_history(
-        self, selection: dict, change_type: str, end_date: datetime
+        self,
+        selection: dict[Any, Any],
+        change_type: str,
+        end_date: datetime.datetime | None,
     ):
         return SelectionHistory(
             study_selection_uid=selection["study_selection_uid"],
@@ -131,7 +163,7 @@ class StudySelectionActivitySubGroupRepository(
             end_date=end_date,
         )
 
-    def get_audit_trail_query(self, study_selection_uid: str):
+    def get_audit_trail_query(self, study_selection_uid: str | None):
         if study_selection_uid:
             audit_trail_cypher = """
             MATCH (sr:StudyRoot { uid: $study_uid})-[:AUDIT_TRAIL]->(:StudyAction)-[:BEFORE|AFTER]->(sa:StudyActivitySubGroup {uid: $study_selection_uid})
@@ -271,6 +303,7 @@ class StudySelectionActivitySubGroupRepository(
         activity_subgroup_uid: str,
         activity_group_uid: str,
         soa_group_term_uid: str,
+        sync_latest_version: bool = False,
     ) -> StudyActivitySubGroup | None:
         query = """
             MATCH (activity_subgroup_root:ActivitySubGroupRoot)-[:HAS_VERSION]->(activity_sub_group_value:ActivitySubGroupValue)
@@ -278,11 +311,23 @@ class StudySelectionActivitySubGroupRepository(
                 -(study_activity:StudyActivity)<-[:HAS_STUDY_ACTIVITY]-(:StudyValue)<-[:LATEST]-(:StudyRoot {uid:$study_uid})
             MATCH (study_activity)-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_GROUP]->(:StudyActivityGroup)
                 -[:HAS_SELECTED_ACTIVITY_GROUP]->(:ActivityGroupValue)<-[:HAS_VERSION]-(activity_group_root:ActivityGroupRoot)
-            MATCH (study_activity)-[:STUDY_ACTIVITY_HAS_STUDY_SOA_GROUP]->(:StudySoAGroup)-[:HAS_FLOWCHART_GROUP]->(flowchart_group_term:CTTermRoot)
+            MATCH (study_activity)-[:STUDY_ACTIVITY_HAS_STUDY_SOA_GROUP]->(:StudySoAGroup)-[:HAS_FLOWCHART_GROUP]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(flowchart_group_term:CTTermRoot)
             WHERE NOT (study_activity_subgroup)<-[:BEFORE]-() AND NOT (study_activity_subgroup)<-[]-(:Delete)
                 AND activity_subgroup_root.uid=$activity_subgroup_uid
                 AND activity_group_root.uid=$activity_group_uid
                 AND flowchart_group_term.uid=$soa_group_term_uid
+            WITH DISTINCT study_activity_subgroup, activity_subgroup_root, activity_sub_group_value, $sync_latest_version AS sync_latest_version
+            CALL apoc.do.case([
+                sync_latest_version=true,
+                'WHERE (activity_subgroup_root)-[:LATEST]->(activity_sub_group_value) RETURN *'
+            ],
+            '',
+            {
+                activity_subgroup_root: activity_subgroup_root,
+                activity_sub_group_value: activity_sub_group_value,
+                sync_latest_version: sync_latest_version
+            })
+            YIELD value
             RETURN DISTINCT study_activity_subgroup, activity_sub_group_value
         """
         study_activity_subgroups, _ = db.cypher_query(
@@ -292,6 +337,7 @@ class StudySelectionActivitySubGroupRepository(
                 "activity_subgroup_uid": activity_subgroup_uid,
                 "activity_group_uid": activity_group_uid,
                 "soa_group_term_uid": soa_group_term_uid,
+                "sync_latest_version": sync_latest_version,
             },
             resolve_objects=True,
         )

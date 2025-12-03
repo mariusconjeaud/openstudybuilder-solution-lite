@@ -3,6 +3,7 @@ from dataclasses import dataclass, field
 from typing import Any, Callable, Iterable, Self
 
 from clinical_mdr_api.domains.concepts.medicinal_product import MedicinalProductAR
+from clinical_mdr_api.domains.controlled_terminologies.utils import CtTermInfo
 from clinical_mdr_api.services.user_info import UserInfoService
 from clinical_mdr_api.utils import normalize_string
 from common import exceptions
@@ -26,13 +27,16 @@ class StudySelectionCompoundVO:
     type_of_treatment_uid: str | None
     reason_for_missing_value_uid: str | None
     dispenser_uid: str | None
+    dispenser: CtTermInfo | None
     dose_frequency_uid: str | None
+    dose_frequency: CtTermInfo | None
     delivery_device_uid: str | None
+    delivery_device: CtTermInfo | None
     other_info: str | None
     study_compound_dosing_count: int | None
     # Study selection Versioning
     start_date: datetime.datetime
-    author_id: str | None
+    author_id: str
     author_username: str | None = None
 
     @classmethod
@@ -48,6 +52,9 @@ class StudySelectionCompoundVO:
         delivery_device_uid: str | None,
         other_info: str | None,
         author_id: str,
+        dose_frequency: CtTermInfo | None = None,
+        dispenser: CtTermInfo | None = None,
+        delivery_device: CtTermInfo | None = None,
         study_uid: str | None = None,
         study_selection_uid: str | None = None,
         study_compound_dosing_count: int | None = None,
@@ -90,8 +97,11 @@ class StudySelectionCompoundVO:
             type_of_treatment_uid=normalize_string(type_of_treatment_uid),
             reason_for_missing_value_uid=normalize_string(reason_for_missing_value_uid),
             dose_frequency_uid=normalize_string(dose_frequency_uid),
+            dose_frequency=dose_frequency,
             dispenser_uid=normalize_string(dispenser_uid),
+            dispenser=dispenser,
             delivery_device_uid=normalize_string(delivery_device_uid),
+            delivery_device=delivery_device,
             other_info=normalize_string(other_info),
             study_compound_dosing_count=study_compound_dosing_count,
             author_id=normalize_string(author_id),
@@ -102,15 +112,15 @@ class StudySelectionCompoundVO:
     def validate(
         self,
         selection_uid_by_details_callback: Callable[
-            ["StudySelectionCompoundVO"], str
-        ] = (lambda _: False),
-        reason_for_missing_callback: Callable[[str], bool] = (lambda _: True),
-        compound_exist_callback: Callable[[str], bool] = (lambda _: True),
-        compound_alias_exist_callback: Callable[[str], bool] = (lambda _: True),
-        medicinal_product_exist_callback: Callable[[str], bool] = (lambda _: True),
-        medicinal_product_callback: Callable[[str], MedicinalProductAR] = (
-            lambda _: None
-        ),
+            ["StudySelectionCompoundVO"], str | None
+        ] = lambda _: None,
+        reason_for_missing_callback: Callable[[str], bool] = lambda _: True,
+        compound_exist_callback: Callable[[str], bool] = lambda _: True,
+        compound_alias_exist_callback: Callable[[str], bool] = lambda _: True,
+        medicinal_product_exist_callback: Callable[[str], bool] = lambda _: True,
+        medicinal_product_callback: Callable[
+            ..., MedicinalProductAR | None
+        ] = lambda _: None,
     ) -> None:
         """
         Raises ValueError or exceptions.BusinessLogicException if values do not comply with relevant business rules.
@@ -171,7 +181,7 @@ class StudySelectionCompoundVO:
 
         # Validate that each of these selections is actually defined on the selected library Medicinal Product:
         #   - Dose value
-        medicinal_product: MedicinalProductAR = medicinal_product_callback(
+        medicinal_product: MedicinalProductAR | None = medicinal_product_callback(
             self.medicinal_product_uid
         )
         # Ensure that the provided CompoundAlias and MedicinalProduct both link to the same Compound
@@ -216,12 +226,14 @@ class StudySelectionCompoundsAR:
     def add_compound_selection(
         self,
         study_compound_selection: StudySelectionCompoundVO,
-        selection_uid_by_details_callback: Callable[["StudySelectionCompoundVO"], str],
-        reason_for_missing_callback: Callable[[str], bool] = (lambda _: True),
-        compound_exist_callback: Callable[[str], bool] = (lambda _: True),
-        compound_alias_exist_callback: Callable[[str], bool] = (lambda _: True),
-        medicinal_product_exist_callback: Callable[[str], bool] = (lambda _: True),
-        medicinal_product_callback: Callable[[str], MedicinalProductAR] = (
+        selection_uid_by_details_callback: Callable[
+            ["StudySelectionCompoundVO"], str | None
+        ],
+        reason_for_missing_callback: Callable[[str], bool] = lambda _: True,
+        compound_exist_callback: Callable[[str], bool] = lambda _: True,
+        compound_alias_exist_callback: Callable[[str], bool] = lambda _: True,
+        medicinal_product_exist_callback: Callable[[str], bool] = lambda _: True,
+        medicinal_product_callback: Callable[..., MedicinalProductAR | None] = (
             lambda _: None
         ),
     ) -> None:
@@ -275,7 +287,7 @@ class StudySelectionCompoundsAR:
         for selection in self.study_compounds_selection:
             if selection.study_selection_uid != study_selection_uid:
                 updated_selection.append(selection)
-        self._study_compounds_selection = tuple(updated_selection)
+        self._study_compounds_selection = updated_selection
 
     def set_new_order_for_selection(self, study_selection_uid: str, new_order: int):
         """
@@ -318,16 +330,18 @@ class StudySelectionCompoundsAR:
             # We add all other vo to in the same order as before, except for the vo we are moving
             elif selection.study_selection_uid != selected_value.study_selection_uid:
                 updated_selections.append(selection)
-        self._study_compounds_selection = tuple(updated_selections)
+        self._study_compounds_selection = updated_selections
 
     def update_selection(
         self,
         updated_study_compound_selection: StudySelectionCompoundVO,
-        selection_uid_by_details_callback: Callable[["StudySelectionCompoundVO"], str],
-        reason_for_missing_callback: Callable[[str], bool] = (lambda _: True),
-        compound_exist_callback: Callable[[str], bool] = (lambda _: True),
-        compound_alias_exist_callback: Callable[[str], bool] = (lambda _: True),
-        medicinal_product_exist_callback: Callable[[str], bool] = (lambda _: True),
+        selection_uid_by_details_callback: Callable[
+            ["StudySelectionCompoundVO"], str | None
+        ],
+        reason_for_missing_callback: Callable[[str], bool] = lambda _: True,
+        compound_exist_callback: Callable[[str], bool] = lambda _: True,
+        compound_alias_exist_callback: Callable[[str], bool] = lambda _: True,
+        medicinal_product_exist_callback: Callable[[str], bool] = lambda _: True,
     ) -> None:
         """
         Used when a study compound is updated
@@ -352,4 +366,4 @@ class StudySelectionCompoundsAR:
                 updated_selection.append(updated_study_compound_selection)
             else:
                 updated_selection.append(selection)
-        self._study_compounds_selection = tuple(updated_selection)
+        self._study_compounds_selection = updated_selection

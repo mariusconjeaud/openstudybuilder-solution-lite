@@ -40,8 +40,9 @@ from clinical_mdr_api.tests.integration.utils.method_library import (
     create_study_epoch_codelists_ret_cat_and_lib,
     get_catalogue_name_library_name,
 )
-from clinical_mdr_api.tests.integration.utils.utils import TestUtils
+from clinical_mdr_api.tests.integration.utils.utils import CT_CODELIST_UIDS, TestUtils
 from clinical_mdr_api.tests.utils.checks import assert_response_status_code
+from common.config import settings
 
 log = logging.getLogger(__name__)
 
@@ -119,17 +120,76 @@ def test_data():
     global medicinal_product1
     global dose_value
 
+    _catalogue_name, library_name = get_catalogue_name_library_name(use_test_utils=True)
+    catalogue_name = "SDTM CT"
     # Create CT Terms
-    ct_term_dosage = TestUtils.create_ct_term(sponsor_preferred_name="dosage_form_1")
-    ct_term_delivery_device = TestUtils.create_ct_term(
-        sponsor_preferred_name="delivery_device_1"
+
+    ct_term_dosage = TestUtils.create_ct_term(
+        codelist_uid=CT_CODELIST_UIDS.dosage_form,
+        submission_value="dosage_form_1",
+        sponsor_preferred_name="dosage_form_1",
+        order=1,
+        catalogue_name=catalogue_name,
+        library_name=library_name,
+        approve=True,
     )
-    ct_term_dose_frequency = TestUtils.create_ct_term(
-        sponsor_preferred_name="dose_frequency_1"
-    )
-    ct_term_dispenser = TestUtils.create_ct_term(sponsor_preferred_name="dispenser_1")
+
     ct_term_roa = TestUtils.create_ct_term(
-        sponsor_preferred_name="route_of_administration_1"
+        codelist_uid=CT_CODELIST_UIDS.roa,
+        submission_value="route_of_administration_1",
+        sponsor_preferred_name="route_of_administration_1",
+        order=1,
+        catalogue_name=catalogue_name,
+        library_name=library_name,
+        approve=True,
+    )
+
+    ct_term_delivery_device = TestUtils.create_ct_term(
+        codelist_uid=CT_CODELIST_UIDS.delivery_device,
+        submission_value="delivery_device_1",
+        sponsor_preferred_name="delivery_device_1",
+        order=1,
+        catalogue_name=catalogue_name,
+        library_name=library_name,
+        approve=True,
+    )
+
+    ct_term_dose_frequency = TestUtils.create_ct_term(
+        codelist_uid=CT_CODELIST_UIDS.frequency,
+        submission_value="dose_frequency_1",
+        sponsor_preferred_name="dose_frequency_1",
+        order=1,
+        catalogue_name=catalogue_name,
+        library_name=library_name,
+        approve=True,
+    )
+
+    ct_term_dispenser = TestUtils.create_ct_term(
+        codelist_uid=CT_CODELIST_UIDS.dispenser,
+        submission_value="dispenser_1",
+        sponsor_preferred_name="dispenser_1",
+        order=1,
+        catalogue_name=catalogue_name,
+        library_name=library_name,
+        approve=True,
+    )
+
+    ttype_codelist = create_codelist(
+        "Type of Treatment",
+        "CTCodelist_TType",
+        catalogue_name,
+        library_name,
+        submission_value=settings.type_of_treatment_cl_submval,
+    )
+
+    TestUtils.create_ct_term(
+        codelist_uid=ttype_codelist.codelist_uid,
+        submission_value="treatment_type_1",
+        sponsor_preferred_name="treatment_type_1",
+        order=1,
+        catalogue_name=catalogue_name,
+        library_name=library_name,
+        approve=True,
     )
 
     # Create Numeric values with unit
@@ -199,29 +259,43 @@ def test_data():
 
     # Create study element
     create_study_epoch_codelists_ret_cat_and_lib(use_test_utils=True)
-    catalogue_name, library_name = get_catalogue_name_library_name(use_test_utils=True)
-    element_type_codelist = create_codelist(
-        "Element Type", "CTCodelist_ElementType", catalogue_name, library_name
+
+    element_subtype_codelist = create_codelist(
+        "Element Type",
+        "CTCodelist_ElementType",
+        catalogue_name,
+        library_name,
+        submission_value="ELEMSTP",
     )
-    element_type_term = create_ct_term(
-        element_type_codelist.codelist_uid,
+    element_subtype_term = create_ct_term(
         "Element Type",
         "ElementType_0001",
-        1,
         catalogue_name,
         library_name,
+        codelists=[
+            {
+                "uid": element_subtype_codelist.codelist_uid,
+                "order": 1,
+                "submission_value": "Element Type",
+            }
+        ],
     )
-    element_type_term_2 = create_ct_term(
-        element_type_codelist.codelist_uid,
-        "Element Type",
+    element_subtype_term_2 = create_ct_term(
+        "Element Type 2",
         "ElementType_0002",
-        2,
         catalogue_name,
         library_name,
+        codelists=[
+            {
+                "uid": element_subtype_codelist.codelist_uid,
+                "order": 2,
+                "submission_value": "Element Type 2",
+            }
+        ],
     )
     study_elements = [
-        create_study_element(element_type_term.uid, study.uid),
-        create_study_element(element_type_term_2.uid, study.uid),
+        create_study_element(element_subtype_term.uid, study.uid),
+        create_study_element(element_subtype_term_2.uid, study.uid),
     ]
 
     yield

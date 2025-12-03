@@ -34,6 +34,7 @@
     <template #beforeSwitches="">
       <v-select
         v-model="selectedTerms"
+        data-cy="search-with-terms-field"
         :label="$t('CodelistTable.search_with_terms')"
         :items="termsStore.terms"
         item-title="sponsor_preferred_name"
@@ -94,6 +95,7 @@
       </v-select>
       <v-select
         v-model="termsFilterOperator"
+        data-cy="search-with-terms-operator-field"
         :items="operators"
         rounded="lg"
         variant="outlined"
@@ -319,7 +321,11 @@ watch(termsFilterOperator, () => {
   fetchCodelists()
 })
 
-termsStore.fetchTerms({}, true).then(() => {
+const filters = {}
+if (props.library) {
+  filters['codelists.library'] = { v: [props.library] }
+}
+termsStore.fetchTerms(filters, true).then(() => {
   loading.value = false
 })
 
@@ -380,7 +386,10 @@ function fetchCodelists(filters, options, filtersUpdated) {
 function goToCodelist(codelist) {
   router.push({
     name: 'CodeListDetail',
-    params: { codelist_id: codelist.codelist_uid },
+    params: {
+      catalogue_name: codelist.catalogue_name,
+      codelist_id: codelist.codelist_uid,
+    },
   })
   eventBusEmit('notification', { msg: t('CodelistCreationForm.add_success') })
 }
@@ -429,13 +438,13 @@ const updateTerms = _debounce(function () {
   const filters = { '*': { v: [search.value] } }
 
   if (props.library) {
-    filters['codelist_library_name'] = { v: [props.library] }
+    filters['codelists.library'] = { v: [props.library] }
   }
 
   termsStore.fetchTerms(filters, true).then(() => {
     loading.value = false
   })
-}, 300)
+}, 800)
 
 function refresh() {
   table.value.filterTable()

@@ -74,17 +74,14 @@
             variant="outlined"
             density="compact"
             class="ml-4 w-50"
-            item-title="code_submission_value"
-            item-value="uid"
-            return-object
             :rules="[formRules.required]"
             @update:model-value="filterActivityInstanceClasses"
           />
         </div>
         <template
           v-if="
-            mandatoryActivityItemClasses.length &&
-            step2Form.activityItems.length &&
+            ((testCodeAic && testNameAic) ||
+              mandatoryActivityItemClasses.length) &&
             step2Form.data_domain
           "
         >
@@ -104,7 +101,7 @@
                 props.activityInstanceUid !== undefined &&
                 props.activityInstanceUid !== null
               "
-              :data-domain="step2Form.data_domain?.code_submission_value"
+              :data-domain="step2Form.data_domain"
               select-value-only
               class="mb-4 w-50"
             />
@@ -112,16 +109,16 @@
           <template v-else>
             <TestActivityItemClassField
               v-model="testValue"
+              v-model:code-codelist="testCodeCodelistValue"
+              v-model:name-codelist="testNameCodelistValue"
               :test-code-aic="testCodeAic"
               :test-name-aic="testNameAic"
-              :data-domain="step2Form.data_domain?.code_submission_value"
+              :data-domain="step2Form.data_domain"
               class="w-50 mb-4"
             />
 
             <ActivityItemClassField
-              v-for="(
-                activityItemClass, index
-              ) in remainingMdActivityItemClasses"
+              v-for="(activityItemClass, index) in mandatoryActivityItemClasses"
               :key="activityItemClass.uid"
               v-model="step2Form.activityItems[index]"
               :all-activity-item-classes="availableActivityItemClasses"
@@ -132,7 +129,7 @@
                 props.activityInstanceUid !== undefined &&
                 props.activityInstanceUid !== null
               "
-              :data-domain="step2Form.data_domain?.code_submission_value"
+              :data-domain="step2Form.data_domain"
               select-value-only
               class="mb-4 w-50"
             />
@@ -162,10 +159,10 @@
           v-for="(activityItemClass, index) in step3Form.activityItems"
           :key="activityItemClass.uid"
           v-model="step3Form.activityItems[index]"
-          :all-activity-item-classes="availableActivityItemClasses"
+          :all-activity-item-classes="filteredActivityItemClasses"
           :compatible-activity-item-classes="optionalActivityItemClasses"
           :disabled="props.activityInstanceUid !== null"
-          :data-domain="step2Form.data_domain?.code_submission_value"
+          :data-domain="step2Form.data_domain"
           adam-specific
           class="mb-4 w-50"
         >
@@ -278,8 +275,8 @@
           <v-select
             v-model="step4Form.data_category"
             :label="$t('ActivityInstanceForm.data_category')"
-            :items="domainDataCategories"
-            item-title="name"
+            :items="dataCategories"
+            item-title="submission_value"
             item-value="term_uid"
             variant="outlined"
             density="compact"
@@ -288,7 +285,7 @@
             v-model="step4Form.data_subcategory"
             :label="$t('ActivityInstanceForm.data_subcategory')"
             :items="dataSubcategories"
-            item-title="name"
+            item-title="submission_value"
             item-value="term_uid"
             variant="outlined"
             density="compact"
@@ -308,9 +305,9 @@
           v-for="(activityItemClass, index) in step4Form.activityItems"
           :key="activityItemClass.uid"
           v-model="step4Form.activityItems[index]"
-          :all-activity-item-classes="availableActivityItemClasses"
+          :all-activity-item-classes="filteredActivityItemClasses"
           :compatible-activity-item-classes="otherAvailableActivityItemClasses"
-          :data-domain="step2Form.data_domain?.code_submission_value"
+          :data-domain="step2Form.data_domain"
           class="mb-4 w-50"
           multiple
         >
@@ -400,7 +397,8 @@ import NNTable from '@/components/tools/NNTable.vue'
 import TestActivityItemClassField from './TestActivityItemClassField.vue'
 import activitiesApi from '@/api/activities'
 import activityInstanceClassesApi from '@/api/activityInstanceClasses'
-import activityItemClassesApi from '@/api/activityItemClasses'
+import codelistsApi from '@/api/controlledTerminology/codelists'
+import termsApi from '@/api/controlledTerminology/terms'
 import activityItemClassesConstants from '@/constants/activityItemClasses'
 import libraryConstants from '@/constants/libraries.js'
 import statuses from '@/constants/statuses.js'
@@ -424,8 +422,9 @@ const activityInstanceClasses = ref([])
 const activities = ref([])
 const activityInstance = ref(null)
 const dataCategories = ref([])
+const dataDomainCTTermUid = ref(null)
 const dataSubcategories = ref([])
-const dataDomainsPerParentClass = ref({})
+const datasets = ref([])
 const loadingActivityInstances = ref(false)
 const step2Form = ref({})
 const step3Form = ref({})
@@ -434,6 +433,8 @@ const selectedActivity = ref(null)
 const stepper = ref()
 const totalActivities = ref(0)
 const testValue = ref(null)
+const testCodeCodelistValue = ref(null)
+const testNameCodelistValue = ref(null)
 
 const step1FormRef = ref()
 const step2FormRef = ref()
@@ -453,80 +454,54 @@ const allowedInstanceClasses = [
 ]
 
 const dataDomains = computed(() => {
-  const aic = step2Form.value.activity_instance_class
-  if (aic) {
-    if (
-      aic.parent_class &&
-      dataDomainsPerParentClass.value[aic.parent_class.uid]
-    ) {
-      return dataDomainsPerParentClass.value[aic.parent_class.uid]
-    }
+  if (!datasets.value.length) {
     return []
   }
-  const allDomains = new Set()
-  for (const uid in dataDomainsPerParentClass.value) {
-    for (const domain of dataDomainsPerParentClass.value[uid]) {
-      if (!allDomains.has(domain)) {
-        allDomains.add(domain)
+  if (datasets.value.length === 1) {
+    return datasets.value[0].datasets
+  }
+  const allValues = new Set()
+  for (const item of datasets.value) {
+    for (const domain of item.datasets) {
+      if (!allValues.has(domain)) {
+        allValues.add(domain)
       }
     }
   }
-  return Array.from(allDomains.values())
+  return Array.from(allValues.values())
 })
 
-const availableActivityItemClasses = computed(() => {
-  if (!step2Form.value.activity_instance_class) {
-    return []
-  }
-  let result = []
-  if (
-    step2Form.value.activity_instance_class?.parent_class?.activity_item_classes
-  ) {
-    result = result.concat(
-      step2Form.value.activity_instance_class.parent_class.activity_item_classes
-    )
-  }
-  if (step2Form.value.activity_instance_class.activity_item_classes) {
-    result = result.concat(
-      step2Form.value.activity_instance_class.activity_item_classes
-    )
-  }
-  return result
-})
+const availableActivityItemClasses = ref([])
+const filteredActivityItemClasses = ref([])
 
 const mandatoryActivityItemClasses = computed(() => {
-  return availableActivityItemClasses.value.filter((item) => {
-    return item.mandatory
-  })
-})
-// Mandatory Activity Item Classes without test_code and test_name
-const remainingMdActivityItemClasses = computed(() => {
   const result = availableActivityItemClasses.value.filter((item) => {
     return item.mandatory && !['test_code', 'test_name'].includes(item.name)
   })
   if (step2Form.value.activity_instance_class?.name === 'NumericFindings') {
-    // FIXME: This is ugly... The API should be responsible for the sorting
+    // special sorting for NumericFindings
     return [
       result.find((item) => item.name === 'unit_dimension'),
       result.find((item) => item.name === 'standard_unit'),
-    ]
+    ].filter(Boolean) // Filter out undefined values
   }
   return result
 })
+
 const optionalActivityItemClasses = computed(() => {
-  return availableActivityItemClasses.value.filter(
+  return filteredActivityItemClasses.value.filter(
     (item) =>
       !item.mandatory &&
-      item.is_adam_param_specific_enabled &&
       step3Form.value.activityItems.find(
         (selection) => selection.activity_item_class_uid === item.uid
       ) === undefined
   )
 })
 const otherAvailableActivityItemClasses = computed(() => {
-  return availableActivityItemClasses.value.filter(
+  return filteredActivityItemClasses.value.filter(
     (item) =>
       !item.mandatory &&
+      item.name !== 'domain' &&
       step3Form.value.activityItems.find(
         (selection) => selection.activity_item_class_uid === item.uid
       ) === undefined &&
@@ -537,24 +512,23 @@ const otherAvailableActivityItemClasses = computed(() => {
 })
 
 const testCodeAic = computed(() => {
-  return mandatoryActivityItemClasses.value.find(
+  return availableActivityItemClasses.value.find(
     (aic) => aic.name === 'test_code'
   )
 })
 const testNameAic = computed(() => {
-  return mandatoryActivityItemClasses.value.find(
+  return availableActivityItemClasses.value.find(
     (aic) => aic.name === 'test_name'
   )
+})
+const domainAic = computed(() => {
+  return availableActivityItemClasses.value.find((aic) => aic.name === 'domain')
 })
 
 const selectedUnitDimension = computed(() => {
   let result = null
-  const itemClasses =
-    testCodeAic.value && testNameAic.value
-      ? remainingMdActivityItemClasses.value
-      : mandatoryActivityItemClasses.value
-  itemClasses.forEach((aic, index) => {
-    if (aic.name === 'unit_dimension') {
+  mandatoryActivityItemClasses.value.forEach((aic, index) => {
+    if (aic?.name === 'unit_dimension') {
       result = step2Form.value.activityItems[index].ct_term_name
     }
   })
@@ -576,7 +550,7 @@ watch(showMolecularWeight, (value) => {
 
 const categoryAic = computed(() => {
   const aicName = step2Form.value.activity_instance_class?.name
-  return availableActivityItemClasses.value.find(
+  return filteredActivityItemClasses.value.find(
     (item) =>
       item.name ===
       activityItemClassesConstants.categoryActivityItemClasses[aicName]
@@ -584,27 +558,11 @@ const categoryAic = computed(() => {
 })
 const subcategoryAic = computed(() => {
   const aicName = step2Form.value.activity_instance_class?.name
-  return availableActivityItemClasses.value.find(
+  return filteredActivityItemClasses.value.find(
     (item) =>
       item.name ===
       activityItemClassesConstants.subcategoryActivityItemClasses[aicName]
   )
-})
-
-const domainDataCategories = computed(() => {
-  if (!step2Form.value.data_domain) {
-    return []
-  }
-  return dataCategories.value.filter((item) => {
-    const codelists =
-      activityItemClassesConstants.codelistsPerDomain[
-        step2Form.value.data_domain.code_submission_value
-      ][categoryAic.value.name]
-    if (codelists) {
-      return codelists.includes(item.codelist_submission_value)
-    }
-    return false
-  })
 })
 
 const activitiesHeaders = [
@@ -662,8 +620,34 @@ function fetchActivities(filters, options, filtersUpdated) {
       params.sort_by = `{"${sortKey}":${options.sortBy[0].order === 'asc'}}`
     }
   }
-  params.filters = { status: { v: [statuses.FINAL] } }
+  if (!params.filters) {
+    params.filters = { status: { v: [statuses.FINAL] } }
+  } else {
+    const newfilters = JSON.parse(params.filters)
+    newfilters.status = { v: [statuses.FINAL] }
+    params.filters = newfilters
+  }
+  if (params.filters['activity_groupings.activity_group_name']) {
+    params.activity_group_names = []
+    params.filters['activity_groupings.activity_group_name'].v.forEach(
+      (value) => {
+        params.activity_group_names.push(value)
+      }
+    )
+    delete params.filters['activity_groupings.activity_group_name']
+  }
+  if (params.filters['activity_groupings.activity_subgroup_name']) {
+    params.activity_subgroup_names = []
+    params.filters['activity_groupings.activity_subgroup_name'].v.forEach(
+      (value) => {
+        params.activity_subgroup_names.push(value)
+      }
+    )
+    delete params.filters['activity_groupings.activity_subgroup_name']
+  }
   params.group_by_groupings = false
+  activities.value = []
+  totalActivities.value = 0
   activitiesApi.get(params, 'activities').then((resp) => {
     activities.value = resp.data.items
     totalActivities.value = resp.data.total
@@ -672,50 +656,95 @@ function fetchActivities(filters, options, filtersUpdated) {
 
 async function fetchActivityItemClasses(activityInstanceClass) {
   if (activityInstanceClass) {
+    // Call 1: Get ALL items without dataset filter (for mandatory/Step 2)
+    const respAll = await activityInstanceClassesApi.getActivityItemClasses(
+      activityInstanceClass.uid
+    )
+    availableActivityItemClasses.value = respAll.data
+
+    // Call 2: Get filtered items with dataset filter (for optional/Step 3 & 4)
+    if (step2Form.value.data_domain) {
+      const respFiltered =
+        await activityInstanceClassesApi.getActivityItemClasses(
+          activityInstanceClass.uid,
+          { dataset_uid: step2Form.value.data_domain }
+        )
+      filteredActivityItemClasses.value = respFiltered.data
+    } else {
+      // No dataset selected yet, use unfiltered for optional items too
+      filteredActivityItemClasses.value = respAll.data
+    }
+
+    // Initialize mandatory activity items for Step 2
     step2Form.value.activityItems = []
     mandatoryActivityItemClasses.value.forEach((aic) => {
+      if (!aic) return // Skip if undefined
       let activityItem
-      if (['test_code', 'test_name'].includes(aic.name)) {
-        return
-      }
       if (activityInstance.value) {
         const matched = activityInstance.value.activity_items.find(
           (item) => item.activity_item_class.uid === aic.uid
         )
-        activityItem = {
-          activity_item_class_uid: matched.activity_item_class.uid,
-          ct_term_uids: matched.ct_terms.map((ct_term) => ct_term.uid),
+        if (matched) {
+          activityItem = {
+            activity_item_class_uid: matched.activity_item_class.uid,
+            ct_term_uids: matched.ct_terms.map((ct_term) => ct_term.uid),
+          }
+        } else {
+          activityItem = { activity_item_class_uid: aic.uid }
         }
       } else {
         activityItem = { activity_item_class_uid: aic.uid }
       }
       step2Form.value.activityItems.push(activityItem)
     })
-    const aicName = activityInstanceClass.name
-    if (!activityItemClassesConstants.categoryActivityItemClasses[aicName]) {
-      return
-    }
-    let resp = await activityItemClassesApi.getTerms(categoryAic.value.uid, {
-      page_size: 0,
-    })
-    dataCategories.value = resp.data.items
-    resp = await activityItemClassesApi.getTerms(subcategoryAic.value.uid, {
-      page_size: 0,
-    })
-    dataSubcategories.value = resp.data.items
+    await fetchDatasets(activityInstanceClass.uid)
   } else {
     step2Form.value.activityItems = []
+    availableActivityItemClasses.value = []
+    filteredActivityItemClasses.value = []
   }
 }
 
+async function fetchDatasets(activityInstanceClassUid) {
+  const params = {}
+  if (activityInstanceClassUid) {
+    params.activity_instance_class_uid = activityInstanceClassUid
+  }
+  const resp = await activityInstanceClassesApi.getModelMappingDatasets(params)
+  datasets.value = resp.data
+}
+
 function filterActivityInstanceClasses(dataDomainUid) {
+  const params = {
+    filters: {
+      submission_value: { v: [dataDomainUid], op: 'eq' },
+    },
+  }
+  codelistsApi
+    .getCodelistTerms(
+      activityItemClassesConstants.sdtmDomainAbbreviationCodelistUid,
+      params
+    )
+    .then((resp) => {
+      if (resp.data.items.length > 0) {
+        dataDomainCTTermUid.value = resp.data.items[0].term_uid
+      }
+    })
+
   if (step2Form.value.activity_instance_class) {
+    // Re-fetch activity item classes with the dataset filter
+    fetchActivityItemClasses(step2Form.value.activity_instance_class)
     return
   }
+  const uids = datasets.value
+    .filter(
+      (item) =>
+        item.datasets.includes(dataDomainUid) &&
+        allowedInstanceClasses.includes(item.name)
+    )
+    .map((item) => item.uid)
   const filters = {
-    'parent_class.data_domains.uid': { v: [dataDomainUid] },
-    name: { v: allowedInstanceClasses },
-    level: { v: [3] },
+    uid: { v: uids },
   }
   loadingActivityInstances.value = true
   activityInstanceClassesApi
@@ -770,7 +799,6 @@ function showInstances(item) {
 }
 
 function close() {
-  resetForms()
   emit('close')
 }
 
@@ -795,7 +823,7 @@ function extraStepValidation(step) {
   return true
 }
 
-function prepareCreationPayload(forPreview) {
+async function prepareCreationPayload(forPreview) {
   const [activityGroupUid, activitySubgroupUid, activityUid] =
     selectedActivity.value.split('|')
   const activityItems = step2Form.value.activityItems.concat(
@@ -803,10 +831,13 @@ function prepareCreationPayload(forPreview) {
     step4Form.value.activityItems
   )
 
-  function addActivityItem(uid, term_uids) {
+  function addActivityItem(uid, codelistUid, term_uids) {
+    const ct_terms = term_uids.map((term_uid) => {
+      return { codelist_uid: codelistUid, term_uid }
+    })
     activityItems.push({
       activity_item_class_uid: uid,
-      ct_term_uids: term_uids,
+      ct_terms,
       odm_item_uids: [],
       unit_definition_uids: [],
       is_adam_param_specific: false,
@@ -814,8 +845,12 @@ function prepareCreationPayload(forPreview) {
   }
 
   if (testValue.value) {
-    addActivityItem(testCodeAic.value.uid, [testValue.value])
-    addActivityItem(testNameAic.value.uid, [testValue.value])
+    addActivityItem(testCodeAic.value.uid, testCodeCodelistValue.value, [
+      testValue.value,
+    ])
+    addActivityItem(testNameAic.value.uid, testNameCodelistValue.value, [
+      testValue.value,
+    ])
   }
 
   if (step4Form.value.data_category) {
@@ -826,7 +861,13 @@ function prepareCreationPayload(forPreview) {
           step2Form.value.activity_instance_class.name
         ]
     ).uid
-    addActivityItem(uid, [step4Form.value.data_category])
+    const resp = await codelistsApi.getAll({
+      filters: { 'attributes.submission_value': { v: ['FINDCAT'] } },
+    })
+    if (resp.data.items.length) {
+      const codelistUid = resp.data.items[0].codelist_uid
+      addActivityItem(uid, codelistUid, [step4Form.value.data_category])
+    }
   }
   if (step4Form.value.data_subcategory) {
     const uid = otherAvailableActivityItemClasses.value.find(
@@ -836,13 +877,27 @@ function prepareCreationPayload(forPreview) {
           step2Form.value.activity_instance_class.name
         ]
     ).uid
-    addActivityItem(uid, [step4Form.value.data_subcategory])
+    const resp = await codelistsApi.getAll({
+      filters: { 'attributes.submission_value': { v: ['FINDSCAT'] } },
+    })
+    if (resp.data.items.length) {
+      const codelistUid = resp.data.items[0].codelist_uid
+      addActivityItem(uid, codelistUid, [step4Form.value.data_subcategory])
+    }
+  }
+  if (domainAic.value && dataDomainCTTermUid.value) {
+    // Manually add domain activity item based on selected dataset
+    addActivityItem(
+      domainAic.value.uid,
+      activityItemClassesConstants.sdtmDomainAbbreviationCodelistUid,
+      [dataDomainCTTermUid.value]
+    )
   }
 
   const result = {
     library_name: libraryConstants.LIBRARY_SPONSOR,
     nci_concept_name: step3Form.value.nci_concept_name,
-    nci_code: step3Form.value.nci_code,
+    nci_concept_id: step3Form.value.nci_concept_id,
     activity_instance_class_uid: step2Form.value.activity_instance_class.uid,
     activity_items: activityItems,
     is_required_for_activity: step4Form.value.is_required_for_activity,
@@ -871,7 +926,7 @@ function prepareCreationPayload(forPreview) {
 }
 
 async function sendPreviewRequest() {
-  const payload = prepareCreationPayload(true)
+  const payload = await prepareCreationPayload(true)
   const resp = await activitiesApi.getPreview(payload, 'activity-instances')
   step3Form.value.name = resp.data.name
   step3Form.value.name_sentence_case = resp.data.name_sentence_case
@@ -882,11 +937,25 @@ async function sendPreviewRequest() {
 async function initStep(step) {
   if (step === 3 && !step3Form.value.name && !activityInstance.value) {
     await sendPreviewRequest()
+  } else if (step === 4) {
+    let resp
+    if (categoryAic.value) {
+      resp = await termsApi.getTermsByCodelist('findingCategoryDefinition', {
+        page_size: 0,
+      })
+      dataCategories.value = resp.data.items
+    }
+    if (subcategoryAic.value) {
+      resp = await termsApi.getTermsByCodelist('findingSubCategoryDefinition', {
+        page_size: 0,
+      })
+      dataSubcategories.value = resp.data.items
+    }
   }
 }
 
 async function submit() {
-  const payload = prepareCreationPayload()
+  const payload = await prepareCreationPayload()
   try {
     const resp = await activitiesApi.create(payload, 'activity-instances')
     eventBusEmit('notification', {
@@ -903,23 +972,21 @@ async function submit() {
 
 resetForms()
 
-let resp = await activityInstanceClassesApi.getAll({
-  filters: {
-    name: { v: allowedInstanceClasses },
-    level: { v: [3] },
-  },
-  page_size: 0,
-})
-for (const aic of resp.data.items) {
-  activityInstanceClasses.value.push(aic)
-  if (aic.parent_class && aic.parent_class.data_domains) {
-    dataDomainsPerParentClass.value[aic.parent_class.uid] =
-      aic.parent_class.data_domains
-  }
-}
+activityInstanceClassesApi
+  .getAll({
+    filters: {
+      name: { v: allowedInstanceClasses },
+      level: { v: [3] },
+    },
+    page_size: 0,
+  })
+  .then((resp) => {
+    activityInstanceClasses.value = resp.data.items
+  })
+fetchDatasets()
 
 if (props.activityInstanceUid) {
-  resp = await activitiesApi.getObject(
+  const resp = await activitiesApi.getObject(
     'activity-instances',
     props.activityInstanceUid
   )
@@ -936,7 +1003,7 @@ if (props.activityInstanceUid) {
   step3Form.value.nci_concept_name = activityInstance.value.nci_concept_name
   step3Form.value.topic_code = activityInstance.value.topic_code
   step3Form.value.adam_param_code = activityInstance.value.adam_param_code
-  step3Form.value.nci_code = activityInstance.value.nci_code
+  step3Form.value.nci_concept_id = activityInstance.value.nci_concept_id
 
   for (const activityItem of activityInstance.value.activity_items) {
     let matched = optionalActivityItemClasses.value.find(

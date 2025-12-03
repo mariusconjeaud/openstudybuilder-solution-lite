@@ -1,4 +1,4 @@
-from typing import Annotated, Callable, Self
+from typing import Annotated, Callable, Self, overload
 
 from pydantic import Field, field_validator
 
@@ -42,7 +42,7 @@ class OdmVendorElement(ConceptModel):
         return cls(
             uid=odm_vendor_element_ar._uid,
             compatible_types=odm_vendor_element_ar.concept_vo.compatible_types,
-            name=odm_vendor_element_ar.concept_vo.name,
+            name=odm_vendor_element_ar.name,
             library_name=odm_vendor_element_ar.library.name,
             start_date=odm_vendor_element_ar.item_metadata.start_date,
             end_date=odm_vendor_element_ar.item_metadata.end_date,
@@ -62,7 +62,7 @@ class OdmVendorElement(ConceptModel):
                     )
                     for vendor_attribute_uid in odm_vendor_element_ar.concept_vo.vendor_attribute_uids
                 ],
-                key=lambda item: item.name,
+                key=lambda item: item.name or "",
             ),
             possible_actions=sorted(
                 [_.value for _ in odm_vendor_element_ar.get_possible_actions()]
@@ -71,19 +71,46 @@ class OdmVendorElement(ConceptModel):
 
 
 class OdmVendorElementRelationModel(BaseModel):
+    @overload
     @classmethod
     def from_uid(
         cls,
         uid: str,
         odm_element_uid: str,
+        odm_element_version: str,
         odm_element_type: RelationType,
         find_by_uid_with_odm_element_relation: Callable[
-            [str, str, RelationType], OdmVendorElementRelationVO | None
+            [str, str, str, RelationType], OdmVendorElementRelationVO
+        ],
+    ) -> Self: ...
+    @overload
+    @classmethod
+    def from_uid(
+        cls,
+        uid: None,
+        odm_element_uid: str,
+        odm_element_version: str,
+        odm_element_type: RelationType,
+        find_by_uid_with_odm_element_relation: Callable[
+            [str, str, str, RelationType], OdmVendorElementRelationVO
+        ],
+    ) -> None: ...
+    @classmethod
+    def from_uid(
+        cls,
+        uid: str | None,
+        odm_element_uid: str,
+        odm_element_version: str,
+        odm_element_type: RelationType,
+        find_by_uid_with_odm_element_relation: Callable[
+            [str, str, str, RelationType], OdmVendorElementRelationVO
         ],
     ) -> Self | None:
+        odm_vendor_element_ref_model = None
+
         if uid is not None:
             odm_vendor_element_ref_vo = find_by_uid_with_odm_element_relation(
-                uid, odm_element_uid, odm_element_type
+                uid, odm_element_uid, odm_element_version, odm_element_type
             )
             if odm_vendor_element_ref_vo is not None:
                 odm_vendor_element_ref_model = cls(
@@ -97,8 +124,6 @@ class OdmVendorElementRelationModel(BaseModel):
                     name=None,
                     value=None,
                 )
-        else:
-            odm_vendor_element_ref_model = None
         return odm_vendor_element_ref_model
 
     uid: Annotated[str, Field()]
@@ -116,6 +141,7 @@ class OdmVendorElementPostInput(ConceptPostInput):
 
 
 class OdmVendorElementPatchInput(ConceptPatchInput):
+    name: Annotated[str, Field(min_length=1)]
     compatible_types: Annotated[list[VendorElementCompatibleType], Field(min_length=1)]
 
 

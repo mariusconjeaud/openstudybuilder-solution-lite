@@ -5,6 +5,7 @@ import os
 import time
 from datetime import datetime, timedelta, timezone
 from random import randint
+from typing import Any, Iterable
 from urllib.parse import urljoin
 from xml.etree import ElementTree
 
@@ -14,7 +15,8 @@ import openpyxl
 from fastapi.testclient import TestClient
 from neomodel.sync_.core import db
 
-from common import config
+from common.config import settings
+from common.database import configure_database
 
 log = logging.getLogger(__name__)
 
@@ -22,13 +24,12 @@ log = logging.getLogger(__name__)
 def set_db(db_name):
     os.environ["NEO4J_DATABASE"] = db_name
 
-    config.settings = config.Settings()
-
-    from neomodel import config as neoconfig
-
-    full_dsn = f"{config.settings.neo4j_dsn}"
-    neoconfig.DATABASE_URL = full_dsn
-    db.set_connection(full_dsn)
+    driver = configure_database(
+        settings.neo4j_dsn,
+        max_connection_lifetime=settings.neo4j_connection_lifetime,
+        liveness_check_timeout=settings.neo4j_liveness_check_timeout,
+    )
+    db.set_connection(driver=driver)
 
     if db_name.strip() != "":
         db.cypher_query("CREATE OR REPLACE DATABASE $db", {"db": db_name})
@@ -40,9 +41,12 @@ def set_db(db_name):
             # Database creation can take a couple of seconds
             # db.set_connection will return a ClientError if the database isn't ready
             # This allows for retrying after a small pause
-            full_dsn = urljoin(config.settings.neo4j_dsn, f"/{db_name}")
-            neoconfig.DATABASE_URL = full_dsn
-            db.set_connection(full_dsn)
+            driver = configure_database(
+                urljoin(settings.neo4j_dsn, f"/{db_name}"),
+                max_connection_lifetime=settings.neo4j_connection_lifetime,
+                liveness_check_timeout=settings.neo4j_liveness_check_timeout,
+            )
+            db.set_connection(driver=driver)
 
             # AuraDB workaround for not supporting multiple db's:
             # Use the main db for tests and remove all nodes
@@ -68,13 +72,13 @@ def set_db(db_name):
     return db
 
 
-def assert_response_status_code(response: httpx.Response, status: int | list[int]):
+def assert_response_status_code(response: httpx.Response, status: int | Iterable[int]):
     """Assert request.Response status code"""
     # pylint: disable=unused-variable
     __tracebackhide__ = True
 
     if isinstance(status, int):
-        status = (status,)
+        status = [status]
 
     assert response.status_code in status, (
         f"Expected HTTP status code in [{', '.join(map(str, status))}].\n"
@@ -89,7 +93,7 @@ class TestUtils:
     @classmethod
     def assert_response_shape_ok(
         cls,
-        response_json: any,
+        response_json: dict[Any, Any],
         expected_fields: list[str],
         expected_not_null_fields: list[str],
     ):
@@ -102,12 +106,12 @@ class TestUtils:
 
     @classmethod
     def assert_timestamp_is_in_utc_zone(cls, val: str):
-        datetime_ts: datetime = datetime.strptime(val, config.DATE_TIME_FORMAT)
+        datetime_ts: datetime = datetime.strptime(val, settings.date_time_format)
         assert datetime_ts.tzinfo == timezone.utc
 
     @classmethod
     def assert_timestamp_is_newer_than(cls, val: str, seconds: int):
-        datetime_ts: datetime = datetime.strptime(val, config.DATE_TIME_FORMAT)
+        datetime_ts: datetime = datetime.strptime(val, settings.date_time_format)
         assert abs(datetime.now(timezone.utc) - datetime_ts) < timedelta(
             seconds=seconds
         )
@@ -115,14 +119,14 @@ class TestUtils:
     @classmethod
     def assert_chronological_sequence(cls, val1: str, val2: str):
         """Asserts that val1 timestamp is chronologically older than val2 timestamp"""
-        ts1: datetime = datetime.strptime(val1, config.DATE_TIME_FORMAT)
-        ts2: datetime = datetime.strptime(val2, config.DATE_TIME_FORMAT)
+        ts1: datetime = datetime.strptime(val1, settings.date_time_format)
+        ts2: datetime = datetime.strptime(val2, settings.date_time_format)
         assert ts1 - ts2 < timedelta(seconds=0)
 
     @classmethod
     def get_datetime(cls, val: str) -> datetime:
         """Returns datetime object from supplied string value"""
-        return datetime.strptime(val, config.DATE_TIME_FORMAT)
+        return datetime.strptime(val, settings.date_time_format)
 
     @classmethod
     def assert_valid_csv(cls, val: str):
@@ -157,7 +161,7 @@ class TestUtils:
         api_client: TestClient,
         export_format: str,
         url: str,
-        params: dict | None = None,
+        params: dict[Any, Any] | None = None,
     ):
         """Verifies that the specified endpoint returns valid csv/xml/Excel content"""
         headers = {"Accept": export_format}

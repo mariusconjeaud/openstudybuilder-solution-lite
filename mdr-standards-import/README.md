@@ -18,7 +18,7 @@ Create `.env` file (in the root of the repository) with the following content (a
 
 ```
 #
-# Neo4j Database
+# Neo4j StudyBuilder Database
 #
 NEO4J_PROTOCOL=neo4j
 NEO4J_MDR_BOLT_PORT=5078
@@ -27,6 +27,9 @@ NEO4J_MDR_AUTH_USER=neo4j
 NEO4J_MDR_AUTH_PASSWORD=test1234
 NEO4J_MDR_DATABASE=neo4j
 
+#
+# Neo4j CDISC staging database
+#
 NEO4J_CDISC_IMPORT_BOLT_PORT=5078
 NEO4J_CDISC_IMPORT_HOST=localhost
 NEO4J_CDISC_IMPORT_AUTH_USER=neo4j
@@ -42,9 +45,14 @@ CDISC_BASE_URL="https://library.cdisc.org/api"
 CDISC_AUTH_TOKEN="<<Insert secret here>>"
 
 #
-# Download folder for the CDISC JSON package files
+# Paths for the CDISC data files
 #
 CDISC_DATA_DIR="cdisc_data/packages"
+CDISC_JSON_DIR="packages/cdisc_ct"
+CDISC_XLS_DIR="CDISC_xls"
+
+# Logging
+LOG_LEVEL=INFO
 ```
 
 **Note:** Bolt port number might need to be changed for different customised setup, but the above could do the trick for basic setup. 
@@ -81,33 +89,35 @@ This is to avoid high usage of the CDISC API, as there is a rate-limit in place.
 
 ## Importing Entrypoints - Available for pipelines
 
-### Import data to both CDISC and MDR databases
+### Import data models to both CDISC and MDR databases
 The following command will:
-* trigger the import into the CDISC DB
+* trigger the import of data models into the CDISC DB
 * trigger the import into the MDR DB
-* It will do so for both CT and Data Models, for all available packages
 
 ```shell
-pipenv run bulk_import 'TEST' '' # Second argument is to specify a different data directory
-```
-
-You also have the option to separately bulk import CT and Data Models:
-
-```shell
-pipenv run bulk_import_ct 'TEST' ''
-pipenv run bulk_import_data_models 'TEST' ''
+pipenv run bulk_import_data_models 'TEST' '' # Second argument is to specify a different data directory
+# You can append the name of a catalogue to import, excluding the others, for example 'SDTM' or 'FBDE'
+# Both model and IG will be imported, for example SDTM and SDTMIG
 ```
 
 
-### Import CT data to CDISC database only
+### Import all CT data to CDISC staging database
 
 The following command will:
-* trigger the import of CT into the CDISC DB
+* trigger the import of CT into the CDISC staging DB
 
 ```shell
-pipenv run import_cdisc_ct_into_cdisc_db 'TEST' '' # Second argument is to specify a different data directory
+pipenv run import_cdisc_ct_into_cdisc_db
 ```
 
+### Import all CT data from the CDISC staging database into the MDR database
+
+The following command will:
+* trigger the import of all staged CT into the MDR DB
+
+```shell
+pipenv run import_ct_from_cdisc_db_into_mdr
+```
 
 ### Import Data Models data to CDISC database only
 
@@ -116,24 +126,8 @@ The following command will:
 
 ```shell
 pipenv run import_cdisc_data_models_into_cdisc_db 'TEST' ''  # Second argument is to specify a different data directory
-```
-
-### Import CT data to only MDR database
-
-The following command will:
-* trigger the import of a single CT package into the MDR DB
-
-```shell
-pipenv run import_ct_from_cdisc_db_into_mdr 'TEST' '2021-09-24'
-```
-
-### Import Data Models data to only MDR database
-
-The following command will:
-* triggers the import into the MDR DB
-
-```shell
-pipenv run import_data_models_from_cdisc_db_into_mdr 'TEST' ''  # Second argument is to specify a different data directory
+# You can append the name of a catalogue to import, excluding the others, for example 'SDTM' or 'FBDE'
+# Both model and IG will be imported, for example SDTM and SDTMIG
 ```
 
 ---

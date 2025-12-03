@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Traceability Matrix</title>
+  </head>
+  <script type="text/javascript">
+    function toggleTextVisibility(className) {
+      const elements = document.getElementsByClassName(className);
+      for (const element of elements) {
+        if (element.style.display === "none") {
+          element.style.display = "block";
+        } else {
+          element.style.display = "none";
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      font-size: small;
+    }
+
+    .title {
+      background-color: #f8f9fa;
+      padding: 10px;
+      border-radius: 5px;
+      margin-bottom: 20px;
+      text-align: center;
+      padding-bottom: 20px;
+    }
+
+    h1,
+    h2,
+    h3,
+    h4 {
+      color: #2c3e50;
+    }
+
+    .urs {
+      margin-top: 60px;
+    }
+
+    .urs,
+    .fs {
+      margin-bottom: 0px;
+    }
+
+    .urs h1 {
+      color: #27ae60;
+    }
+
+    .fs h2 {
+      color: #8e44ad;
+    }
+
+    .urs h1,
+    .fs h2 {
+      border-bottom: 2px solid #2980b9;
+      padding-bottom: 5px;
+    }
+
+    .urs-text,
+    .fs-text {
+      margin-top: 3px;
+      margin-bottom: 0px;
+      margin-left: 0px;
+      padding: 0px 20px;
+      background-color: #f8f9fa;
+      font-size: smaller;
+      border-radius: 5px;
+      border: 1px solid lightgray;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+    }
+
+    th,
+    td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: left;
+    }
+
+    th {
+      background-color: #f2f2f2;
+    }
+
+    div.fs-list {
+      margin-bottom: 30px;
+      padding-left: 40px;
+    }
+
+    div.fs-tests {
+      margin-bottom: 40px;
+      margin-top: 20px;
+    }
+
+    .generated-on {
+      font-size: x-small;
+      color: grey;
+      font-style: italic;
+      margin-bottom: 0px;
+    }
+
+    code {
+      background: #969dde33;
+      padding: 2px 4px;
+      display: inline-block;
+      border-radius: 4px;
+    }
+
+    .warnings {
+      background-color: #fff3cd;
+      color: #856404;
+      border: 1px solid #ffeeba;
+      padding: 0px 30px 5px 30px;
+      border-radius: 5px;
+      margin: 30px 0px;
+    }
+
+    .warnings h1,
+    .warnings h2,
+    .warnings h3,
+    .warnings h4 {
+      color: #856404;
+    }
+  </style>
+  <body>
+    <div class="title">
+      <h1>Traceability Matrix</h1>
+      <h2>
+        User Requirements Specifications (URS) | Functional Specifications (FS)
+        | Tests
+      </h2>
+      <p class="generated-on">Generated on {{ now }}</p>
+    </div>
+
+    <div class="actions">
+      <input
+        type="checkbox"
+        id="show-urs-text"
+        checked
+        onclick="toggleTextVisibility('urs-text')"
+        onKeyPress="if(event.key === 'Enter') toggleTextVisibility('urs-text')"
+      />
+      <label for="show-urs-text">Show URS Text</label>
+      &nbsp;&nbsp;&nbsp;
+      <input
+        type="checkbox"
+        id="show-fs-text"
+        checked
+        onclick="toggleTextVisibility('fs-text')"
+        onKeyPress="if(event.key === 'Enter') toggleTextVisibility('fs-text')"
+      />
+      <label for="show-fs-text">Show FS Text</label>
+      &nbsp;&nbsp;&nbsp;
+      <input
+        type="checkbox"
+        id="show-tests"
+        checked
+        onclick="toggleTextVisibility('fs-tests')"
+        onKeyPress="if(event.key === 'Enter') toggleTextVisibility('fs-tests')"
+      />
+      <label for="show-tests">Show Tests</label>
+      &nbsp;&nbsp;&nbsp;
+      <input
+        type="checkbox"
+        id="show-warnings"
+        checked
+        onclick="toggleTextVisibility('warnings')"
+        onKeyPress="if(event.key === 'Enter') toggleTextVisibility('warnings')"
+      />
+      <label for="show-warnings">Show Warnings</label>
+    </div>
+
+    <div id="warnings" class="warnings">
+      <h2>Warnings</h2>
+      {{ warnings|safe }}
+    </div>
+
+    <div>{{ full_traceability|safe }}</div>
+  </body>
+</html>

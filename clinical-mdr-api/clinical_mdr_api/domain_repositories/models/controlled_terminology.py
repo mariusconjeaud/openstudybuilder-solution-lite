@@ -1,8 +1,11 @@
+from datetime import datetime
+
 from neomodel import (
     ArrayProperty,
     BooleanProperty,
     DateProperty,
     IntegerProperty,
+    One,
     RelationshipFrom,
     RelationshipTo,
     StringProperty,
@@ -54,6 +57,7 @@ class CTCodelistAttributesValue(ControlledTerminology):
     definition = StringProperty()
     extensible = BooleanProperty()
     synonyms = ArrayProperty()
+    ordinal = BooleanProperty(default=False)
 
 
 class CTCodelistAttributesRoot(ControlledTerminology):
@@ -103,8 +107,6 @@ class CTCodelistNameRoot(ControlledTerminology):
 
 class CTTermAttributesValue(ControlledTerminology):
     concept_id = StringProperty()
-    code_submission_value = StringProperty()
-    name_submission_value = StringProperty()
     preferred_term = StringProperty()
     definition = StringProperty()
     synonyms = ArrayProperty()
@@ -154,14 +156,14 @@ class CTTermNameRoot(ControlledTerminology):
 # pylint: disable=abstract-method
 class CodelistTermRelationship(ClinicalMdrRel):
     """
-    A `CodelistTermRelationship` represents a relationship between a `CTCodelistRoot` and a `CTTermRoot` node.
-    In the graph, these are persisted as `HAS_TERM`, `HAD_TERM`.
+    A `CodelistTermRelationship` represents a relationship between a `CTCodelistRoot` and a `CTCodelistTerm` node.
+    In the graph, these are persisted as `HAS_TERM`.
     """
 
-    start_date = ZonedDateTimeProperty()
-    end_date = ZonedDateTimeProperty()
+    start_date: datetime = ZonedDateTimeProperty()
+    end_date: datetime | None = ZonedDateTimeProperty()
     author_id = StringProperty()
-    order = IntegerProperty()
+    order: int | None = IntegerProperty()
 
 
 class CTCodelistRoot(ControlledTerminologyWithUID):
@@ -180,8 +182,21 @@ class CTCodelistRoot(ControlledTerminologyWithUID):
     )
     has_codelist = RelationshipFrom("CTCatalogue", "HAS_CODELIST", model=ClinicalMdrRel)
     has_library = RelationshipFrom(Library, LIBRARY_REL_TYPE, model=ClinicalMdrRel)
-    has_term = RelationshipTo("CTTermRoot", "HAS_TERM", model=CodelistTermRelationship)
-    had_term = RelationshipTo("CTTermRoot", "HAD_TERM", model=CodelistTermRelationship)
+    has_term = RelationshipTo(
+        "CTCodelistTerm", "HAS_TERM", model=CodelistTermRelationship
+    )
+    has_paired_code_codelist = RelationshipTo(
+        "CTCodelistRoot",
+        "PAIRED_CODE_CODELIST",
+        model=ClinicalMdrRel,
+        cardinality=ZeroOrOne,
+    )
+    has_paired_name_codelist = RelationshipFrom(
+        "CTCodelistRoot",
+        "PAIRED_CODE_CODELIST",
+        model=ClinicalMdrRel,
+        cardinality=ZeroOrOne,
+    )
 
 
 class CTTermRoot(ControlledTerminologyWithUID):
@@ -193,17 +208,34 @@ class CTTermRoot(ControlledTerminologyWithUID):
         CTTermAttributesRoot, "HAS_ATTRIBUTES_ROOT", model=ClinicalMdrRel
     )
     has_library = RelationshipFrom(Library, LIBRARY_REL_TYPE)
-    has_term = RelationshipFrom(
-        CTCodelistRoot, "HAS_TERM", model=CodelistTermRelationship
-    )
-    had_term = RelationshipFrom(
-        CTCodelistRoot, "HAD_TERM", model=CodelistTermRelationship
+    has_term_root = RelationshipFrom(
+        "CTCodelistTerm", "HAS_TERM_ROOT", model=ClinicalMdrRel
     )
     has_parent_type = RelationshipTo(
         "CTTermRoot", "HAS_PARENT_TYPE", model=ClinicalMdrRel
     )
+    parent_type_for = RelationshipFrom(
+        "CTTermRoot", "HAS_PARENT_TYPE", model=ClinicalMdrRel
+    )
     has_parent_subtype = RelationshipTo(
         "CTTermRoot", "HAS_PARENT_SUB_TYPE", model=ClinicalMdrRel
+    )
+    parent_subtype_for = RelationshipFrom(
+        "CTTermRoot", "HAS_PARENT_SUB_TYPE", model=ClinicalMdrRel
+    )
+    has_predecessor = RelationshipTo(
+        "CTTermRoot", "HAS_PREDECESSOR", model=ClinicalMdrRel
+    )
+    predecessor_for = RelationshipFrom(
+        "CTTermRoot", "HAS_PREDECESSOR", model=ClinicalMdrRel
+    )
+
+
+class CTCodelistTerm(ControlledTerminology):
+    submission_value = StringProperty()
+    has_term_root = RelationshipTo("CTTermRoot", "HAS_TERM_ROOT", model=ClinicalMdrRel)
+    has_term = RelationshipFrom(
+        "CTCodelistRoot", "HAS_TERM", model=CodelistTermRelationship
     )
 
 
@@ -215,4 +247,17 @@ class CTCatalogue(ClinicalMdrNode):
     has_codelist = RelationshipTo(CTCodelistRoot, "HAS_CODELIST", model=ClinicalMdrRel)
     contains_catalogue = RelationshipFrom(
         Library, "CONTAINS_CATALOGUE", model=ClinicalMdrRel
+    )
+
+
+class CTTermContext(ClinicalMdrNode):
+    has_selected_term = RelationshipTo(
+        "CTTermRoot", "HAS_SELECTED_TERM", model=ClinicalMdrRel, cardinality=One
+    )
+
+    has_selected_codelist = RelationshipTo(
+        "CTCodelistRoot",
+        "HAS_SELECTED_CODELIST",
+        model=ClinicalMdrRel,
+        cardinality=One,
     )

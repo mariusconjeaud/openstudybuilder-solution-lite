@@ -1,3 +1,6 @@
+from clinical_mdr_api.domain_repositories.controlled_terminologies.ct_codelist_attributes_repository import (
+    CTCodelistAttributesRepository,
+)
 from clinical_mdr_api.domain_repositories.models.generic import (
     Library,
     VersionRelationship,
@@ -22,6 +25,7 @@ from clinical_mdr_api.models.controlled_terminologies.ct_term import (
     SimpleTermName,
 )
 from clinical_mdr_api.utils import strip_html
+from common.config import settings
 
 
 class CriteriaPreInstanceRepository(
@@ -46,7 +50,7 @@ class CriteriaPreInstanceRepository(
             guidance_text=getattr(value, "guidance_text", None),
             library=LibraryVO.from_input_values_2(
                 library_name=library.name,
-                is_library_editable_callback=(lambda _: library.is_editable),
+                is_library_editable_callback=lambda _: library.is_editable,
             ),
             item_metadata=self._library_item_metadata_vo_from_relation(relationship),
             template=self.get_template_vo(root, value, kwargs["instance_template"]),
@@ -59,9 +63,6 @@ class CriteriaPreInstanceRepository(
                     ],
                 ),
                 attributes=SimpleTermAttributes(
-                    code_submission_value=kwargs["template_type"][
-                        "code_submission_value"
-                    ],
                     nci_preferred_name=kwargs["template_type"]["preferred_term"],
                 ),
             ),
@@ -86,7 +87,6 @@ class CriteriaPreInstanceRepository(
                             ],
                         ),
                         attributes=SimpleTermAttributes(
-                            code_submission_value=category["code_submission_value"],
                             nci_preferred_name=category["preferred_term"],
                         ),
                     )
@@ -106,7 +106,6 @@ class CriteriaPreInstanceRepository(
                             ],
                         ),
                         attributes=SimpleTermAttributes(
-                            code_submission_value=subcategory["code_submission_value"],
                             nci_preferred_name=subcategory["preferred_term"],
                         ),
                     )
@@ -130,10 +129,22 @@ class CriteriaPreInstanceRepository(
 
         for indication in item.indications or []:
             root.has_indication.connect(self._get_indication(indication.term_uid))
+
         for category in item.categories or []:
-            root.has_category.connect(self._get_category(category.term_uid))
-        for category in item.sub_categories or []:
-            root.has_subcategory.connect(self._get_category(category.term_uid))
+            selected_term_node = CTCodelistAttributesRepository().get_or_create_selected_term(
+                self._get_category(category.term_uid),
+                codelist_submission_value=settings.syntax_criteria_category_cl_submval,
+                catalogue_name=settings.sdtm_ct_catalogue_name,
+            )
+            root.has_category.connect(selected_term_node)
+
+        for sub_category in item.sub_categories or []:
+            selected_term_node = CTCodelistAttributesRepository().get_or_create_selected_term(
+                self._get_category(sub_category.term_uid),
+                codelist_submission_value=settings.syntax_criteria_sub_category_cl_submval,
+                catalogue_name=settings.sdtm_ct_catalogue_name,
+            )
+            root.has_subcategory.connect(selected_term_node)
 
         return item
 
@@ -141,27 +152,33 @@ class CriteriaPreInstanceRepository(
         return ar.name != value.name or ar.guidance_text != value.guidance_text
 
     def _get_or_create_value(
-        self, root: CriteriaPreInstanceRoot, ar: CriteriaPreInstanceAR
+        self,
+        root: CriteriaPreInstanceRoot,
+        ar: CriteriaPreInstanceAR,
+        force_new_value_node: bool = False,
     ) -> VersionValue:
-        (
-            has_version_rel,
-            _,
-            latest_draft_rel,
-            latest_final_rel,
-            latest_retired_rel,
-        ) = self._get_version_relation_keys(root)
-        for itm in has_version_rel.filter(name=ar.name, guidance_text=ar.guidance_text):
-            return itm
+        if not force_new_value_node:
+            (
+                has_version_rel,
+                _,
+                latest_draft_rel,
+                latest_final_rel,
+                latest_retired_rel,
+            ) = self._get_version_relation_keys(root)
+            for itm in has_version_rel.filter(
+                name=ar.name, guidance_text=ar.guidance_text
+            ):
+                return itm
 
-        latest_draft = latest_draft_rel.get_or_none()
-        if latest_draft and not self._has_data_changed(ar, latest_draft):
-            return latest_draft
-        latest_final = latest_final_rel.get_or_none()
-        if latest_final and not self._has_data_changed(ar, latest_final):
-            return latest_final
-        latest_retired = latest_retired_rel.get_or_none()
-        if latest_retired and not self._has_data_changed(ar, latest_retired):
-            return latest_retired
+            latest_draft = latest_draft_rel.get_or_none()
+            if latest_draft and not self._has_data_changed(ar, latest_draft):
+                return latest_draft
+            latest_final = latest_final_rel.get_or_none()
+            if latest_final and not self._has_data_changed(ar, latest_final):
+                return latest_final
+            latest_retired = latest_retired_rel.get_or_none()
+            if latest_retired and not self._has_data_changed(ar, latest_retired):
+                return latest_retired
 
         new_value = self.value_class(
             name=ar.name, guidance_text=ar.guidance_text, name_plain=strip_html(ar.name)

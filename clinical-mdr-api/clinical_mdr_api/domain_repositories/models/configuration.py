@@ -23,6 +23,7 @@ class CTConfigValue(VersionValue):
     has_configured_codelist = RelationshipTo(
         CTCodelistRoot, "HAS_CONFIGURED_CODELIST", model=ClinicalMdrRel
     )
+    # TODO update to CTTermContext
     has_configured_term = RelationshipTo(
         CTTermRoot, "HAS_CONFIGURED_TERM", model=ClinicalMdrRel
     )

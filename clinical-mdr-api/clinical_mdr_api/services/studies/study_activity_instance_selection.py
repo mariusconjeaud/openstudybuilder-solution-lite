@@ -1,6 +1,7 @@
+import dataclasses
 from collections import defaultdict
 from datetime import datetime
-from typing import Callable, Iterable, Mapping
+from typing import Callable, Iterable
 
 from fastapi import status
 from neomodel import db
@@ -15,22 +16,18 @@ from clinical_mdr_api.domain_repositories.study_selections.study_activity_instan
 from clinical_mdr_api.domains.concepts.activities.activity_instance import (
     ActivityInstanceAR,
 )
+from clinical_mdr_api.domains.study_selections.study_selection_activity import (
+    StudySelectionActivityVO,
+)
 from clinical_mdr_api.domains.study_selections.study_selection_activity_instance import (
     StudySelectionActivityInstanceAR,
     StudySelectionActivityInstanceVO,
 )
 from clinical_mdr_api.domains.versioned_object_aggregate import LibraryItemStatus
-from clinical_mdr_api.models.concepts.activities.activity import (
-    ActivityForStudyActivity,
-    ActivityHierarchySimpleModel,
-)
-from clinical_mdr_api.models.concepts.activities.activity_instance import (
-    ActivityInstance,
-)
 from clinical_mdr_api.models.error import BatchErrorResponse
 from clinical_mdr_api.models.study_selections.study_selection import (
     StudySelectionActivityInstance,
-    StudySelectionActivityInstanceBatchCreate,
+    StudySelectionActivityInstanceBatchInput,
     StudySelectionActivityInstanceBatchOutput,
     StudySelectionActivityInstanceCreateInput,
     StudySelectionActivityInstanceEditInput,
@@ -50,7 +47,13 @@ from common import exceptions
 from common.auth.user import user
 
 
-class StudyActivityInstanceSelectionService(StudyActivitySelectionBaseService):
+class StudyActivityInstanceSelectionService(
+    StudyActivitySelectionBaseService[
+        StudySelectionActivityInstanceAR,
+        StudySelectionActivityInstanceVO,
+        StudySelectionActivityInstance,
+    ]
+):
     _repos: MetaRepository
     repository_interface = StudySelectionActivityInstanceRepository
     selected_object_repository_interface = ActivityInstanceRepository
@@ -67,7 +70,7 @@ class StudyActivityInstanceSelectionService(StudyActivitySelectionBaseService):
         study_uid: str,
         study_selection_uid: str,
         new_order: int,
-    ) -> tuple[StudySelectionActivityInstanceAR, StudySelectionActivityInstanceVO]:
+    ):
         pass
 
     def _filter_ars_from_same_parent(
@@ -97,69 +100,26 @@ class StudyActivityInstanceSelectionService(StudyActivitySelectionBaseService):
         specific_selection: StudySelectionActivityInstanceVO,
         terms_at_specific_datetime: datetime | None = None,
         accepted_version: bool = False,
-        activity_versions_by_uid: (
-            Mapping[str, Iterable[ActivityForStudyActivity]] | None
-        ) = None,
-        activity_instance_versions_by_uid: (
-            Mapping[str, Iterable[ActivityInstance]] | None
-        ) = None,
     ) -> StudySelectionActivityInstance:
         return StudySelectionActivityInstance.from_study_selection_activity_instance_vo_and_order(
             study_uid=study_uid,
             study_selection=specific_selection,
-            get_activity_by_uid_callback=self._transform_latest_activity_model,
-            get_activity_by_uid_version_callback=self._transform_activity_model,
-            get_activity_instance_by_uid_callback=self._transform_latest_activity_instance_model,
-            get_activity_instance_by_uid_version_callback=self._transform_activity_instance_model,
-            activity_versions_by_uid=activity_versions_by_uid,
-            activity_instance_versions_by_uid=activity_instance_versions_by_uid,
         )
 
     def _transform_all_to_response_model(
         self,
-        study_selection: StudySelectionActivityInstanceAR,
+        study_selection: StudySelectionActivityInstanceAR | None,
         study_value_version: str | None = None,
     ) -> list[StudySelectionActivityInstance]:
-        activity_versions_by_uid: dict[str, list[ActivityForStudyActivity]] = (
-            defaultdict(list)
-        )
-
-        for activity in self._get_linked_activities(
-            study_selection.study_objects_selection
-        ):
-            activity_versions_by_uid[activity.uid].append(
-                ActivityForStudyActivity.from_activity_ar_objects(
-                    activity,
-                    activity_instance_ars=[
-                        ActivityHierarchySimpleModel(**item)
-                        for item in activity.concept_vo.activity_instances
-                    ],
-                )
-            )
-
-        activity_instance_versions_by_uid: dict[str, list[ActivityInstance]] = (
-            defaultdict(list)
-        )
-
-        for activity_instance in self._get_linked_activity_instances(
-            study_selection.study_objects_selection
-        ):
-            activity_instance_versions_by_uid[activity_instance.uid].append(
-                ActivityInstance.from_activity_instance_ar_objects(
-                    activity_instance_ar=activity_instance
-                )
-            )
+        if study_selection is None:
+            return []
 
         return [
             self._transform_from_vo_to_response_model(
                 study_uid=specific_selection.study_uid,
                 specific_selection=specific_selection,
-                activity_versions_by_uid=activity_versions_by_uid,
-                activity_instance_versions_by_uid=activity_instance_versions_by_uid,
             )
-            for order, specific_selection in enumerate(
-                study_selection.study_objects_selection, start=1
-            )
+            for specific_selection in study_selection.study_objects_selection
         ]
 
     def _get_linked_activity_instances(
@@ -191,8 +151,6 @@ class StudyActivityInstanceSelectionService(StudyActivitySelectionBaseService):
                 StudySelectionActivityInstance.from_study_selection_history(
                     study_selection_history=history,
                     study_uid=study_uid,
-                    get_activity_by_uid_version_callback=self._transform_activity_model,
-                    get_activity_instance_by_uid_version_callback=self._transform_activity_instance_model,
                 )
             )
         return result
@@ -200,14 +158,25 @@ class StudyActivityInstanceSelectionService(StudyActivitySelectionBaseService):
     def activity_instance_validation(
         self,
         activity_instance_uid: str,
-        study_activity_selection: StudySelectionActivityInstanceVO,
+        study_activity_selection: StudySelectionActivityVO,
+        current_activity_instance_uid: str | None = None,
+        current_activity_instance_version: str | None = None,
     ):
         activity_instance_service = ActivityInstanceService()
-        activity_instance_ar = activity_instance_service.repository.find_by_uid_2(
-            activity_instance_uid, for_update=True
-        )
+
+        # If ActivityInstance wasn't changed we should fetch it in the version it was selected by StudyActivityInstance
+        if activity_instance_uid == current_activity_instance_uid:
+            activity_instance_ar = activity_instance_service.repository.find_by_uid_2(
+                activity_instance_uid,
+                version=current_activity_instance_version,
+            )
+        else:
+            activity_instance_ar = activity_instance_service.repository.find_by_uid_2(
+                activity_instance_uid
+            )
+
         exceptions.NotFoundException.raise_if_not(
-            activity_instance_uid, "Activity Instance", activity_instance_uid
+            activity_instance_ar, "Activity Instance", activity_instance_uid
         )
 
         exceptions.NotFoundException.raise_if(
@@ -218,6 +187,14 @@ class StudyActivityInstanceSelectionService(StudyActivitySelectionBaseService):
             ],
             msg=f"There is no approved Activity Instance with UID '{activity_instance_uid}'.",
         )
+
+        if (
+            study_activity_selection.activity_subgroup_uid is None
+            or study_activity_selection.activity_group_uid is None
+        ):
+            raise exceptions.BusinessLogicException(
+                msg="Activity Subgroup UID and Activity Group UID must be provided for new selections."
+            )
 
         related_activity_instances = self._repos.activity_instance_repository.get_all_activity_instances_for_activity_grouping(
             activity_uid=study_activity_selection.activity_uid,
@@ -273,17 +250,9 @@ class StudyActivityInstanceSelectionService(StudyActivitySelectionBaseService):
         )
         return new_selection
 
-    @db.transaction
-    def make_selection(
-        self,
-        study_uid: str,
-        selection_create_input: StudySelectionActivityInstanceCreateInput,
-    ) -> StudySelectionActivityInstance:
-        return self.non_transactional_make_selection(
-            study_uid=study_uid, selection_create_input=selection_create_input
-        )
+    ensure_transaction(db)
 
-    def non_transactional_make_selection(
+    def make_selection(
         self,
         study_uid: str,
         selection_create_input: StudySelectionActivityInstanceCreateInput,
@@ -332,18 +301,40 @@ class StudyActivityInstanceSelectionService(StudyActivitySelectionBaseService):
     def delete_selection(self, study_uid: str, study_selection_uid: str):
         repos = self._repos
         try:
-            # Load aggregate
             selection_aggregate = (
                 repos.study_activity_instance_repository.find_by_study(
                     study_uid=study_uid, for_update=True
                 )
             )
 
-            # remove the connection
-            assert selection_aggregate is not None
-            selection_aggregate.remove_object_selection(study_selection_uid)
+            selection_to_delete, _ = selection_aggregate.get_specific_object_selection(
+                study_selection_uid=study_selection_uid
+            )
+            other_selections_referencing_same_activity = [
+                selection
+                for selection in selection_aggregate.study_objects_selection
+                if selection.activity_uid == selection_to_delete.activity_uid
+                and selection.study_selection_uid != study_selection_uid
+            ]
 
-            # sync with DB and save the update
+            if other_selections_referencing_same_activity:
+                selection_aggregate.remove_object_selection(study_selection_uid)
+            elif (
+                not other_selections_referencing_same_activity
+                and selection_to_delete.activity_instance_uid
+            ):
+                selection_aggregate.update_selection(
+                    updated_study_object_selection=dataclasses.replace(
+                        selection_to_delete, activity_instance_uid=None
+                    ),
+                    object_exist_callback=self._get_selected_object_exist_check(),
+                    ct_term_level_exist_callback=self._repos.ct_term_name_repository.term_specific_exists_by_uid,
+                )
+            else:
+                exceptions.BusinessLogicException.raise_if(
+                    True, msg="Activity cannot be deleted"
+                )
+            selection_aggregate.validate()
             repos.study_activity_instance_repository.save(
                 selection_aggregate, self.author
             )
@@ -360,6 +351,7 @@ class StudyActivityInstanceSelectionService(StudyActivitySelectionBaseService):
             show_activity_instance_in_protocol_flowchart=current_object.show_activity_instance_in_protocol_flowchart,
             activity_instance_uid=current_object.activity_instance_uid,
             study_activity_uid=current_object.study_activity_uid,
+            keep_old_version=current_object.keep_old_version,
         )
 
         # fill the missing from the inputs
@@ -376,6 +368,8 @@ class StudyActivityInstanceSelectionService(StudyActivitySelectionBaseService):
             activity_instance_ar = self.activity_instance_validation(
                 activity_instance_uid=request_object.activity_instance_uid,
                 study_activity_selection=study_activity_selection,
+                current_activity_instance_uid=current_object.activity_instance_uid,
+                current_activity_instance_version=current_object.activity_instance_version,
             )
         else:
             activity_instance_ar = None
@@ -399,6 +393,7 @@ class StudyActivityInstanceSelectionService(StudyActivitySelectionBaseService):
             activity_version=current_object.activity_version,
             study_activity_uid=current_object.study_activity_uid,
             show_activity_instance_in_protocol_flowchart=request_object.show_activity_instance_in_protocol_flowchart,
+            keep_old_version=request_object.keep_old_version,
         )
 
     def get_specific_selection(
@@ -446,6 +441,11 @@ class StudyActivityInstanceSelectionService(StudyActivitySelectionBaseService):
         new_selection: StudySelectionActivityInstanceVO = selection.update_version(
             activity_instance_version=activity_instance_ar.item_metadata.version
         )
+
+        # When we sync to latest version it means we clear keep_old_version flag as user
+        # decided to update to latest version
+        new_selection = new_selection.update_keep_old_version(keep_old_version=False)
+
         selection_ar.update_selection(new_selection)
         self._repos.study_activity_instance_repository.save(selection_ar, self.author)
 
@@ -455,42 +455,42 @@ class StudyActivityInstanceSelectionService(StudyActivitySelectionBaseService):
         )
 
     @ensure_transaction(db)
-    def batch_create(
+    def handle_batch_operations(
         self,
         study_uid: str,
-        create_payload: StudySelectionActivityInstanceBatchCreate,
+        operations: list[StudySelectionActivityInstanceBatchInput],
     ) -> list[StudySelectionActivityInstanceBatchOutput]:
         results = []
-        study_activity_instance_aggregate = self.repository.find_by_study(
-            study_uid=study_uid, for_update=True
-        )
-        selected_instances = {
-            study_activity_instance.activity_instance_uid: study_activity_instance.study_selection_uid
-            for study_activity_instance in study_activity_instance_aggregate.study_objects_selection
-        }
-
-        for activity_instance_uid in create_payload.activity_instance_uids:
-            result = {}
+        for operation in operations:
+            item = None
             try:
-                if activity_instance_uid not in selected_instances:
-                    item = self.non_transactional_make_selection(
+                if operation.method == "PATCH":
+                    item = self.patch_selection(
+                        study_uid=study_uid,
+                        study_selection_uid=operation.content.study_activity_instance_uid,
+                        selection_update_input=StudySelectionActivityInstanceEditInput(
+                            activity_instance_uid=operation.content.activity_instance_uid,
+                            study_activity_uid=operation.content.study_activity_uid,
+                        ),
+                    )
+                    response_code = status.HTTP_200_OK
+                elif operation.method == "POST":
+                    item = self.make_selection(
                         study_uid=study_uid,
                         selection_create_input=StudySelectionActivityInstanceCreateInput(
-                            activity_instance_uid=activity_instance_uid,
-                            study_activity_uid=create_payload.study_activity_uid,
+                            activity_instance_uid=operation.content.activity_instance_uid,
+                            study_activity_uid=operation.content.study_activity_uid,
                         ),
                     )
                     response_code = status.HTTP_201_CREATED
                 else:
-                    item = self.get_specific_selection(
-                        study_uid=study_uid,
-                        study_selection_uid=selected_instances[activity_instance_uid],
+                    raise exceptions.MethodNotAllowedException(method=operation.method)
+                results.append(
+                    StudySelectionActivityInstanceBatchOutput(
+                        response_code=response_code,
+                        content=item,
                     )
-                    response_code = status.HTTP_200_OK
-                result["response_code"] = response_code
-                if item:
-                    result["content"] = item.model_dump()
-                results.append(StudySelectionActivityInstanceBatchOutput(**result))
+                )
             except exceptions.MDRApiBaseException as error:
                 results.append(
                     StudySelectionActivityInstanceBatchOutput.model_construct(

@@ -2,7 +2,7 @@ import copy
 from dataclasses import dataclass, fields
 from datetime import datetime, timezone
 from decimal import Decimal
-from typing import Any, Mapping, MutableSequence, Sequence, cast
+from typing import Any, Mapping, MutableSequence, Sequence, cast, overload
 
 from neomodel import NodeSet
 from neomodel.exceptions import DoesNotExist
@@ -10,9 +10,16 @@ from neomodel.sync_.core import NodeMeta, db
 from neomodel.sync_.match import Collect, Last
 
 from clinical_mdr_api import utils
+from clinical_mdr_api.domain_repositories._utils.helpers import (
+    acquire_write_lock_study_value,
+)
+from clinical_mdr_api.domain_repositories.controlled_terminologies.ct_codelist_attributes_repository import (
+    CTCodelistAttributesRepository,
+)
 from clinical_mdr_api.domain_repositories.generic_repository import RepositoryImpl
 from clinical_mdr_api.domain_repositories.models.concepts import UnitDefinitionRoot
 from clinical_mdr_api.domain_repositories.models.controlled_terminology import (
+    CTTermContext,
     CTTermRoot,
 )
 from clinical_mdr_api.domain_repositories.models.dictionary import DictionaryTermRoot
@@ -74,13 +81,7 @@ from clinical_mdr_api.repositories._utils import (
 from clinical_mdr_api.services._utils import calculate_diffs
 from clinical_mdr_api.services.user_info import UserInfoService
 from common import exceptions
-from common.config import (
-    CT_UID_BOOLEAN_NO,
-    CT_UID_BOOLEAN_YES,
-    STUDY_FIELD_PREFERRED_TIME_UNIT_NAME,
-    STUDY_FIELD_SOA_PREFERRED_TIME_UNIT_NAME,
-    STUDY_SOA_PREFERENCES_FIELDS,
-)
+from common.config import settings
 from common.utils import convert_to_datetime
 
 MAINTAIN_RELATIONSHIPS_FOR_NEW_STUDY_VALUE = {
@@ -152,22 +153,6 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
         super().__init__()
         self.audit_info.author_id = author_id
 
-    @staticmethod
-    def _acquire_write_lock(uid: str) -> None:
-        """
-        Acquires exclusive lock on (Study) root object of given uid.
-        :param uid:
-        :return:
-        """
-        db.cypher_query(
-            """
-             MATCH (otr:StudyRoot {uid: $uid})
-             REMOVE otr.__WRITE_LOCK__
-             RETURN true
-            """,
-            {"uid": uid},
-        )
-
     @classmethod
     def _retrieve_draft_study_metadata_snapshot(
         cls,
@@ -193,6 +178,8 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
         latest_locked_relationship: VersionRelationship | None,
         locked_snapshot: StudyDefinitionSnapshot.StudyMetadataSnapshot | None,
     ):
+        current_metadata_snapshot: StudyDefinitionSnapshot.StudyMetadataSnapshot | None
+
         # some parts of current metadata metadata (those regarding version info) are stored in different way
         # in the underlying DB depending whether current version is draft version or locked
         # so we must retrieve those in different way
@@ -268,14 +255,14 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
         # now we have all locked metadata snapshot in locked_metadata_snapshots list. However in indeterminate order
         # and aggregate want them chronological. So we need to sort the list by version_timestamp
         locked_metadata_snapshots.sort(
-            key=(lambda _: cast(datetime, _.version_timestamp))
+            key=lambda _: cast(datetime, _.version_timestamp)
         )
 
         return locked_metadata_snapshots
 
     @classmethod
     def _retrieve_all_snapshots_from_cypher_query_result(
-        cls, result_set: list[dict], deleted: bool = False
+        cls, result_set: list[dict[Any, Any]], deleted: bool = False
     ) -> list[StudyDefinitionSnapshot]:
         """
         Function maps the result of the cypher query which is list of dictionaries into
@@ -488,7 +475,7 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
     ) -> tuple[StudyDefinitionSnapshot | None, Any]:
         if for_update:
             self._ensure_transaction()
-            self._acquire_write_lock(uid)
+            acquire_write_lock_study_value(uid)
 
             # we should be able to return deleted studies
             # but it should not be possible to be edited
@@ -707,10 +694,10 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
         if expected_latest_value is not previous_value:
             # remove the relation from the old value node
             preferred_time_unit_node = previous_value.has_time_field.get_or_none(
-                field_name=STUDY_FIELD_PREFERRED_TIME_UNIT_NAME
+                field_name=settings.study_field_preferred_time_unit_name
             )
             soa_preferred_time_unit_node = previous_value.has_time_field.get_or_none(
-                field_name=STUDY_FIELD_SOA_PREFERRED_TIME_UNIT_NAME
+                field_name=settings.study_field_soa_preferred_time_unit_name
             )
             if preferred_time_unit_node is not None:
                 # add the relation to the new node
@@ -728,7 +715,7 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
         # if new value node is created
         if expected_latest_value is not previous_value:
             nodes = previous_value.has_boolean_field.filter(
-                field_name__in=STUDY_SOA_PREFERENCES_FIELDS
+                field_name__in=settings.study_soa_preferences_fields
             )
 
             for node in nodes:
@@ -928,11 +915,13 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
 
             # update and reconnect LATEST_LOCKED relationship if there is one
             if latest_locked is not None:
+                if current_snapshot.current_metadata.version_timestamp is None:
+                    raise ValueError("Version timestamp must not be None.")
+
                 latest_locked.start_date = (
                     current_snapshot.current_metadata.version_timestamp
                 )
                 latest_locked.author_id = self.audit_info.author_id
-                latest_locked.end_date = None
                 latest_locked.change_description = (
                     current_snapshot.current_metadata.version_description
                 )
@@ -967,6 +956,9 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
         # if this is study in DRAFT state we need to update LATEST_DRAFT attributes and possibly reconnect
         if current_snapshot.study_status == StudyStatus.DRAFT.value:
             # we need to update attributes of latest DRAFT
+            if current_snapshot.current_metadata.version_timestamp is None:
+                raise ValueError("Version timestamp must not be None.")
+
             latest_draft_relationship.start_date = (
                 current_snapshot.current_metadata.version_timestamp
             )
@@ -1102,7 +1094,7 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
         study_root: StudyRoot,
         study_field_name: str,
         study_field_value: Any,
-        term_root_node: CTTermRoot | DictionaryTermRoot | None,
+        term_node: CTTermContext | DictionaryTermRoot | None,
         null_value_code: str | None = None,
         to_delete: bool = False,
     ):
@@ -1119,12 +1111,52 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
                     "field_name": study_field_name,
                 }
             )[0]
-        if term_root_node:
-            study_field_node.has_type.connect(term_root_node)
+        if term_node:
+            # check if the term is already connected
+            existing_term_rel = study_field_node.has_type.get_or_none()
+            if existing_term_rel:
+                existing_term = existing_term_rel.has_selected_term.get_or_none()
+                new_term = term_node.has_selected_term.get_or_none()
+                if existing_term.uid != new_term.uid:
+                    # disconnect the existing term relationship if it exists
+                    study_field_node.has_type.disconnect(existing_term)
+                    study_field_node.has_type.connect(term_node)
+            else:
+                study_field_node.has_type.connect(term_node)
         if null_value_code:
+            existing_null_value_reason = None
+            existing_null_value_reason_rel = (
+                study_field_node.has_reason_for_null_value.get_or_none()
+            )
+            if existing_null_value_reason_rel:
+                existing_null_value_reason = (
+                    existing_null_value_reason_rel.has_selected_term.get_or_none()
+                )
+
+            # Return early if the null value reason is already correctly set
+            if (
+                existing_null_value_reason
+                and existing_null_value_reason.uid == null_value_code
+            ):
+                return study_field_node
+
+            # Disconnect the existing null value reason relationship if it exists
+            if existing_null_value_reason:
+                study_field_node.has_reason_for_null_value.disconnect(
+                    existing_null_value_reason
+                )
+
+            # TODO This doesn't do much, just gets the node with the given uid
             null_value_reason_node = self._get_associated_ct_term_root_node(
                 term_uid=null_value_code,
                 study_field_name="Null Flavour",
+            )
+            null_value_reason_node = (
+                CTCodelistAttributesRepository().get_or_create_selected_term(
+                    null_value_reason_node,
+                    codelist_submission_value=settings.null_flavor_cl_submval,
+                    catalogue_name=settings.sdtm_ct_catalogue_name,
+                )
             )
 
             study_field_node.has_reason_for_null_value.connect(null_value_reason_node)
@@ -1202,14 +1234,17 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
                     or study_field_null_value_code is not None
                 ):
                     node_uid = None
+                    configured_codelist_uid = None
                     if config_item.configured_codelist_uid:
+                        configured_codelist_uid = config_item.configured_codelist_uid
                         node_uid = study_field_value
                     elif config_item.study_field_data_type == StudyFieldType.BOOL:
                         node_uid = (
-                            CT_UID_BOOLEAN_YES
+                            settings.ct_uid_boolean_yes
                             if study_field_value
-                            else CT_UID_BOOLEAN_NO
+                            else settings.ct_uid_boolean_no
                         )
+                        configured_codelist_uid = settings.ct_uid_boolean_codelist
                     elif config_item.configured_term_uid:
                         node_uid = config_item.configured_term_uid
                     if node_uid:
@@ -1218,6 +1253,12 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
                             study_field_name=study_field_name,
                             is_dictionary_term=config_item.is_dictionary_term,
                         )
+                        if not config_item.is_dictionary_term:
+                            ct_term_root_node = CTCodelistAttributesRepository().get_or_create_selected_term(
+                                ct_term_root_node,
+                                codelist_uid=configured_codelist_uid,
+                                catalogue_name=settings.sdtm_ct_catalogue_name,
+                            )
                     else:
                         ct_term_root_node = None
 
@@ -1228,7 +1269,7 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
                                 study_root=study_root,
                                 study_field_name=study_field_name,
                                 study_field_value=study_field_value,
-                                term_root_node=ct_term_root_node,
+                                term_node=ct_term_root_node,
                                 to_delete=to_delete,
                             )
                             if not to_delete:
@@ -1241,7 +1282,7 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
                                 study_root=study_root,
                                 study_field_name=study_field_name,
                                 study_field_value=study_field_value,
-                                term_root_node=ct_term_root_node,
+                                term_node=ct_term_root_node,
                                 to_delete=to_delete,
                             )
                             if not to_delete:
@@ -1254,7 +1295,7 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
                                 study_root=study_root,
                                 study_field_name=study_field_name,
                                 study_field_value=study_field_value,
-                                term_root_node=ct_term_root_node,
+                                term_node=ct_term_root_node,
                                 to_delete=to_delete,
                             )
                             if not to_delete:
@@ -1267,7 +1308,7 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
                                 study_root=study_root,
                                 study_field_name=study_field_name,
                                 study_field_value=study_field_value,
-                                term_root_node=ct_term_root_node,
+                                term_node=ct_term_root_node,
                                 to_delete=to_delete,
                             )
                             if not to_delete:
@@ -1282,7 +1323,7 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
                                 study_root=study_root,
                                 study_field_name=study_field_name,
                                 study_field_value=study_field_value,
-                                term_root_node=ct_term_root_node,
+                                term_node=ct_term_root_node,
                                 null_value_code=study_field_null_value_code,
                                 to_delete=to_delete,
                             )
@@ -1296,7 +1337,7 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
                                 study_root=study_root,
                                 study_field_name=study_field_name,
                                 study_field_value=study_field_value,
-                                term_root_node=ct_term_root_node,
+                                term_node=ct_term_root_node,
                                 null_value_code=study_field_null_value_code,
                                 to_delete=to_delete,
                             )
@@ -1310,7 +1351,7 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
                                 study_root=study_root,
                                 study_field_name=study_field_name,
                                 study_field_value=study_field_value,
-                                term_root_node=ct_term_root_node,
+                                term_node=ct_term_root_node,
                                 null_value_code=study_field_null_value_code,
                                 to_delete=to_delete,
                             )
@@ -1324,7 +1365,7 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
                                 study_root=study_root,
                                 study_field_name=study_field_name,
                                 study_field_value=study_field_value,
-                                term_root_node=ct_term_root_node,
+                                term_node=ct_term_root_node,
                                 null_value_code=study_field_null_value_code,
                                 to_delete=to_delete,
                             )
@@ -1457,6 +1498,12 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
                                     study_field_name=study_array_field_name,
                                     is_dictionary_term=config_item.is_dictionary_term,
                                 )
+                                if not config_item.is_dictionary_term:
+                                    ct_term_root_node = CTCodelistAttributesRepository().get_or_create_selected_term(
+                                        ct_term_root_node,
+                                        codelist_uid=config_item.configured_codelist_uid,
+                                        catalogue_name=settings.sdtm_ct_catalogue_name,
+                                    )
                                 ct_term_root_nodes.append(ct_term_root_node)
                     if study_array_field_value:
                         # If the value is set, create a StudyTextField node and (optionally) link it to matching CT term.
@@ -1474,6 +1521,16 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
                                     "field_name": study_array_field_name,
                                 }
                             )[0]
+                        # disconnect any existing has_term or has_dictionary_term relationships
+                        if config_item.is_dictionary_term:
+                            for rel in study_array_field_node.has_dictionary_type.all():
+                                study_array_field_node.has_dictionary_type.disconnect(
+                                    rel
+                                )
+                        else:
+                            for rel in study_array_field_node.has_type.all():
+                                study_array_field_node.has_type.disconnect(rel)
+                        # then reconnect the new set
                         for term_root_node in ct_term_root_nodes:
                             if not config_item.is_dictionary_term:
                                 study_array_field_node.has_type.connect(term_root_node)
@@ -1501,15 +1558,47 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
                             study_array_field_node = StudyArrayField.create(
                                 {"value": [], "field_name": study_array_field_name}
                             )[0]
+                        # disconnect any existing has_type relationships
+                        for rel in study_array_field_node.has_type.all():
+                            study_array_field_node.has_type.disconnect(rel)
+                        # then reconnect the new set
                         for ct_term_root_node in ct_term_root_nodes:
                             study_array_field_node.has_type.connect(ct_term_root_node)
-                        null_value_reason_node = self._get_associated_ct_term_root_node(
-                            term_uid=study_array_field_null_value_code,
-                            study_field_name="Null Flavor",
+
+                        # check if the same null flavor reason is already connected,
+                        # don't connect again if so
+                        existing_null_value_reason_uid = None
+                        existing_null_value_reason_rel = (
+                            study_array_field_node.has_reason_for_null_value.get_or_none()
                         )
-                        study_array_field_node.has_reason_for_null_value.connect(
-                            null_value_reason_node
-                        )
+                        if existing_null_value_reason_rel:
+                            existing_null_value_reason_uid = (
+                                existing_null_value_reason_rel.has_selected_term.get_or_none().uid
+                            )
+                            if (
+                                existing_null_value_reason_uid
+                                != study_array_field_null_value_code
+                            ):
+                                study_array_field_node.has_reason_for_null_value.disconnect(
+                                    existing_null_value_reason_rel
+                                )
+                                existing_null_value_reason_uid = None
+
+                        if not existing_null_value_reason_uid:
+                            null_value_reason_node = (
+                                self._get_associated_ct_term_root_node(
+                                    term_uid=study_array_field_null_value_code,
+                                    study_field_name="Null Flavor",
+                                )
+                            )
+                            null_value_reason_node = CTCodelistAttributesRepository().get_or_create_selected_term(
+                                null_value_reason_node,
+                                codelist_submission_value=settings.null_flavor_cl_submval,
+                                catalogue_name=settings.sdtm_ct_catalogue_name,
+                            )
+                            study_array_field_node.has_reason_for_null_value.connect(
+                                null_value_reason_node
+                            )
                         if not to_delete:
                             expected_latest_value.has_array_field.connect(
                                 study_array_field_node
@@ -1616,7 +1705,7 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
                             study_root=study_root,
                             study_field_name=study_registry_id_name,
                             study_field_value=study_registry_id_value,
-                            term_root_node=None,
+                            term_node=None,
                             to_delete=to_delete,
                         )
                     )
@@ -1632,7 +1721,7 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
                             study_root=study_root,
                             study_field_name=study_registry_id_name,
                             study_field_value=study_registry_id_value,
-                            term_root_node=None,
+                            term_node=None,
                             null_value_code=study_registry_null_value_code,
                             to_delete=to_delete,
                         )
@@ -1681,24 +1770,28 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
         )
         retrieved_data[study_field_node_name] = study_field_node_value
         if null_value_code is not None:
-            retrieved_data[null_value_field_name] = null_value_code.uid
+            retrieved_data[null_value_field_name] = (
+                null_value_code.has_selected_term.single().uid
+            )
         else:
             retrieved_data[null_value_field_name] = None
 
     @classmethod
     def _get_text_field_value(cls, text_field_node) -> str:
-        if type_node := text_field_node.has_type.get_or_none():
-            return type_node.uid
+        if type_context_node := text_field_node.has_type.get_or_none():
+            return type_context_node.has_selected_term.get_or_none().uid
         return text_field_node.value
 
     @classmethod
     def _get_array_field_values(cls, array_field_node) -> list[str]:
         if type_nodes := array_field_node.has_type.all():
-            return sorted(node.uid for node in type_nodes)
+            return sorted(
+                node.has_selected_term.get_or_none().uid for node in type_nodes
+            )
         return array_field_node.value
 
     @classmethod
-    def _retrieve_data_from_study_value(cls, study_value: StudyValue) -> dict:
+    def _retrieve_data_from_study_value(cls, study_value: StudyValue) -> dict[Any, Any]:
         """
         Function traverses relationships from StudyValue to different StudyFields and retrieves the data from
         StudyField nodes to populate that data to the StudyDefinitionSnapshot.
@@ -1818,7 +1911,7 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
     ) -> StudyDefinitionSnapshot.StudyMetadataSnapshot:
         retrieved_data = cls._retrieve_data_from_study_value(study_value)
 
-        snapshot_dict = {}
+        snapshot_dict: dict[Any, Any] = {}
         for config_item in FieldConfiguration.default_field_config():
             if config_item.study_field_grouping == "ver_metadata":
                 snapshot_dict[config_item.study_field_name] = None
@@ -1838,9 +1931,19 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
                 )
         return StudyDefinitionSnapshot.StudyMetadataSnapshot(**snapshot_dict)
 
+    @overload
     @classmethod
     def _study_metadata_snapshot_from_cypher_res(
-        cls, metadata_section: dict | None
+        cls, metadata_section: dict[Any, Any]
+    ) -> StudyDefinitionSnapshot.StudyMetadataSnapshot: ...
+    @overload
+    @classmethod
+    def _study_metadata_snapshot_from_cypher_res(
+        cls, metadata_section: None
+    ) -> None: ...
+    @classmethod
+    def _study_metadata_snapshot_from_cypher_res(
+        cls, metadata_section: dict[Any, Any] | None
     ) -> StudyDefinitionSnapshot.StudyMetadataSnapshot | None:
         """
         Function maps the part of the result of the cypher query that holds Study metadata information
@@ -1862,7 +1965,7 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
                 value=metadata_section["version_timestamp"]
             ),
             "version_author": UserInfoService.get_author_username_from_id(
-                metadata_section.get("version_author_id")
+                metadata_section["version_author_id"]
             ),
             "version_description": metadata_section.get("version_description"),
             "version_number": metadata_section.get("version_number"),
@@ -1965,7 +2068,7 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
         study_value_node_after: StudyField | None,
         study_value_node_before: StudyField | None,
         change_status: str | None,
-        author_id: str,
+        author_id: str | None,
         date: datetime,
     ) -> StudyAction:
         if study_value_node_before is None:
@@ -1991,9 +2094,9 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
         self, snapshot: StudyDefinitionSnapshot
     ) -> Mapping[str, Any]:
         assert snapshot.current_metadata is not None
-        assert (
-            snapshot.current_metadata.version_author is None
-            or snapshot.current_metadata.version_author
+        assert snapshot.current_metadata.version_author is None or (
+            self.audit_info.author_id
+            and snapshot.current_metadata.version_author
             == UserInfoService.get_author_username_from_id(self.audit_info.author_id)
         )
         data = {
@@ -2015,7 +2118,7 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
     ) -> list[StudyFieldAuditTrailEntryAR] | None:
         query = """
         MATCH (root:StudyRoot {uid: $studyuid})-[:AUDIT_TRAIL]->(action)
- 
+
         OPTIONAL MATCH (action)-[:BEFORE]->(before)
         WHERE "StudyField" in labels(before) or "StudyValue" in labels(before)
         OPTIONAL MATCH (action)-[:AFTER]->(after)
@@ -2139,13 +2242,13 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
         For a given field name, find what logical section of the study properties it belongs to.
         """
         if (
-            field in [field.name for field in fields(StudyIdentificationMetadataVO)]
+            field in [field.name for field in fields(StudyIdentificationMetadataVO)]  # type: ignore[arg-type]
             or field == "study_id"
         ):
             return "identification_metadata"
         if field in [field.name for field in fields(RegistryIdentifiersVO)]:
             return "registry_identifiers"
-        if field in [field.name for field in fields(StudyVersionMetadataVO)]:
+        if field in [field.name for field in fields(StudyVersionMetadataVO)]:  # type: ignore[arg-type]
             return "version_metadata"
         if field in [field.name for field in fields(HighLevelStudyDesignVO)]:
             return "high_level_study_design"
@@ -2162,7 +2265,7 @@ class StudyDefinitionRepositoryImpl(StudyDefinitionRepository, RepositoryImpl):
         self,
         study_selection_object_node_id,
         study_selection_object_node_type,
-        filter_query_parameters: dict,
+        filter_query_parameters: dict[Any, Any],
         deleted: bool,
     ) -> str:
         if study_selection_object_node_id:
@@ -2304,14 +2407,14 @@ MATCH (sr:StudyRoot)-[:LATEST]->(sv)
 
     def _update_snapshot_filter_by(
         self,
-        filter_by: dict,
+        filter_by: dict[str, dict[str, Any]],
         has_study_footnote: bool | None = None,
         has_study_objective: bool | None = None,
         has_study_endpoint: bool | None = None,
         has_study_criteria: bool | None = None,
         has_study_activity: bool | None = None,
         has_study_activity_instruction: bool | None = None,
-    ) -> dict:
+    ) -> dict[str, dict[str, Any]]:
         if has_study_footnote is not None:
             filter_by["has_study_footnote"] = {"v": [has_study_footnote]}
         if has_study_objective is not None:
@@ -2336,13 +2439,13 @@ MATCH (sr:StudyRoot)-[:LATEST]->(sv)
         has_study_criteria: bool | None = None,
         has_study_activity: bool | None = None,
         has_study_activity_instruction: bool | None = None,
-        sort_by: dict | None = None,
+        sort_by: dict[str, bool] | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: dict | None = None,
-        filter_operator: FilterOperator | None = FilterOperator.AND,
+        filter_by: dict[str, dict[str, Any]] | None = None,
+        filter_operator: FilterOperator = FilterOperator.AND,
         total_count: bool = False,
-        study_selection_object_node_id: int | None = None,
+        study_selection_object_node_id: int | str | None = None,
         study_selection_object_node_type: NodeMeta | None = None,
         deleted: bool = False,
     ) -> GenericFilteringReturn[StudyDefinitionSnapshot]:
@@ -2360,10 +2463,13 @@ MATCH (sr:StudyRoot)-[:LATEST]->(sv)
         # The logic was taken from the already existing implementation of retrieving single Study.
 
         if sort_by is None:
-            sort_by = {"uid": "true"}
+            sort_by = {"uid": True}
+
+        if filter_by is None:
+            filter_by = {}
 
         # Specific filtering
-        filter_query_parameters = {}
+        filter_query_parameters: dict[Any, Any] = {}
 
         match_clause = self._build_snapshot_match_clause(
             study_selection_object_node_id,
@@ -2388,7 +2494,7 @@ MATCH (sr:StudyRoot)-[:LATEST]->(sv)
             sort_by=sort_by,
             page_number=page_number,
             page_size=page_size,
-            filter_by=FilterDict(elements=filter_by),
+            filter_by=FilterDict.model_validate({"elements": filter_by}),
             filter_operator=filter_operator,
             total_count=total_count,
             return_model=StudyDefinitionSnapshot,
@@ -2418,7 +2524,7 @@ MATCH (sr:StudyRoot)-[:LATEST]->(sv)
         else:
             total = 0
 
-        return GenericFilteringReturn.create(
+        return GenericFilteringReturn(
             items=self._retrieve_all_snapshots_from_cypher_query_result(
                 studies, deleted=deleted
             ),
@@ -2428,11 +2534,11 @@ MATCH (sr:StudyRoot)-[:LATEST]->(sv)
     def _retrieve_study_snapshot_history(
         self,
         study_uid: str,
-        sort_by: dict | None = None,
+        sort_by: dict[str, bool] | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: dict | None = None,
-        filter_operator: FilterOperator | None = FilterOperator.AND,
+        filter_by: dict[str, dict[str, Any]] | None = None,
+        filter_operator: FilterOperator = FilterOperator.AND,
         total_count: bool = False,
     ) -> GenericFilteringReturn[StudyDefinitionSnapshot]:
         exceptions.ValidationException.raise_if(
@@ -2540,7 +2646,7 @@ MATCH (sr:StudyRoot)-[:LATEST]->(sv)
             sort_by=sort_by,
             page_number=page_number,
             page_size=page_size,
-            filter_by=FilterDict(elements=filter_by),
+            filter_by=FilterDict.model_validate({"elements": filter_by}),
             filter_operator=filter_operator,
             total_count=total_count,
             return_model=StudyDefinitionSnapshot,
@@ -2569,7 +2675,7 @@ MATCH (sr:StudyRoot)-[:LATEST]->(sv)
         else:
             total = 0
 
-        return GenericFilteringReturn.create(
+        return GenericFilteringReturn(
             items=self._retrieve_all_snapshots_from_cypher_query_result(studies),
             total=total,
         )
@@ -2583,7 +2689,7 @@ MATCH (sr:StudyRoot)-[:LATEST]->(sv)
         study_field_node_after: StudyField | None,
         study_field_node_before: StudyField | None,
         change_status: str | None,
-        author_id: str,
+        author_id: str | None,
         date: datetime,
         to_delete: bool = False,
     ) -> StudyAction:
@@ -2617,9 +2723,9 @@ MATCH (sr:StudyRoot)-[:LATEST]->(sv)
     ) -> NodeSet:
         filters = {
             "field_name": (
-                STUDY_FIELD_SOA_PREFERRED_TIME_UNIT_NAME
+                settings.study_field_soa_preferred_time_unit_name
                 if for_protocol_soa
-                else STUDY_FIELD_PREFERRED_TIME_UNIT_NAME
+                else settings.study_field_preferred_time_unit_name
             ),
         }
         if study_value_version:
@@ -2661,9 +2767,9 @@ MATCH (sr:StudyRoot)-[:LATEST]->(sv)
             {
                 "value": unit_definition_uid,
                 "field_name": (
-                    STUDY_FIELD_SOA_PREFERRED_TIME_UNIT_NAME
+                    settings.study_field_soa_preferred_time_unit_name
                     if for_protocol_soa
-                    else STUDY_FIELD_PREFERRED_TIME_UNIT_NAME
+                    else settings.study_field_preferred_time_unit_name
                 ),
             }
         )[0]
@@ -2710,9 +2816,9 @@ MATCH (sr:StudyRoot)-[:LATEST]->(sv)
             {
                 "value": unit_definition_uid,
                 "field_name": (
-                    STUDY_FIELD_SOA_PREFERRED_TIME_UNIT_NAME
+                    settings.study_field_soa_preferred_time_unit_name
                     if for_protocol_soa
-                    else STUDY_FIELD_PREFERRED_TIME_UNIT_NAME
+                    else settings.study_field_preferred_time_unit_name
                 ),
             }
         )[0]
@@ -2818,10 +2924,11 @@ MATCH (sr:StudyRoot)-[:LATEST]->(sv)
 
     def _retrieve_study_subpart_with_history(
         self, uid: str, is_subpart: bool = False, study_value_version: str | None = None
-    ) -> list:
+    ) -> list[Any]:
         """
         returns the audit trail for all study subparts of the study
         """
+        params: dict[str, str | list[str]] = {}
         if not is_subpart:
             params = {"study_uid": uid}
             if study_value_version:
@@ -2920,7 +3027,7 @@ MATCH (sr:StudyRoot)-[:LATEST]->(sv)
                                 if item["end_date"]
                                 else None
                             ),
-                            "author_id": item["author_id"],
+                            "author_username": item["author_id"],
                             "change_type": (
                                 change_type if item["parent_uid"] else "Delete"
                             ),
@@ -2947,7 +3054,7 @@ MATCH (sr:StudyRoot)-[:LATEST]->(sv)
                             if item["end_date"]
                             else None
                         ),
-                        "author_id": item["author_id"],
+                        "author_username": item["author_id"],
                         "change_type": change_type,
                     }
                 )
@@ -2965,7 +3072,9 @@ MATCH (sr:StudyRoot)-[:LATEST]->(sv)
         """Gets StudyBooleanField nodes related to SoA preferences"""
 
         if field_names is None:
-            field_names = STUDY_SOA_PREFERENCES_FIELDS
+            field_names = settings.study_soa_preferences_fields
+
+        filters: dict[str, Any]
 
         if study_value_version:
             filters = {
@@ -3000,7 +3109,7 @@ MATCH (sr:StudyRoot)-[:LATEST]->(sv)
         study_root = StudyRoot.nodes.get(uid=study_uid)
         latest_study_value = study_root.latest_value.single()
 
-        for name, value in soa_preferences.dict(by_alias=True).items():
+        for name, value in soa_preferences.model_dump(by_alias=True).items():
             field_sf = StudyBooleanField.create({"field_name": name, "value": value})[0]
             latest_study_value.has_boolean_field.connect(field_sf)
 
@@ -3023,7 +3132,7 @@ MATCH (sr:StudyRoot)-[:LATEST]->(sv)
         """Replaces StudyBooleanField nodes of SoA preferences for the supplied show_* parameters only"""
 
         # exclude_unset skips properties that were not provided on init, also won't use defaults
-        prefs = soa_preferences.dict(by_alias=True, exclude_unset=True)
+        prefs = soa_preferences.model_dump(by_alias=True, exclude_unset=True)
 
         study_root = StudyRoot.nodes.get(uid=study_uid)
         latest_study_value = study_root.latest_value.single()
@@ -3036,7 +3145,7 @@ MATCH (sr:StudyRoot)-[:LATEST]->(sv)
         for node in nodes:
             latest_study_value.has_boolean_field.disconnect(node)
 
-        nodes = {node.field_name: node for node in nodes}
+        _nodes = {node.field_name: node for node in nodes}
 
         for name, value in prefs.items():
             field_sf = StudyBooleanField.create({"field_name": name, "value": value})[0]
@@ -3045,7 +3154,7 @@ MATCH (sr:StudyRoot)-[:LATEST]->(sv)
             self._generate_study_field_audit_node(
                 study_root_node=study_root,
                 study_field_node_after=field_sf,
-                study_field_node_before=nodes.get(name),
+                study_field_node_before=_nodes.get(name, None),
                 change_status=None,
                 author_id=self.audit_info.author_id,
                 date=datetime.now(timezone.utc),

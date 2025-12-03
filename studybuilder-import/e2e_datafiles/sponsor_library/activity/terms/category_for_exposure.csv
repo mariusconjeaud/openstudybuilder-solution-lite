@@ -1,0 +1,3 @@
+CODELIST_SUBMVAL,SPONSOR_NAME,SPONSOR_NAME_SENTENCE_CASE,TERM_SUBMVAL,DEFINITION,ORDER,CONCEPT_ID,USE_EXISTING_CL_TERM,NCI_PREFERRED_NAME,CATALOGUES
+EXCAT,Administration of Trial Product,administration of trial product,ADMINISTRATION OF TRIAL PRODUCT,Administration of Trial Product,1,,ECCAT:ADMINISTRATION OF TRIAL PRODUCT,Administration of Trial Product,
+EXCAT,Administration of Non-Trial Product,administration of non-trial product,ADMINISTRATION OF NON-TRIAL PRODUCT,Administration of Non-Trial Product,2,,ECCAT:ADMINISTRATION OF NON-TRIAL PRODUCT,Administration of Non-Trial Product,

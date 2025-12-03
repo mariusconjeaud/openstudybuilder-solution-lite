@@ -3,6 +3,7 @@ import json
 import os
 import re
 import time
+from typing import Any
 from unittest import TestCase
 from urllib.parse import urljoin
 
@@ -14,20 +15,21 @@ from starlette.testclient import TestClient
 from clinical_mdr_api.tests.integration.utils.data_library import inject_base_data
 from clinical_mdr_api.tests.integration.utils.utils import TestUtils
 from clinical_mdr_api.tests.utils.checks import assert_response_status_code
+from common.database import configure_database
 
 
 def inject_and_clear_db(db_name):
     os.environ["NEO4J_DATABASE"] = db_name
 
-    from common import config
+    from common.config import settings
 
-    config.settings = config.Settings()
+    driver = configure_database(
+        urljoin(settings.neo4j_dsn, "/neo4j"),
+        max_connection_lifetime=settings.neo4j_connection_lifetime,
+        liveness_check_timeout=settings.neo4j_liveness_check_timeout,
+    )
+    db.set_connection(driver=driver)
 
-    from neomodel import config as neoconfig
-
-    # Switch to "neo4j" database for creating a new database
-    neoconfig.DATABASE_URL = urljoin(config.settings.neo4j_dsn, "/neo4j")
-    db.set_connection(neoconfig.DATABASE_URL)
     db.cypher_query("CREATE OR REPLACE DATABASE $db", {"db": db_name})
 
     try_cnt = 1
@@ -37,8 +39,12 @@ def inject_and_clear_db(db_name):
             # Database creation can take a couple of seconds
             # db.set_connection will return a ClientError if the database isn't ready
             # This allows for retrying after a small pause
-            neoconfig.DATABASE_URL = urljoin(config.settings.neo4j_dsn, f"/{db_name}")
-            db.set_connection(neoconfig.DATABASE_URL)
+            driver = configure_database(
+                urljoin(settings.neo4j_dsn, f"/{db_name}"),
+                max_connection_lifetime=settings.neo4j_connection_lifetime,
+                liveness_check_timeout=settings.neo4j_liveness_check_timeout,
+            )
+            db.set_connection(driver=driver)
 
             # AuraDB workaround for not supporting multiple db's:
             # Use the main db for tests and remove all nodes
@@ -70,15 +76,15 @@ def inject_and_clear_db(db_name):
 
 
 def drop_db(db_name):
-    from common import config
+    from common.config import settings
 
-    config.settings = config.Settings()
+    driver = configure_database(
+        settings.neo4j_dsn,
+        max_connection_lifetime=settings.neo4j_connection_lifetime,
+        liveness_check_timeout=settings.neo4j_liveness_check_timeout,
+    )
+    db.set_connection(driver=driver)
 
-    from neomodel import config as neoconfig
-
-    full_dsn = f"{config.settings.neo4j_dsn}"
-    neoconfig.DATABASE_URL = full_dsn
-    db.set_connection(full_dsn)
     db.cypher_query("DROP DATABASE $db IF EXISTS", {"db": db_name})
 
 
@@ -187,6 +193,11 @@ class APITest(TestCase):
             f'Patching scenario "{self.current_scenario_file_path}" index {self.current_scenario_item_index} '
             f"by {updates!s}"
         )
+
+        if not self.current_scenario_file_path:
+            raise RuntimeError(
+                "Cannot patch scenario item, no current_scenario_file_path set"
+            )
 
         # read scenario JSON
         indent = None
@@ -396,14 +407,17 @@ class APITest(TestCase):
 
         filter_element = {"v": [header_value]}
         filters = {filter_field_name: filter_element}
-        get_all_data = {"filters": json.dumps(filters), "total_count": True}
+        get_all_data: dict[str, Any] = {
+            "filters": json.dumps(filters),
+            "total_count": True,
+        }
         get_all_filtered = test_client.get(path_root, params=get_all_data)
         assert get_all_filtered.json()["total"] > 0
         assert len(get_all_filtered.json()["items"]) == get_all_filtered.json()["total"]
 
         wildcard_filter_element = {"v": [wildcard_filter_field_name]}
         wildcard_filter = {"*": wildcard_filter_element}
-        get_wildcard_data = {
+        get_wildcard_data: dict[str, Any] = {
             "filters": json.dumps(wildcard_filter),
             "total_count": True,
         }

@@ -18,8 +18,9 @@ from clinical_mdr_api.routers import _generic_descriptions
 from clinical_mdr_api.services.controlled_terminologies.ct_codelist_name import (
     CTCodelistNameService,
 )
-from common import config
 from common.auth import rbac
+from common.auth.dependencies import security
+from common.config import settings
 from common.models.error import ErrorResponse
 
 # Prefixed with "/ct"
@@ -30,7 +31,7 @@ CTCodelistUID = Path(description="The unique id of the CTCodelistName")
 
 @router.get(
     "/codelists/names",
-    dependencies=[rbac.LIBRARY_READ],
+    dependencies=[security, rbac.LIBRARY_READ],
     summary="Returns all codelists names.",
     status_code=200,
     responses={
@@ -40,7 +41,7 @@ CTCodelistUID = Path(description="The unique id of the CTCodelistName")
 )
 def get_codelists(
     catalogue_name: Annotated[
-        str,
+        str | None,
         Query(
             description="If specified, only codelists from given catalogue are returned.",
         ),
@@ -61,16 +62,16 @@ def get_codelists(
         Json | None, Query(description=_generic_descriptions.SORT_BY)
     ] = None,
     page_number: Annotated[
-        int | None, Query(ge=1, description=_generic_descriptions.PAGE_NUMBER)
-    ] = config.DEFAULT_PAGE_NUMBER,
+        int, Query(ge=1, description=_generic_descriptions.PAGE_NUMBER)
+    ] = settings.default_page_number,
     page_size: Annotated[
-        int | None,
+        int,
         Query(
             ge=0,
-            le=config.MAX_PAGE_SIZE,
+            le=settings.max_page_size,
             description=_generic_descriptions.PAGE_SIZE,
         ),
-    ] = config.DEFAULT_PAGE_SIZE,
+    ] = settings.default_page_size,
     filters: Annotated[
         Json | None,
         Query(
@@ -79,10 +80,10 @@ def get_codelists(
         ),
     ] = None,
     operator: Annotated[
-        str | None, Query(description=_generic_descriptions.FILTER_OPERATOR)
-    ] = config.DEFAULT_FILTER_OPERATOR,
+        str, Query(description=_generic_descriptions.FILTER_OPERATOR)
+    ] = settings.default_filter_operator,
     total_count: Annotated[
-        bool | None, Query(description=_generic_descriptions.TOTAL_COUNT)
+        bool, Query(description=_generic_descriptions.TOTAL_COUNT)
     ] = False,
 ) -> CustomPage[CTCodelistName]:
     ct_codelist_name_service = CTCodelistNameService()
@@ -97,14 +98,14 @@ def get_codelists(
         filter_by=filters,
         filter_operator=FilterOperator.from_str(operator),
     )
-    return CustomPage.create(
+    return CustomPage(
         items=results.items, total=results.total, page=page_number, size=page_size
     )
 
 
 @router.get(
     "/codelists/names/headers",
-    dependencies=[rbac.LIBRARY_READ],
+    dependencies=[security, rbac.LIBRARY_READ],
     summary="Returns possibles values from the database for a given header",
     description="""Allowed parameters include : field name for which to get possible
     values, search string to provide filtering for the field name, additional filters to apply on other fields""",
@@ -122,7 +123,7 @@ def get_distinct_values_for_header(
         str, Query(description=_generic_descriptions.HEADER_FIELD_NAME)
     ],
     catalogue_name: Annotated[
-        str,
+        str | None,
         Query(
             description="If specified, only codelists from given catalogue are returned.",
         ),
@@ -136,7 +137,7 @@ def get_distinct_values_for_header(
         Query(description="If specified, only terms from given package are returned."),
     ] = None,
     search_string: Annotated[
-        str | None, Query(description=_generic_descriptions.HEADER_SEARCH_STRING)
+        str, Query(description=_generic_descriptions.HEADER_SEARCH_STRING)
     ] = "",
     filters: Annotated[
         Json | None,
@@ -146,11 +147,11 @@ def get_distinct_values_for_header(
         ),
     ] = None,
     operator: Annotated[
-        str | None, Query(description=_generic_descriptions.FILTER_OPERATOR)
-    ] = config.DEFAULT_FILTER_OPERATOR,
+        str, Query(description=_generic_descriptions.FILTER_OPERATOR)
+    ] = settings.default_filter_operator,
     page_size: Annotated[
-        int | None, Query(description=_generic_descriptions.HEADER_PAGE_SIZE)
-    ] = config.DEFAULT_HEADER_PAGE_SIZE,
+        int, Query(description=_generic_descriptions.HEADER_PAGE_SIZE)
+    ] = settings.default_header_page_size,
 ) -> list[Any]:
     ct_codelist_name_service = CTCodelistNameService()
     return ct_codelist_name_service.get_distinct_values_for_header(
@@ -167,7 +168,7 @@ def get_distinct_values_for_header(
 
 @router.get(
     "/codelists/{codelist_uid}/names",
-    dependencies=[rbac.LIBRARY_READ],
+    dependencies=[security, rbac.LIBRARY_READ],
     summary="Returns the latest/newest version of a specific codelist identified by 'codelist_uid'",
     status_code=200,
     responses={
@@ -216,7 +217,7 @@ def get_codelist_names(
 
 @router.get(
     "/codelists/{codelist_uid}/names/versions",
-    dependencies=[rbac.LIBRARY_READ],
+    dependencies=[security, rbac.LIBRARY_READ],
     summary="Returns the version history of a specific CTCodelistName identified by 'codelist_uid'.",
     description="The returned versions are ordered by\n"
     "0. start_date descending (newest entries first)",
@@ -238,7 +239,7 @@ def get_versions(
 
 @router.patch(
     "/codelists/{codelist_uid}/names",
-    dependencies=[rbac.LIBRARY_WRITE],
+    dependencies=[security, rbac.LIBRARY_WRITE],
     summary="Updates the codelist identified by 'codelist_uid'.",
     description="""This request is only valid if the codelist
 * is in 'Draft' status and
@@ -282,7 +283,7 @@ def edit(
 
 @router.post(
     "/codelists/{codelist_uid}/names/versions",
-    dependencies=[rbac.LIBRARY_WRITE],
+    dependencies=[security, rbac.LIBRARY_WRITE],
     summary="Creates a new codelist in 'Draft' status.",
     description="""This request is only valid if
 * the specified codelist is in 'Final' status and
@@ -319,7 +320,7 @@ def create(
 
 @router.post(
     "/codelists/{codelist_uid}/names/approvals",
-    dependencies=[rbac.LIBRARY_WRITE],
+    dependencies=[security, rbac.LIBRARY_WRITE],
     summary="Approves the codelist identified by 'codelist_uid'.",
     description="""This request is only valid if the codelist
 * is in 'Draft' status and

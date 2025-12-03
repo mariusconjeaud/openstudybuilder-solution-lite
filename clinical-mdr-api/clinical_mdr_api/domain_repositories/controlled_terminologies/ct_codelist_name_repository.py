@@ -1,3 +1,5 @@
+from typing import Any
+
 from neomodel import db
 
 from clinical_mdr_api.domain_repositories._generic_repository_interface import (
@@ -48,23 +50,23 @@ class CTCodelistNameRepository(CTCodelistGenericRepository[CTCodelistNameAR]):
         return len(result) > 0
 
     def _create_aggregate_root_instance_from_cypher_result(
-        self, codelist_dict: dict
+        self, codelist_dict: dict[str, Any]
     ) -> CTCodelistNameAR:
         rel_data = codelist_dict["rel_data"]
         major, minor = rel_data.get("version").split(".")
 
         return CTCodelistNameAR.from_repository_values(
-            uid=codelist_dict.get("codelist_uid"),
+            uid=codelist_dict["codelist_uid"],
             ct_codelist_name_vo=CTCodelistNameVO.from_repository_values(
                 name=codelist_dict.get("value_node").get("name"),
-                catalogue_name=codelist_dict.get("catalogue_name"),
+                catalogue_names=codelist_dict["catalogue_names"],
                 is_template_parameter="TemplateParameter"
                 in codelist_dict.get("value_node").labels,
             ),
             library=LibraryVO.from_input_values_2(
-                library_name=codelist_dict.get("library_name"),
+                library_name=codelist_dict["library_name"],
                 is_library_editable_callback=(
-                    lambda _: codelist_dict.get("is_library_editable")
+                    lambda _: codelist_dict["is_library_editable"]
                 ),
             ),
             item_metadata=LibraryItemMetadataVO.from_repository_values(
@@ -84,7 +86,7 @@ class CTCodelistNameRepository(CTCodelistGenericRepository[CTCodelistNameAR]):
     def _create_aggregate_root_instance_from_version_root_relationship_and_value(
         self,
         root: CTCodelistNameRoot,
-        library: Library | None,
+        library: Library,
         relationship: VersionRelationship,
         value: CTCodelistNameValue,
         **_kwargs,
@@ -94,12 +96,14 @@ class CTCodelistNameRepository(CTCodelistGenericRepository[CTCodelistNameAR]):
             uid=ct_codelist_root_node.uid,
             ct_codelist_name_vo=CTCodelistNameVO.from_repository_values(
                 name=value.name,
-                catalogue_name=ct_codelist_root_node.has_codelist.single().name,
+                catalogue_names=[
+                    cat.name for cat in ct_codelist_root_node.has_codelist.all()
+                ],
                 is_template_parameter=self.is_ct_node_a_tp(value),
             ),
             library=LibraryVO.from_input_values_2(
                 library_name=library.name,
-                is_library_editable_callback=(lambda _: library.is_editable),
+                is_library_editable_callback=lambda _: library.is_editable,
             ),
             item_metadata=self._library_item_metadata_vo_from_relation(relationship),
         )
@@ -124,7 +128,6 @@ class CTCodelistNameRepository(CTCodelistGenericRepository[CTCodelistNameAR]):
         ) = self._db_create_and_link_nodes(
             root, value, self._library_item_metadata_vo_to_datadict(relation_data)
         )
-
         ct_codelist_root_node = CTCodelistRoot.nodes.get_or_none(uid=item.uid)
         ct_codelist_root_node.has_name_root.connect(root)
         self._maintain_parameters(item, root, value)

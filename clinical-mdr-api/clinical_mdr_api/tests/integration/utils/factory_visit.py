@@ -20,10 +20,7 @@ from clinical_mdr_api.tests.integration.utils.factory_epoch import (
     create_study_epoch,
     create_study_epoch_codelists_ret_cat_and_lib,
 )
-from common.config import (
-    DAY_UNIT_CONVERSION_FACTOR_TO_MASTER,
-    WEEK_UNIT_CONVERSION_FACTOR_TO_MASTER,
-)
+from common.config import settings
 
 DAY = {
     "name": "day",
@@ -38,7 +35,7 @@ DAY = {
     "unit_dimension": "TIME_UID",
     "legacy_code": "unit1-legacy-code",
     "use_molecular_weight": False,
-    "conversion_factor_to_master": DAY_UNIT_CONVERSION_FACTOR_TO_MASTER,
+    "conversion_factor_to_master": settings.day_unit_conversion_factor_to_master,
 }
 
 WEEK = {
@@ -54,7 +51,7 @@ WEEK = {
     "unit_dimension": "TIME_UID",
     "legacy_code": "unit2-legacy-code",
     "use_molecular_weight": False,
-    "conversion_factor_to_master": WEEK_UNIT_CONVERSION_FACTOR_TO_MASTER,
+    "conversion_factor_to_master": settings.week_unit_conversion_factor_to_master,
 }
 
 
@@ -63,7 +60,6 @@ def generate_default_input_data_for_visit():
     week_uid = get_unit_uid_by_name("week")
     return {
         "visit_sublabel_reference": None,
-        "consecutive_visit_group": None,
         "show_visit": True,
         "min_visit_window_value": -1,
         "max_visit_window_value": 1,
@@ -87,197 +83,429 @@ def create_study_visit_codelists(
     use_test_utils: bool = False,
     create_epoch_codelist: bool = True,
 ):
-    catalogue_name, library_name = get_catalogue_name_library_name(use_test_utils)
+    _catalogue_name, library_name = get_catalogue_name_library_name(use_test_utils)
+    catalogue_name = settings.sdtm_ct_catalogue_name
     if create_epoch_codelist:
         create_study_epoch_codelists_ret_cat_and_lib(use_test_utils)
 
     unit_dim_codelist = create_codelist(
-        "Unit Dimension", "CTCodelist_UnitDim", catalogue_name, library_name
+        "Unit Dimension",
+        "CTCodelist_UnitDim",
+        catalogue_name,
+        library_name,
+        submission_value=settings.unit_dimension_cl_submval,
     )
     create_ct_term(
-        unit_dim_codelist.codelist_uid,
         "TIME",
         "TIME_UID",
-        1,
         catalogue_name,
         library_name,
+        codelists=[
+            {
+                "uid": unit_dim_codelist.codelist_uid,
+                "order": 1,
+                "submission_value": "TIME",
+            }
+        ],
     )
     create_ct_term(
-        unit_dim_codelist.codelist_uid,
         "WEEK",
         "WEEK_UID",
-        2,
         catalogue_name,
         library_name,
+        codelists=[
+            {
+                "uid": unit_dim_codelist.codelist_uid,
+                "order": 2,
+                "submission_value": "WEEK",
+            }
+        ],
     )
 
     ct_unit_codelist = create_codelist(
-        "CT Unit", "CTCodelist_CTUnit", catalogue_name, library_name
+        "CT Unit",
+        "CTCodelist_CTUnit",
+        catalogue_name,
+        library_name,
+        submission_value=settings.unit_cl_submval,
     )
     create_ct_term(
-        ct_unit_codelist.codelist_uid,
         "ct unit 1",
         "unit1-ct-uid",
-        1,
         catalogue_name,
         library_name,
+        codelists=[
+            {
+                "uid": ct_unit_codelist.codelist_uid,
+                "order": 1,
+                "submission_value": "ct unit 1",
+            }
+        ],
     )
     create_ct_term(
-        ct_unit_codelist.codelist_uid,
         "ct unit 2",
         "unit2-ct-uid",
-        2,
         catalogue_name,
         library_name,
+        codelists=[
+            {
+                "uid": ct_unit_codelist.codelist_uid,
+                "order": 2,
+                "submission_value": "ct unit 2",
+            }
+        ],
     )
     if create_unit_definitions:
         unit_service = UnitDefinitionService()
-        week_unit = unit_service.create(UnitDefinitionPostInput(**WEEK))
+        week_unit = unit_service.create(UnitDefinitionPostInput(**WEEK))  # type: ignore[arg-type]
         unit_service.approve(uid=week_unit.uid)
-        day_unit = unit_service.create(UnitDefinitionPostInput(**DAY))
+        day_unit = unit_service.create(UnitDefinitionPostInput(**DAY))  # type: ignore[arg-type]
         unit_service.approve(uid=day_unit.uid)
 
     codelist = create_codelist(
-        "VisitType", "CTCodelist_00004", catalogue_name, library_name
+        "VisitType",
+        "CTCodelist_00004",
+        catalogue_name,
+        library_name,
+        submission_value="TIMELB",
     )
     create_ct_term(
-        codelist.codelist_uid,
         "Information",
         "VisitType_0000",
-        0,
         catalogue_name,
         library_name,
+        codelists=[
+            {
+                "uid": codelist.codelist_uid,
+                "order": 0,
+                "submission_value": "Information",
+            }
+        ],
     )
     create_ct_term(
-        codelist.codelist_uid,
         "BASELINE",
         "VisitType_0001",
-        1,
         catalogue_name,
         library_name,
+        codelists=[
+            {
+                "uid": codelist.codelist_uid,
+                "order": 0,
+                "submission_value": "BASELINE",
+            }
+        ],
     )
     create_ct_term(
-        codelist.codelist_uid,
         "BASELINE2",
         "VisitType_0002",
-        2,
         catalogue_name,
         library_name,
+        codelists=[
+            {
+                "uid": codelist.codelist_uid,
+                "order": 1,
+                "submission_value": "BASELINE2",
+            }
+        ],
     )
     create_ct_term(
-        codelist.codelist_uid,
         "Visit Type2",
         "VisitType_0003",
-        3,
         catalogue_name,
         library_name,
+        codelists=[
+            {
+                "uid": codelist.codelist_uid,
+                "order": 2,
+                "submission_value": "Visit Type2",
+            }
+        ],
     )
     create_ct_term(
-        codelist.codelist_uid,
         "Visit Type3",
         "VisitType_0004",
-        4,
         catalogue_name,
         library_name,
+        codelists=[
+            {
+                "uid": codelist.codelist_uid,
+                "order": 3,
+                "submission_value": "Visit Type3",
+            }
+        ],
     )
     create_ct_term(
-        codelist.codelist_uid,
         "Early discontinuation",
         "VisitType_0005",
-        5,
         catalogue_name,
         library_name,
+        codelists=[
+            {
+                "uid": codelist.codelist_uid,
+                "order": 5,
+                "submission_value": "Visit Type5",
+            }
+        ],
     )
     codelist = create_codelist(
-        "Time Point Reference", "CTCodelist_00005", catalogue_name, library_name
+        "Time Point Reference",
+        "CTCodelist_00005",
+        catalogue_name,
+        library_name,
+        submission_value="TIMEREF",
     )
     create_ct_term(
-        codelist.codelist_uid,
         "BASELINE",
         "VisitSubType_0001",
-        1,
         catalogue_name,
         library_name,
+        codelists=[
+            {
+                "uid": codelist.codelist_uid,
+                "order": 1,
+                "submission_value": "BASELINE",
+            }
+        ],
     )
     create_ct_term(
-        codelist.codelist_uid,
         "BASELINE2",
         "VisitSubType_0002",
-        2,
         catalogue_name,
         library_name,
+        codelists=[
+            {
+                "uid": codelist.codelist_uid,
+                "order": 2,
+                "submission_value": "BASELINE2",
+            }
+        ],
     )
     create_ct_term(
-        codelist.codelist_uid,
         "Visit Sub Type2",
         "VisitSubType_0003",
-        3,
         catalogue_name,
         library_name,
+        codelists=[
+            {
+                "uid": codelist.codelist_uid,
+                "order": 3,
+                "submission_value": "Visit Sub Type2",
+            }
+        ],
     )
     create_ct_term(
-        codelist.codelist_uid,
         "Visit Sub Type3",
         "VisitSubType_0004",
-        4,
         catalogue_name,
         library_name,
+        codelists=[
+            {
+                "uid": codelist.codelist_uid,
+                "order": 4,
+                "submission_value": "Visit Sub Type3",
+            }
+        ],
     )
     create_ct_term(
-        codelist.codelist_uid,
         "Global anchor visit",
         "VisitSubType_0005",
-        5,
         catalogue_name,
         library_name,
+        codelists=[
+            {
+                "uid": codelist.codelist_uid,
+                "order": 5,
+                "submission_value": "Visit Sub Type4",
+            }
+        ],
     )
 
     codelist = create_codelist(
-        "Visit Contact Mode", "CTCodelist_00006", catalogue_name, library_name
+        "Visit Sub Label",
+        "CTCodelist_00006",
+        catalogue_name,
+        library_name,
+        submission_value="VISSUBLB",
     )
     create_ct_term(
-        codelist.codelist_uid,
+        "Visit Sub Label",
+        "VisitSubLabel_0001",
+        catalogue_name,
+        library_name,
+        codelists=[
+            {
+                "uid": codelist.codelist_uid,
+                "order": 1,
+                "submission_value": "Visit Sub Label",
+            }
+        ],
+    )
+    create_ct_term(
+        "Visit Sub Label1",
+        "VisitSubLabel_0002",
+        catalogue_name,
+        library_name,
+        codelists=[
+            {
+                "uid": codelist.codelist_uid,
+                "order": 2,
+                "submission_value": "Visit Sub Label1",
+            }
+        ],
+    )
+    create_ct_term(
+        "Visit Sub Label2",
+        "VisitSubLabel_0003",
+        catalogue_name,
+        library_name,
+        codelists=[
+            {
+                "uid": codelist.codelist_uid,
+                "order": 3,
+                "submission_value": "Visit Sub Label2",
+            }
+        ],
+    )
+    create_ct_term(
+        "Visit Sub Label3",
+        "VisitSubLabel_0004",
+        catalogue_name,
+        library_name,
+        codelists=[
+            {
+                "uid": codelist.codelist_uid,
+                "order": 4,
+                "submission_value": "Visit Sub Label3",
+            }
+        ],
+    )
+
+    codelist = create_codelist(
+        "Visit Contact Mode",
+        "CTCodelist_00007",
+        catalogue_name,
+        library_name,
+        submission_value="VISCNTMD",
+    )
+    create_ct_term(
         "On Site Visit",
         "VisitContactMode_0001",
-        1,
         catalogue_name,
         library_name,
+        codelists=[
+            {
+                "uid": codelist.codelist_uid,
+                "order": 1,
+                "submission_value": "On Site Visit",
+            }
+        ],
     )
     create_ct_term(
-        codelist.codelist_uid,
         "Phone Contact",
         "VisitContactMode_0002",
-        2,
         catalogue_name,
         library_name,
+        codelists=[
+            {
+                "uid": codelist.codelist_uid,
+                "order": 2,
+                "submission_value": "Phone Contact",
+            }
+        ],
     )
     create_ct_term(
-        codelist.codelist_uid,
         "Virtual Visit",
         "VisitContactMode_0003",
-        3,
         catalogue_name,
         library_name,
+        codelists=[
+            {
+                "uid": codelist.codelist_uid,
+                "order": 3,
+                "submission_value": "Virtual Visit",
+            }
+        ],
     )
 
     codelist = create_codelist(
-        "Epoch Allocation", "CTCodelist_00007", catalogue_name, library_name
+        "Epoch Allocation",
+        "CTCodelist_00008",
+        catalogue_name,
+        library_name,
+        submission_value="EPCHALLC",
     )
     create_ct_term(
-        codelist.codelist_uid,
         "Previous Visit",
         "EpochAllocation_0001",
-        1,
         catalogue_name,
         library_name,
+        codelists=[
+            {
+                "uid": codelist.codelist_uid,
+                "order": 1,
+                "submission_value": "Previous Visit",
+            }
+        ],
     )
     create_ct_term(
-        codelist.codelist_uid,
         "Current Visit",
         "EpochAllocation_0002",
-        2,
         catalogue_name,
         library_name,
+        codelists=[
+            {
+                "uid": codelist.codelist_uid,
+                "order": 2,
+                "submission_value": "Current Visit",
+            }
+        ],
+    )
+
+    codelist = create_codelist(
+        "Repeating Visit Frequency",
+        "CTCodelist_Repeating_Visit_Frequency",
+        catalogue_name,
+        library_name,
+        submission_value="REPEATING_VISIT_FREQUENCY",
+    )
+    create_ct_term(
+        "Daily",
+        "RepeatingVisitFrequency_0001",
+        catalogue_name,
+        library_name,
+        codelists=[
+            {
+                "uid": codelist.codelist_uid,
+                "order": 1,
+                "submission_value": "QD",
+            }
+        ],
+    )
+    create_ct_term(
+        "Weekly",
+        "RepeatingVisitFrequency_0002",
+        catalogue_name,
+        library_name,
+        codelists=[
+            {
+                "uid": codelist.codelist_uid,
+                "order": 2,
+                "submission_value": "EVERY WEEK",
+            }
+        ],
+    )
+    create_ct_term(
+        "Monthly",
+        "RepeatingVisitFrequency_0003",
+        catalogue_name,
+        library_name,
+        codelists=[
+            {
+                "uid": codelist.codelist_uid,
+                "order": 3,
+                "submission_value": "QM",
+            }
+        ],
     )
 
 

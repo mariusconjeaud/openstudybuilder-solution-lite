@@ -27,7 +27,7 @@ from clinical_mdr_api.services.utils.table_f import (
     TableRow,
     TableWithFootnotes,
 )
-from common import config
+from common.config import settings
 
 AUTHOR_USERNAME = "unknown-user"
 
@@ -103,7 +103,6 @@ STUDY_VISITS = [
         end_date=None,
         author_username=AUTHOR_USERNAME,
         possible_actions=["edit", "delete", "lock"],
-        study_activity_count=22,
         change_type=None,
     ),
     StudyVisit(
@@ -177,7 +176,6 @@ STUDY_VISITS = [
         end_date=None,
         author_username=AUTHOR_USERNAME,
         possible_actions=["edit", "delete", "lock"],
-        study_activity_count=9,
         change_type=None,
     ),
     StudyVisit(
@@ -251,7 +249,6 @@ STUDY_VISITS = [
         end_date=None,
         author_username=AUTHOR_USERNAME,
         possible_actions=["edit", "delete", "lock"],
-        study_activity_count=7,
         change_type=None,
     ),
     StudyVisit(
@@ -325,7 +322,6 @@ STUDY_VISITS = [
         end_date=None,
         author_username=AUTHOR_USERNAME,
         possible_actions=["edit", "delete", "lock"],
-        study_activity_count=7,
         change_type=None,
     ),
     StudyVisit(
@@ -399,7 +395,6 @@ STUDY_VISITS = [
         end_date=None,
         author_username=AUTHOR_USERNAME,
         possible_actions=["edit", "delete", "lock"],
-        study_activity_count=8,
         change_type=None,
     ),
     StudyVisit(
@@ -473,7 +468,6 @@ STUDY_VISITS = [
         end_date=None,
         author_username=AUTHOR_USERNAME,
         possible_actions=["edit", "delete", "lock"],
-        study_activity_count=8,
         change_type=None,
     ),
     StudyVisit(
@@ -547,7 +541,6 @@ STUDY_VISITS = [
         end_date=None,
         author_username=AUTHOR_USERNAME,
         possible_actions=["edit", "delete", "lock"],
-        study_activity_count=8,
         change_type=None,
     ),
     StudyVisit(
@@ -621,7 +614,6 @@ STUDY_VISITS = [
         end_date=None,
         author_username=AUTHOR_USERNAME,
         possible_actions=["edit", "delete", "lock"],
-        study_activity_count=6,
         change_type=None,
     ),
     StudyVisit(
@@ -695,7 +687,6 @@ STUDY_VISITS = [
         end_date=None,
         author_username=AUTHOR_USERNAME,
         possible_actions=["edit", "delete", "lock"],
-        study_activity_count=7,
         change_type=None,
     ),
     StudyVisit(
@@ -769,7 +760,6 @@ STUDY_VISITS = [
         end_date=None,
         author_username=AUTHOR_USERNAME,
         possible_actions=["edit", "delete", "lock"],
-        study_activity_count=10,
         change_type=None,
     ),
     StudyVisit(
@@ -843,7 +833,6 @@ STUDY_VISITS = [
         end_date=None,
         author_username=AUTHOR_USERNAME,
         possible_actions=["edit", "delete", "lock"],
-        study_activity_count=12,
         change_type=None,
     ),
     StudyVisit(
@@ -876,7 +865,7 @@ STUDY_VISITS = [
             "sponsor_preferred_name_sentence_case": "screening",
         },
         epoch_uid="CTTerm_000009",
-        order=config.UNSCHEDULED_VISIT_NUMBER,
+        order=settings.unscheduled_visit_number,
         visit_type_name="Unscheduled",
         visit_type={
             "term_uid": "CTTerm_000192",
@@ -901,12 +890,12 @@ STUDY_VISITS = [
         study_duration_weeks_label=None,
         week_in_study_label=None,
         study_week_label=None,
-        visit_number=config.UNSCHEDULED_VISIT_NUMBER,
+        visit_number=settings.unscheduled_visit_number,
         visit_subnumber=0,
-        unique_visit_number=config.UNSCHEDULED_VISIT_NUMBER,
-        visit_subname=f"Visit {config.UNSCHEDULED_VISIT_NUMBER}",
-        visit_name=f"Visit {config.UNSCHEDULED_VISIT_NUMBER}",
-        visit_short_name=f"{config.UNSCHEDULED_VISIT_NUMBER}",
+        unique_visit_number=settings.unscheduled_visit_number,
+        visit_subname=f"Visit {settings.unscheduled_visit_number}",
+        visit_name=f"Visit {settings.unscheduled_visit_number}",
+        visit_short_name=f"{settings.unscheduled_visit_number}",
         visit_window_unit_name="days",
         status="DRAFT",
         start_date=datetime.datetime(
@@ -915,7 +904,6 @@ STUDY_VISITS = [
         end_date=None,
         author_username=AUTHOR_USERNAME,
         possible_actions=["edit", "delete", "lock"],
-        study_activity_count=0,
         change_type=None,
     ),
     StudyVisit(
@@ -948,7 +936,7 @@ STUDY_VISITS = [
             "sponsor_preferred_name_sentence_case": "screening",
         },
         epoch_uid="CTTerm_000009",
-        order=config.NON_VISIT_NUMBER,
+        order=settings.non_visit_number,
         visit_type_name="Non-visit",
         visit_type={
             "term_uid": "CTTerm_000190",
@@ -973,12 +961,12 @@ STUDY_VISITS = [
         study_duration_weeks_label=None,
         week_in_study_label=None,
         study_week_label=None,
-        visit_number=config.NON_VISIT_NUMBER,
+        visit_number=settings.non_visit_number,
         visit_subnumber=0,
-        unique_visit_number=config.NON_VISIT_NUMBER,
-        visit_subname=f"Visit {config.NON_VISIT_NUMBER}",
-        visit_name=f"Visit {config.NON_VISIT_NUMBER}",
-        visit_short_name=f"{config.NON_VISIT_NUMBER}",
+        unique_visit_number=settings.non_visit_number,
+        visit_subname=f"Visit {settings.non_visit_number}",
+        visit_name=f"Visit {settings.non_visit_number}",
+        visit_short_name=f"{settings.non_visit_number}",
         visit_window_unit_name="days",
         status="DRAFT",
         start_date=datetime.datetime(
@@ -987,7 +975,6 @@ STUDY_VISITS = [
         end_date=None,
         author_username=AUTHOR_USERNAME,
         possible_actions=["edit", "delete", "lock"],
-        study_activity_count=0,
         change_type=None,
     ),
 ]

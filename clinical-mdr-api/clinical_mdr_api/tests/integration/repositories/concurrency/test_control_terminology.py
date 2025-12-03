@@ -27,7 +27,6 @@ from clinical_mdr_api.domains.controlled_terminologies.ct_term_attributes import
     CTTermAttributesVO,
 )
 from clinical_mdr_api.domains.controlled_terminologies.ct_term_name import (
-    CTTermCodelistVO,
     CTTermNameAR,
     CTTermNameVO,
 )
@@ -87,13 +86,14 @@ class ControlTerminologyConcurrencyTest(unittest.TestCase):
         with db.transaction:
             ct_codelist_attributes_vo = CTCodelistAttributesVO.from_repository_values(
                 name="Codelist attributes",
-                catalogue_name="SDTM CT",
+                catalogue_names=["SDTM CT"],
                 parent_codelist_uid=None,
                 child_codelist_uids=[],
                 submission_value="Submission Value",
                 preferred_term="Preferred Term",
                 definition="Definition",
                 extensible=True,
+                ordinal=False,
             )
 
             ct_codelist_attributes_ar = CTCodelistAttributesAR.from_input_values(
@@ -106,7 +106,7 @@ class ControlTerminologyConcurrencyTest(unittest.TestCase):
 
         with db.transaction:
             ct_codelist_name_vo = CTCodelistNameVO.from_repository_values(
-                catalogue_name="SDTM CT", name="name", is_template_parameter=True
+                catalogue_names=["SDTM CT"], name="name", is_template_parameter=False
             )
             ct_codelist_name_ar = CTCodelistNameAR.from_input_values(
                 generate_uid_callback=lambda: self.codelist_uid,
@@ -174,17 +174,8 @@ class ControlTerminologyConcurrencyTest(unittest.TestCase):
         )
 
         ct_term_attributes_vo = CTTermAttributesVO.from_repository_values(
-            codelists=[
-                CTTermCodelistVO(
-                    codelist_uid=self.codelist_uid,
-                    order=1,
-                    library_name=self.library_name,
-                )
-            ],
-            catalogue_name="SDTM CT",
+            catalogue_names=["SDTM CT"],
             concept_id=None,
-            code_submission_value="code_submission_value",
-            name_submission_value="name_submission_value",
             preferred_term="preferred_term",
             definition="definition",
         )
@@ -197,14 +188,7 @@ class ControlTerminologyConcurrencyTest(unittest.TestCase):
         )
 
         ct_term_name_vo = CTTermNameVO.from_repository_values(
-            codelists=[
-                CTTermCodelistVO(
-                    codelist_uid=self.codelist_uid,
-                    order=1,
-                    library_name=self.library_name,
-                )
-            ],
-            catalogue_name="SDTM CT",
+            catalogue_names=["SDTM CT"],
             name="term XYZ",
             name_sentence_case="term XYZ",
         )
@@ -218,6 +202,13 @@ class ControlTerminologyConcurrencyTest(unittest.TestCase):
 
         self.ct_term_attributes_repository.save(ct_term_attributes_ar)
         self.ct_term_names_repository.save(ct_term_name_ar)
+        self.ct_codelist_attributes_repository.add_term(
+            codelist_uid=self.codelist_uid,
+            term_uid=ct_term_attributes_ar.uid,
+            author_id=AUTHOR_ID,
+            order=1,
+            submission_value=ct_term_attributes_ar.name,
+        )
 
     def remove_term_with_save(self):
         self.ct_codelist_attributes_repository.remove_term(

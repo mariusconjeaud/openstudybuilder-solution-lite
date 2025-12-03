@@ -41,13 +41,15 @@ from clinical_mdr_api.tests.integration.utils.factory_controlled_terminology imp
 )
 from clinical_mdr_api.tests.integration.utils.utils import TestUtils
 from clinical_mdr_api.tests.utils.checks import assert_response_status_code
-from common import config as settings
+from common.config import settings
 
 log = logging.getLogger(__name__)
 
 study: Study
 study_objective_uid: str
 initial_ct_term_study_standard_test: ct_term.CTTerm
+initial_ct_term_study_standard_test_2: ct_term.CTTerm
+initial_ct_term_study_standard_test_3: ct_term.CTTerm
 
 
 @pytest.fixture(scope="module")
@@ -64,28 +66,55 @@ def test_data():
     inject_and_clear_db(db_name)
 
     global study
-    study = inject_base_data()
+    study, _test_data_dict = inject_base_data()
 
     db.cypher_query(STARTUP_CT_TERM_NAME_CYPHER)
     db.cypher_query(STARTUP_STUDY_OBJECTIVE_CYPHER)
     ObjectiveTemplateRoot.generate_node_uids_if_not_present()
     ObjectiveRoot.generate_node_uids_if_not_present()
 
-    catalogue_name, library_name = get_catalogue_name_library_name(use_test_utils=True)
+    _catalogue_name, library_name = get_catalogue_name_library_name(use_test_utils=True)
+    catalogue_name = "SDTM CT"
     # Create a study selection
-    ct_term_codelist_name = settings.STUDY_OBJECTIVE_LEVEL_NAME
+    ct_term_codelist_name = settings.study_objective_level_name
     ct_term_name = ct_term_codelist_name + " Name For StudyStandardVersioning test"
     ct_term_codelist = create_codelist(
-        ct_term_codelist_name, ct_term_codelist_name, catalogue_name, library_name
+        ct_term_codelist_name,
+        ct_term_codelist_name,
+        catalogue_name,
+        library_name,
+        submission_value="OBJTLEVL",
     )
     ct_term_start_date = datetime(2020, 3, 25, tzinfo=timezone.utc)
 
     global initial_ct_term_study_standard_test
     initial_ct_term_study_standard_test = TestUtils.create_ct_term(
         codelist_uid=ct_term_codelist.codelist_uid,
-        name_submission_value=ct_term_name,
+        submission_value=ct_term_name,
         sponsor_preferred_name=ct_term_name,
         order=2,
+        catalogue_name=catalogue_name,
+        library_name=library_name,
+        effective_date=ct_term_start_date,
+        approve=True,
+    )
+    global initial_ct_term_study_standard_test_2
+    initial_ct_term_study_standard_test_2 = TestUtils.create_ct_term(
+        codelist_uid=ct_term_codelist.codelist_uid,
+        submission_value=ct_term_name + "2",
+        sponsor_preferred_name=ct_term_name + "2",
+        order=3,
+        catalogue_name=catalogue_name,
+        library_name=library_name,
+        effective_date=ct_term_start_date,
+        approve=True,
+    )
+    global initial_ct_term_study_standard_test_3
+    initial_ct_term_study_standard_test_3 = TestUtils.create_ct_term(
+        codelist_uid=ct_term_codelist.codelist_uid,
+        submission_value=ct_term_name + "3",
+        sponsor_preferred_name=ct_term_name + "3",
+        order=4,
         catalogue_name=catalogue_name,
         library_name=library_name,
         effective_date=ct_term_start_date,
@@ -114,6 +143,51 @@ def test_data():
                 """,
         params=params,
     )
+    params["uid"] = initial_ct_term_study_standard_test_2.term_uid
+    db.cypher_query(
+        """
+                    MATCH (n)-[:HAS_NAME_ROOT]-(ct_name:CTTermNameRoot)-[has_version:HAS_VERSION]-(val) 
+                    where 
+                        n.uid =$uid AND EXISTS((ct_name)-[:LATEST]-(val)) 
+                        AND has_version.status ='Final' 
+                    SET has_version.start_date = $date
+                """,
+        params=params,
+    )
+    params["uid"] = initial_ct_term_study_standard_test_3.term_uid
+    db.cypher_query(
+        """
+                    MATCH (n)-[:HAS_NAME_ROOT]-(ct_name:CTTermNameRoot)-[has_version:HAS_VERSION]-(val) 
+                    where 
+                        n.uid =$uid AND EXISTS((ct_name)-[:LATEST]-(val)) 
+                        AND has_version.status ='Final' 
+                    SET has_version.start_date = $date
+                """,
+        params=params,
+    )
+    # adjust codelist name start and end date
+    params["uid"] = ct_term_codelist.codelist_uid
+    db.cypher_query(
+        """
+                    MATCH (n)-[:HAS_NAME_ROOT]-(ct_name:CTCodelistNameRoot)-[has_version:HAS_VERSION]-(val) 
+                    where 
+                        n.uid =$uid AND EXISTS((ct_name)-[:LATEST]-(val)) 
+                        AND has_version.status ='Final' 
+                    SET has_version.start_date = $date
+                """,
+        params=params,
+    )
+    # adjust codelist attributes start_date of the 1.0 final
+    db.cypher_query(
+        """
+                    MATCH (n)-[:HAS_ATTRIBUTES_ROOT]-(ct_attrs:CTCodelistAttributesRoot)-[has_version:HAS_VERSION]-(val) 
+                    where 
+                        n.uid =$uid AND EXISTS((ct_attrs)-[:LATEST]-(val)) 
+                        AND has_version.status ='Final' 
+                    SET has_version.start_date = $date
+                """,
+        params=params,
+    )
 
     yield
 
@@ -125,12 +199,15 @@ def test_objective_modify_actions_on_locked_study(api_client):
         f"/studies/{study.uid}/study-objectives",
         json={
             "objective_uid": "Objective_000001",
-            "objective_level_uid": "term_root_final",
+            "objective_level_uid": initial_ct_term_study_standard_test_2.term_uid,
         },
     )
     res = response.json()
     assert_response_status_code(response, 201)
-    assert res["objective_level"]["term_uid"] == "term_root_final"
+    assert (
+        res["objective_level"]["term_uid"]
+        == initial_ct_term_study_standard_test_2.term_uid
+    )
     study_objective_uid = res["study_objective_uid"]
 
     # get all objectives
@@ -194,7 +271,10 @@ def test_study_objective_with_objective_level_relationship(api_client):
     )
     res = response.json()
     assert_response_status_code(response, 200)
-    assert res["objective_level"]["term_uid"] == "term_root_final"
+    assert (
+        res["objective_level"]["term_uid"]
+        == initial_ct_term_study_standard_test_2.term_uid
+    )
     before_unlock = res
 
     # get study objective headers
@@ -203,7 +283,7 @@ def test_study_objective_with_objective_level_relationship(api_client):
     )
     res = response.json()
     assert_response_status_code(response, 200)
-    assert res == ["term_root_final"]
+    assert res == [initial_ct_term_study_standard_test_2.term_uid]
 
     # Unlock
     response = api_client.delete(f"/studies/{study.uid}/locks")
@@ -214,11 +294,14 @@ def test_study_objective_with_objective_level_relationship(api_client):
         f"/studies/{study.uid}/study-objectives/{study_objective_uid}",
         json={
             "objective_uid": "Objective_000001",
-            "objective_level_uid": "term_root_final5",
+            "objective_level_uid": initial_ct_term_study_standard_test_3.term_uid,
         },
     )
     res = response.json()
-    assert res["objective_level"]["term_uid"] == "term_root_final5"
+    assert (
+        res["objective_level"]["term_uid"]
+        == initial_ct_term_study_standard_test_3.term_uid
+    )
     assert_response_status_code(response, 200)
 
     # get all study objectives of a specific study version
@@ -244,7 +327,7 @@ def test_study_objective_with_objective_level_relationship(api_client):
     )
     res = response.json()
     assert_response_status_code(response, 200)
-    assert res == ["term_root_final"]
+    assert res == [initial_ct_term_study_standard_test_2.term_uid]
 
     # get all study objectives
     response = api_client.get(
@@ -252,7 +335,10 @@ def test_study_objective_with_objective_level_relationship(api_client):
     )
     res = response.json()
     assert_response_status_code(response, 200)
-    assert res["items"][0]["objective_level"]["term_uid"] == "term_root_final5"
+    assert (
+        res["items"][0]["objective_level"]["term_uid"]
+        == initial_ct_term_study_standard_test_3.term_uid
+    )
 
     # get specific study objective
     response = api_client.get(
@@ -260,7 +346,10 @@ def test_study_objective_with_objective_level_relationship(api_client):
     )
     res = response.json()
     assert_response_status_code(response, 200)
-    assert res["objective_level"]["term_uid"] == "term_root_final5"
+    assert (
+        res["objective_level"]["term_uid"]
+        == initial_ct_term_study_standard_test_3.term_uid
+    )
 
     # get study objective headers
     response = api_client.get(
@@ -268,7 +357,7 @@ def test_study_objective_with_objective_level_relationship(api_client):
     )
     res = response.json()
     assert_response_status_code(response, 200)
-    assert res == ["term_root_final5"]
+    assert res == [initial_ct_term_study_standard_test_3.term_uid]
 
 
 @pytest.mark.parametrize(
@@ -376,13 +465,12 @@ def test_study_objective_version_selecting_ct_package(api_client):
     study_selection_ctterm_uid_input_key = "objective_level_uid"
     study_selection_ctterm_keys = "objective_level"
     study_selection_ctterm_uid_key = "term_uid"
-    study_selection_ctterm_name_key = "sponsor_preferred_name"
     study_for_ctterm_versioning = TestUtils.create_study()
     response = api_client.post(
         f"/studies/{study_for_ctterm_versioning.uid}/{study_selection_breadcrumb}",
         json={
             "objective_uid": "Objective_000001",
-            study_selection_ctterm_uid_input_key: "term_root_final",
+            study_selection_ctterm_uid_input_key: initial_ct_term_study_standard_test.term_uid,
         },
     )
     res = response.json()
@@ -391,7 +479,7 @@ def test_study_objective_version_selecting_ct_package(api_client):
     assert res["order"] == 1
     assert (
         res[study_selection_ctterm_keys][study_selection_ctterm_uid_key]
-        == "term_root_final"
+        == initial_ct_term_study_standard_test.term_uid
     )
 
     # edit ctterm
@@ -402,7 +490,7 @@ def test_study_objective_version_selecting_ct_package(api_client):
         f"/ct/terms/{ctterm_uid}/names/versions",
     )
     assert_response_status_code(response, 201)
-    response = api_client.patch(
+    api_client.patch(
         f"/ct/terms/{ctterm_uid}/names",
         json={
             "sponsor_preferred_name": new_ctterm_name,
@@ -425,10 +513,7 @@ def test_study_objective_version_selecting_ct_package(api_client):
     assert (
         res[study_selection_ctterm_keys][study_selection_ctterm_uid_key] == ctterm_uid
     )
-    assert (
-        res[study_selection_ctterm_keys][study_selection_ctterm_name_key]
-        == new_ctterm_name
-    )
+    assert res[study_selection_ctterm_keys]["term_name"] == new_ctterm_name
 
     # get ct_packages
     response = api_client.get(
@@ -459,7 +544,7 @@ def test_study_objective_version_selecting_ct_package(api_client):
         res[study_selection_ctterm_keys][study_selection_ctterm_uid_key] == ctterm_uid
     )
     assert (
-        res[study_selection_ctterm_keys][study_selection_ctterm_name_key]
+        res[study_selection_ctterm_keys]["term_name"]
         == initial_ct_term_study_standard_test.sponsor_preferred_name
     )
 
@@ -473,7 +558,7 @@ def test_study_objective_version_selecting_ct_package(api_client):
     res = response.json()
     assert_response_status_code(response, 200)
     assert (
-        res[study_selection_ctterm_keys][study_selection_ctterm_name_key]
+        res[study_selection_ctterm_keys]["term_name"]
         == initial_ct_term_study_standard_test.sponsor_preferred_name
     )
 
@@ -484,13 +569,10 @@ def test_study_objective_version_selecting_ct_package(api_client):
     res = response.json()
     assert_response_status_code(response, 200)
     assert (
-        res[0][study_selection_ctterm_keys][study_selection_ctterm_name_key]
+        res[0][study_selection_ctterm_keys]["term_name"]
         == initial_ct_term_study_standard_test.sponsor_preferred_name
     )
-    assert (
-        res[1][study_selection_ctterm_keys][study_selection_ctterm_name_key]
-        == new_ctterm_name
-    )
+    assert res[1][study_selection_ctterm_keys]["term_name"] == new_ctterm_name
 
     # get all objectives
     response = api_client.get(
@@ -499,13 +581,10 @@ def test_study_objective_version_selecting_ct_package(api_client):
     res = response.json()
     assert_response_status_code(response, 200)
     assert (
-        res[0][study_selection_ctterm_keys][study_selection_ctterm_name_key]
+        res[0][study_selection_ctterm_keys]["term_name"]
         == initial_ct_term_study_standard_test.sponsor_preferred_name
     )
-    assert (
-        res[1][study_selection_ctterm_keys][study_selection_ctterm_name_key]
-        == new_ctterm_name
-    )
+    assert res[1][study_selection_ctterm_keys]["term_name"] == new_ctterm_name
 
 
 def test_study_objective_ct_term_retrieval_at_date(api_client):
@@ -526,7 +605,7 @@ def test_study_objective_ct_term_retrieval_at_date(api_client):
         f"/studies/{study_for_queried_effective_date.uid}/{study_selection_breadcrumb}",
         json={
             "objective_uid": "Objective_000001",
-            study_selection_ctterm_uid_input_key: "term_root_final",
+            study_selection_ctterm_uid_input_key: initial_ct_term_study_standard_test.term_uid,
         },
     )
     res = response.json()

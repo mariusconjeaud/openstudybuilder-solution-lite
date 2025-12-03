@@ -16,15 +16,18 @@
           hide-details
         />
         <SelectActivityItemTermField
+          :key="props.testNameAic.uid"
           v-model="model"
+          v-model:codelist="nameCodelist"
           v-model:search="search"
           :label="$t('ActivityInstanceForm.name_submission_value')"
           :activity-item-class="props.testNameAic"
           :data-domain="props.dataDomain"
-          item-title="name_submission_value"
+          item-title="submission_value"
           class="ml-4 w-50"
           :disabled="props.disabled"
           :rules="[formRules.required]"
+          @updatecodelist="changeCodelist"
         />
       </div>
       <div class="d-flex">
@@ -42,14 +45,17 @@
           hide-details
         />
         <SelectActivityItemTermField
+          :key="props.testCodeAic.uid"
           v-model="model"
+          v-model:codelist="codeCodelist"
           v-model:search="search"
           :label="$t('ActivityInstanceForm.code_submission_value')"
           :activity-item-class="props.testCodeAic"
           :data-domain="props.dataDomain"
-          item-title="code_submission_value"
+          item-title="submission_value"
           class="ml-4 w-50"
           :rules="[formRules.required]"
+          @updatecodelist="changeCodelist"
         />
       </div>
     </v-card-text>
@@ -81,6 +87,24 @@ const props = defineProps({
 
 const formRules = inject('formRules')
 
-const model = defineModel()
+const model = defineModel({ type: String })
+const codeCodelist = defineModel('codeCodelist', { type: String })
+const nameCodelist = defineModel('nameCodelist', { type: String })
+
 const search = ref('')
+
+const changeCodelist = (codelist) => {
+  if (!codelist) return
+  if (
+    codelist.paired_codes_codelist_uid &&
+    codelist.paired_codes_codelist_uid !== codeCodelist.value
+  ) {
+    codeCodelist.value = codelist.paired_codes_codelist_uid
+  } else if (
+    codelist.paired_names_codelist_uid &&
+    codelist.paired_names_codelist_uid !== nameCodelist.value
+  ) {
+    nameCodelist.value = codelist.paired_names_codelist_uid
+  }
+}
 </script>

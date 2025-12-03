@@ -4,6 +4,7 @@ Feature: Library - Code Lists - Sponsor CT Packages
     Background: User must be logged in
         Given The user is logged in
 
+    @smoke_test
     Scenario: [Navigation] User must be able to navigate to the Sponsor CT Packages page
         Given The '/library' page is opened
         When The 'Sponsor CT Packages' submenu is clicked in the 'Code Lists' section
@@ -16,6 +17,7 @@ Feature: Library - Code Lists - Sponsor CT Packages
     #     And The Sponsor CT Package form is populated and saved
     #     Then The table presents created Sponsor CT Package
 
+    @smoke_test
     Scenario: [Table][Columns][Names] User must be able to see the columns list of Sponsor CT Package for a selected CDISC CT Package
         Given The '/library/sponsor-ct-packages' page is opened
         Then A table is visible with following options

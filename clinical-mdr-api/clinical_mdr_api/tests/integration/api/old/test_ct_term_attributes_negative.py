@@ -1,4 +1,6 @@
-# pylint: disable=unused-argument, redefined-outer-name, too-many-arguments, line-too-long, too-many-statements
+# pylint: disable=unused-argument
+# pylint: disable=redefined-outer-name
+# pylint: disable=too-many-arguments
 
 # pytest fixture functions have other fixture functions as arguments,
 # which pylint interprets as unused arguments
@@ -45,8 +47,6 @@ def test_get_all_terms_from_non_existent_codelist(api_client):
 
 def test_patch_term_attributes_non_draft_term(api_client):
     data = {
-        "code_submission_value": "code_submission_value",
-        "name_submission_value": "name_submission_value",
         "nci_preferred_name": "nci_preferred_name",
         "definition": "definition",
         "change_description": "change_description",
@@ -63,8 +63,6 @@ def test_patch_term_attributes_non_draft_term(api_client):
 
 def test_patch_attributes_terms_in_non_editable_library(api_client):
     data = {
-        "code_submission_value": "code_submission_value",
-        "name_submission_value": "name_submission_value",
         "nci_preferred_name": "nci_preferred_name",
         "definition": "definition",
         "change_description": "change_description",
@@ -81,10 +79,9 @@ def test_patch_attributes_terms_in_non_editable_library(api_client):
     assert res["message"] == "Library isn't editable."
 
 
-def test_patch_attributes_terms_name_submission_value_allready_exists(api_client):
+def test_patch_attributes_terms_concept_id_already_exists(api_client):
     data = {
-        "code_submission_value": "code_submission_value",
-        "name_submission_value": "name_submission_value1",
+        "concept_id": "concept_id1",
         "nci_preferred_name": "nci_preferred_name",
         "definition": "definition",
         "change_description": "change_description",
@@ -98,28 +95,7 @@ def test_patch_attributes_terms_name_submission_value_allready_exists(api_client
     assert res["type"] == "AlreadyExistsException"
     assert (
         res["message"]
-        == "CT Term Attributes with Name 'name_submission_value1' already exists."
-    )
-
-
-def test_patch_attributes_terms_code_submission_value_already_exists(api_client):
-    data = {
-        "code_submission_value": "code_submission_value1",
-        "name_submission_value": "name_submission_value",
-        "nci_preferred_name": "nci_preferred_name",
-        "definition": "definition",
-        "change_description": "change_description",
-    }
-    response = api_client.patch("/ct/terms/term_root_draft/attributes", json=data)
-
-    assert_response_status_code(response, 409)
-
-    res = response.json()
-
-    assert res["type"] == "AlreadyExistsException"
-    assert (
-        res["message"]
-        == "CT Term Attributes with Code Submission Value 'code_submission_value1' already exists."
+        == "Concept ID (concept_id1) already in use by another term or codelist."
     )
 
 
@@ -203,14 +179,10 @@ def test_add_term_node_parent1(api_client):
     res = response.json()
 
     assert res["term_uid"] == "term_root_final"
-    assert res["catalogue_name"] == "SDTM CT"
-    assert res["codelists"] == [
-        {"codelist_uid": "editable_cr", "order": 1, "library_name": "Sponsor"}
-    ]
-    assert res["concept_id"] is None
-    assert res["code_submission_value"] == "code_submission_value1"
-    assert res["name_submission_value"] == "name_submission_value1"
-    assert res["nci_preferred_name"] == "preferred_term"
+    assert res["catalogue_names"] == ["SDTM CT"]
+    assert len(res["codelists"]) == 1
+    assert res["concept_id"] == "concept_id1"
+    assert res["nci_preferred_name"] == "preferred_term1"
     assert res["definition"] == "definition"
     assert res["sponsor_preferred_name"] == "term_value_name1"
     assert (

@@ -399,7 +399,7 @@ NCI preferred term: Milliliter
 
 [strength subset]
 
-",2130,mL,N,N,N,N,Y,N,Y,Y,
+",2130,mL,N,N,Y,N,Y,N,Y,Y,
 ng/g,MASS FRACTION,Y,Y,N,Y,N,,N,N,1,ug/kg,,C67396,Sponsor defined: nanogram/gram.,129,ug/kg,N,N,N,N,N,N,Y,Y,
 mCi/L,VOLUMETRIC RADIOACTIVITY,Y,Y,N,Y,N,,N,N,37000,mCi/L,,C71174,A unit of volumetric radioactivity concentration defined as a concentration of a radionuclide with an activity equal to one thousandth of a Curie per unit volume equal to one liter.(NCI),1,mCi/l,N,N,N,N,N,N,Y,Y,
 mmol/mol,MASS FRACTION,Y,Y,N,Y,Y,,Y,N,1000,mmol/mol,,C111253,"mmol/mol. New unit to report HBA1c in.

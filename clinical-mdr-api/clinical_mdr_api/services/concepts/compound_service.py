@@ -15,7 +15,6 @@ from clinical_mdr_api.services.concepts.compound_alias_service import (
 )
 from clinical_mdr_api.services.concepts.concept_generic_service import (
     ConceptGenericService,
-    _AggregateRootType,
 )
 
 
@@ -33,11 +32,11 @@ class CompoundService(ConceptGenericService[CompoundAR]):
 
     def _create_aggregate_root(
         self, concept_input: CompoundCreateInput, library
-    ) -> _AggregateRootType:
+    ) -> CompoundAR:
         return CompoundAR.from_input_values(
             author_id=self.author_id,
             concept_vo=CompoundVO.from_repository_values(
-                name=concept_input.name,
+                name=concept_input.name,  # type: ignore[arg-type]
                 name_sentence_case=concept_input.name_sentence_case,
                 definition=concept_input.definition,
                 abbreviation=concept_input.abbreviation,
@@ -56,7 +55,7 @@ class CompoundService(ConceptGenericService[CompoundAR]):
             author_id=self.author_id,
             change_description=concept_edit_input.change_description,
             concept_vo=CompoundVO.from_repository_values(
-                name=concept_edit_input.name,
+                name=concept_edit_input.name or item.name,
                 name_sentence_case=concept_edit_input.name_sentence_case,
                 definition=concept_edit_input.definition,
                 abbreviation=concept_edit_input.abbreviation,

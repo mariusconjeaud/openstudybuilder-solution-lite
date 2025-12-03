@@ -8,21 +8,13 @@
       <div class="bg-white pa-4">
         <v-form ref="observer">
           <v-text-field
-            v-model="form.name_submission_value"
-            :label="$t('CodelistTermCreationForm.name_submission_value')"
-            :rules="[formRules.required]"
-            clearable
-          />
-          <v-text-field
-            v-model="form.code_submission_value"
-            :label="$t('CodelistTermCreationForm.code_submission_value')"
-            :rules="[formRules.required]"
+            v-model="form.concept_id"
+            :label="$t('CodelistTermCreationForm.concept_id')"
             clearable
           />
           <v-text-field
             v-model="form.nci_preferred_name"
             :label="$t('CodelistTermCreationForm.nci_pref_name')"
-            :rules="[formRules.required]"
             clearable
           />
           <v-textarea
@@ -83,8 +75,6 @@ const confirm = ref()
 const observer = ref()
 
 const helpItems = [
-  'CodelistTermCreationForm.name_submission_value',
-  'CodelistTermCreationForm.code_submission_value',
   'CodelistTermCreationForm.nci_pref_name',
   'CodelistTermCreationForm.definition',
 ]
@@ -97,8 +87,6 @@ watch(
         .getCodelistTermAttributes(val.term_uid)
         .then((resp) => {
           form.value = {
-            name_submission_value: resp.data.name_submission_value,
-            code_submission_value: resp.data.code_submission_value,
             nci_preferred_name: resp.data.nci_preferred_name,
             definition: resp.data.definition,
           }

@@ -84,18 +84,28 @@ def test_data():
     db.cypher_query(STARTUP_CT_CATALOGUE_CYPHER)
     TestUtils.set_study_standard_version(study_uid=study.uid)
 
-    catalogue_name, library_name = get_catalogue_name_library_name()
+    _catalogue_name, library_name = get_catalogue_name_library_name()
+    catalogue_name = "SDTM CT"
     # Create a study arm
     arm_type_codelist = create_codelist(
-        "Arm Type", "CTCodelist_ArmType", catalogue_name, library_name
-    )
-    arm_type_term = create_ct_term(
-        arm_type_codelist.codelist_uid,
         "Arm Type",
-        "ArmType_0001",
-        1,
+        "CTCodelist_ArmType",
         catalogue_name,
         library_name,
+        submission_value="ARMTTP",
+    )
+    arm_type_term = create_ct_term(
+        "Arm Type",
+        "ArmType_0001",
+        catalogue_name,
+        library_name,
+        codelists=[
+            {
+                "uid": arm_type_codelist.codelist_uid,
+                "order": 1,
+                "submission_value": "Arm Type",
+            }
+        ],
     )
     study_arm = create_study_arm(
         study_uid=study.uid,
@@ -103,7 +113,6 @@ def test_data():
         short_name="Arm_Short_Name_1",
         code="Arm_code_1",
         description="desc...",
-        colour_code="colour...",
         randomization_group="Randomization_Group_1",
         number_of_subjects=1,
         arm_type_uid=arm_type_term.uid,
@@ -114,7 +123,6 @@ def test_data():
         short_name="Arm_Short_Name_2",
         code="Arm_code_2",
         description="desc...",
-        colour_code="colour...",
         randomization_group="Randomization_Group_2",
         number_of_subjects=1,
         arm_type_uid=arm_type_term.uid,
@@ -125,7 +133,6 @@ def test_data():
         short_name="BranchArm_1",
         code="1",
         description="before locked",
-        colour_code="colour...",
         randomization_group="randomization_group",
         number_of_subjects="1",
         arm_uid=study_arm2.arm_uid,
@@ -134,17 +141,26 @@ def test_data():
     study_epoch = create_study_epoch("EpochSubType_0001", study_uid=study.uid)
     global epoch_uid
     epoch_uid = study_epoch.uid
-    element_type_codelist = create_codelist(
-        "Element Type", "CTCodelist_ElementType", catalogue_name, library_name
+    element_subtype_codelist = create_codelist(
+        "Element Subtype",
+        "CTCodelist_ElementType",
+        catalogue_name,
+        library_name,
+        submission_value="ELEMSTP",
     )
     global element_type_term
     element_type_term = create_ct_term(
-        element_type_codelist.codelist_uid,
         "Element Type",
         "ElementType_0001",
-        1,
         catalogue_name,
         library_name,
+        codelists=[
+            {
+                "uid": element_subtype_codelist.codelist_uid,
+                "order": 1,
+                "submission_value": "Element Type",
+            }
+        ],
     )
     yield
 
@@ -302,7 +318,7 @@ def test_study_design_cell_with_study_epoch_relationship(api_client):
     before_unlock_arms = api_client.get(f"/studies/{study.uid}/study-arms").json()
     before_unlock_branch_arms = api_client.get(
         f"/studies/{study.uid}/study-branch-arms"
-    ).json()
+    ).json()["items"]
     before_unlock_elements = api_client.get(
         f"/studies/{study.uid}/study-elements"
     ).json()
@@ -405,7 +421,7 @@ def test_study_design_cell_with_study_epoch_relationship(api_client):
         before_unlock_branch_arms
         == api_client.get(
             f"/studies/{study.uid}/study-branch-arms?study_value_version=2"
-        ).json()
+        ).json()["items"]
     )
     for i, _ in enumerate(before_unlock_elements["items"]):
         before_unlock_elements["items"][i]["study_version"] = mock.ANY
@@ -487,7 +503,7 @@ def test_study_design_cell_with_study_epoch_relationship(api_client):
 
     cloned_branch_arms = api_client.get(
         f"/studies/{study_cloned['uid']}/study-branch-arms"
-    ).json()
+    ).json()["items"]
     cloned_branch_arms_any = copy.deepcopy(cloned_branch_arms)
     for i, _ in enumerate(cloned_branch_arms_any):
         cloned_branch_arms_any[i]["study_version"] = mock.ANY
@@ -495,7 +511,9 @@ def test_study_design_cell_with_study_epoch_relationship(api_client):
         cloned_branch_arms_any[i]["branch_arm_uid"] = mock.ANY
         cloned_branch_arms_any[i]["start_date"] = mock.ANY
         cloned_branch_arms_any[i]["arm_root"] = mock.ANY
-    final_branch_arms = api_client.get(f"/studies/{study.uid}/study-branch-arms").json()
+    final_branch_arms = api_client.get(
+        f"/studies/{study.uid}/study-branch-arms"
+    ).json()["items"]
     for i, _ in enumerate(final_branch_arms):
         final_branch_arms[i]["study_version"] = mock.ANY
         final_branch_arms[i]["study_uid"] = mock.ANY

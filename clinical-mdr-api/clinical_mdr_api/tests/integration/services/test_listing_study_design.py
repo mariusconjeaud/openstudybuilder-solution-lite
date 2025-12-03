@@ -19,6 +19,7 @@ from clinical_mdr_api.models.listings.listings_study import (
     StudyTypeListingModel,
     StudyVisitListingModel,
 )
+from clinical_mdr_api.models.study_selections.study import Study
 from clinical_mdr_api.services.listings.listings_study import (
     StudyMetadataListingService,
 )
@@ -45,7 +46,9 @@ from clinical_mdr_api.tests.integration.utils.method_library import (
     study_population_json_model_to_vo,
 )
 from clinical_mdr_api.tests.integration.utils.utils import TestUtils
-from common.config import STUDY_ENDPOINT_TP_NAME
+from common.config import settings
+
+study: Study
 
 
 class TestStudyListing(unittest.TestCase):
@@ -53,18 +56,16 @@ class TestStudyListing(unittest.TestCase):
     def setUpClass(cls) -> None:
         inject_and_clear_db("StudyListingTest")
         TestUtils.create_library(name="UCUM", is_editable=True)
-        inject_base_data()
+        global study
+        study, _ = inject_base_data()
         codelist = TestUtils.create_ct_codelist()
-        TestUtils.create_study_ct_data_map(codelist_uid=codelist.codelist_uid)
+        TestUtils.create_study_ct_data_map(codelist_uid=None)
         study_service = StudyService()
         studies = study_service.get_all()
         cls.study_uid = studies.items[0].uid
-        cls.project_id = studies.items[
-            0
-        ].current_metadata.identification_metadata.project_number
-        cls.study_number = studies.items[
-            0
-        ].current_metadata.identification_metadata.study_number
+
+        cls.project_id = study.current_metadata.identification_metadata.project_number
+        cls.study_number = study.current_metadata.identification_metadata.study_number
         # Inject study metadata
         input_metadata_in_study(cls.study_uid)
         # Create study epochs
@@ -80,23 +81,37 @@ class TestStudyListing(unittest.TestCase):
         )
         # Create study elements
         element_type_codelist = create_codelist(
-            "Element Type", "CTCodelist_ElementType", catalogue_name, library_name
+            "Element Type",
+            "CTCodelist_ElementType",
+            catalogue_name,
+            library_name,
+            submission_value="ELEMSTP",
         )
         element_type_term = create_ct_term(
-            element_type_codelist.codelist_uid,
             "Element Type",
             "ElementType_0001",
-            1,
             catalogue_name,
             library_name,
+            codelists=[
+                {
+                    "uid": element_type_codelist.codelist_uid,
+                    "order": 1,
+                    "submission_value": "Element Type",
+                }
+            ],
         )
         element_type_term_2 = create_ct_term(
-            element_type_codelist.codelist_uid,
-            "Element Type",
+            "Element Type 2",
             "ElementType_0002",
-            2,
             catalogue_name,
             library_name,
+            codelists=[
+                {
+                    "uid": element_type_codelist.codelist_uid,
+                    "order": 2,
+                    "submission_value": "Element Type 2",
+                }
+            ],
         )
         study_elements = [
             create_study_element(element_type_term.uid, cls.study_uid),
@@ -109,14 +124,20 @@ class TestStudyListing(unittest.TestCase):
             uid="CTCodelist_00009",
             catalogue=catalogue_name,
             library=library_name,
+            submission_value="ARMTTP",
         )
         arm_type = create_ct_term(
-            codelist=codelist.codelist_uid,
             name="Arm Type",
             uid="ArmType_0001",
-            order=1,
             catalogue_name=catalogue_name,
             library_name=library_name,
+            codelists=[
+                {
+                    "uid": codelist.codelist_uid,
+                    "order": 1,
+                    "submission_value": "Arm Type",
+                }
+            ],
         )
 
         create_study_arm(
@@ -125,7 +146,6 @@ class TestStudyListing(unittest.TestCase):
             short_name="Arm_Short_Name_1",
             code="Arm_code_1",
             description="desc...",
-            colour_code="colour...",
             randomization_group="Arm_randomizationGroup",
             number_of_subjects=100,
             arm_type_uid=arm_type.uid,
@@ -136,7 +156,6 @@ class TestStudyListing(unittest.TestCase):
             short_name="Arm_Short_Name_2",
             code="Arm_code_2",
             description="desc...",
-            colour_code="colour...",
             randomization_group="Arm_randomizationGroup2",
             number_of_subjects=100,
             arm_type_uid=arm_type.uid,
@@ -147,7 +166,6 @@ class TestStudyListing(unittest.TestCase):
             short_name="Arm_Short_Name_3",
             code="Arm_code_3",
             description="desc...",
-            colour_code="colour...",
             randomization_group="Arm_randomizationGroup3",
             number_of_subjects=100,
             arm_type_uid=arm_type.uid,
@@ -159,7 +177,6 @@ class TestStudyListing(unittest.TestCase):
             short_name="Arm_Short_Name_9",
             code="Arm_code_9",
             description="desc...",
-            colour_code="colour...",
             randomization_group="Arm_randomizationGroup9",
             number_of_subjects=100,
             arm_type_uid=arm_type.uid,
@@ -169,13 +186,13 @@ class TestStudyListing(unittest.TestCase):
         create_study_design_cell(
             study_element_uid=study_elements[0].element_uid,
             study_epoch_uid=study_epoch.uid,
-            study_arm_uid="StudyArm_000003",
+            study_arm_uid="StudyArm_000002",
             study_uid=cls.study_uid,
         )
         create_study_design_cell(
             study_element_uid=study_elements[0].element_uid,
             study_epoch_uid=study_epoch2.uid,
-            study_arm_uid="StudyArm_000003",
+            study_arm_uid="StudyArm_000002",
             study_uid=cls.study_uid,
         )
 
@@ -189,7 +206,7 @@ class TestStudyListing(unittest.TestCase):
         create_study_design_cell(
             study_element_uid=study_elements[0].element_uid,
             study_epoch_uid=study_epoch2.uid,
-            study_arm_uid="StudyArm_000005",
+            study_arm_uid="StudyArm_000003",
             study_uid=cls.study_uid,
         )
 
@@ -200,10 +217,9 @@ class TestStudyListing(unittest.TestCase):
             short_name="Branch_Arm_Short_Name_1",
             code="Branch_Arm_code_1",
             description="desc...",
-            colour_code="colour...",
             randomization_group="Branch_Arm_randomizationGroup",
             number_of_subjects=100,
-            arm_uid="StudyArm_000003",
+            arm_uid="StudyArm_000002",
         )
 
         # Create study cohort
@@ -213,7 +229,6 @@ class TestStudyListing(unittest.TestCase):
             short_name="Cohort_Short_Name_1",
             code="Cohort_code_1",
             description="desc...",
-            colour_code="desc...",
             number_of_subjects=100,
             arm_uids=["StudyArm_000001"],
         )
@@ -227,12 +242,23 @@ class TestStudyListing(unittest.TestCase):
             epoch2=study_epoch2,
         )
 
+        # Create criteria type codelist
+        crit_codelist = create_codelist(
+            name="Criteria Type",
+            uid="CTCodelist_00099",
+            catalogue=catalogue_name,
+            library=library_name,
+            submission_value="CRITRTP",
+        )
+
         # Create CT Terms
         ct_term_inclusion_criteria = TestUtils.create_ct_term(
-            sponsor_preferred_name="INCLUSION CRITERIA"
+            sponsor_preferred_name="INCLUSION CRITERIA",
+            codelist_uid=crit_codelist.codelist_uid,
         )
         ct_term_exclusion_criteria = TestUtils.create_ct_term(
-            sponsor_preferred_name="EXCLUSION CRITERIA"
+            sponsor_preferred_name="EXCLUSION CRITERIA",
+            codelist_uid=crit_codelist.codelist_uid,
         )
 
         # Create criteria templates
@@ -275,7 +301,7 @@ class TestStudyListing(unittest.TestCase):
         )
 
         # Create endpoint templates
-        TestUtils.create_template_parameter(STUDY_ENDPOINT_TP_NAME)
+        TestUtils.create_template_parameter(settings.study_endpoint_tp_name)
         endpoint_template = TestUtils.create_endpoint_template()
 
         unit_definitions = [
@@ -308,6 +334,7 @@ class TestStudyListing(unittest.TestCase):
         )
 
         # lock study
+        study_service = StudyService()
         study_service.lock(uid=cls.study_uid, change_description="locking it")
         study_service.unlock(uid=cls.study_uid)
 
@@ -321,7 +348,7 @@ class TestStudyListing(unittest.TestCase):
         )
         expected_output = StudyMetadataListingModel(
             api_ver="TBA",
-            study_id="123-123",
+            study_id=f"{study.current_metadata.identification_metadata.project_number}-{study.current_metadata.identification_metadata.study_number}",
             study_ver=1,
             request_dt=datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S"),
             specified_dt="2099-12-30",
@@ -359,11 +386,9 @@ class TestStudyListing(unittest.TestCase):
                 ),
             ),
             epochs=StudyEpochListingModel.from_all_study_epochs(
-                all_study_epochs=StudyEpochService()
-                .get_all_epochs(
+                all_study_epochs=StudyEpochService.get_all_epochs(
                     study_uid=self.study_uid,
-                )
-                .items,
+                ).items,
                 find_term_by_uid=study_listing_service.ct_attr_repo.find_by_uid,
             ),
             elements=StudyElementListingModel.from_study_element_ar(

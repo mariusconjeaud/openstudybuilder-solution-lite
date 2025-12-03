@@ -54,21 +54,11 @@ class StudyDesignCellHistory:
 
 
 class StudyDesignCellRepository:
-    @staticmethod
-    def _acquire_write_lock_study_value(uid: str) -> None:
-        db.cypher_query(
-            """
-                MATCH (sr:StudyRoot {uid: $uid})
-                REMOVE sr.__WRITE_LOCK__
-                RETURN true
-            """,
-            {"uid": uid},
-        )
 
     def find_by_uid(self, study_uid: str, uid: str) -> StudyDesignCellVO:
         unique_design_cells = ListDistinct(
             StudyDesignCell.nodes.fetch_relations(
-                "study_epoch__has_epoch__has_name_root__has_latest_value",
+                "study_epoch__has_epoch__has_selected_term__has_name_root__has_latest_value",
                 "has_after__audit_trail",
                 "study_epoch",
                 Optional("study_arm__study_value"),
@@ -117,7 +107,7 @@ class StudyDesignCellRepository:
             )
             for sas_node in ListDistinct(
                 StudyDesignCell.nodes.fetch_relations(
-                    "study_epoch__has_epoch__has_name_root__has_latest_value",
+                    "study_epoch__has_epoch__has_selected_term__has_name_root__has_latest_value",
                     "has_after__audit_trail",
                     "study_epoch__study_value",
                     "study_element__study_value",
@@ -177,6 +167,7 @@ class StudyDesignCellRepository:
 
         study_epoch_name = (
             study_epoch.has_epoch.single()
+            .has_selected_term.single()
             .has_name_root.single()
             .has_latest_value.single()
             .name
@@ -302,11 +293,10 @@ class StudyDesignCellRepository:
 
         # check if the study_arm has StudyBranchArms assigned to it
         # get StudyArm only if it's necessary
+        study_arm_node: StudyArm | None
         if design_cell_vo.study_arm_uid:
-            study_arm_node: StudyArm = (
-                latest_study_value_node.has_study_arm.get_or_none(
-                    uid=design_cell_vo.study_arm_uid
-                )
+            study_arm_node = latest_study_value_node.has_study_arm.get_or_none(
+                uid=design_cell_vo.study_arm_uid
             )
             # if any StudyBranchArms connectect to StudyArm has a study_value
             exceptions.BusinessLogicException.raise_if(
@@ -499,7 +489,7 @@ class StudyDesignCellRepository:
             }
         sdc_node = ListDistinct(
             StudyDesignCell.nodes.fetch_relations(
-                "study_epoch__has_epoch__has_name_root__has_latest_value",
+                "study_epoch__has_epoch__has_selected_term__has_name_root__has_latest_value",
                 "has_after__audit_trail",
                 "study_epoch__study_value",
                 "study_branch_arm",
@@ -534,7 +524,7 @@ class StudyDesignCellRepository:
             }
         sdc_node = ListDistinct(
             StudyDesignCell.nodes.fetch_relations(
-                "study_epoch__has_epoch__has_name_root__has_latest_value",
+                "study_epoch__has_epoch__has_selected_term__has_name_root__has_latest_value",
                 "has_after__audit_trail",
                 "study_epoch__study_value",
                 Optional("study_arm__study_value"),
@@ -567,7 +557,7 @@ class StudyDesignCellRepository:
             }
         sdc_node = ListDistinct(
             StudyDesignCell.nodes.fetch_relations(
-                "study_epoch__has_epoch__has_name_root__has_latest_value",
+                "study_epoch__has_epoch__has_selected_term__has_name_root__has_latest_value",
                 "study_arm__study_value",
                 "has_after__audit_trail",
                 "study_epoch__study_value",
@@ -580,8 +570,8 @@ class StudyDesignCellRepository:
 
         return sdc_node
 
+    @staticmethod
     def get_design_cells_connected_to_element(
-        self,
         study_uid: str,
         study_element_uid: str,
         study_value_version: str | None = None,
@@ -767,7 +757,7 @@ class StudyDesignCellRepository:
 
     def find_selection_history(
         self, study_uid: str, design_cell_uid: str | None = None
-    ) -> list[dict | None]:
+    ) -> list[StudyDesignCellHistory]:
         if design_cell_uid:
             return self._get_selection_with_history(
                 study_uid=study_uid, design_cell_uid=design_cell_uid

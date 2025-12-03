@@ -1,6 +1,6 @@
 # Downloading Codelist Data from CDISC
 
-Before being able to load the cdisc CT in the StudyBuilder application, we need to download the existing packages from the cdisc library.
+Before being able to load the cdisc CT in the OpenStudyBuilder application, we need to download the existing packages from the cdisc library.
 
 ## Download new cdisc data (optional)
 

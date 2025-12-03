@@ -32,12 +32,14 @@ dosage_form = {
     }
 }
 
+
 # Finishing touches for standard codelists in sponsor library
+# TODO remove this altogether?
 class StandardCodelistFinish(BaseImporter):
     logging_name = "standard_codelists_finish"
 
-    def __init__(self, api=None, metrics_inst=None, cache=None):
-        super().__init__(api=api, metrics_inst=metrics_inst, cache=cache)
+    def __init__(self, api=None, metrics_inst=None):
+        super().__init__(api=api, metrics_inst=metrics_inst)
 
     @open_file()
     def dosage_form(self, csvfile):

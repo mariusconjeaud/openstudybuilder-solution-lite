@@ -18,7 +18,7 @@ Then('The table presents created Sponsor CT Package', () => {
 })
 
 When('Sponsor CT Package is created for the same date as already existing one', () => {
-    cy.createCTPackage('SDTM CT 2014-12-19')
+    cy.createCTPackage('SDTM__CT__2014-12-19')
     cy.waitForTable()
     cy.get('.mdi-plus').click()
     startSponsorCTPackageCreation()

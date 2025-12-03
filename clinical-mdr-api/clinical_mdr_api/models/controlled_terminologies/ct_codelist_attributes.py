@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Annotated, Callable, Self
+from typing import Annotated, Callable, Self, overload
 
 from pydantic import Field
 
@@ -15,7 +15,7 @@ class CTCodelistAttributes(BaseModel):
     @classmethod
     def from_ct_codelist_ar(cls, ct_codelist_ar: CTCodelistAttributesAR) -> Self:
         return cls(
-            catalogue_name=ct_codelist_ar.ct_codelist_vo.catalogue_name,
+            catalogue_names=ct_codelist_ar.ct_codelist_vo.catalogue_names,
             codelist_uid=ct_codelist_ar.uid,
             parent_codelist_uid=ct_codelist_ar.ct_codelist_vo.parent_codelist_uid,
             child_codelist_uids=ct_codelist_ar.ct_codelist_vo.child_codelist_uids,
@@ -24,6 +24,7 @@ class CTCodelistAttributes(BaseModel):
             nci_preferred_name=ct_codelist_ar.ct_codelist_vo.preferred_term,
             definition=ct_codelist_ar.ct_codelist_vo.definition,
             extensible=ct_codelist_ar.ct_codelist_vo.extensible,
+            ordinal=ct_codelist_ar.ct_codelist_vo.ordinal,
             library_name=Library.from_library_vo(ct_codelist_ar.library).name,
             start_date=ct_codelist_ar.item_metadata.start_date,
             end_date=ct_codelist_ar.item_metadata.end_date,
@@ -46,6 +47,7 @@ class CTCodelistAttributes(BaseModel):
             nci_preferred_name=ct_codelist_ar.ct_codelist_vo.preferred_term,
             definition=ct_codelist_ar.ct_codelist_vo.definition,
             extensible=ct_codelist_ar.ct_codelist_vo.extensible,
+            ordinal=ct_codelist_ar.ct_codelist_vo.ordinal,
             start_date=ct_codelist_ar.item_metadata.start_date,
             end_date=ct_codelist_ar.item_metadata.end_date,
             status=ct_codelist_ar.item_metadata.status.value,
@@ -57,9 +59,9 @@ class CTCodelistAttributes(BaseModel):
             ),
         )
 
-    catalogue_name: Annotated[
-        str | None, Field(json_schema_extra={"nullable": True})
-    ] = None
+    catalogue_names: list[str] = Field(
+        json_schema_extra={"remove_from_wildcard": True}, default_factory=list
+    )
 
     codelist_uid: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = (
         None
@@ -85,6 +87,8 @@ class CTCodelistAttributes(BaseModel):
     definition: Annotated[str, Field()]
 
     extensible: Annotated[bool, Field()]
+
+    ordinal: Annotated[bool, Field()]
 
     library_name: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = (
         None
@@ -113,6 +117,7 @@ class CTCodelistAttributes(BaseModel):
 
 
 class CTCodelistAttributesSimpleModel(BaseModel):
+    @overload
     @classmethod
     def from_codelist_uid(
         cls,
@@ -120,7 +125,26 @@ class CTCodelistAttributesSimpleModel(BaseModel):
         find_codelist_attribute_by_codelist_uid: Callable[
             [str], CTCodelistAttributesAR | None
         ],
+    ) -> Self: ...
+    @overload
+    @classmethod
+    def from_codelist_uid(
+        cls,
+        uid: None,
+        find_codelist_attribute_by_codelist_uid: Callable[
+            [str], CTCodelistAttributesAR | None
+        ],
+    ) -> None: ...
+    @classmethod
+    def from_codelist_uid(
+        cls,
+        uid: str | None,
+        find_codelist_attribute_by_codelist_uid: Callable[
+            [str], CTCodelistAttributesAR | None
+        ],
     ) -> Self | None:
+        simple_codelist_attribute_model = None
+
         if uid is not None:
             codelist_attribute = find_codelist_attribute_by_codelist_uid(uid)
 
@@ -138,8 +162,6 @@ class CTCodelistAttributesSimpleModel(BaseModel):
                     submission_value=None,
                     preferred_term=None,
                 )
-        else:
-            simple_codelist_attribute_model = None
         return simple_codelist_attribute_model
 
     uid: Annotated[str, Field()]
@@ -166,4 +188,5 @@ class CTCodelistAttributesEditInput(PatchInputModel):
     nci_preferred_name: Annotated[str | None, Field(min_length=1)] = None
     definition: Annotated[str | None, Field(min_length=1)] = None
     extensible: Annotated[bool | None, Field()] = None
-    change_description: Annotated[str | None, Field(min_length=1)] = None
+    ordinal: Annotated[bool | None, Field()] = None
+    change_description: Annotated[str, Field(min_length=1)]

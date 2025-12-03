@@ -2,7 +2,6 @@ import unittest
 from typing import Callable, Sequence
 
 from clinical_mdr_api.domains.controlled_terminologies.ct_term_name import (
-    CTTermCodelistVO,
     CTTermNameAR,
     CTTermNameVO,
 )
@@ -13,14 +12,12 @@ from clinical_mdr_api.domains.versioned_object_aggregate import (
 from clinical_mdr_api.tests.unit.domain.utils import AUTHOR_ID, random_str
 
 
-def create_random_ct_term_name_vo(codelist_uid: str = random_str()) -> CTTermNameVO:
+def create_random_ct_term_name_vo() -> CTTermNameVO:
+    name = random_str()
     random_ct_term_name_vo = CTTermNameVO.from_repository_values(
-        codelists=[
-            CTTermCodelistVO(codelist_uid=codelist_uid, order=1, library_name="Sponsor")
-        ],
-        catalogue_name=random_str(),
-        name=random_str(),
-        name_sentence_case=random_str(),
+        catalogue_names=[random_str()],
+        name=name,
+        name_sentence_case=name.lower(),
     )
     return random_ct_term_name_vo
 
@@ -28,13 +25,12 @@ def create_random_ct_term_name_vo(codelist_uid: str = random_str()) -> CTTermNam
 def create_random_ct_term_name_ar(
     # pylint: disable=unnecessary-lambda
     generate_uid_callback: Callable[[], str] = lambda: random_str(),
-    codelist_uid: str = random_str(),
     library: str = "Library",
     is_editable: bool = True,
 ) -> CTTermNameAR:
     random_ct_term_name_ar = CTTermNameAR.from_input_values(
         generate_uid_callback=generate_uid_callback,
-        ct_term_name_vo=create_random_ct_term_name_vo(codelist_uid=codelist_uid),
+        ct_term_name_vo=create_random_ct_term_name_vo(),
         library=LibraryVO.from_repository_values(
             library_name=library, is_editable=is_editable
         ),
@@ -54,9 +50,7 @@ def create_random_ct_term_name_ars(
         random_ct_term_name_ars.append(
             CTTermNameAR.from_input_values(
                 generate_uid_callback=lambda codelist_uid=codelist_uid: codelist_uid,
-                ct_term_name_vo=create_random_ct_term_name_vo(
-                    codelist_uid=codelist_uid
-                ),
+                ct_term_name_vo=create_random_ct_term_name_vo(),
                 library=LibraryVO.from_repository_values(
                     library_name=library, is_editable=is_editable
                 ),
@@ -116,6 +110,7 @@ class TestCTTermNameAR(unittest.TestCase):
         # when
         ct_term_vo = create_random_ct_term_name_vo()
         ct_term_name_ar.edit_draft(
+            term_uid=ct_term_name_ar.uid,
             author_id=AUTHOR_ID,
             change_description="Test",
             ct_term_vo=ct_term_vo,
@@ -129,18 +124,10 @@ class TestCTTermNameAR(unittest.TestCase):
         self.assertEqual(ct_term_name_ar.item_metadata.status, LibraryItemStatus.DRAFT)
         self.assertEqual(ct_term_name_ar.item_metadata.author_id, AUTHOR_ID)
         self.assertEqual(ct_term_name_ar.item_metadata.change_description, "Test")
-        self.assertEqual(
-            ct_term_name_ar.ct_term_vo.codelists[0].codelist_uid,
-            ct_term_vo.codelists[0].codelist_uid,
-        )
-        self.assertEqual(
-            ct_term_name_ar.ct_term_vo.codelists[0].order,
-            ct_term_vo.codelists[0].order,
-        )
         self.assertEqual(ct_term_name_ar.name, ct_term_vo.name)
         self.assertEqual(
             ct_term_name_ar.ct_term_vo.name_sentence_case, ct_term_vo.name_sentence_case
         )
-        self.assertEqual(
-            ct_term_name_ar.ct_term_vo.catalogue_name, ct_term_vo.catalogue_name
+        self.assertListEqual(
+            ct_term_name_ar.ct_term_vo.catalogue_names, ct_term_vo.catalogue_names
         )

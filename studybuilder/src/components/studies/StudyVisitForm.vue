@@ -122,7 +122,7 @@
                   :label="$t('StudyVisitForm.contact_mode')"
                   data-cy="contact-mode"
                   :items="contactModes"
-                  item-title="name.sponsor_preferred_name"
+                  item-title="sponsor_preferred_name"
                   item-value="term_uid"
                   :rules="[formRules.required]"
                   clearable
@@ -131,7 +131,13 @@
                 />
               </v-col>
               <v-col
-                v-if="form.visit_class !== visitConstants.CLASS_SPECIAL_VISIT"
+                v-if="
+                  [
+                    visitConstants.CLASS_SPECIAL_VISIT,
+                    visitConstants.CLASS_NON_VISIT,
+                    visitConstants.CLASS_UNSCHEDULED_VISIT,
+                  ].indexOf(form.visit_class) === -1
+                "
                 cols="4"
               >
                 <div class="d-flex">
@@ -174,7 +180,7 @@
                   :label="$t('StudyVisitForm.time_reference')"
                   data-cy="time-reference"
                   :items="timeReferences"
-                  item-title="name.sponsor_preferred_name"
+                  item-title="sponsor_preferred_name"
                   item-value="term_uid"
                   :rules="[formRules.required]"
                   clearable
@@ -240,7 +246,7 @@
                 v-model="form.repeating_frequency_uid"
                 :label="$t('StudyVisitForm.repeating_frequency')"
                 :items="frequencies"
-                item-title="name.sponsor_preferred_name"
+                item-title="sponsor_preferred_name"
                 item-value="term_uid"
                 clearable
                 @update:model-value="getVisitPreview"
@@ -346,13 +352,11 @@
               <div class="sub-title">
                 {{ $t('StudyVisitForm.visit_window') }}
               </div>
-              <v-alert
-                v-if="!disableWindowUnit"
-                density="compact"
-                type="warning"
-                class="text-white"
-                :text="$t('StudyVisitForm.visit_window_alert')"
-              />
+              <v-alert density="compact" type="warning" class="text-white">
+                <div
+                  v-html="sanitizeHTML($t('StudyVisitForm.visit_window_alert'))"
+                />
+              </v-alert>
               <div class="d-flex align-center">
                 <div class="mr-2 flex-grow-1">
                   <v-row>
@@ -424,7 +428,7 @@
                   :label="$t('StudyVisitForm.epoch_allocation')"
                   data-cy="epoch-allocation-rule"
                   :items="epochAllocations"
-                  item-title="name.sponsor_preferred_name"
+                  item-title="sponsor_preferred_name"
                   item-value="term_uid"
                   clearable
                 />
@@ -508,6 +512,7 @@ import { useStudiesGeneralStore } from '@/stores/studies-general'
 import { useEpochsStore } from '@/stores/studies-epochs'
 import { inject, ref, watch, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { sanitizeHTML } from '@/utils/sanitize'
 
 const eventBusEmit = inject('eventBusEmit')
 const formRules = inject('formRules')
@@ -755,9 +760,9 @@ watch(studyEpoch, (value) => {
     return
   }
   form.value.study_epoch_uid = value
-  terms.getNamesByCodelist('visitTypes', { page_size: 0 }).then((resp) => {
+  terms.getTermsByCodelist('visitTypes', { page_size: 0 }).then((resp) => {
     visitTypes.value = resp.data.items
-    terms.getByCodelist('timepointReferences').then((resp) => {
+    terms.getTermsByCodelist('timepointReferences').then((resp) => {
       timeReferences.value = resp.data.items
       if (
         form.value.visit_class === visitConstants.CLASS_UNSCHEDULED_VISIT &&
@@ -817,7 +822,7 @@ watch(
       disableTimeValue.value = true
       form.value.time_reference_uid = timeReferences.value.find(
         (val) =>
-          val.name.sponsor_preferred_name ===
+          val.sponsor_preferred_name ===
           visitConstants.TIMEREF_GLOBAL_ANCHOR_VISIT
       ).term_uid
     } else {
@@ -836,7 +841,7 @@ watch(
       setStudyEpochToBasic()
       const contactMode = contactModes.value.find(
         (item) =>
-          item.name.sponsor_preferred_name ===
+          item.sponsor_preferred_name ===
           visitConstants.CONTACT_MODE_VIRTUAL_VISIT
       )
       if (contactMode) {
@@ -934,7 +939,7 @@ async function addObject() {
   ) {
     data.time_reference_uid = timeReferences.value.find(
       (item) =>
-        item.name.sponsor_preferred_name ===
+        item.sponsor_preferred_name ===
         visitConstants.TIMEREF_ANCHOR_VISIT_IN_VISIT_GROUP
     ).term_uid
   } else if (
@@ -1012,7 +1017,7 @@ function getVisitPreview() {
   ) {
     payload.time_reference_uid = timeReferences.value.find(
       (item) =>
-        item.name.sponsor_preferred_name ===
+        item.sponsor_preferred_name ===
         visitConstants.TIMEREF_GLOBAL_ANCHOR_VISIT
     ).term_uid
     payload.time_value = 0
@@ -1023,7 +1028,7 @@ function getVisitPreview() {
   ) {
     payload.time_reference_uid = timeReferences.value.find(
       (item) =>
-        item.name.sponsor_preferred_name ===
+        item.sponsor_preferred_name ===
         visitConstants.TIMEREF_GLOBAL_ANCHOR_VISIT
     ).term_uid
   }
@@ -1075,14 +1080,14 @@ function callbacks() {
     .then((resp) => {
       anchorVisitsInSubgroup.value = resp.data
     })
-  terms.getByCodelist('epochs').then((resp) => {
+  terms.getTermsByCodelist('epochs').then((resp) => {
     epochsData.value = resp.data.items
     epochs.getStudyEpochs(selectedStudy.value.uid).then((resp) => {
       periods.value = resp.data.items
       periods.value.forEach((item) => {
         epochsData.value.forEach((epochDef) => {
           if (epochDef.term_uid === item.epoch) {
-            item.epoch_name = epochDef.name.sponsor_preferred_name
+            item.epoch_name = epochDef.sponsor_preferred_name
           }
         })
       })
@@ -1092,14 +1097,14 @@ function callbacks() {
       loading.value = false
     })
   })
-  terms.getByCodelist('contactModes').then((resp) => {
+  terms.getTermsByCodelist('contactModes').then((resp) => {
     contactModes.value = resp.data.items
   })
-  terms.getByCodelist('repeatingVisitFrequency').then((resp) => {
+  terms.getTermsByCodelist('repeatingVisitFrequency').then((resp) => {
     frequencies.value = resp.data.items
   })
 
-  terms.getByCodelist('epochAllocations').then((resp) => {
+  terms.getTermsByCodelist('epochAllocations').then((resp) => {
     epochAllocations.value = resp.data.items
   })
   const params = {
@@ -1157,7 +1162,7 @@ function setVisitType(value) {
 function setEpochAllocationRule(value) {
   if (epochAllocations.value.length) {
     form.value.epoch_allocation_uid = epochAllocations.value.find(
-      (item) => item.name.sponsor_preferred_name === value
+      (item) => item.sponsor_preferred_name === value
     ).term_uid
   }
 }

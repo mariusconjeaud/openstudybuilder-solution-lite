@@ -1,6 +1,48 @@
 const { Given, When, Then } = require("@badeball/cypress-cucumber-preprocessor");
 
-let codelistName, termSponsorName, termSentanceName, termName, termSubmissionValue, termNciValue, termDefinition
+let codelistName, termId, termSponsorName, termSentanceName, termName, termSubmissionValue, termNciValue, termDefinition, conceptId
+
+When('The id of the first term on the list is saved', () => cy.getCellValue(0, 'Concept ID').then(id => termId = id))
+
+When('The term is search for and found', () => cy.searchAndCheckPresence(conceptId, true))
+
+When('The codelist is search for and found', () => cy.searchAndCheckPresence(codelistName, true))
+
+When('The codelist and attributes status is set to {string}', (status) => {
+    cy.checkRowByIndex(0, 'Code list status', status)
+    cy.checkRowByIndex(0, 'Attributes status', status)
+})
+
+When('The codelist sponsor values are approved', () => cy.clickButton('approve-sponsor-values'))
+
+When('The codelist attribute values are approved', () => cy.clickButton('approve-attributes-values'))
+
+When('The codelist sponsor values edition is triggered', () => cy.clickButton('edit-sponsor-values'))
+
+When('The codelist attribute values edition is triggered', () => cy.get('[aria-label="For the code list attributes values"] [title="Edit sponsor values"]').click())
+
+When('The codelist sponsor values new version is created', () => cy.clickButton('create-new-sponsor-values'))
+
+When('The codelist attribute values new version is created', () => cy.get('[title="Create new attributes version"]').click())
+
+When('The sponsor preffered name is updated', () => cy.fillInput('sponsor-preffered-name', `Update ${termSponsorName}`))
+
+When('The code list attributes are updated and change description is provided', () => {
+    cy.contains('.v-overlay .v-input__control', 'Code list name').find('input').clear().type(`Update ${codelistName}`)
+    cy.contains('.v-overlay .v-input__control', 'Submission value').find('input').clear().type(`Update ${termSubmissionValue}`)
+    cy.contains('.v-overlay .v-input__control', 'NCI preferred name').find('input').clear().type(`Update ${termNciValue}`)
+    cy.contains('.v-overlay .v-input__control', 'Definition').find('[aria-describedby^="input"]').clear().type(`Update ${termDefinition}`)
+    cy.contains('.v-overlay .v-input__control', 'Change description').find('[aria-describedby^="input"]').clear().type('e2e test')
+})
+
+When('Codelist change description is provided', () => cy.fillInput('change-description', `e2e test`))
+
+When('Code list attrubutes changes are saved', () => cy.contains('.v-card-actions button', 'Save').click())
+
+When('The user is redirected to the term page', () => {
+    cy.url().should('contain', `${termId}/terms`)
+    cy.get('.page-title').should('contain.text', termId)
+})
 
 Given('CT data is loaded', () => {
   cy.intercept('/api/ct/codelists?*').as('getData')
@@ -18,8 +60,6 @@ Then('The URL should contain {string} date selected and {string} ID', (date, id)
     cy.url().should('contain', `${date}/${id}/terms`)
 })
 
-Then('The URL should contain {string} ID', (id) => cy.url().should('contain', `${id}/terms`))
-
 Then('The timeline is visible', () => cy.get('[data-cy="timeline"]', {timeout: 10000}).should('be.visible'))
 
 Then('Add term button is visible in actions menu', () => cy.get('[data-cy="add-term-button"]').should('be.visible'))
@@ -32,6 +72,17 @@ When('The codelist summary is expanded', () => cy.clickButton('cl-summary-title'
 
 Then('The codelist summary show following data', (dataTable) => {
     dataTable.hashes().forEach(element => cy.elementContain(element.name, element.value))
+})
+
+Then('The sponsor preferred name is updated', () => {
+    cy.contains('[aria-label="For the code list sponsor values"] tr td', 'Sponsor preferred name').next().should('contain.text', termSponsorName)
+})
+
+Then('The codelist attributes updated values are visible', () => {
+    cy.contains('[aria-label="For the code list attributes values"] tr td', 'Code list name').next().should('contain.text', codelistName)
+    cy.contains('[aria-label="For the code list attributes values"] tr td', 'Submission value').next().should('contain.text', termSubmissionValue)
+    cy.contains('[aria-label="For the code list attributes values"] tr td', 'NCI preferred name').next().should('contain.text', termNciValue)
+    cy.contains('[aria-label="For the code list attributes values"] tr td', 'Definition').next().should('contain.text', termDefinition)
 })
 
 Then('The sponsor values should be in status {string} and version {string}', (status, version) => {
@@ -60,25 +111,36 @@ When('The term is validated', () => {
     cy.clickButton('approve-term-attributes-values')
 })
 
+Then('The term data is visible in the table', () => {
+    cy.waitForTableData()
+    cy.checkRowByIndex(0, 'Library', 'Sponsor')
+    cy.checkRowByIndex(0, 'Concept ID', conceptId)
+    cy.checkRowByIndex(0, 'Sponsor name', termSponsorName)
+    cy.checkRowByIndex(0, 'Submission value', termName)
+    cy.checkRowByIndex(0, 'NCI Preferred name', termNciValue)
+    cy.checkRowByIndex(0, 'Definition', termDefinition)
+})
+
 When('The new term is added', () => {
     termSponsorName = `SponsorTerm ${Date.now()}`
-    termSentanceName = `TermSentenceCase ${Date.now()}`
-    termName = `TermName ${Date.now()}`
-    termSubmissionValue = `E2ETerm ${Date.now()}`
+    termSentanceName = `sponsorterm ${Date.now()}`
+    termName = `TermName${Date.now()}`
     termNciValue = `NCITerm${Date.now()}`
-    termDefinition = `Definition ${Date.now()}`
+    termDefinition = `Def${Date.now()}`
+    conceptId = `Concept${Date.now()}`
     cy.clickButton('add-term-button')
     cy.get('[data-cy="create-new-term"] input').check( {force: true} )
     cy.clickButton('step.creation_mode-continue-button')
     cy.fillInput('term-sponsor-preferred-name', termSponsorName)
     cy.fillInput('term-sentence-case-name', termSentanceName)
-    cy.fillInput('term-order', '1')
     cy.clickButton('step.names-continue-button')
-    cy.fillInput('term-name', termName)
-    cy.fillInput('term-submission-value', termSubmissionValue)
+    cy.fillInput('term-concept-id', conceptId)
     cy.fillInput('term-nci-preffered-name',  termNciValue)
     cy.fillInput('term-definition', termDefinition)
     cy.clickButton('step.attributes-continue-button')
+    cy.fillInput('term-name', termName)
+    cy.fillInput('term-order', '1')
+    cy.clickButton('step.order_and_submval_new-continue-button')
 })
 
 When('The term sponsor values are edited', () => {
@@ -133,11 +195,13 @@ When('The existing term is added', () => {
     cy.get('[data-cy="select-exitsing-term"] input').check({force: true})
     cy.intercept('/api/ct/terms?*').as('getData2')
     cy.clickButton('step.creation_mode-continue-button')
-    cy.wait('@getData2', {timeout: 30000})
+    cy.wait('@getData2', {timeout: 90000})
     cy.searchForInPopUp(termSponsorName)
     cy.longWaitForTable(60000)
     cy.get('table tbody tr [type="checkbox"]').eq(0).check()
     cy.clickButton('step.select-continue-button')
+    cy.fillInput('term-order', '1')
+    cy.clickButton('step.order_and_submval-continue-button')
 })
 
 Then('The version history contain the changes of edited Codelist', () => {
@@ -153,28 +217,33 @@ function verifyTermSponsorName(checkSentanceName = false) {
 }
 
 function verifyTerm() {
-    verifyData(true)
+    verifyTermSponsorName()
+    cy.contains('NCI preferred name').next().should('contain', termNciValue)
+    checkCodelistTable('Submission value', termName)
+    cy.get('table tbody tr').contains('Definition').next().should('contain', termDefinition)
     cy.contains('Sentence case name').next().should('contain', termSentanceName)
-    cy.contains('Order').next().should('contain', 1)
-    cy.contains('Name submission value').next().should('contain', termName)
+    checkCodelistTable('Order', '1')
 }
 
 function verifyCodelist() {
-    verifyData()
+    verifyTermSponsorName()
+    cy.contains('NCI preferred name').next().should('contain', termNciValue)
+    cy.contains('Submission value').next().should('contain', termSubmissionValue)
+    cy.get('table tbody tr').contains('Definition').next().should('contain', termDefinition)
     cy.contains('Template parameter').next().should('contain', 'No')
     cy.contains('Code list name').next().should('contain', codelistName)
     cy.contains('Extensible').next().should('contain', 'Yes')
 }
 
-function verifyData(isTerm = false) {
-    verifyTermSponsorName()
-    let submissionValueHeader = isTerm ? 'Code submission value' : 'Submission value'
-    cy.contains('NCI preferred name').next().should('contain', termNciValue)
-    cy.contains(submissionValueHeader).next().should('contain', termSubmissionValue)
-    cy.get('table tbody tr').contains('Definition').next().should('contain', termDefinition)
-}
-
 function checkStatusAndVersion(type, status, version) {
     cy.elementContain(`${type}-status`, status)
     cy.elementContain(`${type}-version`, version)
+}
+
+function checkCodelistTable(columnName, value) {
+    cy.get('[aria-label="Term sponsor values"] table').eq(3).within(() => {
+        cy.contains('thead th', columnName).invoke('index').then(index => {
+            cy.get('tbody td').eq(index).should('contain', value)
+        })
+    }) 
 }

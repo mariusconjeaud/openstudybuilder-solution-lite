@@ -1,9 +1,16 @@
 import datetime
 from dataclasses import dataclass
+from typing import Any
 
 from neomodel import db
 
 from clinical_mdr_api import utils
+from clinical_mdr_api.domain_repositories._utils.helpers import (
+    acquire_write_lock_study_value,
+)
+from clinical_mdr_api.domain_repositories.controlled_terminologies.ct_codelist_attributes_repository import (
+    CTCodelistAttributesRepository,
+)
 from clinical_mdr_api.domain_repositories.generic_repository import (
     manage_previous_connected_study_selection_relationships,
 )
@@ -26,6 +33,7 @@ from clinical_mdr_api.domains.study_selections.study_selection_objective import 
     StudySelectionObjectivesAR,
     StudySelectionObjectiveVO,
 )
+from common.config import settings
 from common.exceptions import BusinessLogicException
 from common.utils import convert_to_datetime
 
@@ -49,16 +57,6 @@ class SelectionHistory:
 
 
 class StudySelectionObjectiveRepository:
-    @staticmethod
-    def _acquire_write_lock_study_value(uid: str) -> None:
-        db.cypher_query(
-            """
-             MATCH (sr:StudyRoot {uid: $uid})
-             REMOVE sr.__WRITE_LOCK__
-             RETURN true
-            """,
-            {"uid": uid},
-        )
 
     def _retrieves_all_data(
         self,
@@ -68,7 +66,7 @@ class StudySelectionObjectiveRepository:
         study_value_version: str | None = None,
     ) -> tuple[StudySelectionObjectiveVO]:
         query = ""
-        query_parameters = {}
+        query_parameters: dict[str, Any] = {}
         if study_uids:
             if isinstance(study_uids, str):
                 study_uid_statement = "{uid: $uids}"
@@ -123,8 +121,8 @@ class StudySelectionObjectiveRepository:
                 LIMIT 1
             }
             WITH DISTINCT sr, so, obj, ver, is_instance
-            OPTIONAL MATCH (so)-[:HAS_OBJECTIVE_LEVEL]->(olr:CTTermRoot)<-[has_term:HAS_TERM]-(:CTCodelistRoot)
-            -[:HAS_NAME_ROOT]->(:CTCodelistNameRoot)-[:LATEST_FINAL]->(:CTCodelistNameValue {name: "Objective Level"})
+            OPTIONAL MATCH (so)-[:HAS_OBJECTIVE_LEVEL]->(level_term_context:CTTermContext)-[:HAS_SELECTED_TERM]->(olr:CTTermRoot)
+            OPTIONAL MATCH (level_term_context)-[:HAS_SELECTED_CODELIST]->(:CTCodelistRoot)-[has_term:HAS_TERM WHERE has_term.end_date IS NULL]->(:CTCodelistTerm)-[:HAS_TERM_ROOT]->(olr)
             WITH sr, so, obj, ver, olr, has_term, is_instance
             ORDER BY has_term.order, so.order ASC
             MATCH (so)<-[:AFTER]-(sa:StudyAction)
@@ -178,13 +176,13 @@ class StudySelectionObjectiveRepository:
             study_uids=study_uids,
         )
         # Create a dictionary, with study_uid as key, and list of selections as value
-        selection_aggregate_dict = {}
-        selection_aggregates = []
+        selection_aggregate_dict: dict[str, Any] = {}
+        selection_aggregates: list[Any] = []
         for selection in all_selections:
             if selection.study_uid in selection_aggregate_dict:
                 selection_aggregate_dict[selection.study_uid].append(selection)
             else:
-                selection_aggregate_dict[selection.study_uid] = [selection]
+                selection_aggregate_dict[selection.study_uid] = [selection]  # type: ignore[index]
         # Then, create the list of VO from the dictionary
         for study_uid, selections in selection_aggregate_dict.items():
             selection_aggregates.append(
@@ -199,7 +197,7 @@ class StudySelectionObjectiveRepository:
         study_uid: str,
         for_update: bool = False,
         study_value_version: str | None = None,
-    ) -> StudySelectionObjectivesAR | None:
+    ) -> StudySelectionObjectivesAR:
         """
         Finds all the selected study objectives for a given study, and creates the aggregate
         :param study_uid:
@@ -207,7 +205,7 @@ class StudySelectionObjectiveRepository:
         :return:
         """
         if for_update:
-            self._acquire_write_lock_study_value(study_uid)
+            acquire_write_lock_study_value(study_uid)
         all_selections = self._retrieves_all_data(
             study_uid, study_value_version=study_value_version
         )
@@ -399,7 +397,16 @@ class StudySelectionObjectiveRepository:
         # Set objective level if exists
         if selection.objective_level_uid:
             ct_term_root = CTTermRoot.nodes.get(uid=selection.objective_level_uid)
-            study_objective_selection_node.has_objective_level.connect(ct_term_root)
+            selected_objective_level_node = (
+                CTCodelistAttributesRepository().get_or_create_selected_term(
+                    ct_term_root,
+                    codelist_submission_value=settings.study_objective_level_cl_submval,
+                    catalogue_name=settings.sdtm_ct_catalogue_name,
+                )
+            )
+            study_objective_selection_node.has_objective_level.connect(
+                selected_objective_level_node
+            )
 
         if last_study_selection_node:
             manage_previous_connected_study_selection_relationships(
@@ -457,7 +464,7 @@ class StudySelectionObjectiveRepository:
             }
 
             WITH DISTINCT all_so, or, ver
-            OPTIONAL MATCH (all_so)-[:HAS_OBJECTIVE_LEVEL]->(olr:CTTermRoot)
+            OPTIONAL MATCH (all_so)-[:HAS_OBJECTIVE_LEVEL]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(olr:CTTermRoot)
             WITH DISTINCT all_so, or, olr, ver
             MATCH (all_so)<-[:AFTER]-(asa:StudyAction)
             OPTIONAL MATCH (all_so)<-[:BEFORE]-(bsa:StudyAction)
@@ -513,7 +520,7 @@ class StudySelectionObjectiveRepository:
 
     def find_selection_history(
         self, study_uid: str, study_selection_uid: str | None = None
-    ) -> list[dict | None]:
+    ) -> list[SelectionHistory]:
         """
         Simple method to return all versions of a study objectives for a study.
         Optionally a specific selection uid is given to see only the response for a specific selection.

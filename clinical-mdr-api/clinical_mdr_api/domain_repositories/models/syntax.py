@@ -14,7 +14,7 @@ from clinical_mdr_api.domain_repositories.models.activities import (
     ActivitySubGroupRoot,
 )
 from clinical_mdr_api.domain_repositories.models.controlled_terminology import (
-    CTTermRoot,
+    CTTermContext,
 )
 from clinical_mdr_api.domain_repositories.models.dictionary import DictionaryTermRoot
 from clinical_mdr_api.domain_repositories.models.generic import (
@@ -120,8 +120,8 @@ class SyntaxIndexingTemplateValue(SyntaxTemplateValue): ...
 
 
 class SyntaxIndexingTemplateRoot(SyntaxTemplateRoot):
-    has_category = RelationshipTo(CTTermRoot, "HAS_CATEGORY")
-    has_subcategory = RelationshipTo(CTTermRoot, "HAS_SUBCATEGORY")
+    has_category = RelationshipTo(CTTermContext, "HAS_CATEGORY")
+    has_subcategory = RelationshipTo(CTTermContext, "HAS_SUBCATEGORY")
 
 
 class CriteriaTemplateValue(SyntaxIndexingTemplateValue):
@@ -142,7 +142,7 @@ class CriteriaTemplateRoot(SyntaxIndexingTemplateRoot):
     TEMPLATE_REL_LABEL = "HAS_CRITERIA"
 
     has_template = RelationshipTo("CriteriaRoot", TEMPLATE_REL_LABEL)
-    has_type = RelationshipTo(CTTermRoot, "HAS_TYPE")
+    has_type = RelationshipTo(CTTermContext, "HAS_TYPE")
 
 
 class FootnoteTemplateValue(SyntaxTemplateValue):
@@ -167,7 +167,7 @@ class FootnoteTemplateRoot(SyntaxTemplateRoot):
     TEMPLATE_REL_LABEL = "HAS_FOOTNOTE"
 
     has_template = RelationshipTo("FootnoteRoot", TEMPLATE_REL_LABEL)
-    has_type = RelationshipTo(CTTermRoot, "HAS_TYPE")
+    has_type = RelationshipTo(CTTermContext, "HAS_TYPE")
     has_activity = RelationshipTo(ActivityRoot, "HAS_ACTIVITY")
     has_activity_group = RelationshipTo(ActivityGroupRoot, "HAS_ACTIVITY_GROUP")
     has_activity_subgroup = RelationshipTo(
@@ -313,8 +313,8 @@ class CriteriaPreInstanceValue(SyntaxPreInstanceValue):
 
 
 class CriteriaPreInstanceRoot(SyntaxPreInstanceRoot):
-    has_category = RelationshipTo(CTTermRoot, "HAS_CATEGORY")
-    has_subcategory = RelationshipTo(CTTermRoot, "HAS_SUBCATEGORY")
+    has_category = RelationshipTo(CTTermContext, "HAS_CATEGORY")
+    has_subcategory = RelationshipTo(CTTermContext, "HAS_SUBCATEGORY")
 
 
 class FootnotePreInstanceValue(SyntaxPreInstanceValue):
@@ -334,8 +334,8 @@ class EndpointPreInstanceValue(SyntaxPreInstanceValue):
 
 
 class EndpointPreInstanceRoot(SyntaxPreInstanceRoot):
-    has_category = RelationshipTo(CTTermRoot, "HAS_CATEGORY")
-    has_subcategory = RelationshipTo(CTTermRoot, "HAS_SUBCATEGORY")
+    has_category = RelationshipTo(CTTermContext, "HAS_CATEGORY")
+    has_subcategory = RelationshipTo(CTTermContext, "HAS_SUBCATEGORY")
 
 
 class ObjectivePreInstanceValue(SyntaxPreInstanceValue):
@@ -344,7 +344,7 @@ class ObjectivePreInstanceValue(SyntaxPreInstanceValue):
 
 class ObjectivePreInstanceRoot(SyntaxPreInstanceRoot):
     is_confirmatory_testing = BooleanProperty()
-    has_category = RelationshipTo(CTTermRoot, "HAS_CATEGORY")
+    has_category = RelationshipTo(CTTermContext, "HAS_CATEGORY")
 
 
 class ActivityInstructionPreInstanceValue(SyntaxPreInstanceValue):

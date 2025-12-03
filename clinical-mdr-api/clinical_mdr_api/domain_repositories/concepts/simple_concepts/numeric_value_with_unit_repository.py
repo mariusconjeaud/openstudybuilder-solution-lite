@@ -1,3 +1,5 @@
+from typing import Any
+
 from neomodel import db
 
 from clinical_mdr_api.domain_repositories.concepts.simple_concepts.simple_concept_generic_repository import (
@@ -14,7 +16,6 @@ from clinical_mdr_api.domain_repositories.models.generic import (
     VersionRoot,
     VersionValue,
 )
-from clinical_mdr_api.domains._utils import ObjectStatus
 from clinical_mdr_api.domains.concepts.simple_concepts.numeric_value_with_unit import (
     NumericValueWithUnitAR,
     NumericValueWithUnitVO,
@@ -24,9 +25,7 @@ from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryItemStatus,
     LibraryVO,
 )
-from clinical_mdr_api.models.concepts.concept import (
-    NumericValueWithUnit as NumericValueWithUnitAPIModel,
-)
+from clinical_mdr_api.models.concepts.concept import NumericValueWithUnit
 from common.utils import convert_to_datetime
 
 
@@ -37,7 +36,7 @@ class NumericValueWithUnitRepository(
     value_class = NumericValueWithUnitValue
     aggregate_class = NumericValueWithUnitAR
     value_object_class = NumericValueWithUnitVO
-    return_model = NumericValueWithUnitAPIModel
+    return_model: type = NumericValueWithUnit
 
     def _create_new_value_node(
         self, ar: NumericValueWithUnitAR
@@ -70,30 +69,30 @@ class NumericValueWithUnitRepository(
         )
 
     def _create_aggregate_root_instance_from_cypher_result(
-        self, input_dict: dict
+        self, input_dict: dict[str, Any]
     ) -> NumericValueWithUnitAR:
-        major, minor = input_dict.get("version").split(".")
+        major, minor = input_dict["version"].split(".")
         return self.aggregate_class.from_repository_values(
-            uid=input_dict.get("uid"),
+            uid=input_dict["uid"],
             simple_concept_vo=self.value_object_class.from_repository_values(
-                value=input_dict.get("value"),
+                value=input_dict["value"],
                 definition=input_dict.get("definition"),
                 abbreviation=input_dict.get("abbreviation"),
-                is_template_parameter=input_dict.get("template_parameter"),
-                unit_definition_uid=input_dict.get("unit_definition_uid"),
+                is_template_parameter=input_dict["template_parameter"],
+                unit_definition_uid=input_dict["unit_definition_uid"],
             ),
             library=LibraryVO.from_input_values_2(
-                library_name=input_dict.get("library_name"),
+                library_name=input_dict["library_name"],
                 is_library_editable_callback=(
-                    lambda _: input_dict.get("is_library_editable")
+                    lambda _: input_dict["is_library_editable"]
                 ),
             ),
             item_metadata=LibraryItemMetadataVO.from_repository_values(
-                change_description=input_dict.get("change_description"),
+                change_description=input_dict["change_description"],
                 status=LibraryItemStatus(input_dict.get("status")),
-                author_id=input_dict.get("author_id"),
+                author_id=input_dict["author_id"],
                 author_username=input_dict.get("author_username"),
-                start_date=convert_to_datetime(value=input_dict.get("start_date")),
+                start_date=convert_to_datetime(value=input_dict["start_date"]),
                 end_date=None,
                 major_version=int(major),
                 minor_version=int(minor),
@@ -103,7 +102,7 @@ class NumericValueWithUnitRepository(
     def _create_aggregate_root_instance_from_version_root_relationship_and_value(
         self,
         root: VersionRoot,
-        library: Library | None,
+        library: Library,
         relationship: VersionRelationship,
         value: VersionValue,
         **_kwargs,
@@ -121,14 +120,12 @@ class NumericValueWithUnitRepository(
             ),
             library=LibraryVO.from_input_values_2(
                 library_name=library.name,
-                is_library_editable_callback=(lambda _: library.is_editable),
+                is_library_editable_callback=lambda _: library.is_editable,
             ),
             item_metadata=self._library_item_metadata_vo_from_relation(relationship),
         )
 
-    def specific_alias_clause(
-        self, only_specific_status: str = ObjectStatus.LATEST.name, **kwargs
-    ) -> str:
+    def specific_alias_clause(self, **kwargs) -> str:
         return """
         WITH *,
             concept_value.value as value,

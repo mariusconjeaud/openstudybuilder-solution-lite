@@ -11,6 +11,7 @@ from pydantic import BaseModel
 import clinical_mdr_api.models.syntax_templates.criteria_template as ct_models
 import clinical_mdr_api.services.libraries.libraries as library_service
 from clinical_mdr_api.main import app
+from clinical_mdr_api.models.study_selections.study import Study
 from clinical_mdr_api.services.syntax_templates.criteria_templates import (
     CriteriaTemplateService,
 )
@@ -35,12 +36,16 @@ def api_client(test_data):
     yield TestClient(app)
 
 
+study: Study
+
+
 @pytest.fixture(scope="module")
 def test_data():
     inject_and_clear_db("old.json.test.criteria")
     db.cypher_query(STARTUP_PARAMETERS_CYPHER)
     db.cypher_query(CREATE_BASE_TEMPLATE_PARAMETER_TREE)
-    inject_base_data()
+    global study
+    study, _ = inject_base_data()
     db.cypher_query(STARTUP_CRITERIA)
 
     library_service.create(**library_data)
@@ -48,7 +53,7 @@ def test_data():
     criteria_template = ct_models.CriteriaTemplateCreateInput(**templatedata)
     criteria_template = CriteriaTemplateService().create(criteria_template)
     if isinstance(criteria_template, BaseModel):
-        criteria_template = criteria_template.model_dump()
+        criteria_template = criteria_template.dict()
     CriteriaTemplateService().approve(criteria_template["uid"])
 
     yield
@@ -90,26 +95,14 @@ def test_adding_criteria(api_client):
     assert res["project_name"] == "Project ABC"
     assert res["study_criteria_uid"] == "StudyCriteria_000001"
     assert res["criteria_type"]["term_uid"] == "C25532"
-    assert res["criteria_type"]["catalogue_name"] == "SDTM CT"
-    assert len(res["criteria_type"]["codelists"]) == 1
-    assert res["criteria_type"]["codelists"][0]["codelist_uid"] == "CTCodelist_000001"
-    assert res["criteria_type"]["codelists"][0]["order"] is None
-    assert res["criteria_type"]["codelists"][0]["library_name"] == "CDISC"
-    assert res["criteria_type"]["sponsor_preferred_name"] == "INCLUSION CRITERIA"
-    assert (
-        res["criteria_type"]["sponsor_preferred_name_sentence_case"]
-        == "Inclusion Criteria"
-    )
-    assert res["criteria_type"]["library_name"] == "CDISC"
-    assert res["criteria_type"]["start_date"]
-    assert res["criteria_type"]["end_date"] is None
-    assert res["criteria_type"]["status"] == "Final"
-    assert res["criteria_type"]["version"] == "1.0"
-    assert res["criteria_type"]["change_description"] == "Approved version"
-    assert res["criteria_type"]["author_username"] == "unknown-user@example.com"
-    assert res["criteria_type"]["queried_effective_date"]
-    assert res["criteria_type"]["date_conflict"] is False
-    assert res["criteria_type"]["possible_actions"] == ["inactivate", "new_version"]
+    assert res["criteria_type"]["term_name"] == "INCLUSION CRITERIA"
+    assert res["criteria_type"]["codelist_uid"] == "CTCodelist_000111"
+    assert res["criteria_type"]["codelist_name"] == "Criteria Type"
+    assert res["criteria_type"]["codelist_submission_value"] == "CRITRTP"
+    assert res["criteria_type"]["order"] is None
+    assert res["criteria_type"]["submission_value"] == "Inclusion Criteria"
+    assert res["criteria_type"]["queried_effective_date"] is None
+    assert res["criteria_type"]["date_conflict"] is True
     assert res["criteria"]["uid"] == "Criteria_000001"
     assert res["criteria"]["name"] == "Test_Name_Template"
     assert res["criteria"]["name_plain"] == "Test_Name_Template"
@@ -164,7 +157,6 @@ def test_get_all(api_client):
                 "sponsor_preferred_name_sentence_case": "Inclusion Criteria",
             },
             "attributes": {
-                "code_submission_value": "Inclusion Criteria",
                 "nci_preferred_name": "Inclusion Criteria",
             },
         },
@@ -200,26 +192,14 @@ def test_creating_the_same_criteria_creates_a_new_selection_of_same_criteria(
     assert res["project_name"] == "Project ABC"
     assert res["study_criteria_uid"] == "StudyCriteria_000002"
     assert res["criteria_type"]["term_uid"] == "C25532"
-    assert res["criteria_type"]["catalogue_name"] == "SDTM CT"
-    assert len(res["criteria_type"]["codelists"]) == 1
-    assert res["criteria_type"]["codelists"][0]["codelist_uid"] == "CTCodelist_000001"
-    assert res["criteria_type"]["codelists"][0]["order"] is None
-    assert res["criteria_type"]["codelists"][0]["library_name"] == "CDISC"
-    assert res["criteria_type"]["sponsor_preferred_name"] == "INCLUSION CRITERIA"
-    assert (
-        res["criteria_type"]["sponsor_preferred_name_sentence_case"]
-        == "Inclusion Criteria"
-    )
-    assert res["criteria_type"]["library_name"] == "CDISC"
-    assert res["criteria_type"]["start_date"]
-    assert res["criteria_type"]["end_date"] is None
-    assert res["criteria_type"]["status"] == "Final"
-    assert res["criteria_type"]["version"] == "1.0"
-    assert res["criteria_type"]["change_description"] == "Approved version"
-    assert res["criteria_type"]["author_username"] == "unknown-user@example.com"
-    assert res["criteria_type"]["queried_effective_date"]
-    assert res["criteria_type"]["date_conflict"] is False
-    assert res["criteria_type"]["possible_actions"] == ["inactivate", "new_version"]
+    assert res["criteria_type"]["term_name"] == "INCLUSION CRITERIA"
+    assert res["criteria_type"]["codelist_uid"] == "CTCodelist_000111"
+    assert res["criteria_type"]["codelist_name"] == "Criteria Type"
+    assert res["criteria_type"]["codelist_submission_value"] == "CRITRTP"
+    assert res["criteria_type"]["order"] is None
+    assert res["criteria_type"]["submission_value"] == "Inclusion Criteria"
+    assert res["criteria_type"]["queried_effective_date"] is None
+    assert res["criteria_type"]["date_conflict"] is True
     assert res["criteria"]["uid"] == "Criteria_000001"
     assert res["criteria"]["name"] == "Test_Name_Template"
     assert res["criteria"]["name_plain"] == "Test_Name_Template"
@@ -274,7 +254,6 @@ def test_get_all_still_returns_a_single_entry(api_client):
                 "sponsor_preferred_name_sentence_case": "Inclusion Criteria",
             },
             "attributes": {
-                "code_submission_value": "Inclusion Criteria",
                 "nci_preferred_name": "Inclusion Criteria",
             },
         },
@@ -314,7 +293,6 @@ def test_get_by_uid(api_client):
                 "sponsor_preferred_name_sentence_case": "Inclusion Criteria",
             },
             "attributes": {
-                "code_submission_value": "Inclusion Criteria",
                 "nci_preferred_name": "Inclusion Criteria",
             },
         },
@@ -354,7 +332,6 @@ def test_get_versions(api_client):
                 "sponsor_preferred_name_sentence_case": "Inclusion Criteria",
             },
             "attributes": {
-                "code_submission_value": "Inclusion Criteria",
                 "nci_preferred_name": "Inclusion Criteria",
             },
         },
@@ -395,7 +372,6 @@ def test_get_versions(api_client):
                 "sponsor_preferred_name_sentence_case": "Inclusion Criteria",
             },
             "attributes": {
-                "code_submission_value": "Inclusion Criteria",
                 "nci_preferred_name": "Inclusion Criteria",
             },
         },
@@ -413,24 +389,26 @@ def test_get_studies(api_client):
 
     res = response.json()
 
-    assert res[0]["uid"] == "Study_000001"
+    assert res[0]["uid"] == study.uid
     assert res[0]["possible_actions"] == ["delete", "lock", "release"]
     assert res[0]["study_parent_part"] is None
     assert res[0]["study_subpart_uids"] == []
     assert (
-        res[0]["current_metadata"]["identification_metadata"]["study_number"] == "123"
+        res[0]["current_metadata"]["identification_metadata"]["study_number"]
+        == study.current_metadata.identification_metadata.study_number
     )
     assert res[0]["current_metadata"]["identification_metadata"]["subpart_id"] is None
     assert (
         res[0]["current_metadata"]["identification_metadata"]["study_acronym"]
-        == "study_root"
+        == study.current_metadata.identification_metadata.study_acronym
     )
     assert (
         res[0]["current_metadata"]["identification_metadata"]["study_subpart_acronym"]
         is None
     )
     assert (
-        res[0]["current_metadata"]["identification_metadata"]["project_number"] == "123"
+        res[0]["current_metadata"]["identification_metadata"]["project_number"]
+        == study.current_metadata.identification_metadata.project_number
     )
     assert (
         res[0]["current_metadata"]["identification_metadata"]["project_name"]
@@ -442,7 +420,8 @@ def test_get_studies(api_client):
         == "CP"
     )
     assert (
-        res[0]["current_metadata"]["identification_metadata"]["study_id"] == "123-123"
+        res[0]["current_metadata"]["identification_metadata"]["study_id"]
+        == study.current_metadata.identification_metadata.study_id
     )
     assert (
         res[0]["current_metadata"]["identification_metadata"]["registry_identifiers"][

@@ -8,7 +8,7 @@ from neomodel import (
 )
 
 from clinical_mdr_api.domain_repositories.models.controlled_terminology import (
-    CTTermRoot,
+    CTTermContext,
 )
 from clinical_mdr_api.domain_repositories.models.generic import ClinicalMdrRel
 from clinical_mdr_api.domain_repositories.models.study import StudyValue
@@ -21,7 +21,7 @@ class StudyDiseaseMilestone(StudySelection):
     )
     status = StringProperty()
     has_disease_milestone_type = RelationshipTo(
-        CTTermRoot,
+        CTTermContext,
         "HAS_DISEASE_MILESTONE_TYPE",
         model=ClinicalMdrRel,
         cardinality=ZeroOrOne,

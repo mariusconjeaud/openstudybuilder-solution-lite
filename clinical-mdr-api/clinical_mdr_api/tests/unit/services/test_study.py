@@ -56,7 +56,7 @@ from clinical_mdr_api.tests.unit.domain_repositories.test_study_definition_repos
 from clinical_mdr_api.tests.unit.services.test_study_description import (
     StudyTitleRepositoryForTestImpl,
 )
-from common.config import DEFAULT_STUDY_FIELD_CONFIG_FILE
+from common.config import settings
 
 
 class UnitDefinitionRepositoryForTestImpl:
@@ -100,7 +100,9 @@ class TestStudyService(unittest.TestCase):
     def setUpClass(cls) -> None:
         cls.patcher = patch(
             target=study_configuration.__name__ + ".from_database",
-            new=lambda: study_configuration.from_file(DEFAULT_STUDY_FIELD_CONFIG_FILE),
+            new=lambda: study_configuration.from_file(
+                settings.default_study_field_config_file
+            ),
         )
         cls.patcher.start()
 
@@ -687,7 +689,7 @@ class TestStudyService(unittest.TestCase):
             StudyDefinitionAR.from_initial_values(
                 generate_uid_callback=prepare_repo.generate_uid,
                 initial_id_metadata=StudyIdentificationMetadataVO.from_input_values(
-                    project_number=None,
+                    project_number="None",
                     study_acronym=f"ACRONYM-{num}",
                     study_number=None,
                     subpart_id=None,
@@ -719,8 +721,9 @@ class TestStudyService(unittest.TestCase):
                         investigational_device_exemption_ide_number_null_value_code=None,
                     ),
                 ),
-                study_title_exists_callback=(lambda _, study_number: False),
-                study_short_title_exists_callback=(lambda _, study_number: False),
+                study_title_exists_callback=lambda _, study_number: False,
+                study_short_title_exists_callback=lambda _, study_number: False,
+                author_id=random_str(),
             )
             for num in range(0, 2)
         ]
@@ -861,7 +864,7 @@ class TestStudyService(unittest.TestCase):
         sample_study_definition = StudyDefinitionAR.from_initial_values(
             generate_uid_callback=prepare_repo.generate_uid,
             initial_id_metadata=StudyIdentificationMetadataVO.from_input_values(
-                project_number=None,
+                project_number="None",
                 study_acronym="ACRONYM",
                 study_number=None,
                 subpart_id=None,
@@ -911,8 +914,9 @@ class TestStudyService(unittest.TestCase):
                 post_auth_indicator=None,
                 post_auth_indicator_null_value_code=None,
             ),
-            study_title_exists_callback=(lambda _, study_number: False),
-            study_short_title_exists_callback=(lambda _, study_number: False),
+            study_title_exists_callback=lambda _, study_number: False,
+            study_short_title_exists_callback=lambda _, study_number: False,
+            author_id=random_str(),
         )
         prepare_repo.save(sample_study_definition)
         prepare_repo.close()
@@ -998,7 +1002,7 @@ class TestStudyService(unittest.TestCase):
         sample_study_definition = StudyDefinitionAR.from_initial_values(
             generate_uid_callback=prepare_repo.generate_uid,
             initial_id_metadata=StudyIdentificationMetadataVO.from_input_values(
-                project_number=None,
+                project_number="TBD",
                 study_acronym="ACRONYM",
                 study_number=None,
                 subpart_id=None,
@@ -1030,8 +1034,10 @@ class TestStudyService(unittest.TestCase):
                     investigational_device_exemption_ide_number_null_value_code=None,
                 ),
             ),
-            study_title_exists_callback=(lambda _, study_number: False),
-            study_short_title_exists_callback=(lambda _, study_number: False),
+            study_title_exists_callback=lambda _, study_number: False,
+            study_short_title_exists_callback=lambda _, study_number: False,
+            project_exists_callback=lambda _: True,
+            author_id=random_str(),
         )
         prepare_repo.save(sample_study_definition)
         prepare_repo.close()
@@ -1039,6 +1045,7 @@ class TestStudyService(unittest.TestCase):
         # patching without registry_identifiers
         identification_metadata = StudyIdentificationMetadataJsonModel()
         identification_metadata.study_acronym = "OTHER_ACRONYM"
+        identification_metadata.project_number = "TBD"
         current_metadata = StudyMetadataJsonModel(
             identification_metadata=identification_metadata
         )
@@ -1214,7 +1221,7 @@ class TestStudyService(unittest.TestCase):
         sample_study_definition = StudyDefinitionAR.from_initial_values(
             generate_uid_callback=prepare_repo.generate_uid,
             initial_id_metadata=StudyIdentificationMetadataVO.from_input_values(
-                project_number=None,
+                project_number="TBD",
                 study_acronym="ACRONYM",
                 study_number=None,
                 subpart_id=None,
@@ -1246,8 +1253,10 @@ class TestStudyService(unittest.TestCase):
                     investigational_device_exemption_ide_number_null_value_code=None,
                 ),
             ),
-            study_title_exists_callback=(lambda _, study_number: False),
-            study_short_title_exists_callback=(lambda _, study_number: False),
+            study_title_exists_callback=lambda _, study_number: False,
+            study_short_title_exists_callback=lambda _, study_number: False,
+            project_exists_callback=lambda _: True,
+            author_id=random_str(),
         )
         prepare_repo.save(sample_study_definition)
         prepare_repo.close()
@@ -1257,7 +1266,8 @@ class TestStudyService(unittest.TestCase):
         # removing part data model to ensure we can patch without complete model being submitted
         del ri_metadata.eudract_id
         identification_metadata = StudyIdentificationMetadataJsonModel(
-            registry_identifiers=ri_metadata
+            registry_identifiers=ri_metadata,
+            project_number="TBD",
         )
         current_metadata = StudyMetadataJsonModel(
             identification_metadata=identification_metadata
@@ -1476,8 +1486,9 @@ class TestStudyService(unittest.TestCase):
                     investigational_device_exemption_ide_number_null_value_code=None,
                 ),
             ),
-            study_title_exists_callback=(lambda _, study_number: False),
-            study_short_title_exists_callback=(lambda _, study_number: False),
+            study_title_exists_callback=lambda _, study_number: False,
+            study_short_title_exists_callback=lambda _, study_number: False,
+            author_id=random_str(),
         )
         prepare_repo.save(sample_study_definition)
         prepare_repo.close()
@@ -1632,8 +1643,9 @@ class TestStudyService(unittest.TestCase):
                     investigational_device_exemption_ide_number_null_value_code=None,
                 ),
             ),
-            study_title_exists_callback=(lambda _, study_number: False),
-            study_short_title_exists_callback=(lambda _, study_number: False),
+            study_title_exists_callback=lambda _, study_number: False,
+            study_short_title_exists_callback=lambda _, study_number: False,
+            author_id=random_str(),
         )
         prepare_repo.save(sample_study_definition)
         prepare_repo.close()
@@ -1756,7 +1768,7 @@ class TestStudyService(unittest.TestCase):
         sample_study_definition = StudyDefinitionAR.from_initial_values(
             generate_uid_callback=prepare_repo.generate_uid,
             initial_id_metadata=StudyIdentificationMetadataVO.from_input_values(
-                project_number=None,
+                project_number="None",
                 study_acronym="ACRONYM",
                 study_number=None,
                 subpart_id=None,
@@ -1788,8 +1800,9 @@ class TestStudyService(unittest.TestCase):
                     investigational_device_exemption_ide_number_null_value_code=None,
                 ),
             ),
-            study_title_exists_callback=(lambda _, study_number: False),
-            study_short_title_exists_callback=(lambda _, study_number: False),
+            study_title_exists_callback=lambda _, study_number: False,
+            study_short_title_exists_callback=lambda _, study_number: False,
+            author_id=random_str(),
         )
         prepare_repo.save(sample_study_definition)
         prepare_repo.close()

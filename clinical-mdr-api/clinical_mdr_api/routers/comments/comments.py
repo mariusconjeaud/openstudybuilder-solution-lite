@@ -15,8 +15,9 @@ from clinical_mdr_api.models.comments.comments import (
 from clinical_mdr_api.models.utils import CustomPage
 from clinical_mdr_api.routers import _generic_descriptions
 from clinical_mdr_api.services.comments.comments import CommentsService
-from common import config
 from common.auth import rbac
+from common.auth.dependencies import security
+from common.config import settings
 
 # Endpoints prefixed with "/comment*"
 router = APIRouter()
@@ -28,7 +29,7 @@ Service = CommentsService
 
 @router.get(
     "/comment-topics",
-    dependencies=[rbac.ANY],
+    dependencies=[security, rbac.ANY],
     summary="Returns all comment topics",
     status_code=200,
     responses={
@@ -45,23 +46,23 @@ def get_comment_topics(
         ),
     ] = None,
     topic_path_partial_match: Annotated[
-        bool | None,
+        bool,
         Query(
             description="""If `false`, only topics whose topic path is equal to the specified `topic_path` are returned.
         If `true`, topics whose topic path partially matches the specified `topic_path` are returned.""",
         ),
     ] = False,
     page_number: Annotated[
-        int | None, Query(ge=1, description=_generic_descriptions.PAGE_NUMBER)
-    ] = config.DEFAULT_PAGE_NUMBER,
+        int, Query(ge=1, description=_generic_descriptions.PAGE_NUMBER)
+    ] = settings.default_page_number,
     page_size: Annotated[
-        int | None,
+        int,
         Query(
             ge=0,
-            le=config.MAX_PAGE_SIZE,
+            le=settings.max_page_size,
             description=_generic_descriptions.PAGE_SIZE,
         ),
-    ] = config.DEFAULT_PAGE_SIZE,
+    ] = settings.default_page_size,
 ) -> CustomPage[CommentTopic]:
     results = Service().get_all_comment_topics(
         topic_path=topic_path,
@@ -69,14 +70,14 @@ def get_comment_topics(
         page_number=page_number,
         page_size=page_size,
     )
-    return CustomPage.create(
+    return CustomPage(
         items=results.items, total=results.total, page=page_number, size=page_size
     )
 
 
 @router.get(
     "/comment-threads",
-    dependencies=[rbac.ANY],
+    dependencies=[security, rbac.ANY],
     summary="Returns all comment threads",
     status_code=200,
     responses={
@@ -93,7 +94,7 @@ def get_comment_threads(
         ),
     ] = None,
     topic_path_partial_match: Annotated[
-        bool | None,
+        bool,
         Query(
             description="""If `false`, only comment threads whose topic path is equal to the specified `topic_path` are returned.
         If `true`, comment threads whose topic path partially matches the specified `topic_path` are returned.""",
@@ -106,16 +107,16 @@ def get_comment_threads(
         ),
     ] = None,
     page_number: Annotated[
-        int | None, Query(ge=1, description=_generic_descriptions.PAGE_NUMBER)
-    ] = config.DEFAULT_PAGE_NUMBER,
+        int, Query(ge=1, description=_generic_descriptions.PAGE_NUMBER)
+    ] = settings.default_page_number,
     page_size: Annotated[
-        int | None,
+        int,
         Query(
             ge=0,
-            le=config.MAX_PAGE_SIZE,
+            le=settings.max_page_size,
             description=_generic_descriptions.PAGE_SIZE,
         ),
-    ] = config.DEFAULT_PAGE_SIZE,
+    ] = settings.default_page_size,
 ) -> CustomPage[CommentThread]:
     results = Service().get_all_comment_threads(
         topic_path=topic_path,
@@ -124,14 +125,14 @@ def get_comment_threads(
         page_number=page_number,
         page_size=page_size,
     )
-    return CustomPage.create(
+    return CustomPage(
         items=results.items, total=results.total, page=page_number, size=page_size
     )
 
 
 @router.get(
     "/comment-threads/{comment_thread_uid}",
-    dependencies=[rbac.ANY],
+    dependencies=[security, rbac.ANY],
     summary="Returns the comment thread identified by the specified 'comment_thread_uid'.",
     status_code=200,
     responses={
@@ -147,7 +148,7 @@ def get_comment_thread(
 
 @router.post(
     "/comment-threads",
-    dependencies=[rbac.ANY],
+    dependencies=[security, rbac.ANY],
     summary="Creates a new comment thread",
     status_code=201,
     responses={
@@ -166,7 +167,7 @@ def create_comment_thread(
 
 @router.patch(
     "/comment-threads/{comment_thread_uid}",
-    dependencies=[rbac.ANY],
+    dependencies=[security, rbac.ANY],
     summary="Edits a comment thread's 'text' and/or 'status' properties",
     status_code=200,
     responses={
@@ -187,7 +188,7 @@ def edit_comment_thread(
 
 @router.delete(
     "/comment-threads/{comment_thread_uid}",
-    dependencies=[rbac.ANY],
+    dependencies=[security, rbac.ANY],
     summary="Deletes the comment thread identified by 'comment_thread_uid'.",
     status_code=204,
     responses={
@@ -201,7 +202,7 @@ def delete_comment_thread(comment_thread_uid: Annotated[str, CommentThreadUID]):
 
 @router.post(
     "/comment-threads/{comment_thread_uid}/replies",
-    dependencies=[rbac.ANY],
+    dependencies=[security, rbac.ANY],
     summary="Creates a reply to a comment thread",
     status_code=201,
     responses={
@@ -221,7 +222,7 @@ def create_comment_reply(
 
 @router.get(
     "/comment-threads/{comment_thread_uid}/replies",
-    dependencies=[rbac.ANY],
+    dependencies=[security, rbac.ANY],
     summary="Returns all replies to the specified comment thread",
     status_code=200,
     responses={
@@ -237,7 +238,7 @@ def get_comment_thread_replies(
 
 @router.get(
     "/comment-threads/{comment_thread_uid}/replies/{reply_uid}",
-    dependencies=[rbac.ANY],
+    dependencies=[security, rbac.ANY],
     summary="Returns the comment thread reply identified by the specified 'reply_uid'.",
     status_code=200,
     responses={
@@ -255,7 +256,7 @@ def get_comment_thread_reply(
 
 @router.patch(
     "/comment-threads/{comment_thread_uid}/replies/{reply_uid}",
-    dependencies=[rbac.ANY],
+    dependencies=[security, rbac.ANY],
     summary="Edits the specified comment reply's text",
     status_code=200,
     responses={
@@ -277,7 +278,7 @@ def edit_comment_thread_reply(
 
 @router.delete(
     "/comment-threads/{comment_thread_uid}/replies/{reply_uid}",
-    dependencies=[rbac.ANY],
+    dependencies=[security, rbac.ANY],
     summary="Deletes the comment reply identified by 'reply_uid'.",
     status_code=204,
     responses={

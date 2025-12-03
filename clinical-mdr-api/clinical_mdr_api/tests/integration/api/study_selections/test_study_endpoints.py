@@ -43,17 +43,20 @@ from clinical_mdr_api.tests.integration.utils.data_library import (
 )
 from clinical_mdr_api.tests.integration.utils.factory_controlled_terminology import (
     create_codelist,
+    create_ct_term,
     get_catalogue_name_library_name,
 )
 from clinical_mdr_api.tests.integration.utils.utils import TestUtils
 from clinical_mdr_api.tests.utils.checks import assert_response_status_code
-from common import config as settings
+from common.config import settings
 
 log = logging.getLogger(__name__)
 study: Study
 endpoint_uid: str
 study_objective_uid1: str
 initial_ct_term_study_standard_test: ct_term.CTTerm
+objective_level_term: ct_term.CTTerm
+objective_level_term2: ct_term.CTTerm
 
 
 @pytest.fixture(scope="module")
@@ -70,7 +73,7 @@ def test_data():
     inject_and_clear_db(db_name)
 
     global study
-    study = inject_base_data()
+    study, _test_data_dict = inject_base_data()
 
     db.cypher_query(CREATE_BASE_TEMPLATE_PARAMETER_TREE)
     db.cypher_query(STARTUP_CT_TERM_NAME_CYPHER)
@@ -85,23 +88,98 @@ def test_data():
 
     catalogue_name, library_name = get_catalogue_name_library_name(use_test_utils=True)
 
-    ct_term_codelist_name = settings.STUDY_ENDPOINT_LEVEL_NAME
-    ct_term_name = ct_term_codelist_name + " Name For StudyStandardVersioning test"
-    ct_term_codelist = create_codelist(
-        ct_term_codelist_name, ct_term_codelist_name, catalogue_name, library_name
-    )
     ct_term_start_date = datetime(2020, 3, 25, tzinfo=timezone.utc)
 
-    global initial_ct_term_study_standard_test
-    initial_ct_term_study_standard_test = TestUtils.create_ct_term(
-        codelist_uid=ct_term_codelist.codelist_uid,
-        name_submission_value=ct_term_name,
-        sponsor_preferred_name=ct_term_name,
+    objlevel_codelist = create_codelist(
+        settings.study_objective_level_name,
+        settings.study_objective_level_name,
+        catalogue_name,
+        library_name,
+        submission_value="OBJTLEVL",
+    )
+
+    global objective_level_term
+    obj_term1_name = settings.study_objective_level_name + " term"
+    objective_level_term = TestUtils.create_ct_term(
+        codelist_uid=objlevel_codelist.codelist_uid,
+        submission_value=obj_term1_name,
+        sponsor_preferred_name=obj_term1_name,
         order=2,
         catalogue_name=catalogue_name,
         library_name=library_name,
         effective_date=ct_term_start_date,
         approve=True,
+    )
+    global objective_level_term2
+    obj_term2_name = settings.study_objective_level_name + " term2"
+    objective_level_term2 = TestUtils.create_ct_term(
+        codelist_uid=objlevel_codelist.codelist_uid,
+        submission_value=obj_term2_name,
+        sponsor_preferred_name=obj_term2_name,
+        order=3,
+        catalogue_name=catalogue_name,
+        library_name=library_name,
+        effective_date=ct_term_start_date,
+        approve=True,
+    )
+
+    ct_term_codelist_name = settings.study_endpoint_level_name
+    create_codelist(
+        ct_term_codelist_name, ct_term_codelist_name, catalogue_name, library_name
+    )
+
+    endpoint_level_codelist = create_codelist(
+        "Endpoint Level",
+        "CTCodelist_EndpointLevel",
+        catalogue_name,
+        library_name,
+        submission_value=settings.study_endpoint_level_cl_submval,
+    )
+    global initial_ct_term_study_standard_test
+    initial_ct_term_study_standard_test = TestUtils.create_ct_term(
+        codelist_uid=endpoint_level_codelist.codelist_uid,
+        submission_value="Endpoint level 1 submval",
+        sponsor_preferred_name="Endpoint Level 1",
+        order=1,
+        catalogue_name=catalogue_name,
+        library_name=library_name,
+        effective_date=ct_term_start_date,
+        approve=True,
+        term_uid="EndpointLevel_0001",
+    )
+    create_ct_term(
+        "Endpoint Level 2",
+        "EndpointLevel_0002",
+        catalogue_name,
+        library_name,
+        codelists=[
+            {
+                "uid": endpoint_level_codelist.codelist_uid,
+                "order": 2,
+                "submission_value": "Endpoint level 2 submval",
+            }
+        ],
+    )
+    # Create a endpoint sublevel codelist
+    endpoint_sublevel_codelist = create_codelist(
+        "Endpoint Sublevel",
+        "CTCodelist_EndpointSublevel",
+        catalogue_name,
+        library_name,
+        submission_value=settings.study_endpoint_sublevel_cl_submval,
+    )
+    create_ct_term(
+        "Endpoint Sublevel 1",
+        "EndpointSublevel_0001",
+        catalogue_name,
+        library_name,
+        codelists=[
+            {
+                "uid": endpoint_sublevel_codelist.codelist_uid,
+                "order": 1,
+                "submission_value": "Endpoint sublevel 1 submval",
+            }
+        ],
     )
     cdisc_package_name = "SDTM CT 2020-03-27"
     TestUtils.create_ct_package(
@@ -115,11 +193,46 @@ def test_data():
         "uid": initial_ct_term_study_standard_test.term_uid,
         "date": datetime(2020, 3, 26, tzinfo=timezone.utc),
     }
+    # adjust term end date of the 0.1 draft
     db.cypher_query(
         """
                     MATCH (n)-[:HAS_NAME_ROOT]-(ct_name:CTTermNameRoot)-[has_version:HAS_VERSION]-(val) 
                     where 
                         n.uid =$uid AND EXISTS((ct_name)-[:LATEST]-(val)) 
+                        AND has_version.status ='Draft' 
+                    SET has_version.end_date = $date
+                """,
+        params=params,
+    )
+    # adjust term start_date of the 1.0 final
+    db.cypher_query(
+        """
+                    MATCH (n)-[:HAS_NAME_ROOT]-(ct_name:CTTermNameRoot)-[has_version:HAS_VERSION]-(val) 
+                    where 
+                        n.uid =$uid AND EXISTS((ct_name)-[:LATEST]-(val)) 
+                        AND has_version.status ='Final' 
+                    SET has_version.start_date = $date
+                """,
+        params=params,
+    )
+    # adjust cl start and end date of the 0.1 draft
+    params["uid"] = endpoint_level_codelist.codelist_uid
+    db.cypher_query(
+        """
+                    MATCH (n)-[:HAS_NAME_ROOT]-(ct_name:CTCodelistNameRoot)-[has_version:HAS_VERSION]-(val) 
+                    where 
+                        n.uid =$uid AND EXISTS((ct_name)-[:LATEST]-(val)) 
+                        AND has_version.status ='Final' 
+                    SET has_version.start_date = $date
+                """,
+        params=params,
+    )
+    # adjust term start_date of the 1.0 final
+    db.cypher_query(
+        """
+                    MATCH (n)-[:HAS_ATTRIBUTES_ROOT]-(ct_attrs:CTCodelistAttributesRoot)-[has_version:HAS_VERSION]-(val) 
+                    where 
+                        n.uid =$uid AND EXISTS((ct_attrs)-[:LATEST]-(val)) 
                         AND has_version.status ='Final' 
                     SET has_version.start_date = $date
                 """,
@@ -137,12 +250,12 @@ def test_study_endpoint_modify_actions_on_locked_study(api_client):
         f"/studies/{study.uid}/study-objectives",
         json={
             "objective_uid": "Objective_000001",
-            "objective_level_uid": "term_root_final",
+            "objective_level_uid": objective_level_term.term_uid,
         },
     )
     res = response.json()
     assert_response_status_code(response, 201)
-    assert res["objective_level"]["term_uid"] == "term_root_final"
+    assert res["objective_level"]["term_uid"] == objective_level_term.term_uid
     study_objective_uid1 = res["study_objective_uid"]
 
     response = api_client.post(
@@ -150,11 +263,11 @@ def test_study_endpoint_modify_actions_on_locked_study(api_client):
         json={
             "endpoint_uid": "Endpoint_000001",
             "study_objective_uid": study_objective_uid1,
-            "endpoint_level_uid": "term_root_final",
+            "endpoint_level_uid": "EndpointLevel_0001",
         },
     )
     res = response.json()
-    assert res["endpoint_level"]["term_uid"] == "term_root_final"
+    assert res["endpoint_level"]["term_uid"] == "EndpointLevel_0001"
     assert_response_status_code(response, 201)
 
     # get all endpoints
@@ -172,7 +285,7 @@ def test_study_endpoint_modify_actions_on_locked_study(api_client):
     )
     res = response.json()
     assert_response_status_code(response, 200)
-    assert res["endpoint_level"]["term_uid"] == "term_root_final"
+    assert res["endpoint_level"]["term_uid"] == "EndpointLevel_0001"
 
     # update study title to be able to lock it
     response = api_client.patch(
@@ -231,7 +344,7 @@ def test_study_endpoint_with_study_objective_relationship(api_client):
     )
     res = response.json()
     assert_response_status_code(response, 200)
-    assert res["endpoint_level"]["term_uid"] == "term_root_final"
+    assert res["endpoint_level"]["term_uid"] == "EndpointLevel_0001"
     assert res["study_objective"]["study_objective_uid"] == study_objective_uid1
     before_unlock = res
     before_unlock_objectives = api_client.get(
@@ -244,7 +357,7 @@ def test_study_endpoint_with_study_objective_relationship(api_client):
     )
     res = response.json()
     assert_response_status_code(response, 200)
-    assert res == ["term_root_final"]
+    assert res == ["EndpointLevel_0001"]
 
     # Unlock
     response = api_client.delete(f"/studies/{study.uid}/locks")
@@ -255,24 +368,24 @@ def test_study_endpoint_with_study_objective_relationship(api_client):
         f"/studies/{study.uid}/study-endpoints/{endpoint_uid}",
         json={
             "endpoint_uid": "Endpoint_000001",
-            "endpoint_level_uid": "term_root_final5",
+            "endpoint_level_uid": "EndpointLevel_0002",
         },
     )
     res = response.json()
     assert_response_status_code(response, 200)
-    assert res["endpoint_level"]["term_uid"] == "term_root_final5"
+    assert res["endpoint_level"]["term_uid"] == "EndpointLevel_0002"
 
     # edit study objective
     response = api_client.patch(
         f"/studies/{study.uid}/study-objectives/{study_objective_uid1}",
         json={
             "objective_uid": "Objective_000002",
-            "objective_level_uid": "term_root_final5",
+            "objective_level_uid": objective_level_term2.term_uid,
         },
     )
     res = response.json()
-    assert res["objective_level"]["term_uid"] == "term_root_final5"
     assert_response_status_code(response, 200)
+    assert res["objective_level"]["term_uid"] == objective_level_term2.term_uid
 
     # get all study endpoints of a specific study version
     response = api_client.get(
@@ -308,7 +421,7 @@ def test_study_endpoint_with_study_objective_relationship(api_client):
     )
     res = response.json()
     assert_response_status_code(response, 200)
-    assert res == ["term_root_final"]
+    assert res == ["EndpointLevel_0001"]
 
     # get all study endpoints
     response = api_client.get(
@@ -316,7 +429,7 @@ def test_study_endpoint_with_study_objective_relationship(api_client):
     )
     res = response.json()
     assert_response_status_code(response, 200)
-    assert res["items"][0]["endpoint_level"]["term_uid"] == "term_root_final5"
+    assert res["items"][0]["endpoint_level"]["term_uid"] == "EndpointLevel_0002"
 
     # get specific study endpoint
     response = api_client.get(
@@ -324,7 +437,7 @@ def test_study_endpoint_with_study_objective_relationship(api_client):
     )
     res = response.json()
     assert_response_status_code(response, 200)
-    assert res["endpoint_level"]["term_uid"] == "term_root_final5"
+    assert res["endpoint_level"]["term_uid"] == "EndpointLevel_0002"
 
 
 def test_study_value_version_validation(api_client):
@@ -340,7 +453,7 @@ def test_study_value_version_validation(api_client):
     )
     res = response.json()
     assert_response_status_code(response, 200)
-    assert res == ["term_root_final5"]
+    assert res == ["EndpointLevel_0002"]
 
 
 @pytest.mark.parametrize(
@@ -534,14 +647,13 @@ def test_study_endpoint_version_selecting_ct_package(api_client):
     study_selection_ctterm_uid_input_key = "endpoint_level_uid"
     study_selection_ctterm_keys = "endpoint_level"
     study_selection_ctterm_uid_key = "term_uid"
-    study_selection_ctterm_name_key = "sponsor_preferred_name"
     study_for_ctterm_versioning = TestUtils.create_study()
 
     response = api_client.post(
         f"/studies/{study_for_ctterm_versioning.uid}/{study_selection_breadcrumb}",
         json={
             "endpoint_uid": "Endpoint_000001",
-            study_selection_ctterm_uid_input_key: "term_root_final",
+            study_selection_ctterm_uid_input_key: "EndpointLevel_0001",
         },
     )
     res = response.json()
@@ -550,7 +662,7 @@ def test_study_endpoint_version_selecting_ct_package(api_client):
     assert res["order"] == 1
     assert (
         res[study_selection_ctterm_keys][study_selection_ctterm_uid_key]
-        == "term_root_final"
+        == "EndpointLevel_0001"
     )
 
     # edit ctterm
@@ -584,10 +696,7 @@ def test_study_endpoint_version_selecting_ct_package(api_client):
     assert (
         res[study_selection_ctterm_keys][study_selection_ctterm_uid_key] == ctterm_uid
     )
-    assert (
-        res[study_selection_ctterm_keys][study_selection_ctterm_name_key]
-        == new_ctterm_name
-    )
+    assert res[study_selection_ctterm_keys]["term_name"] == new_ctterm_name
 
     # get ct_packages
     response = api_client.get(
@@ -618,7 +727,7 @@ def test_study_endpoint_version_selecting_ct_package(api_client):
         res[study_selection_ctterm_keys][study_selection_ctterm_uid_key] == ctterm_uid
     )
     assert (
-        res[study_selection_ctterm_keys][study_selection_ctterm_name_key]
+        res[study_selection_ctterm_keys]["term_name"]
         == initial_ct_term_study_standard_test.sponsor_preferred_name
     )
 
@@ -632,7 +741,7 @@ def test_study_endpoint_version_selecting_ct_package(api_client):
     res = response.json()
     assert_response_status_code(response, 200)
     assert (
-        res[study_selection_ctterm_keys][study_selection_ctterm_name_key]
+        res[study_selection_ctterm_keys]["term_name"]
         == initial_ct_term_study_standard_test.sponsor_preferred_name
     )
 
@@ -643,13 +752,10 @@ def test_study_endpoint_version_selecting_ct_package(api_client):
     res = response.json()
     assert_response_status_code(response, 200)
     assert (
-        res[0][study_selection_ctterm_keys][study_selection_ctterm_name_key]
+        res[0][study_selection_ctterm_keys]["term_name"]
         == initial_ct_term_study_standard_test.sponsor_preferred_name
     )
-    assert (
-        res[1][study_selection_ctterm_keys][study_selection_ctterm_name_key]
-        == new_ctterm_name
-    )
+    assert res[1][study_selection_ctterm_keys]["term_name"] == new_ctterm_name
 
     # get all objectives
     response = api_client.get(
@@ -658,13 +764,10 @@ def test_study_endpoint_version_selecting_ct_package(api_client):
     res = response.json()
     assert_response_status_code(response, 200)
     assert (
-        res[0][study_selection_ctterm_keys][study_selection_ctterm_name_key]
+        res[0][study_selection_ctterm_keys]["term_name"]
         == initial_ct_term_study_standard_test.sponsor_preferred_name
     )
-    assert (
-        res[1][study_selection_ctterm_keys][study_selection_ctterm_name_key]
-        == new_ctterm_name
-    )
+    assert res[1][study_selection_ctterm_keys]["term_name"] == new_ctterm_name
 
 
 def test_study_endpoint_ct_term_retrieval_at_date(api_client):
@@ -685,7 +788,7 @@ def test_study_endpoint_ct_term_retrieval_at_date(api_client):
         f"/studies/{study_for_queried_effective_date.uid}/{study_selection_breadcrumb}",
         json={
             "endpoint_uid": "Endpoint_000001",
-            study_selection_ctterm_uid_input_key: "term_root_final",
+            study_selection_ctterm_uid_input_key: "EndpointLevel_0001",
         },
     )
     res = response.json()

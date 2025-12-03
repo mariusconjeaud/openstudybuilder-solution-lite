@@ -37,7 +37,7 @@ class CTCodelistNameService(CTCodelistGenericService[CTCodelistNameAR]):
                 name=self.get_input_or_previous_property(
                     codelist_input.name, item.name
                 ),
-                catalogue_name=item.ct_codelist_vo.catalogue_name,
+                catalogue_names=item.ct_codelist_vo.catalogue_names,
                 is_template_parameter=self.get_input_or_previous_property(
                     codelist_input.template_parameter,
                     item.ct_codelist_vo.is_template_parameter,

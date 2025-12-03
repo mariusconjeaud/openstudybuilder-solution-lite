@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Callable
+from typing import Any, Callable
 
 from neomodel import db
 
@@ -9,7 +9,9 @@ from clinical_mdr_api.domain_repositories.study_selections.study_design_cell_rep
 from clinical_mdr_api.domain_repositories.study_selections.study_element_repository import (
     SelectionHistoryElement,
 )
-from clinical_mdr_api.domains.controlled_terminologies.ct_term_name import CTTermNameAR
+from clinical_mdr_api.domains.concepts.unit_definitions.unit_definition import (
+    UnitDefinitionAR,
+)
 from clinical_mdr_api.domains.study_selections.study_selection_element import (
     StudySelectionElementAR,
     StudySelectionElementVO,
@@ -51,9 +53,12 @@ class StudyElementSelectionService(
 
     def _transform_all_to_response_model(
         self,
-        study_selection: StudySelectionElementAR,
+        study_selection: StudySelectionElementAR | None,
         study_value_version: str | None = None,
     ) -> list[StudySelectionElement]:
+        if study_selection is None:
+            return []
+
         result = []
         terms_at_specific_datetime = self._extract_study_standards_effective_date(
             study_uid=study_selection.study_uid,
@@ -87,8 +92,8 @@ class StudyElementSelectionService(
             study_uid,
             study_selection,
             order,
-            find_simple_term_element_by_term_uid=self._find_by_uid_or_raise_not_found,
             get_term_element_type_by_element_subtype=repos.study_element_repository.get_element_type_term_uid_by_element_subtype_term_uid,
+            find_codelist_term_by_uid_and_submval=self._repos.ct_codelist_name_repository.get_codelist_term_by_uid_and_submval,
             find_all_study_time_units=self._repos.unit_definition_repository.find_all,
             study_value_version=study_value_version,
             terms_at_specific_datetime=terms_at_specific_datetime,
@@ -98,14 +103,14 @@ class StudyElementSelectionService(
         self,
         study_selection_history: SelectionHistoryElement,
         study_uid: str,
-        effective_date: datetime = None,
+        effective_date: datetime | None = None,
     ) -> StudySelectionElement:
         repos = self._repos
         return StudySelectionElement.from_study_selection_history(
             study_selection_history=study_selection_history,
             study_uid=study_uid,
-            get_ct_term_element_subtype=self._find_by_uid_or_raise_not_found,
             get_term_element_type_by_element_subtype=repos.study_element_repository.get_element_type_term_uid_by_element_subtype_term_uid,
+            find_codelist_term_by_uid_and_submval=self._repos.ct_codelist_name_repository.get_codelist_term_by_uid_and_submval,
             find_all_study_time_units=self._repos.unit_definition_repository.find_all,
             effective_date=effective_date,
         )
@@ -125,7 +130,7 @@ class StudyElementSelectionService(
             unique_list_uids = list({x.study_selection_uid for x in selection_history})
             unique_list_uids.sort()
             # list of all study_elements
-            data = []
+            data: list[StudySelectionElementVersion] = []
             for i_unique in unique_list_uids:
                 ith_selection_history = []
                 # gather the selection history of the i_unique Uid
@@ -257,8 +262,8 @@ class StudyElementSelectionService(
                     study_uid=study_uid,
                     selection=new_selection,
                     order=order,
-                    find_simple_term_element_by_term_uid=self._find_by_uid_or_raise_not_found,
                     get_term_element_type_by_element_subtype=repos.study_element_repository.get_element_type_term_uid_by_element_subtype_term_uid,
+                    find_codelist_term_by_uid_and_submval=self._repos.ct_codelist_name_repository.get_codelist_term_by_uid_and_submval,
                     find_all_study_time_units=self._repos.unit_definition_repository.find_all,
                     terms_at_specific_datetime=terms_at_specific_datetime,
                 )
@@ -269,11 +274,11 @@ class StudyElementSelectionService(
     def get_all_selection(
         self,
         study_uid: str,
-        sort_by: dict | None = None,
+        sort_by: dict[str, bool] | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: dict | None = None,
-        filter_operator: FilterOperator | None = FilterOperator.AND,
+        filter_by: dict[str, dict[str, Any]] | None = None,
+        filter_operator: FilterOperator = FilterOperator.AND,
         total_count: bool = False,
         study_value_version: str | None = None,
     ) -> GenericFilteringReturn[StudySelectionElement]:
@@ -282,7 +287,7 @@ class StudyElementSelectionService(
             element_selection_ar = repos.study_element_repository.find_by_study(
                 study_uid, study_value_version=study_value_version
             )
-            filtered_items = service_level_generic_filtering(
+            return service_level_generic_filtering(
                 items=self._transform_all_to_response_model(
                     element_selection_ar, study_value_version=study_value_version
                 ),
@@ -293,8 +298,6 @@ class StudyElementSelectionService(
                 page_number=page_number,
                 page_size=page_size,
             )
-
-            return filtered_items
         finally:
             repos.close()
 
@@ -310,7 +313,8 @@ class StudyElementSelectionService(
             ):
                 design_cells_on_element = (
                     StudyDesignCellRepository.get_design_cells_connected_to_element(
-                        self, study_uid=study_uid, study_element_uid=study_selection_uid
+                        study_uid=study_uid,
+                        study_element_uid=study_selection_uid,
                     )
                 )
 
@@ -375,8 +379,8 @@ class StudyElementSelectionService(
             study_uid=study_uid,
             selection=new_selection,
             order=order,
-            find_simple_term_element_by_term_uid=self._find_by_uid_or_raise_not_found,
             get_term_element_type_by_element_subtype=repos.study_element_repository.get_element_type_term_uid_by_element_subtype_term_uid,
+            find_codelist_term_by_uid_and_submval=self._repos.ct_codelist_name_repository.get_codelist_term_by_uid_and_submval,
             find_all_study_time_units=self._repos.unit_definition_repository.find_all,
             terms_at_specific_datetime=terms_at_specific_datetime,
         )
@@ -385,7 +389,7 @@ class StudyElementSelectionService(
         self,
         request_study_element: StudySelectionElementInput,
         current_study_element: StudySelectionElementVO,
-        find_duration_name_by_code: Callable[[str], CTTermNameAR | None],
+        find_duration_name_by_code: Callable[..., UnitDefinitionAR | None],
     ) -> StudySelectionElementVO:
         # transform current to input model
         transformed_current = StudySelectionElementInput.from_study_selection_element(
@@ -475,8 +479,8 @@ class StudyElementSelectionService(
                 study_uid=study_uid,
                 selection=new_selection,
                 order=order,
-                find_simple_term_element_by_term_uid=self._find_by_uid_or_raise_not_found,
                 get_term_element_type_by_element_subtype=repos.study_element_repository.get_element_type_term_uid_by_element_subtype_term_uid,
+                find_codelist_term_by_uid_and_submval=self._repos.ct_codelist_name_repository.get_codelist_term_by_uid_and_submval,
                 find_all_study_time_units=self._repos.unit_definition_repository.find_all,
                 terms_at_specific_datetime=terms_at_specific_datetime,
             )
@@ -536,9 +540,9 @@ class StudyElementSelectionService(
         self,
         field_name: str,
         study_uid: str | None = None,
-        search_string: str | None = "",
-        filter_by: dict | None = None,
-        filter_operator: FilterOperator | None = FilterOperator.AND,
+        search_string: str = "",
+        filter_by: dict[str, dict[str, Any]] | None = None,
+        filter_operator: FilterOperator = FilterOperator.AND,
         page_size: int = 10,
         study_value_version: str | None = None,
     ):

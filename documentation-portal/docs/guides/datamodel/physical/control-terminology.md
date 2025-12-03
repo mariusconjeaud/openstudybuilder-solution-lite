@@ -123,11 +123,11 @@ The following node labels are part of the control terminology model:
 - Relationships:
   - `HAS_ATTRIBUTES_ROOT (Outgoing, 1)`: a link to the standard control terminology object.
   - `HAS_NAME_ROOT (Outgoing, 1)`: a link to the matching sponsor-defined control terminology object.
-  - `HAS_TERM (Outgoing, 0..*)`: links to the terms currently in the codelist.
-  - `HAD_TERM (Outgoing, 0..*)`: links to the terms that were previously in the codelist.
+  - `HAS_TERM (Outgoing, 0..*)`: links to the terms that currently are in or previously have been in the codelist.
   - `HAS_CONFIGURED_CODELIST (Incoming, 0..*)`: if the codelist is configured as a standard selectable codelist, a link to the configuration parameters. 
   - `CONTAINS_CODELIST (Incoming, 1)`: link to the library that the codelist is in.
-  
+
+
 ### CTCodelistAttributesRoot
 - Description: A root object for the standard control terminology codelist. It has one or more multiple versions.
 - Example: (no value, this node is a pointer)
@@ -195,9 +195,17 @@ The following node labels are part of the control terminology model:
   - `HAS_NAME_ROOT (Outgoing, 1)`: a link to the matching sponsor-defined control terminology object.
   - `HAS_PARENT_TYPE (Outgoing, 0..1)`: a link to a CT term designated as the term's parent type.
   - `HAS_PARENT_SUB_TYPE (Outgoing, 0..1)`: a link to a CT term designated as the term's parent sub-type.
-  - `HAS_TERM (Incoming, 0..*)`: links to one or more codelists the term is currently in.
-  - `HAD_TERM (Incoming, 0..*)`: links to one or more codelists the term was in.
+  - `HAS_TERM_ROOT (Incoming, 0..*)`: links to one or more `CTCodelistTerm` nodes linking the term to codelists it is currently in or has previously been in.
   - **Incoming relationships from library elements that used a term are omitted here. See each individual component for details.**
+
+  
+### CTCodelistTerm
+- Description: An intermediate node for binding a term to a codelist. It contains the submission value for the term.
+- Properties:
+  - `submission_value`: The submission value for the term.
+- Relationships:
+  - `HAS_TERM (Incoming, 0..)`: a link to a codelist that includes this term.
+  - `HAS_TERM_ROOT (Outgoing, 1)`: a link to the term root this node belongs to
 
 ### CTTermAttributesRoot
 - Description: A root object for the standard control terminology term. It has one or  multiple versions.
@@ -216,8 +224,6 @@ The following node labels are part of the control terminology model:
 - Description: A node representing an instance of a standard term, in a specific version.  
 - Example: `Abdomen`
 - Properties:
-  - `code_submission_value: String`: CDISC Submission code for the term.
-  - `name_submission_value: String`: CDISC Submission name for the term.
   - `preferred_term: String`: The preferred term name.
   - `definition: String`: The CDISC definition of the term.
   - `synonyms: String[]`: A list of term synonyms.
@@ -241,7 +247,7 @@ Relationships:
   - `LATEST_DRAFT (Outgoing, 1`): A pointer to the latest draft version of the sponsor-defined term.
   - `LATEST_RETIRED (Outgoing, 1`): A pointer to the latest retired version of the sponsor-defined term.
   - `HAS_NAME_ROOT (Incoming, 1`): A pointer to the root term object.
- 
+
 
 ### CTTermNameValue
 - Description: A node representing an instance of a sponsor defined term, in a specific version.
@@ -255,7 +261,7 @@ Relationships:
   - `LATEST_FINAL (Incoming, 0..1`): The root object that this value is a latest final version of.
   - `LATEST_DRAFT (Incoming, 0..1`): The root object that this value is a latest draft version of.
   - `LATEST_RETIRED (Incoming, 0..1`): The root object that this value is a latest retired version of.
-  
+
 
 ### CodelistConfigRoot / FieldNameConfigRoot / SelectionRelTypeConfigRoot
 - Description: An object representing a configured setting - a mapping between a config string and a CT codelist.
@@ -376,21 +382,19 @@ The following relationships are part of the control terminology model:
 - Description: Links a CT Codelist to the terms that it currently contains.
 - Properties:
   - `start_date: DateTime`: When the term was added to the codelist.
+  - `end_date: DateTime`: When the term was removed from the codelist.
   - `author_id: String`: Identifier of the user that added the term to the codelist.
   - `order: Integer`: The order of the term in the codelist.
 - Cardinality: `(*..*)`
 - Start nodes: `CTCodelistRoot`
-- End nodes: `CTTermRoot`
+- End nodes: `CTCodelistTerm`
 
-### HAD_TERM
-- Description: Links a CT Codelist to the terms that it contained in the past.
+### HAS_TERM_ROOT
+- Description: Links a term submission value to its term root.
 - Properties:
-  - `start_date: DateTime`: When the term was added to the codelist.
-  - `end_date: DateTime`: When the term was removed from the codelist.
-  - `author_id: String`: Identifier of the user that removed the term from the codelist.
-  - `order: Integer`: The old order of the term in the codelist.
-- Cardinality: `(*..*)`
-- Start nodes: `CTCodelistRoot`
+  - `none`
+- Cardinality: `(1)`
+- Start nodes: `CTCodelistTerm`
 - End nodes: `CTTermRoot`
 
 ### HAS_PARENT_TYPE / HAS_PARENT_SUB_TYPE
@@ -404,11 +408,7 @@ The following relationships are part of the control terminology model:
 ### LATEST_FINAL / LATEST_DRAFT / LATEST_RETIRED
 - Description: Relationships between object roots and object versions in a given state: (Draft, final, or retired). Each root can have zero or one versions in each of these three states. (There is always only one latest draft, final version, or retired version)
 - Properties:
-   - `start_date: DateTime (Required)`: the date that the version was created.
-   - `version: String (Required)`: the version number, e.g. 2.0.
-   - `status: String (Optional)`: status message of the version.
-   - `change_description: String (Optional)`: a description of what was changed in the version.
-   - `author_id: String (Required)`: the ID of the user that created the version.
+   - `none`
 - Cardinality: `(0..1)`
 - Start nodes: `CTCodelistAttributesRoot`, `CTCodelistNameRoot`, `CTTermAttributesRoot`, `CTTermNameRoot`, `CodelistConfigRoot`
 - End nodes: `CTCodelistAttributesValue`, `CTCodelistNameValue`, `CTTermAttributesValue`, `CTTermNameValue`, `CodelistConfigValue`
@@ -422,7 +422,7 @@ The following relationships are part of the control terminology model:
 - End nodes: `CTCodelistAttributesValue`, `CTCodelistNameValue`, `CTTermAttributesValue`, `CTTermNameValue`, `CodelistConfigValue`
 
 ### HAS_VERSION
-- Description: A relationship to each of the **previous** versions of an object. That is, if an object value is not a latest [draft, final, retired], it will be linked to the root using this relationship.
+- Description: A relationship to each of the versions of an object.
 - Properties:
    - `start_date: DateTime (Required)`: the date that the version was created.
    - `end_date: DateTime (Required)`: the date that the version was replaced by a new version.

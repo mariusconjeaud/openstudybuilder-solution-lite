@@ -4,29 +4,32 @@ Feature: Studies - Study List - Study List
     Background: User must be logged in
         Given The user is logged in
 
+    @smoke_test
     Scenario:  [Navigation] User must be able to navigate to the Study List page
         Given The '/studies' page is opened
         When The 'Study List' button is clicked
         Then The current URL is '/studies/select_or_add_study/active'
 
+    @smoke_test
     Scenario: [Table][Columns][Names] User must be able to see the page table with correct columns
         Given The '/studies/select_or_add_study/active' page is opened
         Then A table is visible with following headers
-            | headers               |
-            | Clinical Programme    |
-            | Project ID            |
-            | Project name          |
-            | Brand name            |
-            | Study number          |
-            | Study ID              |
-            | Subpart ID            |
-            | Sub study ID          |
-            | Study acronym         |
-            | Study subpart acronym |
-            | Study title           |
-            | Status                |
-            | Modified              |
-            | Modified by           |
+            | headers                 |
+            | Clinical Programme      |
+            | Project ID              |
+            | Project name            |
+            | Study number            |
+            | Study ID                |
+            | Subpart ID              |
+            | Study acronym           |
+            | Study subpart acronym   |
+            | Study title             |
+            | Latest version          |
+            | Latest locked version   |
+            | Latest released version |
+            | Status                  |
+            | Modified                |
+            | Modified by             |
 
     Scenario: [Table][Columns][Visibility] User must be able to use column selection option
         Given The '/studies/select_or_add_study/active' page is opened
@@ -35,27 +38,24 @@ Feature: Studies - Study List - Study List
 
     Scenario Outline: [Table][Filtering] User must be able to filter the table by text fields
         Given The '/studies/select_or_add_study/active' page is opened
-        When The user filters field '<name>'
-        Then The table is filtered correctly
+        When The user filters study list by field '<name>'
 
         Examples:
             | name                  |
             | Clinical Programme    |
             | Project ID            |
             | Project name          |
-            # | Brand name            |
             | Study number          |
             | Study ID              |
-            # | Subpart ID            |
-            # | Sub study ID          |
+            #| Subpart ID            |
             | Study acronym         |
-            # | Study subpart acronym |
+            #| Study subpart acronym |
             | Study title           |
             | Status                |
-            # | Modified              |
             | Modified by           |
 
 
+    @smoke_test
     Scenario: [Table][Search][Positive case] User must be able to search in table
         Given The '/studies/select_or_add_study/active' page is opened
         When The user is searching for 'CDISC DEV' value
@@ -87,6 +87,7 @@ Feature: Studies - Study List - Study List
         When The user selects next page on the table
         Then The data is presented accordingly to table page
 
+    @smoke_test
     Scenario: [Create][Positive case] User must be able to add a new Study
         Given The '/studies/select_or_add_study/active' page is opened
         When A new study is added

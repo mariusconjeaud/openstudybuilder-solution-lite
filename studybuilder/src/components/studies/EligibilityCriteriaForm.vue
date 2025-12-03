@@ -360,8 +360,8 @@ export default {
       creationMode: 'template',
       extraDataFetcherFilters: {
         'criteria.library.name': { v: [libraries.LIBRARY_SPONSOR] },
-        'criteria_type.sponsor_preferred_name': {
-          v: [this.criteriaType.name.sponsor_preferred_name],
+        'criteria_type.term_name': {
+          v: [this.criteriaType.sponsor_preferred_name],
         },
         'criteria.status': { v: [statuses.FINAL] },
       },
@@ -468,7 +468,7 @@ export default {
       return (
         this.$t('_global.add') +
         ' ' +
-        this.criteriaType.name.sponsor_preferred_name_sentence_case
+        this.criteriaType.sponsor_preferred_name_sentence_case
       )
     },
   },
@@ -549,7 +549,7 @@ export default {
       if (!this.preInstanceMode) {
         Object.assign(params.filters, {
           'type.name.sponsor_preferred_name_sentence_case': {
-            v: [this.criteriaType.name.sponsor_preferred_name_sentence_case],
+            v: [this.criteriaType.sponsor_preferred_name_sentence_case],
           },
           'library.name': { v: [libraries.LIBRARY_SPONSOR] },
         })
@@ -572,7 +572,7 @@ export default {
     addTypeFilterToHeader(jsonFilter, params) {
       if (!this.preInstanceMode) {
         jsonFilter['type.name.sponsor_preferred_name_sentence_case'] = {
-          v: [this.criteriaType.name.sponsor_preferred_name_sentence_case],
+          v: [this.criteriaType.sponsor_preferred_name_sentence_case],
         }
       } else {
         jsonFilter.template_type_uid = {

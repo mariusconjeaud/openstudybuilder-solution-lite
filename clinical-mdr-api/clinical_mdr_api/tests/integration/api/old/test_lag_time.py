@@ -13,7 +13,12 @@ from clinical_mdr_api.tests.integration.utils.api import drop_db, inject_and_cle
 from clinical_mdr_api.tests.integration.utils.data_library import (
     CREATE_BASE_TEMPLATE_PARAMETER_TREE,
     STARTUP_ACTIVITY_INSTANCES_CT_INIT,
+    STARTUP_CT_TERM,
     STARTUP_UNIT_DEFINITIONS,
+)
+from clinical_mdr_api.tests.integration.utils.method_library import (
+    create_codelist,
+    create_ct_term,
 )
 from clinical_mdr_api.tests.utils.checks import assert_response_status_code
 
@@ -29,7 +34,30 @@ def test_data():
     library_service.create(name="Sponsor", is_editable=True)
     db.cypher_query(CREATE_BASE_TEMPLATE_PARAMETER_TREE)
     db.cypher_query(STARTUP_UNIT_DEFINITIONS)
+    db.cypher_query(STARTUP_CT_TERM)
     db.cypher_query(STARTUP_ACTIVITY_INSTANCES_CT_INIT)
+    catalogue_name = "SDTM CT"
+    library_name = "Sponsor"
+    codelist = create_codelist(
+        name="SDTM Domain Abbreviation",
+        uid="C66734",
+        catalogue=catalogue_name,
+        library=library_name,
+        submission_value="DOMAIN",
+    )
+    create_ct_term(
+        name="domain",
+        uid="domain001",
+        catalogue_name=catalogue_name,
+        library_name=library_name,
+        codelists=[
+            {
+                "uid": codelist.codelist_uid,
+                "order": 1,
+                "submission_value": "XX",
+            }
+        ],
+    )
 
     yield
 
@@ -40,7 +68,7 @@ def test_post_lag_time(api_client):
     data = {
         "value": 7.5,
         "unit_definition_uid": "unit_definition_root1",
-        "sdtm_domain_uid": "sdtm_domain_uid1",
+        "sdtm_domain_uid": "domain001",
         "definition": "lag_time_definition1",
         "abbreviation": "abbv",
         "template_parameter": True,
@@ -53,13 +81,11 @@ def test_post_lag_time(api_client):
     res = response.json()
 
     assert res["uid"] == "LagTime_000001"
-    assert (
-        res["name"] == "7.5 [unit_definition_root1] for SDTM domain [sdtm_domain_uid1]"
-    )
+    assert res["name"] == "7.5 [unit_definition_root1] for SDTM domain [domain001]"
     assert res["value"] == 7.5
     assert res["unit_definition_uid"] == "unit_definition_root1"
     assert res["unit_label"] == "name1"
-    assert res["sdtm_domain_uid"] == "sdtm_domain_uid1"
+    assert res["sdtm_domain_uid"] == "domain001"
     assert res["name_sentence_case"] == "7.5"
     assert res["definition"] == "lag_time_definition1"
     assert res["abbreviation"] == "abbv"
@@ -76,7 +102,7 @@ def test_post_lag_time_existing_lag_time_is_returned(api_client):
     data = {
         "value": 7.5,
         "unit_definition_uid": "unit_definition_root1",
-        "sdtm_domain_uid": "sdtm_domain_uid1",
+        "sdtm_domain_uid": "domain001",
         "definition": "lag_time_definition1",
         "abbreviation": "abbv",
         "template_parameter": True,
@@ -89,13 +115,11 @@ def test_post_lag_time_existing_lag_time_is_returned(api_client):
     res = response.json()
 
     assert res["uid"] == "LagTime_000001"
-    assert (
-        res["name"] == "7.5 [unit_definition_root1] for SDTM domain [sdtm_domain_uid1]"
-    )
+    assert res["name"] == "7.5 [unit_definition_root1] for SDTM domain [domain001]"
     assert res["value"] == 7.5
     assert res["unit_definition_uid"] == "unit_definition_root1"
     assert res["unit_label"] == "name1"
-    assert res["sdtm_domain_uid"] == "sdtm_domain_uid1"
+    assert res["sdtm_domain_uid"] == "domain001"
     assert res["name_sentence_case"] == "7.5"
     assert res["definition"] == "lag_time_definition1"
     assert res["abbreviation"] == "abbv"
@@ -112,7 +136,7 @@ def test_post_lag_time1(api_client):
     data = {
         "value": 9.12,
         "unit_definition_uid": "unit_definition_root1",
-        "sdtm_domain_uid": "sdtm_domain_uid1",
+        "sdtm_domain_uid": "domain001",
         "definition": "lag_time_definition2",
         "abbreviation": "abbv",
         "template_parameter": True,
@@ -125,13 +149,11 @@ def test_post_lag_time1(api_client):
     res = response.json()
 
     assert res["uid"] == "LagTime_000002"
-    assert (
-        res["name"] == "9.12 [unit_definition_root1] for SDTM domain [sdtm_domain_uid1]"
-    )
+    assert res["name"] == "9.12 [unit_definition_root1] for SDTM domain [domain001]"
     assert res["value"] == 9.12
     assert res["unit_definition_uid"] == "unit_definition_root1"
     assert res["unit_label"] == "name1"
-    assert res["sdtm_domain_uid"] == "sdtm_domain_uid1"
+    assert res["sdtm_domain_uid"] == "domain001"
     assert res["name_sentence_case"] == "9.12"
     assert res["definition"] == "lag_time_definition2"
     assert res["abbreviation"] == "abbv"
@@ -156,7 +178,7 @@ def test_get_all_lag_times(api_client):
     assert res["items"][0]["value"] == 7.5
     assert res["items"][0]["unit_definition_uid"] == "unit_definition_root1"
     assert res["items"][0]["unit_label"] == "name1"
-    assert res["items"][0]["sdtm_domain_uid"] == "sdtm_domain_uid1"
+    assert res["items"][0]["sdtm_domain_uid"] == "domain001"
     assert res["items"][0]["name_sentence_case"] == "7.5"
     assert res["items"][0]["definition"] == "lag_time_definition1"
     assert res["items"][0]["abbreviation"] == "abbv"
@@ -172,7 +194,7 @@ def test_get_all_lag_times(api_client):
     assert res["items"][1]["value"] == 9.12
     assert res["items"][1]["unit_definition_uid"] == "unit_definition_root1"
     assert res["items"][1]["unit_label"] == "name1"
-    assert res["items"][1]["sdtm_domain_uid"] == "sdtm_domain_uid1"
+    assert res["items"][1]["sdtm_domain_uid"] == "domain001"
     assert res["items"][1]["name_sentence_case"] == "9.12"
     assert res["items"][1]["definition"] == "lag_time_definition2"
     assert res["items"][1]["abbreviation"] == "abbv"
@@ -189,7 +211,7 @@ def test_post_lag_time_specifying_a_non_existent_unit(api_client):
     data = {
         "value": 8.43,
         "unit_definition_uid": "non-existent-uid",
-        "sdtm_domain_uid": "sdtm_domain_uid1",
+        "sdtm_domain_uid": "domain001",
         "definition": "lag_time_definition2",
         "abbreviation": "abbv",
         "template_parameter": False,

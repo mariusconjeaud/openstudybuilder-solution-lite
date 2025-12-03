@@ -1,7 +1,7 @@
 import logging
 import os
 from collections import OrderedDict
-from typing import Mapping, MutableMapping
+from typing import Any, Mapping, MutableMapping
 
 import yattag
 from colour import Color
@@ -27,7 +27,7 @@ from clinical_mdr_api.services.studies.study_epoch import StudyEpochService
 
 # Page and margin sizes (horizontal, vertical) in millimeters
 from clinical_mdr_api.services.studies.study_visit import StudyVisitService
-from common import config
+from common.config import settings
 from common.telemetry import trace_calls
 
 # A4 page size (width, height) in millimeters
@@ -149,7 +149,7 @@ class StudyDesignFigureService:
 
     def __init__(self, debug: bool = False):
         self.debug = debug
-        font_path = os.path.join(config.APP_ROOT_DIR, FONT_FILE_NAME)
+        font_path = os.path.join(settings.app_root_dir, FONT_FILE_NAME)
         # Although ImageFont.truetype() expects point size, it seems we need to scale it up for calculations in pixels
         self.font_size = int(round(FONT_SIZE * FONT_SIZE_POINT_TO_PIXELS_RATIO))
         self.font = ImageFont.truetype(font_path, self.font_size)
@@ -246,8 +246,7 @@ class StudyDesignFigureService:
             sort_by={"order": True},
             study_value_version=study_value_version,
         )
-        study_arms = OrderedDict((arm.arm_uid, arm) for arm in study_arms.items)
-        return study_arms
+        return OrderedDict((arm.arm_uid, arm) for arm in study_arms.items)
 
     @trace_calls
     def _get_study_epochs(
@@ -256,14 +255,12 @@ class StudyDesignFigureService:
         """Returns the list of StudyEpochs except Basic epoch."""
         return [
             epoch
-            for epoch in StudyEpochService()
-            .get_all_epochs(
+            for epoch in StudyEpochService.get_all_epochs(
                 study_uid=study_uid,
                 sort_by={"order": True},
                 study_value_version=study_value_version,
-            )
-            .items
-            if epoch.epoch_ctterm.sponsor_preferred_name != config.BASIC_EPOCH_NAME
+            ).items
+            if epoch.epoch_ctterm.sponsor_preferred_name != settings.basic_epoch_name
         ]
 
     @trace_calls
@@ -294,11 +291,9 @@ class StudyDesignFigureService:
         self, study_uid: str, study_value_version: str | None = None
     ) -> list[StudyVisit]:
         """Returns list of StudyVisits"""
-        return (
-            StudyVisitService(study_uid=study_uid)
-            .get_all_visits(study_uid, study_value_version=study_value_version)
-            .items
-        )
+        return StudyVisitService.get_all_visits(
+            study_uid, study_value_version=study_value_version
+        ).items
 
     @trace_calls
     def _mk_data_matrix(
@@ -314,7 +309,7 @@ class StudyDesignFigureService:
         First row with Epochs, First Column with Study Arms, and the rest is num_epochs * num_arms cells
         with Study Elements. (top-left cell-0-0 remains empty)
         """
-        table = [
+        table: list[Any] = [
             [{} for _ in range(len(study_epochs) + 1)]
             for _ in range(len(study_arms) + 1)
         ]
@@ -342,7 +337,7 @@ class StudyDesignFigureService:
                 klass="arm",
                 id=id_,
                 text=arm.short_name or arm.name,
-                colors=self._calculate_colors(arm.arm_colour or ARM_COLOR_DEFAULT),
+                colors=self._calculate_colors(ARM_COLOR_DEFAULT),
                 margin=ARM_MARGIN,
                 paddings=ARM_PADDINGS,
             )
@@ -353,7 +348,7 @@ class StudyDesignFigureService:
             col_idx = column_by_epoch_uid.get(cell.study_epoch_uid)
             element = study_elements.get(cell.study_element_uid)
 
-            if not all((row_idx, col_idx, element)):
+            if not row_idx or not col_idx or not element:
                 log.debug(
                     "Skipping %s, missing %s, %s or %s not in results",
                     cell.design_cell_uid,
@@ -388,7 +383,7 @@ class StudyDesignFigureService:
         for visit in study_visits:
             if (
                 not visit.show_visit
-                or visit.study_epoch.sponsor_preferred_name == config.BASIC_EPOCH_NAME
+                or visit.study_epoch.sponsor_preferred_name == settings.basic_epoch_name
             ):
                 continue
 
@@ -636,7 +631,7 @@ class StudyDesignFigureService:
             )
         return total_width, total_height
 
-    def _flow_cell(self, cell, paddings: tuple[int, int], center: bool | None = False):
+    def _flow_cell(self, cell, paddings: tuple[int, int], center: bool = False):
         """Flows text into a given width, and adjusts cell height accordingly"""
         x = 0
 
@@ -662,7 +657,7 @@ class StudyDesignFigureService:
         text: str,
         cell_width: int,
         paddings: tuple[int, int],
-        center: bool | None = False,
+        center: bool = False,
     ) -> tuple[int, int, list[tuple[int, int, str]]]:
         """Calculates text flow for a given width, wrapping text if necessary, optional centering
 
@@ -679,7 +674,8 @@ class StudyDesignFigureService:
 
         lines: list[tuple[int, int, str]] = []
         total_width, total_height = 0, 0
-        line, line_width, line_height = [], 0, 0
+        line: list[Any] = []
+        line_width, line_height = 0, 0
 
         # pylint: disable=unused-variable
         def newline():
@@ -728,7 +724,7 @@ class StudyDesignFigureService:
         """Merges cells with identical Study Element horizontally"""
         # pylint: disable=unsubscriptable-object,unsupported-assignment-operation
         for row in table[1:]:
-            prev_cell: Mapping | None = None
+            prev_cell: MutableMapping | None = None
             for cell in row[1:]:
                 if not cell.get("id"):
                     prev_cell = None
@@ -752,7 +748,7 @@ class StudyDesignFigureService:
         # pylint: disable=unsubscriptable-object,unsupported-assignment-operation
         n_cols = len(table[0])
         for i in range(1, n_cols):
-            prev_cell: Mapping | None = None
+            prev_cell: MutableMapping | None = None
             for row in table[1:]:
                 cell = row[i]
                 if not cell.get("id"):
@@ -843,10 +839,11 @@ class StudyDesignFigureService:
         else:
             visit_timing_prop = "study_week_label"
 
-        timeline = {"labels": []}
+        timeline: dict[str, list[Any]] = {"labels": []}
 
         # construct labels every visit type - may span multiple epochs
-        row, label = [], {}
+        row: list[Any] = []
+        label: dict[Any, Any] = {}
         timeline["labels"].append(row)
 
         y = doc_height - DOC_MARGIN + TIMELINE_ROW_MARGINS[0]

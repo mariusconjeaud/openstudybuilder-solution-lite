@@ -22,7 +22,7 @@ from clinical_mdr_api.services.studies.study_compound_selection import (
 from clinical_mdr_api.services.studies.study_interventions import (
     StudyInterventionsService,
 )
-from clinical_mdr_api.tests.integration.utils.utils import TestUtils
+from clinical_mdr_api.tests.integration.utils.utils import CT_CODELIST_UIDS, TestUtils
 
 log = logging.getLogger(__name__)
 
@@ -31,16 +31,53 @@ def test_get_table(
     tst_study, study_epochs, study_arms, study_elements, study_design_cells
 ):
     # Create CT Terms
-    ct_term_dosage = TestUtils.create_ct_term(sponsor_preferred_name="dosage_form_1")
+    catalogue_name = "SDTM CT"
+    library_name = "Sponsor"
+
+    ct_term_dosage = TestUtils.create_ct_term(
+        codelist_uid=CT_CODELIST_UIDS.dosage_form,
+        submission_value="dosage_form_1",
+        sponsor_preferred_name="dosage_form_1",
+        order=1,
+        catalogue_name=catalogue_name,
+        library_name=library_name,
+        approve=True,
+    )
     ct_term_delivery_device = TestUtils.create_ct_term(
-        sponsor_preferred_name="delivery_device_1"
+        codelist_uid=CT_CODELIST_UIDS.delivery_device,
+        submission_value="delivery_device_1",
+        sponsor_preferred_name="delivery_device_1",
+        order=1,
+        catalogue_name=catalogue_name,
+        library_name=library_name,
+        approve=True,
     )
     ct_term_dose_frequency = TestUtils.create_ct_term(
-        sponsor_preferred_name="dose_frequency_1"
+        codelist_uid=CT_CODELIST_UIDS.frequency,
+        submission_value="dose_frequency_1",
+        sponsor_preferred_name="dose_frequency_1",
+        order=1,
+        catalogue_name=catalogue_name,
+        library_name=library_name,
+        approve=True,
     )
-    ct_term_dispenser = TestUtils.create_ct_term(sponsor_preferred_name="dispenser_1")
+    ct_term_dispenser = TestUtils.create_ct_term(
+        codelist_uid=CT_CODELIST_UIDS.dispenser,
+        submission_value="dispenser_1",
+        sponsor_preferred_name="dispenser_1",
+        order=1,
+        catalogue_name=catalogue_name,
+        library_name=library_name,
+        approve=True,
+    )
     ct_term_roa = TestUtils.create_ct_term(
-        sponsor_preferred_name="route_of_administration_1"
+        codelist_uid=CT_CODELIST_UIDS.roa,
+        submission_value="route_of_administration_1",
+        sponsor_preferred_name="route_of_administration_1",
+        order=1,
+        catalogue_name=catalogue_name,
+        library_name=library_name,
+        approve=True,
     )
 
     # Create Numeric values with unit
@@ -119,10 +156,6 @@ def test_get_table(
         study_uid=tst_study.uid,
         medicinal_product_uid=medicinal_product1.uid,
         compound_alias_uid=compound_alias1a.uid,
-        dose_frequency_uid=ct_term_dose_frequency.term_uid,
-        delivery_device_uid=ct_term_delivery_device.term_uid,
-        dispenser_uid=ct_term_dispenser.term_uid,
-        dose_value_uid=dose_value.uid,
     )
 
     # Make a compound selection with another compound alias, while keeping all other details the same
@@ -133,10 +166,6 @@ def test_get_table(
         selection_create_input=StudySelectionCompoundCreateInput(
             medicinal_product_uid=medicinal_product2.uid,
             compound_alias_uid=compound_alias2a.uid,
-            dose_frequency_uid=ct_term_dose_frequency.term_uid,
-            delivery_device_uid=ct_term_delivery_device.term_uid,
-            dispenser_uid=ct_term_dispenser.term_uid,
-            dose_value_uid=dose_value.uid,
         ),
     )
 
@@ -147,7 +176,6 @@ def test_get_table(
         study_uid=tst_study.uid,
         selection_create_input=StudyCompoundDosingInput(
             study_compound_uid=study_compound_created1.study_compound_uid,
-            dose_frequency_uid=ct_term_dose_frequency.term_uid,
             dose_value_uid=dose_value.uid,
             study_element_uid=study_elements[0].element_uid,
         ),
@@ -158,7 +186,6 @@ def test_get_table(
         study_uid=tst_study.uid,
         selection_create_input=StudyCompoundDosingInput(
             study_compound_uid=study_compound_created2.study_compound_uid,
-            dose_frequency_uid=ct_term_dose_frequency.term_uid,
             dose_value_uid=dose_value.uid,
             study_element_uid=study_elements[1].element_uid,
         ),

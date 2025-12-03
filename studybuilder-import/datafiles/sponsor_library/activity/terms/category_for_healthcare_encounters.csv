@@ -1,0 +1,3 @@
+CODELIST_SUBMVAL,SPONSOR_NAME,SPONSOR_NAME_SENTENCE_CASE,TERM_SUBMVAL,DEFINITION,ORDER,CONCEPT_ID,NCI_PREFERRED_NAME,CATALOGUES
+HOCAT,In-Patient/Prolonged Hospitalisation,in-patient/prolonged hospitalisation,IN-PATIENT/PROLONGED HOSPITALISATION,In-Patient/Prolonged Hospitalisation,1,,In-Patient/Prolonged Hospitalisation,
+HOCAT,Readmission,readmission,READMISSION,Readmission,2,,Readmission,

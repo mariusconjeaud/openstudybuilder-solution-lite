@@ -7,9 +7,24 @@ const api = baseCollection(resource)
 export default {
   ...api,
 
-  getTerms(activityItemClassUid, params) {
-    return repository.get(`${resource}/${activityItemClassUid}/terms`, {
-      params,
-    })
+  getDatasetCodelists(activityItemClassUid, datasetUid, params) {
+    return repository.get(
+      `${resource}/${activityItemClassUid}/datasets/${datasetUid}/codelists`,
+      {
+        params,
+      }
+    )
+  },
+  getOverview(activityItemClassUid, version) {
+    const url = version
+      ? `${resource}/${activityItemClassUid}/overview?version=${version}`
+      : `${resource}/${activityItemClassUid}/overview`
+    return repository.get(url)
+  },
+  getActivityInstanceClasses(activityItemClassUid, params) {
+    return repository.get(
+      `${resource}/${activityItemClassUid}/activity-instance-classes`,
+      { params }
+    )
   },
 }

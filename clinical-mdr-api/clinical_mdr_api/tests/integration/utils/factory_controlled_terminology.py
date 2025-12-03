@@ -22,12 +22,17 @@ from clinical_mdr_api.domains.controlled_terminologies.ct_term_attributes import
     CTTermAttributesVO,
 )
 from clinical_mdr_api.domains.controlled_terminologies.ct_term_name import (
-    CTTermCodelistVO,
     CTTermNameAR,
     CTTermNameVO,
 )
 from clinical_mdr_api.domains.versioned_object_aggregate import LibraryVO
+from clinical_mdr_api.models.controlled_terminologies.ct_codelist import (
+    CTCodelistPairedInput,
+)
 from clinical_mdr_api.services._meta_repository import MetaRepository
+from clinical_mdr_api.services.controlled_terminologies.ct_codelist import (
+    CTCodelistService,
+)
 from clinical_mdr_api.services.controlled_terminologies.ct_codelist_attributes import (
     CTCodelistAttributesService,
 )
@@ -60,11 +65,14 @@ def get_catalogue_name_library_name(use_test_utils: bool = False):
     return catalogue_name, library_name
 
 
-def create_codelist(name, uid, catalogue, library):
+def create_codelist(
+    name, uid, catalogue, library, submission_value=None, paired_code_codelist_uid=None
+):
     ct_codelist_attributes_ar = CTCodelistAttributesAR.from_input_values(
         generate_uid_callback=lambda: uid,
         ct_codelist_attributes_vo=create_random_ct_codelist_attributes_vo(
-            catalogue=catalogue
+            catalogue=catalogue,
+            submission_value=submission_value,
         ),
         library=LibraryVO.from_repository_values(
             library_name=library, is_editable=True
@@ -74,7 +82,7 @@ def create_codelist(name, uid, catalogue, library):
     CTCodelistAttributesRepository().save(ct_codelist_attributes_ar)
     CTCodelistAttributesService().approve(uid)
     ct_codelist_name_vo = CTCodelistNameVO.from_repository_values(
-        catalogue_name=catalogue, name=name, is_template_parameter=False
+        catalogue_names=[catalogue], name=name, is_template_parameter=False
     )
     ct_codelist: CTCodelistNameAR = CTCodelistNameAR.from_input_values(
         generate_uid_callback=lambda: ct_codelist_attributes_ar.uid,
@@ -86,41 +94,38 @@ def create_codelist(name, uid, catalogue, library):
     )
     CTCodelistNameRepository().save(ct_codelist)
     item = CTCodelistNameService().approve(uid)
+    if paired_code_codelist_uid is not None:
+        CTCodelistService().update_paired_codelists(
+            uid,
+            CTCodelistPairedInput(
+                paired_codes_codelist_uid=paired_code_codelist_uid,
+                paired_names_codelist_uid=None,
+            ),
+        )
     return item
 
 
 def create_ct_term(
-    codelist,
     name: str,
     uid: str,
-    order,
     catalogue_name,
     library_name,
-    code_submission_value="test",
-    name_submission_value="test",
     preferred_term="test",
     definition="123",
+    codelists=None,
 ):
     library = LibraryVO.from_repository_values(
         library_name=library_name, is_editable=True
     )
+
     ct_term_attributes_ar = CTTermAttributesAR.from_input_values(
         author_id=AUTHOR_ID,
         ct_term_attributes_vo=CTTermAttributesVO.from_input_values(
-            codelists=[
-                CTTermCodelistVO(
-                    codelist_uid=codelist, order=order, library_name=library_name
-                )
-            ],
-            catalogue_name=catalogue_name,
-            code_submission_value=code_submission_value,
-            name_submission_value=name_submission_value,
+            catalogue_names=[catalogue_name],
             preferred_term=preferred_term,
             definition=definition,
-            codelist_exists_callback=lambda s: True,
+            concept_id=None,
             catalogue_exists_callback=lambda s: True,
-            term_exists_by_name_callback=lambda s: False,
-            term_exists_by_code_submission_value_callback=lambda s: False,
         ),
         library=library,
         generate_uid_callback=lambda: uid,
@@ -130,12 +135,7 @@ def create_ct_term(
 
     CTTermAttributesService().approve(uid)
     term_vo = CTTermNameVO.from_repository_values(
-        codelists=[
-            CTTermCodelistVO(
-                codelist_uid=codelist, order=order, library_name=library_name
-            )
-        ],
-        catalogue_name=catalogue_name,
+        catalogue_names=[catalogue_name],
         name=name,
         name_sentence_case=name.capitalize(),
     )
@@ -147,6 +147,17 @@ def create_ct_term(
     )
     CTTermNameRepository().save(ct_term)
     CTTermNameService().approve(uid)
+
+    codelist_service = CTCodelistService()
+    if codelists is not None:
+        for codelist in codelists:
+            codelist_service.add_term(
+                codelist_uid=codelist["uid"],
+                term_uid=ct_term.uid,
+                submission_value=codelist["submission_value"],
+                order=codelist["order"],
+            )
+
     return ct_term
 
 

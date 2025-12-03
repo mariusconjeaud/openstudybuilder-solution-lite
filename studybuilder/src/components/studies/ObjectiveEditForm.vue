@@ -23,7 +23,7 @@
             v-model="form.objective_level"
             :label="$t('StudyObjectiveForm.objective_level')"
             :items="objectiveLevels"
-            item-title="sponsor_preferred_name"
+            item-title="preferred_term"
             return-object
             dense
             clearable

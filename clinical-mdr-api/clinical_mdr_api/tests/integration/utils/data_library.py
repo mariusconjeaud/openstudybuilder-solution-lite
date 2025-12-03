@@ -1,4 +1,5 @@
 import re
+from typing import Any
 
 from fastapi import FastAPI
 from fastapi.routing import APIRoute
@@ -16,11 +17,11 @@ from clinical_mdr_api.services.controlled_terminologies.ct_codelist import (
 )
 from clinical_mdr_api.services.controlled_terminologies.ct_term import CTTermService
 from clinical_mdr_api.tests.integration.utils.utils import LIBRARY_NAME, TestUtils
-from common import config
+from common.config import settings
 
 library_data = {"name": "Test library", "is_editable": True}
 
-template_data = {
+template_data: dict[str, Any] = {
     "name": "Test_Name_Template",
     "library": library_data,
     "library_name": "Test library",
@@ -41,12 +42,8 @@ version: "1.0"
 } AS final_properties
 MERGE (library:Library {name:"Sponsor", is_editable:true})
 
-MERGE (library)-[:CONTAINS_CONCEPT]->(odm_description_root1:ConceptRoot:OdmDescriptionRoot {uid: "odm_description1"})
-MERGE (odm_description_value1:ConceptValue:OdmDescriptionValue {name: "name1", language: "ENG", description: "description1", instruction: "instruction1", sponsor_instruction: "sponsor_instruction1"})
-MERGE (odm_description_root1)-[ld:LATEST_FINAL]->(odm_description_value1)
-MERGE (odm_description_root1)-[l:LATEST]->(odm_description_value1)
-CREATE (odm_description_root1)-[hv:HAS_VERSION]->(odm_description_value1)
-SET hv = final_properties
+MERGE (odm_description1:OdmDescription {name: "name1", language: "eng", description: "description1", instruction: "instruction1", sponsor_instruction: "sponsor_instruction1"})
+MERGE (odm_formal_expression1:OdmFormalExpression {context: "context1", expression: "expression1"})
 
 MERGE (library)-[:CONTAINS_CONCEPT]->(odm_condition_root1:ConceptRoot:OdmConditionRoot {uid: "odm_condition1"})
 MERGE (odm_condition_value1:ConceptValue:OdmConditionValue {oid: "oid1", name: "name1"})
@@ -62,8 +59,10 @@ MERGE (odm_condition_root2)-[l2:LATEST]->(odm_condition_value2)
 MERGE (odm_condition_root2)-[hv2:HAS_VERSION]->(odm_condition_value2)
 SET hv2 = final_properties
 
-MERGE (odm_condition_root1)-[:HAS_DESCRIPTION]->(odm_description_root1)
-MERGE (odm_condition_root2)-[:HAS_DESCRIPTION]->(odm_description_root1)
+MERGE (odm_condition_value1)-[:HAS_DESCRIPTION]->(odm_description1)
+MERGE (odm_condition_value2)-[:HAS_DESCRIPTION]->(odm_description1)
+MERGE (odm_condition_value1)-[:HAS_FORMAL_EXPRESSION]->(odm_formal_expression1)
+MERGE (odm_condition_value2)-[:HAS_FORMAL_EXPRESSION]->(odm_formal_expression1)
 
 """
 
@@ -77,12 +76,7 @@ version: "1.0"
 } AS final_properties
 MERGE (library:Library {name:"Sponsor", is_editable:true})
 
-MERGE (library)-[:CONTAINS_CONCEPT]->(odm_description_root1:ConceptRoot:OdmDescriptionRoot {uid: "odm_description1"})
-MERGE (odm_description_value1:ConceptValue:OdmDescriptionValue {name: "name1", language: "ENG", description: "description1", instruction: "instruction1", sponsor_instruction: "sponsor_instruction1"})
-MERGE (odm_description_root1)-[ld:LATEST_FINAL]->(odm_description_value1)
-MERGE (odm_description_root1)-[l:LATEST]->(odm_description_value1)
-CREATE (odm_description_root1)-[hv:HAS_VERSION]->(odm_description_value1)
-SET hv = final_properties
+MERGE (odm_description1:OdmDescription {name: "name1", language: "eng", description: "description1", instruction: "instruction1", sponsor_instruction: "sponsor_instruction1"})
 
 MERGE (library)-[:CONTAINS_CONCEPT]->(odm_method_root1:ConceptRoot:OdmMethodRoot {uid: "odm_method1"})
 MERGE (odm_method_value1:ConceptValue:OdmMethodValue {oid: "oid1", name: "name1", method_type: "type1"})
@@ -98,91 +92,9 @@ MERGE (odm_method_root2)-[l2:LATEST]->(odm_method_value2)
 MERGE (odm_method_root2)-[hv2:HAS_VERSION]->(odm_method_value2)
 SET hv2 = final_properties
 
-MERGE (odm_method_root1)-[:HAS_DESCRIPTION]->(odm_description_root1)
-MERGE (odm_method_root2)-[:HAS_DESCRIPTION]->(odm_description_root1)
+MERGE (odm_method_value1)-[:HAS_DESCRIPTION]->(odm_description1)
+MERGE (odm_method_value2)-[:HAS_DESCRIPTION]->(odm_description1)
 
-"""
-
-STARTUP_ODM_FORMAL_EXPRESSIONS = """
-WITH  {
-change_description: "New draft version",
-start_date: datetime(),
-status: "Draft",
-author_id: "unknown-user",
-version: "0.1"
-} AS draft_properties
-MERGE (library:Library {name:"Sponsor", is_editable:true})
-
-MERGE (library)-[:CONTAINS_CONCEPT]->(odm_formal_expression_root1:ConceptRoot:OdmFormalExpressionRoot {uid: "odm_formal_expression1"})
-MERGE (odm_formal_expression_value1:ConceptValue:OdmFormalExpressionValue {context: "context1", expression: "expression1"})
-MERGE (odm_formal_expression_root1)-[ld1:LATEST_DRAFT]->(odm_formal_expression_value1)
-MERGE (odm_formal_expression_root1)-[l1:LATEST]->(odm_formal_expression_value1)
-MERGE (odm_formal_expression_root1)-[hv1:HAS_VERSION]->(odm_formal_expression_value1)
-SET hv1 = draft_properties
-
-MERGE (library)-[:CONTAINS_CONCEPT]->(odm_formal_expression_root2:ConceptRoot:OdmFormalExpressionRoot {uid: "odm_formal_expression2"})
-MERGE (odm_formal_expression_value2:ConceptValue:OdmFormalExpressionValue {context: "context2", expression: "expression2"})
-MERGE (odm_formal_expression_root2)-[ld2:LATEST_DRAFT]->(odm_formal_expression_value2)
-MERGE (odm_formal_expression_root2)-[l2:LATEST]->(odm_formal_expression_value2)
-MERGE (odm_formal_expression_root2)-[hv2:HAS_VERSION]->(odm_formal_expression_value2)
-SET hv2 = draft_properties
-
-MERGE (library)-[:CONTAINS_CONCEPT]->(odm_formal_expression_root3:ConceptRoot:OdmFormalExpressionRoot {uid: "odm_formal_expression3"})
-MERGE (odm_formal_expression_value3:ConceptValue:OdmFormalExpressionValue {context: "context1", expression: "expression1"})
-MERGE (odm_formal_expression_root3)-[ld3:LATEST_DRAFT]->(odm_formal_expression_value3)
-MERGE (odm_formal_expression_root3)-[l3:LATEST]->(odm_formal_expression_value3)
-MERGE (odm_formal_expression_root3)-[hv3:HAS_VERSION]->(odm_formal_expression_value3)
-SET hv3 = draft_properties
-"""
-
-STARTUP_ODM_DESCRIPTIONS = """
-WITH  {
-change_description: "New draft version",
-start_date: datetime(),
-status: "Draft",
-author_id: "unknown-user",
-version: "0.1"
-} AS draft_properties
-MERGE (library:Library {name:"Sponsor", is_editable:true})
-
-MERGE (library)-[:CONTAINS_CONCEPT]->(odm_description_root2:ConceptRoot:OdmDescriptionRoot {uid: "odm_description2"})
-MERGE (odm_description_value2:ConceptValue:OdmDescriptionValue {name: "name2", language: "language2", description: "description2", instruction: "instruction2", sponsor_instruction: "sponsor_instruction2"})
-MERGE (odm_description_root2)-[ld2:LATEST_DRAFT]->(odm_description_value2)
-MERGE (odm_description_root2)-[l2:LATEST]->(odm_description_value2)
-MERGE (odm_description_root2)-[hv2:HAS_VERSION]->(odm_description_value2)
-SET hv2 = draft_properties
-
-MERGE (library)-[:CONTAINS_CONCEPT]->(odm_description_root3:ConceptRoot:OdmDescriptionRoot {uid: "odm_description3"})
-MERGE (odm_description_value3:ConceptValue:OdmDescriptionValue {name: "name3", language: "ENG", description: "description3", instruction: "instruction3", sponsor_instruction: "sponsor_instruction3"})
-MERGE (odm_description_root3)-[ld3:LATEST_DRAFT]->(odm_description_value3)
-MERGE (odm_description_root3)-[l3:LATEST]->(odm_description_value3)
-CREATE (odm_description_root3)-[hv3:HAS_VERSION]->(odm_description_value3)
-SET hv3 = draft_properties
-"""
-
-STARTUP_ODM_ALIASES = """
-WITH  {
-change_description: "New draft version",
-start_date: datetime(),
-status: "Draft",
-author_id: "unknown-user",
-version: "0.1"
-} AS draft_properties
-MERGE (library:Library {name:"Sponsor", is_editable:true})
-
-MERGE (library)-[:CONTAINS_CONCEPT]->(odm_alias_root1:ConceptRoot:OdmAliasRoot {uid: "odm_alias1"})
-MERGE (odm_alias_value1:ConceptValue:OdmAliasValue {context: "context1", name: "name1"})
-MERGE (odm_alias_root1)-[ld1:LATEST_DRAFT]->(odm_alias_value1)
-MERGE (odm_alias_root1)-[l1:LATEST]->(odm_alias_value1)
-MERGE (odm_alias_root1)-[hv1:HAS_VERSION]->(odm_alias_value1)
-SET hv1 = draft_properties
-
-MERGE (library)-[:CONTAINS_CONCEPT]->(odm_alias_root2:ConceptRoot:OdmAliasRoot {uid: "odm_alias2"})
-MERGE (odm_alias_value2:ConceptValue:OdmAliasValue {context: "context2", name: "name2"})
-MERGE (odm_alias_root2)-[ld2:LATEST_DRAFT]->(odm_alias_value2)
-MERGE (odm_alias_root2)-[l2:LATEST]->(odm_alias_value2)
-MERGE (odm_alias_root2)-[hv2:HAS_VERSION]->(odm_alias_value2)
-SET hv2 = draft_properties
 """
 
 STARTUP_CT_TERM_WITHOUT_CATALOGUE = """
@@ -197,7 +109,7 @@ version: "1.0"
 MERGE (Library:Library {name:"Sponsor", is_editable:true})
 MERGE (Library)-[:CONTAINS_TERM]->(TermRoot:CTTermRoot {concept_id: "concept_id1", uid: "term1"})
 MERGE (TermRoot)-[:HAS_ATTRIBUTES_ROOT]->(TermAttrRoot:CTTermAttributesRoot)
-MERGE (TermAttrValue:CTTermAttributesValue {code_submission_value: "code_submission_value1", concept_id: "concept_id1", definition: "definition1", preferred_term: "preferred_term1", synonyms: "synonyms1"})
+MERGE (TermAttrValue:CTTermAttributesValue {concept_id: "concept_id1", definition: "definition1", preferred_term: "preferred_term1", synonyms: "synonyms1"})
 MERGE (TermAttrRoot)-[lf1:LATEST_FINAL]->(TermAttrValue)
 MERGE (TermAttrRoot)-[:LATEST]->(TermAttrValue)
 MERGE (TermAttrRoot)-[hv1:HAS_VERSION]->(TermAttrValue)
@@ -221,13 +133,15 @@ version: "1.0"
 } AS final_properties
 
 MERGE (Library:Library {name:"Sponsor", is_editable:true})
-MERGE (Library)-[:CONTAINS_CATALOGUE]->(Catalogue:CTCatalogue {name:"SDTM CT"})
+MERGE (Catalogue:CTCatalogue {name:"SDTM CT"})
+MERGE (Library)-[:CONTAINS_CATALOGUE]->(Catalogue)
 MERGE (Library)-[:CONTAINS_CODELIST]->(CodelistRoot:CTCodelistRoot {uid: "codelist_root1"})
 MERGE (Catalogue)-[:HAS_CODELIST]->(CodelistRoot)
 MERGE (Library)-[:CONTAINS_TERM]->(TermRoot1:CTTermRoot {concept_id: "concept_id1", uid: "term1"})
-MERGE (CodelistRoot)-[:HAS_TERM]->(TermRoot1)
+MERGE (TermRoot1)<-[:HAS_TERM_ROOT]-(CTCodelistTerm1:CTCodelistTerm {submission_value: "submission_value1"})
+MERGE (CodelistRoot)-[:HAS_TERM]->(CTCodelistTerm1)
 MERGE (TermRoot1)-[:HAS_ATTRIBUTES_ROOT]->(TermAttrRoot1:CTTermAttributesRoot)
-MERGE (TermAttrValue1:CTTermAttributesValue {code_submission_value: "code_submission_value1", concept_id: "concept_id1", definition: "definition1", preferred_term: "preferred_term1", synonyms: "synonyms1"})
+MERGE (TermAttrValue1:CTTermAttributesValue {concept_id: "concept_id1", definition: "definition1", preferred_term: "preferred_term1", synonyms: "synonyms1"})
 MERGE (TermAttrRoot1)-[lf1:LATEST_FINAL]->(TermAttrValue1)
 MERGE (TermAttrRoot1)-[:LATEST]->(TermAttrValue1)
 MERGE (TermAttrRoot1)-[hv1:HAS_VERSION]->(TermAttrValue1)
@@ -239,13 +153,16 @@ MERGE (TermNameRoot1)-[lf2:LATEST_FINAL]->(TermNameValue1)
 MERGE (TermNameRoot1)-[hv2:HAS_VERSION]->(TermNameValue1)
 SET hv2 = final_properties
 
-MERGE (Library)-[:CONTAINS_TERM]->(TermRoot2:CTTermRoot {concept_id: "concept_id2", uid: "term2"})
-MERGE (CodelistRoot)-[:HAS_TERM]->(TermRoot2)
-MERGE (TermRoot2)-[:HAS_ATTRIBUTES_ROOT]->(TermAttrRoot2:CTTermAttributesRoot)
-MERGE (TermAttrValue2:CTTermAttributesValue {code_submission_value: "code_submission_value2", concept_id: "concept_id2", definition: "definition2", preferred_term: "preferred_term2", synonyms: "synonyms2"})
-MERGE (TermAttrRoot2)-[lf3:LATEST_FINAL]->(TermAttrValue2)
-MERGE (TermAttrRoot2)-[:LATEST]->(TermAttrValue2)
-MERGE (TermAttrRoot2)-[hv3:HAS_VERSION]->(TermAttrValue2)
+MERGE (Library)-[:CONTAINS_TERM]->(TermRoot2:CTTermRoot {concept_id: "concept_id2", uid: "uid2"})
+MERGE (Library)-[:CONTAINS_CODELIST]->(CodelistRoot2:CTCodelistRoot {uid: "codelist_root2"})
+MERGE (Catalogue)-[:HAS_CODELIST]->(CodelistRoot2)
+MERGE (TermRoot)<-[:HAS_TERM_ROOT]-(CTCodelistTerm:CTCodelistTerm {submission_value: "submission_value2"})
+MERGE (CodelistRoot2)-[has_term:HAS_TERM]->(CTCodelistTerm)
+MERGE (TermRoot)-[:HAS_ATTRIBUTES_ROOT]->(TermAttrRoot:CTTermAttributesRoot)
+MERGE (TermAttrValue:CTTermAttributesValue {concept_id: "concept_id1", definition: "definition1", preferred_term: "preferred_term1", synonyms: "synonyms1"})
+MERGE (TermAttrRoot)-[:LATEST_FINAL]->(TermAttrValue)
+MERGE (TermAttrRoot)-[hv3:HAS_VERSION]->(TermAttrValue)
+MERGE (TermAttrRoot)-[:LATEST]->(TermAttrValue)
 SET hv3 = final_properties
 
 MERGE (TermRoot2)-[:HAS_NAME_ROOT]->(TermNameRoot2:CTTermNameRoot)
@@ -302,13 +219,42 @@ SET hv3 = final_properties
 SET has_term1 = has_term_properties
 MERGE (unit_def_value)-[hut1:HAS_UCUM_TERM]->(term_root1)
 
-MERGE (library)-[:CONTAINS_TERM]->(cttr:CTTermRoot {uid: "C25532_name1", concept_id: "C25532"})
-MERGE (cttr)-[:HAS_NAME_ROOT]->(cttnr:CTTermNameRoot)
-MERGE (unit_def_value)-[hcu1:HAS_CT_UNIT]->(cttr)
-MERGE (cttnr)-[:LATEST]->(cttnv:CTTermNameValue {name: "name1", name_sentence_case: "name1"})
-MERGE (cttnr)-[latest_final1:LATEST_FINAL]->(cttnv)
-MERGE (cttnr)-[has_version1:HAS_VERSION]->(cttnv)
-SET has_version1 = final_properties
+// SDTM Unit codelist
+MERGE (library)-[:CONTAINS_CODELIST]->(unit_codelist_root:CTCodelistRoot {uid:"CTCodelist_UNITS"})-[:HAS_NAME_ROOT]->
+(unit_cnr:CTCodelistNameRoot)-[:LATEST]->(unit_cnv:CTCodelistNameValue {
+name: "Units",
+name_sentence_case: "units"})
+MERGE (unit_cnr)-[unit_cnrel:LATEST_FINAL]->(unit_cnv)
+MERGE (unit_cnr)-[unit_cnrel_hv:HAS_VERSION]->(unit_cnv)
+SET unit_cnrel_hv = final_properties
+MERGE (unit_codelist_root)-[:HAS_ATTRIBUTES_ROOT]->
+(unit_car:CTCodelistAttributesRoot)-[:LATEST]->(unit_cav:CTCodelistAttributesValue {
+preferred_term: "Unit",
+submission_value: "UNIT"})
+MERGE (unit_car)-[unit_carel:LATEST_FINAL]->(unit_cav)
+MERGE (unit_car)-[unit_carel_hv:HAS_VERSION]->(unit_cav)
+SET unit_carel_hv = final_properties
+
+// Create a term in UNIT codelist
+MERGE (library)-[:CONTAINS_TERM]->(unit_tr:CTTermRoot {uid: "C25532_name1"})-[:HAS_NAME_ROOT]->
+(unit_tnr:CTTermNameRoot)-[:LATEST]->(unit_tnv:CTTermNameValue {
+name: "name1",
+name_sentence_case: "name1"})
+MERGE (unit_tr)<-[:HAS_TERM_ROOT]-(unit_tr_submval:CTCodelistTerm {submission_value: "unit_submission_value1"})
+MERGE (unit_tnr)-[unit_tnrel:LATEST_FINAL]->(unit_tnv)
+MERGE (unit_tnr)-[unit_tnrel_hv:HAS_VERSION]->(unit_tnv)
+SET unit_tnrel_hv = final_properties
+MERGE (unit_codelist_root)-[:HAS_TERM]->(unit_tr_submval)
+MERGE (unit_tar:CTTermAttributesRoot)-[:LATEST]->(unit_tav:CTTermAttributesValue {
+definition: "Unit 1",
+preferred_term: "Unit 1"})
+MERGE (unit_tr)-[:HAS_ATTRIBUTES_ROOT]->(unit_tar)-[unit_tarel:LATEST_FINAL]->(unit_tav)
+MERGE (unit_tar)-[unit_tarel_hv:HAS_VERSION]->(unit_tav)
+SET unit_tarel_hv = final_properties
+
+// Link unit definition to the term in UNIT codelist
+MERGE (unit_def_value)-[:HAS_CT_UNIT]->(ctxt:CTTermContext)-[:HAS_SELECTED_TERM]->(unit_tr)
+MERGE (ctxt)-[:HAS_SELECTED_CODELIST]->(unit_codelist_root)
 """
 
 STARTUP_ODM_ITEM_GROUPS = """
@@ -322,12 +268,7 @@ version: "1.0"
 
 MERGE (library:Library {name:"Sponsor", is_editable:true})
 
-MERGE (library)-[:CONTAINS_CONCEPT]->(odm_description_root1:ConceptRoot:OdmDescriptionRoot {uid: "odm_description1"})
-MERGE (odm_description_value1:ConceptValue:OdmDescriptionValue {name: "name1", language: "ENG", description: "description1", instruction: "instruction1"})
-MERGE (odm_description_root1)-[ld1:LATEST_FINAL]->(odm_description_value1)
-MERGE (odm_description_root1)-[l1:LATEST]->(odm_description_value1)
-CREATE (odm_description_root1)-[hv1:HAS_VERSION]->(odm_description_value1)
-SET hv1 = final_properties
+MERGE (odm_description1:OdmDescription {name: "name1", language: "eng", description: "description1", instruction: "instruction1", sponsor_instruction: "sponsor_instruction1"})
 
 MERGE (item_group_root1:ConceptRoot:OdmItemGroupRoot {uid: "odm_item_group1"})
 MERGE (item_group_value1:ConceptValue:OdmItemGroupValue {oid: "oid1", name: "name1", repeating: false, is_reference_data: false, sas_dataset_name: "sas_dataset_name1", origin: "origin1", purpose: "purpose1", comment: "comment1"})
@@ -335,7 +276,7 @@ MERGE (library)-[r0:CONTAINS_CONCEPT]->(item_group_root1)
 MERGE (item_group_root1)-[r1:LATEST_FINAL]->(item_group_value1)
 MERGE (item_group_root1)-[hv2:HAS_VERSION]->(item_group_value1)
 MERGE (item_group_root1)-[:LATEST]->(item_group_value1)
-MERGE (item_group_root1)-[:HAS_DESCRIPTION]->(odm_description_root1)
+MERGE (item_group_value1)-[:HAS_DESCRIPTION]->(odm_description1)
 SET hv2 = final_properties
 
 MERGE (item_group_root2:ConceptRoot:OdmItemGroupRoot {uid: "odm_item_group2"})
@@ -344,15 +285,62 @@ MERGE (library)-[:CONTAINS_CONCEPT]->(item_group_root2)
 MERGE (item_group_root2)-[r2:LATEST_FINAL]->(item_group_value2)
 MERGE (item_group_root2)-[hv3:HAS_VERSION]->(item_group_value2)
 MERGE (item_group_root2)-[:LATEST]->(item_group_value2)
-MERGE (item_group_root2)-[:HAS_DESCRIPTION]->(odm_description_root1)
+MERGE (item_group_value2)-[:HAS_DESCRIPTION]->(odm_description1)
 SET hv3 = final_properties
 
+// SDTM Domain codelist
+MERGE (library)-[:CONTAINS_CODELIST]->(domain_codelist_root:CTCodelistRoot {uid:"CTCodelist_DOMAIN"})-[:HAS_NAME_ROOT]->
+(domain_cnr:CTCodelistNameRoot)-[:LATEST]->(domain_cnv:CTCodelistNameValue {
+name: "SDTM Domain Abbreviation",
+name_sentence_case: "SDTM domain abbreviation"})
+MERGE (domain_cnr)-[domain_cnrel:LATEST_FINAL]->(domain_cnv)
+MERGE (domain_cnr)-[domain_cnrel_hv:HAS_VERSION]->(domain_cnv)
+SET domain_cnrel_hv = final_properties
+MERGE (domain_codelist_root)-[:HAS_ATTRIBUTES_ROOT]->
+(domain_car:CTCodelistAttributesRoot)-[:LATEST]->(domain_cav:CTCodelistAttributesValue {
+preferred_term: "Domain",
+submission_value: "DOMAIN"})
+MERGE (domain_car)-[domain_carel:LATEST_FINAL]->(domain_cav)
+MERGE (domain_car)-[domain_carel_hv:HAS_VERSION]->(domain_cav)
+SET domain_carel_hv = final_properties
+
+// Create two terms in DOMAIN codelist
+MERGE (library)-[:CONTAINS_TERM]->(domain_tr:CTTermRoot {uid: "term_domain_xx"})-[:HAS_NAME_ROOT]->
+(domain_tnr:CTTermNameRoot)-[:LATEST]->(domain_tnv:CTTermNameValue {
+name: "xx",
+name_sentence_case: "xx"})
+MERGE (domain_tr)<-[:HAS_TERM_ROOT]-(domain_tr_submval:CTCodelistTerm {submission_value: "XX"})
+MERGE (domain_tnr)-[domain_tnrel:LATEST_FINAL]->(domain_tnv)
+MERGE (domain_tnr)-[domain_tnrel_hv:HAS_VERSION]->(domain_tnv)
+SET domain_tnrel_hv = final_properties
+MERGE (domain_codelist_root)-[:HAS_TERM]->(domain_tr_submval)
+MERGE (domain_tar:CTTermAttributesRoot)-[:LATEST]->(domain_tav:CTTermAttributesValue {
+definition: "Domain XX",
+preferred_term: "Domain XX"})
+MERGE (domain_tr)-[:HAS_ATTRIBUTES_ROOT]->(domain_tar)-[domain_tarel:LATEST_FINAL]->(domain_tav)
+MERGE (domain_tar)-[domain_tarel_hv:HAS_VERSION]->(domain_tav)
+SET domain_tarel_hv = final_properties
+
+MERGE (library)-[:CONTAINS_TERM]->(domain2_tr:CTTermRoot {uid: "term_domain_yy"})-[:HAS_NAME_ROOT]->
+(domain2_tnr:CTTermNameRoot)-[:LATEST]->(domain2_tnv:CTTermNameValue {
+name: "yy",
+name_sentence_case: "yy"})
+MERGE (domain2_tr)<-[:HAS_TERM_ROOT]-(domain2_tr_submval:CTCodelistTerm {submission_value: "YY"})
+MERGE (domain2_tnr)-[domain2_tnrel:LATEST_FINAL]->(domain2_tnv)
+MERGE (domain2_tnr)-[domain2_tnrel_hv:HAS_VERSION]->(domain2_tnv)
+SET domain2_tnrel_hv = final_properties
+MERGE (domain_codelist_root)-[:HAS_TERM]->(domain2_tr_submval)
+MERGE (domain2_tar:CTTermAttributesRoot)-[:LATEST]->(domain2_tav:CTTermAttributesValue {
+definition: "Domain YY",
+preferred_term: "Domain YY"})
+MERGE (domain2_tr)-[:HAS_ATTRIBUTES_ROOT]->(domain2_tar)-[domain2_tarel:LATEST_FINAL]->(domain2_tav)
+MERGE (domain2_tar)-[domain2_tarel_hv:HAS_VERSION]->(domain2_tav)
+SET domain2_tarel_hv = final_properties
+
 WITH *
-MATCH (ct_term_root1:CTTermRoot {uid: "term1"})
-MATCH (ct_term_root2:CTTermRoot {uid: "term2"})
-MERGE (item_group_root1)-[:HAS_SDTM_DOMAIN]->(ct_term_root1)
-MERGE (item_group_root1)-[:HAS_SDTM_DOMAIN]->(ct_term_root2)
-MERGE (item_group_root2)-[:HAS_SDTM_DOMAIN]->(ct_term_root1)
+MERGE (item_group_value1)-[:HAS_SDTM_DOMAIN]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(domain_tr)
+MERGE (item_group_value1)-[:HAS_SDTM_DOMAIN]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(domain2_tr)
+MERGE (item_group_value2)-[:HAS_SDTM_DOMAIN]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(domain_tr)
 """
 
 STARTUP_ODM_ITEMS = """
@@ -366,20 +354,15 @@ version: "1.0"
 
 MERGE (library:Library {name:"Sponsor", is_editable:true})
 
-MERGE (library)-[:CONTAINS_CONCEPT]->(odm_description_root1:ConceptRoot:OdmDescriptionRoot {uid: "odm_description1"})
-MERGE (odm_description_value1:ConceptValue:OdmDescriptionValue {name: "name1", language: "ENG", description: "description1", instruction: "instruction1"})
-MERGE (odm_description_root1)-[ld1:LATEST_FINAL]->(odm_description_value1)
-MERGE (odm_description_root1)-[l1:LATEST]->(odm_description_value1)
-CREATE (odm_description_root1)-[hv1:HAS_VERSION]->(odm_description_value1)
-SET hv1 = final_properties
+MERGE (odm_description1:OdmDescription {name: "name1", language: "eng", description: "description1", instruction: "instruction1", sponsor_instruction: "sponsor_instruction1"})
 
 MERGE (item_root1:ConceptRoot:OdmItemRoot {uid: "odm_item1"})
-MERGE (item_value1:ConceptValue:OdmItemValue {oid: "oid1", name: "name1", datatype: "datatype1", length: 1, significant_digits: 1, sas_field_name: "sasfieldname1", sds_var_name: "sdsvarname1", origin: "origin1", comment: "comment1"})
+MERGE (item_value1:ConceptValue:OdmItemValue {oid: "oid1", name: "name1", datatype: "string", length: 1, significant_digits: 1, sas_field_name: "sasfieldname1", sds_var_name: "sdsvarname1", origin: "origin1", comment: "comment1"})
 MERGE (library)-[:CONTAINS_CONCEPT]->(item_root1)
 MERGE (item_root1)-[r1:LATEST_FINAL]->(item_value1)
 MERGE (item_root1)-[hv2:HAS_VERSION]->(item_value1)
 MERGE (item_root1)-[:LATEST]->(item_value1)
-MERGE (item_root1)-[:HAS_DESCRIPTION]->(odm_description_root1)
+MERGE (item_value1)-[:HAS_DESCRIPTION]->(odm_description1)
 SET hv2 = final_properties
 
 MERGE (item_root2:ConceptRoot:OdmItemRoot {uid: "odm_item2"})
@@ -388,7 +371,7 @@ MERGE (library)-[:CONTAINS_CONCEPT]->(item_root2)
 MERGE (item_root2)-[r2:LATEST_FINAL]->(item_value2)
 MERGE (item_root2)-[hv3:HAS_VERSION]->(item_value2)
 MERGE (item_root2)-[:LATEST]->(item_value2)
-MERGE (item_root2)-[:HAS_DESCRIPTION]->(odm_description_root1)
+MERGE (item_value2)-[:HAS_DESCRIPTION]->(odm_description1)
 SET hv3 = final_properties
 """
 
@@ -402,12 +385,8 @@ version: "1.0"
 } AS final_properties
 MERGE (library:Library {name:"Sponsor", is_editable:true})
 
-MERGE (library)-[:CONTAINS_CONCEPT]->(odm_description_root1:ConceptRoot:OdmDescriptionRoot {uid: "odm_description1"})
-MERGE (odm_description_value1:ConceptValue:OdmDescriptionValue {name: "name1", language: "ENG", description: "description1", instruction: "instruction1"})
-MERGE (odm_description_root1)-[ld1:LATEST_FINAL]->(odm_description_value1)
-MERGE (odm_description_root1)-[l1:LATEST]->(odm_description_value1)
-CREATE (odm_description_root1)-[hv1:HAS_VERSION]->(odm_description_value1)
-SET hv1 = final_properties
+MERGE (odm_description1:OdmDescription {name: "name1", language: "eng", description: "description1", instruction: "instruction1", sponsor_instruction: "sponsor_instruction1"})
+MERGE (odm_alias1:OdmAlias {context: "context1", name: "name1"})
 
 MERGE (odm_form_root1:ConceptRoot:OdmFormRoot {uid: "odm_form1"})
 MERGE (odm_form_value1:ConceptValue:OdmFormValue {oid: "oid1", name: "name1", repeating: true})
@@ -415,7 +394,8 @@ MERGE (library)-[:CONTAINS_CONCEPT]->(odm_form_root1)
 MERGE (odm_form_root1)-[r1:LATEST_FINAL]->(odm_form_value1)
 MERGE (odm_form_root1)-[hv2:HAS_VERSION]->(odm_form_value1)
 MERGE (odm_form_root1)-[:LATEST]->(odm_form_value1)
-MERGE (odm_form_root1)-[:HAS_DESCRIPTION]->(odm_description_root1)
+MERGE (odm_form_value1)-[:HAS_DESCRIPTION]->(odm_description1)
+MERGE (odm_form_value1)-[:HAS_ALIAS]->(odm_alias1)
 SET hv2 = final_properties
 
 MERGE (odm_form_root2:ConceptRoot:OdmFormRoot {uid: "odm_form2"})
@@ -424,7 +404,8 @@ MERGE (library)-[:CONTAINS_CONCEPT]->(odm_form_root2)
 MERGE (odm_form_root2)-[r2:LATEST_FINAL]->(odm_form_value2)
 MERGE (odm_form_root2)-[hv3:HAS_VERSION]->(odm_form_value2)
 MERGE (odm_form_root2)-[:LATEST]->(odm_form_value2)
-MERGE (odm_form_root2)-[:HAS_DESCRIPTION]->(odm_description_root1)
+MERGE (odm_form_value2)-[:HAS_DESCRIPTION]->(odm_description1)
+MERGE (odm_form_value2)-[:HAS_ALIAS]->(odm_alias1)
 SET hv3 = final_properties
 """
 
@@ -465,77 +446,80 @@ version: "1.0"
 } AS final_properties
 
 MERGE (Library:Library {name:"Sponsor", is_editable:true})
-MERGE (Library)-[:CONTAINS_CATALOUGE]->(Catalogue:CTCatalogue {name:"SDTM CT"})
+MERGE (catalogue:CTCatalogue {name:"SDTM CT"})
+MERGE (Library)-[:CONTAINS_CATALOUGE]->(Catalogue)
 
 WITH *
-MATCH (oa:OdmAliasRoot {uid: "odm_alias1"})
-MATCH (ofr:OdmFormRoot {uid: "odm_form1"})
-MATCH (oigr:OdmItemGroupRoot {uid: "odm_item_group1"})
-MATCH (oir:OdmItemRoot {uid: "odm_item1"})
-MERGE (ofr)-[:HAS_ALIAS]->(oa)
-MERGE (oigr)-[:HAS_ALIAS]->(oa)
-MERGE (oir)-[:HAS_ALIAS]->(oa)
+MERGE (odm_alias1:OdmAlias {context: "context1", name: "name1"})
+WITH *
+MATCH (:OdmFormRoot {uid: "odm_form1"})-[:LATEST]-(ofv:OdmFormValue)
+MATCH (:OdmItemGroupRoot {uid: "odm_item_group1"})-[:LATEST]-(oigv:OdmItemGroupValue)
+MATCH (:OdmItemRoot {uid: "odm_item1"})-[:LATEST]-(oiv:OdmItemValue)
+MERGE (ofv)-[:HAS_ALIAS]->(odm_alias1)
+MERGE (oigv)-[:HAS_ALIAS]->(odm_alias1)
+MERGE (oiv)-[:HAS_ALIAS]->(odm_alias1)
 
 WITH *
-MATCH (ItemRoot:OdmItemRoot {uid: "odm_item1"})
+MATCH (:OdmItemRoot {uid: "odm_item1"})-[:LATEST]-(ItemValue:OdmItemValue)
 MATCH (UnitRoot:UnitDefinitionRoot {uid: "unit_definition_root1"})
-MERGE (ItemRoot)-[:HAS_UNIT_DEFINITION]->(UnitRoot)
+MERGE (ItemValue)-[:HAS_UNIT_DEFINITION {mandatory: false}]->(UnitRoot)
 
 MERGE (CodelistRoot:CTCodelistRoot {uid: "codelist_root1"})
 MERGE (Library)-[:CONTAINS_CODELIST]->(CodelistRoot)
 MERGE (Catalogue)-[:HAS_CODELIST]->(CodelistRoot)
-MERGE (ItemRoot)-[:HAS_CODELIST]->(CodelistRoot)
+MERGE (ItemValue)-[:HAS_CODELIST]->(CodelistRoot)
 
 WITH *
 MATCH (CTTerm:CTTermRoot {uid: "term1"})
-MERGE (ItemRoot)-[:HAS_CODELIST_TERM {order: "1", mandatory: false, display_text: "custom text"}]->(CTTerm)
+MERGE (ItemValue)-[:HAS_CODELIST_TERM {order: "1", mandatory: false, display_text: "custom text"}]->(TermContext:CTTermContext)-[:HAS_SELECTED_TERM]->(CTTerm)
+MERGE (TermContext)-[:HAS_SELECTED_CODELIST]->(CodelistRoot)
 
 MERGE (CodelistRoot)-[:HAS_ATTRIBUTES_ROOT]->(CodelistAttrRoot:CTCodelistAttributesRoot)
-MERGE (CodelistAttrValue:CTCodelistAttributesValue {name:"name1", definition:"definition1", preferred_term: "preferred_term1", synonyms: "synonyms1", submission_value: "submission_value1", extensible:false})
+MERGE (CodelistAttrValue:CTCodelistAttributesValue {name:"name1", definition:"definition1", preferred_term: "preferred_term1", synonyms: "synonyms1", submission_value: "submission_value1", extensible:false, ordinal: false})
 MERGE (CodelistAttrRoot)-[lf1:LATEST_FINAL]->(CodelistAttrValue)
 MERGE (CodelistAttrRoot)-[hv1:HAS_VERSION]->(CodelistAttrValue)
 MERGE (CodelistAttrRoot)-[:LATEST]->(CodelistAttrValue)
 SET hv1 = final_properties
 
 MERGE (Library)-[:CONTAINS_TERM]->(TermRoot:CTTermRoot {concept_id: "concept_id1", uid: "uid1"})
-MERGE (CodelistRoot)-[:HAS_TERM]->(TermRoot)
+MERGE (TermRoot)<-[:HAS_TERM_ROOT]-(CTCodelistTerm:CTCodelistTerm {submission_value: "submission_value1"})
+MERGE (CodelistRoot)-[has_term:HAS_TERM]->(CTCodelistTerm)
 MERGE (TermRoot)-[:HAS_ATTRIBUTES_ROOT]->(TermAttrRoot:CTTermAttributesRoot)
-MERGE (TermAttrValue:CTTermAttributesValue {code_submission_value: "code_submission_value1", concept_id: "concept_id1", definition: "definition1", preferred_term: "preferred_term1", synonyms: "synonyms1"})
+MERGE (TermAttrValue:CTTermAttributesValue {concept_id: "concept_id1", definition: "definition1", preferred_term: "preferred_term1", synonyms: "synonyms1"})
 MERGE (TermAttrRoot)-[lf2:LATEST_FINAL]->(TermAttrValue)
 MERGE (TermAttrRoot)-[hv2:HAS_VERSION]->(TermAttrValue)
 MERGE (TermAttrRoot)-[:LATEST]->(TermAttrValue)
 SET hv2 = final_properties
 
 WITH *
-MATCH (ConditionRoot1:OdmConditionRoot {uid: "odm_condition1"})
-MATCH (ConditionRoot2:OdmConditionRoot {uid: "odm_condition2"})
-MATCH (FormalExpression:OdmFormalExpressionRoot {uid: "odm_formal_expression1"})
-MERGE (ConditionRoot1)-[:HAS_FORMAL_EXPRESSION]->(FormalExpression)
-MERGE (ConditionRoot2)-[:HAS_FORMAL_EXPRESSION]->(FormalExpression)
+MATCH (:OdmConditionRoot {uid: "odm_condition1"})-[:LATEST]->(ConditionValue1:OdmConditionValue)
+MATCH (:OdmConditionRoot {uid: "odm_condition2"})-[:LATEST]->(ConditionValue2:OdmConditionValue)
+MERGE (odm_formal_expression1:OdmFormalExpression {context: "context1", expression: "expression1"})
+MERGE (ConditionValue1)-[:HAS_FORMAL_EXPRESSION]->(odm_formal_expression1)
+MERGE (ConditionValue2)-[:HAS_FORMAL_EXPRESSION]->(odm_formal_expression1)
 
 WITH *
-MATCH (MethodRoot1:OdmMethodRoot {uid: "odm_method1"})
-MATCH (MethodRoot2:OdmMethodRoot {uid: "odm_method2"})
-MATCH (FormalExpression:OdmFormalExpressionRoot {uid: "odm_formal_expression1"})
-MERGE (MethodRoot1)-[:HAS_FORMAL_EXPRESSION]->(FormalExpression)
-MERGE (MethodRoot2)-[:HAS_FORMAL_EXPRESSION]->(FormalExpression)
+MATCH (:OdmMethodRoot {uid: "odm_method1"})-[:LATEST]->(MethodValue1:OdmMethodValue)
+MATCH (:OdmMethodRoot {uid: "odm_method2"})-[:LATEST]->(MethodValue2:OdmMethodValue)
+MERGE (MethodValue1)-[:HAS_FORMAL_EXPRESSION]->(odm_formal_expression1)
+MERGE (MethodValue2)-[:HAS_FORMAL_EXPRESSION]->(odm_formal_expression1)
 
 WITH *
-MATCH (ItemGroupRoot:OdmItemGroupRoot {uid: "odm_item_group1"})
-MATCH (ItemRoot:OdmItemRoot {uid: "odm_item1"})
-MERGE (ItemGroupRoot)-[:ITEM_REF {order_number: "1", mandatory: true, collection_exception_condition_oid: "oid1", method_oid: "oid1", vendor: '{"attributes": [{"uid": "odm_vendor_attribute3", "value": "No"}]}'}]->(ItemRoot)
+MATCH (:OdmItemGroupRoot {uid: "odm_item_group1"})-[:LATEST]->(ItemGroupValue:OdmItemGroupValue)
+MATCH (:OdmItemRoot {uid: "odm_item1"})-[:LATEST]->(ItemValue:OdmItemValue)
+MERGE (ItemGroupValue)-[:ITEM_REF {order_number: "1", mandatory: true, collection_exception_condition_oid: "oid1", method_oid: "oid1", vendor: '{"attributes": [{"uid": "odm_vendor_attribute3", "value": "No"}]}'}]->(ItemValue)
 
 WITH *
-MATCH (FormRoot:OdmFormRoot {uid: "odm_form1"})
-MATCH (ItemGroupRoot:OdmItemGroupRoot {uid: "odm_item_group1"})
-MATCH (VendorElementRoot:OdmVendorElementRoot {uid: "odm_vendor_element1"})
-MERGE (FormRoot)-[:ITEM_GROUP_REF {order_number: "1", mandatory: true, collection_exception_condition_oid: "oid2", vendor: '{"attributes": [{"uid": "odm_vendor_attribute3", "value": "No"}]}'}]->(ItemGroupRoot)
-MERGE (FormRoot)-[:HAS_VENDOR_ELEMENT]->(VendorElementRoot)
+MATCH (:OdmFormRoot {uid: "odm_form1"})-[:LATEST]->(FormValue:OdmFormValue)
+MATCH (:OdmItemGroupRoot {uid: "odm_item_group1"})-[:LATEST]->(ItemGroupValue:OdmItemGroupValue)
+MATCH (:OdmVendorElementRoot {uid: "odm_vendor_element1"})-[:LATEST]->(VendorElementValue:OdmVendorElementValue)
+MERGE (FormValue)-[:ITEM_GROUP_REF {order_number: "1", mandatory: true, collection_exception_condition_oid: "oid2", vendor: '{"attributes": [{"uid": "odm_vendor_attribute3", "value": "No"}]}'}]->(ItemGroupValue)
+MERGE (FormValue)-[:HAS_VENDOR_ELEMENT]->(VendorElementValue)
 
 WITH *
-MATCH (StudyEventRoot:OdmStudyEventRoot {uid: "odm_study_event1"})
-MATCH (FormRoot:OdmFormRoot {uid: "odm_form1"})
-MERGE (StudyEventRoot)-[:FORM_REF {order_number: "1", mandatory: true, locked: false, collection_exception_condition_oid: "oid1"}]->(FormRoot)
+MATCH (:OdmStudyEventRoot {uid: "odm_study_event1"})-[:LATEST]->(StudyEventValue:OdmStudyEventValue)
+MATCH (:OdmFormRoot {uid: "odm_form1"})-[:LATEST]->(FormValue:OdmFormValue)
+MERGE (StudyEventValue)-[:FORM_REF {order_number: "1", mandatory: true, locked: false, collection_exception_condition_oid: "oid1"}]->(FormValue)
 """
 
 STARTUP_ODM_VENDOR_NAMESPACES = """
@@ -576,8 +560,8 @@ version: "1.0"
 MERGE (library:Library {name:"Sponsor", is_editable:true})
 
 WITH *
-MATCH (odm_vendor_namespace_root1:ConceptRoot:OdmVendorNamespaceRoot {uid: "odm_vendor_namespace1"})
-MATCH (odm_vendor_namespace_root2:ConceptRoot:OdmVendorNamespaceRoot {uid: "odm_vendor_namespace2"})
+MATCH (odm_vendor_namespace_root1:ConceptRoot:OdmVendorNamespaceRoot {uid: "odm_vendor_namespace1"})-[:LATEST]->(odm_vendor_namespace_value1:OdmVendorNamespaceValue)
+MATCH (odm_vendor_namespace_root2:ConceptRoot:OdmVendorNamespaceRoot {uid: "odm_vendor_namespace2"})-[:LATEST]->(odm_vendor_namespace_value2:OdmVendorNamespaceValue)
 
 MERGE (odm_vendor_element_root1:ConceptRoot:OdmVendorElementRoot {uid: "odm_vendor_element1"})
 MERGE (odm_vendor_element_value1:ConceptValue:OdmVendorElementValue {name: "nameOne", compatible_types: '["FormDef","ItemGroupDef","ItemDef"]'})
@@ -585,7 +569,7 @@ MERGE (library)-[:CONTAINS_CONCEPT]->(odm_vendor_element_root1)
 MERGE (odm_vendor_element_root1)-[r1:LATEST_FINAL]->(odm_vendor_element_value1)
 MERGE (odm_vendor_element_root1)-[hv1:HAS_VERSION]->(odm_vendor_element_value1)
 MERGE (odm_vendor_element_root1)-[:LATEST]->(odm_vendor_element_value1)
-MERGE (odm_vendor_namespace_root1)-[:HAS_VENDOR_ELEMENT]->(odm_vendor_element_root1)
+MERGE (odm_vendor_namespace_value1)-[:HAS_VENDOR_ELEMENT]->(odm_vendor_element_value1)
 SET hv1 = final_properties
 
 MERGE (odm_vendor_element_root2:ConceptRoot:OdmVendorElementRoot {uid: "odm_vendor_element2"})
@@ -594,7 +578,7 @@ MERGE (library)-[:CONTAINS_CONCEPT]->(odm_vendor_element_root2)
 MERGE (odm_vendor_element_root2)-[r2:LATEST_FINAL]->(odm_vendor_element_value2)
 MERGE (odm_vendor_element_root2)-[hv2:HAS_VERSION]->(odm_vendor_element_value2)
 MERGE (odm_vendor_element_root2)-[:LATEST]->(odm_vendor_element_value2)
-MERGE (odm_vendor_namespace_root2)-[:HAS_VENDOR_ELEMENT]->(odm_vendor_element_root2)
+MERGE (odm_vendor_namespace_value2)-[:HAS_VENDOR_ELEMENT]->(odm_vendor_element_value2)
 SET hv2 = final_properties
 
 MERGE (odm_vendor_element_root3:ConceptRoot:OdmVendorElementRoot {uid: "odm_vendor_element3"})
@@ -603,7 +587,7 @@ MERGE (library)-[:CONTAINS_CONCEPT]->(odm_vendor_element_root3)
 MERGE (odm_vendor_element_root3)-[r3:LATEST_FINAL]->(odm_vendor_element_value3)
 MERGE (odm_vendor_element_root3)-[hv3:HAS_VERSION]->(odm_vendor_element_value3)
 MERGE (odm_vendor_element_root3)-[:LATEST]->(odm_vendor_element_value3)
-MERGE (odm_vendor_namespace_root3)-[:HAS_VENDOR_ELEMENT]->(odm_vendor_element_root3)
+MERGE (odm_vendor_namespace_value3)-[:HAS_VENDOR_ELEMENT]->(odm_vendor_element_value3)
 SET hv3 = final_properties
 
 MERGE (odm_vendor_element_root4:ConceptRoot:OdmVendorElementRoot {uid: "odm_vendor_element4"})
@@ -612,7 +596,7 @@ MERGE (library)-[:CONTAINS_CONCEPT]->(odm_vendor_element_root4)
 MERGE (odm_vendor_element_root4)-[r4:LATEST_FINAL]->(odm_vendor_element_value4)
 MERGE (odm_vendor_element_root4)-[hv4:HAS_VERSION]->(odm_vendor_element_value4)
 MERGE (odm_vendor_element_root4)-[:LATEST]->(odm_vendor_element_value4)
-MERGE (odm_vendor_namespace_root4)-[:HAS_VENDOR_ELEMENT]->(odm_vendor_element_root4)
+MERGE (odm_vendor_namespace_value4)-[:HAS_VENDOR_ELEMENT]->(odm_vendor_element_value4)
 SET hv4 = final_properties
 """
 
@@ -627,9 +611,9 @@ version: "1.0"
 MERGE (library:Library {name:"Sponsor", is_editable:true})
 
 WITH *
-MATCH (odm_vendor_namespace_root:ConceptRoot:OdmVendorNamespaceRoot {uid: "odm_vendor_namespace1"})
-MATCH (odm_vendor_element_root1:OdmVendorElementRoot {uid:"odm_vendor_element1"})
-MATCH (odm_vendor_element_root3:OdmVendorElementRoot {uid:"odm_vendor_element3"})
+MATCH (odm_vendor_namespace_root:ConceptRoot:OdmVendorNamespaceRoot {uid: "odm_vendor_namespace1"})-[:LATEST]->(odm_vendor_namespace_value:OdmVendorNamespaceValue)
+MATCH (odm_vendor_element_root1:OdmVendorElementRoot {uid:"odm_vendor_element1"})-[:LATEST]->(odm_vendor_element_value1:OdmVendorElementValue)
+MATCH (odm_vendor_element_root3:OdmVendorElementRoot {uid:"odm_vendor_element3"})-[:LATEST]->(odm_vendor_element_value3:OdmVendorElementValue)
 
 MERGE (odm_vendor_attribute_root1:ConceptRoot:OdmVendorAttributeRoot {uid: "odm_vendor_attribute1"})
 MERGE (odm_vendor_attribute_value1:ConceptValue:OdmVendorAttributeValue {name: "nameOne", data_type: "string", value_regex: "^[a-zA-Z]+$"})
@@ -637,7 +621,7 @@ MERGE (library)-[:CONTAINS_CONCEPT]->(odm_vendor_attribute_root1)
 MERGE (odm_vendor_attribute_root1)-[r1:LATEST_FINAL]->(odm_vendor_attribute_value1)
 MERGE (odm_vendor_attribute_root1)-[hv1:HAS_VERSION]->(odm_vendor_attribute_value1)
 MERGE (odm_vendor_attribute_root1)-[:LATEST]->(odm_vendor_attribute_value1)
-MERGE (odm_vendor_element_root1)-[:HAS_VENDOR_ATTRIBUTE {value: "value1"}]->(odm_vendor_attribute_root1)
+MERGE (odm_vendor_element_value1)-[:HAS_VENDOR_ATTRIBUTE {value: "value1"}]->(odm_vendor_attribute_value1)
 SET hv1 = final_properties
 
 MERGE (odm_vendor_attribute_root2:ConceptRoot:OdmVendorAttributeRoot {uid: "odm_vendor_attribute2"})
@@ -646,7 +630,7 @@ MERGE (library)-[:CONTAINS_CONCEPT]->(odm_vendor_attribute_root2)
 MERGE (odm_vendor_attribute_root2)-[r2:LATEST_FINAL]->(odm_vendor_attribute_value2)
 MERGE (odm_vendor_attribute_root2)-[hv2:HAS_VERSION]->(odm_vendor_attribute_value2)
 MERGE (odm_vendor_attribute_root2)-[:LATEST]->(odm_vendor_attribute_value2)
-MERGE (odm_vendor_element_root1)-[:HAS_VENDOR_ATTRIBUTE {value: "value2"}]->(odm_vendor_attribute_root2)
+MERGE (odm_vendor_element_value1)-[:HAS_VENDOR_ATTRIBUTE {value: "value2"}]->(odm_vendor_attribute_value2)
 SET hv2 = final_properties
 
 MERGE (odm_vendor_attribute_root3:ConceptRoot:OdmVendorAttributeRoot {uid: "odm_vendor_attribute3"})
@@ -655,7 +639,7 @@ MERGE (library)-[:CONTAINS_CONCEPT]->(odm_vendor_attribute_root3)
 MERGE (odm_vendor_attribute_root3)-[r4:LATEST_FINAL]->(odm_vendor_attribute_value3)
 MERGE (odm_vendor_attribute_root3)-[hv4:HAS_VERSION]->(odm_vendor_attribute_value3)
 MERGE (odm_vendor_attribute_root3)-[:LATEST]->(odm_vendor_attribute_value3)
-MERGE (odm_vendor_namespace_root)-[:HAS_VENDOR_ATTRIBUTE {value: "value3"}]->(odm_vendor_attribute_root3)
+MERGE (odm_vendor_namespace_value)-[:HAS_VENDOR_ATTRIBUTE {value: "value3"}]->(odm_vendor_attribute_value3)
 SET hv4 = final_properties
 
 MERGE (odm_vendor_attribute_root4:ConceptRoot:OdmVendorAttributeRoot {uid: "odm_vendor_attribute4"})
@@ -664,7 +648,7 @@ MERGE (library)-[:CONTAINS_CONCEPT]->(odm_vendor_attribute_root4)
 MERGE (odm_vendor_attribute_root4)-[r5:LATEST_FINAL]->(odm_vendor_attribute_value4)
 MERGE (odm_vendor_attribute_root4)-[hv5:HAS_VERSION]->(odm_vendor_attribute_value4)
 MERGE (odm_vendor_attribute_root4)-[:LATEST]->(odm_vendor_attribute_value4)
-MERGE (odm_vendor_namespace_root)-[:HAS_VENDOR_ATTRIBUTE {value: "value4"}]->(odm_vendor_attribute_root4)
+MERGE (odm_vendor_namespace_value)-[:HAS_VENDOR_ATTRIBUTE {value: "value4"}]->(odm_vendor_attribute_value4)
 SET hv5 = final_properties
 
 MERGE (odm_vendor_attribute_root5:ConceptRoot:OdmVendorAttributeRoot {uid: "odm_vendor_attribute5"})
@@ -673,7 +657,7 @@ MERGE (library)-[:CONTAINS_CONCEPT]->(odm_vendor_attribute_root5)
 MERGE (odm_vendor_attribute_root5)-[r6:LATEST_FINAL]->(odm_vendor_attribute_value5)
 MERGE (odm_vendor_attribute_root5)-[hv6:HAS_VERSION]->(odm_vendor_attribute_value5)
 MERGE (odm_vendor_attribute_root5)-[:LATEST]->(odm_vendor_attribute_value5)
-MERGE (odm_vendor_namespace_root)-[:HAS_VENDOR_ATTRIBUTE {value: "value5"}]->(odm_vendor_attribute_root5)
+MERGE (odm_vendor_namespace_value)-[:HAS_VENDOR_ATTRIBUTE {value: "value5"}]->(odm_vendor_attribute_value5)
 SET hv6 = final_properties
 
 MERGE (odm_vendor_attribute_root7:ConceptRoot:OdmVendorAttributeRoot {uid: "odm_vendor_attribute7"})
@@ -682,7 +666,8 @@ MERGE (library)-[:CONTAINS_CONCEPT]->(odm_vendor_attribute_root7)
 MERGE (odm_vendor_attribute_root7)-[r7:LATEST_FINAL]->(odm_vendor_attribute_value7)
 MERGE (odm_vendor_attribute_root7)-[hv7:HAS_VERSION]->(odm_vendor_attribute_value7)
 MERGE (odm_vendor_attribute_root7)-[:LATEST]->(odm_vendor_attribute_value7)
-MERGE (odm_vendor_element_root3)-[:HAS_VENDOR_ATTRIBUTE {value: "value7"}]->(odm_vendor_attribute_root7)
+MERGE (odm_vendor_namespace_value)-[:HAS_VENDOR_ELEMENT {value: "value"}]->(odm_vendor_element_value3)
+MERGE (odm_vendor_element_value3)-[:HAS_VENDOR_ATTRIBUTE {value: "value7"}]->(odm_vendor_attribute_value7)
 SET hv7 = final_properties
 """
 
@@ -699,19 +684,29 @@ version: "1.0"
 MERGE (cdisc:Library {name:"CDISC", is_editable: True})
 MERGE (catalogue:CTCatalogue {name:"SDTM CT"})
 MERGE (cdisc)-[:CONTAINS_CATALOGUE]->(catalogue)
-MERGE (cdisc)-[:CONTAINS_CODELIST]->(codelist_root:CTCodelistRoot {uid:"CTCodelist_000001"})
+MERGE (cdisc)-[:CONTAINS_CODELIST]->(codelist_root:CTCodelistRoot {uid:"CTCodelist_000111"})
 MERGE (catalogue)-[:HAS_CODELIST]-(codelist_root)
+MERGE (codelist_root)-[:HAS_NAME_ROOT]->(codelist_name_root:CTCodelistNameRoot)-[:LATEST_FINAL]->(codelist_name_value:CTCodelistNameValue {name:"Criteria Type"})
+MERGE (codelist_name_root)-[:LATEST]->(codelist_name_value)
+MERGE (codelist_name_root)-[cln_hv:HAS_VERSION]->(codelist_name_value)
+SET cln_hv = final_properties
+MERGE (codelist_root)-[:HAS_ATTRIBUTES_ROOT]->(codelist_attr_root:CTCodelistAttributesRoot)-[:LATEST]->(codelist_attr_value:CTCodelistAttributesValue {
+preferred_term: "Criteria Type",
+submission_value: "CRITRTP"})
+MERGE (codelist_attr_root)-[:LATEST_FINAL]->(codelist_attr_value)
+MERGE (codelist_attr_root)-[cla_hv:HAS_VERSION]->(codelist_attr_value)
+SET cla_hv = final_properties
 // Create Inclusion criteria term
 CREATE (cdisc)-[:CONTAINS_TERM]->(incr:CTTermRoot {uid: "C25532"})-[:HAS_NAME_ROOT]->
 (incnr:CTTermNameRoot)-[:LATEST]->(incnv:CTTermNameValue {
 name: "INCLUSION CRITERIA",
 name_sentence_case: "Inclusion Criteria"})
+MERGE (incr)<-[:HAS_TERM_ROOT]-(incr_submval:CTCodelistTerm {submission_value: "Inclusion Criteria"})
 MERGE (incnr)-[incnrel:LATEST_FINAL]->(incnv)
 MERGE (incnr)-[incnrel_hv:HAS_VERSION]->(incnv)
 SET incnrel_hv = final_properties
-CREATE (codelist_root)-[:HAS_TERM]->(incr)
+CREATE (codelist_root)-[:HAS_TERM]->(incr_submval)
 CREATE (incar:CTTermAttributesRoot)-[:LATEST]->(incav:CTTermAttributesValue {
-code_submission_value: "Inclusion Criteria",
 definition: "Inclusion Criteria",
 preferred_term: "Inclusion Criteria"})
 MERGE (incr)-[:HAS_ATTRIBUTES_ROOT]->(incar)-[incarel:LATEST_FINAL]->(incav)
@@ -725,9 +720,9 @@ name_sentence_case: "Exclusion Criteria"})
 MERGE (excnr)-[excnrel:LATEST_FINAL]->(excnv)
 MERGE (excnr)-[excnrel_hv:HAS_VERSION]->(excnv)
 SET excnrel_hv = final_properties
-CREATE (codelist_root)-[:HAS_TERM]->(excr)
+MERGE (excr)<-[:HAS_TERM_ROOT]-(excr_submval:CTCodelistTerm {submission_value: "Exclusion Criteria"})
+CREATE (codelist_root)-[:HAS_TERM]->(excr_submval)
 CREATE (excar:CTTermAttributesRoot)-[:LATEST]->(excav:CTTermAttributesValue {
-code_submission_value: "Exclusion Criteria",
 definition: "Exclusion Criteria",
 preferred_term: "Exclusion Criteria"})
 MERGE (excr)-[:HAS_ATTRIBUTES_ROOT]->(excar)-[excarel:LATEST_FINAL]->(excav)
@@ -774,17 +769,30 @@ value:3.21})
 MERGE (numeric_value_root2)-[numeric_value_final2:LATEST_FINAL]-(numeric_value_value2)
 MERGE (numeric_value_root2)-[numeric_value_hv2:HAS_VERSION]-(numeric_value_value2)
 SET numeric_value_hv2 = final_properties
-MERGE (cc:CTCatalogue {name: "SDTM CT"})-[:HAS_CODELIST]->(cr:CTCodelistRoot {uid:"CTCodelistRoot_000001"})-[:HAS_NAME_ROOT]
+MERGE (cc:CTCatalogue {name: "SDTM CT"})
+MERGE (cc)-[:HAS_CODELIST]->(cr:CTCodelistRoot {uid:"CTCodelistRoot_000001"})-[:HAS_NAME_ROOT]
 ->(codelist_ver_root:CTCodelistNameRoot)-[:LATEST_FINAL]->(codelist_ver_value:CTCodelistNameValue {name:"codelist_name"})
+MERGE (cr)-[:HAS_ATTRIBUTES_ROOT]->(codelist_attr_root:CTCodelistAttributesRoot)-[:LATEST_FINAL]->(codelist_attr_value:CTCodelistAttributesValue {
+preferred_term: "codelist_name",
+submission_value: "TIMEREF"})
 CREATE (codelist_ver_root)-[:LATEST]->(codelist_ver_value)
+CREATE (codelist_attr_root)-[:LATEST]->(codelist_attr_value)
+CREATE (codelist_ver_root)-[cln_hv:HAS_VERSION]->(codelist_ver_value)
+CREATE (codelist_attr_root)-[cla_hv:HAS_VERSION]->(codelist_attr_value)
+SET cln_hv = final_properties
+SET cla_hv = final_properties
 MERGE (editable_lib:Library{ name:"Sponsor", is_editable:true})
 MERGE (editable_lib)-[:CONTAINS_CODELIST]->(cr)
 
-MERGE (cr)-[has_term:HAS_TERM]->(term_root:CTTermRoot {uid:"CTTermRoot_000001"})-[:HAS_NAME_ROOT]->
+
+MERGE (cr)-[has_term:HAS_TERM]->(term_submval:CTCodelistTerm {submission_value: "term_value_name1"})
+MERGE (term_submval)-[:HAS_TERM_ROOT]->(term_root:CTTermRoot {uid:"CTTermRoot_000001"})-[:HAS_NAME_ROOT]->
     (term_ver_root:CTTermNameRoot)-[:LATEST]-(term_ver_value:CTTermNameValue 
         {name:"term_value_name1", name_sentence_case:"term_value_name_sentence_case"})
 MERGE (editable_lib)-[:CONTAINS_TERM]->(term_root)
 MERGE (term_ver_root)-[lf:LATEST_FINAL]->(term_ver_value)
+MERGE (term_ver_root)-[has_version:HAS_VERSION]->(term_ver_value)
+set has_version = final_properties
 set has_term.order = 1
 set lf.change_description = "Approved version"
 set lf.start_date = datetime()
@@ -857,6 +865,7 @@ MERGE (catalogue:CTCatalogue {name:"SDTM"})
 MERGE (library)-[:CONTAINS_CATALOGUE]->(catalogue)
 MERGE (library)-[:CONTAINS_CODELIST]->(codelist_root:CTCodelistRoot {uid:"CTCodelist_000001"})
 MERGE (catalogue)-[:HAS_CODELIST]-(codelist_root)
+
 CREATE (library)-[:CONTAINS_TERM]->(sdtm_variable1:CTTermRoot {uid: "sdtm_variable_uid1"})-[:HAS_NAME_ROOT]->
 (term_ver_root1:CTTermNameRoot)-[:LATEST]->(term_ver_value1:CTTermNameValue {
 name: "sdtm_variable_name1",
@@ -864,7 +873,7 @@ name_sentence_case: "sdtm_variable_name1"})
 MERGE (term_ver_root1)-[latest_final1:LATEST_FINAL]->(term_ver_value1)
 MERGE (term_ver_root1)-[has_version1:HAS_VERSION]->(term_ver_value1)
 SET has_version1 = final_properties
-CREATE (codelist_root)-[:HAS_TERM]->(sdtm_variable1)
+CREATE (codelist_root)-[:HAS_TERM]->(:CTCodelistTerm {submission_value: "sdtm_variable"})-[:HAS_CODELIST_ROOT]->(sdtm_variable1)
 
 CREATE (library)-[:CONTAINS_TERM]->(sdtm_subcat1:CTTermRoot {uid: "sdtm_subcat_uid1"})-[:HAS_NAME_ROOT]->
 (term_ver_root2:CTTermNameRoot)-[:LATEST]->(term_ver_value2:CTTermNameValue {
@@ -873,7 +882,7 @@ name_sentence_case: "sdtm_subcat_name1"})
 MERGE (term_ver_root2)-[latest_final2:LATEST_FINAL]->(term_ver_value2)
 MERGE (term_ver_root2)-[has_version2:HAS_VERSION]->(term_ver_value2)
 SET has_version2 = final_properties
-CREATE (codelist_root)-[:HAS_TERM]->(sdtm_subcat1)
+CREATE (codelist_root)-[:HAS_TERM]->(:CTCodelistTerm {submission_value: "sdtm_subcat1"})-[:HAS_CODELIST_ROOT]->(sdtm_subcat1)
 
 CREATE (library)-[:CONTAINS_TERM]->(sdtm_cat1:CTTermRoot {uid: "sdtm_cat_uid1"})-[:HAS_NAME_ROOT]->
 (term_ver_root3:CTTermNameRoot)-[:LATEST]->(term_ver_value3:CTTermNameValue {
@@ -882,7 +891,7 @@ name_sentence_case: "sdtm_cat_name1"})
 MERGE (term_ver_root3)-[latest_final3:LATEST_FINAL]->(term_ver_value3)
 MERGE (term_ver_root3)-[has_version3:HAS_VERSION]->(term_ver_value3)
 SET has_version3 = final_properties
-CREATE (codelist_root)-[:HAS_TERM]->(sdtm_cat1)
+CREATE (codelist_root)-[:HAS_TERM]->(:CTCodelistTerm {submission_value: "sdtm_cat1"})-[:HAS_CODELIST_ROOT]->(sdtm_cat1)
 
 CREATE (library)-[:CONTAINS_TERM]->(sdtm_domain1:CTTermRoot {uid: "sdtm_domain_uid1"})-[:HAS_NAME_ROOT]->
 (term_ver_root4:CTTermNameRoot)-[:LATEST]->(term_ver_value4:CTTermNameValue {
@@ -891,7 +900,7 @@ name_sentence_case: "sdtm_domain_name1"})
 MERGE (term_ver_root4)-[latest_final4:LATEST_FINAL]->(term_ver_value4)
 MERGE (term_ver_root4)-[has_version4:HAS_VERSION]->(term_ver_value4)
 SET has_version4 = final_properties
-CREATE (codelist_root)-[:HAS_TERM]->(sdtm_domain1)
+CREATE (codelist_root)-[:HAS_TERM]->(:CTCodelistTerm {submission_value: "sdtm_domain"})-[:HAS_CODELIST_ROOT]->(sdtm_domain1)
 
 CREATE (library)-[:CONTAINS_TERM]->(sdtm_variable2:CTTermRoot {uid: "sdtm_variable_uid2"})-[:HAS_NAME_ROOT]->
 (term_ver_root5:CTTermNameRoot)-[:LATEST]->(term_ver_value5:CTTermNameValue {
@@ -900,7 +909,7 @@ name_sentence_case: "sdtm_variable_name2"})
 MERGE (term_ver_root5)-[latest_final5:LATEST_FINAL]->(term_ver_value5)
 MERGE (term_ver_root5)-[has_version5:HAS_VERSION]->(term_ver_value5)
 SET has_version5 = final_properties
-CREATE (codelist_root)-[:HAS_TERM]->(sdtm_variable2)
+CREATE (codelist_root)-[:HAS_TERM]->(:CTCodelistTerm {submission_value: "sdtm_variable2"})-[:HAS_CODELIST_ROOT]->(sdtm_variable2)
 
 CREATE (library)-[:CONTAINS_TERM]->(sdtm_subcat2:CTTermRoot {uid: "sdtm_subcat_uid2"})-[:HAS_NAME_ROOT]->
 (term_ver_root6:CTTermNameRoot)-[:LATEST]->(term_ver_value6:CTTermNameValue {
@@ -909,7 +918,7 @@ name_sentence_case: "sdtm_subcat_name2"})
 MERGE (term_ver_root6)-[latest_final6:LATEST_FINAL]->(term_ver_value6)
 MERGE (term_ver_root6)-[has_version6:HAS_VERSION]->(term_ver_value6)
 SET has_version6 = final_properties
-CREATE (codelist_root)-[:HAS_TERM]->(sdtm_subcat2)
+CREATE (codelist_root)-[:HAS_TERM]->(:CTCodelistTerm {submission_value: "sdtm_subcat2"})-[:HAS_CODELIST_ROOT]->(sdtm_subcat2)
 
 CREATE (library)-[:CONTAINS_TERM]->(sdtm_cat2:CTTermRoot {uid: "sdtm_cat_uid2"})-[:HAS_NAME_ROOT]->
 (term_ver_root7:CTTermNameRoot)-[:LATEST]->(term_ver_value7:CTTermNameValue {
@@ -918,7 +927,7 @@ name_sentence_case: "sdtm_cat_name2"})
 MERGE (term_ver_root7)-[latest_final7:LATEST_FINAL]->(term_ver_value7)
 MERGE (term_ver_root7)-[has_version7:HAS_VERSION]->(term_ver_value7)
 SET has_version7 = final_properties
-CREATE (codelist_root)-[:HAS_TERM]->(sdtm_cat2)
+CREATE (codelist_root)-[:HAS_TERM]->(:CTCodelistTerm {submission_value: "sdtm_cat2"})-[:HAS_CODELIST_ROOT]->(sdtm_cat2)
 
 CREATE (library)-[:CONTAINS_TERM]->(sdtm_domain2:CTTermRoot {uid: "sdtm_domain_uid2"})-[:HAS_NAME_ROOT]->
 (term_ver_root8:CTTermNameRoot)-[:LATEST]->(term_ver_value8:CTTermNameValue {
@@ -927,7 +936,7 @@ name_sentence_case: "sdtm_domain_name2"})
 MERGE (term_ver_root8)-[latest_final8:LATEST_FINAL]->(term_ver_value8)
 MERGE (term_ver_root8)-[has_version8:HAS_VERSION]->(term_ver_value8)
 SET has_version8 = final_properties
-CREATE (codelist_root)-[:HAS_TERM]->(sdtm_domain2)
+CREATE (codelist_root)-[:HAS_TERM]->(:CTCodelistTerm {submission_value: "sdtm_domain2"})-[:HAS_CODELIST_ROOT]->(sdtm_domain2)
 
 CREATE (library)-[:CONTAINS_TERM]->(specimen1:CTTermRoot {uid: "specimen_uid1"})-[:HAS_NAME_ROOT]->
 (term_ver_root9:CTTermNameRoot)-[:LATEST]->(term_ver_value9:CTTermNameValue {
@@ -936,7 +945,7 @@ name_sentence_case: "specimen_name_sentence_case1"})
 MERGE (term_ver_root9)-[latest_final9:LATEST_FINAL]->(term_ver_value9)
 MERGE (term_ver_root9)-[has_version9:HAS_VERSION]->(term_ver_value9)
 SET has_version9 = final_properties
-CREATE (codelist_root)-[:HAS_TERM]->(specimen1)
+CREATE (codelist_root)-[:HAS_TERM]->(:CTCodelistTerm {submission_value: "specimen1"})-[:HAS_CODELIST_ROOT]->(specimen1)
 
 CREATE (library)-[:CONTAINS_TERM]->(specimen2:CTTermRoot {uid: "specimen_uid2"})-[:HAS_NAME_ROOT]->
 (term_ver_root10:CTTermNameRoot)-[:LATEST]->(term_ver_value10:CTTermNameValue {
@@ -945,7 +954,7 @@ name_sentence_case: "specimen_name_sentence_case2"})
 MERGE (term_ver_root10)-[latest_final10:LATEST_FINAL]->(term_ver_value10)
 MERGE (term_ver_root10)-[has_version10:HAS_VERSION]->(term_ver_value10)
 SET has_version10 = final_properties
-CREATE (codelist_root)-[:HAS_TERM]->(specimen2)
+CREATE (codelist_root)-[:HAS_TERM]->(:CTCodelistTerm {submission_value: "specimen2"})-[:HAS_CODELIST_ROOT]->(specimen2)
 
 CREATE (library)-[:CONTAINS_TERM]->(test_code1:CTTermRoot {uid: "test_code_uid1"})-[:HAS_NAME_ROOT]->
 (term_ver_root11:CTTermNameRoot)-[:LATEST]->(term_ver_value11:CTTermNameValue {
@@ -954,7 +963,7 @@ name_sentence_case: "test_code_name_sentence_case1"})
 MERGE (term_ver_root11)-[latest_final11:LATEST_FINAL]->(term_ver_value11)
 MERGE (term_ver_root11)-[has_version11:HAS_VERSION]->(term_ver_value11)
 SET has_version11 = final_properties
-CREATE (codelist_root)-[:HAS_TERM]->(test_code1)
+CREATE (codelist_root)-[:HAS_TERM]->(:CTCodelistTerm {submission_value: "test_code1"})-[:HAS_CODELIST_ROOT]->(test_code1)
 
 CREATE (library)-[:CONTAINS_TERM]->(test_code2:CTTermRoot {uid: "test_code_uid2"})-[:HAS_NAME_ROOT]->
 (term_ver_root12:CTTermNameRoot)-[:LATEST]->(term_ver_value12:CTTermNameValue {
@@ -963,7 +972,7 @@ name_sentence_case: "test_code_name_sentence_case2"})
 MERGE (term_ver_root12)-[latest_final12:LATEST_FINAL]->(term_ver_value12)
 MERGE (term_ver_root12)-[has_version12:HAS_VERSION]->(term_ver_value12)
 SET has_version12 = final_properties
-CREATE (codelist_root)-[:HAS_TERM]->(test_code2)
+CREATE (codelist_root)-[:HAS_TERM]->(:CTCodelistTerm {submission_value: "test_code2"})-[:HAS_CODELIST_ROOT]->(test_code2)
 
 CREATE (library)-[:CONTAINS_TERM]->(unit_dimension1:CTTermRoot {uid: "unit_dimension_uid1"})-[:HAS_NAME_ROOT]->
 (term_ver_root13:CTTermNameRoot)-[:LATEST]->(term_ver_value13:CTTermNameValue {
@@ -972,7 +981,7 @@ name_sentence_case: "unit_dimension_name_sentence_case1"})
 MERGE (term_ver_root13)-[latest_final13:LATEST_FINAL]->(term_ver_value13)
 MERGE (term_ver_root13)-[has_version13:HAS_VERSION]->(term_ver_value13)
 SET has_version13 = final_properties
-CREATE (codelist_root)-[:HAS_TERM]->(unit_dimension1)
+CREATE (codelist_root)-[:HAS_TERM]->(:CTCodelistTerm {submission_value: "unit_dimension1"})-[:HAS_CODELIST_ROOT]->(unit_dimension1)
 
 CREATE (library)-[:CONTAINS_TERM]->(unit_dimension2:CTTermRoot {uid: "unit_dimension_uid2"})-[:HAS_NAME_ROOT]->
 (term_ver_root14:CTTermNameRoot)-[:LATEST]->(term_ver_value14:CTTermNameValue {
@@ -981,7 +990,7 @@ name_sentence_case: "unit_dimension_name_sentence_case2"})
 MERGE (term_ver_root14)-[latest_final14:LATEST_FINAL]->(term_ver_value14)
 MERGE (term_ver_root14)-[has_version14:HAS_VERSION]->(term_ver_value14)
 SET has_version14 = final_properties
-CREATE (codelist_root)-[:HAS_TERM]->(unit_dimension2)
+CREATE (codelist_root)-[:HAS_TERM]->(:CTCodelistTerm {submission_value: "unit_dimension2"})-[:HAS_CODELIST_ROOT]->(unit_dimension2)
 
 CREATE (library)-[:CONTAINS_TERM]->(categoric_response_value1:CTTermRoot {uid: "categoric_response_value_uid1"})-[:HAS_NAME_ROOT]->
 (term_ver_root15:CTTermNameRoot)-[:LATEST]->(term_ver_value15:CTTermNameValue {
@@ -990,7 +999,7 @@ name_sentence_case: "categoric_response_value_name_sentence_case1"})
 MERGE (term_ver_root15)-[latest_final15:LATEST_FINAL]->(term_ver_value15)
 MERGE (term_ver_root15)-[has_version15:HAS_VERSION]->(term_ver_value15)
 SET has_version15 = final_properties
-CREATE (codelist_root)-[:HAS_TERM]->(categoric_response_value1)
+CREATE (codelist_root)-[:HAS_TERM]->(:CTCodelistTerm {submission_value: "categoric_response1"})-[:HAS_CODELIST_ROOT]->(categoric_response_value1)
 
 CREATE (library)-[:CONTAINS_TERM]->(categoric_response_value2:CTTermRoot {uid: "categoric_response_value_uid2"})-[:HAS_NAME_ROOT]->
 (term_ver_root16:CTTermNameRoot)-[:LATEST]->(term_ver_value16:CTTermNameValue {
@@ -1008,7 +1017,7 @@ name_sentence_case: "categoric_response_list_name_sentence_case1"})
 MERGE (term_ver_root17)-[latest_final17:LATEST_FINAL]->(term_ver_value17)
 MERGE (term_ver_root17)-[has_version17:HAS_VERSION]->(term_ver_value17)
 SET has_version17 = final_properties
-CREATE (codelist_root)-[:HAS_TERM]->(categoric_response_list1)
+CREATE (codelist_root)-[:HAS_TERM]->(:CTCodelistTerm {submission_value: "categoric_response_list1"})-[:HAS_CODELIST_ROOT]->(categoric_response_list1)
 
 CREATE (library)-[:CONTAINS_TERM]->(categoric_response_list2:CTTermRoot {uid: "categoric_response_list_uid2"})-[:HAS_NAME_ROOT]->
 (term_ver_root18:CTTermNameRoot)-[:LATEST]->(term_ver_value18:CTTermNameValue {
@@ -1017,7 +1026,7 @@ name_sentence_case: "categoric_response_list_name_sentence_case2"})
 MERGE (term_ver_root18)-[latest_final18:LATEST_FINAL]->(term_ver_value18)
 MERGE (term_ver_root18)-[has_version18:HAS_VERSION]->(term_ver_value18)
 SET has_version18 = final_properties
-CREATE (codelist_root)-[:HAS_TERM]->(categoric_response_list2)
+CREATE (codelist_root)-[:HAS_TERM]->(:CTCodelistTerm {submission_value: "categoric_response_list2"})-[:HAS_CODELIST_ROOT]->(categoric_response_list2)
 
 CREATE (library)-[:CONTAINS_TERM]->(dose_frequency1:CTTermRoot {uid: "dose_frequency_uid1"})-[:HAS_NAME_ROOT]->
 (term_ver_root19:CTTermNameRoot)-[:LATEST]->(term_ver_value19:CTTermNameValue {
@@ -1026,7 +1035,7 @@ name_sentence_case: "dose_frequency_name_sentence_case1"})
 MERGE (term_ver_root19)-[latest_final19:LATEST_FINAL]->(term_ver_value19)
 MERGE (term_ver_root19)-[has_version19:HAS_VERSION]->(term_ver_value19)
 SET has_version19 = final_properties
-CREATE (codelist_root)-[:HAS_TERM]->(dose_frequency1)
+CREATE (codelist_root)-[:HAS_TERM]->(:CTCodelistTerm {submission_value: "dose_frequency1"})-[:HAS_CODELIST_ROOT]->(dose_frequency1)
 
 CREATE (library)-[:CONTAINS_TERM]->(dose_frequency2:CTTermRoot {uid: "dose_frequency_uid2"})-[:HAS_NAME_ROOT]->
 (term_ver_root20:CTTermNameRoot)-[:LATEST]->(term_ver_value20:CTTermNameValue {
@@ -1035,7 +1044,7 @@ name_sentence_case: "dose_frequency_name_sentence_case2"})
 MERGE (term_ver_root20)-[latest_final20:LATEST_FINAL]->(term_ver_value20)
 MERGE (term_ver_root20)-[has_version20:HAS_VERSION]->(term_ver_value20)
 SET has_version20 = final_properties
-CREATE (codelist_root)-[:HAS_TERM]->(dose_frequency2)
+CREATE (codelist_root)-[:HAS_TERM]->(:CTCodelistTerm {submission_value: "dose_frequency2"})-[:HAS_CODELIST_ROOT]->(dose_frequency2)
 
 CREATE (library)-[:CONTAINS_TERM]->(dose_frequency3:CTTermRoot {uid: "dose_frequency_uidXYZ"})-[:HAS_NAME_ROOT]->
 (term_ver_root20b:CTTermNameRoot)-[:LATEST]->(term_ver_value20b:CTTermNameValue {
@@ -1044,7 +1053,7 @@ name_sentence_case: "dose_frequency_name_sentence_case3"})
 MERGE (term_ver_root20b)-[latest_final20b:LATEST_FINAL]->(term_ver_value20b)
 MERGE (term_ver_root20b)-[has_version20b:HAS_VERSION]->(term_ver_value20b)
 SET has_version20b = final_properties
-CREATE (codelist_root)-[:HAS_TERM]->(dose_frequency3)
+CREATE (codelist_root)-[:HAS_TERM]->(:CTCodelistTerm {submission_value: "dose_frequency3"})-[:HAS_CODELIST_ROOT]->(dose_frequency3)
 
 CREATE (library)-[:CONTAINS_TERM]->(dose_unit1:CTTermRoot {uid: "dose_unit_uid1"})-[:HAS_NAME_ROOT]->
 (term_ver_root21:CTTermNameRoot)-[:LATEST]->(term_ver_value21:CTTermNameValue {
@@ -1053,7 +1062,7 @@ name_sentence_case: "dose_unit_name_sentence_case1"})
 MERGE (term_ver_root21)-[latest_final21:LATEST_FINAL]->(term_ver_value21)
 MERGE (term_ver_root21)-[has_version21:HAS_VERSION]->(term_ver_value21)
 SET has_version21 = final_properties
-CREATE (codelist_root)-[:HAS_TERM]->(dose_unit1)
+CREATE (codelist_root)-[:HAS_TERM]->(:CTCodelistTerm {submission_value: "dose_unit1"})-[:HAS_CODELIST_ROOT]->(dose_unit1)
 
 CREATE (library)-[:CONTAINS_TERM]->(dose_unit2:CTTermRoot {uid: "dose_unit_uid2"})-[:HAS_NAME_ROOT]->
 (term_ver_root22:CTTermNameRoot)-[:LATEST]->(term_ver_value22:CTTermNameValue {
@@ -1062,7 +1071,7 @@ name_sentence_case: "dose_unit_name_sentence_case2"})
 MERGE (term_ver_root22)-[latest_final22:LATEST_FINAL]->(term_ver_value22)
 MERGE (term_ver_root22)-[has_version22:HAS_VERSION]->(term_ver_value22)
 SET has_version22 = final_properties
-CREATE (codelist_root)-[:HAS_TERM]->(dose_unit2)
+CREATE (codelist_root)-[:HAS_TERM]->(:CTCodelistTerm {submission_value: "dose_unit2"})-[:HAS_CODELIST_ROOT]->(dose_unit2)
 
 CREATE (library)-[:CONTAINS_TERM]->(dosage_form1:CTTermRoot {uid: "dosage_form_uid1"})-[:HAS_NAME_ROOT]->
 (term_ver_root23:CTTermNameRoot)-[:LATEST]->(term_ver_value23:CTTermNameValue {
@@ -1071,7 +1080,7 @@ name_sentence_case: "dosage_form_name_sentence_case1"})
 MERGE (term_ver_root23)-[latest_final23:LATEST_FINAL]->(term_ver_value23)
 MERGE (term_ver_root23)-[has_version23:HAS_VERSION]->(term_ver_value23)
 SET has_version23 = final_properties
-CREATE (codelist_root)-[:HAS_TERM]->(dosage_form1)
+CREATE (codelist_root)-[:HAS_TERM]->(:CTCodelistTerm {submission_value: "dosage_form1"})-[:HAS_CODELIST_ROOT]->(dosage_form1)
 
 CREATE (library)-[:CONTAINS_TERM]->(dosage_form2:CTTermRoot {uid: "dosage_form_uid2"})-[:HAS_NAME_ROOT]->
 (term_ver_root24:CTTermNameRoot)-[:LATEST]->(term_ver_value24:CTTermNameValue {
@@ -1080,7 +1089,7 @@ name_sentence_case: "dosage_form_name_sentence_case2"})
 MERGE (term_ver_root24)-[latest_final24:LATEST_FINAL]->(term_ver_value24)
 MERGE (term_ver_root24)-[has_version24:HAS_VERSION]->(term_ver_value24)
 SET has_version24 = final_properties
-CREATE (codelist_root)-[:HAS_TERM]->(dosage_form2)
+CREATE (codelist_root)-[:HAS_TERM]->(:CTCodelistTerm {submission_value: "dosare_form2"})-[:HAS_CODELIST_ROOT]->(dosage_form2)
 
 CREATE (library)-[:CONTAINS_TERM]->(route_of_administration1:CTTermRoot {uid: "route_of_administration_uid1"})-[:HAS_NAME_ROOT]->
 (term_ver_root25:CTTermNameRoot)-[:LATEST]->(term_ver_value25:CTTermNameValue {
@@ -1089,7 +1098,7 @@ name_sentence_case: "route_of_administration_name_sentence_case1"})
 MERGE (term_ver_root25)-[latest_final25:LATEST_FINAL]->(term_ver_value25)
 MERGE (term_ver_root25)-[has_version25:HAS_VERSION]->(term_ver_value25)
 SET has_version25 = final_properties
-CREATE (codelist_root)-[:HAS_TERM]->(route_of_administration1)
+CREATE (codelist_root)-[:HAS_TERM]->(:CTCodelistTerm {submission_value: "route_of_administration1"})-[:HAS_CODELIST_ROOT]->(route_of_administration1)
 
 CREATE (library)-[:CONTAINS_TERM]->(route_of_administration2:CTTermRoot {uid: "route_of_administration_uid2"})-[:HAS_NAME_ROOT]->
 (term_ver_root26:CTTermNameRoot)-[:LATEST]->(term_ver_value26:CTTermNameValue {
@@ -1098,7 +1107,7 @@ name_sentence_case: "route_of_administration_name_sentence_case2"})
 MERGE (term_ver_root26)-[latest_final26:LATEST_FINAL]->(term_ver_value26)
 MERGE (term_ver_root26)-[has_version26:HAS_VERSION]->(term_ver_value26)
 SET has_version26 = final_properties
-CREATE (codelist_root)-[:HAS_TERM]->(route_of_administration2)
+CREATE (codelist_root)-[:HAS_TERM]->(:CTCodelistTerm {submission_value: "route_of_administration2"})-[:HAS_CODELIST_ROOT]->(route_of_administration2)
 
 CREATE (library)-[:CONTAINS_TERM]->(delivery_device1:CTTermRoot {uid: "delivery_device_uid1"})-[:HAS_NAME_ROOT]->
 (term_ver_root27:CTTermNameRoot)-[:LATEST]->(term_ver_value27:CTTermNameValue {
@@ -1107,7 +1116,7 @@ name_sentence_case: "delivery_device_name_sentence_case1"})
 MERGE (term_ver_root27)-[latest_final27:LATEST_FINAL]->(term_ver_value27)
 MERGE (term_ver_root27)-[has_version27:HAS_VERSION]->(term_ver_value27)
 SET has_version27 = final_properties
-CREATE (codelist_root)-[:HAS_TERM]->(delivery_device1)
+CREATE (codelist_root)-[:HAS_TERM]->(:CTCodelistTerm {submission_value: "delivery_device1"})-[:HAS_CODELIST_ROOT]->(delivery_device1)
 
 CREATE (library)-[:CONTAINS_TERM]->(delivery_device2:CTTermRoot {uid: "delivery_device_uid2"})-[:HAS_NAME_ROOT]->
 (term_ver_root28:CTTermNameRoot)-[:LATEST]->(term_ver_value28:CTTermNameValue {
@@ -1116,7 +1125,7 @@ name_sentence_case: "delivery_device_name_sentence_case2"})
 MERGE (term_ver_root28)-[latest_final28:LATEST_FINAL]->(term_ver_value28)
 MERGE (term_ver_root28)-[has_version28:HAS_VERSION]->(term_ver_value28)
 SET has_version28 = final_properties
-CREATE (codelist_root)-[:HAS_TERM]->(delivery_device2)
+CREATE (codelist_root)-[:HAS_TERM]->(:CTCodelistTerm {submission_value: "delivery_device2"})-[:HAS_CODELIST_ROOT]->(delivery_device2)
 
 CREATE (library)-[:CONTAINS_TERM]->(dispenser1:CTTermRoot {uid: "dispenser_uid1"})-[:HAS_NAME_ROOT]->
 (term_ver_root29:CTTermNameRoot)-[:LATEST]->(term_ver_value29:CTTermNameValue {
@@ -1125,7 +1134,7 @@ name_sentence_case: "dispenser_name_sentence_case1"})
 MERGE (term_ver_root29)-[latest_final29:LATEST_FINAL]->(term_ver_value29)
 MERGE (term_ver_root29)-[has_version29:HAS_VERSION]->(term_ver_value29)
 SET has_version29 = final_properties
-CREATE (codelist_root)-[:HAS_TERM]->(dispenser1)
+CREATE (codelist_root)-[:HAS_TERM]->(:CTCodelistTerm {submission_value: "dispenser1"})-[:HAS_CODELIST_ROOT]->(dispenser1)
 
 CREATE (library)-[:CONTAINS_TERM]->(dispenser2:CTTermRoot {uid: "dispenser_uid2"})-[:HAS_NAME_ROOT]->
 (term_ver_root30:CTTermNameRoot)-[:LATEST]->(term_ver_value30:CTTermNameValue {
@@ -1134,7 +1143,7 @@ name_sentence_case: "dispenser_name_sentence_case2"})
 MERGE (term_ver_root30)-[latest_final30:LATEST_FINAL]->(term_ver_value30)
 MERGE (term_ver_root30)-[has_version30:HAS_VERSION]->(term_ver_value30)
 SET has_version30 = final_properties
-CREATE (codelist_root)-[:HAS_TERM]->(dispenser2)
+CREATE (codelist_root)-[:HAS_TERM]->(:CTCodelistTerm {submission_value: "dispenser2"})-[:HAS_CODELIST_ROOT]->(dispenser2)
 """
 
 STARTUP_ACTIVITY_INSTANCES = """
@@ -1296,15 +1305,7 @@ SET hv5 = final2_properties
 """
 
 STARTUP_ACTIVITY_GROUPS = """
-WITH  {
-change_description: "New draft version",
-start_date: datetime(),
-status: "Draft",
-author_id: "unknown-user",
-version: "0.1"
-} AS draft_properties,
-
-{
+WITH {
 change_description: "Approved version",
 start_date: datetime(),
 status: "Final",
@@ -1313,6 +1314,9 @@ version: "1.0"
 } AS final_properties
 
 MERGE (library:Library {name:"Sponsor", is_editable:true})
+MERGE (Catalogue:CTCatalogue {name:"SDTM CT"})
+MERGE (Library)-[:CONTAINS_CATALOGUE]->(Catalogue)
+
 MERGE (library)-[:CONTAINS_CONCEPT]->(activity_group_root1:ConceptRoot:ActivityGroupRoot {uid:"activity_group_root1"})
 -[:LATEST]->(activity_group_value1:ConceptValue:ActivityGroupValue {
 name:"name1",
@@ -1331,10 +1335,9 @@ name_sentence_case:"name2",
 definition:"definition2",
 abbreviation:"abbv"
 })
-MERGE (activity_group_root2)-[latest_draft2:LATEST_DRAFT]->(activity_group_value2)
 MERGE (activity_group_root2)-[:LATEST_FINAL]->(activity_group_value2)
 MERGE (activity_group_root2)-[has_version2:HAS_VERSION]->(activity_group_value2)
-SET has_version2 = draft_properties
+SET has_version2 = final_properties
 
 MERGE (library)-[:CONTAINS_CONCEPT]->(activity_group_root3:ConceptRoot:ActivityGroupRoot {uid:"activity_group_root3"})
 -[:LATEST]->(activity_group_value3:ConceptValue:ActivityGroupValue {
@@ -1349,15 +1352,7 @@ SET has_version3 = final_properties
 """
 
 STARTUP_ACTIVITY_SUB_GROUPS = """
-WITH  {
-change_description: "New draft version",
-start_date: datetime(),
-status: "Draft",
-author_id: "unknown-user",
-version: "0.1"
-} AS draft_properties,
-
-{
+WITH {
 change_description: "Approved version",
 start_date: datetime(),
 status: "Final",
@@ -1383,7 +1378,7 @@ MERGE (avf1:ActivityValidGroup {uid:"ActivityValidGroup_000001"})
 MERGE (avf1)-[:IN_GROUP]->(activity_group_value1)
 MERGE (activity_subgroup_value1)-[:HAS_GROUP]->(avf1)
 MERGE (activity_group_root1)-[group_has_version:HAS_VERSION]->(activity_group_value1)
-SET group_has_version = draft_properties
+SET group_has_version = final_properties
 
 MERGE (library)-[:CONTAINS_CONCEPT]->(activity_subgroup_root2:ConceptRoot:ActivitySubGroupRoot {uid:"activity_subgroup_root2"})
 -[:LATEST]->(activity_subgroup_value2:ConceptValue:ActivitySubGroupValue {
@@ -1392,15 +1387,15 @@ name_sentence_case:"name2",
 definition:"definition2",
 abbreviation:"abbv"
 })
-MERGE (activity_subgroup_root2)-[latest_draft2:LATEST_DRAFT]->(activity_subgroup_value2)
+MERGE (activity_subgroup_root2)-[:LATEST_FINAL]->(activity_subgroup_value2)
 MERGE (activity_subgroup_root2)-[has_version2:HAS_VERSION]->(activity_subgroup_value2)
-SET has_version2 = draft_properties
+SET has_version2 = final_properties
 
 WITH *
 MERGE (activity_group_root2:ConceptRoot:ActivityGroupRoot {uid:"activity_group_root2"})
 -[:LATEST]->(activity_group_value2:ConceptValue:ActivityGroupValue)
 MERGE (activity_group_root2)-[hvg2:HAS_VERSION]->(activity_group_value2)
-SET hvg2 = draft_properties
+SET hvg2 = final_properties
 MERGE (avf2:ActivityValidGroup {uid:"ActivityValidGroup_000002"})
 MERGE (avf2)-[:IN_GROUP]->(activity_group_value2)
 MERGE (activity_subgroup_value2)-[:HAS_GROUP]->(avf2)
@@ -1448,7 +1443,11 @@ MERGE (library)-[:CONTAINS_CONCEPT]->(activity_root1:ConceptRoot:ActivityRoot {u
 name:"name1",
 name_sentence_case:"name1",
 definition:"definition1",
-abbreviation:"abbv"
+abbreviation:"abbv",
+is_request_final: false,
+is_request_rejected: false,
+is_data_collected: false,
+is_multiple_selection_allowed: true
 })
 MERGE (activity_root1)-[latest_final1:LATEST_FINAL]->(activity_value1)
 MERGE (activity_root1)-[has_version1:HAS_VERSION]->(activity_value1)
@@ -1475,7 +1474,12 @@ MERGE (library)-[:CONTAINS_CONCEPT]->(activity_root2:ConceptRoot:ActivityRoot {u
 name:"name2",
 name_sentence_case:"name2",
 definition:"definition2",
-abbreviation:"abbv"
+abbreviation:"abbv",
+is_request_final: false,
+is_request_rejected: false,
+is_data_collected: false,
+is_multiple_selection_allowed: true,
+synonyms: []
 })
 MERGE (activity_root2)-[latest_draft2:LATEST_DRAFT]->(activity_value2)
 MERGE (activity_root2)-[has_version2:HAS_VERSION]->(activity_value2)
@@ -1483,7 +1487,7 @@ SET has_version2 = draft_properties
 MERGE (activity_subgroup_root2:ConceptRoot:ActivitySubGroupRoot {uid:"activity_subgroup_root2"})
 -[:LATEST]->(activity_subgroup_value2:ConceptValue:ActivitySubGroupValue)
 MERGE (activity_subgroup_root2)-[hvsg2:HAS_VERSION]->(activity_subgroup_value2)
-SET hvsg2 = draft_properties
+SET hvsg2 = final_properties
 MERGE (activity_value2)-[:HAS_GROUPING]->(activity_grouping2:ActivityGrouping {uid:"ActivityGrouping_000002"})
 WITH *
 MERGE (activity_valid_group2:ActivityValidGroup {uid:"ActivityValidGroup_000002"})
@@ -1492,7 +1496,7 @@ MERGE (activity_valid_group2)<-[:HAS_GROUP]-(activity_subgroup_value2)
 WITH *
 MERGE (activity_group_root2:ActivityGroupRoot:ConceptRoot {uid:"activity_group_root2"})-[:LATEST]->(activity_group_value2:ActivityGroupValue:ConceptValue)
 MERGE (activity_group_root2)-[hvg2:HAS_VERSION]->(activity_group_value2)
-SET hvg2 = draft_properties
+SET hvg2 = final_properties
 MERGE (activity_valid_group2)-[:IN_GROUP]->(activity_group_value2)
 
 MERGE (library)-[:CONTAINS_CONCEPT]->(activity_root3:ConceptRoot:ActivityRoot {uid:"activity_root3"})
@@ -1673,6 +1677,7 @@ SET hv6 = draft_properties
 SET has_term5 = has_term_properties
 """
 
+
 STARTUP_CT_CATALOGUE_CYPHER = """
 WITH  {
 change_description: "Approved version",
@@ -1688,44 +1693,63 @@ status: "Final",
 author_id: "unknown-user",
 version: "1.0"
 } AS new_props
+
+// Create a catalogue named "catalogue" and a codelist "updated_codelist_uid" that will be updated
 MERGE (catalogue:CTCatalogue {name:"catalogue"})-[:HAS_CODELIST]->
 (codelist_to_update:CTCodelistRoot {uid:"updated_codelist_uid"})-[:HAS_ATTRIBUTES_ROOT]->
 (codelist_attr_root_to_update:CTCodelistAttributesRoot)-[final1:LATEST_FINAL]->(val1:CTCodelistAttributesValue
-{name:"old_name", extensible:false})
+{name:"old_name", extensible:false, ordinal: false})
 MERGE (codelist_attr_root_to_update)-[final1hv:HAS_VERSION]->(val1)
 SET final1hv = old_props
+
+// Create a catalogue named "SDTM CT"
+MERGE (catalogue_sdtm:CTCatalogue {name:"SDTM CT"})
+ON CREATE SET catalogue_sdtm.uid = "CTCatalogue_123456"
+
+// Create a second codelist "deleted_codelist_uid", that will be deleted
 MERGE (catalogue)-[:HAS_CODELIST]->(codelist_to_delete:CTCodelistRoot {uid:"deleted_codelist_uid"})-[:HAS_ATTRIBUTES_ROOT]->
 (codelist_attr_to_delete)-[final2:LATEST_FINAL]->(val2:CTCodelistAttributesValue 
-{name:"old_name", extensible:false})
+{name:"old_name", extensible:false, ordinal: false})
 MERGE (codelist_attr_to_delete)-[final2hv:HAS_VERSION]->(val2)
 SET final2hv=old_props
-MERGE (codelist_to_update)-[:HAS_TERM]->(term_to_update:CTTermRoot {uid:"updated_term_uid"})
+
+// Add a term "updated_term_uid" to the codelist "updated_codelist_uid". This term will be updated.
+MERGE (codelist_to_update)-[:HAS_TERM]->(:CTCodelistTerm {submission_value: "old_submission_value"})-[:HAS_TERM_ROOT]->(term_to_update:CTTermRoot {uid:"updated_term_uid"})
 -[:HAS_ATTRIBUTES_ROOT]->(term_attr_root_to_update:CTTermAttributesRoot)-[final3:LATEST_FINAL]->(val3:CTTermAttributesValue 
-{name_submission_value:"old_submission_value", preferred_term:"old_preferred_term"})
+{preferred_term:"old_preferred_term", concept_id:"original_cid"})
 MERGE (term_attr_root_to_update)-[final3hv:HAS_VERSION]->(val3)
 SET final3hv = old_props
-MERGE (codelist_to_delete)-[:HAS_TERM]->(:CTTermRoot {uid:"deleted_term_uid"})
+
+// Add a term "deleted_term_uid" to the codelist "deleted_codelist_uid". This term will be deleted.
+MERGE (codelist_to_delete)-[:HAS_TERM]->(:CTCodelistTerm {submission_value: "old_submission_value"})-[:HAS_TERM_ROOT]->(:CTTermRoot {uid:"deleted_term_uid"})
 -[:HAS_ATTRIBUTES_ROOT]->(root4:CTTermAttributesRoot)-[final4:LATEST_FINAL]->(val4:CTTermAttributesValue 
-{name_submission_value:"old_submission_value", preferred_term:"old_preferred_term"})
+{preferred_term:"old_preferred_term"})
 MERGE (root4)-[final4hv:HAS_VERSION]->(val4)
 SET final4hv=old_props
 
+// Update the codelist "updated_codelist_uid"
 MERGE (codelist_attr_root_to_update)-[final5:LATEST_FINAL]->(val5:CTCodelistAttributesValue 
-{name:"new_name", definition: "new_definition"})
+{name:"new_name", definition: "new_definition", extensible:false, ordinal: false})
 MERGE (codelist_attr_root_to_update)-[final5hv:HAS_VERSION]->(val5)
 SET final5hv=new_props
+
+// Add a new codelist "added_codelist_uid" that is not available in the first package
 MERGE (catalogue)-[:HAS_CODELIST]->(codelist_to_add:CTCodelistRoot {uid:"added_codelist_uid"})-[:HAS_ATTRIBUTES_ROOT]->
 (root6:CTCodelistAttributesRoot)-[final6:LATEST_FINAL]->(val6:CTCodelistAttributesValue 
-{name:"new_name", definition:"codelist_added"})
+{name:"new_name", definition:"codelist_added", extensible:false, ordinal: false})
 MERGE (root6)-[final6hv:HAS_VERSION]->(val6)
 SET final6hv=new_props
+
+// Update the term "updated_term_uid" that was meant to get updated
 MERGE (term_attr_root_to_update)-[final7:LATEST_FINAL]->(val7:CTTermAttributesValue 
-{name_submission_value:"new_submission_value", definition:"new_definition"})
+{definition:"new_definition", concept_id:"new_cid"})
 MERGE (term_attr_root_to_update)-[final7hv:HAS_VERSION]->(val7)
 SET final7hv=new_props
-MERGE (codelist_to_add)-[:HAS_TERM]->(:CTTermRoot {uid:"added_term_uid"})-
+
+// Add a new term "added_term_uid" to the newly added codelist "added_codelist_uid"
+MERGE (codelist_to_add)-[:HAS_TERM]->(:CTCodelistTerm {submission_value: "added_submission_value"})-[:HAS_TERM_ROOT]->(:CTTermRoot {uid:"added_term_uid"})-
 [:HAS_ATTRIBUTES_ROOT]->(root8:CTTermAttributesRoot)-[final8:LATEST_FINAL]->(val8:CTTermAttributesValue 
-{name_submission_value:"old_submission_value", preferred_term:"old_preferred_term"})
+{preferred_term:"added_preferred_term"})
 MERGE (root8)-[final8hv:HAS_VERSION]->(val8)
 SET final8hv=new_props
 """
@@ -1771,7 +1795,7 @@ author_id:"unknown-user"
 })
 
 MERGE (old_package)-[:CONTAINS_CODELIST]->(package_codelist1:CTPackageCodelist)-[:CONTAINS_ATTRIBUTES]->(codelist_attr_value_to_update:CTCodelistAttributesValue 
-{name:"old_name", extensible:false})<-[final1hv:HAS_VERSION]-(codelist_attr_root_to_update:CTCodelistAttributesRoot)
+{name:"old_name", extensible:false, ordinal:false})<-[final1hv:HAS_VERSION]-(codelist_attr_root_to_update:CTCodelistAttributesRoot)
 <-[:HAS_ATTRIBUTES_ROOT]-(codelist_to_update:CTCodelistRoot {uid:"updated_codelist_uid"})
 SET final1hv = old_props
 MERGE (codelist_to_update)-[:HAS_NAME_ROOT]->(codelist_name_root_to_update:CTCodelistNameRoot)-[final2:LATEST_FINAL]->(codelist_name_value_to_update:CTCodelistNameValue)
@@ -1779,7 +1803,7 @@ MERGE (codelist_name_root_to_update)-[:LATEST]->(codelist_name_value_to_update)
 MERGE (codelist_name_root_to_update)-[final2hv:HAS_VERSION]->(codelist_name_value_to_update)
 SET final2hv=old_props
 MERGE (old_package)-[:CONTAINS_CODELIST]->(package_codelist2:CTPackageCodelist)-[:CONTAINS_ATTRIBUTES]->(codelist_attributes_value_to_delete:CTCodelistAttributesValue 
-{name:"old_name", extensible:false})<-[final3:LATEST_FINAL]-(codelist_attributes_root_to_delete:CTCodelistAttributesRoot)<-[:HAS_ATTRIBUTES_ROOT]-(codelist_to_delete:CTCodelistRoot {uid:"deleted_codelist_uid"})
+{name:"old_name", extensible:false, ordinal:false})<-[final3:LATEST_FINAL]-(codelist_attributes_root_to_delete:CTCodelistAttributesRoot)<-[:HAS_ATTRIBUTES_ROOT]-(codelist_to_delete:CTCodelistRoot {uid:"deleted_codelist_uid"})
 MERGE (codelist_attributes_root_to_delete)-[final3hv:HAS_VERSION]->(codelist_attributes_value_to_delete)
 SET final3hv=old_props
 MERGE (package_codelist1)-[contains_term:CONTAINS_TERM]->(package_term1:CTPackageTerm)-[:CONTAINS_ATTRIBUTES]->(term_attr_value_to_update:CTTermAttributesValue 
@@ -1799,11 +1823,11 @@ MERGE (term_attrs_root6)-[final6hv:HAS_VERSION]->(term_attrs_val6)
 SET final6hv=old_props
 
 MERGE (new_package)-[:CONTAINS_CODELIST]->(package_codelist3:CTPackageCodelist)-[:CONTAINS_ATTRIBUTES]->(attr_val7:CTCodelistAttributesValue 
-{name:"new_name", definition: "new_definition"})<-[final7:LATEST_FINAL]-(codelist_attr_root_to_update)
+{name:"new_name", definition: "new_definition", extensible:false, ordinal:false})<-[final7:LATEST_FINAL]-(codelist_attr_root_to_update)
 MERGE (codelist_attr_root_to_update)-[final7hv:HAS_VERSION]->(attr_val7)
 SET final7hv = new_props
 MERGE (new_package)-[:CONTAINS_CODELIST]->(package_codelist4:CTPackageCodelist)-[:CONTAINS_ATTRIBUTES]->(attr_val8:CTCodelistAttributesValue 
-{name:"new_name", definition:"codelist_added"})<-[final8:LATEST_FINAL]-(attr_root8:CTCodelistAttributesRoot)<-[:HAS_ATTRIBUTES_ROOT]-(codelist_to_add:CTCodelistRoot {uid:"added_codelist_uid"})
+{name:"new_name", definition:"codelist_added", extensible:false, ordinal:false})<-[final8:LATEST_FINAL]-(attr_root8:CTCodelistAttributesRoot)<-[:HAS_ATTRIBUTES_ROOT]-(codelist_to_add:CTCodelistRoot {uid:"added_codelist_uid"})
 MERGE (attr_root8)-[final8hv:HAS_VERSION]->(attr_val8)
 SET final8hv = new_props
 MERGE (attr_root8)-[:LATEST]->(attr_val8)
@@ -1839,21 +1863,26 @@ MERGE (cat:CTCatalogue {name: "catalogue2"})-[:CONTAINS_PACKAGE] -> (package1:CT
 uid:"package1_uid",name:"package1",effective_date:date("2020-06-26")})
 -[:CONTAINS_CODELIST]->(p_codelist1:CTPackageCodelist {uid:"package1_uid_cdlist_code1"})
 -[:CONTAINS_ATTRIBUTES]->(:CTCodelistAttributesValue 
-{name:"codelist_name1", extensible:false, submission_value:"submission_value1", definition: "definition1", 
+{name:"codelist_name1", extensible:false, ordinal:false, submission_value:"submission_value1", definition: "definition1", 
 preferred_term:"codelist_pref_term1", synonyms:apoc.text.split("synonym1",",")})
-MERGE (p_codelist1)-[:CONTAINS_TERM]->(:CTPackageTerm)-[:CONTAINS_ATTRIBUTES]->(:CTTermAttributesValue 
-{concept_id:"concept_id", code_submission_value:"code_submission_value",definition:"definition",
+
+MERGE (p_codelist1)-[:CONTAINS_TERM]->(pt1:CTPackageTerm)-[:CONTAINS_ATTRIBUTES]->(:CTTermAttributesValue 
+{concept_id:"concept_id", definition:"definition",
 preferred_term:"pref_term",synonyms:apoc.text.split("syn1,syn2",",")})
+MERGE (pt1)-[:CONTAINS_SUBMISSION_VALUE]->(:CTCodelistTerm {submission_value:"submission_value"})
+
 
 MERGE (cat2:CTCatalogue {name: "catalogue3"})-[:CONTAINS_PACKAGE] -> (package2:CTPackage{
 uid:"package2_uid",name:"package2",effective_date:date("2020-06-26")})
 -[:CONTAINS_CODELIST]->(p_codelist2:CTPackageCodelist {uid:"package2_uid_cdlist_code2"})
 -[:CONTAINS_ATTRIBUTES]->(:CTCodelistAttributesValue 
-{name:"codelist_name2", extensible:false, submission_value:"submission_value2", definition: "definition2", 
+{name:"codelist_name2", extensible:false, ordinal:false, submission_value:"submission_value2", definition: "definition2", 
 preferred_term:"codelist_pref_term2", synonyms:apoc.text.split("synonym2",",")})
-MERGE (p_codelist2)-[:CONTAINS_TERM]->(:CTPackageTerm)-[:CONTAINS_ATTRIBUTES]->(:CTTermAttributesValue 
-{concept_id:"concept_id2", code_submission_value:"code_submission_value2",definition:"definition2",
+
+MERGE (p_codelist2)-[:CONTAINS_TERM]->(pt2:CTPackageTerm)-[:CONTAINS_ATTRIBUTES]->(:CTTermAttributesValue 
+{concept_id:"concept_id2", definition:"definition2",
 preferred_term:"pref_term2",synonyms:apoc.text.split("syn1,syn2",",")})
+MERGE (pt2)-[:CONTAINS_SUBMISSION_VALUE]->(:CTCodelistTerm {submission_value:"submission_value2"})
 
 MERGE (catalogue:CTCatalogue {name:"catalogue"})-[:CONTAINS_PACKAGE]->(old_package:CTPackage{
 uid:"old_package_uid",
@@ -1881,7 +1910,7 @@ author_id:"unknown-user"
 })
 
 MERGE (old_package)-[:CONTAINS_CODELIST]->(package_codelist1:CTPackageCodelist {uid:"old_package_uid_codelist_code1"})-[:CONTAINS_ATTRIBUTES]->(cav1:CTCodelistAttributesValue 
-{name:"old_name1", extensible:false, submission_value:"old_submission_value1", definition:"old_definition1", preferred_term:"old_pref_term1", synonyms:apoc.text.split("syn1,syn2",",")})
+{name:"old_name1", extensible:false, ordinal:false, submission_value:"old_submission_value1", definition:"old_definition1", preferred_term:"old_pref_term1", synonyms:apoc.text.split("syn1,syn2",",")})
 <-[final1:LATEST_FINAL]-(codelist_attr_root_to_update:CTCodelistAttributesRoot)
 <-[:HAS_ATTRIBUTES_ROOT]-(codelist_to_update:CTCodelistRoot {uid:"updated_codelist_uid"})
 MERGE (codelist_attr_root_to_update)-[hv1:HAS_VERSION]->(cav1)
@@ -1891,15 +1920,18 @@ MERGE (cnr)-[hv2:HAS_VERSION]->(cnv)
 SET hv2=old_props
 
 MERGE (old_package)-[:CONTAINS_CODELIST]->(package_codelist2:CTPackageCodelist {uid:"old_package_uid_codelist_code2"})-[:CONTAINS_ATTRIBUTES]->(cav3:CTCodelistAttributesValue 
-{name:"old_name2", extensible:false, submission_value:"old_submission_value2", definition: "old_definition2", preferred_term:"old_pref_term2", synonyms:apoc.text.split("synonym",",")})
+{name:"old_name2", extensible:false, ordinal:false, submission_value:"old_submission_value2", definition: "old_definition2", preferred_term:"old_pref_term2", synonyms:apoc.text.split("synonym",",")})
 <-[final3:LATEST_FINAL]-(car3:CTCodelistAttributesRoot)<-[:HAS_ATTRIBUTES_ROOT]-(codelist_to_delete:CTCodelistRoot {uid:"deleted_codelist_uid"})
 MERGE (car3)-[hv3:HAS_VERSION]->(cav3)
 SET hv3=old_props
 
 MERGE (package_codelist1)-[contains_term:CONTAINS_TERM]->(package_term1:CTPackageTerm)-[:CONTAINS_ATTRIBUTES]->(cav4:CTTermAttributesValue 
-{concept_id:"concept_id1", code_submission_value:"code_submission_value1",definition:"definition1",
+{concept_id:"concept_id1", definition:"definition1",
 preferred_term:"pref_term1",synonyms:apoc.text.split("syn1,syn2",",")})<-[final4:LATEST_FINAL]-(term_attr_root_to_update:CTTermAttributesRoot)
-<-[:HAS_ATTRIBUTES_ROOT]-(term_to_update:CTTermRoot {uid:"updated_term_uid"})<-[:HAS_TERM]-(codelist_to_update)
+<-[:HAS_ATTRIBUTES_ROOT]-(term_to_update:CTTermRoot {uid:"updated_term_uid"})
+MERGE (package_term1)-[:CONTAINS_SUBMISSION_VALUE]->(codelist_term1:CTCodelistTerm {submission_value:"submission_value1"})
+MERGE (codelist_term1)<-[:HAS_TERM]-(codelist_to_update)
+MERGE (codelist_term1)-[:HAS_TERM_ROOT]->(term_to_update)
 MERGE (term_attr_root_to_update)-[hv4:HAS_VERSION]->(cav4)
 SET hv4=old_props
 
@@ -1909,36 +1941,43 @@ SET hv4=old_props
 //SET final5=old_props
 
 MERGE (package_codelist2)-[:CONTAINS_TERM]->(package_term2:CTPackageTerm)-[:CONTAINS_ATTRIBUTES]->(cav6:CTTermAttributesValue 
-{concept_id:"concept_id2", code_submission_value:"code_submission_value2",
+{concept_id:"concept_id2",
 definition:"definition2",preferred_term:"pref_term2",synonyms:apoc.text.split("syn",",")})<-[final6:LATEST_FINAL]-(car6:CTTermAttributesRoot)
-<-[:HAS_ATTRIBUTES_ROOT]-(:CTTermRoot {uid:"deleted_term_uid"})<-[:HAS_TERM]-(codelist_to_delete)
+<-[:HAS_ATTRIBUTES_ROOT]-(term_root2:CTTermRoot {uid:"deleted_term_uid"})
+MERGE (package_term2)-[:CONTAINS_SUBMISSION_VALUE]->(codelist_term2:CTCodelistTerm {submission_value:"submission_value2"})
+MERGE (codelist_term2)<-[:HAS_TERM]-(codelist_to_delete)
+MERGE (codelist_term2)-[:HAS_TERM_ROOT]->(term_root2)
 MERGE (car6)-[hv6:HAS_VERSION]->(cav6)
 SET hv6=old_props
 
 
 MERGE (new_package)-[:CONTAINS_CODELIST]->(package_codelist3:CTPackageCodelist {uid:"new_package_uid_codelist_code3"})-[:CONTAINS_ATTRIBUTES]->(cav7:CTCodelistAttributesValue 
-{name:"new_name", definition: "new_definition", extensible:true, submission_value:"new_submission_value", preferred_term:"new_pref_term1"})
+{name:"new_name", definition: "new_definition", extensible:true, ordinal:false, submission_value:"new_submission_value", preferred_term:"new_pref_term1"})
 <-[final7:LATEST_FINAL]-(codelist_attr_root_to_update)
 MERGE (codelist_attr_root_to_update)-[hv7:HAS_VERSION]->(cav7)
 SET hv7 = new_props
 
 MERGE (new_package)-[:CONTAINS_CODELIST]->(package_codelist4:CTPackageCodelist {uid:"new_package_uid_codelist_code4"})-[:CONTAINS_ATTRIBUTES]->(cav8:CTCodelistAttributesValue 
-{name:"new_name", submission_value:"new_submission_value",definition:"codelist_added", extensible:false, preferred_term:"new_pref_term", synonyms:apoc.text.split("syn1,syn2,syn3",",")})
+{name:"new_name", submission_value:"new_submission_value",definition:"codelist_added", extensible:false, ordinal:false, preferred_term:"new_pref_term", synonyms:apoc.text.split("syn1,syn2,syn3",",")})
 <-[final8:LATEST_FINAL]-(car8:CTCodelistAttributesRoot)<-[:HAS_ATTRIBUTES_ROOT]-(codelist_to_add:CTCodelistRoot {uid:"added_codelist_uid"})
 MERGE (car8)-[hv8:HAS_VERSION]->(cav8)
 SET hv8 = new_props
 
 MERGE (package_codelist3)-[:CONTAINS_TERM]->(package_term3:CTPackageTerm)-[:CONTAINS_ATTRIBUTES]->(cav9:CTTermAttributesValue 
-{concept_id:"concept_id3", code_submission_value:"code_submission_value3",definition:"definition3",preferred_term:"pref_term3"})
+{concept_id:"concept_id3", definition:"definition3",preferred_term:"pref_term3"})
 <-[final9:LATEST_FINAL]-(term_attr_root_to_update)
+MERGE (package_term3)-[:CONTAINS_SUBMISSION_VALUE]->(:CTCodelistTerm {submission_value:"submission_value3"})
 MERGE (term_attr_root_to_update)-[hv9:HAS_VERSION]->(cav9)
 SET hv9 = new_props
 
 //MERGE (package_codelist3)-[:CONTAINS_TERM]->(package_term5:CTPackageTerm)-[:CONTAINS_ATTRIBUTES]->(not_modified_term_value)
 MERGE (package_codelist4)-[:CONTAINS_TERM]->(package_term4:CTPackageTerm)-[:CONTAINS_ATTRIBUTES]->(cav10:CTTermAttributesValue
-{concept_id:"concept_id4", code_submission_value:"code_submission_value4",
+{concept_id:"concept_id4",
 definition:"definition4",preferred_term:"pref_term4",synonyms:apoc.text.split("syn1,syn2,syn3",",")})<-[final10:LATEST_FINAL]-(car10:CTTermAttributesRoot)
-<-[:HAS_ATTRIBUTES_ROOT]-(:CTTermRoot {uid:"added_term_uid"})<-[:HAS_TERM]-(codelist_to_add)
+<-[:HAS_ATTRIBUTES_ROOT]-(term_root4:CTTermRoot {uid:"added_term_uid"})
+MERGE (package_term4)-[:CONTAINS_SUBMISSION_VALUE]->(codelist_term4:CTCodelistTerm {submission_value:"submission_value4"})
+MERGE (codelist_term4)<-[:HAS_TERM]-(codelist_to_add)
+MERGE (codelist_term4)-[:HAS_TERM_ROOT]->(term_root4)
 MERGE (car10)-[hv10:HAS_VERSION]->(cav10)
 SET hv10 = new_props
 
@@ -1951,9 +1990,11 @@ MERGE (cr)-[:HAS_ATTRIBUTES_ROOT]->(car:CTCodelistAttributesRoot)-
                                                submission_value: "codelist submission value1",
                                                preferred_term: "codelist preferred term",
                                                definition: "codelist definition",
-                                               extensible: false})
+                                               extensible: false,
+                                               ordinal: false})
 MERGE (:CTTermRoot {uid:"ct_term_root1"})
-MERGE (cc:CTCatalogue {name: "SDTM CT"})-[:HAS_CODELIST]->(cr)
+MERGE (cc:CTCatalogue {name: "SDTM CT"})
+MERGE (cc)-[:HAS_CODELIST]->(cr)
 MERGE (car)-[hv1:HAS_VERSION]->(cav)
 CREATE (car)-[hv2:HAS_VERSION]->(cav)
 MERGE (car)-[lf:LATEST_FINAL]->(cav)
@@ -1977,7 +2018,8 @@ MERGE (cr2)-[:HAS_ATTRIBUTES_ROOT]->(car2:CTCodelistAttributesRoot)-[:LATEST]->
                                     submission_value: "codelist submission value2",
                                     preferred_term: "codelist preferred term",
                                     definition: "codelist definition",
-                                    extensible: false})
+                                    extensible: false,
+                                    ordinal: false})
 MERGE (cc)-[:HAS_CODELIST]->(cr2)
 MERGE (car2)-[hv3:HAS_VERSION]->(cav2)
 CREATE (car2)-[hv4:HAS_VERSION]->(cav2)
@@ -2002,7 +2044,8 @@ MERGE (cr3)-[:HAS_ATTRIBUTES_ROOT]->(car3:CTCodelistAttributesRoot)-[:LATEST]->
                                     submission_value: "codelist submission value3",
                                     preferred_term: "codelist preferred term",
                                     definition: "codelist definition",
-                                    extensible: false})
+                                    extensible: false,
+                                    ordinal: false})
 MERGE (cc)-[:HAS_CODELIST]->(cr3)
 MERGE (car3)-[ld3:LATEST_DRAFT]->(cav3)
 MERGE (car3)-[hv5:HAS_VERSION]->(cav3)
@@ -2035,7 +2078,8 @@ STARTUP_CT_CODELISTS_NAME_CYPHER = """
 MERGE (cr:CTCodelistRoot {uid: "ct_codelist_root1"})
 MERGE (cr)-[:HAS_NAME_ROOT]->(cnr:CTCodelistNameRoot)-[:LATEST]->
     (cnv:TemplateParameter:CTCodelistNameValue {name: "tp_codelist_name_value"})
-MERGE (cc:CTCatalogue {name: "SDTM CT"})-[:HAS_CODELIST]->(cr)
+MERGE (cc:CTCatalogue {name: "SDTM CT"})
+MERGE (cc)-[:HAS_CODELIST]->(cr)
 MERGE (cnr)-[hv1:HAS_VERSION]->(cnv)
 CREATE (cnr)-[hv2:HAS_VERSION]->(cnv)
 MERGE (cnr)-[lf:LATEST_FINAL]->(cnv)
@@ -2095,10 +2139,12 @@ set hv6.version = "0.1"
 MERGE (lib)-[:CONTAINS_CODELIST]->(cr3)
 """
 
+
 STARTUP_CT_TERM_ATTRIBUTES_CYPHER = """
-MERGE (cc:CTCatalogue {name: "SDTM CT"})-[:HAS_CODELIST]->(cr:CTCodelistRoot {uid:"editable_cr"})-[:HAS_NAME_ROOT]
-->(codelist_ver_root:CTCodelistNameRoot)-[:HAS_VERSION{change_description: "Approved version",start_date: datetime(),status: "Final",author_id: "unknown-user",version : "1.0"}]->(codelist_ver_value:CTCodelistNameValue)
-MERGE (cr)-[:HAS_ATTRIBUTES_ROOT]->(car:CTCodelistAttributesRoot)-[:LATEST]->(cav:CTCodelistAttributesValue {name: "codelist attributes value1", submission_value: "codelist submission value1", preferred_term: "codelist preferred term", definition: "codelist definition", extensible: true})
+MERGE (cc:CTCatalogue {name: "SDTM CT"})
+MERGE (cc)-[:HAS_CODELIST]->(cr:CTCodelistRoot {uid:"editable_cr"})-[:HAS_NAME_ROOT]
+->(codelist_ver_root:CTCodelistNameRoot)-[:HAS_VERSION{change_description: "Approved version",start_date: datetime(),status: "Final",author_id: "TODO initials",version : "1.0"}]->(codelist_ver_value:CTCodelistNameValue {name: "Objective Level", name_sentence_case: "objective level"})
+MERGE (cr)-[:HAS_ATTRIBUTES_ROOT]->(car:CTCodelistAttributesRoot)-[:LATEST]->(cav:CTCodelistAttributesValue {name: "codelist attributes value1", submission_value: "codelist submission value1", preferred_term: "codelist preferred term", definition: "codelist definition", extensible: true, ordinal: false})
 
 CREATE (codelist_ver_root)-[:LATEST]->(codelist_ver_value)
 CREATE (codelist_ver_root)-[:LATEST_FINAL]->(codelist_ver_value)
@@ -2123,10 +2169,10 @@ MERGE (editable_lib)-[:CONTAINS_CODELIST]->(cr)
 MERGE (cc)-[:HAS_CODELIST]->(cr2:CTCodelistRoot {uid:"non_editable_cr"})
 MERGE (non_editable_lib:Library{ name:"CDISC", is_editable:false})-[:CONTAINS_CODELIST]->(cr2)
 
-MERGE (cr)-[has_term1:HAS_TERM]->(term_root:CTTermRoot {uid:"term_root_final"})-[:HAS_ATTRIBUTES_ROOT]->
+MERGE (cr)-[has_term1:HAS_TERM]->(codelist_term1:CTCodelistTerm {submission_value: "submission_value_1"})
+MERGE (codelist_term1)-[:HAS_TERM_ROOT]->(term_root:CTTermRoot {uid:"term_root_final"})-[:HAS_ATTRIBUTES_ROOT]->
     (term_ver_root:CTTermAttributesRoot)-[:LATEST]-(term_ver_value:CTTermAttributesValue 
-        {code_submission_value: "code_submission_value1", name_submission_value:"name_submission_value1", 
-        preferred_term:"preferred_term", definition:"definition"})
+        {preferred_term:"preferred_term1", definition:"definition", concept_id:"concept_id1"})
 MERGE (term_root)-[:HAS_NAME_ROOT]->(term_name_ver_root:CTTermNameRoot)-[:LATEST]-(term_name_ver_value:CTTermNameValue 
         {name:"term_value_name1", name_sentence_case:"term_value_name_sentence_case"})
 MERGE (editable_lib)-[:CONTAINS_TERM]->(term_root)
@@ -2136,6 +2182,8 @@ CREATE (term_ver_root)-[hv4:HAS_VERSION]->(term_ver_value)
 MERGE (term_name_ver_root)-[latest_final:LATEST_FINAL]->(term_name_ver_value)
 MERGE (term_name_ver_root)-[latest_final_hv:HAS_VERSION]->(term_name_ver_value)
 set has_term1.order = 1
+set has_term1.submission_value = "submission_value_1"
+set has_term1.start_date = datetime()
 set hv4.change_description = "Approved version"
 set hv4.start_date = datetime()
 set hv4.status = "Final"
@@ -2153,27 +2201,44 @@ set hv3.status = "Draft"
 set hv3.author_id = "unknown-user"
 set hv3.version = "0.1"
 
-MERGE (cr)-[has_term2:HAS_TERM]->(term_root2:CTTermRoot {uid:"term_root_draft"})-[:HAS_ATTRIBUTES_ROOT]->
+MERGE (cr)-[has_term2:HAS_TERM]->(codelist_term2:CTCodelistTerm {submission_value: "submission_value_2"})
+MERGE (codelist_term2)-[:HAS_TERM_ROOT]->(term_root2:CTTermRoot {uid:"term_root_draft"})-[:HAS_ATTRIBUTES_ROOT]->
     (term_ver_root2:CTTermAttributesRoot)-[:LATEST]-(term_ver_value2:CTTermAttributesValue 
-        {code_submission_value: "code_submission_value2", name_submission_value:"name_submission_value2", preferred_term:"preferred_term", definition:"definition"})
+        {preferred_term:"preferred_term2", definition:"definition"})
+MERGE (term_root2)-[:HAS_NAME_ROOT]->(term_name_ver_root2:CTTermNameRoot)-[:LATEST]-(term_name_ver_value2:CTTermNameValue 
+        {name:"term_value_name2", name_sentence_case:"term_value_name_sentence_case2"})
 MERGE (term_ver_root2)-[ld:LATEST_DRAFT]->(term_ver_value2)
 MERGE (term_ver_root2)-[hv5:HAS_VERSION]->(term_ver_value2)
 MERGE (editable_lib)-[:CONTAINS_TERM]->(term_root2)
+MERGE (term_name_ver_root2)-[latest_final2:LATEST_FINAL]->(term_name_ver_value2)
+MERGE (term_name_ver_root2)-[latest_final_hv2:HAS_VERSION]->(term_name_ver_value2)
 set has_term2.order = 2
+set has_term2.start_date = datetime()
 set hv5.change_description = "latest draft"
 set hv5.start_date = datetime()
 set hv5.status = "Draft"
 set hv5.author_id = "unknown-user"
 set hv5.version = "0.1"
+set latest_final_hv2.change_description = "Approved version"
+set latest_final_hv2.start_date = datetime()
+set latest_final_hv2.status = "Final"
+set latest_final_hv2.author_id = "unknown-user"
+set latest_final_hv2.version = "1.0"
 
-MERGE (cr2)-[has_term3:HAS_TERM]->(term_root3:CTTermRoot {uid:"term_root_final_non_edit"})-[:HAS_ATTRIBUTES_ROOT]->
+MERGE (cr2)-[has_term3:HAS_TERM]->(codelist_term3:CTCodelistTerm {submission_value: "submission_value_3"})
+MERGE (codelist_term3)-[:HAS_TERM_ROOT]->(term_root3:CTTermRoot {uid:"term_root_final_non_edit"})-[:HAS_ATTRIBUTES_ROOT]->
     (term_ver_root3:CTTermAttributesRoot)-[:LATEST]-(term_ver_value3:CTTermAttributesValue 
-        {code_submission_value: "code_submission_value3", name_submission_value:"name_submission_value3", preferred_term:"preferred_term", definition:"definition"})
+        {preferred_term:"preferred_term3", definition:"definition"})
+MERGE (term_root3)-[:HAS_NAME_ROOT]->(term_name_ver_root3:CTTermNameRoot)-[:LATEST]-(term_name_ver_value3:CTTermNameValue 
+        {name:"term_value_name3", name_sentence_case:"term_value_name_sentence_case3"})
 MERGE (non_editable_lib)-[:CONTAINS_TERM]->(term_root3)
 MERGE (term_ver_root3)-[hv6:HAS_VERSION]->(term_ver_value3)
 MERGE (term_ver_root3)-[lf3:LATEST_FINAL]->(term_ver_value3)
 CREATE (term_ver_root3)-[hv7:HAS_VERSION]->(term_ver_value3)
+MERGE (term_name_ver_root3)-[latest_final3:LATEST_FINAL]->(term_name_ver_value3)
+MERGE (term_name_ver_root3)-[latest_final_hv3:HAS_VERSION]->(term_name_ver_value3)
 set has_term3.order = 3
+set has_term3.start_date = datetime()
 set hv7.change_description = "Approved version"
 set hv7.start_date = datetime()
 set hv7.status = "Final"
@@ -2185,25 +2250,95 @@ set hv6.end_date = datetime()
 set hv6.status = "Draft"
 set hv6.author_id = "unknown-user"
 set hv6.version = "0.1"
+set latest_final_hv3.change_description = "Approved version"
+set latest_final_hv3.start_date = datetime()
+set latest_final_hv3.status = "Final"
+set latest_final_hv3.author_id = "unknown-user"
+set latest_final_hv3.version = "1.0"
 
-MERGE (cr2)-[has_term4:HAS_TERM]->(term_root4:CTTermRoot {uid:"term_root_draft_non_edit"})-[:HAS_ATTRIBUTES_ROOT]->
+
+MERGE (cr2)-[has_term4:HAS_TERM]->(codelist_term4:CTCodelistTerm {submission_value: "submission_value_4"})
+MERGE (codelist_term4)-[:HAS_TERM_ROOT]->(term_root4:CTTermRoot {uid:"term_root_draft_non_edit"})-[:HAS_ATTRIBUTES_ROOT]->
     (term_ver_root4:CTTermAttributesRoot)-[:LATEST]-(term_ver_value4:CTTermAttributesValue 
-        {code_submission_value: "code_submission_value4", name_submission_value:"name_submission_value4", preferred_term:"preferred_term", definition:"definition"})
+        {preferred_term:"preferred_term4", definition:"definition"})
+MERGE (term_root4)-[:HAS_NAME_ROOT]->(term_name_ver_root4:CTTermNameRoot)-[:LATEST]-(term_name_ver_value4:CTTermNameValue 
+        {name:"term_value_name4", name_sentence_case:"term_value_name_sentence_case4"})
 MERGE (term_ver_root4)-[ld2:LATEST_DRAFT]->(term_ver_value4)
 MERGE (term_ver_root4)-[hv8:HAS_VERSION]->(term_ver_value4)
 MERGE (non_editable_lib)-[:CONTAINS_TERM]->(term_root4)
+MERGE (term_name_ver_root4)-[latest_final4:LATEST_FINAL]->(term_name_ver_value4)
+MERGE (term_name_ver_root4)-[latest_final_hv4:HAS_VERSION]->(term_name_ver_value4)
 set has_term4.order = 4
+set has_term4.start_date = datetime()
 set hv8.change_description = "latest draft"
 set hv8.start_date = datetime()
 set hv8.status = "Draft"
 set hv8.author_id = "unknown-user"
 set hv8.version = "0.1"
+set latest_final_hv4.change_description = "Approved version"
+set latest_final_hv4.start_date = datetime()
+set latest_final_hv4.status = "Final"
+set latest_final_hv4.author_id = "unknown-user"
+set latest_final_hv4.version = "1.0"
+
+"""
+
+# Add  a DOMAIN codelist, based on terms from STARTUP_CT_TERM_ATTRIBUTES_CYPHER
+STARTUP_DOMAIN_CL_CYPHER = """
+MERGE (cc:CTCatalogue {name: "SDTM CT"})
+MERGE (cc)-[:HAS_CODELIST]->(cr:CTCodelistRoot {uid:"domain_cl"})-[:HAS_NAME_ROOT]
+->(codelist_ver_root:CTCodelistNameRoot)-[:HAS_VERSION{change_description: "Approved version",start_date: datetime(),status: "Final",author_id: "TODO initials",version : "1.0"}]->(codelist_ver_value:CTCodelistNameValue {name: "SDTM Domain Abbreviation", name_sentence_case: "SDTM domain abbreviation"})
+MERGE (cr)-[:HAS_ATTRIBUTES_ROOT]->(car:CTCodelistAttributesRoot)-[:LATEST]->(cav:CTCodelistAttributesValue {name: "SDTM domain abbreviation", submission_value: "DOMAIN", preferred_term: "SDTM Domain Abbreviation", definition: "domain codelist definition", extensible: true, ordinal: false})
+
+CREATE (codelist_ver_root)-[:LATEST]->(codelist_ver_value)
+CREATE (codelist_ver_root)-[:LATEST_FINAL]->(codelist_ver_value)
+MERGE (car)-[hv1:HAS_VERSION]->(cav)
+CREATE (car)-[hv2:HAS_VERSION]->(cav)
+MERGE (car)-[lf1:LATEST_FINAL]->(cav)
+set hv2.change_description = "Approved version"
+set hv2.start_date = datetime("2020-06-26T00:00:00")
+set hv2.status = "Final"
+set hv2.author_id = "unknown-user"
+set hv2.version = "1.0"
+set hv1.change_description = "Initial version"
+set hv1.start_date = datetime("2020-03-27T00:00:00")
+set hv1.end_date = datetime("2020-06-26T00:00:00")
+set hv1.status = "Draft"
+set hv1.author_id = "unknown-user"
+set hv1.version = "0.1"
+
+MERGE (editable_lib:Library{name:"CDISC", is_editable:true})
+MERGE (editable_lib)-[:CONTAINS_CODELIST]->(cr)
+
+WITH cr
+MATCH (term_root1:CTTermRoot {uid:"term_root_final"})
+MERGE (cr)-[has_term1:HAS_TERM]->(codelist_term1:CTCodelistTerm {submission_value: "submission_value_1"})-[:HAS_TERM_ROOT]->(term_root1)
+set has_term1.order = 1
+set has_term1.start_date = datetime()
+
+WITH cr
+MATCH (term_root2:CTTermRoot {uid:"term_root_draft"})
+MERGE (cr)-[has_term2:HAS_TERM]->(codelist_term2:CTCodelistTerm {submission_value: "submission_value_2"})-[:HAS_TERM_ROOT]->(term_root2)
+set has_term2.order = 2
+set has_term2.start_date = datetime()
+
+WITH cr
+MATCH (term_root3:CTTermRoot {uid:"term_root_final_non_edit"})
+MERGE (cr)-[has_term3:HAS_TERM]->(codelist_term3:CTCodelistTerm {submission_value: "submission_value_3"})-[:HAS_TERM_ROOT]->(term_root3)
+set has_term3.order = 3
+set has_term3.start_date = datetime()
+
+WITH cr
+MATCH (term_root4:CTTermRoot {uid:"term_root_draft_non_edit"})
+MERGE (cr)-[has_term4:HAS_TERM]->(codelist_term4:CTCodelistTerm {submission_value: "submission_value_4"})-[:HAS_TERM_ROOT]->(term_root4)
+set has_term4.order = 4
+set has_term4.start_date = datetime()
 """
 
 STARTUP_CT_TERM_NAME_CYPHER = """
 MERGE (cc:CTCatalogue {name: "SDTM CT"})
 MERGE (cc)-[:HAS_CODELIST]->(cr:CTCodelistRoot {uid:"editable_cr"})-[:HAS_NAME_ROOT]
-->(codelist_ver_root:CTCodelistNameRoot)-[:LATEST_FINAL]->(codelist_ver_value:CTCodelistNameValue {name:"Objective Level"})
+->(codelist_ver_root:CTCodelistNameRoot)-[:LATEST_FINAL]->(codelist_ver_value:CTCodelistNameValue {name:"Objective Level", name_sentence_case: "objective level"})
 CREATE (codelist_ver_root)-[:LATEST]->(codelist_ver_value)
 CREATE (codelist_ver_root)-[:HAS_VERSION{change_description: "Approved version",start_date: datetime(),status: "Final",author_id: "unknown-user",version : "1.0"}]->(codelist_ver_value)
 MERGE (editable_lib:Library{ name:"Sponsor", is_editable:true})
@@ -2215,7 +2350,8 @@ ON CREATE
     SET non_editable_lib.is_editable = false
 MERGE (non_editable_lib)-[:CONTAINS_CODELIST]->(cr2)
 
-MERGE (cr)-[has_term:HAS_TERM]->(term_root:CTTermRoot {uid:"term_root_final"})-[:HAS_NAME_ROOT]->
+MERGE (cr)-[has_term:HAS_TERM]->(codelist_term_final:CTCodelistTerm {submission_value: "final_submval"})
+MERGE (codelist_term_final)-[:HAS_TERM_ROOT]->(term_root:CTTermRoot {uid:"term_root_final"})-[:HAS_NAME_ROOT]->
     (term_ver_root:CTTermNameRoot)-[:LATEST]-(term_ver_value:CTTermNameValue 
         {name:"term_value_name1", name_sentence_case:"term_value_name_sentence_case"})
 MERGE (editable_lib)-[:CONTAINS_TERM]->(term_root)
@@ -2235,15 +2371,14 @@ set hv1.status = "Draft"
 set hv1.author_id = "unknown-user"
 set hv1.version = "0.1"
 
-MERGE (cr)-[has_term2:HAS_TERM]->(term_root2:CTTermRoot {uid:"term_root_draft"})-[:HAS_NAME_ROOT]->
+MERGE (cr)-[has_term2:HAS_TERM]->(codelist_term2:CTCodelistTerm {submission_value: "term2_submission_value"})
+MERGE (codelist_term2)-[:HAS_TERM_ROOT]->(term_root2:CTTermRoot {uid:"term_root_draft"})-[:HAS_NAME_ROOT]->
     (term_ver_root2:CTTermNameRoot)-[:LATEST]-(term_ver_value2:CTTermNameValue 
         {name:"term_value_name2", name_sentence_case:"term_value_name_sentence_case"})
 MERGE (term_ver_root2)-[ld:LATEST_DRAFT]->(term_ver_value2)
 MERGE (term_ver_root2)-[hv3:HAS_VERSION]->(term_ver_value2)
 MERGE (term_root2)-[:HAS_ATTRIBUTES_ROOT]->(term_attributes_root:CTTermAttributesRoot)-[ld_attributes:LATEST_DRAFT]->
 (term_attributes_value:CTTermAttributesValue { 
-                code_submission_value: "code_submission_value",
-                name_submission_value: "name_submission_value",
                 preferred_term: "nci_preferred_name",
                 definition: "definition"})
 MERGE (term_attributes_root)-[:LATEST]->(term_attributes_value)
@@ -2263,7 +2398,8 @@ set hv_attributes.status = "Draft"
 set hv_attributes.author_id = "unknown-user"
 set hv_attributes.version = "0.1"
 
-MERGE (cr2)-[has_term3:HAS_TERM]->(term_root3:CTTermRoot {uid:"term_root_final_non_edit"})-[:HAS_NAME_ROOT]->
+MERGE (cr2)-[has_term3:HAS_TERM]->(codelist_term3:CTCodelistTerm {submission_value: "term3_submission_value"})
+MERGE (codelist_term3)-[:HAS_TERM_ROOT]->(term_root3:CTTermRoot {uid:"term_root_final_non_edit"})-[:HAS_NAME_ROOT]->
     (term_ver_root3:CTTermNameRoot)-[:LATEST]-(term_ver_value3:CTTermNameValue 
         {name:"term_value_name3", name_sentence_case:"term_value_name_sentence_case"})
 MERGE (non_editable_lib)-[:CONTAINS_TERM]->(term_root3)
@@ -2283,7 +2419,8 @@ set hv4.status = "Draft"
 set hv4.author_id = "unknown-user"
 set hv4.version = "0.1"
 
-MERGE (cr2)-[has_term4:HAS_TERM]->(term_root4:CTTermRoot {uid:"term_root_draft_non_edit"})-[:HAS_NAME_ROOT]->
+MERGE (cr2)-[has_term4:HAS_TERM]->(codelist_term4:CTCodelistTerm {submission_value: "term4_submission_value"})
+MERGE (codelist_term4)-[:HAS_TERM_ROOT]->(term_root4:CTTermRoot {uid:"term_root_draft_non_edit"})-[:HAS_NAME_ROOT]->
     (term_ver_root4:CTTermNameRoot)-[:LATEST]-(term_ver_value4:CTTermNameValue 
         {name:"term_value_name4", name_sentence_case:"term_value_name_sentence_case"})
 MERGE (term_ver_root4)-[ld2:LATEST_DRAFT]->(term_ver_value4)
@@ -2296,7 +2433,8 @@ set hv6.status = "Draft"
 set hv6.author_id = "unknown-user"
 set hv6.version = "0.1"
 
-MERGE (cr)-[has_term5:HAS_TERM]->(term_root5:CTTermRoot {uid:"term_root_final5"})-[:HAS_NAME_ROOT]->
+MERGE (cr)-[has_term5:HAS_TERM]->(codelist_term5:CTCodelistTerm {submission_value: "term5_submission_value"})
+MERGE (codelist_term5)-[:HAS_TERM_ROOT]->(term_root5:CTTermRoot {uid:"term_root_final5"})-[:HAS_NAME_ROOT]->
     (term_ver_root5:CTTermNameRoot)-[:LATEST]-(term_ver_value5:CTTermNameValue 
         {name:"term_value_name1", name_sentence_case:"term_value_name_sentence_case"})
 MERGE (editable_lib)-[:CONTAINS_TERM]->(term_root5)
@@ -2327,6 +2465,10 @@ WITH {{
 }} AS final_properties
 MERGE (l:Library {{name:"Library", is_editable:true}})
 
+MERGE (cdisc:Library {{name:"CDISC", is_editable: True}})
+MERGE (catalogue:CTCatalogue {{name:"SDTM CT"}})
+MERGE (cdisc)-[:CONTAINS_CATALOGUE]->(catalogue)
+
 MERGE (intervention:TemplateParameter {{name: 'Intervention'}})
 MERGE (pr1:TemplateParameterTermRoot {{uid: 'Intervention-99991'}})-[:LATEST_FINAL]->(prv1:TemplateParameterTermValue {{name: 'human insulin'}})
 MERGE (intervention)-[:HAS_PARAMETER_TERM]->(pr1)
@@ -2352,7 +2494,7 @@ MERGE (pr5)-[hv5:HAS_VERSION]->(prv5)
 set hv5 = final_properties
 
 //Study Endpoint
-MERGE (endpoint:TemplateParameter {{name: '{config.STUDY_ENDPOINT_TP_NAME}'}})
+MERGE (endpoint:TemplateParameter {{name: '{settings.study_endpoint_tp_name}'}})
 
 CREATE (l)-[:CONTAINS]->(pr1)
 CREATE (l)-[:CONTAINS]->(pr2)
@@ -2669,7 +2811,8 @@ set tim_rel_hv = final_properties
 WITH final_properties
 
 MATCH (termroot:CTTermRoot {uid:"term_root_final"})
-MERGE (termroot)<-[has_term:HAS_TERM]-(codelistroot:CTCodelistRoot {uid: "ct_codelist_root_endpoint"})-[:HAS_NAME_ROOT]->(cnr:CTCodelistNameRoot)-[:LATEST_FINAL]->
+MERGE (termroot)<-[:HAS_TERM_ROOT]-(term_submval:CTCodelistTerm {submission_value: "submission_value0"})
+MERGE (term_submval)<-[has_term:HAS_TERM]-(codelistroot:CTCodelistRoot {uid: "ct_codelist_root_endpoint"})-[:HAS_NAME_ROOT]->(cnr:CTCodelistNameRoot)-[:LATEST_FINAL]->
     (cnv:TemplateParameter:CTCodelistNameValue {name: "Endpoint Level"})
 set has_term.order = 1
 MERGE (cnr)-[clname_hv:HAS_VERSION]->(cnv)
@@ -2678,7 +2821,8 @@ set clname_hv = final_properties
 
 WITH *
 MATCH (termroot1:CTTermRoot {uid:"term_root_final5"})
-MERGE (termroot1)<-[has_term1:HAS_TERM]-(codelistroot)
+MERGE (termroot1)<-[:HAS_TERM_ROOT]-(term_submval1:CTCodelistTerm {submission_value: "submission_value5"})
+MERGE (term_submval1)<-[has_term1:HAS_TERM]-(codelistroot)
 set has_term.order = 1
 
 MERGE (catalogue:CTCatalogue {name:"SDTM CT"}) 
@@ -2687,7 +2831,8 @@ MERGE (catalogue)-[:HAS_CODELIST]->(codelistroot)
 
 WITH *
 MATCH (termroot2:CTTermRoot {uid:"term_root_final_non_edit"})
-MERGE (termroot2)<-[has_term2:HAS_TERM]-(codelistroot2:CTCodelistRoot {uid: "ct_codelist_root_endpoint_sub"})-[:HAS_NAME_ROOT]->(cnr2:CTCodelistNameRoot)-[:LATEST_FINAL]->
+MERGE (termroot2)<-[:HAS_TERM_ROOT]-(term_submval2:CTCodelistTerm {submission_value: "submission_value_non_edit"})
+MERGE (term_submval2)<-[has_term2:HAS_TERM]-(codelistroot2:CTCodelistRoot {uid: "ct_codelist_root_endpoint_sub"})-[:HAS_NAME_ROOT]->(cnr2:CTCodelistNameRoot)-[:LATEST_FINAL]->
     (cnv2:TemplateParameter:CTCodelistNameValue {name: "Endpoint Sub Level"})
 set has_term2.order = 1
 MERGE (cnr2)-[clname_hv2:HAS_VERSION]->(cnv2)
@@ -2880,7 +3025,7 @@ MERGE (cv)-[:HAS_DOSE_VALUE]->(term_root)
 STARTUP_STUDY_COMPOUND_DOSING_CYPHER = """
 MATCH (sr:StudyRoot {uid: "study_root"})-[:LATEST]->(sv:StudyValue)
 MATCH (est:CTTermRoot {uid: "ElementSubTypeTermUid_1"})
-MERGE (sv)-[:HAS_STUDY_ELEMENT]->(se:StudyElement:StudySelection)-[:HAS_ELEMENT_SUBTYPE]->(est)
+MERGE (sv)-[:HAS_STUDY_ELEMENT]->(se:StudyElement:StudySelection)-[:HAS_ELEMENT_SUBTYPE]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(est)
 set se.order = 1
 set se.uid = "StudyElement_000001"
 set se.name = "Element_Name_1"
@@ -2921,10 +3066,10 @@ MATCH (incl:CTTermRoot {uid: "C25532"}), (excl:CTTermRoot {uid: "C25370"})
 MERGE (library:Library{name: "Sponsor", is_editable: True})
 MERGE (sr:StudyRoot {uid: "study_root"})-[:LATEST]->(sv:StudyValue{study_id_prefix: "some_id", study_number:0})
 MERGE (p)-[:HAS_FIELD]->(:StudyField:StudyProjectField)<-[:HAS_PROJECT]-(sv)
-MERGE (incl)<-[:HAS_TYPE]-(ctr1:CriteriaTemplateRoot:SyntaxTemplateRoot:SyntaxIndexingTemplateRoot {uid: "incl_criteria_1"})-[relt:LATEST_FINAL]->(ctv1:CriteriaTemplateValue:SyntaxTemplateValue:SyntaxIndexingTemplateValue {name : "incl_criteria_1", guidance_text: "Guidance text", name_plain : "incl_criteria_1"})
-MERGE (incl)<-[:HAS_TYPE]-(ctr2:CriteriaTemplateRoot:SyntaxTemplateRoot:SyntaxIndexingTemplateRoot {uid: "incl_criteria_2"})-[relt2:LATEST_FINAL]->(ctv2:CriteriaTemplateValue:SyntaxTemplateValue:SyntaxIndexingTemplateValue {name : "incl_criteria_2", name_plain : "incl_criteria_2"})
-MERGE (incl)<-[:HAS_TYPE]-(ctr3:CriteriaTemplateRoot:SyntaxTemplateRoot:SyntaxIndexingTemplateRoot {uid: "incl_criteria_3"})-[relt3:LATEST_FINAL]->(ctv3:CriteriaTemplateValue:SyntaxTemplateValue:SyntaxIndexingTemplateValue {name : "incl_criteria_3", name_plain : "incl_criteria_3"})
-MERGE (incl)<-[:HAS_TYPE]-(ctr4:CriteriaTemplateRoot:SyntaxTemplateRoot:SyntaxIndexingTemplateRoot {uid: "incl_criteria_4"})-[relt4:LATEST_FINAL]->(ctv4:CriteriaTemplateValue:SyntaxTemplateValue:SyntaxIndexingTemplateValue {name : "incl_criteria_4", name_plain : "incl_criteria_4"})
+MERGE (incl)<-[:HAS_SELECTED_TERM]-(:CTTermContext)<-[:HAS_TYPE]-(ctr1:CriteriaTemplateRoot:SyntaxTemplateRoot:SyntaxIndexingTemplateRoot {uid: "incl_criteria_1"})-[relt:LATEST_FINAL]->(ctv1:CriteriaTemplateValue:SyntaxTemplateValue:SyntaxIndexingTemplateValue {name : "incl_criteria_1", guidance_text: "Guidance text", name_plain : "incl_criteria_1"})
+MERGE (incl)<-[:HAS_SELECTED_TERM]-(:CTTermContext)<-[:HAS_TYPE]-(ctr2:CriteriaTemplateRoot:SyntaxTemplateRoot:SyntaxIndexingTemplateRoot {uid: "incl_criteria_2"})-[relt2:LATEST_FINAL]->(ctv2:CriteriaTemplateValue:SyntaxTemplateValue:SyntaxIndexingTemplateValue {name : "incl_criteria_2", name_plain : "incl_criteria_2"})
+MERGE (incl)<-[:HAS_SELECTED_TERM]-(:CTTermContext)<-[:HAS_TYPE]-(ctr3:CriteriaTemplateRoot:SyntaxTemplateRoot:SyntaxIndexingTemplateRoot {uid: "incl_criteria_3"})-[relt3:LATEST_FINAL]->(ctv3:CriteriaTemplateValue:SyntaxTemplateValue:SyntaxIndexingTemplateValue {name : "incl_criteria_3", name_plain : "incl_criteria_3"})
+MERGE (incl)<-[:HAS_SELECTED_TERM]-(:CTTermContext)<-[:HAS_TYPE]-(ctr4:CriteriaTemplateRoot:SyntaxTemplateRoot:SyntaxIndexingTemplateRoot {uid: "incl_criteria_4"})-[relt4:LATEST_FINAL]->(ctv4:CriteriaTemplateValue:SyntaxTemplateValue:SyntaxIndexingTemplateValue {name : "incl_criteria_4", name_plain : "incl_criteria_4"})
 MERGE (ctr1)-[:LATEST]->(ctv1)
 MERGE (ctr2)-[:LATEST]->(ctv2)
 MERGE (ctr3)-[:LATEST]->(ctv3)
@@ -2957,8 +3102,8 @@ MERGE (library)-[:CONTAINS_SYNTAX_TEMPLATE]->(ctr1)
 MERGE (library)-[:CONTAINS_SYNTAX_TEMPLATE]->(ctr2)
 MERGE (library)-[:CONTAINS_SYNTAX_TEMPLATE]->(ctr3)
 MERGE (library)-[:CONTAINS_SYNTAX_TEMPLATE]->(ctr4)
-MERGE (excl)<-[:HAS_TYPE]-(ctr5:CriteriaTemplateRoot:SyntaxTemplateRoot:SyntaxIndexingTemplateRoot {uid: "excl_criteria_1"})-[relt5:LATEST_FINAL]->(ctv5:CriteriaTemplateValue:SyntaxTemplateValue:SyntaxIndexingTemplateValue {name :"excl_criteria_1", name_plain : "excl_criteria_1"})
-MERGE (excl)<-[:HAS_TYPE]-(ctr6:CriteriaTemplateRoot:SyntaxTemplateRoot:SyntaxIndexingTemplateRoot {uid: "excl_criteria_2"})-[relt6:LATEST_FINAL]->(ctv6:CriteriaTemplateValue:SyntaxTemplateValue:SyntaxIndexingTemplateValue {name :"excl_criteria_2", name_plain : "excl_criteria_2"})
+MERGE (excl)<-[:HAS_SELECTED_TERM]-(:CTTermContext)<-[:HAS_TYPE]-(ctr5:CriteriaTemplateRoot:SyntaxTemplateRoot:SyntaxIndexingTemplateRoot {uid: "excl_criteria_1"})-[relt5:LATEST_FINAL]->(ctv5:CriteriaTemplateValue:SyntaxTemplateValue:SyntaxIndexingTemplateValue {name :"excl_criteria_1", name_plain : "excl_criteria_1"})
+MERGE (excl)<-[:HAS_SELECTED_TERM]-(:CTTermContext)<-[:HAS_TYPE]-(ctr6:CriteriaTemplateRoot:SyntaxTemplateRoot:SyntaxIndexingTemplateRoot {uid: "excl_criteria_2"})-[relt6:LATEST_FINAL]->(ctv6:CriteriaTemplateValue:SyntaxTemplateValue:SyntaxIndexingTemplateValue {name :"excl_criteria_2", name_plain : "excl_criteria_2"})
 MERGE (ctr5)-[:LATEST]->(ctv5)
 MERGE (ctr6)-[:LATEST]->(ctv6)
 MERGE (ctr5)-[hv5:HAS_VERSION]->(ctv5)
@@ -3069,7 +3214,7 @@ CREATE_BASE_TEMPLATE_PARAMETER_TREE = f"""
         MERGE (lag_time)-[:HAS_PARENT_PARAMETER]->(numeric_values)
 
         //Study Endpoint
-        MERGE (endpoint:TemplateParameter {{name: '{config.STUDY_ENDPOINT_TP_NAME}'}})
+        MERGE (endpoint:TemplateParameter {{name: '{settings.study_endpoint_tp_name}'}})
 """
 
 CREATE_NA_TEMPLATE_PARAMETER = """
@@ -3092,6 +3237,7 @@ def get_codelist_with_term_cypher(
     codelist_name: str = "tp_codelist_name_value",
     codelist_uid: str = "ct_codelist_root1",
     term_uid: str = "term_root_final",
+    codelist_submval: str = "cl_submission_value1",
 ) -> str:
     return """
 WITH {
@@ -3100,22 +3246,30 @@ WITH {
   status: "Final",
   author_id: "unknown-user",
   version: "1.0"
-} AS final_version_props
+} AS final_version_props,
+{
+  start_date: datetime("2020-06-26T00:00:00")
+} AS has_term_props
 MERGE (clr:CTCodelistRoot {uid: "%(codelist_uid)s"})
 MERGE (clr)-[:HAS_NAME_ROOT]->(cnr:CTCodelistNameRoot)-[:LATEST]->
     (cnv:TemplateParameter:CTCodelistNameValue {name: "%(codelist_name)s"})
+MERGE (clr)-[:HAS_ATTRIBUTES_ROOT]->(car:CTCodelistAttributesRoot)-[:LATEST]->
+    (cav:TemplateParameter:CTCodelistAttributesValue {submission_value: "%(codelist_submval)s"})
 MERGE (cc:CTCatalogue {name: "SDTM CT"})
 MERGE (cc)-[:HAS_CODELIST]->(clr)
 MERGE (cnr)-[cl_lf:LATEST_FINAL]->(cnv)
 MERGE (cnr)-[cl_hv:HAS_VERSION]->(cnv)
 set cl_hv = final_version_props
+MERGE (car)-[cl_alf:LATEST_FINAL]->(cav)
+MERGE (car)-[cl_ahv:HAS_VERSION]->(cav)
+set cl_ahv = final_version_props
 MERGE (lib:Library {name: "Sponsor", is_editable: true})
 MERGE (lib)-[:CONTAINS_CODELIST]->(clr)
 
-MERGE (clr)-[has_term1:HAS_TERM]->(term_root:CTTermRoot {uid:"%(term_uid)s"})-[:HAS_ATTRIBUTES_ROOT]->
+MERGE (clr)-[has_term1:HAS_TERM]->(term_submval:CTCodelistTerm {submission_value: "submission_value1"})
+MERGE (term_submval)-[:HAS_TERM_ROOT]->(term_root:CTTermRoot {uid:"%(term_uid)s"})-[:HAS_ATTRIBUTES_ROOT]->
     (term_ver_root:CTTermAttributesRoot)-[:LATEST]-(term_ver_value:CTTermAttributesValue
-        {code_submission_value: "code_submission_value1", name_submission_value:"name_submission_value1",
-        preferred_term:"preferred_term", definition:"definition"})
+        {preferred_term:"preferred_term", definition:"definition"})
 MERGE (term_root)-[:HAS_NAME_ROOT]->(term_name_ver_root:CTTermNameRoot)-[:LATEST]-(term_name_ver_value:CTTermNameValue
         {name: "%(name)s", name_sentence_case:"term_value_name_sentence_case"})
 MERGE (lib)-[:CONTAINS_TERM]->(term_root)
@@ -3125,11 +3279,13 @@ set hv = final_version_props
 MERGE (term_name_ver_root)-[tnvr_lf:LATEST_FINAL]->(term_name_ver_value)
 MERGE (term_name_ver_root)-[tnvr_hv:HAS_VERSION]->(term_name_ver_value)
 set tnvr_hv = final_version_props
+set has_term1 = has_term_props
 """ % {
         "name": name,
         "codelist_name": codelist_name,
         "codelist_uid": codelist_uid,
         "term_uid": term_uid,
+        "codelist_submval": codelist_submval,
     }
 
 
@@ -3146,7 +3302,8 @@ MERGE (l:Library {name:"CDISC", is_editable:false})
 MERGE (catalogue:CTCatalogue {uid:"CTCatalogue_000001", name:"catalogue_name"})
 MERGE (catalogue)-[:HAS_CODELIST]->(codelist:CTCodelistRoot {uid:"CTCodelist_000001"})
 // Set counter for CTCodelist
-MERGE (:Counter:CTCodelistCounter {count: 1, counterId:'CTCodelistCounter'})
+MERGE (clc:Counter:CTCodelistCounter {counterId:'CTCodelistCounter'})
+ON CREATE SET clc.count = 1
 MERGE (c:ClinicalProgramme)
 SET c.name = "CP",
     c.uid = "cp_001"
@@ -3232,7 +3389,8 @@ set tim_rel_hv = final_properties
 WITH final_properties
 
 MATCH (termroot:CTTermRoot {uid:"term_root_final"})
-MERGE (termroot)<-[has_term:HAS_TERM]-(codelistroot:CTCodelistRoot {uid: "ct_codelist_root_endpoint"})-[:HAS_NAME_ROOT]->(cnr:CTCodelistNameRoot)-[:LATEST_FINAL]->
+MERGE (termroot)<-[:HAS_TERM_ROOT]-(term_submval:CTCodelistTerm {submission_value: "submission_value1"})
+MERGE (term_submval)<-[has_term:HAS_TERM]-(codelistroot:CTCodelistRoot {uid: "ct_codelist_root_endpoint"})-[:HAS_NAME_ROOT]->(cnr:CTCodelistNameRoot)-[:LATEST_FINAL]->
     (cnv:TemplateParameter:CTCodelistNameValue {name: "Endpoint Level"})
 set has_term.order = 1
 MERGE (cnr)-[clname_hv:HAS_VERSION]->(cnv)
@@ -3337,7 +3495,8 @@ set hv4 = final_properties
 WITH tim_rel
 
 MATCH (termroot:CTTermRoot {uid:"term_root_final"})
-MERGE (termroot)<-[has_term:HAS_TERM]-(codelistroot:CTCodelistRoot {uid: "ct_codelist_root_endpoint"})-[:HAS_NAME_ROOT]->(cnr:CTCodelistNameRoot)-[:LATEST_FINAL]->
+MERGE (termroot)<-[:HAS_TERM_ROOT]-(term_submval:CTCodelistTerm {submission_value: "ct_codelist_root_endpoint"})
+MERGE (term_submval)<-[has_term:HAS_TERM]-(codelistroot:CTCodelistRoot {uid: "ct_codelist_root_endpoint"})-[:HAS_NAME_ROOT]->(cnr:CTCodelistNameRoot)-[:LATEST_FINAL]->
     (cnv:TemplateParameter:CTCodelistNameValue {name: "Endpoint Level"})
 set has_term.order = 1
 
@@ -3357,13 +3516,14 @@ set sa2.date = datetime()
 set sa2.author_id = "unknown-user"
 MERGE (sr)-[:AUDIT_TRAIL]->(sa2)
 // Set counter for study arm UID 
-MERGE (:Counter:StudyArmCounter {count: 1, counterId:'StudyArmCounter'})
+MERGE (counter:Counter:StudyArmCounter {counterId:'StudyArmCounter'})
+ON CREATE SET counter.count = 1
 
 WITH sv
 
 MATCH (termroot:CTTermRoot {uid:"term_root_final"})
 MATCH (sar:StudyArm {uid:"StudyArm_000001"})
-CREATE (sar)-[:HAS_ARM_TYPE]->(termroot)
+CREATE (sar)-[:HAS_ARM_TYPE]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(termroot)
 
 WITH sv
 
@@ -3383,7 +3543,7 @@ MERGE (:Counter:StudyArmCounter {count: 2, counterId:'StudyArmCounter2'})
 WITH sv
 MATCH (termroot:CTTermRoot {uid:"term_root_final_non_edit"})
 MATCH (sar:StudyArm {uid:"StudyArm_000002"})
-CREATE (sar)-[:HAS_ARM_TYPE]->(termroot)
+CREATE (sar)-[:HAS_ARM_TYPE]->(st:CTTermContext)-[:HAS_SELECTED_TERM]->(termroot)
 
 WITH sv
 
@@ -3402,7 +3562,7 @@ MERGE (:Counter:StudyArmCounter {count: 3, counterId:'StudyArmCounter3'})
 WITH sv
 MATCH (termroot:CTTermRoot {uid:"term_root_final"})
 MATCH (sar:StudyArm {uid:"StudyArm_000003"})
-CREATE (sar)-[:HAS_ARM_TYPE]->(termroot)
+CREATE (sar)-[:HAS_ARM_TYPE]->(st:CTTermContext)-[:HAS_SELECTED_TERM]->(termroot)
 
 """
 
@@ -3468,18 +3628,22 @@ def create_paths():
     return _create_paths(app)
 
 
-def _create_paths(app: FastAPI, path_prefix="") -> list[dict[str, any]]:
+def _create_paths(app: FastAPI, path_prefix="") -> list[dict[str, Any]]:
     paths = []
     for route in app.routes:
         if isinstance(route, APIRoute):
             path = create_stub(path_prefix + route.path, route.methods)
             paths.append(path)
         elif isinstance(route, Mount):
-            paths += _create_paths(route.app, route.path)
+            paths += _create_paths(route.app, route.path)  # type: ignore[arg-type]
     return paths
 
 
-def inject_base_data(inject_unit_subset: bool = True) -> Study:
+def inject_base_data(
+    inject_unit_subset: bool = True,
+    inject_study_selection_basics: bool = False,
+    inject_unit_dimension: bool = False,
+) -> tuple[Study, dict[str, Any]]:
     """
     The data included as generic base data is the following
     - names specified below
@@ -3502,72 +3666,131 @@ def inject_base_data(inject_unit_subset: bool = True) -> Study:
     # Inject generic base data
     TestUtils.create_dummy_user()
 
+    test_data: dict[str, Any] = {}
+
     ## Parent objects for study
     clinical_programme = TestUtils.create_clinical_programme(name="CP")
+    test_data["clinical_programme"] = clinical_programme
     project = TestUtils.create_project(
         name="Project ABC",
         project_number="123",
         description="Base project",
         clinical_programme_uid=clinical_programme.uid,
     )
+    test_data["project"] = project
 
     ## Libraries
-    TestUtils.create_library(config.CDISC_LIBRARY_NAME, True)
+    TestUtils.create_library(settings.cdisc_library_name, True)
     TestUtils.create_library("Sponsor", True)
     TestUtils.create_library("SNOMED", True)
-    TestUtils.create_library(name=config.REQUESTED_LIBRARY_NAME, is_editable=True)
+    unit_subset_terms = []
+    TestUtils.create_library(name=settings.requested_library_name, is_editable=True)
     TestUtils.create_ct_catalogue(
-        library=config.CDISC_LIBRARY_NAME, catalogue_name=config.SDTM_CT_CATALOGUE_NAME
+        library=settings.cdisc_library_name,
+        catalogue_name=settings.sdtm_ct_catalogue_name,
     )
     TestUtils.create_ct_catalogue(
-        library=config.CDISC_LIBRARY_NAME, catalogue_name=config.ADAM_CT_CATALOGUE_NAME
+        library=settings.cdisc_library_name,
+        catalogue_name=settings.adam_ct_catalogue_name,
     )
-    unit_subsets = []
     if inject_unit_subset:
         unit_subset_codelist = TestUtils.create_ct_codelist(
             name="Unit Subset",
             sponsor_preferred_name="unit subset",
+            submission_value="UNITSUBS",
             extensible=True,
             approve=True,
+            catalogue_name="SDTM CT",
         )
+        test_data["unit_subset_codelist"] = unit_subset_codelist
         unit_subset_term = TestUtils.create_ct_term(
             codelist_uid=unit_subset_codelist.codelist_uid,
             sponsor_preferred_name_sentence_case="study time",
             sponsor_preferred_name="Study Time",
         )
-        unit_subsets.append(unit_subset_term.term_uid)
+        unit_subset_terms.append(unit_subset_term)
+    test_data["unit_subset_terms"] = unit_subset_terms
+    unit_dimension_terms = []
+    if inject_unit_dimension:
+        unit_dimension_codelist = TestUtils.create_ct_codelist(
+            name="Unit Dimension",
+            sponsor_preferred_name="unit dimension",
+            submission_value="UNITDIM",
+            extensible=True,
+            approve=True,
+            catalogue_name="SDTM CT",
+        )
+        test_data["unit_dimension_codelist"] = unit_dimension_codelist
+        unit_dimension_term = TestUtils.create_ct_term(
+            codelist_uid=unit_dimension_codelist.codelist_uid,
+            sponsor_preferred_name_sentence_case="weight",
+            sponsor_preferred_name="Weight",
+        )
+        unit_dimension_terms.append(unit_dimension_term)
+    test_data["unit_dimension_terms"] = unit_dimension_terms
+    if inject_study_selection_basics:
+        arm_type_codelist = TestUtils.create_ct_codelist(
+            name="Arm Type",
+            sponsor_preferred_name="arm type",
+            submission_value="ARMTTP",
+            extensible=True,
+            approve=True,
+            catalogue_name="SDTM CT",
+        )
+        test_data["arm_type_codelist"] = arm_type_codelist
+
+        arm_type = "Investigational Arm"
+        investigational_arm = TestUtils.create_ct_term(
+            sponsor_preferred_name=arm_type,
+            sponsor_preferred_name_sentence_case=arm_type.lower(),
+            codelist_uid=arm_type_codelist.codelist_uid,
+            term_uid="investigational_arm_uid",
+        )
+        test_data["investigational_arm"] = investigational_arm
 
     ## Unit Definitions
-    TestUtils.create_unit_definition(
-        name=config.DAY_UNIT_NAME,
+    day_unit = TestUtils.create_unit_definition(
+        name=settings.day_unit_name,
         convertible_unit=True,
         display_unit=True,
         master_unit=False,
         si_unit=True,
         us_conventional_unit=True,
-        conversion_factor_to_master=config.DAY_UNIT_CONVERSION_FACTOR_TO_MASTER,
-        unit_subsets=unit_subsets,
+        conversion_factor_to_master=settings.day_unit_conversion_factor_to_master,
+        unit_subsets=[term.term_uid for term in unit_subset_terms],
+        unit_dimension=(
+            unit_dimension_terms[0].term_uid if unit_dimension_terms else None
+        ),
     )
-    TestUtils.create_unit_definition(
-        name=config.DAYS_UNIT_NAME,
+    test_data["day_unit"] = day_unit
+    days_unit = TestUtils.create_unit_definition(
+        name=settings.days_unit_name,
         convertible_unit=True,
         display_unit=True,
         master_unit=False,
         si_unit=True,
         us_conventional_unit=True,
-        conversion_factor_to_master=config.DAY_UNIT_CONVERSION_FACTOR_TO_MASTER,
-        unit_subsets=unit_subsets,
+        conversion_factor_to_master=settings.day_unit_conversion_factor_to_master,
+        unit_subsets=[term.term_uid for term in unit_subset_terms],
+        unit_dimension=(
+            unit_dimension_terms[0].term_uid if unit_dimension_terms else None
+        ),
     )
-    TestUtils.create_unit_definition(
-        name=config.WEEK_UNIT_NAME,
+    test_data["days_unit"] = days_unit
+    week_unit = TestUtils.create_unit_definition(
+        name=settings.week_unit_name,
         convertible_unit=True,
         display_unit=True,
         master_unit=False,
         si_unit=True,
         us_conventional_unit=True,
-        conversion_factor_to_master=config.WEEK_UNIT_CONVERSION_FACTOR_TO_MASTER,
-        unit_subsets=unit_subsets,
+        conversion_factor_to_master=settings.week_unit_conversion_factor_to_master,
+        unit_subsets=[term.term_uid for term in unit_subset_terms],
+        unit_dimension=(
+            unit_dimension_terms[0].term_uid if unit_dimension_terms else None
+        ),
     )
+    test_data["week_unit"] = week_unit
 
     ## Codelists
     TestUtils.create_ct_codelists_using_cypher()
@@ -3577,13 +3800,15 @@ def inject_base_data(inject_unit_subset: bool = True) -> Study:
     TestUtils.create_study_fields_configuration()
 
     ## Study
-    study = TestUtils.create_study("123", "study_root", project.project_number)
-
-    TestUtils.set_study_standard_version(
-        study_uid=study.uid, catalogue=config.SDTM_CT_CATALOGUE_NAME
+    study = TestUtils.create_study(
+        TestUtils.get_study_number(), "study_root", project.project_number
     )
 
-    return study
+    TestUtils.set_study_standard_version(
+        study_uid=study.uid, catalogue=settings.sdtm_ct_catalogue_name
+    )
+
+    return study, test_data
 
 
 def fix_study_preferred_time_unit(study_uid):
@@ -3595,7 +3820,7 @@ def fix_study_preferred_time_unit(study_uid):
         u.name: u
         for u in unit_definition_service.get_all(library_name=LIBRARY_NAME).items
     }
-    if unit_definition := unit_definitions.get(config.DAY_UNIT_NAME):
+    if unit_definition := unit_definitions.get(settings.day_unit_name):
         if unit_definition.status in {
             LibraryItemStatus.DRAFT,
             LibraryItemStatus.RETIRED,
@@ -3613,11 +3838,13 @@ def fix_study_preferred_time_unit(study_uid):
         if codelists:
             unit_subset_codelist = codelists[0]
         else:
-            unit_subset_codelist = TestUtils.create_ct_codelist(
+            unit_subset_codelist = TestUtils.create_ct_codelist(  # type: ignore[assignment]
                 name="Unit Subset",
                 sponsor_preferred_name="unit subset",
                 extensible=True,
                 approve=True,
+                submission_value="UNITSUBS",
+                catalogue_name="SDTM CT",
             )
 
         if (
@@ -3633,30 +3860,30 @@ def fix_study_preferred_time_unit(study_uid):
         ):
             unit_subset_term = terms[0]
         else:
-            unit_subset_term = TestUtils.create_ct_term(
+            unit_subset_term = TestUtils.create_ct_term(  # type: ignore[assignment]
                 codelist_uid=unit_subset_codelist.codelist_uid,
                 sponsor_preferred_name_sentence_case="study time",
                 sponsor_preferred_name="Study Time",
             )
 
         unit_definition = TestUtils.create_unit_definition(
-            name=config.DAY_UNIT_NAME,
+            name=settings.day_unit_name,
             convertible_unit=True,
             display_unit=True,
             master_unit=False,
             si_unit=True,
             us_conventional_unit=True,
-            conversion_factor_to_master=config.DAY_UNIT_CONVERSION_FACTOR_TO_MASTER,
+            conversion_factor_to_master=settings.day_unit_conversion_factor_to_master,
             unit_subsets=[unit_subset_term.term_uid],
         )
         TestUtils.create_unit_definition(
-            name=config.WEEK_UNIT_NAME,
+            name=settings.week_unit_name,
             convertible_unit=True,
             display_unit=True,
             master_unit=False,
             si_unit=True,
             us_conventional_unit=True,
-            conversion_factor_to_master=config.WEEK_UNIT_CONVERSION_FACTOR_TO_MASTER,
+            conversion_factor_to_master=settings.week_unit_conversion_factor_to_master,
             unit_subsets=[unit_subset_term.term_uid],
         )
 

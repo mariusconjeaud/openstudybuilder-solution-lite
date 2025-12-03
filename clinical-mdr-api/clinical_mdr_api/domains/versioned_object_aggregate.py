@@ -18,9 +18,9 @@ class LibraryVO:
     def from_input_values_2(
         cls,
         library_name: str,
-        is_library_editable_callback: Callable[[str], bool | None],
+        is_library_editable_callback: Callable[[str], bool],
     ) -> Self:
-        is_library_editable_callback_result: bool | None = is_library_editable_callback(
+        is_library_editable_callback_result: bool = is_library_editable_callback(
             library_name
         )
 
@@ -254,6 +254,8 @@ class VersioningActionMixin:
     _RETIRED_VERSION_LABEL = "Inactivated version"
     _REACTIVATED_VERSION_LABEL = "Reactivated version"
 
+    _item_metadata: LibraryItemMetadataVO
+
     # implementations of basic versioning actions
     def approve(
         self, author_id: str, change_description: str = _FINAL_VERSION_LABEL
@@ -399,7 +401,7 @@ class LibraryItemAggregateRootBase(VersioningActionMixin, abc.ABC):
 
     @property
     def uid(self) -> str:
-        return self._uid  # type: ignore
+        return self._uid
 
     @uid.setter
     def uid(self, uid: str) -> None:

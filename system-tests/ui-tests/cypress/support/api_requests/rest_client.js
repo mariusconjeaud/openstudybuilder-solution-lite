@@ -1,6 +1,6 @@
 Cypress.Commands.add('sendPostRequest', (url, body) => {
     cy.request('POST', Cypress.env('API') + url, body).then((response) => {
-        expect(response.status).to.be.oneOf([200, 201])
+        expect(response.status).to.be.oneOf([200, 201, 207])
         return response;
     })
 })

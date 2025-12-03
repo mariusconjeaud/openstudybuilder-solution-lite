@@ -3,6 +3,7 @@
 # pytest fixture functions have other fixture functions as arguments,
 # which pylint interprets as unused arguments
 
+
 import pytest
 from fastapi.testclient import TestClient
 from neomodel import db
@@ -76,14 +77,18 @@ def test_post_create_activity(api_client):
         {
             "activity_subgroup_uid": "activity_subgroup_root1",
             "activity_subgroup_name": "name1",
+            "activity_subgroup_version": None,
             "activity_group_uid": "activity_group_root1",
             "activity_group_name": "name1",
+            "activity_group_version": None,
         },
         {
             "activity_subgroup_uid": "activity_subgroup_root3",
             "activity_subgroup_name": "name3",
+            "activity_subgroup_version": None,
             "activity_group_uid": "activity_group_root3",
             "activity_group_name": "name3",
+            "activity_group_version": None,
         },
     ]
     assert res["is_data_collected"] is True
@@ -125,8 +130,10 @@ def test_get_all_activities(api_client):
         {
             "activity_subgroup_uid": "activity_subgroup_root1",
             "activity_subgroup_name": "name1",
+            "activity_subgroup_version": "1.0",
             "activity_group_uid": "activity_group_root1",
             "activity_group_name": "name1",
+            "activity_group_version": "1.0",
         }
     ]
     assert res["items"][0]["is_data_collected"] is False
@@ -159,8 +166,10 @@ def test_get_all_activities(api_client):
         {
             "activity_subgroup_uid": "activity_subgroup_root2",
             "activity_subgroup_name": "name2",
+            "activity_subgroup_version": "1.0",
             "activity_group_uid": "activity_group_root2",
             "activity_group_name": "name2",
+            "activity_group_version": "1.0",
         }
     ]
     assert res["items"][1]["is_data_collected"] is False
@@ -193,8 +202,10 @@ def test_get_all_activities(api_client):
         {
             "activity_subgroup_uid": "activity_subgroup_root3",
             "activity_subgroup_name": "name3",
+            "activity_subgroup_version": "1.0",
             "activity_group_uid": "activity_group_root3",
             "activity_group_name": "name3",
+            "activity_group_version": "1.0",
         }
     ]
     assert res["items"][2]["is_data_collected"] is False
@@ -227,14 +238,18 @@ def test_get_all_activities(api_client):
         {
             "activity_subgroup_uid": "activity_subgroup_root1",
             "activity_subgroup_name": "name1",
+            "activity_subgroup_version": "1.0",
             "activity_group_uid": "activity_group_root1",
             "activity_group_name": "name1",
+            "activity_group_version": "1.0",
         },
         {
             "activity_subgroup_uid": "activity_subgroup_root3",
             "activity_subgroup_name": "name3",
+            "activity_subgroup_version": "1.0",
             "activity_group_uid": "activity_group_root3",
             "activity_group_name": "name3",
+            "activity_group_version": "1.0",
         },
     ]
     assert res["items"][3]["is_data_collected"] is True
@@ -278,8 +293,10 @@ def test_get_all_activities_from_a_given_activity_sub_group(api_client):
         {
             "activity_subgroup_uid": "activity_subgroup_root2",
             "activity_subgroup_name": "name2",
+            "activity_subgroup_version": "1.0",
             "activity_group_uid": "activity_group_root2",
             "activity_group_name": "name2",
+            "activity_group_version": "1.0",
         }
     ]
     assert res["items"][0]["is_data_collected"] is False
@@ -323,8 +340,10 @@ def test_get_all_activities_with_a_given_name(api_client):
         {
             "activity_subgroup_uid": "activity_subgroup_root2",
             "activity_subgroup_name": "name2",
+            "activity_subgroup_version": "1.0",
             "activity_group_uid": "activity_group_root2",
             "activity_group_name": "name2",
+            "activity_group_version": "1.0",
         }
     ]
     assert res["items"][0]["is_data_collected"] is False
@@ -368,8 +387,10 @@ def test_get_all_activities_from_a_given_activity_sub_group_using_name(api_clien
         {
             "activity_subgroup_uid": "activity_subgroup_root2",
             "activity_subgroup_name": "name2",
+            "activity_subgroup_version": "1.0",
             "activity_group_uid": "activity_group_root2",
             "activity_group_name": "name2",
+            "activity_group_version": "1.0",
         }
     ]
     assert res["items"][0]["is_data_collected"] is False
@@ -413,8 +434,10 @@ def test_get_all_activities_from_a_given_activity_group_using_name(api_client):
         {
             "activity_subgroup_uid": "activity_subgroup_root2",
             "activity_subgroup_name": "name2",
+            "activity_subgroup_version": "1.0",
             "activity_group_uid": "activity_group_root2",
             "activity_group_name": "name2",
+            "activity_group_version": "1.0",
         }
     ]
     assert res["items"][0]["is_data_collected"] is False
@@ -458,14 +481,18 @@ def test_post_approve_activity(api_client):
         {
             "activity_subgroup_uid": "activity_subgroup_root1",
             "activity_subgroup_name": "name1",
+            "activity_subgroup_version": "1.0",
             "activity_group_uid": "activity_group_root1",
             "activity_group_name": "name1",
+            "activity_group_version": "1.0",
         },
         {
             "activity_subgroup_uid": "activity_subgroup_root3",
             "activity_subgroup_name": "name3",
+            "activity_subgroup_version": "1.0",
             "activity_group_uid": "activity_group_root3",
             "activity_group_name": "name3",
+            "activity_group_version": "1.0",
         },
     ]
     assert res["is_data_collected"] is True
@@ -509,14 +536,18 @@ def test_post_versions_activity(api_client):
         {
             "activity_subgroup_uid": "activity_subgroup_root1",
             "activity_subgroup_name": "name1",
+            "activity_subgroup_version": "1.0",
             "activity_group_uid": "activity_group_root1",
             "activity_group_name": "name1",
+            "activity_group_version": "1.0",
         },
         {
             "activity_subgroup_uid": "activity_subgroup_root3",
             "activity_subgroup_name": "name3",
+            "activity_subgroup_version": "1.0",
             "activity_group_uid": "activity_group_root3",
             "activity_group_name": "name3",
+            "activity_group_version": "1.0",
         },
     ]
     assert res["is_data_collected"] is True
@@ -560,8 +591,10 @@ def test_delete_activations_activity(api_client):
         {
             "activity_subgroup_uid": "activity_subgroup_root1",
             "activity_subgroup_name": "name1",
+            "activity_subgroup_version": "1.0",
             "activity_group_uid": "activity_group_root1",
             "activity_group_name": "name1",
+            "activity_group_version": "1.0",
         }
     ]
     assert res["is_data_collected"] is False
@@ -605,8 +638,10 @@ def test_post_activations_activity(api_client):
         {
             "activity_subgroup_uid": "activity_subgroup_root1",
             "activity_subgroup_name": "name1",
+            "activity_subgroup_version": "1.0",
             "activity_group_uid": "activity_group_root1",
             "activity_group_name": "name1",
+            "activity_group_version": "1.0",
         }
     ]
     assert res["is_data_collected"] is False

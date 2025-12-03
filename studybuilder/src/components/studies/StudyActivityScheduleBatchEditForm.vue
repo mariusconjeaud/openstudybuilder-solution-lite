@@ -15,7 +15,7 @@
           v-model="selectedFlowchartGroup"
           :label="$t('StudyActivityForm.flowchart_group')"
           :items="flowchartGroups"
-          item-title="name.sponsor_preferred_name"
+          item-title="sponsor_preferred_name"
           return-object
           clearable
           class="mt-4"
@@ -92,7 +92,7 @@ export default {
     }
   },
   mounted() {
-    terms.getByCodelist('flowchartGroups').then((resp) => {
+    terms.getTermsByCodelist('flowchartGroups').then((resp) => {
       this.flowchartGroups = resp.data.items
     })
     // Filter out non-visit and unscheduled-visits as these shouldn't

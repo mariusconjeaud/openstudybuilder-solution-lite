@@ -1,4 +1,5 @@
-from typing import Annotated, Callable, Self
+from datetime import datetime
+from typing import Annotated, Callable, Self, overload
 
 from pydantic import Field
 
@@ -8,11 +9,14 @@ from clinical_mdr_api.domains.concepts.pharmaceutical_product import (
     PharmaceuticalProductAR,
 )
 from clinical_mdr_api.domains.concepts.simple_concepts.lag_time import LagTimeAR
-from clinical_mdr_api.domains.concepts.simple_concepts.numeric_value import (
-    NumericValueAR,
+from clinical_mdr_api.domains.concepts.simple_concepts.numeric_value_with_unit import (
+    NumericValueWithUnitAR,
 )
 from clinical_mdr_api.domains.concepts.unit_definitions.unit_definition import (
     UnitDefinitionAR,
+)
+from clinical_mdr_api.domains.controlled_terminologies.ct_codelist_term import (
+    CTSimpleCodelistTermAR,
 )
 from clinical_mdr_api.domains.controlled_terminologies.ct_term_name import CTTermNameAR
 from clinical_mdr_api.domains.dictionaries.dictionary_term import DictionaryTermAR
@@ -25,9 +29,12 @@ from clinical_mdr_api.models.concepts.concept import (
     SimpleNumericValueWithUnit,
     VersionProperties,
 )
-from clinical_mdr_api.models.controlled_terminologies.ct_term import SimpleTermModel
+from clinical_mdr_api.models.controlled_terminologies.ct_term import (
+    SimpleCodelistTermModel,
+)
 from clinical_mdr_api.models.libraries.library import Library
 from clinical_mdr_api.models.utils import BaseModel, PatchInputModel, PostInputModel
+from common.config import settings
 
 
 class Ingredient(BaseModel):
@@ -90,8 +97,8 @@ class PharmaceuticalProduct(VersionProperties):
     )
     library_name: Annotated[str, Field()]
 
-    dosage_forms: Annotated[list[SimpleTermModel] | None, Field()]
-    routes_of_administration: Annotated[list[SimpleTermModel] | None, Field()]
+    dosage_forms: Annotated[list[SimpleCodelistTermModel] | None, Field()]
+    routes_of_administration: Annotated[list[SimpleCodelistTermModel] | None, Field()]
     formulations: Annotated[list[Formulation], Field()]
 
     possible_actions: Annotated[
@@ -109,35 +116,45 @@ class PharmaceuticalProduct(VersionProperties):
         cls,
         pharmaceutical_product_ar: PharmaceuticalProductAR,
         find_term_by_uid: Callable[[str], CTTermNameAR | None],
-        find_numeric_value_by_uid: Callable[[str], NumericValueAR | None],
+        find_numeric_value_by_uid: Callable[[str], NumericValueWithUnitAR | None],
         find_lag_time_by_uid: Callable[[str], LagTimeAR | None],
         find_unit_by_uid: Callable[[str], UnitDefinitionAR | None],
         find_active_substance_by_uid: Callable[[str], ActiveSubstanceAR | None],
         find_dictionary_term_by_uid: Callable[[str], DictionaryTermAR | None],
         find_substance_term_by_uid: Callable[[str], DictionaryTermSubstanceAR | None],
+        find_codelist_term_by_uid_and_submission_value: Callable[
+            [str | None, str | None, datetime | None], CTSimpleCodelistTermAR | None
+        ],
     ) -> Self:
+        dosage_form_terms = []
+        for uid in pharmaceutical_product_ar.concept_vo.dosage_form_uids:
+            term = SimpleCodelistTermModel.from_term_uid_and_codelist_submval(
+                term_uid=uid,
+                codelist_submission_value=settings.dosage_form_cl_submval,
+                find_codelist_term_by_uid_and_submission_value=find_codelist_term_by_uid_and_submission_value,
+            )
+            if term is not None:
+                dosage_form_terms.append(term)
+        admin_route_terms = []
+        for uid in pharmaceutical_product_ar.concept_vo.route_of_administration_uids:
+            term = SimpleCodelistTermModel.from_term_uid_and_codelist_submval(
+                term_uid=uid,
+                codelist_submission_value=settings.route_of_administration_cl_submval,
+                find_codelist_term_by_uid_and_submission_value=find_codelist_term_by_uid_and_submission_value,
+            )
+            if term is not None:
+                admin_route_terms.append(term)
+
         return cls(
             uid=pharmaceutical_product_ar.uid,
             external_id=pharmaceutical_product_ar.concept_vo.external_id,
             dosage_forms=sorted(
-                [
-                    SimpleTermModel.from_ct_code(
-                        c_code=uid,
-                        find_term_by_uid=find_term_by_uid,
-                    )
-                    for uid in pharmaceutical_product_ar.concept_vo.dosage_form_uids
-                ],
-                key=lambda item: item.name if item.name else "",
+                dosage_form_terms,
+                key=lambda item: item.term_name if item.term_name else "",
             ),
             routes_of_administration=sorted(
-                [
-                    SimpleTermModel.from_ct_code(
-                        c_code=uid,
-                        find_term_by_uid=find_term_by_uid,
-                    )
-                    for uid in pharmaceutical_product_ar.concept_vo.route_of_administration_uids
-                ],
-                key=lambda item: item.name if item.name else "",
+                admin_route_terms,
+                key=lambda item: item.term_name if item.term_name else "",
             ),
             formulations=sorted(
                 [
@@ -214,29 +231,44 @@ class PharmaceuticalProduct(VersionProperties):
 
 
 class SimplePharmaceuticalProduct(BaseModel):
+    @overload
     @classmethod
     def from_uid(
         cls, uid: str, find_by_uid: Callable[[str], PharmaceuticalProductAR | None]
+    ) -> Self: ...
+    @overload
+    @classmethod
+    def from_uid(
+        cls, uid: None, find_by_uid: Callable[[str], PharmaceuticalProductAR | None]
+    ) -> None: ...
+    @classmethod
+    def from_uid(
+        cls,
+        uid: str | None,
+        find_by_uid: Callable[[str], PharmaceuticalProductAR | None],
     ) -> Self | None:
         item = None
         if uid is not None:
-            item_ar: PharmaceuticalProductAR = find_by_uid(uid)
+            item_ar: PharmaceuticalProductAR | None = find_by_uid(uid)
             if item_ar is not None:
-                item = cls(uid=uid, external_id=item_ar.concept_vo.external_id)
+                item = cls(
+                    uid=uid,
+                    external_id=item_ar.concept_vo.external_id,
+                )
 
         return item
+
+    @classmethod
+    def from_input(cls, input_data) -> Self:
+        return cls(
+            uid=input_data.uid,
+            external_id=input_data.external_id,
+        )
 
     uid: Annotated[str, Field()]
     external_id: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = (
         None
     )
-
-    @classmethod
-    def from_item_ar(cls, item_ar: PharmaceuticalProductAR) -> Self:
-        return cls(
-            uid=item_ar.uid,
-            name=item_ar.name,
-        )
 
 
 class PharmaceuticalProductCreateInput(PostInputModel):

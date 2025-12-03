@@ -29,17 +29,18 @@ from mdr_standards_import.scripts.utils import (
     get_author_id,
     get_cdisc_neo4j_driver,
     get_ordered_data_model_versions,
+    get_catalogue_filter,
 )
 
 
 CDISC_IMPORT_DATABASE = environ.get("NEO4J_CDISC_IMPORT_DATABASE", "neo4j")
 
-print(f"============================================")
+print("============================================")
 print(f"=====The database name is '{CDISC_IMPORT_DATABASE}'=")
 
 
 def wrapper_import_cdisc_data_models_into_cdisc_db(
-    author_id: str, json_data_directory: str = ""
+    author_id: str, json_data_directory: str = "", catalogue_filter: str = None
 ):
     """
     Calls the import step to transform the JSON files into the CDISC graph structure.
@@ -47,11 +48,11 @@ def wrapper_import_cdisc_data_models_into_cdisc_db(
     """
     cdisc_neo4j_driver = get_cdisc_neo4j_driver()
 
-    versions = get_ordered_data_model_versions(json_data_directory)
-    print(f"============================================")
+    versions = get_ordered_data_model_versions(json_data_directory, catalogue_filter)
+    print("============================================")
     print(f"Found the following data model versions: {str(versions)}")
     for catalogue in versions:
-        print(f"============================================")
+        print("============================================")
         print(
             f"== Importing JSON data into the cdisc-DB='{CDISC_IMPORT_DATABASE}' for the catalogue='{catalogue}'."
         )
@@ -87,5 +88,7 @@ def wrapper_import_cdisc_data_models_into_cdisc_db(
 
 if __name__ == "__main__":
     wrapper_import_cdisc_data_models_into_cdisc_db(
-        get_author_id(1), get_directory_name(2, "cdisc_data_models")
+        get_author_id(1),
+        get_directory_name(2, "cdisc_data_models"),
+        get_catalogue_filter(3),
     )

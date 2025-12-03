@@ -1,5 +1,7 @@
 const { When, Then } = require("@badeball/cypress-cucumber-preprocessor");
 
+When('User waits for table to load', () => cy.waitForTable())
+
 When('The {string} submenu is clicked in the {string} section', (submenu, section) => {
     cy.openFromSidebar(section, submenu)
 })
@@ -35,9 +37,9 @@ When('The {string} is not listed after the dropdown {string} is clicked', (link,
     cy.wait(1000);
 })
 
-Then('The form is not closed', () => {
-    cy.get('[data-cy="form-body"]').should('be.visible')
-})
+Then('The form is not closed', () => cy.get('[data-cy="form-body"]').should('be.visible'))
+
+Then('The form is closed', () => cy.get('[data-cy="form-body"]').should('not.exist'))
 
 When('The continue is clicked in confirmation popup', () => {
     cy.clickButton('continue-popup')

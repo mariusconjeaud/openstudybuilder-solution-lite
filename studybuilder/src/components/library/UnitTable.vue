@@ -152,7 +152,8 @@ const headers = [
   },
   {
     title: t('UnitTable.unit_dimension'),
-    key: 'unit_dimension.name',
+    key: 'unit_dimension.term_name',
+    filteringName: 'unit_dimension.name',
   },
   { title: t('UnitTable.legacy_code'), key: 'legacy_code' },
   {
@@ -236,7 +237,7 @@ const showHistory = ref(false)
 const table = ref()
 
 function displayList(items) {
-  return items.map((item) => item.name).join(', ')
+  return items.map((item) => item.term_name).join(', ')
 }
 
 function getUnits(filters, options, filtersUpdated) {

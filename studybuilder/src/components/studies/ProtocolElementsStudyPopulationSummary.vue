@@ -73,13 +73,11 @@ export default {
   mounted() {
     study.getStudyCriteria(this.selectedStudy.uid).then((resp) => {
       resp.data.items.forEach((el) => {
-        if (
-          el.criteria_type.sponsor_preferred_name in this.studyCriteriasTypes
-        ) {
-          if (!this.studyCriterias[el.criteria_type.sponsor_preferred_name]) {
-            this.studyCriterias[el.criteria_type.sponsor_preferred_name] = []
+        if (el.criteria_type.term_name in this.studyCriteriasTypes) {
+          if (!this.studyCriterias[el.criteria_type.term_name]) {
+            this.studyCriterias[el.criteria_type.term_name] = []
           }
-          this.studyCriterias[el.criteria_type.sponsor_preferred_name].push(
+          this.studyCriterias[el.criteria_type.term_name].push(
             el.criteria
               ? this.removeBrackets(el.criteria.name)
               : this.removeBrackets(el.criteria_template.name)

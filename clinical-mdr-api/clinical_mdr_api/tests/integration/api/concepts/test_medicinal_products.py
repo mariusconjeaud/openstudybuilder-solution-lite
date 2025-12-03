@@ -13,6 +13,7 @@ import copy
 import json
 import logging
 from functools import reduce
+from typing import Any
 
 import pytest
 from fastapi.testclient import TestClient
@@ -32,7 +33,11 @@ from clinical_mdr_api.tests.integration.utils.api import (
     inject_and_clear_db,
     inject_base_data,
 )
-from clinical_mdr_api.tests.integration.utils.utils import CT_CODELIST_NAMES, TestUtils
+from clinical_mdr_api.tests.integration.utils.utils import (
+    CT_CODELIST_NAMES,
+    CT_CODELIST_UIDS,
+    TestUtils,
+)
 from clinical_mdr_api.tests.utils.checks import assert_response_status_code
 
 log = logging.getLogger(__name__)
@@ -42,7 +47,7 @@ BASE_URL = "/concepts/medicinal-products"
 
 # Global variables shared between fixtures and tests
 rand: str
-CREATE_MEDICINAL_PRODUCT_PAYLOAD_OK: dict
+CREATE_MEDICINAL_PRODUCT_PAYLOAD_OK: dict[Any, Any]
 medicinal_products_all: list[MedicinalProduct]
 pharmaceutical_products_all: list[PharmaceuticalProduct]
 compound: Compound
@@ -54,7 +59,7 @@ unii_codelist: DictionaryCodelist
 strength: NumericValueWithUnit
 lag_time: LagTime
 half_life: NumericValueWithUnit
-formulation_1: dict
+formulation_1: dict[Any, Any]
 dose_value: NumericValueWithUnit
 ct_term_delivery_device: CTTerm
 ct_term_dose_frequency: CTTerm
@@ -105,39 +110,58 @@ def test_data():
         CT_CODELIST_NAMES.dispenser,
         CT_CODELIST_NAMES.adverse_events,
     ]
-    codelists = TestUtils.get_codelists_by_names(relevant_codelists)
+    _codelists = TestUtils.get_codelists_by_names(relevant_codelists)
 
     # Create CT Terms
+    catalogue_name = "SDTM CT"
+    library_name = "Sponsor"
+
     ct_term_dose_form = TestUtils.create_ct_term(
+        codelist_uid=CT_CODELIST_UIDS.dosage_form,
+        submission_value="dosage_form_1",
         sponsor_preferred_name="dosage_form_1",
-        codelist_uid=TestUtils.get_codelist_uid_by_name(
-            codelists, CT_CODELIST_NAMES.dosage_form
-        ),
+        order=1,
+        catalogue_name=catalogue_name,
+        library_name=library_name,
+        approve=True,
     )
     ct_term_roa = TestUtils.create_ct_term(
+        codelist_uid=CT_CODELIST_UIDS.roa,
+        submission_value="route_of_administration_1",
         sponsor_preferred_name="route_of_administration_1",
-        codelist_uid=TestUtils.get_codelist_uid_by_name(
-            codelists, CT_CODELIST_NAMES.roa
-        ),
+        order=1,
+        catalogue_name=catalogue_name,
+        library_name=library_name,
+        approve=True,
+    )
+    ct_term_delivery_device = TestUtils.create_ct_term(
+        codelist_uid=CT_CODELIST_UIDS.delivery_device,
+        submission_value="delivery_device_1a",
+        sponsor_preferred_name="delivery_device_1a",
+        order=1,
+        catalogue_name=catalogue_name,
+        library_name=library_name,
+        approve=True,
     )
 
-    ct_term_delivery_device = TestUtils.create_ct_term(
-        sponsor_preferred_name="delivery_device_1",
-        codelist_uid=TestUtils.get_codelist_uid_by_name(
-            codelists, CT_CODELIST_NAMES.delivery_device
-        ),
-    )
     ct_term_dose_frequency = TestUtils.create_ct_term(
+        codelist_uid=CT_CODELIST_UIDS.frequency,
+        submission_value="dose_frequency_1",
         sponsor_preferred_name="dose_frequency_1",
-        codelist_uid=TestUtils.get_codelist_uid_by_name(
-            codelists, CT_CODELIST_NAMES.frequency
-        ),
+        order=1,
+        catalogue_name=catalogue_name,
+        library_name=library_name,
+        approve=True,
     )
+
     ct_term_dispenser = TestUtils.create_ct_term(
+        codelist_uid=CT_CODELIST_UIDS.dispenser,
+        submission_value="dispenser_1",
         sponsor_preferred_name="dispenser_1",
-        codelist_uid=TestUtils.get_codelist_uid_by_name(
-            codelists, CT_CODELIST_NAMES.dispenser
-        ),
+        order=1,
+        catalogue_name=catalogue_name,
+        library_name=library_name,
+        approve=True,
     )
 
     TestUtils.create_library("UNII")
@@ -345,6 +369,15 @@ MEDICINAL_PRODUCT_FIELDS_NOT_NULL = [
     "name_sentence_case",
 ]
 
+PHARMACEUTICAL_PRODUCT_FIELDS_ALL = [
+    "uid",
+    "external_id",
+]
+
+PHARMACEUTICAL_PRODUCT_FIELDS_NOT_NULL = [
+    "uid",
+]
+
 
 def test_get_medicinal_product(api_client):
     response = api_client.get(f"{BASE_URL}/{medicinal_products_all[0].uid}")
@@ -353,9 +386,14 @@ def test_get_medicinal_product(api_client):
     assert_response_status_code(response, 200)
 
     # Check fields included in the response
-    assert set(list(res.keys())) == set(MEDICINAL_PRODUCT_FIELDS_ALL)
+    assert set(res.keys()) == set(MEDICINAL_PRODUCT_FIELDS_ALL)
     for key in MEDICINAL_PRODUCT_FIELDS_NOT_NULL:
         assert res[key] is not None
+
+    for item in res["pharmaceutical_products"]:
+        assert set(item.keys()) == set(PHARMACEUTICAL_PRODUCT_FIELDS_ALL)
+        for key_pp in PHARMACEUTICAL_PRODUCT_FIELDS_NOT_NULL:
+            assert item[key_pp] is not None
 
     assert res["uid"] == medicinal_products_all[0].uid
     assert res["external_id"] == f"external_id_a-{rand}"
@@ -419,6 +457,12 @@ def test_get_medicinal_products_versions(api_client):
         assert set(list(item.keys())) == set(MEDICINAL_PRODUCT_FIELDS_ALL)
         for key in MEDICINAL_PRODUCT_FIELDS_NOT_NULL:
             assert item[key] is not None
+
+        for pp in item["pharmaceutical_products"]:
+            assert set(pp.keys()) == set(PHARMACEUTICAL_PRODUCT_FIELDS_ALL)
+            for key_pp in PHARMACEUTICAL_PRODUCT_FIELDS_NOT_NULL:
+                assert pp[key_pp] is not None
+
         TestUtils.assert_timestamp_is_in_utc_zone(item["start_date"])
         TestUtils.assert_timestamp_is_newer_than(item["start_date"], 60)
 
@@ -440,6 +484,7 @@ def test_get_medicinal_products_versions_csv_xml_excel(api_client, export_format
 
 def test_update_medicinal_product_property(api_client):
     # First try a dummy patch with no new property values in the payload
+    payload: dict[Any, Any]
     payload = {
         "change_description": "dummy update",
         "dose_frequency_uid": ct_term_dose_frequency.term_uid,
@@ -567,9 +612,12 @@ def test_update_medicinal_product_property(api_client):
 
 def test_update_medicinal_product_delivery_device(api_client):
     ct_term_delivery_device_new = TestUtils.create_ct_term(
-        sponsor_preferred_name="delivery_device_2"
+        sponsor_preferred_name="delivery_device_2",
+        codelist_uid=CT_CODELIST_UIDS.delivery_device,
+        order=2,
     )
 
+    payload: dict[Any, Any]
     # Change delivery device
     payload = {
         "delivery_device_uid": ct_term_delivery_device_new.term_uid,
@@ -716,7 +764,7 @@ def test_get_medicinal_product_versioning(api_client):
 
 
 def test_get_medicinal_products_pagination(api_client):
-    results_paginated: dict = {}
+    results_paginated: dict[Any, Any] = {}
     sort_by = '{"external_id": true}'
     for page_number in range(1, 4):
         url = f"{BASE_URL}?page_number={page_number}&page_size=10&sort_by={sort_by}"
@@ -729,7 +777,11 @@ def test_get_medicinal_products_pagination(api_client):
     log.info("All pages: %s", results_paginated)
 
     results_paginated_merged = list(
-        set(list(reduce(lambda a, b: a + b, list(results_paginated.values()))))
+        set(
+            list(
+                reduce(lambda a, b: list(a) + list(b), list(results_paginated.values()))
+            )
+        )
     )
     log.info("All unique rows returned by pagination: %s", results_paginated_merged)
 
@@ -790,6 +842,12 @@ def test_get_medicinal_products(
         assert set(list(item.keys())) == set(MEDICINAL_PRODUCT_FIELDS_ALL)
         for key in MEDICINAL_PRODUCT_FIELDS_NOT_NULL:
             assert item[key] is not None
+
+        for pp in item["pharmaceutical_products"]:
+            assert set(pp.keys()) == set(PHARMACEUTICAL_PRODUCT_FIELDS_ALL)
+            for key_pp in PHARMACEUTICAL_PRODUCT_FIELDS_NOT_NULL:
+                assert pp[key_pp] is not None
+
         TestUtils.assert_timestamp_is_in_utc_zone(item["start_date"])
         TestUtils.assert_timestamp_is_newer_than(item["start_date"], 60)
 

@@ -8,32 +8,34 @@ from starlette.requests import Request
 
 from clinical_mdr_api.models.biomedical_concepts.activity_item_class import (
     ActivityItemClass,
+    ActivityItemClassCodelist,
     ActivityItemClassCreateInput,
     ActivityItemClassEditInput,
     ActivityItemClassMappingInput,
+    ActivityItemClassOverview,
+    SimpleActivityInstanceClassForItem,
 )
-from clinical_mdr_api.models.controlled_terminologies.ct_term import (
-    TermWithCodelistMetadata,
-)
-from clinical_mdr_api.models.utils import CustomPage
+from clinical_mdr_api.models.utils import CustomPage, GenericFilteringReturn
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.routers import _generic_descriptions, decorators
 from clinical_mdr_api.services.biomedical_concepts.activity_item_class import (
     ActivityItemClassService,
 )
-from common import config
 from common.auth import rbac
+from common.auth.dependencies import security
+from common.config import settings
 from common.models.error import ErrorResponse
 
 # Prefixed with "/activity-item-classes"
 router = APIRouter()
 
 ActivityItemClassUID = Path(description="The unique id of the ActivityItemClass")
+DatasetUID = Path(description="The unique id of the Dataset")
 
 
 @router.get(
     "",
-    dependencies=[rbac.LIBRARY_READ],
+    dependencies=[security, rbac.LIBRARY_READ],
     summary="List all activity item classes (for a given library)",
     description=f"""
 State before:
@@ -75,16 +77,16 @@ def get_activity_item_classes(
         Json | None, Query(description=_generic_descriptions.SORT_BY)
     ] = None,
     page_number: Annotated[
-        int | None, Query(ge=1, description=_generic_descriptions.PAGE_NUMBER)
-    ] = config.DEFAULT_PAGE_NUMBER,
+        int, Query(ge=1, description=_generic_descriptions.PAGE_NUMBER)
+    ] = settings.default_page_number,
     page_size: Annotated[
-        int | None,
+        int,
         Query(
             ge=0,
-            le=config.MAX_PAGE_SIZE,
+            le=settings.max_page_size,
             description=_generic_descriptions.PAGE_SIZE,
         ),
-    ] = config.DEFAULT_PAGE_SIZE,
+    ] = settings.default_page_size,
     filters: Annotated[
         Json | None,
         Query(
@@ -93,10 +95,10 @@ def get_activity_item_classes(
         ),
     ] = None,
     operator: Annotated[
-        str | None, Query(description=_generic_descriptions.FILTER_OPERATOR)
-    ] = config.DEFAULT_FILTER_OPERATOR,
+        str, Query(description=_generic_descriptions.FILTER_OPERATOR)
+    ] = settings.default_filter_operator,
     total_count: Annotated[
-        bool | None, Query(description=_generic_descriptions.TOTAL_COUNT)
+        bool, Query(description=_generic_descriptions.TOTAL_COUNT)
     ] = False,
 ) -> CustomPage[ActivityItemClass]:
     activity_item_class_service = ActivityItemClassService()
@@ -108,14 +110,14 @@ def get_activity_item_classes(
         filter_by=filters,
         filter_operator=FilterOperator.from_str(operator),
     )
-    return CustomPage.create(
+    return CustomPage(
         items=results.items, total=results.total, page=page_number, size=page_size
     )
 
 
 @router.get(
     "/headers",
-    dependencies=[rbac.LIBRARY_READ],
+    dependencies=[security, rbac.LIBRARY_READ],
     summary="Returns possible values from the database for a given header",
     description="Allowed parameters include : field name for which to get possible values, "
     "search string to provide filtering for the field name, additional filters to apply on other fields",
@@ -133,7 +135,7 @@ def get_distinct_values_for_header(
         str, Query(description=_generic_descriptions.HEADER_FIELD_NAME)
     ],
     search_string: Annotated[
-        str | None, Query(description=_generic_descriptions.HEADER_SEARCH_STRING)
+        str, Query(description=_generic_descriptions.HEADER_SEARCH_STRING)
     ] = "",
     filters: Annotated[
         Json | None,
@@ -143,11 +145,11 @@ def get_distinct_values_for_header(
         ),
     ] = None,
     operator: Annotated[
-        str | None, Query(description=_generic_descriptions.FILTER_OPERATOR)
-    ] = config.DEFAULT_FILTER_OPERATOR,
+        str, Query(description=_generic_descriptions.FILTER_OPERATOR)
+    ] = settings.default_filter_operator,
     page_size: Annotated[
-        int | None, Query(description=_generic_descriptions.HEADER_PAGE_SIZE)
-    ] = config.DEFAULT_HEADER_PAGE_SIZE,
+        int, Query(description=_generic_descriptions.HEADER_PAGE_SIZE)
+    ] = settings.default_header_page_size,
 ) -> list[Any]:
     activity_item_class_service = ActivityItemClassService()
     return activity_item_class_service.get_distinct_values_for_header(
@@ -161,7 +163,7 @@ def get_distinct_values_for_header(
 
 @router.get(
     "/{activity_item_class_uid}",
-    dependencies=[rbac.LIBRARY_READ],
+    dependencies=[security, rbac.LIBRARY_READ],
     summary="Get details on a specific activity item class (in a specific version)",
     description="""
 State before:
@@ -189,7 +191,7 @@ def get_activity(
 
 @router.get(
     "/{activity_item_class_uid}/versions",
-    dependencies=[rbac.LIBRARY_READ],
+    dependencies=[security, rbac.LIBRARY_READ],
     summary="List version history for activity item classes",
     description="""
 State before:
@@ -223,69 +225,57 @@ def get_versions(
 
 
 @router.get(
-    "/{activity_item_class_uid}/terms",
-    dependencies=[rbac.LIBRARY_READ],
-    summary="Returns all terms names and attributes.",
-    description=_generic_descriptions.DATA_EXPORTS_HEADER,
+    "/{activity_item_class_uid}/datasets/{dataset_uid}/codelists",
+    dependencies=[security, rbac.LIBRARY_READ],
+    summary="Returns all related codelists.",
+    description="""
+State before:
+ - uids of actvity item class and dataset must exist.
+
+Business logic:
+ - List the codelists related to the given activity item class.
+
+State after:
+ - No change
+
+Possible errors:
+ - Invalid uids.
+    """,
     response_model_exclude_unset=True,
     status_code=200,
     responses={
         404: _generic_descriptions.ERROR_404,
     },
 )
-@decorators.allow_exports(
-    {
-        "defaults": [
-            "term_uid",
-            "catalogue_name",
-            "codelist_uid",
-            "library_name",
-            "name.sponsor_preferred_name",
-            "name.sponsor_preferred_name_sentence_case",
-            "name.order",
-            "name.start_date",
-            "name.end_date",
-            "name.status",
-            "name.version",
-            "name.change_description",
-            "name.author_username",
-            "attributes.code_submission_value",
-            "attributes.name_submission_value",
-            "attributes.nci_preferred_name",
-            "attributes.definition",
-            "attributes.start_date",
-            "attributes.end_date",
-            "attributes.status",
-            "attributes.version",
-            "attributes.change_description",
-            "attributes.author_username",
-        ],
-        "formats": [
-            "text/csv",
-            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            "text/xml",
-            "application/json",
-        ],
-    }
-)
 # pylint: disable=unused-argument
-def get_all_terms(
+def get_all_codelists(
     request: Request,  # request is actually required by the allow_exports decorator
     activity_item_class_uid: Annotated[str, ActivityItemClassUID],
+    dataset_uid: Annotated[str, DatasetUID],
+    use_sponsor_model: Annotated[
+        bool,
+        Query(
+            description=(
+                "Whether to use the Sponsor Model to filter Codelists and Terms.\n\n"
+                "If set to True, the Sponsor Model will take precedence.\n\n"
+                "Defaults to True."
+            )
+        ),
+    ] = True,
     sort_by: Annotated[
         Json | None, Query(description=_generic_descriptions.SORT_BY)
     ] = None,
     page_number: Annotated[
-        int | None, Query(ge=1, description=_generic_descriptions.PAGE_NUMBER)
-    ] = config.DEFAULT_PAGE_NUMBER,
+        int, Query(ge=1, description=_generic_descriptions.PAGE_NUMBER)
+    ] = settings.default_page_number,
     page_size: Annotated[
-        int | None,
+        int,
         Query(
             ge=0,
-            le=config.MAX_PAGE_SIZE,
+            le=settings.max_page_size,
             description=_generic_descriptions.PAGE_SIZE,
         ),
-    ] = config.DEFAULT_PAGE_SIZE,
+    ] = settings.default_page_size,
     filters: Annotated[
         Json | None,
         Query(
@@ -294,14 +284,16 @@ def get_all_terms(
         ),
     ] = None,
     operator: Annotated[
-        str | None, Query(description=_generic_descriptions.FILTER_OPERATOR)
-    ] = config.DEFAULT_FILTER_OPERATOR,
+        str, Query(description=_generic_descriptions.FILTER_OPERATOR)
+    ] = settings.default_filter_operator,
     total_count: Annotated[
-        bool | None, Query(description=_generic_descriptions.TOTAL_COUNT)
+        bool, Query(description=_generic_descriptions.TOTAL_COUNT)
     ] = False,
-) -> CustomPage[TermWithCodelistMetadata]:
-    results = ActivityItemClassService().get_terms_of_activity_item_class(
+) -> CustomPage[ActivityItemClassCodelist]:
+    results = ActivityItemClassService().get_codelists_of_activity_item_class(
         activity_item_class_uid=activity_item_class_uid,
+        dataset_uid=dataset_uid,
+        use_sponsor_model=use_sponsor_model,
         sort_by=sort_by,
         page_number=page_number,
         page_size=page_size,
@@ -309,14 +301,14 @@ def get_all_terms(
         filter_by=filters,
         filter_operator=FilterOperator.from_str(operator),
     )
-    return CustomPage.create(
+    return CustomPage(
         items=results.items, total=results.total, page=page_number, size=page_size
     )
 
 
 @router.post(
     "",
-    dependencies=[rbac.LIBRARY_WRITE],
+    dependencies=[security, rbac.LIBRARY_WRITE],
     summary="Creates new activity item class.",
     description="""
 State before:
@@ -359,7 +351,7 @@ def create(
 
 @router.patch(
     "/{activity_item_class_uid}",
-    dependencies=[rbac.LIBRARY_WRITE],
+    dependencies=[security, rbac.LIBRARY_WRITE],
     summary="Update activity item class",
     description="""
 State before:
@@ -408,7 +400,7 @@ def edit(
 
 @router.patch(
     "/{activity_item_class_uid}/model-mappings",
-    dependencies=[rbac.LIBRARY_WRITE],
+    dependencies=[security, rbac.LIBRARY_WRITE],
     summary="Edit the mappings to variable classes",
     description="""
 State before:
@@ -447,7 +439,7 @@ def patch_mappings(
 
 @router.post(
     "/{activity_item_class_uid}/versions",
-    dependencies=[rbac.LIBRARY_WRITE],
+    dependencies=[security, rbac.LIBRARY_WRITE],
     summary=" Create a new version of activity item class",
     description="""
 State before:
@@ -490,7 +482,7 @@ def new_version(
 
 @router.post(
     "/{activity_item_class_uid}/approvals",
-    dependencies=[rbac.LIBRARY_WRITE],
+    dependencies=[security, rbac.LIBRARY_WRITE],
     summary="Approve draft version of activity item class",
     description="""
 State before:
@@ -535,7 +527,7 @@ def approve(
 
 @router.delete(
     "/{activity_item_class_uid}/activations",
-    dependencies=[rbac.LIBRARY_WRITE],
+    dependencies=[security, rbac.LIBRARY_WRITE],
     summary=" Inactivate final version of activity item class",
     description="""
 State before:
@@ -579,7 +571,7 @@ def inactivate(
 
 @router.post(
     "/{activity_item_class_uid}/activations",
-    dependencies=[rbac.LIBRARY_WRITE],
+    dependencies=[security, rbac.LIBRARY_WRITE],
     summary="Reactivate retired version of a activity item class",
     description="""
 State before:
@@ -621,9 +613,150 @@ def reactivate(
     return activity_item_class_service.reactivate_retired(uid=activity_item_class_uid)
 
 
+@router.get(
+    "/{activity_item_class_uid}/overview",
+    dependencies=[security, rbac.LIBRARY_READ],
+    summary="Get detailed overview of an activity item class",
+    description="""
+Returns detailed information about an activity item class including:
+- Activity item class details (name, definition, NCI code, status, version, etc.)
+- Activity Instance Classes that use this item class
+- Version history
+
+State before:
+- UID must exist
+
+State after:
+- No change
+
+Possible errors:
+- Invalid uid
+    """,
+    status_code=200,
+    responses={
+        403: _generic_descriptions.ERROR_403,
+        404: {
+            "model": ErrorResponse,
+            "description": "Not Found - The activity item class with the specified UID wasn't found.",
+        },
+    },
+)
+@decorators.allow_exports(
+    {
+        "defaults": ["uid", "name", "start_date", "status", "version"],
+        "formats": [
+            "text/csv",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "text/xml",
+            "application/json",
+        ],
+    }
+)
+def get_activity_item_class_overview(
+    # pylint: disable=unused-argument
+    request: Request,  # request is actually required by the allow_exports decorator
+    activity_item_class_uid: Annotated[str, ActivityItemClassUID],
+    version: Annotated[
+        str | None,
+        Query(description="Select specific version, omit to view latest version"),
+    ] = None,
+) -> ActivityItemClassOverview:
+    if version == "":
+        version = None
+
+    service = ActivityItemClassService()
+    return service.get_activity_item_class_overview(
+        activity_item_class_uid=activity_item_class_uid, version=version
+    )
+
+
+@router.get(
+    "/{activity_item_class_uid}/activity-instance-classes",
+    dependencies=[security, rbac.LIBRARY_READ],
+    summary="Get paginated Activity Instance Classes that use this item",
+    description="""
+Retrieves a paginated list of Activity Instance Classes that use this Activity Item Class.
+
+When a version is specified, returns the instance classes that were using this item at that version's date.
+Otherwise returns the latest version of each instance class.
+
+State before:
+- Activity item class UID must exist
+
+State after:
+- No change
+
+Possible errors:
+- Invalid uid
+    """,
+    response_model=GenericFilteringReturn[SimpleActivityInstanceClassForItem],
+    status_code=200,
+    responses={
+        403: _generic_descriptions.ERROR_403,
+        404: {
+            "model": ErrorResponse,
+            "description": "Not Found - The activity item class with the specified UID wasn't found.",
+        },
+    },
+)
+@decorators.allow_exports(
+    {
+        "defaults": [
+            "uid",
+            "name",
+            "mandatory",
+            "adam_param_specific_enabled",
+            "version",
+            "status",
+            "modified_date",
+        ],
+        "formats": [
+            "text/csv",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "text/xml",
+            "application/json",
+        ],
+    }
+)
+def get_activity_instance_classes_using_item(
+    # pylint: disable=unused-argument
+    request: Request,  # request is actually required by the allow_exports decorator
+    activity_item_class_uid: Annotated[str, ActivityItemClassUID],
+    version: Annotated[
+        str | None,
+        Query(description="Select specific version, omit to view latest version"),
+    ] = None,
+    page_number: Annotated[
+        int, Query(ge=1, description=_generic_descriptions.PAGE_NUMBER)
+    ] = settings.default_page_number,
+    page_size: Annotated[
+        int,
+        Query(
+            ge=0,
+            le=settings.max_page_size,
+            description=_generic_descriptions.PAGE_SIZE,
+        ),
+    ] = settings.default_page_size,
+    total_count: Annotated[
+        bool, Query(description=_generic_descriptions.TOTAL_COUNT)
+    ] = False,
+) -> GenericFilteringReturn[SimpleActivityInstanceClassForItem]:
+    if version == "":
+        version = None
+
+    service = ActivityItemClassService()
+    return service.get_activity_instance_classes_using_item_paginated(
+        activity_item_class_uid=activity_item_class_uid,
+        version=version,
+        page_number=page_number,
+        page_size=page_size,
+        total_count=total_count,
+    )
+
+
 @router.delete(
     "/{activity_item_class_uid}",
-    dependencies=[rbac.LIBRARY_WRITE],
+    dependencies=[security, rbac.LIBRARY_WRITE],
     summary="Delete draft version of activity item class",
     description="""
 State before:

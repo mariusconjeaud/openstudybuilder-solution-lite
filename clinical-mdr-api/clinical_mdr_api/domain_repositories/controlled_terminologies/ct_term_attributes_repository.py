@@ -1,11 +1,10 @@
-from datetime import datetime, timezone
+from typing import Any
 
 from neomodel import db
 
 from clinical_mdr_api.domain_repositories._generic_repository_interface import (
     _AggregateRootType,
 )
-from clinical_mdr_api.domain_repositories._utils.helpers import is_codelist_in_final
 from clinical_mdr_api.domain_repositories.controlled_terminologies.ct_get_all_query_utils import (
     create_term_attributes_aggregate_instances_from_cypher_result,
 )
@@ -13,7 +12,6 @@ from clinical_mdr_api.domain_repositories.controlled_terminologies.ct_term_gener
     CTTermGenericRepository,
 )
 from clinical_mdr_api.domain_repositories.models.controlled_terminology import (
-    CTCodelistRoot,
     CTTermAttributesRoot,
     CTTermAttributesValue,
     CTTermRoot,
@@ -27,13 +25,11 @@ from clinical_mdr_api.domain_repositories.models.generic import (
 from clinical_mdr_api.domains.controlled_terminologies.ct_term_attributes import (
     CTTermAttributesAR,
     CTTermAttributesVO,
-    CTTermCodelistVO,
 )
 from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryItemMetadataVO,
     LibraryVO,
 )
-from common.exceptions import BusinessLogicException
 
 
 class CTTermAttributesRepository(CTTermGenericRepository[CTTermAttributesAR]):
@@ -41,35 +37,34 @@ class CTTermAttributesRepository(CTTermGenericRepository[CTTermAttributesAR]):
     value_class = CTTermAttributesValue
     relationship_from_root = "has_attributes_root"
 
-    def term_specific_exists_by_name(self, term_name: str) -> bool:
-        # We allow duplicates under the condition that the conflicting term is retired
-        query = """
-            MATCH (term_ver_root:CTTermAttributesRoot)-[:LATEST]->(term_ver_value:CTTermAttributesValue {name_submission_value: $term_name})
-            OPTIONAL MATCH (term_ver_root)-[retired:HAS_VERSION {status: 'Retired'}]-(term_ver_value)
-            WITH * WHERE NOT (retired IS NOT NULL AND retired.end_date IS NULL)
-            RETURN term_ver_value
-            """
-        result, _ = db.cypher_query(query, {"term_name": term_name})
-        return len(result) > 0
-
-    def term_attributes_exists_by_code_submission_value(
-        self, term_code_submission_value: str
+    def entity_exists_by_concept_id(
+        self, entity_uid: str | None, concept_id: str | None
     ) -> bool:
-        # We allow duplicates under the condition that the conflicting term is retired
+        # Check if the concept_id is already in use by another term or codelist
+        # We allow duplicates under the condition that the conflicting term is retired.
+        if not concept_id:
+            # no conflict if concept_id is not defined
+            return False
         query = """
-            MATCH (term_ver_root:CTTermAttributesRoot)-[:LATEST]->
-                (term_ver_value:CTTermAttributesValue {code_submission_value: $term_code_submission_value})
-            OPTIONAL MATCH (term_ver_root)-[retired:HAS_VERSION {status: 'Retired'}]-(term_ver_value)
-            WITH * WHERE NOT (retired IS NOT NULL AND retired.end_date IS NULL)
-            RETURN term_ver_value
+            MATCH
+                (term_root:CTTermRoot WHERE $entity_uid IS NULL OR term_root.uid <> $entity_uid)-[:HAS_ATTRIBUTES_ROOT]->
+                (term_ver_root:CTTermAttributesRoot)-[thv:HAS_VERSION WHERE thv.end_date IS NULL AND thv.status <> "Retired"]->
+                (term_ver_value:CTTermAttributesValue {concept_id: $concept_id})
+            RETURN term_root.uid as conflicting_uid
+            UNION ALL
+            MATCH
+                (cl_root:CTCodelistRoot WHERE $entity_uid IS NULL OR cl_root.uid <> $entity_uid)-[:HAS_ATTRIBUTES_ROOT]->
+                (cl_ver_root:CTCodelistAttributesRoot)-[clhv:HAS_VERSION WHERE clhv.end_date IS NULL AND clhv.status <> "Retired"]->
+                (cl_ver_value:CTCodelistAttributesValue {concept_id: $concept_id})
+            RETURN cl_root.uid as conflicting_uid
             """
         result, _ = db.cypher_query(
-            query, {"term_code_submission_value": term_code_submission_value}
+            query, {"entity_uid": entity_uid, "concept_id": concept_id}
         )
         return len(result) > 0
 
     def _create_aggregate_root_instance_from_cypher_result(
-        self, term_dict: dict
+        self, term_dict: dict[str, Any]
     ) -> CTTermAttributesAR:
         return create_term_attributes_aggregate_instances_from_cypher_result(
             term_dict=term_dict, is_aggregated_query=False
@@ -78,40 +73,34 @@ class CTTermAttributesRepository(CTTermGenericRepository[CTTermAttributesAR]):
     def _create_aggregate_root_instance_from_version_root_relationship_and_value(
         self,
         root: CTTermAttributesRoot,
-        library: Library | None,
+        library: Library,
         relationship: VersionRelationship,
         value: CTTermAttributesValue,
         **_kwargs,
     ) -> CTTermAttributesAR:
         ct_term_root_node = root.has_root.single()
-        ct_codelist_root_node = ct_term_root_node.has_term.single()
-        if not ct_codelist_root_node:
-            ct_codelist_root_node = ct_term_root_node.had_term.single()
+        ct_codelist_term = ct_term_root_node.has_term_root.single()
+        ct_codelist_root_node = (
+            ct_codelist_term.has_term.single() if ct_codelist_term else None
+        )
 
-        codelists: list[CTTermCodelistVO] = []
-        for codelist_root in ct_term_root_node.has_term.all():
-            codelists.append(
-                CTTermCodelistVO(
-                    codelist_uid=codelist_root.uid,
-                    order=codelist_root.has_term.relationship(ct_term_root_node).order,
-                    library_name=codelist_root.has_library.single().name,
-                )
-            )
+        catalogue_names = (
+            [cat.name for cat in ct_codelist_root_node.has_codelist.all()]
+            if ct_codelist_root_node
+            else []
+        )
 
         return CTTermAttributesAR.from_repository_values(
             uid=ct_term_root_node.uid,
             ct_term_attributes_vo=CTTermAttributesVO.from_repository_values(
-                codelists=codelists,
                 concept_id=value.concept_id,
-                code_submission_value=value.code_submission_value,
-                name_submission_value=value.name_submission_value,
                 preferred_term=value.preferred_term,
                 definition=value.definition,
-                catalogue_name=ct_codelist_root_node.has_codelist.single().name,
+                catalogue_names=catalogue_names,
             ),
             library=LibraryVO.from_input_values_2(
                 library_name=library.name,
-                is_library_editable_callback=(lambda _: library.is_editable),
+                is_library_editable_callback=lambda _: library.is_editable,
             ),
             item_metadata=self._library_item_metadata_vo_from_relation(relationship),
         )
@@ -122,39 +111,41 @@ class CTTermAttributesRepository(CTTermGenericRepository[CTTermAttributesAR]):
         return self._has_data_changed(ar, value)
 
     def _get_or_create_value(
-        self, root: CTTermAttributesRoot, ar: CTTermAttributesAR
+        self,
+        root: CTTermAttributesRoot,
+        ar: CTTermAttributesAR,
+        force_new_value_node: bool = False,
     ) -> CTTermAttributesValue:
-        for itm in root.has_version.filter(
-            code_submission_value=ar.ct_term_vo.code_submission_value,
-            name_submission_value=ar.ct_term_vo.name_submission_value,
-            preferred_term=ar.ct_term_vo.preferred_term,
-            definition=ar.ct_term_vo.definition,
-        ):
-            return itm
-        latest_draft = root.latest_draft.get_or_none()
-        if latest_draft and not self._has_data_changed(ar, latest_draft):
-            return latest_draft
-        latest_final = root.latest_final.get_or_none()
-        if latest_final and not self._has_data_changed(ar, latest_final):
-            return latest_final
-        latest_retired = root.latest_retired.get_or_none()
-        if latest_retired and not self._has_data_changed(ar, latest_retired):
-            return latest_retired
+        if not force_new_value_node:
+            for itm in root.has_version.filter(
+                preferred_term=ar.ct_term_vo.preferred_term,
+                definition=ar.ct_term_vo.definition,
+                concept_id=ar.ct_term_vo.concept_id,
+            ):
+                return itm
+            latest_draft = root.latest_draft.get_or_none()
+            if latest_draft and not self._has_data_changed(ar, latest_draft):
+                return latest_draft
+            latest_final = root.latest_final.get_or_none()
+            if latest_final and not self._has_data_changed(ar, latest_final):
+                return latest_final
+            latest_retired = root.latest_retired.get_or_none()
+            if latest_retired and not self._has_data_changed(ar, latest_retired):
+                return latest_retired
+
         new_value = self.value_class(
-            code_submission_value=ar.ct_term_vo.code_submission_value,
-            name_submission_value=ar.ct_term_vo.name_submission_value,
             preferred_term=ar.ct_term_vo.preferred_term,
             definition=ar.ct_term_vo.definition,
+            concept_id=ar.ct_term_vo.concept_id,
         )
         self._db_save_node(new_value)
         return new_value
 
     def _has_data_changed(self, ar: CTTermAttributesAR, value: VersionValue):
         return (
-            ar.ct_term_vo.name_submission_value != value.name_submission_value
-            or ar.ct_term_vo.code_submission_value != value.code_submission_value
-            or ar.ct_term_vo.preferred_term != value.preferred_term
+            ar.ct_term_vo.preferred_term != value.preferred_term
             or ar.ct_term_vo.definition != value.definition
+            or ar.ct_term_vo.concept_id != value.concept_id
         )
 
     def _create(self, item: CTTermAttributesAR) -> CTTermAttributesAR:
@@ -168,10 +159,9 @@ class CTTermAttributesRepository(CTTermGenericRepository[CTTermAttributesAR]):
         relation_data: LibraryItemMetadataVO = item.item_metadata
         root = self.root_class()
         value = self.value_class(
-            code_submission_value=item.ct_term_vo.code_submission_value,
-            name_submission_value=item.ct_term_vo.name_submission_value,
             preferred_term=item.ct_term_vo.preferred_term,
             definition=item.ct_term_vo.definition,
+            concept_id=item.ct_term_vo.concept_id,
         )
         self._db_save_node(root)
 
@@ -191,24 +181,6 @@ class CTTermAttributesRepository(CTTermGenericRepository[CTTermAttributesAR]):
 
         library = self._get_library(item.library.name)
         ct_term_root_node.has_library.connect(library)
-
-        ct_codelist_root_node = CTCodelistRoot.nodes.get_or_none(
-            uid=item.ct_term_vo.codelists[0].codelist_uid
-        )
-        ct_term_root_node.has_term.connect(
-            ct_codelist_root_node,
-            {
-                "start_date": datetime.now(timezone.utc),
-                "end_date": None,
-                "author_id": item.item_metadata.author_id,
-            },
-        )
-
-        # Validate that the term is added to a codelist that isn't in a draft state.
-        BusinessLogicException.raise_if_not(
-            is_codelist_in_final(ct_codelist_root_node),
-            msg=f"Term with UID '{item.uid}' cannot be added to Codelist with UID '{item.ct_term_vo.codelists[0].codelist_uid}' as the codelist is in a draft state.",
-        )
 
         self._maintain_parameters(item, root, value)
 

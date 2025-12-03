@@ -85,11 +85,11 @@
           <span>&nbsp;</span>
         </v-chip>
       </template>
-      <template #[`item.element_type.sponsor_preferred_name`]="{ item }">
-        <CTTermDisplay :term="item.element_type" />
+      <template #[`item.element_type.term_name`]="{ item }">
+        <CTCodelistTermDisplay :term="item.element_type" />
       </template>
-      <template #[`item.element_subtype.sponsor_preferred_name`]="{ item }">
-        <CTTermDisplay :term="item.element_subtype" />
+      <template #[`item.element_subtype.term_name`]="{ item }">
+        <CTCodelistTermDisplay :term="item.element_subtype" />
       </template>
       <template #[`item.start_date`]="{ item }">
         {{ $filters.date(item.start_date) }}
@@ -144,7 +144,7 @@
 <script setup>
 import ActionsMenu from '@/components/tools/ActionsMenu.vue'
 import ConfirmDialog from '@/components/tools/ConfirmDialog.vue'
-import CTTermDisplay from '@/components/tools/CTTermDisplay.vue'
+import CTCodelistTermDisplay from '../tools/CTCodelistTermDisplay.vue'
 import NNTable from '@/components/tools/NNTable.vue'
 import StudyElementsForm from './StudyElementsForm.vue'
 import armsApi from '@/api/arms'
@@ -153,7 +153,6 @@ import filteringParameters from '@/utils/filteringParameters'
 import HistoryTable from '@/components/tools/HistoryTable.vue'
 import { useAccessGuard } from '@/composables/accessGuard'
 import { useStudiesGeneralStore } from '@/stores/studies-general'
-import { useUnitsStore } from '@/stores/units'
 import { computed, onMounted, inject, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useDragAndDrop } from '@formkit/drag-and-drop/vue'
@@ -165,7 +164,6 @@ const studiesGeneralStore = useStudiesGeneralStore()
 const accessGuard = useAccessGuard()
 const table = ref()
 const confirm = ref()
-const unitsStore = useUnitsStore()
 
 const [parent, studyElements] = useDragAndDrop([], {
   onDragend: (event) => {
@@ -204,11 +202,11 @@ const headers = [
   { title: '#', key: 'order', width: '5%' },
   {
     title: t('StudyElements.el_type'),
-    key: 'element_type.sponsor_preferred_name',
+    key: 'element_type.term_name',
   },
   {
     title: t('StudyElements.el_sub_type'),
-    key: 'element_subtype.sponsor_preferred_name',
+    key: 'element_subtype.term_name',
   },
   { title: t('StudyElements.el_name'), key: 'name' },
   { title: t('StudyElements.el_short_name'), key: 'short_name' },
@@ -242,8 +240,8 @@ const studyElementHistoryTitle = computed(() => {
 })
 
 onMounted(() => {
-  unitsStore.fetchUnits()
-  terms.getByCodelist('elementTypes').then((resp) => {
+  studiesGeneralStore.fetchUnits()
+  terms.getTermsByCodelist('elementTypes').then((resp) => {
     elementTypes.value = resp.data.items
   })
 })
@@ -325,7 +323,7 @@ function closeElementHistory() {
 function getElementType(item) {
   const type = elementTypes.value.filter((el) => el.term_uid === item.code)[0]
   if (item.code && type) {
-    return type.name.sponsor_preferred_name
+    return type.sponsor_preferred_name
   }
 }
 

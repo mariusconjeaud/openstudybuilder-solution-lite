@@ -32,7 +32,7 @@ services:
         TARGET: ${BUILD_TARGET:-dev}
         UID: ${UID:-1000}
     environment:
-      NEO4J_DSN: "${NEO4J_DSN:-bolt://neo4j:changeme1234@database:7687}/mdrdb"
+      NEO4J_DSN: "${NEO4J_DSN:-bolt://neo4j:changeme1234@database:7687/mdrdb}"
       UVICORN_ROOT_PATH: ""
       UVICORN_RELOAD: "true"
     ports:
@@ -48,6 +48,14 @@ services:
       service: database
     profiles:
       - database
+
+  zipkin:
+    image: openzipkin/zipkin
+    ports:
+      - "127.0.0.1:9411:9411"
+      - "::1:9411:9411"
+    profiles:
+      - zipkin
 
 networks:
   default:

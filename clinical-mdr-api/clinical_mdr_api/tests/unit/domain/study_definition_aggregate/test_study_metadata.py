@@ -2,6 +2,7 @@ import random
 import string
 import unittest
 from datetime import datetime, timedelta, timezone
+from decimal import Decimal
 from typing import Any, Callable, Iterable, Mapping
 
 import pytest
@@ -45,7 +46,7 @@ def random_valid_duration_object() -> str:
     return "P" + str(value) + duration_unit[0]
 
 
-initialize_ct_data_map = {
+initialize_ct_data_map: dict[str, Any] = {
     "NullValueCodes": [("A good reason", "NullValue1"), ("A bad reason", "NullValue2")],
     "StudyType": [
         ("C129000", "Patient Registry Study"),
@@ -80,11 +81,11 @@ initialize_ct_data_map = {
         ("C48660", "Not Applicable"),
         ("C49686", "Phase IIa Trial"),
     ],
-    "StudyStopRules": ("C49698_STOPRULE", "Study Stop Rule"),
-    "IsExtensionTrial": [("C49488_Y", "Y"), ("C49487_N", "N")],
-    "IsAdaptiveDesign": [("C49488_Y", "Y"), ("C49487_N", "N")],
+    "StudyStopRules": ("C49698", "Study Stop Rule"),
+    "IsExtensionTrial": [("C49488", "Y"), ("C49487", "N")],
+    "IsAdaptiveDesign": [("C49488", "Y"), ("C49487", "N")],
     "PostAuthIndicator": (
-        "C139275_PASSIND",
+        "C139275",
         "Post Authorization Safety Study Indicator",
     ),
     "TherapeuticAreas": [
@@ -110,27 +111,27 @@ initialize_ct_data_map = {
     ],
     "SexOfParticipants": [("C16576", "Female"), ("C20197", "Male"), ("C49636", "Both")],
     "StableDiseaseMinimumDuration": (
-        "C98783_SDMDUR",
+        "C98783",
         "Stable Disease Minimum Duration",
     ),
-    "RareDiseaseIndicator": [("C49488_Y", "Y"), ("C49487_N", "N")],  # SDTM catalogue
-    "HealthySubjectIndicator": [("C49488_Y", "Y"), ("C49487_N", "N")],  # SDTM catalogue
+    "RareDiseaseIndicator": [("C49488", "Y"), ("C49487", "N")],  # SDTM catalogue
+    "HealthySubjectIndicator": [("C49488", "Y"), ("C49487", "N")],  # SDTM catalogue
     "PlannedMinimumAgeOfSubject": (
-        "C49693_AGEMIN",
+        "C49693",
         "Planned Minimum Age of Subjects",
     ),  # SDTM catalogue
     "PlannedMaximumAgeOfSubject": (
-        "C49694_AGEMAX",
+        "C49694",
         "Planned Maximum Age of Subjects",
     ),  # SDTM catalogue
-    "PediatricStudyIndicator": [("C49488_Y", "Y"), ("C49487_N", "N")],  # SDTM catalogue
+    "PediatricStudyIndicator": [("C49488", "Y"), ("C49487", "N")],  # SDTM catalogue
     "PediatricPostmarketStudyIndicator": [
-        ("C49488_Y", "Y"),
-        ("C49487_N", "N"),
+        ("C49488", "Y"),
+        ("C49487", "N"),
     ],  # SDTM catalogue
-    "PediatricInvestigationPlanIndicator": [("C49488_Y", "Y"), ("C49487_N", "N")],
+    "PediatricInvestigationPlanIndicator": [("C49488", "Y"), ("C49487", "N")],
     # SDTM catalogue
-    "RelapseCriteria": ("C117961_RLPSCRIT", "Relapse Criteria"),
+    "RelapseCriteria": ("C117961", "Relapse Criteria"),
     "InterventionType": [
         ("C127574", "MJDIAEVS"),
         ("C122086", "Augmentation Pressure Point P2"),
@@ -141,8 +142,8 @@ initialize_ct_data_map = {
         ("C147156", "Pressure Half Time"),
     ],
     "AddOnToExistingTreatments": [
-        ("C49488_Y", "Y"),
-        ("C49487_N", "N"),
+        ("C49488", "Y"),
+        ("C49487", "N"),
     ],  # SDTM catalogue
     "ControlType": [
         ("C120841", "Dose Response Control"),
@@ -157,9 +158,9 @@ initialize_ct_data_map = {
         ("C82639", "Parallel Study"),
         ("C82640", "Single Group Study"),
     ],
-    "IsTrialRandomised": [("C49488_Y", "Y"), ("C49487_N", "N")],  # SDTM catalogue
+    "IsTrialRandomised": [("C49488", "Y"), ("C49487", "N")],  # SDTM catalogue
     "StratificationFactor": (
-        "C16153_STRATFCT",
+        "C16153",
         "Stratification Factors",
     ),  # SDTM catalogue
     "TrialBlindingSchema": [
@@ -168,20 +169,69 @@ initialize_ct_data_map = {
         ("C156592", "OPEN LABEL TO TREATMENT AND DOUBLE BLIND TO IMP DOSE"),
         ("C28233", "Single Blind Study"),
     ],
-    "PlannedStudyLength": ("C49697_LENGTH", "Trial Length"),  # SDTM catalogue
+    "PlannedStudyLength": ("C49697", "Trial Length"),  # SDTM catalogue
     "ConfirmedResponseMinimumDuration": (
-        "C98715_CRMDUR",
+        "C98715",
         "ConfirmedResponseMinimumDuration",
     ),  # SDTM catalogue
-    "DrugStudyIndication": [("C49488_Y", "Y"), ("C49487_N", "N")],  # SDTM catalogue
-    "DeviceStudyIndication": [("C49488_Y", "Y"), ("C49487_N", "N")],  # SDTM catalogue
-    "StudyTitle": ("C49802_TITLE", "Trial Title"),  # SDTM catalogue
+    "DrugStudyIndication": [("C49488", "Y"), ("C49487", "N")],  # SDTM catalogue
+    "DeviceStudyIndication": [("C49488", "Y"), ("C49487", "N")],  # SDTM catalogue
+    "StudyTitle": ("C49802", "Trial Title"),  # SDTM catalogue
+}
+
+initialize_ct_codelist_map = {
+    "NullValueCodes": (None, "Null Flavor", "NULLFLVR"),
+    "StudyType": ("C99077", "Study Type", "STYPE"),
+    "TrialIntentType": ("C66736", "Trial Indication Type", "TINDTP"),
+    "TrialType": ("C66739", "Trial Type", "TTYPE"),
+    "TrialPhase": ("C66737", "Trial Phase", "TPHASE"),
+    "StudyStopRules": ("C66738", "Trial Summary Parameter Test Code", "TSPARMCD"),
+    "IsExtensionTrial": ("C66742", "No Yes Response", "NY"),
+    "IsAdaptiveDesign": ("C66742", "No Yes Response", "NY"),
+    "PostAuthIndicator": ("C66742", "No Yes Response", "NY"),
+    "SexOfParticipants": ("C66732", "Sex of Participants", "SEXPOP"),
+    "StableDiseaseMinimumDuration": (
+        "C66738",
+        "Trial Summary Parameter Test Code",
+        "TSPARMCD",
+    ),
+    "RareDiseaseIndicator": ("C66742", "No Yes Response", "NY"),
+    "HealthySubjectIndicator": ("C66742", "No Yes Response", "NY"),
+    "PlannedMinimumAgeOfSubject": (
+        "C66738",
+        "Trial Summary Parameter Test Code",
+        "TSPARMCD",
+    ),
+    "PlannedMaximumAgeOfSubject": (
+        "C66738",
+        "Trial Summary Parameter Test Code",
+        "TSPARMCD",
+    ),
+    "PediatricStudyIndicator": ("C66742", "No Yes Response", "NY"),
+    "PediatricPostmarketStudyIndicator": ("C66742", "No Yes Response", "NY"),
+    "PediatricInvestigationPlanIndicator": ("C66742", "No Yes Response", "NY"),
+    "RelapseCriteria": ("C66738", "Trial Summary Parameter Test Code", "TSPARMCD"),
+    "InterventionType": ("C99078", "Intervention Type", "INTTYPE"),
+    "AddOnToExistingTreatments": ("C66742", "No Yes Response", "NY"),
+    "ControlType": ("C66785", "Control Type", "TCNTRL"),
+    "InterventionModel": ("C99076", "Intervention Model", "INTMODEL"),
+    "IsTrialRandomised": ("C66742", "No Yes Response", "NY"),
+    "StratificationFactor": ("C66738", "Trial Summary Parameter Test Code", "TSPARMCD"),
+    "TrialBlindingSchema": ("C66735", "Trial Blinding Schema", "TBLIND"),
+    "PlannedStudyLength": ("C66738", "Trial Summary Parameter Test Code", "TSPARMCD"),
+    "ConfirmedResponseMinimumDuration": (
+        "C66738",
+        "Trial Summary Parameter Test Code",
+        "TSPARMCD",
+    ),
+    "DrugStudyIndication": ("C66742", "No Yes Response", "NY"),
+    "DeviceStudyIndication": ("C66742", "No Yes Response", "NY"),
 }
 
 
 def random_valid_study_population(
     *,
-    condition: Callable[[StudyPopulationVO], bool] = (lambda _: True),
+    condition: Callable[[StudyPopulationVO], bool] = lambda _: True,
     max_tries: int = 100,
 ) -> StudyPopulationVO:
     count = 0
@@ -344,7 +394,7 @@ def random_valid_study_population(
             if use_number_of_expected_subjects
             else random_opt_c_code(initialize_ct_data_map["NullValueCodes"])
         )
-        result = StudyPopulationVO.from_input_values(
+        result: StudyPopulationVO = StudyPopulationVO.from_input_values(
             therapeutic_area_codes=therapeutic_area_codes,
             therapeutic_area_null_value_code=therapeutic_area_null_value_code,
             disease_condition_or_indication_codes=disease_condition_or_indication_codes,
@@ -484,9 +534,7 @@ class TestStudyPopulation(unittest.TestCase):
                 # then
                 with self.assertRaises(exceptions.ValidationException):
                     # when
-                    test_data.validate(
-                        therapeutic_area_exists_callback=(lambda _: False)
-                    )
+                    test_data.validate(therapeutic_area_exists_callback=lambda _: False)
 
     def test__validate__invalid_disease_condition_or_indication_code__failure(self):
         # given
@@ -520,9 +568,7 @@ class TestStudyPopulation(unittest.TestCase):
                 # then
                 with self.assertRaises(exceptions.ValidationException):
                     # when
-                    test_data.validate(
-                        diagnosis_group_exists_callback=(lambda _: False)
-                    )
+                    test_data.validate(diagnosis_group_exists_callback=lambda _: False)
 
     def test__validate__invalid_sex_of_participants_code__failure(self):
         # given
@@ -538,7 +584,7 @@ class TestStudyPopulation(unittest.TestCase):
                 with self.assertRaises(exceptions.ValidationException):
                     # when
                     test_data.validate(
-                        sex_of_participants_exists_callback=(lambda _: False)
+                        sex_of_participants_exists_callback=lambda _: False
                     )
 
     def test__validate__invalid_null_value_code_provided__failure(self):
@@ -696,9 +742,9 @@ class TestIdentificationMetadataVO(unittest.TestCase):
         #       project_number)
         test_tuples = [
             ("study-num", "study-acronym", "id-prefix", "proj-num", "desc"),
-            ("s-num", None, None, None, None),
-            (None, "study-acronym", None, None, None),
-            (None, None, "id-prefix", None, None),
+            ("s-num", None, None, "123", None),
+            (None, "study-acronym", None, "abc", None),
+            (None, None, "id-prefix", "xyz", None),
         ]
         for test_tuple in test_tuples:
             with self.subTest(test_tuple=test_tuple):
@@ -761,7 +807,7 @@ class TestIdentificationMetadataVO(unittest.TestCase):
                 study_id_metadata = StudyIdentificationMetadataVO.from_input_values(
                     study_number=study_number,
                     subpart_id=None,
-                    project_number=None,
+                    project_number="",
                     study_acronym=None,
                     description=None,
                     registry_identifiers=RegistryIdentifiersVO(
@@ -804,7 +850,7 @@ class TestIdentificationMetadataVO(unittest.TestCase):
             study_id_metadata = StudyIdentificationMetadataVO.from_input_values(
                 study_number=study_number,
                 subpart_id=None,
-                project_number=None,
+                project_number="",
                 study_acronym=None,
                 description=None,
                 registry_identifiers=RegistryIdentifiersVO(
@@ -899,7 +945,6 @@ class TestIdentificationMetadataVO(unittest.TestCase):
 
                 # when
                 id_metadata.validate(project_exists_callback=lambda _: True)
-                id_metadata.validate(project_exists_callback=None)
 
                 # then
                 # nothing we're just happy no exception raised
@@ -907,7 +952,7 @@ class TestIdentificationMetadataVO(unittest.TestCase):
 
 def random_valid_high_level_study_design(
     *,
-    condition: Callable[[HighLevelStudyDesignVO], bool] = (lambda _: True),
+    condition: Callable[[HighLevelStudyDesignVO], bool] = lambda _: True,
     fixed_values: Mapping[str, Any] | None = None,
     max_tries: int = 100,
 ) -> HighLevelStudyDesignVO:
@@ -1060,7 +1105,7 @@ def random_valid_high_level_study_design(
 
 def random_valid_high_level_study_design_sequence(
     count: int,
-    condition: Callable[[HighLevelStudyDesignVO], bool] = (lambda _: True),
+    condition: Callable[[HighLevelStudyDesignVO], bool] = lambda _: True,
     generators: Mapping[str, Any] | None = None,
     max_tries: int = 100,
 ) -> Iterable[HighLevelStudyDesignVO]:
@@ -1231,8 +1276,8 @@ class TestStudyDescriptionVO(unittest.TestCase):
                 # then
                 test_item.validate(
                     study_number="study_number",
-                    study_title_exists_callback=(lambda _, study_number: False),
-                    study_short_title_exists_callback=(lambda _, study_number: False),
+                    study_title_exists_callback=lambda _, study_number: False,
+                    study_short_title_exists_callback=lambda _, study_number: False,
                 )
 
     def test__validate__create_existing_study_title__failure(self):
@@ -1245,7 +1290,7 @@ class TestStudyDescriptionVO(unittest.TestCase):
                 with self.assertRaises(exceptions.AlreadyExistsException):
                     test_item.validate(
                         study_number="study_number",
-                        study_title_exists_callback=(lambda _, study_number: True),
+                        study_title_exists_callback=lambda _, study_number: True,
                         study_short_title_exists_callback=(
                             lambda _, study_number: True
                         ),
@@ -1277,18 +1322,18 @@ class TestHighLevelStudyDesignVO(unittest.TestCase):
                 with self.assertRaises(exceptions.ValidationException):
                     # when
                     test_item.validate(
-                        null_value_exists_callback=(lambda _: False),
-                        study_type_exists_callback=(lambda _: True),
-                        trial_type_exists_callback=(lambda _: True),
-                        trial_intent_type_exists_callback=(lambda _: True),
-                        trial_phase_exists_callback=(lambda _: True),
+                        null_value_exists_callback=lambda _: False,
+                        study_type_exists_callback=lambda _: True,
+                        trial_type_exists_callback=lambda _: True,
+                        trial_intent_type_exists_callback=lambda _: True,
+                        trial_phase_exists_callback=lambda _: True,
                     )
 
     def test__validate__both_study_stop_rules_and_its_null_value_present__failure(self):
         # given
         test_sequence = list(
             random_valid_high_level_study_design_sequence(
-                count=10, condition=(lambda _: _.is_valid())
+                count=10, condition=lambda _: _.is_valid()
             )
         )
         test_sequence = [
@@ -1305,11 +1350,11 @@ class TestHighLevelStudyDesignVO(unittest.TestCase):
                 with self.assertRaises(exceptions.ValidationException):
                     # when
                     test_item.validate(
-                        null_value_exists_callback=(lambda _: True),
-                        study_type_exists_callback=(lambda _: True),
-                        trial_type_exists_callback=(lambda _: True),
-                        trial_intent_type_exists_callback=(lambda _: True),
-                        trial_phase_exists_callback=(lambda _: True),
+                        null_value_exists_callback=lambda _: True,
+                        study_type_exists_callback=lambda _: True,
+                        trial_type_exists_callback=lambda _: True,
+                        trial_intent_type_exists_callback=lambda _: True,
+                        trial_phase_exists_callback=lambda _: True,
                     )
 
     def test__validate__both_is_adaptive_design_and_its_null_value_present__failure(
@@ -1318,7 +1363,7 @@ class TestHighLevelStudyDesignVO(unittest.TestCase):
         # given
         test_sequence = list(
             random_valid_high_level_study_design_sequence(
-                count=10, condition=(lambda _: _.is_valid())
+                count=10, condition=lambda _: _.is_valid()
             )
         )
         test_sequence = [
@@ -1335,11 +1380,11 @@ class TestHighLevelStudyDesignVO(unittest.TestCase):
                 with self.assertRaises(exceptions.ValidationException):
                     # when
                     test_item.validate(
-                        null_value_exists_callback=(lambda _: True),
-                        study_type_exists_callback=(lambda _: True),
-                        trial_type_exists_callback=(lambda _: True),
-                        trial_intent_type_exists_callback=(lambda _: True),
-                        trial_phase_exists_callback=(lambda _: True),
+                        null_value_exists_callback=lambda _: True,
+                        study_type_exists_callback=lambda _: True,
+                        trial_type_exists_callback=lambda _: True,
+                        trial_intent_type_exists_callback=lambda _: True,
+                        trial_phase_exists_callback=lambda _: True,
                     )
 
     def test__validate__both_is_extension_trial_and_its_null_value_present__failure(
@@ -1348,7 +1393,7 @@ class TestHighLevelStudyDesignVO(unittest.TestCase):
         # given
         test_sequence = list(
             random_valid_high_level_study_design_sequence(
-                count=10, condition=(lambda _: _.is_valid())
+                count=10, condition=lambda _: _.is_valid()
             )
         )
         test_sequence = [
@@ -1365,18 +1410,18 @@ class TestHighLevelStudyDesignVO(unittest.TestCase):
                 with self.assertRaises(exceptions.ValidationException):
                     # when
                     test_item.validate(
-                        null_value_exists_callback=(lambda _: True),
-                        study_type_exists_callback=(lambda _: True),
-                        trial_type_exists_callback=(lambda _: True),
-                        trial_intent_type_exists_callback=(lambda _: True),
-                        trial_phase_exists_callback=(lambda _: True),
+                        null_value_exists_callback=lambda _: True,
+                        study_type_exists_callback=lambda _: True,
+                        trial_type_exists_callback=lambda _: True,
+                        trial_intent_type_exists_callback=lambda _: True,
+                        trial_phase_exists_callback=lambda _: True,
                     )
 
     def test__validate__both_trial_types_and_its_null_value_present__failure(self):
         # given
         test_sequence = list(
             random_valid_high_level_study_design_sequence(
-                count=10, condition=(lambda _: _.is_valid())
+                count=10, condition=lambda _: _.is_valid()
             )
         )
         test_sequence = [
@@ -1393,18 +1438,18 @@ class TestHighLevelStudyDesignVO(unittest.TestCase):
                 with self.assertRaises(exceptions.ValidationException):
                     # when
                     test_item.validate(
-                        null_value_exists_callback=(lambda _: True),
-                        study_type_exists_callback=(lambda _: True),
-                        trial_type_exists_callback=(lambda _: True),
-                        trial_intent_type_exists_callback=(lambda _: True),
-                        trial_phase_exists_callback=(lambda _: True),
+                        null_value_exists_callback=lambda _: True,
+                        study_type_exists_callback=lambda _: True,
+                        trial_type_exists_callback=lambda _: True,
+                        trial_intent_type_exists_callback=lambda _: True,
+                        trial_phase_exists_callback=lambda _: True,
                     )
 
     def test__validate__both_trial_phase_and_its_null_value_present__failure(self):
         # given
         test_sequence = list(
             random_valid_high_level_study_design_sequence(
-                count=10, condition=(lambda _: _.is_valid())
+                count=10, condition=lambda _: _.is_valid()
             )
         )
         test_sequence = [
@@ -1420,11 +1465,11 @@ class TestHighLevelStudyDesignVO(unittest.TestCase):
                 with self.assertRaises(exceptions.ValidationException):
                     # when
                     test_item.validate(
-                        null_value_exists_callback=(lambda _: True),
-                        study_type_exists_callback=(lambda _: True),
-                        trial_type_exists_callback=(lambda _: True),
-                        trial_intent_type_exists_callback=(lambda _: True),
-                        trial_phase_exists_callback=(lambda _: True),
+                        null_value_exists_callback=lambda _: True,
+                        study_type_exists_callback=lambda _: True,
+                        trial_type_exists_callback=lambda _: True,
+                        trial_intent_type_exists_callback=lambda _: True,
+                        trial_phase_exists_callback=lambda _: True,
                     )
 
     def test__validate__both_study_type_and_study_type_null_value_present__failure(
@@ -1432,7 +1477,7 @@ class TestHighLevelStudyDesignVO(unittest.TestCase):
     ):
         # given
         test_sequence = random_valid_high_level_study_design_sequence(
-            count=10, condition=(lambda _: _.is_valid())
+            count=10, condition=lambda _: _.is_valid()
         )
         test_sequence = [
             _.fix_some_values(
@@ -1447,11 +1492,11 @@ class TestHighLevelStudyDesignVO(unittest.TestCase):
                 with self.assertRaises(exceptions.ValidationException):
                     # when
                     test_item.validate(
-                        null_value_exists_callback=(lambda _: True),
-                        study_type_exists_callback=(lambda _: True),
-                        trial_type_exists_callback=(lambda _: True),
-                        trial_intent_type_exists_callback=(lambda _: True),
-                        trial_phase_exists_callback=(lambda _: True),
+                        null_value_exists_callback=lambda _: True,
+                        study_type_exists_callback=lambda _: True,
+                        trial_type_exists_callback=lambda _: True,
+                        trial_intent_type_exists_callback=lambda _: True,
+                        trial_phase_exists_callback=lambda _: True,
                     )
 
     def test__validate__neither_main_nor_null_values__success(self):
@@ -1480,11 +1525,11 @@ class TestHighLevelStudyDesignVO(unittest.TestCase):
             with self.subTest():
                 # when
                 test_item.validate(
-                    null_value_exists_callback=(lambda _: True),
-                    study_type_exists_callback=(lambda _: True),
-                    trial_type_exists_callback=(lambda _: True),
-                    trial_intent_type_exists_callback=(lambda _: True),
-                    trial_phase_exists_callback=(lambda _: True),
+                    null_value_exists_callback=lambda _: True,
+                    study_type_exists_callback=lambda _: True,
+                    trial_type_exists_callback=lambda _: True,
+                    trial_intent_type_exists_callback=lambda _: True,
+                    trial_phase_exists_callback=lambda _: True,
                 )
 
                 # then
@@ -1509,11 +1554,11 @@ class TestHighLevelStudyDesignVO(unittest.TestCase):
             with self.subTest():
                 # when
                 test_item.validate(
-                    null_value_exists_callback=(lambda _: True),
-                    study_type_exists_callback=(lambda _: True),
-                    trial_type_exists_callback=(lambda _: True),
-                    trial_intent_type_exists_callback=(lambda _: True),
-                    trial_phase_exists_callback=(lambda _: True),
+                    null_value_exists_callback=lambda _: True,
+                    study_type_exists_callback=lambda _: True,
+                    trial_type_exists_callback=lambda _: True,
+                    trial_intent_type_exists_callback=lambda _: True,
+                    trial_phase_exists_callback=lambda _: True,
                 )
 
                 # then
@@ -1538,11 +1583,11 @@ class TestHighLevelStudyDesignVO(unittest.TestCase):
             with self.subTest():
                 # when
                 test_item.validate(
-                    null_value_exists_callback=(lambda _: True),
-                    study_type_exists_callback=(lambda _: True),
-                    trial_type_exists_callback=(lambda _: True),
-                    trial_intent_type_exists_callback=(lambda _: True),
-                    trial_phase_exists_callback=(lambda _: True),
+                    null_value_exists_callback=lambda _: True,
+                    study_type_exists_callback=lambda _: True,
+                    trial_type_exists_callback=lambda _: True,
+                    trial_intent_type_exists_callback=lambda _: True,
+                    trial_phase_exists_callback=lambda _: True,
                 )
 
                 # then
@@ -1551,7 +1596,7 @@ class TestHighLevelStudyDesignVO(unittest.TestCase):
     def test__init__with_mutable_iterables__changed_to_tuples(self):
         # given
         study_type_code: str | None = random_str()
-        trial_type_codes: Iterable[str] = [random_str(), random_str()]
+        trial_type_codes: list[str] = [random_str(), random_str()]
         trial_phase_code: str | None = random_str()
         is_extension_trial: bool | None = None
         is_adaptive_design: bool | None = None
@@ -1597,7 +1642,7 @@ class TestHighLevelStudyDesignVO(unittest.TestCase):
                 return False
             try:
                 high_level_study_design_vo.validate(
-                    trial_phase_exists_callback=(lambda _: True)
+                    trial_phase_exists_callback=lambda _: True
                 )
             except exceptions.ValidationException:
                 return False
@@ -1616,7 +1661,7 @@ class TestHighLevelStudyDesignVO(unittest.TestCase):
                 with self.assertRaises(exceptions.ValidationException):
                     # when
                     high_level_study_design.validate(
-                        trial_phase_exists_callback=(lambda _: False)
+                        trial_phase_exists_callback=lambda _: False
                     )
 
     def test__validate__invalid_study_type_code__failure(self):
@@ -1627,7 +1672,7 @@ class TestHighLevelStudyDesignVO(unittest.TestCase):
                 return False
             try:
                 high_level_study_design_vo.validate(
-                    study_type_exists_callback=(lambda _: True)
+                    study_type_exists_callback=lambda _: True
                 )
             except exceptions.ValidationException:
                 return False
@@ -1646,7 +1691,7 @@ class TestHighLevelStudyDesignVO(unittest.TestCase):
                 with self.assertRaises(exceptions.ValidationException):
                     # when
                     high_level_study_design.validate(
-                        study_type_exists_callback=(lambda _: False)
+                        study_type_exists_callback=lambda _: False
                     )
 
 
@@ -1669,7 +1714,7 @@ def random_ver_metadata(
             study_status=random.choice(
                 [StudyStatus.DRAFT, StudyStatus.RELEASED, StudyStatus.LOCKED]
             ),
-            version_number=random.choice([None, random.randint(-100, 100)]),
+            version_number=random.choice([None, Decimal(random.randint(-100, 100))]),
         )
         if condition is None or condition(result):
             return result
@@ -1732,7 +1777,7 @@ def random_valid_study_description() -> StudyDescriptionVO:
 
 def random_valid_study_intervention(
     *,
-    condition: Callable[[StudyInterventionVO], bool] = (lambda _: True),
+    condition: Callable[[StudyInterventionVO], bool] = lambda _: True,
     max_tries: int = 100,
 ) -> StudyInterventionVO:
     count = 0
@@ -1836,7 +1881,7 @@ def random_valid_study_intervention(
             else random_opt_c_code(initialize_ct_data_map["NullValueCodes"])
         )
 
-        result = StudyInterventionVO.from_input_values(
+        result: StudyInterventionVO = StudyInterventionVO.from_input_values(
             intervention_type_code=intervention_type_code,
             intervention_type_null_value_code=intervention_type_null_value_code,
             add_on_to_existing_treatments=add_on_to_existing_treatments,

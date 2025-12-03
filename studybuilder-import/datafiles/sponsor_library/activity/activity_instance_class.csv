@@ -1,7 +1,7 @@
 LEVEL_0_CLASS,LEVEL_1_CLASS,LEVEL_2_CLASS,LEVEL_3_CLASS,LEVEL_4_CLASS,DOMAIN_SPECIFIC,DEFINITION,ORDER
 GeneralObservation,SubjectObservation,SpecialPurpose,Demographics,,Yes,"TBD",1
 GeneralObservation,SubjectObservation,SpecialPurpose,Comments,,Yes,"TBD",2
-GeneralObservation,SubjectObservation,SpecialPurpose,SubjectVisits,,Yes,"TBD",3
+GeneralObservation,SubjectObservation,SpecialPurpose,SubjectVisit,,Yes,"TBD",3
 GeneralObservation,Observation,DeviceSpecialPurpose,DeviceIdentifiers,,Yes,"TBD",4
 GeneralObservation,SubjectObservation,Finding,NumericFindings,,No,"TBD",5
 GeneralObservation,SubjectObservation,Finding,CategoricFindings,,No,"TBD",6

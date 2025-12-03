@@ -80,7 +80,7 @@ The visit 0 is occasionally utilized in early phase studies. This visit is not e
 ![visit_0](~@source/images/user_guides/Visit_0_1.png)
 Figure 7: Visits 0 in a study
 
-Follow the below steps to create an Information visit 0 in StudyBuilder:
+Follow the below steps to create an Information visit 0 in OpenStudyBuilder:
 1.	In studies/define study/study Structure/study visits: click on ”Add content” button
 1.	In Visit scheduling type, select Scheduled visit and click Continue
 1.	Select the screening or first study period (Epoch) and click continue
@@ -91,7 +91,7 @@ Follow the below steps to create an Information visit 0 in StudyBuilder:
 1.	Select time unit as needed
 1.	Set timing as *negative* towards the global anchor visit, e.g. ’-28’ (days). *Note* that the timing must be before any existing Visit 1.
 1.	Set visit window as needed (optional)
-1.	StudyBuilder will now name this very first Information visit as Visit 0 (see green boxes in Figure 8)
+1.	OpenStudyBuilder will now name this very first Information visit as Visit 0 (see green boxes in Figure 8)
 
 ![visit_0](~@source/images/user_guides/Visit_0_2.png)
 Figure 8: Settings to create visit 0
@@ -172,7 +172,7 @@ Epoch | The epoch, the visit is assigned to
 Visit Type | Based on the visit type codelist in the library. Example: Screening
 SoA Milestone | Indicate the visit type is to be displayed as a SoA milestone
 Visit Class | Scheduled visit, Unscheduled visit, Non-visit, Special Visit, Manually defined visit
-Visit Subclass | Single visit, Anchor visit in visit grouo, Additional sub-visit, Repeating visit
+Visit Subclass | Single visit, Anchor visit in visit group, Additional sub-visit, Repeating visit
 Repeating frequency | For repeating visits the optional specification of the repeating frequency
 Visit name | Visit as name. Example: Visit 2. Defined manually for Manually defined visits
 Anchor visit in visit group | Indicator when visit is the anchor visit in a visit stretching across several days

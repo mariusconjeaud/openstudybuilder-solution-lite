@@ -1,4 +1,5 @@
 import functools
+import inspect
 from collections.abc import Hashable
 from dataclasses import dataclass
 from enum import Enum
@@ -14,8 +15,8 @@ from clinical_mdr_api.domain_repositories.libraries.library_repository import (
 from clinical_mdr_api.domains.concepts.unit_definitions.unit_definition import (
     UnitDefinitionAR,
 )
+from clinical_mdr_api.models.concepts.concept import SimpleNumericValueWithUnit
 from clinical_mdr_api.models.syntax_templates.template_parameter import (
-    ComplexTemplateParameter,
     TemplateParameter,
     TemplateParameterTerm,
 )
@@ -25,9 +26,8 @@ from clinical_mdr_api.repositories._utils import (
     FilterDict,
     FilterOperator,
 )
-from clinical_mdr_api.utils import extract_parameters
 from common.exceptions import ValidationException
-from common.telemetry import trace_calls
+from common.telemetry import trace_block, trace_calls
 from common.utils import get_field_type
 
 
@@ -377,15 +377,15 @@ def filter_base_model_using_fields_directive(
 
 
 def create_duration_object_from_api_input(
-    value: int,
+    value: int | None,
     unit: str,
-    find_duration_name_by_code: Callable[[str], UnitDefinitionAR | None],
+    find_duration_name_by_code: Callable[..., UnitDefinitionAR | None],
 ) -> str | None:
     """
     Transforms the API duration input to the ISO duration format.
 
     Args:
-        value (int): The duration value.
+        value (int | None): The duration value.
         unit (str): The duration unit.
         find_duration_name_by_code (Callable[[str], UnitDefinitionAR | None]): A function that finds the duration name
             by its code.
@@ -405,12 +405,11 @@ def create_duration_object_from_api_input(
     return None
 
 
-@trace_calls
 def service_level_generic_filtering(
     items: list[Any],
-    filter_by: dict | None = None,
+    filter_by: dict[str, dict[str, Any]] | None = None,
     filter_operator: FilterOperator = FilterOperator.AND,
-    sort_by: dict | None = None,
+    sort_by: dict[str, bool] | None = None,
     total_count: bool = False,
     page_number: int = 1,
     page_size: int = 0,
@@ -449,28 +448,46 @@ def service_level_generic_filtering(
             )
         GenericFilteringReturn(items=[<__main__.Obj object at 0x7f58cfc4b310>], total=1)
     """
-    filtered_items = generic_item_filtering(
-        items=items,
-        filter_by=filter_by,
-        filter_operator=filter_operator,
-        sort_by=sort_by,
-    )
-    # Do count
-    count = len(filtered_items) if total_count else 0
-    # Do pagination
-    filtered_items = generic_pagination(
-        items=filtered_items,
-        page_number=page_number,
-        page_size=page_size,
-    )
-    return GenericFilteringReturn.create(items=filtered_items, total=count)
+
+    with trace_block("service_level_generic_filtering") as span:
+        span.add_attribute(
+            "call.kwargs",
+            {
+                "filter_by": filter_by,
+                "filter_operator": filter_operator,
+                "sort_by": sort_by,
+                "total_count": total_count,
+                "page_number": page_number,
+                "page_size": page_size,
+            },
+        )
+        span.add_attribute("call.num_input", len(items))
+
+        filtered_items = generic_item_filtering(
+            items=items,
+            filter_by=filter_by,
+            filter_operator=filter_operator,
+            sort_by=sort_by,
+        )
+        # Do count
+        count = len(filtered_items) if total_count else 0
+        # Do pagination
+        filtered_items = generic_pagination(
+            items=filtered_items,
+            page_number=page_number,
+            page_size=page_size,
+        )
+
+        span.add_attribute("call.num_output", len(filtered_items))
+
+    return GenericFilteringReturn(items=filtered_items, total=count)
 
 
 def generic_item_filtering(
     items: list[Any],
-    filter_by: dict | None = None,
+    filter_by: dict[str, dict[str, Any]] | None = None,
     filter_operator: FilterOperator = FilterOperator.AND,
-    sort_by: dict | None = None,
+    sort_by: dict[str, bool] | None = None,
 ) -> list[Any]:
     """
     Filters and sorts a list of items based on the provided filter and sort criteria.
@@ -503,92 +520,103 @@ def generic_item_filtering(
             )
         [<__main__.Obj object at 0x7f58cfc4b310>]
     """
-    if sort_by is None:
-        sort_by = {}
-    if filter_by is None:
-        filter_by = {}
-    validate_is_dict("sort_by", sort_by)
-    validate_is_dict("filter_by", filter_by)
 
-    filters = FilterDict(elements=filter_by)
-    if filter_operator == FilterOperator.AND:
-        # Start from full list, then only keep items that match filter elements, one by one
-        filtered_items = items
-        # The list will decrease after each step (aka filtering out)
-        for key in filters.elements:
-            _values = filters.elements[key].v
-            _operator = filters.elements[key].op
-            filtered_items = list(
-                filter(
-                    lambda x, k=key, v=_values, o=_operator: filter_aggregated_items(
-                        x, k, v, o
-                    ),
-                    filtered_items,
-                )
-            )
-    elif filter_operator == FilterOperator.OR:
-        # Start from empty list then add element one by one
-        _filtered_items = []
-        # The list will increase after each step
-        for key in filters.elements:
-            _values = filters.elements[key].v
-            _operator = filters.elements[key].op
-            matching_items = list(
-                filter(
-                    lambda x, k=key, v=_values, o=_operator: filter_aggregated_items(
-                        x, k, v, o
-                    ),
-                    items,
-                )
-            )
-            _filtered_items += matching_items
-        # if passed filter dict is empty we should return all elements without any filtering
-        if not filters.elements:
-            filtered_items = items
-        else:
-            # Finally, deduplicate list
-            uids = set()
-            filtered_items = []
-            for item in _filtered_items:
-                if item.uid not in uids:
-                    filtered_items.append(item)
-                    uids.add(item.uid)
-    else:
-        raise ValidationException(msg=f"Invalid filter_operator: {filter_operator}")
-
-    # Do sorting
-    distinct_sort_orders = set(list(sort_by.values()))
-    # If all orders for SortKeys are the same we can order the list in a single sort function call
-    if len(distinct_sort_orders) == 1:
-        filtered_items.sort(
-            key=lambda x: [
-                (
-                    elm
-                    if (elm := extract_nested_key_value(x, sort_key)) is not None
-                    else (
-                        "-1"
-                        if issubclass(extract_nested_key_type(x, sort_key), str)
-                        else -1
-                    )
-                )
-                for sort_key in sort_by.keys()
-            ],
-            reverse=not distinct_sort_orders.pop(),
+    with trace_block("generic_item_filtering") as span:
+        span.add_attribute(
+            "call.kwargs",
+            {
+                "filter_by": filter_by,
+                "filter_operator": filter_operator,
+                "sort_by": sort_by,
+            },
         )
-    # If orders for SortKeys are different we have to order list calling sort function a few times, once per each SortKey
-    elif len(distinct_sort_orders) > 1:
-        for sort_key, sort_order in sort_by.items():
+        span.add_attribute("call.num_input", len(items))
+
+        if sort_by is None:
+            sort_by = {}
+        if filter_by is None:
+            filter_by = {}
+        validate_is_dict("sort_by", sort_by)
+        validate_is_dict("filter_by", filter_by)
+
+        filters = FilterDict.model_validate({"elements": filter_by})
+        if filter_operator == FilterOperator.AND:
+            # Start from full list, then only keep items that match filter elements, one by one
+            filtered_items = items
+            # The list will decrease after each step (aka filtering out)
+            for key in filters.elements:
+                _values = filters.elements[key].v
+                _operator = filters.elements[key].op
+                filtered_items = [
+                    item
+                    for item in filtered_items
+                    if filter_aggregated_items(item, key, _values, _operator)
+                ]
+        elif filter_operator == FilterOperator.OR:
+            # Start from empty list then add element one by one
+            _filtered_items = []
+            # The list will increase after each step
+            for key in filters.elements:
+                _values = filters.elements[key].v
+                _operator = filters.elements[key].op
+                matching_items: list[Any] = [
+                    item
+                    for item in items
+                    if filter_aggregated_items(item, key, _values, _operator)
+                ]
+                _filtered_items += matching_items
+            # if passed filter dict is empty we should return all elements without any filtering
+            if not filters.elements:
+                filtered_items = items
+            else:
+                # Finally, deduplicate list
+                uids = set()
+                filtered_items = []
+                for item in _filtered_items:
+                    if item.uid not in uids:
+                        filtered_items.append(item)
+                        uids.add(item.uid)
+        else:
+            raise ValidationException(msg=f"Invalid filter_operator: {filter_operator}")
+
+        # Do sorting
+        distinct_sort_orders = set(list(sort_by.values()))
+        # If all orders for SortKeys are the same we can order the list in a single sort function call
+        if len(distinct_sort_orders) == 1:
             filtered_items.sort(
-                key=lambda x, s=sort_key: (
-                    elm
-                    if (elm := extract_nested_key_value(x, s)) is not None
-                    else (
-                        "-1" if issubclass(extract_nested_key_type(x, s), str) else -1
+                key=lambda x: [
+                    (
+                        elm
+                        if (elm := extract_nested_key_value(x, sort_key)) is not None
+                        else (
+                            "-1"
+                            if issubclass(extract_nested_key_type(x, sort_key), str)
+                            else -1
+                        )
                     )
-                ),
-                reverse=not sort_order,
+                    for sort_key in sort_by.keys()
+                ],
+                reverse=not distinct_sort_orders.pop(),
             )
-    return filtered_items
+        # If orders for SortKeys are different we have to order list calling sort function a few times, once per each SortKey
+        elif len(distinct_sort_orders) > 1:
+            for sort_key, sort_order in sort_by.items():
+                filtered_items.sort(
+                    key=lambda x, y=sort_key: (  # type: ignore[misc]
+                        elm
+                        if (elm := extract_nested_key_value(x, y)) is not None
+                        else (
+                            "-1"
+                            if issubclass(extract_nested_key_type(x, y), str)
+                            else -1
+                        )
+                    ),
+                    reverse=not sort_order,
+                )
+
+        span.add_attribute("call.num_output", len(filtered_items))
+
+        return filtered_items
 
 
 def generic_pagination(
@@ -626,22 +654,27 @@ def generic_pagination(
             )
         -> a list containing the "Joe" and "Doe" objects.
     """
-    # Do pagination
-    paged_items = items
-    if page_size > 0:
-        paged_items = paged_items[
-            (page_number - 1) * page_size : page_number * page_size
-        ]
-    return paged_items
+    with trace_block("generic_pagination") as span:
+        span.add_attribute("call.num_input", len(items))
+
+        # Do pagination
+        paged_items = items
+        if page_size > 0:
+            paged_items = paged_items[
+                (page_number - 1) * page_size : page_number * page_size
+            ]
+
+        span.add_attribute("call.num_output", len(paged_items))
+
+        return paged_items
 
 
-@trace_calls
 def service_level_generic_header_filtering(
     items: list[Any],
     field_name: str,
     filter_operator: FilterOperator = FilterOperator.AND,
     search_string: str = "",
-    filter_by: dict | None = None,
+    filter_by: dict[str, dict[str, Any]] | None = None,
     page_size: int = 10,
 ) -> list[Any]:
     """
@@ -679,81 +712,102 @@ def service_level_generic_header_filtering(
         ... )
         ["John", "Doe"]
     """
-    if filter_by is None:
-        filter_by = {}
-    validate_is_dict("filter_by", filter_by)
 
-    # Add header field name to filter_by, to filter with a CONTAINS pattern
-    if search_string != "":
-        filter_by[field_name] = {
-            "v": [search_string],
-            "op": ComparisonOperator.CONTAINS,
-        }
-    filters = FilterDict(elements=filter_by)
-    if filter_operator == FilterOperator.AND:
-        # Start from full list, then only keep items that match filter elements, one by one
-        filtered_items = items
-        # The list will decrease after each step (aka filtering out)
-        for key in filters.elements:
-            _values = filters.elements[key].v
-            _operator = filters.elements[key].op
-            filtered_items = list(
-                filter(
-                    lambda x, k=key, v=_values, o=_operator: filter_aggregated_items(
-                        x, k, v, o
-                    ),
-                    filtered_items,
-                )
-            )
-    else:
-        # Start from full list, then add items that match filter elements, one by one
-        _filtered_items = []
-        # The list will increase after each step
-        for key in filters.elements:
-            _values = filters.elements[key].v
-            _operator = filters.elements[key].op
-            matching_items = list(
-                filter(
-                    lambda x, k=key, v=_values, o=_operator: filter_aggregated_items(
-                        x, k, v, o
-                    ),
-                    items,
-                )
-            )
-            _filtered_items += matching_items
-        filtered_items = _filtered_items
+    with trace_block("service_level_generic_header_filtering") as span:
+        span.add_attribute(
+            "call.kwargs",
+            {
+                "filter_by": filter_by,
+                "filter_operator": filter_operator,
+                "search_string": search_string,
+                "page_size": page_size,
+            },
+        )
+        span.add_attribute("call.num_input", len(items))
 
-    # Return values for field_name
-    extracted_values = []
-    for item in filtered_items:
-        extracted_value = extract_nested_key_value(item, field_name)
-        # The extracted value can be
-        # * A list when the property associated with key is a list of objects
-        # ** (e.g. categories.name.sponsor_preferred_name for an Objective Template)
-        if isinstance(extracted_value, list):
-            # Merge lists
-            extracted_values = extracted_values + extracted_value
-        # * A single value when the property associated with key is a simple property
-        # Skip if None
-        elif extracted_value is not None:
-            # Append element to list
-            extracted_values.append(extracted_value)
+        if filter_by is None:
+            filter_by = {}
+        validate_is_dict("filter_by", filter_by)
 
-    return_values = []
-    # Transform into a set in order to remove duplicates, then cast back to list
-    is_hashable = bool(extracted_values and isinstance(extracted_values[0], Hashable))
-    for extracted_value in extracted_values:
-        if is_hashable:
-            value_to_return = extracted_value
+        # Add header field name to filter_by, to filter with a CONTAINS pattern
+        if search_string != "":
+            filter_by[field_name] = {
+                "v": [search_string],
+                "op": ComparisonOperator.CONTAINS,
+            }
+        filters = FilterDict.model_validate({"elements": filter_by})
+        if filter_operator == FilterOperator.AND:
+            # Start from full list, then only keep items that match filter elements, one by one
+            filtered_items = items
+            # The list will decrease after each step (aka filtering out)
+            for key in filters.elements:
+                _values = filters.elements[key].v
+                _operator = filters.elements[key].op
+                filtered_items = [
+                    item
+                    for item in filtered_items
+                    if filter_aggregated_items(item, key, _values, _operator)
+                ]
         else:
-            value_to_return = extracted_value.name
+            # Start from full list, then add items that match filter elements, one by one
+            _filtered_items = []
+            # The list will increase after each step
+            for key in filters.elements:
+                _values = filters.elements[key].v
+                _operator = filters.elements[key].op
+                matching_items: list[Any] = [
+                    item
+                    for item in items
+                    if filter_aggregated_items(item, key, _values, _operator)
+                ]
+                _filtered_items += matching_items
+            filtered_items = _filtered_items
 
-        if value_to_return not in return_values:
-            return_values.append(value_to_return)
+        # Return values for field_name
+        extracted_values: list[Any] = []
+        for item in filtered_items:
+            extracted_value = extract_nested_key_value(item, field_name)
+            # The extracted value can be
+            # * A list when the property associated with key is a list of objects
+            # ** (e.g. categories.name.sponsor_preferred_name for an Objective Template)
+            if isinstance(extracted_value, list):
+                # Merge lists
+                extracted_values = extracted_values + extracted_value
+            # * A single value when the property associated with key is a simple property
+            # Skip if None
+            elif isinstance(extracted_value, SimpleNumericValueWithUnit):
+                # Append `{value} {unit_label}`
+                extracted_values.append(
+                    f"{str(extracted_value.value)} {extracted_value.unit_label}"
+                )
+            elif extracted_value is not None:
+                # Append element to list
+                extracted_values.append(extracted_value)
 
-    # Limit results returned
-    return_values = return_values[:page_size]
-    return return_values
+        return_values = []
+        # Transform into a set in order to remove duplicates, then cast back to list
+        is_hashable = bool(
+            extracted_values and isinstance(extracted_values[0], Hashable)
+        )
+        for extracted_value in extracted_values:
+            if is_hashable:
+                value_to_return = extracted_value
+            else:
+                value_to_return = None
+                for attrn_name in ["name", "term_name"]:
+                    if hasattr(extracted_value, attrn_name):
+                        value_to_return = getattr(extracted_value, attrn_name)
+                        break
+
+            if value_to_return not in return_values:
+                return_values.append(value_to_return)
+
+        # Limit results returned
+        return_values = return_values[:page_size]
+
+        span.add_attribute("call.num_output", len(return_values))
+
+        return return_values
 
 
 def extract_nested_key_value(term, key):
@@ -765,7 +819,7 @@ def extract_nested_key_type(term, key):
 
 
 def extract_properties_for_wildcard(item, prefix: str = ""):
-    output = []
+    output: list[Any] = []
     if prefix:
         prefix += "."
     # item can be None - ignore if it is
@@ -839,6 +893,23 @@ def filter_aggregated_items(item, filter_key, filter_values, filter_operator):
     if isinstance(_item_value_for_key, Enum):
         return apply_filter_operator(
             _item_value_for_key.value, filter_operator, filter_values
+        )
+    if isinstance(_item_value_for_key, SimpleNumericValueWithUnit) and filter_values:
+        # When filtering on a SimpleNumericValueWithUnit we expect the filter value to be in the format "<number> <unit>", e.g., "5 mg"
+        # We split the filter value into a numeric part and a unit part and apply the filter operator to both parts
+        numeric_values = [
+            float(filter_value.split(" ")[0]) for filter_value in filter_values
+        ]
+        unit_values = [
+            filter_value.split(" ")[1]
+            for filter_value in filter_values
+            if " " in filter_value
+        ]
+
+        return apply_filter_operator(
+            float(_item_value_for_key.value), filter_operator, numeric_values
+        ) and apply_filter_operator(
+            _item_value_for_key.unit_label, filter_operator, unit_values
         )
     return apply_filter_operator(_item_value_for_key, filter_operator, filter_values)
 
@@ -940,9 +1011,8 @@ def rgetattr_type(obj, attr):
             prop = obj.model_fields.get(attr)
             if prop:
                 return get_field_type(prop.annotation)
-            ValidationException.raise_if(
-                True,
-                msg=f"Cannot resolve a model field for attribute {attr}",
+            raise ValidationException(
+                msg=f"Cannot resolve a model field for attribute {attr}"
             )
         return inner_obj
 
@@ -950,45 +1020,17 @@ def rgetattr_type(obj, attr):
 
 
 @trace_calls
-def process_complex_parameters(parameters, parameter_repository):
+def process_parameters(parameters):
     return_parameters = []
     for _, item in enumerate(parameters):
         item_terms = []
-        if item["definition"] is not None:
-            param_names = extract_parameters(item["template"])
-            params = []
-            for param_name in param_names:
-                param_term_list = []
-                if param_name != "NumericValue":
-                    param = parameter_repository.get_parameter_including_terms(
-                        param_name
-                    )
-                    if param is not None:
-                        for val in param["terms"]:
-                            if val["uid"] is not None:
-                                tpt = TemplateParameterTerm(
-                                    name=val["name"], uid=val["uid"], type=val["type"]
-                                )
-                                param_term_list.append(tpt)
-                template_parameter = TemplateParameter(
-                    name=param_name, terms=param_term_list
+        for term in item["terms"]:
+            if term["uid"] is not None:
+                tpt = TemplateParameterTerm(
+                    name=term["name"], uid=term["uid"], type=term["type"]
                 )
-                params.append(template_parameter)
-            return_parameters.append(
-                ComplexTemplateParameter(
-                    name=item["name"], format=item["template"], parameters=params
-                )
-            )
-        else:
-            for term in item["terms"]:
-                if term["uid"] is not None:
-                    tpt = TemplateParameterTerm(
-                        name=term["name"], uid=term["uid"], type=term["type"]
-                    )
-                    item_terms.append(tpt)
-            return_parameters.append(
-                TemplateParameter(name=item["name"], terms=item_terms)
-            )
+                item_terms.append(tpt)
+        return_parameters.append(TemplateParameter(name=item["name"], terms=item_terms))
     return return_parameters
 
 
@@ -1003,8 +1045,8 @@ def calculate_diffs_history(
     unique_list_uids = list({x.uid for x in selection_history})
     unique_list_uids.sort(reverse=True)
     # list of all study_elements
-    data = []
-    ith_selection_history = []
+    data: list[Any] = []
+    ith_selection_history: list[Any] = []
     for i_unique in unique_list_uids:
         ith_selection_history = []
         # gather the selection history of the i_unique Uid
@@ -1065,8 +1107,10 @@ def extract_filtering_values(filters, parameter_name, single_value=False):
 
 
 def build_simple_filters(
-    _vo_to_ar_filter_map: dict, filter_by: dict | None, sort_by: dict | None
-) -> dict | None:
+    _vo_to_ar_filter_map: dict[Any, Any],
+    filter_by: dict[Any, Any] | None,
+    sort_by: dict[Any, Any] | None,
+) -> dict[Any, Any] | None:
     if (
         filter_by is None
         or all(key in _vo_to_ar_filter_map.keys() for key in filter_by.keys())
@@ -1096,18 +1140,44 @@ class AggregatedTransactionProxy(neomodel.sync_.core.TransactionProxy):
     __manage_transaction = None
 
     def __enter__(self):
-        self.__manage_transaction = (
-            getattr(self.db, "_active_transaction", None) is None
-        )
+        self.__manage_transaction = self.db._active_transaction is None
         if self.__manage_transaction:
-            return super().__enter__()
+            super().__enter__()
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
         if self.__manage_transaction:
             super().__exit__(exc_type, exc_value, traceback)
 
+    def __call__(self, func: Callable) -> Callable:
+        raise NotImplementedError(
+            f"{self.__class__.__name__} must not be used as a decorator."
+        )
 
-def ensure_transaction(db: neomodel.sync_.core.Database) -> Callable:
-    """decorator to ensure a database transaction: starts a new transaction if not already in an active transaction"""
-    return AggregatedTransactionProxy(db)
+
+_Func = TypeVar("_Func", bound=Callable[..., Any])
+
+
+def ensure_transaction(db: neomodel.sync_.core.Database) -> Callable[[_Func], _Func]:
+    """decorator to manage transaction `with TransactionProxy(db)` only if not already in db a transaction"""
+
+    def decorate(func: _Func) -> _Func:
+        if inspect.iscoroutinefunction(func):
+            raise TypeError(
+                f"@ensure_transaction cannot be used with async function '{func.__name__}'"
+            )
+
+        @functools.wraps(func)
+        def wrapper(*args: Any, **kwargs: Any) -> Any:
+            if db._active_transaction is None:
+                # No active transaction, wrap call into TransactionProxy to start and manage a transaction
+                with neomodel.sync_.core.TransactionProxy(db):
+                    return func(*args, **kwargs)
+
+            else:
+                # Active transaction detected, just call func without managing a transaction
+                return func(*args, **kwargs)
+
+        return wrapper
+
+    return decorate

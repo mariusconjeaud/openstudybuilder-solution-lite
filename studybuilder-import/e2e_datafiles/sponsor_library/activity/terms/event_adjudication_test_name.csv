@@ -1,0 +1,6 @@
+CODELIST_SUBMVAL,SPONSOR_NAME,SPONSOR_NAME_SENTENCE_CASE,TERM_SUBMVAL,DEFINITION,ORDER,CONCEPT_ID,USE_EXISTING_CL_TERM,NCI_PREFERRED_NAME,CATALOGUES
+ZATEST,Adjudication Outcome,adjudication outcome,Adjudication Outcome,Adjudication Outcome,1,,ZATESTCD:ADJOUT,Adjudication Outcome,
+ZATEST,Cause of Death,cause of death,Cause of Death,Cause of Death,2,,ZATESTCD:CAUSEDEA,Cause of Death,
+ZATEST,Classification of Myocardial Infarction,classification of myocardial infarction,Classification of Myocardial Infarction,Classification of Myocardial Infarction,3,,ZATESTCD:CLASSMYF,Classification of Myocardial Infarction,
+ZATEST,Source of Adjudicated Event,source of adjudicated event,Source of Adjudicated Event,Source of Adjudicated Event,4,,ZATESTCD:SOURADEV,Source of Adjudicated Event,
+ZATEST,Undetermined Etiology Reason,undetermined etiology reason,Undetermined Etiology Reason,Undetermined Etiology Reason,5,,ZATESTCD:UNDETIRE,Undetermined Etiology Reason,

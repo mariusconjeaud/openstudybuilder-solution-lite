@@ -166,8 +166,8 @@ project_mapper = {
 class Mockdata(BaseImporter):
     logging_name = "mockdata"
 
-    def __init__(self, api=None, metrics_inst=None, cache=None):
-        super().__init__(api=api, metrics_inst=metrics_inst, cache=cache)
+    def __init__(self, api=None, metrics_inst=None):
+        super().__init__(api=api, metrics_inst=metrics_inst)
         self.all_activity_instances = self.api.get_all_activity_objects(
             "activity-instances"
         )
@@ -258,7 +258,7 @@ class Mockdata(BaseImporter):
                     {"values": values, "conjunction": conjunction, "position": 2}
                 )
             body = {
-                "parameter_values": parameter_values,
+                "parameter_terms": parameter_values,
                 f"{objecttype}_template_uid": template["uid"],
                 "library_name": data["library_name"],
             }
@@ -530,7 +530,7 @@ class Mockdata(BaseImporter):
                                         data_to_patch = study_patch_data["patch"][
                                             "c_code"
                                         ]
-                                        if api_param_name.endswith("Codes"):
+                                        if api_param_name.endswith("_codes"):
                                             if api_param_name not in patched_data:
                                                 dict_to_patch = {
                                                     "term_uid": data_to_patch

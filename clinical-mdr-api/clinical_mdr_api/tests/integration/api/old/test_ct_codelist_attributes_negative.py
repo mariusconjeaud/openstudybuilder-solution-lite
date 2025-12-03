@@ -1,4 +1,6 @@
-# pylint: disable=unused-argument, redefined-outer-name, too-many-arguments, line-too-long, too-many-statements
+# pylint: disable=unused-argument
+# pylint: disable=redefined-outer-name
+# pylint: disable=too-many-arguments
 
 # pytest fixture functions have other fixture functions as arguments,
 # which pylint interprets as unused arguments
@@ -32,12 +34,13 @@ def test_data():
 
 def test_post_create_codelist_non_enditable_library(api_client):
     data = {
-        "catalogue_name": "SDTM CT",
+        "catalogue_names": ["SDTM CT"],
         "name": "name",
         "submission_value": "Submission value",
         "nci_preferred_name": "Nci preferred name",
         "definition": "definition",
         "extensible": True,
+        "ordinal": False,
         "sponsor_preferred_name": "Sponsor preferred name",
         "template_parameter": True,
         "library_name": "CDISC",
@@ -183,13 +186,14 @@ def test_post_approve_non_editable_library(api_client):
 
 def test_post_create_codelist_with_parent_codelist1(api_client):
     data = {
-        "catalogue_name": "SDTM CT",
+        "catalogue_names": ["SDTM CT"],
         "name": "name with parent",
         "parent_codelist_uid": "ct_codelist_root3",
         "submission_value": "Submission value with parent",
         "nci_preferred_name": "Nci preferred name with parent",
         "definition": "definition",
         "extensible": True,
+        "ordinal": False,
         "sponsor_preferred_name": "Sponsor preferred name with parent",
         "template_parameter": True,
         "library_name": "Sponsor",
@@ -201,7 +205,7 @@ def test_post_create_codelist_with_parent_codelist1(api_client):
 
     res = response.json()
 
-    assert res["catalogue_name"] == "SDTM CT"
+    assert res["catalogue_names"] == ["SDTM CT"]
     assert res["codelist_uid"] == "CTCodelist_000001"
     assert res["parent_codelist_uid"] == "ct_codelist_root3"
     assert res["child_codelist_uids"] == []
@@ -210,6 +214,7 @@ def test_post_create_codelist_with_parent_codelist1(api_client):
     assert res["nci_preferred_name"] == "Nci preferred name with parent"
     assert res["definition"] == "definition"
     assert res["extensible"] is True
+    assert res["ordinal"] is False
     assert res["sponsor_preferred_name"] == "Sponsor preferred name with parent"
     assert res["template_parameter"] is True
     assert res["library_name"] == "Sponsor"
@@ -217,7 +222,11 @@ def test_post_create_codelist_with_parent_codelist1(api_client):
 
 
 def test_post_add_term_to_child_codelist1(api_client):
-    data = {"term_uid": "term1"}
+    data = {
+        "term_uid": "term1",
+        "submission_value": "Submission value with parent",
+        "order": 999999,
+    }
     response = api_client.post("/ct/codelists/CTCodelist_000001/terms", json=data)
 
     assert_response_status_code(response, 400)

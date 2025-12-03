@@ -108,7 +108,7 @@
           </template>
           <template #[`header.data-table-select`]>
             <v-btn
-              :disabled="exchangeMode"
+              :disabled="exchangeMode || selectedOnly"
               data-cy="copy-all-activities"
               icon="mdi-content-copy"
               color="nnWhite"
@@ -130,7 +130,6 @@
               data-cy="select-activity"
               :disabled="
                 isStudyActivitySelected(internalItem.raw) ||
-                isStudyActivityRequested(internalItem.raw) ||
                 !isGroupingValid(internalItem.raw) ||
                 multipleSelectedInExchangeMode(internalItem.raw)
               "
@@ -140,6 +139,26 @@
           <template #[`item.activity.is_data_collected`]="{ item }">
             <div v-if="item.activity">
               {{ $filters.yesno(item.activity.is_data_collected) }}
+            </div>
+          </template>
+          <template #[`item.activity.definition`]="{ item }">
+            <div v-if="item.activity">
+              {{ item.activity.definition || '-' }}
+            </div>
+          </template>
+          <template #[`item.activity.synonyms`]="{ item }">
+            <div v-if="item.activity && item.activity.synonyms">
+              {{
+                item.activity.synonyms.length > 0
+                  ? item.activity.synonyms.join(', ')
+                  : '-'
+              }}
+            </div>
+            <div v-else>-</div>
+          </template>
+          <template #[`item.activity.abbreviation`]="{ item }">
+            <div v-if="item.activity">
+              {{ item.activity.abbreviation || '-' }}
             </div>
           </template>
         </NNTable>
@@ -165,6 +184,7 @@
           :initial-filters="initialFilters"
           column-data-resource="concepts/activities/activities"
           :filters-modify-function="modifyFilters"
+          :loading-watcher="stopLoading"
           @filter="getActivities"
         >
           <template #beforeSwitches="">
@@ -173,7 +193,7 @@
               color="primary"
               :label="$t('StudyActivityForm.show_selected')"
               data-cy="show-selected"
-              class="mt-6"
+              class="mt-6 ml-4"
               @update:model-value="switchTableItems"
             />
             <v-checkbox
@@ -187,7 +207,7 @@
               v-model="unifiedGroup"
               :label="$t('StudyActivityForm.flowchart_group_title')"
               :items="flowchartGroups"
-              item-title="name.sponsor_preferred_name"
+              item-title="sponsor_preferred_name"
               style="min-width: 250px"
               class="mt-6 ml-2"
               rounded="lg"
@@ -205,7 +225,7 @@
               :label="$t('StudyActivityForm.flowchart_group_title')"
               data-cy="flowchart-group"
               :items="flowchartGroups"
-              item-title="name.sponsor_preferred_name"
+              item-title="sponsor_preferred_name"
               style="min-width: 250px"
               class="mt-2 mb-n4"
               rounded="lg"
@@ -226,7 +246,7 @@
           </template>
           <template #[`header.data-table-select`]>
             <v-btn
-              :disabled="exchangeMode"
+              :disabled="exchangeMode || selectedOnly"
               icon="mdi-content-copy"
               color="nnWhite"
               data-cy="copy-all-activities"
@@ -257,6 +277,13 @@
           </template>
           <template #[`item.is_data_collected`]="{ item }">
             {{ $filters.yesno(item.is_data_collected) }}
+          </template>
+          <template #[`item.synonyms`]="{ item }">
+            {{
+              item.synonyms && item.synonyms.length > 0
+                ? item.synonyms.join(', ')
+                : ''
+            }}
           </template>
         </NNTable>
       </v-col>
@@ -330,7 +357,7 @@
                 data-cy="flowchart-group"
                 :items="flowchartGroups"
                 :rules="[formRules.required]"
-                item-title="name.sponsor_preferred_name"
+                item-title="sponsor_preferred_name"
                 rounded="lg"
                 variant="outlined"
                 color="nnBaseBlue"
@@ -393,7 +420,7 @@
                   :label="$t('StudyActivityForm.flowchart_group_title')"
                   data-cy="flowchart-group"
                   :items="flowchartGroups"
-                  item-title="name.sponsor_preferred_name"
+                  item-title="sponsor_preferred_name"
                   style="min-width: 250px"
                   class="mt-2 mb-n4"
                   rounded="lg"
@@ -441,6 +468,19 @@
               </template>
               <template #[`item.is_data_collected`]="{ item }">
                 {{ $filters.yesno(item.is_data_collected) }}
+              </template>
+              <template #[`item.definition`]="{ item }">
+                {{ item.definition || '-' }}
+              </template>
+              <template #[`item.synonyms`]="{ item }">
+                {{
+                  item.synonyms && item.synonyms.length > 0
+                    ? item.synonyms.join(', ')
+                    : '-'
+                }}
+              </template>
+              <template #[`item.abbreviation`]="{ item }">
+                {{ item.abbreviation || '-' }}
               </template>
             </v-data-table>
           </div>
@@ -518,6 +558,7 @@ const selectedOnly = ref(false)
 const timeout = ref(null)
 const sameGroup = ref(false)
 const unifiedGroup = ref(null)
+const stopLoading = ref(null)
 
 const requestTypes = [
   {
@@ -541,14 +582,14 @@ const activityHeaders = [
   },
   {
     title: t('StudyActivity.activity_group'),
-    key: 'activity_group.name',
-    externalFilterSource: 'concepts/activities/activity-groups$name',
+    key: 'activity_group_name',
+    split_activity_by_groupings: true,
     exludeFromHeader: ['is_data_collected'],
   },
   {
     title: t('StudyActivity.activity_sub_group'),
-    key: 'activity_subgroup.name',
-    externalFilterSource: 'concepts/activities/activity-sub-groups$name',
+    split_activity_by_groupings: true,
+    key: 'activity_subgroup_name',
     exludeFromHeader: ['is_data_collected'],
   },
   {
@@ -556,6 +597,9 @@ const activityHeaders = [
     key: 'name',
     exludeFromHeader: ['is_data_collected'],
   },
+  { title: t('_global.definition'), key: 'definition' },
+  { title: t('ActivityTable.synonyms'), key: 'synonyms' },
+  { title: t('_global.abbreviation'), key: 'abbreviation' },
   { title: t('StudyActivity.data_collection'), key: 'is_data_collected' },
   { title: t('_global.status'), key: 'status' },
 ]
@@ -599,6 +643,9 @@ const studyActivityHeaders = [
     disableColumnFilters: true,
   },
   { title: t('StudyActivity.activity'), key: 'activity.name' },
+  { title: t('_global.definition'), key: 'activity.definition' },
+  { title: t('ActivityTable.synonyms'), key: 'activity.synonyms' },
+  { title: t('_global.abbreviation'), key: 'activity.abbreviation' },
   {
     title: t('StudyActivity.data_collection'),
     key: 'activity.is_data_collected',
@@ -662,7 +709,8 @@ watch(selectedStudy, () => {
 steps.value = selectFromLibrarySteps
 
 onMounted(() => {
-  terms.getByCodelist('flowchartGroups').then((resp) => {
+  const filters = { 'name.status': { v: [statuses.FINAL] } }
+  terms.getTermsByCodelist('flowchartGroups', null, filters).then((resp) => {
     flowchartGroups.value = resp.data.items
   })
   study.get({ has_study_activity: true, page_size: 0 }).then((resp) => {
@@ -681,7 +729,9 @@ onMounted(() => {
 function switchTableItems() {
   if (selectedOnly.value) {
     activities.value = selectedActivities.value
+    activitiesTotal.value = activities.value.length
   } else {
+    stopLoading.value = null
     creationMode.value === 'selectFromLibrary'
       ? selectionLibraryTable.value.filterTable()
       : selectionTable.value.filterTable()
@@ -734,6 +784,10 @@ function pushActivityToSelected(item) {
 }
 
 function getActivities(filters, options) {
+  if (selectedOnly.value) {
+    stopLoading.value = false
+    return
+  }
   if (creationMode.value === 'createPlaceholder') {
     const params = {
       page_number: options && options.page ? options.page : 1,
@@ -788,9 +842,6 @@ function getActivities(filters, options) {
       params.filters = {}
     }
     params.filters.study_uid = { v: [selectedStudy.value.uid] }
-    params.filters['activity.library_name'] = {
-      v: [libConstants.LIBRARY_SPONSOR],
-    }
     params.filters['activity.status'] = {
       v: [statuses.FINAL],
     }
@@ -870,90 +921,15 @@ function getActivities(filters, options) {
     page_size: options ? options.itemsPerPage : 15,
     library_name: libConstants.LIBRARY_SPONSOR,
     total_count: true,
+    filters: JSON.parse(savedFilters.value),
+    split_activity_by_groupings: true,
   }
   if (options && options.sortBy && options.sortBy.length) {
     const ascending = options.sortBy[0].order === 'asc'
     params.sort_by = `{"${options.sortBy[0].key}":${ascending}}`
   }
-  if (options.sortBy[0] && options.sortBy[0].key === 'activity_group.name') {
-    params.sort_by = JSON.stringify({
-      'activity_groupings[0].activity_group_name':
-        options.sortBy[0].order === 'desc' ? false : true,
-    })
-  } else if (
-    options.sortBy[0] &&
-    options.sortBy[0].key === 'activity_subgroup.name'
-  ) {
-    params.sort_by = JSON.stringify({
-      'activity_groupings[0].activity_subgroup_name':
-        options.sortBy[0].order === 'desc' ? false : true,
-    })
-  }
-  if (savedFilters.value && savedFilters.value !== undefined) {
-    const filtersObj = JSON.parse(savedFilters.value)
-    filtersObj['is_used_by_legacy_instances'] = {
-      v: [false],
-      op: 'eq',
-    }
-    if (filtersObj['activity_group.name']) {
-      params.activity_group_names = []
-      filtersObj['activity_group.name'].v.forEach((value) => {
-        params.activity_group_names.push(value)
-      })
-      delete filtersObj['activity_group.name']
-    }
-    if (filtersObj['activity_subgroup.name']) {
-      params.activity_subgroup_names = []
-      filtersObj['activity_subgroup.name'].v.forEach((value) => {
-        params.activity_subgroup_names.push(value)
-      })
-      delete filtersObj['activity_subgroup.name']
-    }
-    if (filtersObj.name) {
-      params.activity_names = []
-      filtersObj.name.v.forEach((value) => {
-        params.activity_names.push(value)
-      })
-      delete filtersObj.name
-    }
-    if (
-      Object.keys(filtersObj).length !== 0 &&
-      filtersObj.constructor === Object
-    ) {
-      params.filters = JSON.stringify(filtersObj)
-    }
-  }
   activitiesApi.get(params, 'activities').then((resp) => {
-    const items = []
-    for (const item of resp.data.items) {
-      if (item.activity_groupings.length > 0) {
-        for (const grouping of item.activity_groupings) {
-          items.push({
-            activity_group: {
-              name: grouping.activity_group_name,
-              uid: grouping.activity_group_uid,
-            },
-            activity_subgroup: {
-              name: grouping.activity_subgroup_name,
-              uid: grouping.activity_subgroup_uid,
-            },
-            item_key:
-              item.uid +
-              grouping.activity_group_uid +
-              grouping.activity_subgroup_uid,
-            ...item,
-          })
-        }
-      } else {
-        items.push({
-          activity_group: { name: '', uid: '' },
-          activity_subgroup: { name: '', uid: '' },
-          item_key: item.uid,
-          ...item,
-        })
-      }
-    }
-    activities.value = items
+    activities.value = resp.data.items
     if (selectedActivities.value.length > 0) {
       for (const sa of selectedActivities.value) {
         activities.value[
@@ -1063,6 +1039,13 @@ async function selectAllStudyActivities() {
       selectedActivities.value.push(copy)
     }
   }
+  selectedActivities.value = selectedActivities.value.filter(
+    (activity1, i, arr) =>
+      arr.findIndex(
+        (activity2) =>
+          activity2.study_activity_uid === activity1.study_activity_uid
+      ) === i
+  )
 }
 
 function isActivitySelected(activity) {
@@ -1073,9 +1056,9 @@ function isActivitySelected(activity) {
         (item) =>
           item.activity.uid === activity.uid &&
           item.study_activity_group.activity_group_uid ===
-            activity.activity_group.uid &&
+            activity.activity_group_uid &&
           item.study_activity_subgroup.activity_subgroup_uid ===
-            activity.activity_subgroup.uid
+            activity.activity_subgroup_uid
       )
     }
     return selected !== undefined
@@ -1124,8 +1107,12 @@ function getCreationPayload(selectedItem) {
       order: props.order,
     }
     if (form.value.activity_groupings) {
-      result.activity_group_uid = selectedItem.activity_group.uid
-      result.activity_subgroup_uid = selectedItem.activity_subgroup.uid
+      result.activity_group_uid = selectedItem.activity_group_uid
+        ? selectedItem.activity_group_uid
+        : selectedItem.activity_group.uid
+      result.activity_subgroup_uid = selectedItem.activity_subgroup_uid
+        ? selectedItem.activity_subgroup_uid
+        : selectedItem.activity_subgroup.uid
     }
     return result
   }
@@ -1174,7 +1161,7 @@ async function batchCreateStudyActivities() {
 async function exchangeStudyActivity() {
   for (const item of selectedActivities.value) {
     let payload = getCreationPayload(item)
-    payload.show_activity_in_protocol_flowchart = true
+    payload.show_activity_in_protocol_flowchart = false
     await study.exchangeStudyActivity(
       studiesGeneralStore.selectedStudy.uid,
       props.exchangeActivityUid,

@@ -16,14 +16,15 @@ from clinical_mdr_api.routers.studies import utils
 from clinical_mdr_api.services.studies.study_activity_instruction import (
     StudyActivityInstructionService,
 )
-from common import config
 from common.auth import rbac
+from common.auth.dependencies import security
+from common.config import settings
 from common.models.error import ErrorResponse
 
 
 @router.get(
     "/study-activity-instructions",
-    dependencies=[rbac.STUDY_READ],
+    dependencies=[security, rbac.STUDY_READ],
     summary="Returns all study activity instructions currently selected",
     response_model_exclude_unset=True,
     status_code=200,
@@ -37,16 +38,16 @@ def get_all_activity_instructions_for_all_studies(
         Json | None, Query(description=_generic_descriptions.SORT_BY)
     ] = None,
     page_number: Annotated[
-        int | None, Query(ge=1, description=_generic_descriptions.PAGE_NUMBER)
-    ] = config.DEFAULT_PAGE_NUMBER,
+        int, Query(ge=1, description=_generic_descriptions.PAGE_NUMBER)
+    ] = settings.default_page_number,
     page_size: Annotated[
-        int | None,
+        int,
         Query(
             ge=0,
-            le=config.MAX_PAGE_SIZE,
+            le=settings.max_page_size,
             description=_generic_descriptions.PAGE_SIZE,
         ),
-    ] = config.DEFAULT_PAGE_SIZE,
+    ] = settings.default_page_size,
     filters: Annotated[
         Json | None,
         Query(
@@ -55,10 +56,10 @@ def get_all_activity_instructions_for_all_studies(
         ),
     ] = None,
     operator: Annotated[
-        str | None, Query(description=_generic_descriptions.FILTER_OPERATOR)
-    ] = config.DEFAULT_FILTER_OPERATOR,
+        str, Query(description=_generic_descriptions.FILTER_OPERATOR)
+    ] = settings.default_filter_operator,
     total_count: Annotated[
-        bool | None, Query(description=_generic_descriptions.TOTAL_COUNT)
+        bool, Query(description=_generic_descriptions.TOTAL_COUNT)
     ] = False,
 ) -> CustomPage[StudyActivityInstruction]:
     service = StudyActivityInstructionService()
@@ -70,7 +71,7 @@ def get_all_activity_instructions_for_all_studies(
         filter_operator=FilterOperator.from_str(operator),
         sort_by=sort_by,
     )
-    return CustomPage.create(
+    return CustomPage(
         items=all_selections.items,
         total=all_selections.total,
         page=page_number,
@@ -80,7 +81,7 @@ def get_all_activity_instructions_for_all_studies(
 
 @router.get(
     "/studies/{study_uid}/study-activity-instructions",
-    dependencies=[rbac.STUDY_READ],
+    dependencies=[security, rbac.STUDY_READ],
     summary="List all study activity instructions currently defined for the study",
     response_model_exclude_unset=True,
     status_code=200,
@@ -106,7 +107,7 @@ def get_all_selected_instructions(
 
 @router.delete(
     "/studies/{study_uid}/study-activity-instructions/{study_activity_instruction_uid}",
-    dependencies=[rbac.STUDY_WRITE],
+    dependencies=[security, rbac.STUDY_WRITE],
     summary="Delete a study activity instruction",
     status_code=204,
     responses={
@@ -130,7 +131,7 @@ def delete_activity_instruction(
 
 @router.post(
     "/studies/{study_uid}/study-activity-instructions/batch",
-    dependencies=[rbac.STUDY_WRITE],
+    dependencies=[security, rbac.STUDY_WRITE],
     summary="Batch operations (create, delete) for study activity instructions",
     status_code=207,
     responses={

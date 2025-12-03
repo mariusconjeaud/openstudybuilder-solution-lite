@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 def tst_study(request, temp_database):
     """Initialize test study"""
     logging.info("%s fixture: injecting magic data", request.fixturename)
-    study = inject_base_data()
+    study, _test_data_dict = inject_base_data()
     return study
 
 

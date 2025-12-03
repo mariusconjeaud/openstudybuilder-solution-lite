@@ -1,4 +1,4 @@
-from typing import Annotated
+from typing import Annotated, Any
 
 from pydantic import ConfigDict, Field
 
@@ -70,6 +70,9 @@ class DatasetVariable(BaseModel):
         str | None, Field(json_schema_extra={"nullable": True})
     ] = None
     value_list: list[str] = Field(default_factory=list)
+    analysis_variable_set: Annotated[
+        str | None, Field(json_schema_extra={"nullable": True})
+    ] = None
     dataset: Annotated[SimpleDataset, Field()]
     data_model_ig_names: Annotated[
         list[str],
@@ -89,9 +92,9 @@ class DatasetVariable(BaseModel):
     ] = None
 
     @classmethod
-    def from_repository_output(cls, input_dict: dict):
+    def from_repository_output(cls, input_dict: dict[str, Any]):
         return cls(
-            uid=input_dict.get("uid"),
+            uid=input_dict["uid"],
             label=input_dict.get("standard_value").get("label"),
             title=input_dict.get("standard_value").get("title"),
             description=input_dict.get("standard_value").get("description"),
@@ -104,11 +107,10 @@ class DatasetVariable(BaseModel):
             implementation_notes=input_dict.get("implementation_notes"),
             mapping_instructions=input_dict.get("mapping_instructions"),
             described_value_domain=input_dict.get("described_value_domain"),
-            value_list=(
-                input_dict.get("value_list") if input_dict.get("value_list") else []
-            ),
-            catalogue_name=input_dict.get("catalogue_name"),
-            data_model_ig_names=input_dict.get("data_model_ig_names"),
+            value_list=input_dict.get("value_list") or [],
+            analysis_variable_set=input_dict.get("analysis_variable_set"),
+            catalogue_name=input_dict["catalogue_name"],
+            data_model_ig_names=input_dict["data_model_ig_names"],
             dataset=SimpleDataset(
                 name=input_dict.get("dataset").get("name"),
                 ordinal=input_dict.get("dataset").get("ordinal"),

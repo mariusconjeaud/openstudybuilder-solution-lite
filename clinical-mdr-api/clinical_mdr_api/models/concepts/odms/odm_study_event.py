@@ -13,7 +13,7 @@ from clinical_mdr_api.models.concepts.concept import (
 )
 from clinical_mdr_api.models.concepts.odms.odm_form import OdmFormRefModel
 from clinical_mdr_api.models.utils import PostInputModel
-from common import config
+from common.config import settings
 
 
 class OdmStudyEvent(ConceptModel):
@@ -36,12 +36,12 @@ class OdmStudyEvent(ConceptModel):
         cls,
         odm_study_event_ar: OdmStudyEventAR,
         find_odm_form_by_uid_with_study_event_relation: Callable[
-            [str, str], OdmFormRefVO | None
+            [str, str, str], OdmFormRefVO
         ],
     ) -> Self:
         return cls(
             uid=odm_study_event_ar._uid,
-            name=odm_study_event_ar.concept_vo.name,
+            name=odm_study_event_ar.name,
             oid=odm_study_event_ar.concept_vo.oid,
             effective_date=odm_study_event_ar.concept_vo.effective_date,
             retired_date=odm_study_event_ar.concept_vo.retired_date,
@@ -59,6 +59,7 @@ class OdmStudyEvent(ConceptModel):
                     OdmFormRefModel.from_odm_form_uid(
                         uid=form_uid,
                         study_event_uid=odm_study_event_ar._uid,
+                        study_event_version=odm_study_event_ar.item_metadata.version,
                         find_odm_form_by_uid_with_study_event_relation=find_odm_form_by_uid_with_study_event_relation,
                     )
                     for form_uid in odm_study_event_ar.concept_vo.form_uids
@@ -80,6 +81,7 @@ class OdmStudyEventPostInput(ConceptPostInput):
 
 
 class OdmStudyEventPatchInput(ConceptPatchInput):
+    name: Annotated[str, Field(min_length=1)]
     oid: Annotated[str | None, Field(min_length=1)]
     effective_date: Annotated[date | None, Field()]
     retired_date: Annotated[date | None, Field()]
@@ -89,12 +91,10 @@ class OdmStudyEventPatchInput(ConceptPatchInput):
 
 class OdmStudyEventFormPostInput(PostInputModel):
     uid: Annotated[str, Field(min_length=1)]
-    order_number: Annotated[int, Field(lt=config.MAX_INT_NEO4J)]
+    order_number: Annotated[int, Field(lt=settings.max_int_neo4j)]
     mandatory: Annotated[str, Field(min_length=1)]
     locked: Annotated[str, Field(min_length=1)] = "No"
-    collection_exception_condition_oid: Annotated[str | None, Field(min_length=1)] = (
-        None
-    )
+    collection_exception_condition_oid: Annotated[str | None, Field()] = None
 
 
 class OdmStudyEventVersion(OdmStudyEvent):

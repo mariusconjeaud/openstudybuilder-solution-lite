@@ -1,4 +1,6 @@
-# pylint: disable=unused-argument, redefined-outer-name, too-many-arguments, line-too-long, too-many-statements
+# pylint: disable=unused-argument
+# pylint: disable=redefined-outer-name
+# pylint: disable=too-many-arguments
 
 # pytest fixture functions have other fixture functions as arguments,
 # which pylint interprets as unused arguments
@@ -59,13 +61,15 @@ def test_ct_stats(api_client):
     assert res["term_change_details"] == []
     assert res["latest_added_codelists"] == [
         {
-            "catalogue_name": "SDTM CT",
+            "catalogue_names": ["SDTM CT"],
             "codelist_uid": "ct_codelist_root1",
             "library_name": "Sponsor",
             "parent_codelist_uid": None,
             "child_codelist_uids": [],
+            "paired_codes_codelist_uid": None,
+            "paired_names_codelist_uid": None,
             "name": {
-                "catalogue_name": None,
+                "catalogue_names": [],
                 "codelist_uid": None,
                 "name": "tp_codelist_name_value",
                 "template_parameter": True,
@@ -79,7 +83,7 @@ def test_ct_stats(api_client):
                 "possible_actions": ["new_version"],
             },
             "attributes": {
-                "catalogue_name": None,
+                "catalogue_names": [],
                 "codelist_uid": None,
                 "parent_codelist_uid": None,
                 "child_codelist_uids": [],
@@ -88,6 +92,7 @@ def test_ct_stats(api_client):
                 "nci_preferred_name": "codelist preferred term",
                 "definition": "codelist definition",
                 "extensible": False,
+                "ordinal": False,
                 "library_name": None,
                 "start_date": "2020-06-26T00:00:00Z",
                 "end_date": None,
@@ -99,13 +104,15 @@ def test_ct_stats(api_client):
             },
         },
         {
-            "catalogue_name": "SDTM CT",
+            "catalogue_names": ["SDTM CT"],
             "codelist_uid": "ct_codelist_root2",
             "library_name": "CDISC",
             "parent_codelist_uid": None,
             "child_codelist_uids": [],
+            "paired_codes_codelist_uid": None,
+            "paired_names_codelist_uid": None,
             "name": {
-                "catalogue_name": None,
+                "catalogue_names": [],
                 "codelist_uid": None,
                 "name": "not_tp_codelist_name_value",
                 "template_parameter": False,
@@ -119,7 +126,7 @@ def test_ct_stats(api_client):
                 "possible_actions": ["approve", "edit"],
             },
             "attributes": {
-                "catalogue_name": None,
+                "catalogue_names": [],
                 "codelist_uid": None,
                 "parent_codelist_uid": None,
                 "child_codelist_uids": [],
@@ -128,6 +135,7 @@ def test_ct_stats(api_client):
                 "nci_preferred_name": "codelist preferred term",
                 "definition": "codelist definition",
                 "extensible": False,
+                "ordinal": False,
                 "library_name": None,
                 "start_date": "2020-06-26T00:00:00Z",
                 "end_date": None,
@@ -139,13 +147,15 @@ def test_ct_stats(api_client):
             },
         },
         {
-            "catalogue_name": "SDTM CT",
+            "catalogue_names": ["SDTM CT"],
             "codelist_uid": "ct_codelist_root3",
             "library_name": "Sponsor",
             "parent_codelist_uid": None,
             "child_codelist_uids": [],
+            "paired_codes_codelist_uid": None,
+            "paired_names_codelist_uid": None,
             "name": {
-                "catalogue_name": None,
+                "catalogue_names": [],
                 "codelist_uid": None,
                 "name": "codelist_name_value",
                 "template_parameter": False,
@@ -159,7 +169,7 @@ def test_ct_stats(api_client):
                 "possible_actions": ["new_version"],
             },
             "attributes": {
-                "catalogue_name": None,
+                "catalogue_names": [],
                 "codelist_uid": None,
                 "parent_codelist_uid": None,
                 "child_codelist_uids": [],
@@ -168,6 +178,7 @@ def test_ct_stats(api_client):
                 "nci_preferred_name": "codelist preferred term",
                 "definition": "codelist definition",
                 "extensible": False,
+                "ordinal": False,
                 "library_name": None,
                 "start_date": "2020-06-26T00:00:00Z",
                 "end_date": None,

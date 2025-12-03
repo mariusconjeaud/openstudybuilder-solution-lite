@@ -9,12 +9,10 @@ from clinical_mdr_api.models.utils import InputModel
 
 
 class TemplateParameterMultiSelectInput(InputModel):
-    terms: Annotated[
-        list[IndexedTemplateParameterTerm] | None,
-        Field(
-            description="A list of indexed template parameter terms that are used at this position in the template.",
-        ),
-    ]
+    terms: list[IndexedTemplateParameterTerm] = Field(
+        default_factory=list,
+        description="A list of indexed template parameter terms that are used at this position in the template.",
+    )
     value: Annotated[
         float | None,
         Field(

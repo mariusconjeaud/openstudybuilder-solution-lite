@@ -30,7 +30,7 @@ from common import exceptions
 
 class StudyDesignCellTestCase(unittest.TestCase):
     def setUp(self):
-        inject_and_clear_db("studydesigncelltest")
+        inject_and_clear_db("studydesigncelltestt")
         db.cypher_query(STARTUP_STUDY_LIST_CYPHER)
         db.cypher_query(STARTUP_CT_CATALOGUE_CYPHER)
 
@@ -40,22 +40,32 @@ class StudyDesignCellTestCase(unittest.TestCase):
         self.study = StudyRoot.nodes.all()[0]
 
         # Create an epoch
-        catalogue_name, library_name = get_catalogue_name_library_name()
+        _catalogue_name, library_name = get_catalogue_name_library_name()
+        catalogue_name = "SDTM CT"
         create_study_epoch_codelists_ret_cat_and_lib()
         self.study_epoch = create_study_epoch("EpochSubType_0001")
         self.study_epoch2 = create_study_epoch("EpochSubType_0001")
 
         # Create a study arm
         arm_type_codelist = create_codelist(
-            "Arm Type", "CTCodelist_ArmType", catalogue_name, library_name
-        )
-        arm_type_term = create_ct_term(
-            arm_type_codelist.codelist_uid,
             "Arm Type",
-            "ArmType_0001",
-            1,
+            "CTCodelist_ArmType",
             catalogue_name,
             library_name,
+            submission_value="ARMTTP",
+        )
+        arm_type_term = create_ct_term(
+            "Arm Type",
+            "ArmType_0001",
+            catalogue_name,
+            library_name,
+            codelists=[
+                {
+                    "uid": arm_type_codelist.codelist_uid,
+                    "order": 1,
+                    "submission_value": "Arm Type",
+                }
+            ],
         )
         self.study_arms = [
             create_study_arm(
@@ -64,7 +74,6 @@ class StudyDesignCellTestCase(unittest.TestCase):
                 short_name="Arm_Short_Name_1",
                 code="Arm_code_1",
                 description="desc...",
-                colour_code="colour...",
                 randomization_group="Randomization_Group_1",
                 number_of_subjects=1,
                 arm_type_uid=arm_type_term.uid,
@@ -75,7 +84,6 @@ class StudyDesignCellTestCase(unittest.TestCase):
                 short_name="Arm_Short_Name_2",
                 code="Arm_code_2",
                 description="desc...",
-                colour_code="colour...",
                 randomization_group="Randomization_Group_2",
                 number_of_subjects=1,
                 arm_type_uid=arm_type_term.uid,
@@ -86,7 +94,6 @@ class StudyDesignCellTestCase(unittest.TestCase):
                 short_name="Arm_Short_Name_3",
                 code="Arm_code_3",
                 description="desc...",
-                colour_code="colour...",
                 randomization_group="Randomization_Group_3",
                 number_of_subjects=3,
                 arm_type_uid=arm_type_term.uid,
@@ -97,7 +104,6 @@ class StudyDesignCellTestCase(unittest.TestCase):
                 short_name="Arm_Short_Name_4",
                 code="Arm_code_4",
                 description="desc...",
-                colour_code="colour...",
                 randomization_group="Randomization_Group_4",
                 number_of_subjects=3,
                 arm_type_uid=arm_type_term.uid,
@@ -108,7 +114,6 @@ class StudyDesignCellTestCase(unittest.TestCase):
                 short_name="Arm_Short_Name_5",
                 code="Arm_code_5",
                 description="desc...",
-                colour_code="colour...",
                 randomization_group="Randomization_Group_5",
                 number_of_subjects=3,
                 arm_type_uid=arm_type_term.uid,
@@ -116,28 +121,42 @@ class StudyDesignCellTestCase(unittest.TestCase):
         ]
 
         # Create a study element
-        element_type_codelist = create_codelist(
-            "Element Type", "CTCodelist_ElementType", catalogue_name, library_name
-        )
-        element_type_term = create_ct_term(
-            element_type_codelist.codelist_uid,
-            "Element Type",
-            "ElementType_0001",
-            1,
+        element_subtype_codelist = create_codelist(
+            "Element Subtype",
+            "CTCodelist_ElementType",
             catalogue_name,
             library_name,
+            submission_value="ELEMSTP",
         )
-        element_type_term_2 = create_ct_term(
-            element_type_codelist.codelist_uid,
-            "Element Type",
-            "ElementType_0002",
-            2,
+        element_subtype_term = create_ct_term(
+            "Element Subtype",
+            "ElementSubType_0001",
             catalogue_name,
             library_name,
+            codelists=[
+                {
+                    "uid": element_subtype_codelist.codelist_uid,
+                    "order": 1,
+                    "submission_value": "Element SubType",
+                }
+            ],
+        )
+        element_subtype_term_2 = create_ct_term(
+            "Element Subtype2",
+            "ElementSubType_0002",
+            catalogue_name,
+            library_name,
+            codelists=[
+                {
+                    "uid": element_subtype_codelist.codelist_uid,
+                    "order": 2,
+                    "submission_value": "Element SubType2",
+                }
+            ],
         )
         self.study_elements = [
-            create_study_element(element_type_term.uid, self.study.uid),
-            create_study_element(element_type_term_2.uid, self.study.uid),
+            create_study_element(element_subtype_term.uid, self.study.uid),
+            create_study_element(element_subtype_term_2.uid, self.study.uid),
         ]
 
         # Create a study branch arm
@@ -148,7 +167,6 @@ class StudyDesignCellTestCase(unittest.TestCase):
                 short_name="BranchArm_Short_Name_1",
                 code="BranchArm_code_1",
                 description="desc...",
-                colour_code="desc...",
                 randomization_group="Randomization_Group_1",
                 number_of_subjects=1,
                 arm_uid=self.study_arms[0].arm_uid,
@@ -159,7 +177,6 @@ class StudyDesignCellTestCase(unittest.TestCase):
                 short_name="BranchArm_Short_Name_2",
                 code="BranchArm_code_2",
                 description="desc...",
-                colour_code="desc...",
                 randomization_group="BranchArm_Randomization_Group_2",
                 number_of_subjects=1,
                 arm_uid=self.study_arms[1].arm_uid,
@@ -170,7 +187,6 @@ class StudyDesignCellTestCase(unittest.TestCase):
                 short_name="BranchArm_Short_Name_3",
                 code="BranchArm_code_3",
                 description="desc...",
-                colour_code="desc...",
                 randomization_group="Randomization_Group_3",
                 number_of_subjects=1,
                 arm_uid=self.study_arms[0].arm_uid,
@@ -181,7 +197,6 @@ class StudyDesignCellTestCase(unittest.TestCase):
                 short_name="BranchArm_Short_Name_4",
                 code="BranchArm_code_4",
                 description="desc...",
-                colour_code="desc...",
                 randomization_group="BranchArm_Randomization_Group_4",
                 number_of_subjects=1,
                 arm_uid=self.study_arms[1].arm_uid,
@@ -192,7 +207,6 @@ class StudyDesignCellTestCase(unittest.TestCase):
                 short_name="BranchArm_Short_Name_5",
                 code="BranchArm_code_5",
                 description="desc...",
-                colour_code="desc...",
                 randomization_group="BranchArm_Randomization_Group_5",
                 number_of_subjects=1,
                 arm_uid=self.study_arms[1].arm_uid,

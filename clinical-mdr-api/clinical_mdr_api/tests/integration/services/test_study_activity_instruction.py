@@ -28,6 +28,7 @@ from clinical_mdr_api.services.syntax_templates.activity_instruction_templates i
 )
 from clinical_mdr_api.tests.integration.utils import data_library
 from clinical_mdr_api.tests.integration.utils.api import inject_and_clear_db
+from clinical_mdr_api.tests.integration.utils.utils import TestUtils
 
 
 class StudyActivityInstructionTestCase(unittest.TestCase):
@@ -38,10 +39,19 @@ class StudyActivityInstructionTestCase(unittest.TestCase):
         db.cypher_query(data_library.STARTUP_ACTIVITY_GROUPS)
         db.cypher_query(data_library.STARTUP_ACTIVITY_SUB_GROUPS)
         db.cypher_query(data_library.STARTUP_ACTIVITIES)
-        db.cypher_query(
-            data_library.get_codelist_with_term_cypher("EFFICACY", "Flowchart Group")
-        )
         db.cypher_query(data_library.STARTUP_SINGLE_STUDY_CYPHER)
+
+        fl_grp_codelist = TestUtils.create_ct_codelist(
+            name="Flowchart Group",
+            submission_value="FLWCRTGRP",
+            extensible=True,
+            approve=True,
+        )
+        _efficacy_term = TestUtils.create_ct_term(
+            sponsor_preferred_name="Efficacy",
+            codelist_uid=fl_grp_codelist.codelist_uid,
+            term_uid="term_efficacy_uid",
+        )
 
         self.library = library_service.create(**data_library.library_data)
         data = data_library.template_data.copy()
@@ -63,7 +73,7 @@ class StudyActivityInstructionTestCase(unittest.TestCase):
                 StudySelectionActivityBatchInput(
                     method="POST",
                     content=StudySelectionActivityCreateInput(
-                        soa_group_term_uid="term_root_final",
+                        soa_group_term_uid="term_efficacy_uid",
                         activity_uid="activity_root1",
                         activity_subgroup_uid="activity_subgroup_root1",
                         activity_group_uid="activity_group_root1",
@@ -72,7 +82,7 @@ class StudyActivityInstructionTestCase(unittest.TestCase):
                 StudySelectionActivityBatchInput(
                     method="POST",
                     content=StudySelectionActivityCreateInput(
-                        soa_group_term_uid="term_root_final",
+                        soa_group_term_uid="term_efficacy_uid",
                         activity_uid="activity_root3",
                         activity_subgroup_uid="activity_subgroup_root3",
                         activity_group_uid="activity_group_root3",

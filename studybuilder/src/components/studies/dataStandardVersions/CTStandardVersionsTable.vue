@@ -8,7 +8,9 @@
         :title="$t('CTStandardVersionsForm.add_title')"
         icon="mdi-plus"
         data-cy="add-ct-standard-version"
-        :disabled="selectedStudyVersion !== null"
+        :disabled="
+          !checkPermission($roles.STUDY_WRITE) || selectedStudyVersion !== null
+        "
         @click.stop="showForm = true"
       />
       <v-btn

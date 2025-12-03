@@ -34,10 +34,8 @@
               <v-text-field
                 v-model="form.nci_preferred_name"
                 :label="$t('CodelistAttributesForm.nci_pref_name')"
-                :error-messages="errors"
                 density="compact"
                 clearable
-                :rules="[formRules.required]"
               />
             </v-col>
           </v-row>
@@ -47,6 +45,15 @@
                 v-model="form.extensible"
                 color="primary"
                 :label="$t('CodelistAttributesForm.extensible')"
+              />
+            </v-col>
+          </v-row>
+          <v-row>
+            <v-col>
+              <v-switch
+                v-model="form.ordinal"
+                color="primary"
+                :label="$t('CodelistAttributesForm.ordinal')"
               />
             </v-col>
           </v-row>
@@ -123,6 +130,7 @@ export default {
         'CodelistAttributesForm.subm_value',
         'CodelistAttributesForm.nci_pref_name',
         'CodelistAttributesForm.extensible',
+        'CodelistAttributesForm.ordinal',
         'CodelistAttributesForm.definition',
       ],
       working: false,

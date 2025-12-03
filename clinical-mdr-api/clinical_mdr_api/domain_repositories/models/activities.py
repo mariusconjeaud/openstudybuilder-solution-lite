@@ -21,7 +21,7 @@ from clinical_mdr_api.domain_repositories.models.concepts import (
     UnitDefinitionRoot,
 )
 from clinical_mdr_api.domain_repositories.models.controlled_terminology import (
-    CTTermRoot,
+    CTTermContext,
 )
 from clinical_mdr_api.domain_repositories.models.generic import (
     ClinicalMdrNode,
@@ -178,7 +178,7 @@ class ActivityItem(ClinicalMdrNode):
         model=ClinicalMdrRel,
     )
     has_ct_term = RelationshipTo(
-        CTTermRoot, "HAS_CT_TERM", model=ClinicalMdrRel, cardinality=ZeroOrMore
+        CTTermContext, "HAS_CT_TERM", model=ClinicalMdrRel, cardinality=ZeroOrMore
     )
     has_unit_definition = RelationshipTo(
         UnitDefinitionRoot,
@@ -187,10 +187,23 @@ class ActivityItem(ClinicalMdrNode):
         cardinality=ZeroOrMore,
     )
 
-    from clinical_mdr_api.domain_repositories.models.odm import OdmItemRoot
+    from clinical_mdr_api.domain_repositories.models.odm import (
+        OdmFormValue,
+        OdmItemGroupValue,
+        OdmItemValue,
+    )
 
+    has_odm_form = RelationshipTo(
+        OdmFormValue, "HAS_ODM_FORM", model=ClinicalMdrRel, cardinality=ZeroOrOne
+    )
+    has_odm_item_group = RelationshipTo(
+        OdmItemGroupValue,
+        "HAS_ODM_ITEM_GROUP",
+        model=ClinicalMdrRel,
+        cardinality=ZeroOrOne,
+    )
     has_odm_item = RelationshipTo(
-        OdmItemRoot, "HAS_ODM_ITEM", model=ClinicalMdrRel, cardinality=ZeroOrMore
+        OdmItemValue, "HAS_ODM_ITEM", model=ClinicalMdrRel, cardinality=ZeroOrOne
     )
 
 

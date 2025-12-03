@@ -3,11 +3,12 @@ import logging
 import os
 from functools import reduce
 from itertools import zip_longest
-from typing import Mapping
+from typing import Any, Mapping
 
 from bs4 import BeautifulSoup, NavigableString, Tag
 from docx import Document
 from docx.blkcntnr import BlockItemContainer
+from docx.document import Document as DocumentObject
 from docx.enum.section import WD_ORIENTATION
 from docx.enum.text import WD_BREAK
 from docx.oxml import OxmlElement
@@ -31,7 +32,7 @@ class DocxBuilder:
     def __init__(
         self,
         styles: Mapping | None = None,
-        landscape: bool | None = False,
+        landscape: bool = False,
         margins: list[float] | None = None,
         template: str | None = None,
     ):
@@ -40,7 +41,7 @@ class DocxBuilder:
             template or self.DEFAULT_TEMPLATE_FILENAME,
         )
         self.document = self.load_document(template_filename)
-        self.styles = {}
+        self.styles: dict[Any, Any] = {}
         self.clear_document()
         if styles:
             self.create_styles(styles)
@@ -86,7 +87,7 @@ class DocxBuilder:
 
     @staticmethod
     @trace_calls(args=[0], kwargs=["template_filename"])
-    def load_document(template_filename: str) -> Document:
+    def load_document(template_filename: str) -> DocumentObject:
         log.debug("Reading document: %s", template_filename)
         with open(template_filename, "rb") as file:
             return Document(file)
@@ -140,7 +141,7 @@ class DocxBuilder:
         tc_pr.append(text_direction)
 
     @staticmethod
-    def merge_cells(cells: list[_Cell]) -> _Cell:
+    def merge_cells(cells: tuple[_Cell, ...]) -> _Cell:
         return reduce(lambda c1, c2: c1.merge(c2), cells)
 
     def get_document_stream(self) -> io.BytesIO:

@@ -48,7 +48,7 @@ class ComplexTemplateParameterRepository:
         time_unit = parameter_concept_create_factory(
             name="TimeUnit",
             query="""
-            MATCH (n:UnitDefinitionRoot)-[:LATEST_FINAL]->(v:UnitDefinitionValue)-[:HAS_CT_DIMENSION]->
+            MATCH (n:UnitDefinitionRoot)-[:LATEST_FINAL]->(v:UnitDefinitionValue)-[:HAS_CT_DIMENSION]->(:CTTermContext)-[:HAS_SELECTED_TERM]->
             (term_root:CTTermRoot)-[:HAS_NAME_ROOT]->()-[:LATEST_FINAL]->(:CTTermNameValue {name: "TIME"}) 
             return n.uid as uid, v.name as name, 'TimeUnit' as type
             """,
@@ -56,7 +56,7 @@ class ComplexTemplateParameterRepository:
         acidity_unit = parameter_concept_create_factory(
             name="AcidityUnit",
             query="""
-            MATCH (n:UnitDefinitionRoot)-[:LATEST_FINAL]->(v:UnitDefinitionValue)-[:HAS_CT_DIMENSION]->
+            MATCH (n:UnitDefinitionRoot)-[:LATEST_FINAL]->(v:UnitDefinitionValue)-[:HAS_CT_DIMENSION]->(:CTTermContext)-[:HAS_SELECTED_TERM]->
             (term_root:CTTermRoot)-[:HAS_NAME_ROOT]->()-[:LATEST_FINAL]->(:CTTermNameValue {name: "ACIDITY"}) 
             return n.uid as uid, v.name as name, 'AcidityUnit' as type
             """,
@@ -64,7 +64,7 @@ class ComplexTemplateParameterRepository:
         concentration_unit = parameter_concept_create_factory(
             name="ConcentrationUnit",
             query="""
-            MATCH (n:UnitDefinitionRoot)-[:LATEST_FINAL]->(v:UnitDefinitionValue)-[:HAS_CT_DIMENSION]->
+            MATCH (n:UnitDefinitionRoot)-[:LATEST_FINAL]->(v:UnitDefinitionValue)-[:HAS_CT_DIMENSION]->(:CTTermContext)-[:HAS_SELECTED_TERM]->
             (term_root:CTTermRoot)-[:HAS_NAME_ROOT]->()-[:LATEST_FINAL]->(:CTTermNameValue {name: "CONCENTRATION"}) 
             return n.uid as uid, v.name as name, 'ConcentrationUnit' as type
             """,

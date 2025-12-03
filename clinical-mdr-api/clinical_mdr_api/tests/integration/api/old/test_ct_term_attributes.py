@@ -1,4 +1,6 @@
-# pylint: disable=unused-argument, redefined-outer-name, too-many-arguments, line-too-long, too-many-statements
+# pylint: disable=unused-argument
+# pylint: disable=redefined-outer-name
+# pylint: disable=too-many-arguments
 
 # pytest fixture functions have other fixture functions as arguments,
 # which pylint interprets as unused arguments
@@ -32,31 +34,40 @@ def test_data():
 
 def test_post_create_term(api_client):
     data = {
-        "catalogue_name": "SDTM CT",
-        "codelist_uid": "editable_cr",
-        "code_submission_value": "code_submission_value",
-        "name_submission_value": "name_submission_value",
+        "catalogue_names": ["SDTM CT"],
         "nci_preferred_name": "nci_preferred_name",
         "definition": "definition",
         "sponsor_preferred_name": "string",
         "sponsor_preferred_name_sentence_case": "string",
-        "order": 7,
         "library_name": "Sponsor",
+        "codelists": [
+            {
+                "codelist_uid": "editable_cr",
+                "order": 7,
+                "submission_value": "term_submission_value",
+            }
+        ],
     }
     response = api_client.post("/ct/terms", json=data)
 
     assert_response_status_code(response, 201)
 
     res = response.json()
+    term_uid = res["term_uid"]
 
-    assert res["term_uid"] == "CTTerm_000001"
-    assert res["catalogue_name"] == "SDTM CT"
-    assert res["codelists"] == [
-        {"codelist_uid": "editable_cr", "order": 7, "library_name": "Sponsor"}
-    ]
+    assert res["term_uid"] == term_uid
+    assert res["catalogue_names"] == ["SDTM CT"]
+    assert res["codelists"][0]["codelist_uid"] == "editable_cr"
+    assert res["codelists"][0]["codelist_name"] == "Objective Level"
+    assert (
+        res["codelists"][0]["codelist_submission_value"] == "codelist submission value1"
+    )
+    assert res["codelists"][0]["codelist_concept_id"] == "editable_cr"
+    assert res["codelists"][0]["submission_value"] == "term_submission_value"
+    assert res["codelists"][0]["order"] == 7
+    assert res["codelists"][0]["library_name"] == "Sponsor"
+    assert res["codelists"][0]["start_date"] is not None
     assert res["concept_id"] is None
-    assert res["code_submission_value"] == "code_submission_value"
-    assert res["name_submission_value"] == "name_submission_value"
     assert res["nci_preferred_name"] == "nci_preferred_name"
     assert res["definition"] == "definition"
     assert res["sponsor_preferred_name"] == "string"
@@ -67,10 +78,8 @@ def test_post_create_term(api_client):
 
 def test_patch_term_attributes_draft_term(api_client):
     data = {
-        "code_submission_value": "code_submission_valuePATCHED",
-        "name_submission_value": "name_submission_valuePATCHED",
         "nci_preferred_name": "nci_preferred_name",
-        "definition": "definition",
+        "definition": "definitionPATCHED",
         "change_description": "change_description",
     }
     response = api_client.patch("/ct/terms/term_root_draft/attributes", json=data)
@@ -80,15 +89,10 @@ def test_patch_term_attributes_draft_term(api_client):
     res = response.json()
 
     assert res["term_uid"] == "term_root_draft"
-    assert res["catalogue_name"] == "SDTM CT"
-    assert res["codelists"] == [
-        {"codelist_uid": "editable_cr", "order": 2, "library_name": "Sponsor"}
-    ]
+    assert res["catalogue_names"] == ["SDTM CT"]
     assert res["concept_id"] is None
-    assert res["code_submission_value"] == "code_submission_valuePATCHED"
-    assert res["name_submission_value"] == "name_submission_valuePATCHED"
     assert res["nci_preferred_name"] == "nci_preferred_name"
-    assert res["definition"] == "definition"
+    assert res["definition"] == "definitionPATCHED"
     assert res["change_description"] == "change_description"
     assert res["library_name"] == "Sponsor"
     assert res["end_date"] is None
@@ -106,15 +110,10 @@ def test_post_attributes_approve_term(api_client):
     res = response.json()
 
     assert res["term_uid"] == "term_root_draft"
-    assert res["catalogue_name"] == "SDTM CT"
-    assert res["codelists"] == [
-        {"codelist_uid": "editable_cr", "order": 2, "library_name": "Sponsor"}
-    ]
+    assert res["catalogue_names"] == ["SDTM CT"]
     assert res["concept_id"] is None
-    assert res["code_submission_value"] == "code_submission_valuePATCHED"
-    assert res["name_submission_value"] == "name_submission_valuePATCHED"
     assert res["nci_preferred_name"] == "nci_preferred_name"
-    assert res["definition"] == "definition"
+    assert res["definition"] == "definitionPATCHED"
     assert res["change_description"] == "Approved version"
     assert res["library_name"] == "Sponsor"
     assert res["end_date"] is None
@@ -132,15 +131,10 @@ def test_delete_attributes_activations_term(api_client):
     res = response.json()
 
     assert res["term_uid"] == "term_root_draft"
-    assert res["catalogue_name"] == "SDTM CT"
-    assert res["codelists"] == [
-        {"codelist_uid": "editable_cr", "order": 2, "library_name": "Sponsor"}
-    ]
+    assert res["catalogue_names"] == ["SDTM CT"]
     assert res["concept_id"] is None
-    assert res["code_submission_value"] == "code_submission_valuePATCHED"
-    assert res["name_submission_value"] == "name_submission_valuePATCHED"
     assert res["nci_preferred_name"] == "nci_preferred_name"
-    assert res["definition"] == "definition"
+    assert res["definition"] == "definitionPATCHED"
     assert res["change_description"] == "Inactivated version"
     assert res["library_name"] == "Sponsor"
     assert res["end_date"] is None
@@ -158,15 +152,10 @@ def test_post_attributes_reactivate_term(api_client):
     res = response.json()
 
     assert res["term_uid"] == "term_root_draft"
-    assert res["catalogue_name"] == "SDTM CT"
-    assert res["codelists"] == [
-        {"codelist_uid": "editable_cr", "order": 2, "library_name": "Sponsor"}
-    ]
+    assert res["catalogue_names"] == ["SDTM CT"]
     assert res["concept_id"] is None
-    assert res["code_submission_value"] == "code_submission_valuePATCHED"
-    assert res["name_submission_value"] == "name_submission_valuePATCHED"
     assert res["nci_preferred_name"] == "nci_preferred_name"
-    assert res["definition"] == "definition"
+    assert res["definition"] == "definitionPATCHED"
     assert res["change_description"] == "Reactivated version"
     assert res["library_name"] == "Sponsor"
     assert res["end_date"] is None
@@ -184,15 +173,10 @@ def test_post_attributes_versions_term(api_client):
     res = response.json()
 
     assert res["term_uid"] == "term_root_draft"
-    assert res["catalogue_name"] == "SDTM CT"
-    assert res["codelists"] == [
-        {"codelist_uid": "editable_cr", "order": 2, "library_name": "Sponsor"}
-    ]
+    assert res["catalogue_names"] == ["SDTM CT"]
     assert res["concept_id"] is None
-    assert res["code_submission_value"] == "code_submission_valuePATCHED"
-    assert res["name_submission_value"] == "name_submission_valuePATCHED"
     assert res["nci_preferred_name"] == "nci_preferred_name"
-    assert res["definition"] == "definition"
+    assert res["definition"] == "definitionPATCHED"
     assert res["change_description"] == "New draft created"
     assert res["library_name"] == "Sponsor"
     assert res["end_date"] is None
@@ -212,14 +196,10 @@ def test_add_term_node_parent(api_client):
     res = response.json()
 
     assert res["term_uid"] == "term_root_final"
-    assert res["catalogue_name"] == "SDTM CT"
-    assert res["codelists"] == [
-        {"codelist_uid": "editable_cr", "order": 1, "library_name": "Sponsor"}
-    ]
-    assert res["concept_id"] is None
-    assert res["code_submission_value"] == "code_submission_value1"
-    assert res["name_submission_value"] == "name_submission_value1"
-    assert res["nci_preferred_name"] == "preferred_term"
+    assert res["catalogue_names"] == ["SDTM CT"]
+    assert len(res["codelists"]) == 1
+    assert res["concept_id"] == "concept_id1"
+    assert res["nci_preferred_name"] == "preferred_term1"
     assert res["definition"] == "definition"
     assert res["sponsor_preferred_name"] == "term_value_name1"
     assert (
@@ -234,19 +214,15 @@ def test_remove_term_node_parent(api_client):
         "/ct/terms/term_root_final/parents?parent_uid=term_root_final&relationship_type=type"
     )
 
-    assert_response_status_code(response, 201)
+    assert_response_status_code(response, 200)
 
     res = response.json()
 
     assert res["term_uid"] == "term_root_final"
-    assert res["catalogue_name"] == "SDTM CT"
-    assert res["codelists"] == [
-        {"codelist_uid": "editable_cr", "order": 1, "library_name": "Sponsor"}
-    ]
-    assert res["concept_id"] is None
-    assert res["code_submission_value"] == "code_submission_value1"
-    assert res["name_submission_value"] == "name_submission_value1"
-    assert res["nci_preferred_name"] == "preferred_term"
+    assert res["catalogue_names"] == ["SDTM CT"]
+    assert len(res["codelists"]) == 1
+    assert res["concept_id"] == "concept_id1"
+    assert res["nci_preferred_name"] == "preferred_term1"
     assert res["definition"] == "definition"
     assert res["sponsor_preferred_name"] == "term_value_name1"
     assert (
@@ -266,14 +242,10 @@ def test_add_term_node_parent_after_deleting(api_client):
     res = response.json()
 
     assert res["term_uid"] == "term_root_final"
-    assert res["catalogue_name"] == "SDTM CT"
-    assert res["codelists"] == [
-        {"codelist_uid": "editable_cr", "order": 1, "library_name": "Sponsor"}
-    ]
-    assert res["concept_id"] is None
-    assert res["code_submission_value"] == "code_submission_value1"
-    assert res["name_submission_value"] == "name_submission_value1"
-    assert res["nci_preferred_name"] == "preferred_term"
+    assert res["catalogue_names"] == ["SDTM CT"]
+    assert len(res["codelists"]) == 1
+    assert res["concept_id"] == "concept_id1"
+    assert res["nci_preferred_name"] == "preferred_term1"
     assert res["definition"] == "definition"
     assert res["sponsor_preferred_name"] == "term_value_name1"
     assert (

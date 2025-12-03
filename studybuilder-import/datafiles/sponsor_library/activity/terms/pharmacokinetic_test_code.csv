@@ -1,0 +1,4 @@
+CODELIST_SUBMVAL,SPONSOR_NAME,SPONSOR_NAME_SENTENCE_CASE,TERM_SUBMVAL,DEFINITION,ORDER,CONCEPT_ID,NCI_PREFERRED_NAME,CATALOGUES
+PCTESTCD,Metformin Concentration,metformin concentration,METFORMI,Metformin Concentration,1,,Metformin Concentration,
+PCTESTCD,Dasiglucagon Measurement,dasiglucagon measurement,DASIGLUP,Dasiglucagon Measurement,2,,Dasiglucagon Measurement,
+PCTESTCD,Cyclodextrin Concentration,cyclodextrin concentration,CYCLODEX,Cyclodextrin Concentration,3,,Cyclodextrin Concentration,

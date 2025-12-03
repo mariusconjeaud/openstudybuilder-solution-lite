@@ -1,7 +1,9 @@
 """Base classes/mixins related to study selection."""
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Sequence
+
+from opencensus.trace import execution_context
 
 from clinical_mdr_api.domain_repositories.models.controlled_terminology import CTPackage
 from clinical_mdr_api.domains.versioned_object_aggregate import LibraryItemStatus
@@ -35,9 +37,156 @@ from clinical_mdr_api.models.syntax_templates.objective_template import (
     ObjectiveTemplate,
 )
 from common import exceptions
+from common.config import settings
+from common.telemetry import trace_calls
 
 
 class StudySelectionMixin:
+
+    @trace_calls
+    def update_ctterm_maps(self, terms_at_specific_datetime: datetime | None = None):
+        study_epoch_types = set()
+        study_epoch_subtypes = set()
+        study_epoch_epochs = set()
+        study_visit_types = set()
+        study_visit_repeating_frequency = set()
+        study_visit_timeref = set()
+        study_visit_contact_mode = set()
+        study_visit_epoch_allocation = set()
+
+        ct_terms = self.repo.fetch_ctlist(
+            codelist_names=[
+                settings.study_epoch_type_name,
+                settings.study_epoch_subtype_name,
+                settings.study_epoch_epoch_name,
+                settings.study_visit_type_name,
+                settings.study_visit_repeating_frequency,
+                settings.study_visit_timeref_name,
+                settings.study_visit_contact_mode_name,
+                settings.study_visit_epoch_allocation_name,
+            ]
+        )
+
+        ctterm_uids = set()
+        for ct_term_uid, codelist_names in ct_terms.items():
+            ctterm_uids.add(ct_term_uid)
+            if settings.study_epoch_type_name in codelist_names:
+                study_epoch_types.add(ct_term_uid)
+            if settings.study_epoch_subtype_name in codelist_names:
+                study_epoch_subtypes.add(ct_term_uid)
+            if settings.study_epoch_epoch_name in codelist_names:
+                study_epoch_epochs.add(ct_term_uid)
+            if settings.study_visit_type_name in codelist_names:
+                study_visit_types.add(ct_term_uid)
+            if settings.study_visit_repeating_frequency in codelist_names:
+                study_visit_repeating_frequency.add(ct_term_uid)
+            if settings.study_visit_timeref_name in codelist_names:
+                study_visit_timeref.add(ct_term_uid)
+            if settings.study_visit_contact_mode_name in codelist_names:
+                study_visit_contact_mode.add(ct_term_uid)
+            if settings.study_visit_epoch_allocation_name in codelist_names:
+                study_visit_epoch_allocation.add(ct_term_uid)
+
+        if span := execution_context.get_current_span():
+            span.add_attribute(
+                "terms_at_specific_datetime", str(terms_at_specific_datetime)
+            )
+
+        ctterms = self._find_terms_by_uids(
+            term_uids=list(ctterm_uids),
+            at_specific_date=terms_at_specific_datetime,
+            return_simple_object=True,
+        )
+
+        self.study_epoch_types_by_uid = {
+            ct_term.term_uid: ct_term
+            for ct_term in ctterms
+            if ct_term.term_uid in study_epoch_types
+        }
+
+        self.study_epoch_subtypes_by_uid = {
+            ct_term.term_uid: ct_term
+            for ct_term in ctterms
+            if ct_term.term_uid in study_epoch_subtypes
+        }
+
+        self.study_epoch_epochs_by_uid = {
+            ct_term.term_uid: ct_term
+            for ct_term in ctterms
+            if ct_term.term_uid in study_epoch_epochs
+        }
+
+        self.study_visit_types_by_uid = {
+            ct_term.term_uid: ct_term
+            for ct_term in ctterms
+            if ct_term.term_uid in study_visit_types
+        }
+
+        self.study_visit_repeating_frequencies_by_uid = {
+            ct_term.term_uid: ct_term
+            for ct_term in ctterms
+            if ct_term.term_uid in study_visit_repeating_frequency
+        }
+
+        self.study_visit_time_references_by_uid = {
+            ct_term.term_uid: ct_term
+            for ct_term in ctterms
+            if ct_term.term_uid in study_visit_timeref
+        }
+
+        self.study_visit_contact_modes_by_uid = {
+            ct_term.term_uid: ct_term
+            for ct_term in ctterms
+            if ct_term.term_uid in study_visit_contact_mode
+        }
+
+        self.study_visit_epoch_allocations_by_uid = {
+            ct_term.term_uid: ct_term
+            for ct_term in ctterms
+            if ct_term.term_uid in study_visit_epoch_allocation
+        }
+
+    @trace_calls
+    def get_study_standard_version_ct_terms_datetime(
+        self, study_uid, study_value_version: str | None = None
+    ) -> datetime | None:
+        study_standard_versions = self._repos.study_standard_version_repository.find_standard_versions_in_study(
+            study_uid=study_uid,
+            study_value_version=study_value_version,
+        )
+        study_standard_versions_sdtm = [
+            study_standard_version
+            for study_standard_version in study_standard_versions
+            if "SDTM CT" in study_standard_version.ct_package_uid
+        ]
+        study_standard_version_sdtm = (
+            study_standard_versions_sdtm[0] if study_standard_versions_sdtm else None
+        )
+        terms_at_specific_date = None
+        if study_standard_version_sdtm:
+            terms_at_specific_date = self._repos.ct_package_repository.find_by_uid(
+                study_standard_version_sdtm.ct_package_uid
+            ).effective_date
+        dt = (
+            datetime(
+                terms_at_specific_date.year,
+                terms_at_specific_date.month,
+                terms_at_specific_date.day,
+                23,
+                59,
+                59,
+                999999,
+                tzinfo=timezone.utc,
+            )
+            if terms_at_specific_date
+            else None
+        )
+
+        if span := execution_context.get_current_span():
+            span.add_attribute("call.return", dt.isoformat() if dt else "None")
+
+        return dt
+
     def _transform_latest_endpoint_model(self, endpoint_uid: str) -> Endpoint:
         endpoint_repo = self._repos.endpoint_repository
         try:
@@ -51,7 +200,7 @@ class StudySelectionMixin:
         return Endpoint.from_endpoint_ar(endpoint)
 
     def _transform_endpoint_model(
-        self, endpoint_uid: str, objective_version: str
+        self, endpoint_uid: str, objective_version: str | None
     ) -> Endpoint:
         endpoint_repo = self._repos.endpoint_repository
         endpoint = endpoint_repo.find_by_uid(
@@ -74,7 +223,7 @@ class StudySelectionMixin:
         return EndpointTemplate.from_endpoint_template_ar(endpoint_template)
 
     def _transform_endpoint_template_model(
-        self, endpoint_template_uid: str, endpoint_template_version: str
+        self, endpoint_template_uid: str, endpoint_template_version: str | None
     ) -> EndpointTemplate:
         endpoint_template_repo = self._repos.endpoint_template_repository
         endpoint_template = endpoint_template_repo.find_by_uid(
@@ -88,7 +237,7 @@ class StudySelectionMixin:
         return Objective.from_objective_ar(objective)
 
     def _transform_objective_model(
-        self, objective_uid: str, objective_version: str
+        self, objective_uid: str, objective_version: str | None
     ) -> Objective:
         objective_repo = self._repos.objective_repository
         objective = objective_repo.find_by_uid(
@@ -111,7 +260,7 @@ class StudySelectionMixin:
         return ObjectiveTemplate.from_objective_template_ar(objective_template)
 
     def _transform_objective_template_model(
-        self, objective_template_uid: str, objective_template_version: str
+        self, objective_template_uid: str, objective_template_version: str | None
     ) -> ObjectiveTemplate:
         objective_template_repo = self._repos.objective_template_repository
         objective_template = objective_template_repo.find_by_uid(
@@ -132,7 +281,7 @@ class StudySelectionMixin:
         return Timeframe.from_timeframe_ar(timeframe)
 
     def _transform_timeframe_model(
-        self, timeframe_uid: str, timeframe_version: str
+        self, timeframe_uid: str, timeframe_version: str | None
     ) -> Timeframe:
         timeframe_repo = self._repos.timeframe_repository
         timeframe = timeframe_repo.find_by_uid(
@@ -155,7 +304,7 @@ class StudySelectionMixin:
         return CriteriaTemplate.from_criteria_template_ar(criteria_template)
 
     def _transform_criteria_template_model(
-        self, criteria_template_uid: str, criteria_template_version: str
+        self, criteria_template_uid: str, criteria_template_version: str | None
     ) -> CriteriaTemplate:
         criteria_template_repo = self._repos.criteria_template_repository
         criteria_template = criteria_template_repo.find_by_uid(
@@ -178,7 +327,7 @@ class StudySelectionMixin:
         )
 
     def _transform_criteria_model(
-        self, criteria_uid: str, criteria_version: str
+        self, criteria_uid: str, criteria_version: str | None
     ) -> Criteria:
         criteria_repo = self._repos.criteria_repository
         criteria = criteria_repo.find_by_uid(uid=criteria_uid, version=criteria_version)
@@ -196,7 +345,7 @@ class StudySelectionMixin:
         return ActivityForStudyActivity.from_activity_ar(activity_ar=activity_ar)
 
     def _transform_activity_model(
-        self, activity_uid: str, activity_version: str
+        self, activity_uid: str, activity_version: str | None
     ) -> ActivityForStudyActivity:
         """Finds the activity with given UID and version."""
         return ActivityForStudyActivity.from_activity_ar(
@@ -220,7 +369,7 @@ class StudySelectionMixin:
         )
 
     def _transform_activity_instance_model(
-        self, activity_instance_uid: str, activity_instance_version: str
+        self, activity_instance_uid: str, activity_instance_version: str | None
     ) -> ActivityInstance:
         """Finds the activity instance with given UID and version."""
         return ActivityInstance.from_activity_ar(
@@ -256,13 +405,9 @@ class StudySelectionMixin:
             medicinal_product_ar=self._repos.medicinal_product_repository.find_by_uid_2(
                 uid
             ),
-            find_term_by_uid=self._repos.ct_term_name_repository.find_by_uid,
-            find_numeric_value_by_uid=self._repos.numeric_value_with_unit_repository.find_by_uid_2,
-            find_unit_by_uid=self._repos.unit_definition_repository.find_by_uid_2,
-            find_compound_by_uid=self._repos.compound_repository.find_by_uid_2,
-            find_pharmaceutical_product_by_uid=self._repos.pharmaceutical_product_repository.find_by_uid_2,
         )
 
+    @trace_calls
     def find_term_name_by_uid(self, uid, at_specific_date=None):
         """Helper function to find CT term names."""
         return SimpleTermModel.from_ct_code(
@@ -271,6 +416,7 @@ class StudySelectionMixin:
             at_specific_date=at_specific_date,
         )
 
+    @trace_calls
     def _find_by_uid_or_raise_not_found(
         self,
         term_uid: str,
@@ -296,6 +442,7 @@ class StudySelectionMixin:
 
         return CTTermName.from_ct_term_ar(item)
 
+    @trace_calls
     def _find_terms_by_uids(
         self,
         term_uids: list[str],
@@ -316,6 +463,7 @@ class StudySelectionMixin:
             ]
         return [CTTermName.from_ct_term_ar(ith) for ith in items]
 
+    @trace_calls
     def _find_branch_arms_connected_to_arm_uid(
         self,
         study_uid: str,
@@ -344,6 +492,7 @@ class StudySelectionMixin:
 
         return branch_arms_transformed
 
+    @trace_calls
     def _get_specific_objective_selection_by_uids(
         self,
         study_uid: str,
@@ -366,6 +515,7 @@ class StudySelectionMixin:
         finally:
             repos.close()
 
+    @trace_calls
     def _get_specific_endpoint_selection_by_uids(
         self,
         study_uid: str,
@@ -388,6 +538,7 @@ class StudySelectionMixin:
         finally:
             repos.close()
 
+    @trace_calls
     def _get_specific_criteria_selection_by_uids(
         self,
         study_uid: str,
@@ -415,6 +566,7 @@ class StudySelectionMixin:
         finally:
             repos.close()
 
+    @trace_calls
     def _get_specific_activity_selection_by_uids(
         self,
         study_uid: str,
@@ -442,6 +594,7 @@ class StudySelectionMixin:
         finally:
             repos.close()
 
+    @trace_calls
     def _get_specific_activity_subgroup_selection_by_uids(
         self, study_uid: str, study_selection_uid: str, for_update: bool = False
     ):
@@ -468,6 +621,7 @@ class StudySelectionMixin:
         finally:
             repos.close()
 
+    @trace_calls
     def _get_specific_activity_group_selection_by_uids(
         self, study_uid: str, study_selection_uid: str, for_update: bool = False
     ):
@@ -492,6 +646,7 @@ class StudySelectionMixin:
         finally:
             repos.close()
 
+    @trace_calls
     def _get_specific_arm_selection_by_uids(
         self,
         study_uid: str,
@@ -514,6 +669,7 @@ class StudySelectionMixin:
         finally:
             repos.close()
 
+    @trace_calls
     def _get_specific_element_selection_by_uids(
         self,
         study_uid: str,
@@ -536,6 +692,7 @@ class StudySelectionMixin:
         finally:
             repos.close()
 
+    @trace_calls
     def _get_specific_branch_arm_selection_by_uids(
         self,
         study_uid: str,
@@ -561,6 +718,7 @@ class StudySelectionMixin:
         finally:
             repos.close()
 
+    @trace_calls
     def _get_specific_cohort_selection_by_uids(
         self,
         study_uid: str,
@@ -583,6 +741,7 @@ class StudySelectionMixin:
         finally:
             repos.close()
 
+    @trace_calls
     def _get_specific_soa_group_selection_by_uids(
         self, study_uid: str, study_selection_uid: str, for_update: bool = False
     ):
@@ -607,6 +766,7 @@ class StudySelectionMixin:
         finally:
             repos.close()
 
+    @trace_calls
     def _get_specific_activity_instance_selection_by_uids(
         self,
         study_uid: str,
@@ -639,8 +799,9 @@ class StudySelectionMixin:
         finally:
             repos.close()
 
+    @trace_calls
     def _extract_study_standards_effective_date(
-        self, study_uid, study_value_version: str = None
+        self, study_uid, study_value_version: str | None = None
     ) -> datetime | None:
         repos = self._repos
         study_standard_versions = (
@@ -651,7 +812,7 @@ class StudySelectionMixin:
         study_standard_versions_sdtm = [
             study_standard_version
             for study_standard_version in study_standard_versions
-            if "SDTM CT" in study_standard_version.ct_package_uid
+            if settings.sdtm_ct_catalogue_name in study_standard_version.ct_package_uid
         ]
         study_standard_version_sdtm = (
             study_standard_versions_sdtm[0] if study_standard_versions_sdtm else None
@@ -672,9 +833,10 @@ class StudySelectionMixin:
             )
         return terms_at_specific_datetime
 
+    @trace_calls
     def _extract_multiple_version_study_standards_effective_date(
         self, study_uid: str, list_of_start_dates: Sequence[datetime]
-    ) -> Sequence[datetime | None]:
+    ) -> list[datetime | None]:
         """
         This method returns the effective dates for study standard versions given a list of start dates and a study UID.
 
@@ -704,7 +866,8 @@ class StudySelectionMixin:
                 (
                     version
                     for version in active_versions
-                    if start_date >= version.start_date
+                    if version.start_date is not None
+                    and start_date >= version.start_date
                     and (not version.end_date or start_date < version.end_date)
                 ),
                 None,

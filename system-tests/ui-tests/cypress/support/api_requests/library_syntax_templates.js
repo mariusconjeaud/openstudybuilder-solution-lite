@@ -1,5 +1,3 @@
-import { group_uid, subgroup_uid, activity_uid } from "./library_activities"
-
 let indication_uid, activity_instruction_uid, timeframe_uid, objective_uid, objective_category_uid
 let endpoint_uid, endpoint_category_uid, endpoint_sub_category_uid
 let criteria_uid, type_uid, criteria_category_uid, criteria_sub_category_uid
@@ -29,8 +27,9 @@ const endpointTemplateUrl = '/endpoint-templates'
 const timeframeTemplateUrl = '/timeframe-templates'
 const indicationUrl = '/dictionaries/terms?codelist_uid=DictionaryCodelist_000001&page_size=0'
 
-Cypress.Commands.add('createActivityInstruction', (customName = '') => {
-  cy.sendPostRequest(activityInstructionTemplateUrl, createActivityInstructionBody(customName)).then(response => activity_instruction_uid = response.body.uid)
+Cypress.Commands.add('createActivityInstruction', (group_uid, subgroup_uid, activity_uid, customName = '') => {
+  cy.sendPostRequest(activityInstructionTemplateUrl, createActivityInstructionBody(group_uid, subgroup_uid, activity_uid, customName))
+        .then(response => activity_instruction_uid = response.body.uid)
 })
 
 Cypress.Commands.add('createObjective', (customName = '') => {
@@ -117,7 +116,7 @@ Cypress.Commands.add('getCriteriaTypeUid', (typeName) => {
   })
 })
 
-const createActivityInstructionBody = (customName = '') => {
+const createActivityInstructionBody = (group_uid, subgroup_uid, activity_uid, customName = '') => {
   const name = customName === '' ? `API_ActivityInstructionTemplate${Date.now()}` : customName
   return {
     "name": `<p>${name}</p>`,

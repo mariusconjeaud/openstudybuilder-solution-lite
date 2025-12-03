@@ -1,4 +1,5 @@
 import datetime
+from typing import Any
 
 from neomodel import db
 
@@ -16,6 +17,7 @@ from clinical_mdr_api.models.study_selections.study_disease_milestone import (
     StudyDiseaseMilestone,
     StudyDiseaseMilestoneCreateInput,
     StudyDiseaseMilestoneEditInput,
+    StudyDiseaseMilestoneOGM,
     StudyDiseaseMilestoneVersion,
 )
 from clinical_mdr_api.models.utils import (
@@ -30,8 +32,8 @@ from clinical_mdr_api.services._utils import (
     fill_missing_values_in_base_model_from_reference_base_model,
 )
 from clinical_mdr_api.services.user_info import UserInfoService
-from common import config as settings
 from common.auth.user import user
+from common.config import settings
 from common.exceptions import BusinessLogicException, ValidationException
 
 
@@ -44,7 +46,7 @@ class StudyDiseaseMilestoneService:
 
     def _create_ctlist_map(self):
         self.study_disease_milestone_types = self.repo.create_ctlist_definition(
-            settings.STUDY_DISEASE_MILESTONE_TYPE_NAME
+            settings.study_disease_milestone_type_name
         )
         StudyDiseaseMilestoneType.clear()
         StudyDiseaseMilestoneType.update(
@@ -65,6 +67,9 @@ class StudyDiseaseMilestoneService:
         disease_milestone: StudyDiseaseMilestoneVO,
         study_value_version: str | None = None,
     ) -> StudyDiseaseMilestone:
+        if disease_milestone.uid is None:
+            raise ValidationException(msg="Study Disease Milestone UID is missing.")
+
         return StudyDiseaseMilestone(
             uid=disease_milestone.uid,
             study_uid=disease_milestone.study_uid,
@@ -75,7 +80,7 @@ class StudyDiseaseMilestoneService:
             ),
             order=disease_milestone.order,
             status=disease_milestone.status.value,
-            start_date=disease_milestone.start_date.strftime(settings.DATE_TIME_FORMAT),
+            start_date=disease_milestone.start_date,
             author_username=UserInfoService.get_author_username_from_id(
                 disease_milestone.author_id,
             ),
@@ -93,11 +98,7 @@ class StudyDiseaseMilestoneService:
             self._transform_all_to_response_model(disease_milestone)
         )
         study_disease_milestone.change_type = disease_milestone.change_type
-        study_disease_milestone.end_date = (
-            disease_milestone.end_date.strftime(settings.DATE_TIME_FORMAT)
-            if disease_milestone.end_date
-            else None
-        )
+        study_disease_milestone.end_date = disease_milestone.end_date
         return study_disease_milestone
 
     def _instantiate_disease_milestone_items(
@@ -113,10 +114,10 @@ class StudyDiseaseMilestoneService:
     def get_all_disease_milestones(
         self,
         study_uid: str,
-        sort_by: dict | None = None,
+        sort_by: dict[str, bool] | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: dict | None = None,
+        filter_by: dict[str, dict[str, Any]] | None = None,
         filter_operator: FilterOperator = FilterOperator.AND,
         total_count: bool = False,
         study_value_version: str | None = None,
@@ -141,7 +142,7 @@ class StudyDiseaseMilestoneService:
             for disease_milestone in items
         ]
 
-        study_disease_milestones = GenericFilteringReturn.create(all_items, total)
+        study_disease_milestones = GenericFilteringReturn(items=all_items, total=total)
         return study_disease_milestones
 
     @db.transaction
@@ -159,7 +160,7 @@ class StudyDiseaseMilestoneService:
     def _validate_creation(
         self,
         disease_milestone_input: StudyDiseaseMilestoneCreateInput,
-        all_disease_milestones: list[StudyDiseaseMilestoneVO],
+        all_disease_milestones: list[StudyDiseaseMilestoneOGM],
     ):
         used_types = [
             disease_milestone.dm_type.name
@@ -177,7 +178,7 @@ class StudyDiseaseMilestoneService:
 
     def _validate_update(
         self,
-        disease_milestone_input: StudyDiseaseMilestoneCreateInput,
+        disease_milestone_input: StudyDiseaseMilestoneEditInput,
         study_disease_milestone: StudyDiseaseMilestoneVO,
     ):
         if (
@@ -214,7 +215,7 @@ class StudyDiseaseMilestoneService:
 
         return StudyDiseaseMilestoneVO(
             study_uid=study_uid,
-            order=study_disease_milestone_create_input.order,
+            order=study_disease_milestone_create_input.order,  # type: ignore[arg-type]
             start_date=datetime.datetime.now(datetime.timezone.utc),
             status=StudyStatus.DRAFT,
             author_id=self.author,
@@ -233,10 +234,11 @@ class StudyDiseaseMilestoneService:
         self,
         study_disease_milestone_to_edit: StudyDiseaseMilestoneVO,
         study_disease_milestone_edit_input: StudyDiseaseMilestoneEditInput,
-    ) -> StudyDiseaseMilestoneVO:
+    ):
         dm_type: DiseaseMilestoneTypeNamedTuple | None = None
         if (
-            study_disease_milestone_to_edit.disease_milestone_type
+            study_disease_milestone_edit_input.disease_milestone_type
+            and study_disease_milestone_to_edit.disease_milestone_type
             != study_disease_milestone_edit_input.disease_milestone_type
         ):
             dm_type = StudyDiseaseMilestoneType[
@@ -282,6 +284,7 @@ class StudyDiseaseMilestoneService:
             for disease_milestone in all_disease_milestones[
                 created_study_disease_milestone.order - 1 :
             ]:
+                assert disease_milestone.order is not None
                 disease_milestone.order += 1
                 self.repo.save(disease_milestone)
         else:
@@ -362,6 +365,7 @@ class StudyDiseaseMilestoneService:
         for disease_milestone in all_disease_milestones_in_study[
             study_disease_milestone.order - 1 :
         ]:
+            assert disease_milestone.order is not None
             disease_milestone.order -= 1
             self.repo.save(disease_milestone)
 
@@ -397,9 +401,9 @@ class StudyDiseaseMilestoneService:
     def get_distinct_values_for_header(
         self,
         field_name: str,
-        search_string: str | None = "",
-        filter_by: dict | None = None,
-        filter_operator: FilterOperator | None = FilterOperator.AND,
+        search_string: str = "",
+        filter_by: dict[str, dict[str, Any]] | None = None,
+        filter_operator: FilterOperator = FilterOperator.AND,
         page_size: int = 10,
         **kwargs,
     ):

@@ -86,7 +86,7 @@
               v-model="form.endpoint_level"
               :label="$t('StudyEndpointForm.endpoint_level')"
               :items="studiesGeneralStore.endpointLevels"
-              item-title="sponsor_preferred_name"
+              item-title="term_name"
               return-object
               clearable
               :disabled="editTemplate"
@@ -97,7 +97,7 @@
               v-model="form.endpoint_sublevel"
               :label="$t('StudyEndpointForm.endpoint_sub_level')"
               :items="studiesGeneralStore.endpointSubLevels"
-              item-title="sponsor_preferred_name"
+              item-title="term_name"
               return-object
               clearable
               :disabled="editTemplate"

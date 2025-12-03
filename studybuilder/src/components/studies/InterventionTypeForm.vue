@@ -144,6 +144,7 @@ import DurationField from '@/components/tools/DurationField.vue'
 import MultipleSelect from '@/components/tools/MultipleSelect.vue'
 import NotApplicableField from '@/components/tools/NotApplicableField.vue'
 import SimpleFormDialog from '@/components/tools/SimpleFormDialog.vue'
+import studyConstants from '@/constants/study'
 import YesNoField from '@/components/tools/YesNoField.vue'
 import { useStudiesGeneralStore } from '@/stores/studies-general'
 import { useStudiesManageStore } from '@/stores/studies-manage'
@@ -222,8 +223,12 @@ export default {
       if (this.form.trial_intent_types_null_value_code) {
         this.form.trial_intent_types_null_value_code = null
       } else {
+        const termUid = this.studiesGeneralStore.nullValues.find(
+          (el) =>
+            el.submission_value === studyConstants.TERM_NOT_APPLICABLE_SUBMVAL
+        ).term_uid
         this.form.trial_intent_types_null_value_code = {
-          term_uid: this.$t('_global.na_uid'),
+          term_uid: termUid,
           name: this.$t('_global.not_applicable_full_name'),
         }
       }
@@ -233,8 +238,12 @@ export default {
       if (this.form.stratification_factor_null_value_code) {
         this.form.stratification_factor_null_value_code = null
       } else {
+        const termUid = this.studiesGeneralStore.nullValues.find(
+          (el) =>
+            el.submission_value === studyConstants.TERM_NOT_APPLICABLE_SUBMVAL
+        ).term_uid
         this.form.stratification_factor_null_value_code = {
-          term_uid: this.$t('_global.na_uid'),
+          term_uid: termUid,
           name: this.$t('_global.not_applicable_full_name'),
         }
       }

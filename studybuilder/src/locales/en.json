@@ -95,7 +95,7 @@
         "reactivate": "Reactivate",
         "not_applicable_full_name": "Not Applicable",
         "positive_infinity_full_name": "Positive Infinity",
-        "na_uid": "C48660_NA",
+        "na_uid": "C48660",
         "filtering_to_add": "Filtering currently not activated",
         "save_anyway": "Save anyway",
         "add_defaults": "Default values",
@@ -150,10 +150,25 @@
         "reports": "Reports",
         "download": "Download",
         "and_or": "And/Or",
+        "submission_value": "Submission value",
+        "none": "(none/blank)",
         "select": "Select",
         "view_all": "View All",
         "author": "Author",
-        "multi_error_title": "One or more errors were encountered during operation"
+        "role": "Role",
+        "data_type": "Data type",
+        "multi_error_title": "One or more errors were encountered during operation",
+        "save_exit": "Save & exit",
+        "save_continue": "Save & continue",
+        "children_unaffected": "No child items will be affected.",
+        "sub_study_edit_warning": "This is a sub-study which inherits these properties from its parent. Please select the parent study to edit.",
+        "parents_unaffected": "No parent items will be affected.",
+        "new_version_affecting_parents_warning": "Creating a new version can affect the following parent elements:",
+        "approval_affecting_children_warning": "Approving the element will approve the following child elements:",
+        "continuation_confirmation": "Are you sure you want to continue?",
+        "back": "Back",
+        "select_all": "Select All",
+        "unselect_all": "Unselect All"
     },
     "_errors": {
         "exclusive_select": "Field and Null Flavor can't be selected at the same time.",
@@ -166,23 +181,23 @@
         "validation_error": "Data validation error:",
         "select_at_least_one": "Select a value or a reason for missing",
         "no_parameter_values_selected": "No value(s) selected",
-        "identical_name": "Sentence case name value must be identical to name value"
+        "identical_name": "Sentence case name can only differ in case compared to name value"
     },
     "_help": {
-        "CrfTemplates": {
-            "name": "Provide the name of the Template that will be displayed in the different part of the application (Mandatory field).",
-            "oid": "Specify an 'Object Identifier' as a unique ID in the application. As we are defining a Template, it could starts with T.XXX. This is not an ODM element but we are using it here to group Forms, ItemGroups and Items to be re-used after at the Study Level of the application (Mandatory field, but it can be auto-populated if left blank).",
-            "effective_date": "Provide an effective start date, when this Template will be applicable (Select a date in the datepicker).",
-            "retired_date": "Provide an obsolete stop date (a retired date), when this Template will be deprecated (Select a date in the datepicker)."
+        "CRFCollections": {
+            "name": "Provide the name of the Collection that will be displayed in the different part of the application (Mandatory field).",
+            "oid": "Specify an 'Object Identifier' as a unique ID in the application. As we are defining a Collection, it could starts with T.XXX. This is not an ODM element but we are using it here to group Forms, ItemGroups and Items to be re-used after at the Study Level of the application (Mandatory field, but it can be auto-populated if left blank).",
+            "effective_date": "Provide an effective start date, when this Collection will be applicable (Select a date in the datepicker).",
+            "retired_date": "Provide an obsolete stop date (a retired date), when this Collection will be deprecated (Select a date in the datepicker)."
         },
         "CRFForms": {
             "name": "Provide the name of the Form. This will be used as the /ODM/FormDef/@name attribute in the ODM-XML file (Mandatory field).",
             "oid": "Specify an 'Object Identifier' as a unique ID in the application. As we are defining a Form, it could starts with F.XXX. This will be used as the /ODM/FormDef/@OID attribute in the ODM-XML file (Mandatory field, but it can be auto-populated if left blank).",
             "repeating": "Specify if the Form is repeating over time or not. This will be used as the /ODM/FormDef/@Repeating with a Yes/No answer.",
             "description": "A free-text description of the containing study metadata component. This information will be used as the /ODM/FormDef/Description/TranslatedText.",
-            "impl_notes": "Provide here the text explaining the way this Form will be used in the application (as a Sponsor note). Note that here you can use the Rich Editor to add some html tag. This will be used as the /ODM/FormDef[@ImplementationNotes] attribute in the ODM-XML file.",
+            "sponsor_instruction": "Provide here the text explaining the way this Form will be used in the application (as a Sponsor note). Note that here you can use the Rich Editor to add some html tag. This will be used as the /ODM/FormDef[@sponsorInstruction] attribute in the ODM-XML file.",
             "displayed_text": "Specify here the label of the Form (using the default language). This will be used as the /ODM/FormDef/Description/TranslatedText/ tag in the ODM-XML file. When the multilingual is activated then, the stepper 'Translations' will allow the display text of the Form to be translated accordingly.",
-            "compl_instructions": "Provide here the help text that could be displayed in a CRF as an OnlineHelp. Note that here you can use the Rich Editor to add some html tag. This will be used as the /ODM/FormDef/[@CompletionInstructions] name attribute in the ODM-XML file.",
+            "instruction": "Provide here the help text that could be displayed in a CRF as an OnlineHelp. Note that here you can use the Rich Editor to add some html tag. This will be used as the /ODM/FormDef/[@Instruction] name attribute in the ODM-XML file.",
             "vendor_extensions": "This stepper is dedicated to the extension of the Form by providing both Elements and / or Attributes. This will then be added to the ODM/FormDef as a Vendor like for example osb:displayAsTable='Yes' or as an extension under this OMD level. XML namespaces are used for providing uniquely named elements and attributes in an XML document. Provide also the datatype for this Vendor Extension and note that the value can be verified against a dedicated list of accepted reply.",
             "aliases": "An Alias provides an additional name for an element, here for the Form element. The Context attribute specifies the application domain in which this additional name is relevant. This will be used as the /ODM/FormDef/Alias[@Context] name attribute in the ODM-XML file.",
             "context": "The Context attribute specifies the application domain in which this additional name is relevant. You could use for example 'CDASH/SDTM' with a 'Name' = 'DM:Demographics' and then the ODM-XML view will display it as an annotation."
@@ -192,9 +207,9 @@
             "oid": "Specify an 'Object Identifier' as a unique ID in the application. As we are defining an ItemGroup, it could starts with G.XXX. This will be used as the /ODM/ItemGroupDef/@OID attribute in the ODM-XML file (Mandatory field, but it can be auto-populated if left blank).",
             "repeating": "Specify if the ItemGroup is repeating over time or not. This will be used as the /ODM/ItemGroupDef/@Repeating with a Yes/No answer.",
             "description": "A free-text description of the containing study metadata component. This information will be used as the /ODM/ItemGroupDef/Description/TranslatedText.",
-            "impl_notes": "Provide here the text explaining the way this Item Group will be used in the application (as a Sponsor note). Note that here you can use the Rich Editor to add some html tag. This will be used as the /ODM/ItemGroupDef[@osb:instruction] attribute in the ODM-XML file.",
+            "sponsor_instruction": "Provide here the text explaining the way this Item Group will be used in the application (as a Sponsor note). Note that here you can use the Rich Editor to add some html tag. This will be used as the /ODM/ItemGroupDef[@osb:sponsorInstruction] attribute in the ODM-XML file.",
             "displayed_text": "Specify here the label of the Item Group (using the default language). This will be used as the /ODM/ItemGroupDef/Description/TranslatedText/ tag in the ODM-XML file. When the multilingual is activated then, the stepper 'Translations' will allow the display text of the Form to be translated accordingly.",
-            "compl_instructions": "Provide here the help text that could be displayed in a CRF as an OnlineHelp. Note that here you can use the Rich Editor to add some html tag. This will be used as the /ODM/ItemGroupDef[@osb:sponsorInstruction] attribute in the ODM-XML file.",
+            "instruction": "Provide here the help text that could be displayed in a CRF as an OnlineHelp. Note that here you can use the Rich Editor to add some html tag. This will be used as the /ODM/ItemGroupDef[@osb:instruction] attribute in the ODM-XML file.",
             "aliases": "An Alias provides an additional name for an element, here for the ItemGroup element. The Context attribute specifies the application domain in which this additional name is relevant. This will be used as the /ODM/ItemGroupDef/Alias[@Context] name attribute in the ODM-XML file.",
             "context": "The Context attribute specifies the application domain in which this additional name is relevant. You could use for example 'CDASH/SDTM' with a 'Name' = 'DM:Demographics|DS:Disposition' and then the ODM-XML view will display it as an annotation for two SDTM Domain."
         },
@@ -208,16 +223,12 @@
             "sds_name": "The SDSVarName attribute carry submission information as described in the latest version of CDISC SDTM. It should use a SDTMIG variable reference.",
             "origin": "Origin attribute carry submission information as described in the latest version of CDISC SDTM.",
             "comment": "Comment attribute carry submission information as described in the latest version of CDISC SDTM.",
-            "impl_notes": "Provide here the text explaining the way this Item will be used in the application (as a Sponsor note). Note that here you can use the Rich Editor to add some html tag. This will be used as the /ODM/ItemDef[@osb:instruction] attribute in the ODM-XML file.",
+            "sponsor_instruction": "Provide here the text explaining the way this Item will be used in the application (as a Sponsor note). Note that here you can use the Rich Editor to add some html tag. This will be used as the /ODM/ItemDef[@osb:sponsorInstruction] attribute in the ODM-XML file.",
             "displayed_text": "Specify here the label of the Item (using the default language). This will be used as the /ODM/ItemDef/Description/TranslatedText/ tag in the ODM-XML file. When the multilingual is activated then, the stepper 'Translations' will allow the display text of the Form to be translated accordingly.",
-            "compl_instructions": "Provide here the help text that could be displayed in a CRF as an OnlineHelp. Note that here you can use the Rich Editor to add some html tag. This will be used as the /ODM/ItemDef[@osb:sponsorInstruction] attribute in the ODM-XML file.",
+            "instruction": "Provide here the help text that could be displayed in a CRF as an OnlineHelp. Note that here you can use the Rich Editor to add some html tag. This will be used as the /ODM/ItemDef[@osb:instruction] attribute in the ODM-XML file.",
             "vendor_extensions": "This stepper is dedicated to the extension of the Form by providing both Elements and / or Attributes. This will then be added to the ODM/ItemDef as a Vendor like for example osb:displayAsTable='Yes' or as an extension under this OMD level. XML namespaces are used for providing uniquely named elements and attributes in an XML document. Provide also the datatype for this Vendor Extension and note that the value can be verified against a dedicated list of accepted reply.",
             "aliases": "An Alias provides an additional name for an element, here for the Item element. The Context attribute specifies the application domain in which this additional name is relevant. This will be used as the /ODM/ItemDef/Alias[@Context] name attribute in the ODM-XML file.",
             "context": "The Context attribute specifies the application domain in which this additional name is relevant. You could use for example 'CDASH/SDTM' with a 'Name' = 'VS:VSORRES' and then the ODM-XML view will display it as an annotation for two SDTM Domain."
-        },
-        "CrfAliases": {
-            "name": "An Alias provides an additional name for an element, here for the ItemGroup element. The Context attribute specifies the application domain in which this additional name is relevant. This will be used as the Alias[@Name] name attribute in the ODM-XML file.",
-            "context": "The Context attribute specifies the application domain in which this additional name is relevant. You could use for example 'CDASH/SDTM' with a 'Name' = 'DM:Demographics|DS:Disposition' and then the ODM-XML view will display it as an annotation for two SDTM Domain."
         },
         "GenericTemplateForm": {
             "study_indication": "Indications, conditions, diseases or disorders in scope for the template. Select NA (not applicable), if template is generic not targeted specific studies.",
@@ -292,40 +303,40 @@
             "rationale_for_request": "A written note on why the request is needed."
         },
         "ActivityOverview": {
-          "general": "An Activity is a definition of an activity performed on a subject. The Activity is the overall name of the activity used in the protocol SoA.",
-          "cosmos_yaml": "The tab displays the content in a YAML file structure. The naming complies with the CDISC COSMoS Biomedical Concept structure.",
-          "osb_yaml": "OSB YAML",
-          "activity_groups": "The overall group(s) that the activity belongs to. The grouping is also used for protocol SoA display and for searching in the List of Activities.",
-          "activity_subgroups": "This is a sub-grouping within a group. The sub-grouping is also used for protocol SoA display and for searching in the List of Activities.",
-          "activity_group": "Activity group",
-          "activity_subgroup": "Activity subgroup",
-          "adam_code": "The code used as the PARAM code in the ADaM data.",
-          "topic_code": "The CDW Topic Code",
-          "is_data_collected": "Specifies if the activity involves data collection.",
-          "class": "The class in which the Activity Instance belongs to.",
-          "instances": "The list of Activity Instances. An Activity Instance is a detailed definition of the activity specifying e.g. unit, specimen, location etc.",
-          "no_instances": "No activity instances available for this activity.",
-          "activity_groupings": "The list of groups and sub-groups assigned.",
-          "history_title": "History for activity [{uid}]",
-          "name": "Name",
-          "sentence_case_name": "Sentence case name",
-          "version": "Version",
-          "status": "Status",
-          "start_date": "Date when this version became active",
-          "end_date": "Date when this version became inactive",
-          "library": "Library where defined",
-          "author": "User who created or last modified",
-          "definition": "Definition",
-          "activities": "List of Activities",
-          "is_required_for_activity": "Required for activity",
-          "is_default_selected_for_activity": "Default selected for activity",
-          "is_data_sharing": "Data sharing",
-          "is_legacy_usage": "Legacy usage",
-          "item_type": "Item type",
-          "items": "Items",
-          "ct_term_name": "CT term name",
-          "unit_def_name": "Unit definition",
-          "item_class": "Item class"
+            "general": "An Activity is a definition of an activity performed on a subject. The Activity is the overall name of the activity used in the protocol SoA.",
+            "cosmos_yaml": "The tab displays the content in a YAML file structure. The naming complies with the CDISC COSMoS Biomedical Concept structure.",
+            "osb_yaml": "OSB YAML",
+            "activity_groups": "The overall group(s) that the activity belongs to. The grouping is also used for protocol SoA display and for searching in the List of Activities.",
+            "activity_subgroups": "This is a sub-grouping within a group. The sub-grouping is also used for protocol SoA display and for searching in the List of Activities.",
+            "activity_group": "Activity group",
+            "activity_subgroup": "Activity subgroup",
+            "adam_code": "The code used as the PARAM code in the ADaM data.",
+            "topic_code": "The CDW Topic Code",
+            "is_data_collected": "Specifies if the activity involves data collection.",
+            "class": "The class in which the Activity Instance belongs to.",
+            "instances": "The list of Activity Instances. An Activity Instance is a detailed definition of the activity specifying e.g. unit, specimen, location etc.",
+            "no_instances": "No activity instances available for this activity.",
+            "activity_groupings": "The list of groups and sub-groups assigned.",
+            "history_title": "History for activity [{uid}]",
+            "name": "Name",
+            "sentence_case_name": "Sentence case name",
+            "version": "Version",
+            "status": "Status",
+            "start_date": "Date when this version became active",
+            "end_date": "Date when this version became inactive",
+            "library": "Library where defined",
+            "author": "User who created or last modified",
+            "definition": "Definition",
+            "activities": "List of Activities",
+            "is_required_for_activity": "Required for activity",
+            "is_default_selected_for_activity": "Default selected for activity",
+            "is_data_sharing": "Data sharing",
+            "is_legacy_usage": "Legacy usage",
+            "item_type": "Item type",
+            "items": "Items",
+            "ct_term_name": "CT term name",
+            "unit_def_name": "Unit definition",
+            "item_class": "Item class"
         },
         "ActivityInstanceOverview": {
             "general": "An Activity Instance is detailed definition of an activity, showing the relevant qualifiers/items, e.g. unit, location, specimen, dose regimen.",
@@ -407,7 +418,7 @@
             "catalogue": "The new code list will be created in this catalogue"
         },
         "CodelistSponsorValuesForm": {
-            "pref_name": "The sponsor preferred name is used by the StudyBuilder as the default display name for the code list",
+            "pref_name": "The sponsor preferred name is used by the OpenStudyBuilder as the default display name for the code list",
             "tpl_parameter": "If set/active, the code list is used as parameter in the creation of templates."
         },
         "CodelistAttributesForm": {
@@ -415,17 +426,33 @@
             "subm_value": "Provide a unique submission value. If a duplicate exists then the application will request a unique value.",
             "nci_pref_name": "Provide if applicable a preferred name",
             "extensible": "Allow addition of new term(s)",
+            "ordinal": "Mark the codelist as ordinal, meaning that the 'order' of the terms represent their numeric value.",
             "definition": "Provide a complete definition of the code list"
         },
         "CodelistTermCreationForm": {
             "sponsor_pref_name": "Preferred name of the term",
             "sponsor_sentence_case_name": "The sponsor sentence case name should be the same as the sponsor preferred name but with no capital letters",
             "term_name": "Provide the term name that represent the only allowed reply for a data item",
-            "submission_value": "Provide a unique submission value. If a duplicate exists then the application will use it instead",
+            "submission_value": "Provide a submission value that is unique within the codelist.",
+            "concept_id": "If available, provide an NCI Concept ID",
             "nci_pref_name": "Provide if applicable a preferred NCI name",
             "definition": "Provide a complete definition of the term",
             "synonyms": "Provide if applicable one or more synonym(s), separated by a ';'. If those synonyms already exist in the database, they will be linked",
             "order": "Order of term in the codelist"
+        },
+        "CodelistAddPairedForm": {
+            "pair_type_names": "Choose this option if the current codelist contains code submission values. Pair it with a codelist that contains the name submission values.",
+            "pair_type_codes": "Choose this option if the current codelist contains name submission values. Pair it with a codelist that contains the code submission values"
+        },
+        "AddChildTermForm": {
+            "type": "Select a child term for which the current term specifies the type.",
+            "subtype": "Select a child term for which the current term specifies the subtype.",
+            "predecessor": "Select a child term to which the current term is the predecessor. This is used to indicate that this child term replaces the current term."
+        },
+        "AddParentTermForm": {
+            "type": "Select a parent term that specifies the type of this term.",
+            "subtype": "Select a parent term that specifies the subtype of this term.",
+            "predecessor": "Select a parent term that specifies the predecessor of this term. This is used to indicate that this term replaces the parent."
         },
         "DictionaryTermForm": {
             "dictionary_id": "Add an ID of the dictionary term. Ensure that the ID follows the nomenclature for the dictionary. Example UNII for Insulin Detemir (levemir) is 4FT78T86XV, MED-RT for Insulin analogue is N0000175453, and SNOMED ID for Diabetes Mellitus is 73211009.",
@@ -451,7 +478,7 @@
             "select_template": "To create an instantiation of a Time Frame, select from the relevant library and it's listed templates."
         },
         "StudyForm": {
-            "project_id": "Select the project number from the drop-down list. For details on project see <a href='https://novonordisk.sharepoint.com/sites/ProjectToolbox' target='_blank'>[Project Toolbox]<a> ",
+            "project_id": "Select the project ID from the drop-down list. For details on project see <a href='https://novonordisk.sharepoint.com/sites/ProjectToolbox' target='_blank'>[Project Toolbox]<a> ",
             "project_name": "Auto-populated based on selected project",
             "brand_name": "Auto-populated based on selected project (only populated if brand name exists)",
             "study_id": "ID that will be generated for this study",
@@ -510,7 +537,7 @@
             "added_to_et": "The addition of a therapeutic product to the existing regimen in a clinical study, where both entities remain as discrete products"
         },
         "StudyCompoundForm": {
-            "general": "Compounds are defined in the Study Builder Library. If a new compound or additional information to an existing compound is needed it must be defined in the library.",
+            "general": "Compounds are defined in the OpenStudyBuilder Library. If a new compound or additional information to an existing compound is needed it must be defined in the library.",
             "type_of_treatment": "Each Type of Treatment will be classified into IMP (Investigational Medical Product) or NIMP (Non-investigational Medical Product) - this will be used when generating the study interventions table for the protocol. Choose type of intervention from drop-down. Investigational Product (IMP):Following Study Compound will be linked to TSPARM 'TRT' (Investigational Therapy or Treatment) and SDTM.EX, Comparative Treatment (IMP): Following Study Compound will be linked to TSPARM 'COMPTRT' (Comparative Treatment Name) and SDTM.EX, Placebo Treatment (IMP): Following Study Compound will not be linked to TSPARM - but info used for SDTM.EX, Current Treatment (NIMP): Following Study Compound will be linked to TSPARM 'CURTRT' (Current Therapy or Treatment) and SDTM.EX. if Type of treatment is  either 'Investigational Product', 'Comparative Treatment' or 'Current Treatment' then NA can be ticked. This implies that no details for the compound will be/is provided (the next steps in this edit menu (select alias and details for the compound) will disappear. A reason for NA should be provided.",
             "compound": "Choose compound from drop-down.",
             "compound_alias": "Choose compound alias from drop-down",
@@ -627,7 +654,7 @@
             "study_visits": "A clinical encounter where the the subject interacts with the investigator. There can be one more visits in an Epoch. To edit visit(s) in the table view click on the pencil in the top-right menu.",
             "design_matrix": "The tabular (matrix) view of the study arms, epochs and elements. Click on the pencil to select the elements in the epochs for the different arms",
             "edit_visit_tableview": "To edit visits in a tabular view (all visits displayed) then click on the pencil (top right menu of the table). Use the dropdowns to change information as needed. To save an edit for row (a visit) click on the context menu and press Save. This must be done for all visits edited to save the edits. If timing or time reference is changed then the visits timeline will be recalculated and the visit edited may change Visit name. Tip: Write the original Visits name/number in the Visit Description to track where the visit being edited has been placed on the visit timeline. Delete the note afterwards.",
-            "disease_milestones": "A disease milestone is an event or activity that can be anticipated in the course of a disease, and which trigger the collection of data, but whose timing is not controlled by the study schedule (Planned visits). A disease milestone may also be something that occurred pre-study. Example is DIAGNOSIS (activity typically occurred pre-study), or HYPOGLYCAEMIC EVENT (event anticipated during a diabetes study). A Disease Milestone can be marked for repetition for milestones expected more than once in a study. If a new milestone is need in the drop-down it must be added to the codelist MIDSTYPE in the StudyBuilder Library."
+            "disease_milestones": "A disease milestone is an event or activity that can be anticipated in the course of a disease, and which trigger the collection of data, but whose timing is not controlled by the study schedule (Planned visits). A disease milestone may also be something that occurred pre-study. Example is DIAGNOSIS (activity typically occurred pre-study), or HYPOGLYCAEMIC EVENT (event anticipated during a diabetes study). A Disease Milestone can be marked for repetition for milestones expected more than once in a study. If a new milestone is need in the drop-down it must be added to the codelist MIDSTYPE in the OpenStudyBuilder Library."
         },
         "StudyBranchArms": {
             "study_arm": "Select the study arm in which the branching applies.",
@@ -720,6 +747,9 @@
             "QS_FT_CT": "Questionnaire and Functional Test Controlled Terminology. With the December 19th 2014 release of the CDISC terminologies, the standalone Questionnaire and Functional Test (QS-FT) Terminology was deprecated and its content subsumed into the Clinical Outcome Assessments (COA) Terminology",
             "SDTM_CT": "Study Data Tabulation Controlled Terminology. Terminology to support the tabulation of the collected data. SDTM is one of the required standards for data submission to FDA (U.S.) and PMDA (Japan).",
             "SEND_CT": "Standard for the Exchange of Nonclinical Data Controlled Terminology. SEND is an implementation of the SDTM standard for nonclinical studies. SEND is one of the required standards for data submission to FDA."
+        },
+        "CtTermsTable": {
+            "general": "A listing of all terms within the controlled terminology. The listing includes both CDISC and sponsor terms. It also includes terms that are not included in any codelist."
         },
         "CtSponsorPackagesTable": {
             "general": "The CT Sponsor Packages displays all version of both CDISC and Sponsor code lists and terms. Navigate using the CT Sponsor package date to show specific subsets of terminology."
@@ -884,7 +914,7 @@
         "ProjectForm": {
             "general": "Add a new project to a clinical programme.",
             "name": "Name for the new project, example: 'Demo Project'.",
-            "project_number": "Project number for the new project, example: 'AB1234'.",
+            "project_number": "Project ID for the new project, example: 'AB1234'.",
             "description": "Description of the project, example: 'Project for demonstration purposes'.",
             "clinical_programme": "Clinical programme that the project belongs to."
         },
@@ -893,7 +923,7 @@
             "name": "Name for the new clinical programme."
         },
         "UsdmPage": {
-            "general": "This page display the JSON file generated based on the  Digital Data Flow (DDF) CDISC / TransCelerate Unified Study Definitions Model (USDM). The data available here are extracted and converted into the USDM model, based on mapping rules defined within the StudyBuilder team: Be aware about that.",
+            "general": "This page display the JSON file generated based on the  Digital Data Flow (DDF) CDISC / TransCelerate Unified Study Definitions Model (USDM). The data available here are extracted and converted into the USDM model, based on mapping rules defined within the OpenStudyBuilder team: Be aware about that.",
             "official_protocol_title": "The formal descriptive name for the protocol.",
             "clinical_study_def": "A clinical study involves research using human volunteers (also called participants) that is intended to add to medical knowledge. There are two main types of clinical studies: clinical trials (also called interventional studies) and observational studies. [[http://ClinicalTrials.gov]](CDISC Glossary)",
             "study_protocol_version": "A plan at a particular point in time for a formal investigation to assess the utility, impact, pharmacological, physiological, and/or psychological effects of a particular treatment, procedure, drug, device, biologic, food product, cosmetic, care plan, or subject characteristic. (BRIDG)",
@@ -915,6 +945,36 @@
             "step2_description": "Select an activity instance class and a data domain. These selections will determine the required and optional metadata to be defined for SDTM",
             "step3_description": "Specify additional details to be used for the generation of PARAM and PARAMCD. The selection of values will autogenerate a suggestion for a unique name for the activity instance, PARAMCD and topic code. Its possible to manually modify the names.",
             "step4_description": "Specify optional activity items that are not part of PARAM/PARAMCD but will be in SDTM. These values are used to specify data that can be collected on a CRF or a external specification. Examples are methods, anatomical locations or evaluator information that will increase the value of secondary use of data."
+        },
+        "CohortsStepper": {
+            "select_class": "“Study with cohorts, branches and subpopulations” will bring up the full stepper, helping you set up cohorts and branches in an easy and controlled way. Study participants must be as-signed to each branch and are then automatically assigned to cohorts and arms as well. “Study with arms only” will only bring up the first page of the stepper and participants must be assigned to arms directly. It is still possible to add cohorts and branches manually after-wards.",
+            "set_arms_for_study": "You can add as many arms as required in your study using the “Add arm” button.",
+            "study_arm_type": "There are four options available for study arm type: Comparator arm, Investigational arm, Observational arm and Placebo arm.",
+            "arm_name": "Arm name can be filled in with free text but is most commonly the name of the investigation, e.g. “Semaglutide” or “Placebo”.",
+            "arm_short_name": "Arm short name can be filled in with free text but is most commonly the same as the arm name.",
+            "rand_group": "Randomisation group should be filled out when known. Randomisation group must be filled out with capital letters (e.g. A). If multiple groups apply for one arm, they must be separated using pipes (e.g. AIBID).",
+            "arm_code": "Arm code is generated automatically within Novo Nordisk but may be applicable for open-source users.",
+            "set_cohorts_for_study": "You can add as many cohorts/subpop as required in your study using the “Add Co-horts/subpop.” button.",
+            "source_var": "There are three options available for source variable: Cohort, Subgroup or Stratum.",
+            "cohort_code": "Cohort code must be filled out with a numerical value (e.g. 1). Most common approach is numbering each cohort in numerical order.",
+            "cohort_name": "Cohort/subpop. name can be filled in with free text but is most commonly the name of the investigation + dose level, e.g. “Semaglutide 2.4 mg” or “Placebo 2.4 mg”.",
+            "cohort_short_name": "Cohort/subpop. short name can be filled in with free text but is most commonly the same as the cohort/subpop. name or sometimes just the dose level.",
+            "link_arms_cohorts": "Enter the number of participants per branch. It is possible to copy the number of participants from the first row to all other rows. Branch name and branch short name is automatically generated based on the cohort and arm that the branch is assigned to. Using the Edit button, it is possible to rename the branch name and branch short name."
+        },
+        "DataSupplierView": {
+            "DataSupplierTable": {
+                "general": "TBD"
+            },
+            "DataSupplierForm": {
+                "name": "TBD",
+                "description": "TBD",
+                "order": "TBD",
+                "supplier_api_base_url": "TBD",
+                "supplier_ui_base_url": "TBD",
+                "supplier_type": "TBD",
+                "supplier_origin_source": "TBD",
+                "supplier_origin_type": "TBDe"
+            }
         }
     },
     "Topbar": {
@@ -934,7 +994,7 @@
     "Library": {
         "description_top_before": "The ",
         "description_top_after": " helps you manage the",
-        "description_bottom": "standards used in the StudyBuilder",
+        "description_bottom": "standards used in the OpenStudyBuilder",
         "dashboard_description": "A simple graphical presentation of the current status and historical trends of the metadata stored in the Library",
         "codelist_description": "Find the CDISC controlled terminology, including the code lists, the valid values and associated definitions for each code list and the evolution in packages and terms over time. Sponsor defined list and terms are also included.",
         "dictionaries_description": "Find relevant external dictionaries and thesaurus for clinical development such as SNOMED, MedDRA, MED-RT, UNII, LOINC, UCUM. Since some of these dictionaries are very large, only selected terms relevant for the Novo Nordisk pipeline are included.",
@@ -948,7 +1008,8 @@
         "projects": "View or create projects.",
         "clinical_programmes": "View or create clinical programmes.",
         "administrative_definitions": "View or create administrative definitions.",
-        "overview_pages_description": ""
+        "overview_pages_description": "",
+        "data_collection_standards_description": ""
     },
     "Studies": {
         "description_top_before": "Under ",
@@ -971,8 +1032,8 @@
     },
     "About": {
         "header": "We are using the following combination of components:",
-        "about_release_number": "StudyBuilder version:",
-        "components_list": "Clinical-MDR and StudyBuilder build number:",
+        "about_release_number": "OpenStudyBuilder version:",
+        "components_list": "Clinical-MDR and OpenStudyBuilder build number:",
         "component": "Component",
         "description": "Description",
         "database": "Database",
@@ -983,18 +1044,19 @@
         "clinical-mdr-api_description": "Built using Python3 and FastAPI",
         "studybuilder": "Frontend application",
         "studybuilder_description": "Built using VueJS and Vuetify",
-        "studybuilder-export": "StudyBuilder Export",
-        "studybuilder-export_description": "Export of StudyBuilder data",
+        "studybuilder-export": "OpenStudyBuilder Export",
+        "studybuilder-export_description": "Export of OpenStudyBuilder data",
         "build_number": "Build number",
-        "title": "About StudyBuilder",
+        "title": "About OpenStudyBuilder",
         "license": "Component License",
         "sbom": "Software Bill of Materials",
-        "studybuilder-import": "StudyBuilder Import",
+        "studybuilder-import": "OpenStudyBuilder Import",
         "studybuilder-import_description": "Dictionary and sponsor data import",
         "mdr-standards-import": "Standards Import",
         "mdr-standards-import_description": "CDISC Library Standards Import",
         "neo4j-mdr-db": "Clinical MDR",
-        "neo4j-mdr-db_description": "Logical and physical data models"
+        "neo4j-mdr-db_description": "Logical and physical data models",
+        "components": "Components"
     },
     "Sidebar": {
         "dashboard": "Dashboard",
@@ -1010,6 +1072,8 @@
             "activities_instances": "Activity Instances",
             "units": "Units",
             "crfs": "CRFs",
+            "crf_viewer": "CRF Viewer",
+            "crf_builder": "CRF Builder",
             "compounds": "Compounds",
             "dictionaries": "Dictionaries",
             "snomed": "SNOMED",
@@ -1060,10 +1124,13 @@
             "clinical_programmes": "Clinical Programmes",
             "projects": "Projects",
             "administrative_definitions": "Admin Definitions",
+            "terms": "Terms",
             "overview_pages": "Overview Pages",
             "study_structures": "Study Structures",
+            "data_collection_standards": "Data Collection Standards",
             "activities_subgroups": "Activity Subgroups",
-            "activities_groups": "Activity Groups"
+            "activities_groups": "Activity Groups",
+            "data_suppliers": "Data Suppliers"
         },
         "study": {
             "about": "About Studies",
@@ -1162,12 +1229,14 @@
             "ichm11": "ICH M11"
         },
         "admin": {
-            "announcements": "System annoucement",
-            "feature_flags": "Feature flags"
+            "announcements": "System Annoucement",
+            "feature_flags": "Feature Flags",
+            "complexity_burdens": "Complexity Burdens",
+            "odm_vendor_extensions": "ODM Vendor Extensions"
         }
     },
     "HomeView": {
-        "title": "Welcome to the StudyBuilder {env} application",
+        "title": "Welcome to the OpenStudyBuilder {env} application",
         "subtitle": "Study Specification made easy",
         "design": "Build",
         "design_text1": "your study in a",
@@ -1392,8 +1461,6 @@
         "history": "history",
         "catalogue_name": "Catalogue Name",
         "sponsor_pref_name": "Sponsored Preferred Name",
-        "code_submission_value": "Code Submission Value",
-        "name_submission_value": "Name Submission Value",
         "nci_pref_name": "NCI Preferred Name",
         "action": "Action",
         "date": "Date",
@@ -1515,7 +1582,10 @@
         "brand_name": "Brand name",
         "title": "Study title",
         "subpart_id": "Subpart ID",
-        "sub_study_id": "Sub study ID"
+        "sub_study_id": "Sub study ID",
+        "lts_locked_ver": "Latest locked version",
+        "lts_released_ver": "Latest released version",
+        "lts_version": "Latest version"
     },
     "StudyCreationForm": {
         "title": "Add study",
@@ -1604,10 +1674,20 @@
         "branch_arms": "Branch arms",
         "number_of_subjects": "Number of subjects",
         "epochs": "Epochs",
-        "arms_number": "Number of arms:",
-        "planned_subjects": "Planned number of subjects:",
-        "study_design_class": "Study Design Class:",
-        "table_caption": "Study structure overview table"
+        "arms_number": "Number of Arms",
+        "planned_subjects": "Planned number of subjects",
+        "study_design_class": "Study Design Class",
+        "table_caption": "Study structure overview table",
+        "number_arms": "Number of Arms",
+        "number_branches": "Number of Branch Arms",
+        "number_cohorts": "Number of Cohorts",
+        "number_elements": "Number of Study Elements",
+        "study_structure": "Study structure",
+        "cohorts": "Cohorts",
+        "subjects": "subjects",
+        "total_subjects": " subjects in total per cohort",
+        "source_var": "Source variable",
+        "source_var_desc": "Source variable description"
     },
     "NullFlavorSelect": {
         "label": "Reason for missing"
@@ -1657,7 +1737,7 @@
         "japanese_trial_registry_id_japic": "Japanese Trial Registry ID (JAPIC)",
         "investigational_new_drug_application_number_ind": "Investigational New Drug Application (IND) Number",
         "eu_trial_number": "EU Trial Number",
-        "civ_id_sin_number": "CID ID SIN Number",
+        "civ_id_sin_number": "CIV-ID/SIN Number",
         "national_clinical_trial_number": "National Clinical Trial Number",
         "japanese_trial_registry_number_jrct": "Japanese Trial Registry Number",
         "national_medical_products_administration_nmpa_number": "NMPA Number",
@@ -1716,7 +1796,7 @@
         "copy_objective": "Select objective",
         "brand_name": "Brand name",
         "project_name": "Project name",
-        "project_number": "Project number",
+        "project_number": "Project ID",
         "study_id": "Study ID",
         "template": "Template",
         "select_objective_title": "Selected objective",
@@ -1826,7 +1906,7 @@
         "endpoint_added": "Endpoint added",
         "brand_name": "Brand name",
         "project_name": "Project name",
-        "project_number": "Project number",
+        "project_number": "Project ID",
         "study_id": "Study ID",
         "unit": "Unit",
         "endpoint_title": "Endpoint title",
@@ -1890,51 +1970,55 @@
         "title": "Study Compounds"
     },
     "StudyCompoundTable": {
-        "study_compound": "Study Compound",
+        "study_compound": "Study compound",
         "compound": "Compound",
-        "sponsor_compound": "Sponsor Compound",
+        "sponsor_compound": "Sponsor compound",
         "is_name_inn": "Is INN",
-        "pharma_class": "Pharmacological Class (MED-RT)",
-        "substance": "Substance (UNII)",
+        "pharma_class": "Pharmacological class (MED-RT)",
+        "substance": "UNII",
         "type_of_treatment": "Type of treatment",
         "route_of_admin": "Route of administration",
-        "compound_alias": "Compound Alias",
-        "preferred_alias": "Preferred Alias",
+        "compound_alias": "Compound alias",
+        "preferred_alias": "Preferred alias",
         "strength": "Strength",
-        "dosage_form": "Pharmaceutical Dosage form",
+        "dosage_form": "Pharmaceutical dosage form",
         "dispensed_in": "Dispensed in",
-        "device": "Delivery Device",
+        "device": "Delivered in",
         "half_life": "Half-life",
         "lag_time": "Lag-time",
-        "nnc_number_long": "Compound Number (long)",
-        "nnc_number_short": "Compound Number (short)",
-        "analyte_number": "Analyte Number",
-        "reason_for_missing": "Reason For Missing",
-        "compound_definition": "Compound Definition",
-        "alias_definition": "Alias Definition",
+        "nnc_number_long": "NNC Number (long)",
+        "nnc_number_short": "NNC Number (short)",
+        "analyte_number": "Analyte number",
+        "reason_for_missing": "Reason for missing",
+        "compound_definition": "Compound definition",
+        "alias_definition": "Alias definition",
         "confirm_delete": "The study compound '{compound}' will be removed",
         "confirm_delete_cascade": "The study compound '{compound}' and {compoundDosings} study compound dosing(s) will be removed",
         "confirm_delete_na": "The study compound will be removed",
         "delete_compound_success": "Study compound deleted",
         "study_compound_history_title": "History for study compound [{studyCompoundUid}]",
-        "global_history_title": "Study compounds history"
+        "global_history_title": "Study compounds history",
+        "medicinal_product": "Medicinal product",
+        "dose_frequency": "Dose frequency"
     },
     "StudyCompoundForm": {
         "add_title": "Add study compound",
         "edit_title": "Edit study compound",
         "step1_title": "Type of treatment",
-        "step2_title": "Select compound alias",
+        "step2_title": "Select compound",
         "step3_title": "Select compound details",
         "type_of_treatment": "Type of treatment",
         "compound": "Compound",
         "compound_alias": "Compound alias",
+        "compound_no_preferred_synonym": "Compound does not have a preferred synonym. Please define a preferred synonym in the Library.",
+        "compound_no_medicinal_product": "Compound does not have an approved medicinal product. Please define a medicinal product in the Library.",
         "pharma_class": "Pharmacological class",
         "substance": "Substance name",
         "unii": "UNII (Unique ingredient identifier)",
         "route_of_admin": "Route of administration",
         "dosage_form": "Pharmaceutical dosage form",
         "dispensed_in": "Dispensed in",
-        "device": "Delivery device",
+        "device": "Delivered in",
         "sponsor_compound": "Sponsor compound",
         "formulation": "Formulation",
         "is_preferred_synonym": "Is preferred synonym",
@@ -1942,12 +2026,17 @@
         "alias_definition": "Compound alias definition",
         "compound_strength_value": "Compound strength value",
         "other": "Other information",
+        "preferred_alias": "Preferred alias",
+        "other_aliases": "Other aliases",
+        "medicinal_product": "Medicinal product",
+        "active_substance": "Active substance",
         "add_success": "Study compound added",
         "update_success": "Study compound updated"
     },
     "StudyCompoundDosingTable": {
         "element": "Study Element",
         "compound": "Compound Name",
+        "medicinal_product": "Medicinal product",
         "compound_alias": "Compound Alias Name",
         "preferred_alias": "Preferred Alias",
         "dose_value": "Dose Value",
@@ -1978,11 +2067,13 @@
         "dose_value": "Dose value",
         "dose_frequency": "Dose frequency",
         "add_success": "Study compound dosing added",
-        "update_success": "Study compound dosing updated"
+        "update_success": "Study compound dosing updated",
+        "no_product_name": "No product name"
     },
     "InterventionOverview": {
         "no_intervention_selected": "No study intervention selected",
         "study_compounds": "Study Compounds",
+        "medicinal_product": "Medicinal product",
         "first_col_title": "Attribute / Compound name",
         "type_of_treatment": "Type of treatment",
         "reason_for_missing": "Reason for missing",
@@ -1991,18 +2082,20 @@
         "compound_number_short": "Compound number (short)",
         "analyte_number": "Analyte number",
         "is_inn": "Is INN",
+        "inn": "INN",
         "substances": "Substance (UNII) | Pharmacological class (MED-RT)",
-        "compound_aliases": "Compound Alias names (preferred alias)",
+        "compound_aliases": "Compound aliases (preferred alias)",
         "strength": "Strength (unit)",
         "pharmaceutical_dosage_form": "Pharmaceutical dosage form",
         "route_of_admin": "Route of administration",
         "dispensed_in": "Dispensed in",
-        "delivery_device": "Delivery device",
-        "compound_dosing": "Study Element | Dose, Frequency",
-        "half_life": "Half-life (unit)",
-        "lag_time": "Lag-time (unit) | SDTM Domain",
+        "delivery_device": "Delivered in",
+        "compound_dosing": "Study Element: dose, frequency",
+        "half_life": "Half-life",
+        "lag_time": "Lag-time",
         "compound_def": "Compound definition",
-        "table_caption": "Study interventions overview table"
+        "table_caption": "Study interventions overview table",
+        "active_substances": "Active substances"
     },
     "CtCatalogueTable": {
         "concept_id": "Concept ID",
@@ -2056,7 +2149,9 @@
         "nci_concept_name": "NCI Concept Name",
         "synonyms": "Synonyms",
         "show_only_handled": "Show only handled requests",
-        "study_id": "Study ID"
+        "study_id": "Study ID",
+        "activity_instance_classes": "Activity Instance Classes",
+        "activity_item_classes": "Activity Item Classes"
     },
     "ActivityFormsInstantiations": {
         "select_type": "Select type",
@@ -2155,8 +2250,8 @@
         "submit_request": "Submit request",
         "similar_activity_alert": "It looks like an Activity with a similar name already exist. Please do not request Activities that already exists, but instead select the existing activity below.",
         "similar_activity_title": "Existing activities with similar name",
-        "draft_activity_edit_alert": "Selected activity is in DRAFT state. Please move the activity to FINAL state before editing the Activity Instance.",
-        "draft_activity_create_alert": "Selected activity is in DRAFT state. Please move the activity to FINAL state before creating the Activity Instance."
+        "draft_activity_edit_alert": "Selected activity is in {state} state. Please move the activity to FINAL state before editing the Activity Instance.",
+        "draft_activity_create_alert": "Selected activity is in {state} state. Please move the activity to FINAL state before creating the Activity Instance."
     },
     "StudyTitleView": {
         "title": "Study Title",
@@ -2307,6 +2402,7 @@
         "submission_value": "Submission value",
         "definition": "Definition",
         "extensible": "Extensible",
+        "ordinal": "Ordinal",
         "new_attributes_version": "Create new attributes version",
         "new_attributes_version_success": "New version of attributes created",
         "approve_attributes_version": "Change status to Final",
@@ -2314,7 +2410,14 @@
         "names_history_title": "Sponsor values history for code list [{codelist}]",
         "attributes_history_title": "Attributes values history for code list [{codelist}]",
         "terms_listing": "Terms listing",
-        "open_ct": "Open CT"
+        "open_ct": "Open CT",
+        "pair_type": "Pair type",
+        "pair_type_names": "Names",
+        "pair_type_codes": "Codes",
+        "paired_codelists": "Paired code lists",
+        "add_paired_codelist": "Add paired code list",
+        "remove_paired_codelist": "The paired code list will be removed",
+        "remove_paired_codelist_success": "The paired code list was removed"
     },
     "CodelistSponsorValuesForm": {
         "title": "Edit Sponsor Code list",
@@ -2337,6 +2440,8 @@
         "nci_pref_name_hint": "Provide if applicable a preferred name",
         "extensible": "Extensible?",
         "extensible_hint": "Allow addition of new term(s)",
+        "ordinal": "Ordinal?",
+        "ordinal_hint": "Mark the codelist as ordinal, meaning that the 'order' of the terms represent their numeric value.",
         "definition": "Definition",
         "definition_hint": "Provide a complete definition of the code list"
     },
@@ -2359,11 +2464,25 @@
         "attr_status": "Attributes status",
         "name_date": "Name date",
         "attr_date": "Attributes date",
-        "name_submission_value": "Name submission value",
-        "code_submission_value": "Code submission value",
-        "subject_trial_status": "Subject Trial Status"
+        "subject_trial_status": "Subject Trial Status",
+        "added_date": "Added date",
+        "removed_date": "Removed date",
+        "show_removed": "Show removed terms"
+    },
+    "TermsView": {
+        "codelist_names": "Code list names",
+        "codelist_submvals": "Code list submission values",
+        "submission_values": "Submission values",
+        "sponsor_name": "Sponsor name",
+        "add_term": "Add a new term",
+        "terms": "Terms",
+        "name_status": "Name status",
+        "attr_status": "Attributes status",
+        "name_date": "Name date",
+        "attr_date": "Attributes date"
     },
     "CodelistTermTable": {
+        "edit": "View or edit details",
         "open_sponsor_history": "Sponsor values history",
         "open_ct_history": "CT values history",
         "history_label_name": "Sponsor values history for term [{term}]",
@@ -2374,9 +2493,9 @@
         "add_term": "Add term",
         "term_detail": "Term Detail",
         "concept_id": "Concept ID",
+        "term_uid": "UID",
         "sponsor_title": "Term sponsor values",
-        "name_submission_value": "Name submission value",
-        "code_submission_value": "Code submission value",
+        "codelist_submission_value": "Codelist submission value",
         "nci_pref_name": "NCI preferred name",
         "synonyms": "Synonyms",
         "edit_names": "Edit term names",
@@ -2402,19 +2521,54 @@
         "delete_attributes": "Delete term attributes",
         "delete_attributes_success": "Term attributes deleted",
         "sentence_case_name": "Sentence case name",
-        "order": "Order"
+        "order": "Order",
+        "code_lists": "Code Lists",
+        "code_list_name": "Codelist name",
+        "submission_value": "Submission value",
+        "codelist_cid": "Codelist concept ID",
+        "name_status": "Name status",
+        "attributes_status": "Attr. status",
+        "name_date": "Name date",
+        "attributes_date": "Attr. date",
+        "name_version": "Name version",
+        "attributes_version": "Attr. version",
+        "parents": "Parents",
+        "children": "Children",
+        "relationship_type": "Relationship type",
+        "edit_order_submval": "Edit term order and submission value",
+        "add_parent": "Add a parent term",
+        "add_child": "Add a child term",
+        "remove_parent": "Remove this parent term",
+        "remove_child": "Remove this child term",
+        "add_to_codelists": "Add this term to additional codelists"
+    },
+    "CodelistTermOrderSubmvalForm": {
+        "order_and_submval_edit": "Edit order and/or submission value",
+        "term": "Term",
+        "codelist": "Code list",
+        "update_success": "Order and/or submission value updated"
+    },
+    "CodelistTermAddToCodelistsForm": {
+        "title": "Add term '{term}' to additional codelists",
+        "concept_id": "Concept ID",
+        "submission_value": "Submission value",
+        "sponsor_name": "Sponsor name",
+        "term": "Term",
+        "codelist": "Code list",
+        "update_success": "Added term to codelists(s)",
+        "select_codelists_label": "Select codelists",
+        "order_and_submval_label": "Enter term order and submission value for each codelist"
     },
     "CodelistTermCreationForm": {
-        "title": "Add term",
+        "title": "Add one or more terms to codelist '{codelist}'",
         "creation_mode_label": "How do you want to add a new term",
-        "select_mode": "Select an existing one",
-        "create_mode": "Create a new one",
+        "select_mode": "Add one or more existing terms to this codelist",
+        "create_mode": "Create a new sponsor defined term and add to this codelist",
         "create_sponsor_name": "Manage sponsor term preferred name",
         "sponsor_pref_name": "Sponsor preferred name",
         "sponsor_sentence_case_name": "Sponsor sentence case name",
         "create_term_attributes": "Manage term attribute values",
-        "name_submission_value": "Name submission value",
-        "code_submission_value": "Code submission value",
+        "submission_value": "Submission value",
         "nci_pref_name": "NCI preferred name",
         "definition": "Definition",
         "synonyms": "Synonym(s)",
@@ -2424,7 +2578,34 @@
         "select_term_label": "Select an existing term",
         "concept_id": "Concept ID",
         "sponsor_name": "Sponsor name",
-        "no_selection": "You must select at least one term to add"
+        "no_selection": "You must select at least one term to add",
+        "order_and_submval_label": "Enter term order and submission value"
+    },
+    "CodelistAddPairedForm": {
+        "title": "Add paired code list",
+        "codelist": "Code list",
+        "add_success": "Paired code list added",
+        "remove_success": "Paired code list removed",
+        "select_pair_type": "Select pair type",
+        "select_codelist": "Select a code list to pair with",
+        "pair_type_names": "Names",
+        "pair_type_codes": "Codes"
+    },
+    "AddChildTermForm": {
+        "title": "Add a child term to the current term",
+        "type": "Type",
+        "subtype": "Subtype",
+        "predecessor": "Predecessor",
+        "select_relationship": "Select relationship",
+        "select_term": "Select a term to add as child"
+    },
+    "AddParentTermForm": {
+        "title": "Add a parent term to the current term",
+        "type": "Type",
+        "subtype": "Subtype",
+        "predecessor": "Predecessor",
+        "select_relationship": "Select relationship",
+        "select_term": "Select a term to add as parent"
     },
     "CodelistTermNamesForm": {
         "title": "Edit sponsor term",
@@ -2475,49 +2656,51 @@
     "UCUMUnitField": {
         "label": "UCUM unit"
     },
-    "CrfsView": {
-        "title": "CRFs (Case Report Forms)",
-        "tab1_title": "CRF Templates",
+    "CRFViewer": {
+        "title": "CRF Viewer",
+        "tab1_title": "CRF Viewer"
+    },
+    "CRFBuilder": {
+        "title": "CRF Builder",
+        "tab1_title": "CRF Collections",
         "tab2_title": "Forms",
         "tab3_title": "Item Groups",
         "tab4_title": "Items",
         "tab5_title": "CRF Tree",
-        "tab6_title": "CRF View",
-        "tab7_title": "Alias",
-        "tab8_title": "Extensions"
+        "tab6_title": "CRF Viewer"
     },
-    "CrfFormTable": {
+    "CRFFormTable": {
         "repeating": "Repeating",
         "singular_title": "CRF Form",
         "form_history_title": "History for form [{formUid}]"
     },
-    "CrfTemplate": {
-        "add_title": "Add CRF Template"
-    },
     "CompoundsView": {
         "title": "Compounds",
         "tab1_title": "Compounds",
-        "tab2_title": "Compound Aliases"
+        "tab2_title": "Compound Aliases",
+        "tab3_title": "Active Substances",
+        "tab4_title": "Pharmaceutical Products",
+        "tab5_title": "Medicinal Products"
     },
     "CompoundTable": {
-        "compound_name": "Compound Name",
-        "sponsor_compound": "Sponsor Compound",
-        "substance_name": "Substance Name (UNII)",
-        "pharmacological_class": "Pharmacological Class (MED-RT)",
+        "compound_name": "Compound name",
+        "sponsor_compound": "Sponsor compound",
+        "substance_name": "Substance name (UNII)",
+        "pharmacological_class": "Pharmacological class (MED-RT)",
         "is_name_inn": "Is INN",
         "dose": "Doses",
         "strength": "Strength",
-        "dosage_form": "Pharmaceutical Dosage Form",
-        "route_of_admin": "Route of Administration",
-        "dose_frequency": "Dose Frequency",
-        "dispensed_in": "Dispensed In",
-        "delivery_device": "Delivery Device",
+        "dosage_form": "Pharmaceutical dosage form",
+        "route_of_admin": "Route of administration",
+        "dose_frequency": "Dose frequency",
+        "dispensed_in": "Dispensed in",
+        "delivery_device": "Delivered in",
         "half_life": "Half-life",
         "lag_time": "Lag-time",
-        "nnc_number_long": "Compound Number (long)",
-        "nnc_number_short": "Compound Number (short)",
-        "analyte_number": "Analyte Number",
-        "brand_name": "Brand Name",
+        "nnc_number_long": "Compound number (long)",
+        "nnc_number_short": "Compound number (short)",
+        "analyte_number": "Analyte number",
+        "brand_name": "Brand name",
         "compound": "Compound",
         "approve_success": "Compound is now in Final state",
         "confirm_delete": "The compound '{compound}' will be removed",
@@ -2529,31 +2712,8 @@
     },
     "CompoundOverview": {
         "sponsor_compound": "Sponsor compound",
-        "is_name_inn": "Is compound name INN",
-        "nnc_number_long": "Compound number (long)",
-        "nnc_number_short": "Compound number (short)",
-        "analyte_number": "Analyte number",
-        "compound_aliases": "Compound aliases",
-        "compound_alias": "Compound alias",
-        "preferred_alias": "Preferred alias",
-        "brand_name": "Brand name",
-        "substance_name": "Substance name",
-        "unii": "UNII",
-        "pharma_class": "Pharmacological class",
-        "med_rt": "MED-RT",
-        "dose": "Dose",
-        "value": "Value",
-        "dose_unit": "Dose unit",
-        "strength": "Strength",
-        "unit": "Unit",
-        "dosing_freq": "Dosing frequency",
-        "route_of_admin": "Route of administration",
-        "dosage_form": "Pharmaceutical dosage form",
-        "dispensed_in": "Dispensed in",
-        "device": "Delivery device",
-        "half_life": "Half-life",
-        "lag_time": "Lag-time",
-        "sdtm_domain": "SDTM domain"
+        "medicinal_products": "Medicinal products",
+        "compound_aliases": "Compound aliases"
     },
     "CompoundForm": {
         "add_title": "Add new compound",
@@ -2566,13 +2726,8 @@
         "name": "Compound name (INN if defined)",
         "is_inn": "Is compound name the INN",
         "sponsor_compound": "Sponsor compound",
-        "analyte_number": "Analyte number",
-        "long_number": "Compound number (long)",
-        "short_number": "Compound number (short)",
         "brand_name": "Brand name",
         "dosing_frequency": "Dosing frequency",
-        "route_of_administration": "Route of administration",
-        "dosage_form": "Pharmaceutical dosage form",
         "dispensed_in": "Dispensed in",
         "device": "Device",
         "dose": "Dose",
@@ -2595,15 +2750,94 @@
         "pharmacological_class": "Pharmalogical class",
         "medrt": "MED-RT"
     },
+    "ActiveSubstance": {
+        "inn": "INN",
+        "analyte_number": "Analyte number",
+        "long_number": "Compound number (long)",
+        "short_number": "Compound number (short)",
+        "unii": "UNII",
+        "pharma_class": "Pharmacological class:"
+    },
+    "ActiveSubstanceTable": {
+        "approve_success": "Active substance is now in Final state",
+        "delete_success": "Active substance deleted",
+        "new_version_success": "New version created",
+        "inactivate_success": "Active substance inactivated",
+        "reactivate_success": "Active substance reactivated"
+    },
+    "ActiveSubstanceForm": {
+        "add_title": "Add active substance",
+        "edit_title": "Edit active substance",
+        "add_success": "Active substance added",
+        "update_success": "Active substance updated"
+    },
+    "PharmaceuticalProduct": {
+        "title": "Pharmaceutical product",
+        "route_of_administration": "Route of administration",
+        "route_of_administration_short": "RoA",
+        "dosage_form": "Dosage form",
+        "ingredients": "Ingredients"
+    },
+    "PharmaceuticalProductTable": {
+        "history_title": "History for pharmaceutical product [{product}]",
+        "approve_success": "Pharmaceutical product is now in Final state",
+        "confirm_delete": "The pharmaceutical product will be removed",
+        "delete_success": "Pharmaceutical product deleted",
+        "new_version_success": "New version created",
+        "inactivate_success": "Pharmaceutical product inactivated",
+        "reactivate_success": "Pharmaceutical product reactivated"
+    },
+    "PharmaceuticalProductForm": {
+        "add_title": "Add pharmaceutical product",
+        "edit_title": "Edit pharmaceutical product",
+        "ingredients": "Ingredients",
+        "add_success": "Pharmaceutical product added",
+        "update_success": "Pharmaceutical product updated"
+    },
+    "Formulation": {
+        "formulation": "Formulation",
+        "active_substance": "Active substance",
+        "strength": "Strength",
+        "half-life": "Half-life",
+        "lag_times": "Lag times"
+    },
+    "MedicinalProduct": {
+        "compound": "Compound",
+        "pharmaceutical_product": "Pharmaceutical product",
+        "medicinal_product": "Medicinal product",
+        "dose": "Dose",
+        "frequency": "Frequency",
+        "delivery_device": "Delivered in",
+        "dispenser": "Dispensed in"
+    },
+    "MedicinalProductForm": {
+        "add_title": "Add medicinal product",
+        "edit_title": "Edit medicinal product",
+        "dose_values": "Dose values",
+        "add_success": "Medicinal product added",
+        "update_success": "Medicinal product updated"
+    },
     "SubstanceField": {
         "label": "Substance name",
         "pharmacological_class": "Pharmalogical class",
         "medrt": "MED-RT"
     },
+    "ProductsTree": {
+        "confirm_delete": "The medicinal product '{product}' will be removed",
+        "delete_success": "Medicinal product deleted",
+        "history_title": "History for medicinal product [{product}]",
+        "approve_success": "Medicinal product is now in Final state",
+        "new_version_success": "New version created",
+        "inactivate_success": "Medicinal product inactivated",
+        "reactivate_success": "Medicinal product reactivated"
+    },
+    "CompoundAlias": {
+        "is_preferred_synonym": "Is preferred synonym"
+    },
     "CompoundAliasTable": {
-        "compound_alias": "Compound alias",
-        "compound_name": "Compound Name",
-        "is_preferred_synonym": "Is Preferred Synonym",
+        "compound_alias": "Compound alias name",
+        "compound_name": "Compound name",
+        "is_preferred_synonym": "Is preferred synonym",
         "approve_success": "Compound alias is now in Final state",
         "confirm_delete": "The compound alias '{compoundAlias}' will be removed",
         "delete_success": "Compound alias deleted",
@@ -2619,7 +2853,7 @@
         "step2_title": "Define compound alias",
         "name": "Compound alias name",
         "sentence_case_name": "Sentence case name",
-        "substance": "Substance (UNII)",
+        "substance": "UNII",
         "pharmacological_class": "Pharmacological class (MED-RT)",
         "is_preferred_synonym": "Is preferred synonym",
         "add_success": "Compound alias added",
@@ -2914,7 +3148,7 @@
         "no_visit_available": "No visit in this epoch",
         "manually_defined_visit": "Manually defined visit",
         "visit_number_uniqueness_warning": "Enter unique visit names and visit numbers. Ensure that the newly created manually defined visit is placed in the correct chronological order, reflecting the defined visit names and numbers.",
-        "visit_window_alert": "Visit window unit selected for first visit in a Study will be preselected for each subsequent visit."
+        "visit_window_alert": "The <strong> visit window unit  </strong> (days/weeks) you choose for the <strong> first visit </strong> will apply to all subsequent visits and <strong> can't </strong> be changed later without <strong> deleting all visits. </strong> This means that if you want to change the unit, you'll need to <strong> remove all the subsequent visits </strong> while keeping the first one, update the unit, and then <strong> set up the remaining visits again. </strong>"
     },
     "StudyVisitDuplicate": {
         "time_value": "Timing",
@@ -3158,7 +3392,7 @@
     "Study": {
         "brand_name": "Brand name",
         "project_name": "Project name",
-        "project_number": "Project number",
+        "project_number": "Project ID",
         "study_number": "Study number",
         "study_id": "Study ID",
         "study_acronym": "Study acronym",
@@ -3243,6 +3477,25 @@
         "downloading": "Download in progress...",
         "loading": "Table is reloading..."
     },
+    "StudyActivityUpdateForms": {
+        "update_to_activity": "Update to Study Activity",
+        "update_to_request": "Update to Study Activity request",
+        "request_accepted": "Study Activity request has been accepted",
+        "activity_group": "Activity group",
+        "activity_subgroup": "Activity subgroup",
+        "activity_name": "Activity name",
+        "data_collection": "Data collection",
+        "accept_change": "Do you want to accept this change?",
+        "decline_keep": "Decline and keep",
+        "decline_remove": "Decline and remove",
+        "accept": "Accept",
+        "update_success": "Study activity updated",
+        "remove_success": "Study activity removed",
+        "decline_success": "Changes declined",
+        "instance_name": "Instance name",
+        "instance_class": "Instance class",
+        "topic_code": "Topic code"
+    },
     "StudyActivityTable": {
         "confirm_delete": "The study activity '{activity}' will be removed",
         "confirm_delete_side_effect": "Removing this study activity will impact protocol SoA display",
@@ -3323,7 +3576,10 @@
         "notification": "Notification",
         "action_needed": "Action needed",
         "na": "Not applicable",
-        "multiple_select_info": "Selecting multiple instances will result in the creation of new Study Activity Instances."
+        "multiple_select_info": "Selecting multiple instances will result in the creation of new Study Activity Instances.",
+        "test_name_code": "Test name code",
+        "specimen": "Specimen",
+        "standard_unit": "Standard unit"
     },
     "StudyActivityForm": {
         "add_title": "Add study activities",
@@ -3421,6 +3677,7 @@
         "empty_soa_text_2": "You have not added any Study Activities yet. Click the button to add your first Activity.",
         "add_study_activity": "Add study activity",
         "add_visit": "Add visit",
+        "complexity_score": "Complexity score:",
         "search_activities": "Search Activities"
     },
     "StudyActivityInstructionTable": {
@@ -3460,16 +3717,18 @@
         "type": "Type",
         "name": "Arm name",
         "short_name": "Arm short name",
-        "code": "Arm code",
-        "randomisation_group": "Randomisation group",
-        "number_of_subjects": "Number of subjects",
+        "code": "Random. code",
+        "randomisation_group": "Random. group",
+        "number_of_subjects": "No. of subjects",
         "connected_branches": "Connected Branches",
         "description": "Description",
         "arm_deleted": "Arm deleted",
         "arm_delete_notification": "There are some Branch arms, Design Cells or Cohorts related to this Arm. Are you sure you want to delete it?",
         "study_arm": "Study arm",
         "global_history_title": "Study arms history",
-        "study_arm_history_title": "History for study arm [{armUid}]"
+        "study_arm_history_title": "History for study arm [{armUid}]",
+        "number_of_participants": "No. of participants",
+        "cohorts_stepper": "Cohorts Stepper"
     },
     "StudyArmsForm": {
         "study_arm": "Study Arm",
@@ -3611,7 +3870,8 @@
         "global_history_title": "Study elements history",
         "study_element_history_title": "History for study element [{elementUid}]",
         "planned_duration": "Planned duration",
-        "description": "Description"
+        "description": "Description",
+        "planned_duration_time": "Planned study duration time"
     },
     "DesignMatrix": {
         "global_help": "For each of the Study Arms, select the relevant elements in the given epochs. If a study element is missing then go back to the Study Elements tab to create/update the elments",
@@ -3624,49 +3884,61 @@
         "matrix_updated": "Design Matrix updated",
         "matrix_guide": "To complete study design, please assign elements to all epochs per arm/branch."
     },
+    "CRFCollections": {
+        "add_collection": "Add Collection",
+        "edit_collection": "Edit Collection",
+        "approve_collection": "Approve Collection",
+        "crf_collection": "CRF Collection",
+        "name": "Name",
+        "oid": "OID",
+        "effective_date": "Effective",
+        "retired_date": "Obsolete",
+        "updated": "Collection updated",
+        "created": "Collection created",
+        "approved": "Collection approved",
+        "collection_history_title": "History for collection [{collectionUid}]"
+    },
     "CRFForms": {
         "add_form": "Add CRF Form",
         "edit_form": "Edit CRF Form",
         "crf_form": "CRF Form",
+        "approve_form": "Approve Form",
+        "approved": "Form approved",
+        "create_new_version": "Create new version for the Form",
         "oid": "OID",
         "repeating": "Repeating",
         "name": "Name",
         "context": "Context",
-        "create": "Create an Alias",
-        "select": "Or select one here",
         "aliases": "Aliases",
         "new_translation": "New translation",
+        "sponsor_instruction": "Design Notes",
+        "instruction": "Implementation Notes",
         "language": "Language",
         "description": "Description",
         "instructions": "Instructions",
         "form_details": "Form",
         "alias_details": "Alias",
         "description_details": "Translations",
-        "alias_created": "Alias created",
         "form_created": "Form created",
         "form_updated": "Form updated",
-        "description_change_description": "Updated by ODM Form",
-        "eng": "ENG",
         "change_desc": "Change Description",
         "displayed_text": "Displayed text",
         "help_for_site": "Help for site",
-        "english_required": "English description is required.",
         "help_for_sponsor": "Help for sponsor",
         "definition": "Definition",
         "display": "Display",
         "annotations": "Annotations and reporting",
-        "delete_warning_1": "This Form is used in",
-        "delete_warning_2": "Templates. Are you sure you want to delete it?",
-        "impl_notes": "Implementation Notes",
-        "compl_instructions": "Completion Instructions",
+        "delete_warning": "This Form is used in {count} Collection(s). Are you sure you want to delete it?",
         "vendor_extensions": "Vendor Extensions",
         "vendor_extensions_low": "Vendor extensions",
-        "standard_attributes": "ODM standard",
-        "new_version_warning": "You are about to affect more than one element, are you sure you want to continue?"
+        "standard_attributes": "ODM standard"
     },
     "CRFItemGroups": {
         "add_group": "Add CRF Item Group",
         "edit_group": "Edit CRF Item Group",
+        "approve_group": "Approve Item Group",
+        "approved": "Item Group approved",
+        "create_new_version": "Create new version for the Item Group",
         "item_group": "CRF Item Group",
         "repeating": "Repeating",
         "oid": "OID",
@@ -3678,32 +3950,28 @@
         "role": "Role",
         "purpose": "Purpose",
         "comment": "Comment",
-        "create": "Create an Alias",
-        "select": "Or select one here",
         "context": "Context",
         "aliases": "Aliases",
         "new_translation": "New translation",
-        "language": "Language",
+        "sponsor_instruction": "Design Notes",
+        "instruction": "Implementation Notes",
         "description": "Description",
         "instructions": "Instructions",
-        "eng": "ENG",
         "group_details": "Item Group",
         "alias_details": "Alias",
         "description_details": "Translations",
         "group_created": "Item Group created",
         "group_updated": "Item Group updated",
-        "description_change_description": "Updated by ODM Item Group",
-        "alias_created": "Alias created",
         "displayed_text": "Displayed text",
         "help_for_site": "Help for site",
         "help_for_sponsor": "Implementation notes",
-        "delete_warning_1": "This Item Group is used in",
-        "delete_warning_2": "Forms. Are you sure you want to delete it?",
-        "impl_notes": "Implementation Notes",
-        "compl_instructions": "Completion Instructions",
+        "warning": "This Item Group is used in {count} Form(s). Are you sure you want to delete it?",
         "group_history_title": "History for item group [{groupUid}]"
     },
     "CRFItems": {
+        "approve_item": "Approve Item",
+        "approved": "Item approved",
+        "create_new_version": "Create new version for the Item",
         "type": "Type",
         "length": "Length",
         "sds_name": "SDS Var Name",
@@ -3715,6 +3983,8 @@
         "sas_name": "SAS Field Name",
         "origin": "Origin",
         "comment": "Comment",
+        "sponsor_instruction": "Design Notes",
+        "instruction": "Implementation Notes",
         "item_details": "Item",
         "alias_details": "Alias",
         "context": "Context",
@@ -3725,10 +3995,8 @@
         "change_desc": "Change Description",
         "sponsor_unit": "Sponsor unit",
         "eng": "ENG",
-        "alias_created": "Alias created",
         "item_created": "Item created",
         "item_updated": "Item updated",
-        "description_change_description": "Updated by ODM Item",
         "add_title": "Add CRF Item",
         "crf_item": "CRF Item",
         "unit_name": "Unit Name",
@@ -3737,22 +4005,34 @@
         "uid": "UID",
         "codelist_subset": "Code list subset",
         "multiple_choice": "Multiple choice",
-        "delete_warning_1": "This Item is used in",
-        "delete_warning_2": "Item Groups. Are you sure you want to delete it?",
-        "impl_notes": "Implementation Notes",
-        "compl_instructions": "Completion Instructions",
+        "delete_warning": "This Item is used in {count} Item Group(s). Are you sure you want to delete it?",
         "item_history_title": "History for item [{itemUid}]",
         "sponsor_pref_name": "Sponsor preferred name",
         "displayed_name": "Displayed name"
     },
+    "CRFAliases": {
+        "add": "Add Alias",
+        "select": "Or select one here",
+        "name": "Name",
+        "context": "Context"
+    },
+    "CRFDescriptions": {
+        "add": "Add Description",
+        "select": "Or select one here",
+        "name": "Display Text",
+        "language": "Language",
+        "description": "Description",
+        "instruction": "Implementation Notes",
+        "sponsor_instruction": "Design Notes"
+    },
     "StudyBranchArms": {
         "no_data": "No data available - Create Study Arm first",
-        "name": "Branch arm name",
-        "short_name": "Branch arm short name",
+        "name": "Branch name",
+        "short_name": "Short name",
         "arm_name": "Arm name",
-        "code": "Branch Code",
-        "randomisation_group": "Randomisation group",
-        "number_of_subjects": "Number of subjects",
+        "code": "Random. Code",
+        "randomisation_group": "Random. group",
+        "number_of_subjects": "No. of subjects",
         "description": "Description",
         "branch_deleted": "Branch Arm deleted",
         "add_arm_message": "To add Study Branch Arm, you need to define the Study Arm first. Would you like to define Study Arm?",
@@ -3772,11 +4052,19 @@
         "number_of_subjects_exceeds": "Number of subjects in a branch cannot exceed total number of subjects in the arm",
         "branch_delete_notification": "There are some Design Cells related to this Branch. Are you sure you want to delete it?",
         "global_history_title": "Study branch arms history",
-        "study_branch_history_title": "History for study branch arm [{branchUid}]"
+        "study_branch_history_title": "History for study branch arm [{branchUid}]",
+        "number_of_participants": "No. of participants",
+        "cohort_name": "Cohort name",
+        "cohort_code": "Cohort code",
+        "cohorts_stepper": "Cohorts Stepper",
+        "branch": "Branch",
+        "branch_short_name": "Branch short name",
+        "branch_rand_group": "Branch Randomisation group",
+        "branch_code": "Branch Code"
     },
     "StudyCohorts": {
         "code": "Code",
-        "number_of_subjects": "Number of subjects",
+        "number_of_subjects": "No. of subjects",
         "colour": "Colour",
         "cohort_deleted": "Cohort deleted",
         "cohort_updated": "Study Cohort updated",
@@ -3784,9 +4072,9 @@
         "study_arm": "Study Arm",
         "study_branch_arm": "Study Branch Arm",
         "arm_name": "Arm name",
-        "branch_arm_name": "Branch Arm name",
+        "branch_arm_name": "Branch name",
         "cohort_name": "Cohort Name",
-        "cohort_short_name": "Cohort Short Name",
+        "cohort_short_name": "Short Name",
         "cohort_code": "Cohort Code",
         "planned_number_of_subjects": "Planned number of subjects in Cohort",
         "edit_cohort": "Edit Cohort",
@@ -3801,29 +4089,23 @@
         "cohort_code_error": "This field can only contain numbers from 1-99",
         "description": "Description",
         "connected_arms": "Connected Arms",
-        "connected_branches": "Connected Branch Arms"
+        "connected_branches": "Connected Branch Arms",
+        "number_of_participants": "No. of participants",
+        "cohorts_stepper": "Cohorts Stepper"
     },
-    "CrfTemplates": {
-        "add_template": "Add Template",
-        "edit_template": "Edit Template",
-        "crf_template": "CRF Template",
-        "name": "Name",
-        "oid": "OID",
-        "effective_date": "Effective",
-        "retired_date": "Obsolete",
-        "template_updated": "Template updated",
-        "template_created": "Template created",
-        "template_history_title": "History for template [{templateUid}]"
-    },
-    "CrfTree": {
+    "CRFTree": {
+        "show_all": "Show all",
+        "select": "Select Collection",
+        "reordering_not_allowed": "<p>You can only reorder elements when:<ul><li>their parent is in Draft status</li><li>there are at least two elements at the same level</li></ul></p>",
         "link": "Link",
+        "collections": "Collections",
         "forms": "Forms",
         "item_groups": "Item Groups",
         "items": "Items",
         "link_forms": "Link Forms",
         "link_item_groups": "Link Item Groups",
         "link_items": "Link Items",
-        "items_for_linking": "Templates / Forms / ItemGroups / Items",
+        "items_for_linking": "Collections / Forms / ItemGroups / Items",
         "repeating": "Repeating",
         "mandatory": "Mandatory",
         "set_condition": "Set Condition",
@@ -3845,61 +4127,61 @@
         "expand": "Expand All",
         "entry_required": "Data Entry Required",
         "data_type": " Data Type",
-        "impl_notes": "Implementation Notes",
+        "sponsor_instruction": "Design Notes",
         "edit_reference": "Edit reference attributes",
         "view_reference": "View reference attributes",
         "approve_all": "Approve all",
+        "create_new_versions": "Create new versions",
+        "create_new_version_all": "New version of all child elements",
+        "new_version_affecting_children_warning": "Creating a new version of this colleciton will create new versions of all child elements.\n\r This can affect other collections that are using the same child elements.",
         "vendor_extension_applied": "Vendor Extension Applied",
         "ref_vendor_extension_applied": "Reference Vendor Extension Applied"
     },
-    "CrfLinikingForm": {
+    "CRFLinkingForm": {
         "link_activities": "Link Activities",
         "link_activity_groups": "Link Activity Groups",
         "link_activity_sub_groups": "Link Activity Sub Groups"
     },
-    "CrfAliases": {
-        "alias_created": "Alias created",
-        "alias_deleted": "Alias deleted",
-        "alias_edited": "Alias edited",
-        "add_alias": "Add Alias",
-        "edit_alias": "Edit Alias",
-        "oid": "OID",
-        "name": "Name",
-        "context": "Context",
-        "delete_approve": "Are you sure to delete this Alias?"
-    },
     "OdmViewer": {
         "blank": "Blank",
-        "sdtm": "SDTM Annotation",
+        "crf_with_annotations": "CRF with annotations",
+        "falcon": "Downloadable Falcon (word)",
         "allowed_namespaces": "Allowed Extensions",
         "specific": "Specific",
         "provide_uri": "Provide URI",
         "stylesheet": "Stylesheet",
         "loading_message": "Please be patient, we are creating your ODM-XML document",
-        "load": "Load",
-        "load_another": "Reload",
+        "generate": "Generate",
         "odm_references": "ODM References",
-        "odm_element_type": "ODM Element Type",
-        "odm_element_name": "ODM Element Name",
-        "template": "Template",
+        "element_type": "Level",
+        "element_name": "Name",
+        "collection_name": "Collection Name",
+        "form_name": "Form Name",
+        "item_group_name": "Item Group Name",
+        "item_name": "Item Name",
+        "collection": "Collection",
         "form": "Form",
         "item_group": "Item Group",
         "item": "Item",
-        "element_status": "ODM Element Status",
+        "element_version": "Version",
+        "latest_version": "Latest Version",
         "export": "Export ",
-        "format": "Format"
+        "format": "Format",
+        "xml_code": "XML Code",
+        "crf_collection": "CRF Collection",
+        "forms": "Form(s)"
     },
     "TemplateIndexingDialog": {
         "title": "Edit indexing properties",
         "update_success": "Indexing properties updated"
     },
-    "CrfDuplicationForm": {
+    "CRFDuplicationForm": {
         "duplicate": "Duplicate element",
         "include": "Include relations",
         "attributes": "Attributes of duplicates",
         "item_to_link": "Item To Link To"
     },
-    "CrfReferencesForm": {
+    "CRFReferencesForm": {
         "locked": "Locked",
         "mandatory": "Mandatory",
         "sdv": "SDV",
@@ -3907,10 +4189,11 @@
         "title": "Reference attributes of ",
         "warning_1": "You are about to change a property that will affect ",
         "warning_forms": " other forms. Are you sure you want to continue?",
-        "warning_templ": " other templates. Are you sure you want to continue?",
-        "templates_warning": "You are about to change a property that will affect other templates. Are you sure you want to continue?"
+        "warning_templ": " other collections. Are you sure you want to continue?",
+        "collection_warning": "You are about to change a property that will affect other collections. Are you sure you want to continue?"
     },
-    "CrfExtensions": {
+    "CRFExtensions": {
+        "title": "ODM Vendor Extensions",
         "attr_name": "Attribute Name",
         "data_type": "Data Type",
         "parent": "Parent",
@@ -3959,7 +4242,13 @@
         "title": "Add collapsible visit group",
         "warning": "Automatic creation of a new collapsible visit group failed because selected visits differ in some way. You can still force creation by selecting a visit to act as a template to overwrite the other ones.",
         "visit_template": "Select a template",
-        "creation_success": "Collapsible visit group created"
+        "creation_success": "Collapsible visit group created",
+        "format_title": "Group selected visits together",
+        "format_question": "How do you want to show collapsed visits?",
+        "format_info": "The visit timing will be shown in a similar way.",
+        "range_visits": "Range ({visits})",
+        "list_visits": "List ({visits})",
+        "selected_visits": "Visits selected ({number}):"
     },
     "SelectOrAddStudyTable": {
         "tab1_title": "Study list",
@@ -3967,7 +4256,8 @@
     },
     "AnalysisStudyMetadata": {
         "mdvisit": "MDVISIT",
-        "mdendpnt": "MDENDPNT"
+        "mdendpnt": "MDENDPNT",
+        "mdflow": "MDFLOW"
     },
     "AnalysisMetadataTable": {
         "study_id": "Study Identifier",
@@ -3993,7 +4283,16 @@
         "related_activity_groups": "Related Activity Groups",
         "related_activity_subgroups": "Related Activity Subgroups",
         "related_activities": "Related Activities",
-        "related_activity_instances": "Related Activity Instances"
+        "related_activity_instances": "Related Activity Instances",
+        "param_code": "Parameter code",
+        "param": "ADaM PARAM",
+        "paramn": "Parameter (N)",
+        "analysis_tpn": "Analysis timepoint (N)",
+        "analysis_tp": "Analysis timepoint",
+        "topic_code": "Topic code",
+        "baseline_type": "Baseline type",
+        "baseline_record_flag": "Baseline record flag",
+        "assessment_type": "Assessment type"
     },
     "ActivitiesTable": {
         "inactivate_activities_success": "Activity inactivated",
@@ -4065,6 +4364,7 @@
         "activity_group": "Activity group",
         "activity_subgroup": "Activity subgroup",
         "activity": "Activity",
+        "activity_name": "Activity",
         "nci_concept_id": "NCI Concept ID",
         "nci_concept_name": "NCI Concept Name",
         "is_research_lab": "Research Lab",
@@ -4072,6 +4372,7 @@
         "adam_code": "ADaM parameter code",
         "topic_code": "Topic code",
         "class": "Activity instance class",
+        "activity_instance_class": "Activity instance class",
         "items": "Activity items",
         "item_class": "Activity item class",
         "activity_groupings": "Activity groupings",
@@ -4083,6 +4384,18 @@
         "is_data_sharing": "Data sharing",
         "is_legacy_usage": "Legacy usage",
         "history_title": "History for activity instance [{uid}]"
+    },
+    "ActivityInstanceClassOverview": {
+        "domain_specific": "Domain specific",
+        "hierarchy": "Hierarchy",
+        "activity_instance_classes": "Activity Instance Classes",
+        "activity_item_classes": "Activity Item Classes"
+    },
+    "ActivityItemClassOverview": {
+        "activity_instance_classes": "Activity Instance Classes",
+        "nci_code": "NCI Code",
+        "adam_param_specific": "ADAM Param Specific",
+        "mandatory": "Mandatory"
     },
     "ActivityOverview": {
         "cosmos_yaml": "COSMoS YAML",
@@ -4109,7 +4422,14 @@
         "library": "Library",
         "author": "Author",
         "definition": "Definition",
-        "activities": "Activities"
+        "activities": "Activities",
+        "activity_items": "Activity Items",
+        "no_terms": "No CT terms available",
+        "no_units": "No unit definitions available",
+        "no_forms": "No ODM forms available"
+    },
+    "SubgroupOverview": {
+        "noItemsAvailable": "No items available"
     },
     "activityInstancesTable": {
         "versionNotAvailable": "Version not available",
@@ -4123,8 +4443,16 @@
         "headerActivityInstanceClass": "Activity Instance class",
         "headerTopicCode": "Topic code",
         "headerAdamParamCode": "Adam parameter code"
-  },
-  "activitySummary": {
+    },
+    "activityItemsTable": {
+        "exportLabel": "Activity Items",
+        "noItemsFound": "No activity items found",
+        "noItemsAvailable": "No activity items available",
+        "headerDataType": "Data type",
+        "headerName": "Name",
+        "headerActivityItemClass": "Activity Item Class"
+    },
+    "activitySummary": {
         "dataCollection": "Data collection"
     },
     "YamlViewer": {
@@ -4224,7 +4552,7 @@
         "copy_footnote": "Select footnote",
         "brand_name": "Brand name",
         "project_name": "Project name",
-        "project_number": "Project number",
+        "project_number": "Project ID",
         "study_id": "Study ID",
         "template": "Template",
         "select_footnote_title": "Selected footnote",
@@ -4293,7 +4621,7 @@
     },
     "Projects": {
         "name": "Name",
-        "project_number": "Project number",
+        "project_number": "Project ID",
         "description": "Description",
         "clinical_programme": "Clinical programme",
         "add_success": "Project added",
@@ -4305,7 +4633,7 @@
         "add_title": "Add project",
         "edit_title": "Edit project",
         "name": "Name",
-        "project_number": "Project number",
+        "project_number": "Project ID",
         "description": "Description",
         "clinical_programme": "Clinical programme"
     },
@@ -4341,14 +4669,14 @@
     "SystemAnnouncementsView": {
         "title": "System announcement",
         "show_title": "Show announcement",
-        "show_help": "The annoucement will be shown at the top of StudyBuilder as a system-wide message",
+        "show_help": "The annoucement will be shown at the top of OpenStudyBuilder as a system-wide message",
         "announcement_type": "Choose type of announcement",
         "type_informative": "Informative",
         "help_informative": "An information that is not an error or potentially dangerous",
         "type_warning": "Warning",
         "help_warning": "A potential dangerous situation such as when changes are not saved due to release",
         "type_error": "Error",
-        "help_error": "A major error in StudyBuilder with high severity",
+        "help_error": "A major error in OpenStudyBuilder with high severity",
         "announcement_content": "Announcement content",
         "announcement_title": "Announcement title",
         "announcement_description": "Announcement description",
@@ -4370,7 +4698,7 @@
         "table_7": "Eligibility",
         "table_8": "Conditions",
         "intervention_type": "Intervention Type",
-        "sb_term": "StudyBuilder term",
+        "sb_term": "OpenStudyBuilder term",
         "pharma_term": "PharmaCM term",
         "secondary_id": "Secondary ID",
         "secondary_id_type": "Secondary ID Type",
@@ -4385,7 +4713,7 @@
         "study_acronym": "Study Acronym",
         "acronym": "Acronym",
         "study_type_resp": "Study Type Response",
-        "not_available_in_sb": "Not available in StudyBuilder. Data available in COSMOS",
+        "not_available_in_sb": "Not available in OpenStudyBuilder. Data available in COSMOS",
         "record_verification_date": "Record Verification Date",
         "overall_recruitment_status": "Overall Recruitment Status",
         "study_start_date": "Study Start Date",
@@ -4431,7 +4759,7 @@
     },
     "FeatureFlagsView": {
         "title": "Feature flags",
-        "help": "Feature flags enable you to toggle features in StudyBuilder on/off, thus controlling the visibility for the users. It only has an effect on the visibility in the environment you currently are in."
+        "help": "Feature flags enable you to toggle features in OpenStudyBuilder on/off, thus controlling the visibility for the users. It only has an effect on the visibility in the environment you currently are in."
     },
     "ActivityInstanceForm": {
         "add_title": "Add activity instance",
@@ -4477,7 +4805,8 @@
         "step4_description": "Optional activity item selection",
         "code_submission_value": "Code submission value",
         "name_submission_value": "Name submission value",
-        "activity_not_selected": "You must select an activity from the list"
+        "activity_not_selected": "You must select an activity from the list",
+        "codelist": "Codelist"
     },
     "ActivityInstancePreview": {
         "activity_instance_name": "Activity instance name",
@@ -4486,5 +4815,104 @@
         "topic_code": "Topic code",
         "adam_param_code": "ADaM parameter code",
         "nci_code": "NCI Code (optional)"
+    },
+    "CohortsStepper": {
+        "select_class": "Select study design class",
+        "full_stepper": "Study with cohorts, branches and subpopulations",
+        "arms_only_stepper": "Study with arms only",
+        "manual": "Manual",
+        "set_arms_for_study": "Set up the Arms of your study",
+        "study_arm_type": "Study arm type",
+        "arm_name": "Arm name",
+        "arm_short_name": "Arm short name",
+        "no_participants": "Number of participants",
+        "rand_group": "Randomisation group",
+        "rand_group_optional": "Randomisation group (optional)",
+        "arm_code": "Arm code",
+        "arm_code_optional": "Arm code (optional)",
+        "desc": "Description (optional)",
+        "merge_branch": "Merge branch arms for this arm for SDTM/ADaM",
+        "add_arm": "Add Arm",
+        "set_cohorts_for_study": "Set up the Cohorts/subpop. of your study",
+        "source_var": "Source variable",
+        "source_var_optional": "Source variable (optional)",
+        "source_var_desc": "Source variable description (optional)",
+        "cohort_code": "Cohort/subpop. code",
+        "cohort_name": "Cohort/subpop. name",
+        "cohort_short_name": "Cohort /subpop. short name",
+        "add_cohort": "Add Cohort/subpop.",
+        "link_arms_cohorts": "Link Arms and Cohorts/subpop. to create Branches",
+        "link_info": "If there is no connection or no participants in a Cohort/subpop.-arm relation, then leave the participant number at 0. The system will automatically create the Branch relation between Cohorts/subpop and Arms. only when number of participants is greater then 0.",
+        "total_amount": "Total amount",
+        "total": "Total",
+        "copy_row": "Copy row to all",
+        "set_arms": "Set up Arms",
+        "set_cohorts": "Set up Cohorts/subpop.",
+        "linking": "Linking",
+        "cohort": "Cohort",
+        "subgroup": "Subgroup",
+        "stratum": "Stratum",
+        "update_structure": "Update Study Design Structure",
+        "create_stucture": "Create Study Design Structure",
+        "keep_class": "Keep study design class",
+        "change_class": "Change study design class",
+        "change_class_warning_1": "Changing Study design class will remove all branch arms. Do you want to continue?",
+        "change_class_warning_2": "Changing Study design class will remove all cohorts and branch arms. Do you want to continue?",
+        "error_update_class": "Error updating design class",
+        "error_update_arms": "Error updating arms",
+        "error_update_cohorts": "Error updating cohorts",
+        "error_update_branches": "Error updating branches",
+        "keep_arm": "Keep arm",
+        "remove_arm": "Remove arm",
+        "remove_arm_warning": "You are about to remove an arm and all its participants. This will decrease the total numbers of participants in the study.",
+        "keep_cohort": "Keep cohort",
+        "remove_cohort": "Remove cohort",
+        "remove_cohort_warning": "You are about to remove a cohort and all its participants. This will decrease the total numbers of participants in the study.",
+        "create_arms": "Create arms"
+    },
+    "DataSupplierView": {
+        "title": "Data Suppliers",
+        "DataSupplierTable": {
+            "add_data_supplier": "Add Data Supplier",
+            "supplier_api_base_url": "API base URL",
+            "supplier_ui_base_url": "UI base URL",
+            "supplier_type": "Type",
+            "supplier_origin_source": "Origin Source",
+            "supplier_origin_type": "Origin Type"
+        },
+        "DataSupplierForm": {
+            "add_data_supplier": "Add a new Data Supplier",
+            "data_supplier_created": "Data Supplier created successfully",
+            "edit_data_supplier": "Edit Data Supplier",
+            "data_supplier_updated": "Data Supplier updated successfully",
+            "name": "Name",
+            "description": "Description",
+            "order": "Order",
+            "supplier_api_base_url": "API base URL",
+            "supplier_ui_base_url": "UI base URL",
+            "supplier_type": "Type",
+            "supplier_origin_source": "Origin Source",
+            "supplier_origin_type": "Origin Type"
+        }
+    },
+    "ActivityInstanceClassTable": {
+        "domain_specific": "Domain specific"
+    },
+    "ActivityItemClassTable": {
+        "nci_concept_id": "NCI Code"
+    },
+    "ComplexityScore": {
+        "admin_title": "Complexity Burdens",
+        "admin_activity_burdens_info": "Mapping between activity subgroups and corresponding site/participant burdens.",
+        "admin_activity_burdens_tab": "Activity Subgroup Burdens",
+        "admin_burdens_tab": "Burdens Library",
+        "admin_burdens_info": "Library of site/participant burdens.",
+        "admin_activity_burdens_name": "Activity subgroup",
+        "admin_activity_burdens_burden_id": "Burden ID",
+        "admin_burdens_name": "Name",
+        "admin_burdens_description": "Description",
+        "admin_burdens_id": "Burden ID",
+        "admin_burdens_site_burden": "Site burden",
+        "admin_burdens_patient_burden": "Participant burden"
     }
 }

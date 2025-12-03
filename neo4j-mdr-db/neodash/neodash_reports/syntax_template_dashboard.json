@@ -326,7 +326,23 @@
             "expandHeightForLegend": false,
             "legendWidth": 256,
             "legend": true,
-            "marginBottom": 100
+            "marginBottom": 100,
+            "styleRules": [
+              {
+                "field": "Library",
+                "condition": "=",
+                "value": "Sponsor",
+                "customization": "bar color",
+                "customizationValue": "lightgreen"
+              },
+              {
+                "field": "Library",
+                "condition": "=",
+                "value": "User Defined",
+                "customization": "bar color",
+                "customizationValue": "lightblue"
+              }
+            ]
           }
         }
       ]

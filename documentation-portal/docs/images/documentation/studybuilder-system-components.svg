@@ -135,7 +135,7 @@
     </g>
     <g text-rendering="geometricPrecision" stroke-miterlimit="1.45" shape-rendering="geometricPrecision" transform="matrix(1,0,0,1,-53,36)" stroke-linecap="butt">
       <rect fill="none" x="310" width="916.7566" height="601.5" y="56.4987" clip-path="url(#clipPath2)"/>
-      <text x="316" xml:space="preserve" y="74.5631" clip-path="url(#clipPath2)" font-family="sans-serif" stroke="none">StudyBuilder System</text>
+      <text x="316" xml:space="preserve" y="74.5631" clip-path="url(#clipPath2)" font-family="sans-serif" stroke="none">OpenStudyBuilder System</text>
     </g>
     <g fill="url(#linearGradient1)" text-rendering="geometricPrecision" shape-rendering="geometricPrecision" transform="matrix(1,0,0,1,-53,36)" stroke="url(#linearGradient1)">
       <rect x="700.3366" y="99.8112" clip-path="url(#clipPath2)" width="237.609" rx="57.5" ry="57.5" height="115" stroke="none"/>
@@ -148,7 +148,7 @@
     <g text-rendering="geometricPrecision" stroke-miterlimit="1.45" shape-rendering="geometricPrecision" transform="matrix(1,0,0,1,-53,36)" stroke-linecap="butt">
       <rect fill="none" x="68.2673" width="1335.9909" height="40" y="-20.0013" clip-path="url(#clipPath2)"/>
       <path fill="none" d="M78.2673 -20.0013 L78.2673 19.9987 M1394.2582 -20.0013 L1394.2582 19.9987 M78.2673 -20.0013 Z" clip-path="url(#clipPath2)"/>
-      <text x="486.8936" font-size="22px" y="8.6408" clip-path="url(#clipPath2)" font-family="sans-serif" stroke="none" font-weight="bold" xml:space="preserve">StudyBuilder: System Component Architecture </text>
+      <text x="486.8936" font-size="22px" y="8.6408" clip-path="url(#clipPath2)" font-family="sans-serif" stroke="none" font-weight="bold" xml:space="preserve">OpenStudyBuilder: System Component Architecture </text>
     </g>
     <g text-rendering="geometricPrecision" stroke-miterlimit="1.45" shape-rendering="geometricPrecision" transform="matrix(1,0,0,1,-53,36)" stroke-linecap="butt">
       <rect fill="none" x="68.2673" width="223.0661" height="166.9817" y="491.017" clip-path="url(#clipPath2)"/>
@@ -251,7 +251,7 @@
     </g>
     <g text-rendering="geometricPrecision" stroke-miterlimit="1.45" shape-rendering="geometricPrecision" transform="matrix(1,0,0,1,-53,36)" stroke-linecap="butt">
       <rect x="325.2673" y="99.8112" clip-path="url(#clipPath2)" fill="none" width="355.2327" rx="57.5" ry="57.5" height="115"/>
-      <text x="456.655" xml:space="preserve" y="117.8756" clip-path="url(#clipPath2)" font-family="sans-serif" stroke="none">StudyBuilder App</text>
+      <text x="456.655" xml:space="preserve" y="117.8756" clip-path="url(#clipPath2)" font-family="sans-serif" stroke="none">OpenStudyBuilder App</text>
     </g>
     <g fill="url(#linearGradient12)" text-rendering="geometricPrecision" shape-rendering="geometricPrecision" transform="matrix(1,0,0,1,-53,36)" stroke="url(#linearGradient12)">
       <rect x="349" y="131.8112" clip-path="url(#clipPath2)" width="145" rx="20" ry="20" height="40" stroke="none"/>
@@ -275,7 +275,7 @@
     </g>
     <g text-rendering="geometricPrecision" stroke-miterlimit="1.45" shape-rendering="geometricPrecision" transform="matrix(1,0,0,1,-53,36)" stroke-linecap="butt">
       <rect x="745.7533" y="131.8112" clip-path="url(#clipPath2)" fill="none" width="145" rx="20" ry="20" height="40"/>
-      <text x="784.2338" xml:space="preserve" y="149.1745" clip-path="url(#clipPath2)" font-family="sans-serif" stroke="none">StudyBuilder</text>
+      <text x="784.2338" xml:space="preserve" y="149.1745" clip-path="url(#clipPath2)" font-family="sans-serif" stroke="none">OpenStudyBuilder</text>
       <text x="777.8969" xml:space="preserve" y="163.8756" clip-path="url(#clipPath2)" font-family="sans-serif" stroke="none">Documentation</text>
     </g>
     <g fill="url(#linearGradient15)" text-rendering="geometricPrecision" shape-rendering="geometricPrecision" transform="matrix(1,0,0,1,-53,36)" stroke="url(#linearGradient15)">

@@ -24,7 +24,7 @@
             variant="outlined"
             color="nnBaseBlue"
             rounded="lg"
-            item-title="name.sponsor_preferred_name"
+            item-title="soa_group_term_name"
             return-object
             :rules="[formRules.required]"
             clearable
@@ -180,8 +180,11 @@ watch(
 )
 
 onMounted(() => {
-  terms.getByCodelist('flowchartGroups').then((resp) => {
+  terms.getTermsByCodelist('flowchartGroups').then((resp) => {
     flowchartGroups.value = resp.data.items
+    flowchartGroups.value.forEach((item) => {
+      item.soa_group_term_name = item.sponsor_preferred_name
+    })
   })
 })
 

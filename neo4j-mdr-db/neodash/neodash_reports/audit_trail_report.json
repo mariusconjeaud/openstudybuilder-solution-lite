@@ -2,21 +2,13 @@
   "title": "Audit Trail Report",
   "version": "2.4",
   "settings": {
-    "pagenumber": 0,
+    "pagenumber": 3,
     "editable": true,
     "fullscreenEnabled": true,
     "parameters": {
       "neodash_has_value_start_date": "",
-      "neodash_has_version_end_date": {
-        "year": 2016,
-        "month": 3,
-        "day": 25
-      },
-      "neodash_has_version_start_date_2": {
-        "year": 2022,
-        "month": 1,
-        "day": 10
-      },
+      "neodash_has_version_end_date": {},
+      "neodash_has_version_start_date_2": {},
       "neodash_2015_01_01": "",
       "neodash_studyaction_oid": "",
       "neodash_studyaction_oid_display": "",
@@ -25,15 +17,81 @@
       "neodash_action_id_number": "",
       "neodash_start_date": "",
       "neodash_end_date": "",
-      "neodash_studyroot_uid": "",
+      "neodash_studyroot_uid": "Study_000002",
       "neodash_idaction_1": "",
       "neodash_idaction_2": "",
       "neodash_action_id": "",
       "neodash_user_username_1": "",
       "neodash_user_username_2": "",
       "neodash_user_username_1_display": "",
-      "neodash_study_min_date": "",
-      "neodash_study_max_date": "",
+      "neodash_study_min_date": {
+        "year": {
+          "low": 2025,
+          "high": 0
+        },
+        "month": {
+          "low": 5,
+          "high": 0
+        },
+        "day": {
+          "low": 30,
+          "high": 0
+        },
+        "hour": {
+          "low": 10,
+          "high": 0
+        },
+        "minute": {
+          "low": 57,
+          "high": 0
+        },
+        "second": {
+          "low": 12,
+          "high": 0
+        },
+        "nanosecond": {
+          "low": 521485000,
+          "high": 0
+        },
+        "timeZoneOffsetSeconds": {
+          "low": 0,
+          "high": 0
+        }
+      },
+      "neodash_study_max_date": {
+        "year": {
+          "low": 2025,
+          "high": 0
+        },
+        "month": {
+          "low": 8,
+          "high": 0
+        },
+        "day": {
+          "low": 23,
+          "high": 0
+        },
+        "hour": {
+          "low": 7,
+          "high": 0
+        },
+        "minute": {
+          "low": 49,
+          "high": 0
+        },
+        "second": {
+          "low": 54,
+          "high": 0
+        },
+        "nanosecond": {
+          "low": 359000000,
+          "high": 0
+        },
+        "timeZoneOffsetSeconds": {
+          "low": 0,
+          "high": 0
+        }
+      },
       "neodash_user_username_2_display": ""
     },
     "theme": "light",
@@ -101,7 +159,7 @@
           "x": 0,
           "y": 0,
           "title": "Select User",
-          "query": "MATCH (n:`User`) \nWHERE toLower(toString(n.`username`)) CONTAINS toLower($input) \nRETURN DISTINCT n.`username` as value,  n.`username` as display ORDER BY size(toString(value)) ASC LIMIT 5",
+          "query": "MATCH (n:`User`) \nWHERE toLower(toString(n.`username`)) CONTAINS toLower($input) \nRETURN DISTINCT n.`username` as value,  n.`username` as display ORDER BY size(toString(value)) ASC ",
           "width": 6,
           "type": "select",
           "height": 2,
@@ -114,7 +172,8 @@
             "propertyType": "username",
             "propertyTypeDisplay": "username",
             "parameterName": "neodash_user_username_1",
-            "id": "1"
+            "id": "1",
+            "suggestionLimit": 100
           },
           "id": "52360e3d-4402-49f1-8254-68c63857b02d"
         },
@@ -351,7 +410,7 @@
         {
           "id": "6e27e2f3-37db-43d5-bf06-70eec58e0ff9",
           "title": "Change Visualisation",
-          "query": "WITH  $neodash_action_id AS specific_action_id\nMATCH p = (component)<-[version:LATEST|LATEST_FINAL|LATEST_DRAFT|HAS_VERSION]-(root)\nWHERE toStringOrNull(id(version)) = specific_action_id AND\n  (date(version.start_date) >= date($neodash_start_date)) AND\n  (date(version.start_date) <= date($neodash_end_date))\nOPTIONAL MATCH (component)<-[version]-(root)-[old_version:LATEST|LATEST_FINAL|LATEST_DRAFT|HAS_VERSION]->(old_component)\nWHERE old_version.start_date < version.start_date\nWITH p,\nroot, \ncomponent, \nversion, \nold_component, \nold_version\nORDER BY version.start_date, old_version.start_date DESC\nWITH DISTINCT p, root, component, version, collect(old_component) AS old_component_collected, collect(old_version) AS old_version_collected\nWITH p,\n  root, \n  component, \n  version, \n  head(old_component_collected) AS prev_component, \n  head(old_version_collected) AS prev_version\nOPTIONAL MATCH p2 = (component)<-[version]-(root)-[prev_version]->(prev_component)\nOPTIONAL MATCH p3 = (prev_component)--(object) WHERE object <> root\nOPTIONAL MATCH p4 = (component)--(object2) WHERE object2 <> root\nWITH collect(distinct(p))+collect(distinct(p2))+collect(distinct(p3))+collect(distinct(p4)) AS collected_paths\nUNWIND collected_paths AS unw_collected_paths\nRETURN unw_collected_paths",
+          "query": "WITH  $neodash_action_id AS specific_action_id,\nCASE \n  WHEN $neodash_start_date <> \"\" \n    THEN \n    CASE \n      WHEN $neodash_start_date =~ \"\\d{4,}-\\d{2,}-\\d{2,}\" THEN Date($neodash_start_date)\n      ELSE Date(\"IS NOT A VALID DATE\")\n    END\n    ELSE \"2015-01-01\"\n  END AS neodash_start_date,\n  CASE \n  WHEN $neodash_end_date  <> \"\"  \n    THEN \n    CASE \n      WHEN $neodash_end_date =~ \"\\d{4,}-\\d{2,}-\\d{2,}\" THEN Date($neodash_end_date)\n      ELSE Date(\"IS NOT A VALID DATE\")\n    END\n    ELSE Date(datetime())+duration({days:1})\n  END AS neodash_end_date\n//WITH specific_action_id, neodash_start_date, neodash_end_date\nMATCH p = (component)<-[version:LATEST|LATEST_FINAL|LATEST_DRAFT|HAS_VERSION]-(root)\nWHERE toStringOrNull(id(version)) = specific_action_id AND\n  (date(version.start_date) >= date(neodash_start_date)) AND\n  (date(version.start_date) <= date(neodash_end_date))\nOPTIONAL MATCH (component)<-[version]-(root)-[old_version:LATEST|LATEST_FINAL|LATEST_DRAFT|HAS_VERSION]->(old_component)\nWHERE old_version.start_date < version.start_date\nWITH p,\nroot, \ncomponent, \nversion, \nold_component, \nold_version\nORDER BY version.start_date, old_version.start_date DESC\nWITH DISTINCT p, root, component, version, collect(old_component) AS old_component_collected, collect(old_version) AS old_version_collected\nWITH p,\n  root, \n  component, \n  version, \n  head(old_component_collected) AS prev_component, \n  head(old_version_collected) AS prev_version\nOPTIONAL MATCH p2 = (component)<-[version]-(root)-[prev_version]->(prev_component)\nOPTIONAL MATCH p3 = (prev_component)--(object) WHERE object <> root\nOPTIONAL MATCH p4 = (component)--(object2) WHERE object2 <> root\nWITH collect(distinct(p))+collect(distinct(p2))+collect(distinct(p3))+collect(distinct(p4)) AS collected_paths\nUNWIND collected_paths AS unw_collected_paths\nRETURN unw_collected_paths",
           "width": 12,
           "height": 6,
           "x": 0,
@@ -482,7 +541,7 @@
           "x": 0,
           "y": 0,
           "title": "Select User",
-          "query": "MATCH (n:`User`) \nWHERE toLower(toString(n.`username`)) CONTAINS toLower($input) \nRETURN DISTINCT n.`username` as value,  n.`username` as display ORDER BY size(toString(value)) ASC LIMIT 5",
+          "query": "MATCH (n:`User`) \nWHERE toLower(toString(n.`username`)) CONTAINS toLower($input) \nRETURN DISTINCT n.`username` as value,  n.`username` as display ORDER BY size(toString(value)) ASC",
           "width": 6,
           "type": "select",
           "height": 2,
@@ -495,7 +554,8 @@
             "propertyType": "username",
             "propertyTypeDisplay": "username",
             "parameterName": "neodash_user_username_1",
-            "id": "1"
+            "id": "1",
+            "suggestionLimit": 100
           },
           "id": "5d70c29a-7d78-4bb5-9d12-c36dd6e0e05c"
         },
@@ -829,10 +889,10 @@
           "type": "graph",
           "selection": {
             "StudyRoot": "uid",
+            "Create": "(label)",
             "StudyAction": "(label)",
-            "Edit": "(label)",
             "StudySelection": "uid",
-            "StudyBranchArm": "name"
+            "StudyActivitySchedule": "uid"
           },
           "settings": {
             "refreshButtonEnabled": true,
@@ -844,40 +904,22 @@
               "uid"
             ],
             [
+              "Create",
+              "date",
+              "author_id"
+            ],
+            [
               "StudyAction",
               "date",
               "author_id"
             ],
             [
-              "Edit",
-              "date",
-              "author_id"
-            ],
-            [
               "StudySelection",
-              "uid",
-              "colour_code",
-              "randomization_group",
-              "branch_arm_code",
-              "accepted_version",
-              "name",
-              "description",
-              "number_of_subjects",
-              "short_name",
-              "order"
+              "uid"
             ],
             [
-              "StudyBranchArm",
-              "uid",
-              "colour_code",
-              "randomization_group",
-              "branch_arm_code",
-              "accepted_version",
-              "name",
-              "description",
-              "number_of_subjects",
-              "short_name",
-              "order"
+              "StudyActivitySchedule",
+              "uid"
             ]
           ]
         },
@@ -909,7 +951,7 @@
         {
           "id": "09ebc707-d7f8-43d3-b80c-185a22b5e953",
           "title": "Actions Table on $neodash_studyroot_uid",
-          "query": "\nWITH $neodash_user_username_2 as user_name,\n$neodash_studyroot_uid as study_uid,\n$neodash_study_min_date as study_min_date,\n$neodash_study_max_date as study_max_date\n\nMATCH (user:User) \n  where user.name = user_name or user_name = \"\" \nMATCH (sr:StudyRoot)\n  WHERE sr.uid = study_uid\n\nmatch (sr)-[at:AUDIT_TRAIL]->(all_study_action:StudyAction)-[:AFTER]-(component)\n  WHERE (user_name = \"\" OR all_study_action.author_id = user.oid)\n    and (datetime(all_study_action.date) >= datetime(study_min_date)) \n    and (datetime(all_study_action.date) <= datetime(study_max_date))\n\noptional match (all_study_action)-[:BEFORE]-(before_component)\noptional match (final_user:User) where final_user.oid = all_study_action.author_id\n\nwith sr, all_study_action, component, before_component, final_user\nwith sr, \n  all_study_action, \n  component, \n  before_component,\n  final_user\ncall{\n      with all_study_action\n     with labels(all_study_action) as action_labels\n      unwind action_labels as action_labels_unw\n      with action_labels_unw\n        where not action_labels_unw contains \"StudyAction\"\n      return action_labels_unw\n    }\nWith\n    apoc.date.format(DateTime(all_study_action.date).epochMillis, \"ms\", \"yyyy-MM-dd'T'HH:mm:ssz\") as DateTime, \n    toString(id(all_study_action)) as action_id,\n    case \n      when component.uid is NULL THEN \"N/A\"\n      else component.uid\n    end as alias,\n    sr.uid as study_uid,\n    labels(component) as labels,\n    final_user.name as user_final_name,\n    action_labels_unw\n    order by all_study_action.date desc\n\nRETURN DISTINCT\n    DateTime as `Timestamp`\n    ,user_final_name as `User Name`\n    ,action_id as `Action ID`\n    ,alias as `Component UID`\n    ,action_labels_unw as `Action Type`\n    order by DateTime desc\nlimit 1000",
+          "query": "\nWITH $neodash_user_username_2 as user_name,\n$neodash_studyroot_uid as study_uid,\n$neodash_study_min_date as study_min_date,\n$neodash_study_max_date as study_max_date\n\nMATCH (user:User) \n  where user.username = user_name or user_name = \"\" \nMATCH (sr:StudyRoot)\n  WHERE sr.uid = study_uid\n\nmatch (sr)-[at:AUDIT_TRAIL]->(all_study_action:StudyAction)-[:AFTER]-(component)\n  WHERE (user_name = \"\" OR all_study_action.author_id = user.oid)\n    and (datetime(all_study_action.date) >= datetime(study_min_date)) \n    and (datetime(all_study_action.date) <= datetime(study_max_date))\n\noptional match (all_study_action)-[:BEFORE]-(before_component)\noptional match (final_user:User) where final_user.oid = all_study_action.author_id\n\nwith sr, all_study_action, component, before_component, final_user\nwith sr, \n  all_study_action, \n  component, \n  before_component,\n  final_user\ncall{\n      with all_study_action\n     with labels(all_study_action) as action_labels\n      unwind action_labels as action_labels_unw\n      with action_labels_unw\n        where not action_labels_unw contains \"StudyAction\"\n      return action_labels_unw\n    }\nWith\n    apoc.date.format(DateTime(all_study_action.date).epochMillis, \"ms\", \"yyyy-MM-dd'T'HH:mm:ssz\") as DateTime, \n    toString(id(all_study_action)) as action_id,\n    case \n      when component.uid is NULL THEN \"N/A\"\n      else component.uid\n    end as alias,\n    sr.uid as study_uid,\n    labels(component) as labels,\n    final_user.username as user_final_username,\n    final_user.name as user_final_name,\n    action_labels_unw\n    order by all_study_action.date desc\n\nRETURN DISTINCT\n    DateTime as `Timestamp`\n    ,user_final_username as `User Name`\n    ,user_final_name as `Name`\n    ,action_id as `Action ID`\n    ,alias as `Component UID`\n    ,action_labels_unw as `Action Type`\n    order by DateTime desc\nlimit 1000",
           "width": 16,
           "height": 6,
           "x": 0,
@@ -918,7 +960,7 @@
           "selection": {},
           "settings": {
             "refreshButtonEnabled": true,
-            "compact": false,
+            "compact": true,
             "allowDownload": true,
             "actionsRules": [
               {
@@ -960,7 +1002,8 @@
               }
             ],
             "description": "A list of all actions preformed by the selected User on a specific Study. You must select a User (above), as well as a Study UID (left) to obtain results in this table.",
-            "columnWidths": "[2,2,1,2,2]"
+            "columnWidths": "[2,2,2,1.5,2,1]",
+            "wrapContent": true
           }
         },
         {
@@ -996,7 +1039,7 @@
           "x": 0,
           "y": 3,
           "title": "Select User",
-          "query": "WITH $neodash_studyroot_uid as study_uid,\n$neodash_study_min_date as study_min_date,\n$neodash_study_max_date as study_max_date\n\nMATCH (sr:StudyRoot)\n  WHERE sr.uid = study_uid\n\nMATCH (sr)-[at:AUDIT_TRAIL]->(all_study_action:StudyAction)-[:AFTER]-(component)\n  WHERE  (datetime(all_study_action.date) >= datetime(study_min_date)) \n    and (datetime(all_study_action.date) <= datetime(study_max_date))\n\nWITH DISTINCT all_study_action.author_id as author_id\n\nMATCH (user:User)\nWHERE user.oid = author_id\n\nRETURN user.name as value",
+          "query": "WITH $neodash_studyroot_uid as study_uid,\ncoalesce($neodash_study_min_date, toString(date())) as study_min_date,\ncoalesce($neodash_study_max_date, toString(date())) as study_max_date\n\nMATCH (sr:StudyRoot)\n  WHERE sr.uid = study_uid\n\nMATCH (sr)-[at:AUDIT_TRAIL]->(all_study_action:StudyAction)-[:AFTER]-(component)\n  WHERE  (datetime(all_study_action.date) >= datetime(study_min_date)) \n    and (datetime(all_study_action.date) <= datetime(study_max_date))\n\nWITH DISTINCT all_study_action.author_id as author_id\n\nMATCH (user:User)\nWHERE user.oid = author_id\n\nRETURN user.username as value",
           "width": 6,
           "type": "select",
           "height": 2,
@@ -1006,7 +1049,8 @@
             "helperText": "Username",
             "description": "This parameter is used to filter the results in the Actions Table below based on a specific user. The value must be a valid user initial to render any results.",
             "entityType": "user_username_2",
-            "parameterName": "neodash_user_username_2"
+            "parameterName": "neodash_user_username_2",
+            "suggestionLimit": 100
           },
           "id": "14740fbe-885b-4b31-b38a-2b76753502f5"
         },

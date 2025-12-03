@@ -19,7 +19,6 @@ from clinical_mdr_api.domains.controlled_terminologies.ct_term_attributes import
     CTTermAttributesVO,
 )
 from clinical_mdr_api.domains.controlled_terminologies.ct_term_name import (
-    CTTermCodelistVO,
     CTTermNameAR,
     CTTermNameVO,
 )
@@ -42,6 +41,7 @@ from clinical_mdr_api.tests.integration.utils.data_library import (
     STARTUP_STUDY_FIELD_CYPHER,
     inject_base_data,
 )
+from clinical_mdr_api.tests.integration.utils.utils import TestUtils
 from clinical_mdr_api.tests.unit.domain.utils import AUTHOR_ID
 
 
@@ -81,15 +81,13 @@ class StudyFieldsConcurrencyTest(unittest.TestCase):
         self.ct_term_attributes_repository = self._repos.ct_term_attributes_repository
         self.ct_term_names_repository = self._repos.ct_term_name_repository
 
-        codelist_uid = "editable_cr"
-
         with db.transaction:
             study_ar = StudyDefinitionAR.from_initial_values(
                 generate_uid_callback=lambda: "Study_000001",
                 initial_id_metadata=StudyIdentificationMetadataVO.from_input_values(
                     project_number="456",
                     study_acronym="STUDY_ACR",
-                    study_number="123",
+                    study_number=TestUtils.get_study_number(),
                     subpart_id=None,
                     description="123description",
                     registry_identifiers=RegistryIdentifiersVO.from_input_values(
@@ -119,10 +117,11 @@ class StudyFieldsConcurrencyTest(unittest.TestCase):
                         investigational_device_exemption_ide_number_null_value_code=None,
                     ),
                 ),
-                project_exists_callback=(lambda _: True),
-                study_title_exists_callback=(lambda _, study_number: False),
-                study_short_title_exists_callback=(lambda _, study_number: False),
-                study_number_exists_callback=(lambda x, y: False),
+                project_exists_callback=lambda _: True,
+                study_title_exists_callback=lambda _, study_number: False,
+                study_short_title_exists_callback=lambda _, study_number: False,
+                study_number_exists_callback=lambda x, y: False,
+                author_id="unknown-user",
             )
 
             self.studies_repository.save(study_ar)
@@ -134,17 +133,8 @@ class StudyFieldsConcurrencyTest(unittest.TestCase):
             )
 
             ct_term_attributes_vo = CTTermAttributesVO.from_repository_values(
-                codelists=[
-                    CTTermCodelistVO(
-                        codelist_uid=codelist_uid,
-                        order=1,
-                        library_name=self.library_name,
-                    )
-                ],
-                catalogue_name="SDTM CT",
+                catalogue_names=["SDTM CT"],
                 concept_id=None,
-                code_submission_value="code_submission_value",
-                name_submission_value="name_submission_value",
                 preferred_term="preferred_term",
                 definition="definition",
             )
@@ -168,14 +158,7 @@ class StudyFieldsConcurrencyTest(unittest.TestCase):
 
         with db.transaction:
             ct_term_name_vo = CTTermNameVO.from_repository_values(
-                codelists=[
-                    CTTermCodelistVO(
-                        codelist_uid=codelist_uid,
-                        order=1,
-                        library_name=self.library_name,
-                    )
-                ],
-                catalogue_name="SDTM CT",
+                catalogue_names=["SDTM CT"],
                 name="StudyTitle",
                 name_sentence_case="study_title",
             )
@@ -227,6 +210,7 @@ class StudyFieldsConcurrencyTest(unittest.TestCase):
             new_study_description=study_description,
             study_title_exists_callback=lambda _, study_number: False,
             study_short_title_exists_callback=lambda _, study_number: False,
+            author_id=self.author_id,
         )
 
     def save_study_ar(self):

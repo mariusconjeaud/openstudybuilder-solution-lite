@@ -118,7 +118,7 @@
           <th width="25%">
             {{ $t('CodeListDetail.ct_identifiers') }}
           </th>
-          <th width="45%">
+          <th width="50%">
             {{ $t('CodeListDetail.selected_values') }}
           </th>
           <th width="5%">
@@ -130,7 +130,7 @@
           <th width="5%">
             {{ $t('_global.version') }}
           </th>
-          <th width="10%">
+          <th width="5%">
             {{ $t('_global.actions') }}
           </th>
         </tr>
@@ -205,8 +205,68 @@
           <td>{{ $filters.yesno(attributes.extensible) }}</td>
         </tr>
         <tr>
+          <td>{{ $t('CodeListDetail.ordinal') }}</td>
+          <td>{{ $filters.yesno(attributes.ordinal) }}</td>
+        </tr>
+        <tr>
           <td>{{ $t('CodeListDetail.definition') }}</td>
           <td>{{ attributes.definition }}</td>
+        </tr>
+      </tbody>
+    </v-table>
+
+    <div class="v-label pa-4 mt-6">
+      {{ $t('CodeListDetail.paired_codelists') }}
+    </div>
+    <v-btn
+      class="ml-2"
+      size="small"
+      variant="outlined"
+      color="nnBaseBlue"
+      data-cy="add-paired-codelist-button"
+      :title="$t('CodeListDetail.add_paired_codelist')"
+      :disabled="!accessGuard.checkPermission($roles.LIBRARY_WRITE)"
+      icon="mdi-plus"
+      @click.stop="showAddPairedCodelistForm = true"
+    />
+    <v-table :aria-label="$t('CodeListDetail.paired_codelists')">
+      <thead>
+        <tr class="bg-greyBackground">
+          <th width="10%">
+            {{ $t('CodeListDetail.pair_type') }}
+          </th>
+          <th width="10%">
+            {{ $t('_global.library') }}
+          </th>
+          <th width="15%">
+            {{ $t('CodeListDetail.submission_value') }}
+          </th>
+          <th width="45%">
+            {{ $t('CodeListDetail.sponsor_pref_name') }}
+          </th>
+          <th width="15%">
+            {{ $t('CodeListDetail.concept_id') }}
+          </th>
+          <th width="5%">
+            {{ $t('_global.actions') }}
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="(cl, index) in pairedCodelists" :key="`item-${index}`">
+          <td>{{ $t('CodeListDetail.pair_type_' + cl.type) }}</td>
+          <td>{{ cl.library_name }}</td>
+          <td>{{ cl.attributes.submission_value }}</td>
+          <td>{{ cl.name.name }}</td>
+          <td>{{ cl.attributes.codelist_uid }}</td>
+          <td>
+            <v-btn
+              icon="mdi-delete-outline"
+              :title="$t('CodeListDetail.remove_paired_codelist')"
+              variant="text"
+              @click="openRemovePairedCodelistForm(cl)"
+            />
+          </td>
         </tr>
       </tbody>
     </v-table>
@@ -234,6 +294,17 @@
       />
     </v-dialog>
     <v-dialog
+      v-model="showAddPairedCodelistForm"
+      persistent
+      max-width="1024px"
+      @keydown.esc="showAddPairedCodelistForm = false"
+    >
+      <CodelistAddPairedForm
+        :codelist-uid="route.params.codelist_id"
+        @close="closeAddPairedForm"
+      />
+    </v-dialog>
+    <v-dialog
       v-model="showHistory"
       persistent
       :fullscreen="$globals.historyDialogFullscreen"
@@ -246,6 +317,7 @@
         @close="closeHistory"
       />
     </v-dialog>
+    <ConfirmDialog ref="confirm" :text-cols="6" :action-cols="5" />
   </div>
 </template>
 
@@ -256,12 +328,16 @@ import { useRoute, useRouter } from 'vue-router'
 import controlledTerminology from '@/api/controlledTerminology'
 import CodelistAttributesForm from '@/components/library/CodelistAttributesForm.vue'
 import CodelistSponsorValuesForm from '@/components/library/CodelistSponsorValuesForm.vue'
+import CodelistAddPairedForm from '@/components/library/CodelistAddPairedForm.vue'
 import dataFormating from '@/utils/dataFormating'
 import HistoryTable from '@/components/tools/HistoryTable.vue'
 import StatusChip from '@/components/tools/StatusChip.vue'
 import { useAppStore } from '@/stores/app'
+import { useAccessGuard } from '@/composables/accessGuard'
+import ConfirmDialog from '@/components/tools/ConfirmDialog.vue'
 
 const { t } = useI18n()
+const accessGuard = useAccessGuard()
 const eventBusEmit = inject('eventBusEmit')
 const appStore = useAppStore()
 const route = useRoute()
@@ -269,6 +345,7 @@ const router = useRouter()
 
 const attributes = ref({ possible_actions: [] })
 const codelistNames = ref({ possible_actions: [] })
+const pairedCodelists = ref([])
 const attributesHistoryHeaders = [
   { title: t('CodeListDetail.codelist_name'), key: 'name' },
   {
@@ -287,6 +364,7 @@ const attributesHistoryHeaders = [
 const historyHeaders = ref([])
 const historyItems = ref([])
 const historyTitle = ref('')
+const confirm = ref()
 
 const namesHistoryHeaders = [
   { title: t('CodeListDetail.sponsor_pref_name'), key: 'name' },
@@ -300,6 +378,7 @@ const namesHistoryHeaders = [
 const showAttributesForm = ref(false)
 const showHistory = ref(false)
 const showSponsorValuesForm = ref(false)
+const showAddPairedCodelistForm = ref(false)
 
 const namesHistoryTitle = computed(() => {
   return t('CodeListDetail.names_history_title', {
@@ -328,7 +407,24 @@ onMounted(() => {
     .then((resp) => {
       attributes.value = resp.data
     })
+  fetchPairedCodelists()
 })
+
+function fetchPairedCodelists() {
+  controlledTerminology
+    .getPairedCodelists(route.params.codelist_id)
+    .then((resp) => {
+      pairedCodelists.value = []
+      if (resp.data.names) {
+        resp.data.names.type = 'names'
+        pairedCodelists.value.push(resp.data.names)
+      }
+      if (resp.data.codes) {
+        resp.data.codes.type = 'codes'
+        pairedCodelists.value.push(resp.data.codes)
+      }
+    })
+}
 
 function editSponsorValues() {
   showSponsorValuesForm.value = true
@@ -403,6 +499,10 @@ function openCodelistTerms() {
     params: { codelist_id: codelistNames.value.codelist_uid },
   })
 }
+function closeAddPairedForm() {
+  showAddPairedCodelistForm.value = false
+  fetchPairedCodelists()
+}
 function transformHistoryItems(items) {
   const result = []
   for (const item of items) {
@@ -418,5 +518,37 @@ function transformHistoryItems(items) {
     result.push(newItem)
   }
   return result
+}
+async function openRemovePairedCodelistForm(cl) {
+  const options = {
+    type: 'warning',
+    cancelLabel: t('_global.cancel'),
+    agreeLabel: t('_global.continue'),
+  }
+  if (
+    await confirm.value.open(
+      t('CodeListDetail.remove_paired_codelist'),
+      options
+    )
+  ) {
+    let data
+    if (cl.type === 'codes') {
+      data = {
+        paired_codes_codelist_uid: null,
+      }
+    } else {
+      data = {
+        paired_names_codelist_uid: null,
+      }
+    }
+    controlledTerminology
+      .updatePairedCodelists(route.params.codelist_id, data)
+      .then(() => {
+        fetchPairedCodelists()
+        eventBusEmit('notification', {
+          msg: t('CodeListDetail.remove_paired_codelist_success'),
+        })
+      })
+  }
 }
 </script>

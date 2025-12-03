@@ -7,7 +7,7 @@ from fastapi import UploadFile
 from lxml import etree
 from weasyprint import HTML
 
-from clinical_mdr_api.domains._utils import ObjectStatus, get_iso_lang_data
+from clinical_mdr_api.domains._utils import get_iso_lang_data
 from clinical_mdr_api.domains.concepts.odms.odm_xml_definition import (
     ODM,
     Alias,
@@ -59,9 +59,8 @@ class OdmXmlExporterService:
     odm_data_extractor: OdmDataExtractor
     xml_document: Document
     odm: ODM
-    used_vendor_namespaces: dict[str, dict]
-    allowed_namespaces: list[str] | None
-    pdf: bool | None
+    allowed_namespaces: list[str] | dict[str, str]
+    pdf: bool
     stylesheet: str | None
 
     mapper_file: UploadFile | None = None
@@ -74,11 +73,11 @@ class OdmXmlExporterService:
 
     def __init__(
         self,
-        target_uid: str,
+        target_uids: list[str],
         target_type: TargetType,
-        status: ObjectStatus,
+        version: str | None,
         allowed_namespaces: list[str],
-        pdf: bool | None,
+        pdf: bool,
         stylesheet: str | None,
         mapper_file: UploadFile | None,
     ):
@@ -86,9 +85,9 @@ class OdmXmlExporterService:
         Initializes a new instance of the `OdmXmlGenerator` class.
 
         Args:
-            target_uid (str): The UID of the ODM element to generate XML for.
+            target_uids (list[str]): The UIDs of the ODM elements to generate XML for.
             target_type (TargetType): The type of the ODM element to generate XML for.
-            status (ObjectStatus): The status of the ODM elements to generate XML for.
+            version (str | None): The version of the ODM elements to generate XML for.
             allowed_namespaces (list[str]): A list of allowed vendor namespace prefixes.
             pdf (bool | None): A flag indicating whether to generate a PDF.
             stylesheet (str | None): The name of the stylesheet to include as the XML stylesheet.
@@ -98,20 +97,27 @@ class OdmXmlExporterService:
         Returns:
             None
         """
-        self.odm_data_extractor = OdmDataExtractor(target_uid, target_type, status.name)
+        self.odm_data_extractor = OdmDataExtractor(target_uids, target_type, version)
         self.mapper_file = mapper_file
         self.allowed_namespaces = allowed_namespaces
-        self.used_vendor_namespaces = {}
         self.pdf = pdf
         self.stylesheet = stylesheet
 
         if self.allowed_namespaces:
-            for uid, ext in self.odm_data_extractor.odm_vendor_namespaces.items():
-                if (
-                    "*" in self.allowed_namespaces
-                    or ext["prefix"] in self.allowed_namespaces
-                ):
-                    self.used_vendor_namespaces[uid] = ext
+            if "*" in self.allowed_namespaces:
+                self.allowed_namespaces = {
+                    ns["prefix"]: ns["url"]
+                    for ns in self.odm_data_extractor.odm_vendor_namespaces.values()
+                }
+            else:
+                _allowed_namespaces = {
+                    ns["prefix"]: ns["url"]
+                    for ns in self.odm_data_extractor.odm_vendor_namespaces.values()
+                    if ns["prefix"] in self.allowed_namespaces
+                }
+                self.allowed_namespaces = _allowed_namespaces
+        else:
+            self.allowed_namespaces = {}
 
         self.odm = self._create_odm_object()
         self.xml_document = Document()
@@ -140,6 +146,11 @@ class OdmXmlExporterService:
 
         if self.pdf:
             try:
+                if self.stylesheet is None:
+                    raise BusinessLogicException(
+                        msg="Stylesheet is required for PDF generation."
+                    )
+
                 stylesheet_filename = OdmXmlStylesheetService.get_xml_filename_by_name(
                     self.stylesheet
                 )
@@ -228,7 +239,7 @@ class OdmXmlExporterService:
         rs = {}
         for name, elm in elements.items():
             prefix, _ = elm.name.split(":")
-            if "*" in self.allowed_namespaces or prefix in self.allowed_namespaces:
+            if prefix in self.allowed_namespaces:
                 rs[name] = elm
         return rs
 
@@ -254,7 +265,7 @@ class OdmXmlExporterService:
                 continue
 
             prefix, _ = elm._custom_element_name.split(":")
-            if "*" in self.allowed_namespaces or prefix in self.allowed_namespaces:
+            if prefix in self.allowed_namespaces:
                 rs.append(elm)
         return rs
 
@@ -275,12 +286,12 @@ class OdmXmlExporterService:
         attributes = {}
 
         for vendor_attribute in target.vendor_attributes:
+            if vendor_attribute.vendor_namespace_uid is None:
+                continue
             odm_vendor_namespace = self.odm_data_extractor.odm_vendor_namespaces[
                 vendor_attribute.vendor_namespace_uid
             ]
-            if "*" in self.allowed_namespaces or (
-                odm_vendor_namespace["prefix"] in self.allowed_namespaces
-            ):
+            if odm_vendor_namespace["prefix"] in self.allowed_namespaces:
                 attributes[vendor_attribute.name] = Attribute(
                     f"{odm_vendor_namespace['prefix']}:{vendor_attribute.name}",
                     vendor_attribute.value,
@@ -308,9 +319,7 @@ class OdmXmlExporterService:
             odm_vendor_element = self.odm_data_extractor.odm_vendor_elements[
                 vendor_element.uid
             ]["vendor_namespace"]
-            if "*" in self.allowed_namespaces or (
-                odm_vendor_element["prefix"] in self.allowed_namespaces
-            ):
+            if odm_vendor_element["prefix"] in self.allowed_namespaces:
                 elements[vendor_element.name] = Element(
                     _custom_element_name=f"{self.odm_data_extractor.odm_vendor_elements[vendor_element.uid]['vendor_namespace']['prefix']}"
                     f":{vendor_element.name}",
@@ -324,6 +333,7 @@ class OdmXmlExporterService:
                         for vendor_element_attribute in target.vendor_element_attributes
                         if vendor_element_attribute.vendor_element_uid
                         == vendor_element.uid
+                        and isinstance(vendor_element_attribute.name, str)
                     },
                 )
 
@@ -401,15 +411,9 @@ class OdmXmlExporterService:
                                 lang=Attribute(
                                     self.XML_LANG,
                                     get_iso_lang_data(
-                                        query=description.language, return_key="639-1"
+                                        query=description.language or "en",
+                                        return_key="639-1",
                                     ),
-                                ),
-                                **self._get_vendor_attributes_or_empty_dict(
-                                    {
-                                        "version": Attribute(
-                                            self.OSB_VERSION, description.version
-                                        )
-                                    }
                                 ),
                             )
                             for description in form.descriptions
@@ -420,9 +424,6 @@ class OdmXmlExporterService:
                         Alias(
                             name=Attribute("Name", alias.name),
                             context=Attribute("Context", alias.context),
-                            **self._get_vendor_attributes_or_empty_dict(
-                                {"version": Attribute(self.OSB_VERSION, alias.version)}
-                            ),
                         )
                         for alias in form.aliases
                     ],
@@ -440,8 +441,6 @@ class OdmXmlExporterService:
                             **self._get_vendor_attributes_or_empty_dict(
                                 self._get_dict_of_attributes(
                                     item_group.vendor.attributes
-                                    if item_group.vendor
-                                    else {}
                                 )
                             ),
                         )
@@ -464,15 +463,17 @@ class OdmXmlExporterService:
                     domain=(
                         Attribute(
                             "Domain",
-                            "|".join(
-                                [
-                                    f"{sdtm_domain.code_submission_value}:{sdtm_domain.preferred_term}"
-                                    for sdtm_domain in item_group.sdtm_domains
-                                ]
+                            (
+                                "|".join(
+                                    [
+                                        f"{sdtm_domain.submission_value}:{sdtm_domain.preferred_term}"
+                                        for sdtm_domain in item_group.sdtm_domains
+                                    ]
+                                )
+                                if item_group.sdtm_domains
+                                else ""
                             ),
                         )
-                        if item_group.sdtm_domains
-                        else ""
                     ),
                     **self._get_vendor_attributes_or_empty_dict(
                         {
@@ -509,7 +510,7 @@ class OdmXmlExporterService:
                         self._get_vendor_elements_or_empty_list(
                             [
                                 OsbDomainColor(
-                                    f"{sdtm_domain.code_submission_value}:{self.SDTM_MSG_COLOURS[idx%len(self.SDTM_MSG_COLOURS)]} !important;"
+                                    f"{sdtm_domain.submission_value}:{self.SDTM_MSG_COLOURS[idx%len(self.SDTM_MSG_COLOURS)]} !important;"
                                 )
                                 for idx, sdtm_domain in enumerate(
                                     item_group.sdtm_domains
@@ -526,15 +527,9 @@ class OdmXmlExporterService:
                                 lang=Attribute(
                                     self.XML_LANG,
                                     get_iso_lang_data(
-                                        query=description.language, return_key="639-1"
+                                        query=description.language or "en",
+                                        return_key="639-1",
                                     ),
-                                ),
-                                **self._get_vendor_attributes_or_empty_dict(
-                                    {
-                                        "version": Attribute(
-                                            self.OSB_VERSION, description.version
-                                        )
-                                    }
                                 ),
                             )
                             for description in item_group.descriptions
@@ -545,9 +540,6 @@ class OdmXmlExporterService:
                         Alias(
                             name=Attribute("Name", alias.name),
                             context=Attribute("Context", alias.context),
-                            **self._get_vendor_attributes_or_empty_dict(
-                                {"version": Attribute(self.OSB_VERSION, alias.version)}
-                            ),
                         )
                         for alias in item_group.aliases
                     ],
@@ -562,9 +554,7 @@ class OdmXmlExporterService:
                                 item.collection_exception_condition_oid,
                             ),
                             **self._get_vendor_attributes_or_empty_dict(
-                                self._get_dict_of_attributes(
-                                    item.vendor.attributes if item.vendor else {}
-                                )
+                                self._get_dict_of_attributes(item.vendor.attributes)
                             ),
                         )
                         for item in item_group.items
@@ -581,6 +571,9 @@ class OdmXmlExporterService:
                     origin=Attribute("Origin", item.origin),
                     datatype=Attribute("DataType", item.datatype.lower()),
                     length=Attribute("Length", item.length),
+                    significant_digits=Attribute(
+                        "SignificantDigits", item.significant_digits
+                    ),
                     sas_field_name=Attribute("SASFieldName", item.sas_field_name),
                     sds_var_name=Attribute("SDSVarName", item.sds_var_name),
                     **self._get_vendor_attributes_or_empty_dict(
@@ -618,9 +611,6 @@ class OdmXmlExporterService:
                         Alias(
                             name=Attribute("Name", alias.name),
                             context=Attribute("Context", alias.context),
-                            **self._get_vendor_attributes_or_empty_dict(
-                                {"version": Attribute(self.OSB_VERSION, alias.version)}
-                            ),
                         )
                         for alias in item.aliases
                     ],
@@ -631,15 +621,9 @@ class OdmXmlExporterService:
                                 lang=Attribute(
                                     self.XML_LANG,
                                     get_iso_lang_data(
-                                        query=description.language, return_key="639-1"
+                                        query=description.language or "en",
+                                        return_key="639-1",
                                     ),
-                                ),
-                                **self._get_vendor_attributes_or_empty_dict(
-                                    {
-                                        "version": Attribute(
-                                            self.OSB_VERSION, description.version
-                                        )
-                                    }
                                 ),
                             )
                             for description in item.descriptions
@@ -653,15 +637,9 @@ class OdmXmlExporterService:
                                 lang=Attribute(
                                     self.XML_LANG,
                                     get_iso_lang_data(
-                                        query=description.language, return_key="639-1"
+                                        query=description.language or "en",
+                                        return_key="639-1",
                                     ),
-                                ),
-                                **self._get_vendor_attributes_or_empty_dict(
-                                    {
-                                        "version": Attribute(
-                                            self.OSB_VERSION, description.version
-                                        )
-                                    }
                                 ),
                             )
                             for description in item.descriptions
@@ -702,13 +680,6 @@ class OdmXmlExporterService:
                         FormalExpression(
                             _string=formal_expression.expression,
                             context=Attribute("Context", formal_expression.context),
-                            **self._get_vendor_attributes_or_empty_dict(
-                                {
-                                    "version": Attribute(
-                                        self.OSB_VERSION, formal_expression.version
-                                    )
-                                }
-                            ),
                         )
                         for formal_expression in condition.formal_expressions
                     ],
@@ -716,9 +687,6 @@ class OdmXmlExporterService:
                         Alias(
                             name=Attribute("Name", alias.name),
                             context=Attribute("Context", alias.context),
-                            **self._get_vendor_attributes_or_empty_dict(
-                                {"version": Attribute(self.OSB_VERSION, alias.version)}
-                            ),
                         )
                         for alias in condition.aliases
                     ],
@@ -729,15 +697,9 @@ class OdmXmlExporterService:
                                 lang=Attribute(
                                     self.XML_LANG,
                                     get_iso_lang_data(
-                                        query=description.language, return_key="639-1"
+                                        query=description.language or "en",
+                                        return_key="639-1",
                                     ),
-                                ),
-                                **self._get_vendor_attributes_or_empty_dict(
-                                    {
-                                        "version": Attribute(
-                                            self.OSB_VERSION, description.version
-                                        )
-                                    }
                                 ),
                             )
                             for description in condition.descriptions
@@ -761,13 +723,6 @@ class OdmXmlExporterService:
                         FormalExpression(
                             _string=formal_expression.expression,
                             context=Attribute("Context", formal_expression.context),
-                            **self._get_vendor_attributes_or_empty_dict(
-                                {
-                                    "version": Attribute(
-                                        self.OSB_VERSION, formal_expression.version
-                                    )
-                                }
-                            ),
                         )
                         for formal_expression in method.formal_expressions
                     ],
@@ -775,9 +730,6 @@ class OdmXmlExporterService:
                         Alias(
                             name=Attribute("Name", alias.name),
                             context=Attribute("Context", alias.context),
-                            **self._get_vendor_attributes_or_empty_dict(
-                                {"version": Attribute(self.OSB_VERSION, alias.version)}
-                            ),
                         )
                         for alias in method.aliases
                     ],
@@ -788,15 +740,9 @@ class OdmXmlExporterService:
                                 lang=Attribute(
                                     self.XML_LANG,
                                     get_iso_lang_data(
-                                        query=description.language, return_key="639-1"
+                                        query=description.language or "en",
+                                        return_key="639-1",
                                     ),
-                                ),
-                                **self._get_vendor_attributes_or_empty_dict(
-                                    {
-                                        "version": Attribute(
-                                            self.OSB_VERSION, description.version
-                                        )
-                                    }
                                 ),
                             )
                             for description in method.descriptions
@@ -811,6 +757,9 @@ class OdmXmlExporterService:
             codelists = []
 
             for codelist in self.odm_data_extractor.codelists:
+                if codelist.codelist_uid is None:
+                    continue
+
                 items = self.odm_data_extractor.get_items_by_codelist_uid(
                     codelist.codelist_uid
                 )
@@ -847,7 +796,7 @@ class OdmXmlExporterService:
                                 CodeListItem(
                                     coded_value=Attribute(
                                         "CodedValue",
-                                        codelist_item["code_submission_value"],
+                                        codelist_item["submission_value"],
                                     ),
                                     decode=Decode(
                                         TranslatedText(
@@ -946,7 +895,7 @@ class OdmXmlExporterService:
             study=Study(
                 oid=Attribute(
                     "OID",
-                    f"{self.odm_data_extractor.target_name}-{self.odm_data_extractor.target_uid}",
+                    f"{self.odm_data_extractor.target_name}-{self.odm_data_extractor.target_uids[0]}",
                 ),
                 meta_data_version=MetaDataVersion(
                     oid=Attribute("OID", "MDV.0.1"),
@@ -971,13 +920,8 @@ class OdmXmlExporterService:
                 ),
             ),
             **{
-                used_vendor_namespace["prefix"]: Attribute(
-                    f"xmlns:{used_vendor_namespace['prefix']}",
-                    used_vendor_namespace["url"],
-                )
-                for used_vendor_namespace in self.used_vendor_namespaces.values()
-                if "*" in self.allowed_namespaces
-                or used_vendor_namespace["prefix"] in self.allowed_namespaces
+                prefix: Attribute(f"xmlns:{prefix}", url)
+                for prefix, url in self.allowed_namespaces.items()
             },
         )
 

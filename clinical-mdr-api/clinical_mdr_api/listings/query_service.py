@@ -12,7 +12,7 @@ from clinical_mdr_api.repositories._utils import (
     FilterDict,
     FilterOperator,
 )
-from common.config import CT_UID_NA_VALUE, CT_UID_POSITIVE_INFINITY
+from common.config import settings
 
 MATCH_SPECIFIC_STUDY_VERSION = """
     MATCH (sr:StudyRoot {uid: $study_uid})-[l:HAS_VERSION{status:'RELEASED', version:$study_value_version}]->(sv:StudyValue)
@@ -31,7 +31,7 @@ class QueryService:
         catalogue_name: str | None = None,
         package: str | None = None,
         after_date: str | None = None,
-    ) -> tuple[str, dict]:
+    ) -> tuple[str, dict[Any, Any]]:
         """Create filter to use in cypher query"""
         filter_parameters = []
         filter_query_parameters = {}
@@ -78,11 +78,11 @@ class QueryService:
     def get_topic_codes(
         self,
         at_specific_date: datetime | None = None,
-        sort_by: dict | None = None,
+        sort_by: dict[str, bool] | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: dict | None = None,
-        filter_operator: FilterOperator | None = FilterOperator.AND,
+        filter_by: dict[str, dict[str, Any]] | None = None,
+        filter_operator: FilterOperator = FilterOperator.AND,
         total_count: bool = False,
     ) -> GenericFilteringReturn:
         """Query to get the legacy dataset topic_cd_def."""
@@ -144,7 +144,7 @@ class QueryService:
             sort_by=sort_by,
             page_number=page_number,
             page_size=page_size,
-            filter_by=FilterDict(elements=filter_by),
+            filter_by=FilterDict.model_validate({"elements": filter_by}),
             filter_operator=filter_operator,
             total_count=total_count,
         )
@@ -164,17 +164,17 @@ class QueryService:
             if len(count_result) > 0:
                 total = count_result[0][0]
 
-        return GenericFilteringReturn.create(items=result, total=total)
+        return GenericFilteringReturn(items=result, total=total)
 
     def get_cdisc_ct_ver(
         self,
         catalogue_name: str | None = None,
         after_date: str | None = None,
-        sort_by: dict | None = None,
+        sort_by: dict[str, bool] | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: dict | None = None,
-        filter_operator: FilterOperator | None = FilterOperator.AND,
+        filter_by: dict[str, dict[str, Any]] | None = None,
+        filter_operator: FilterOperator = FilterOperator.AND,
         total_count: bool = False,
     ) -> GenericFilteringReturn:
         """Query to get the legacy dataset cdisc_ct_ver."""
@@ -200,7 +200,7 @@ class QueryService:
             sort_by=sort_by,
             page_number=page_number,
             page_size=page_size,
-            filter_by=FilterDict(elements=filter_by),
+            filter_by=FilterDict.model_validate({"elements": filter_by}),
             filter_operator=filter_operator,
             total_count=total_count,
         )
@@ -218,17 +218,17 @@ class QueryService:
             if len(count_result) > 0:
                 total = count_result[0][0]
 
-        return GenericFilteringReturn.create(items=result, total=total)
+        return GenericFilteringReturn(items=result, total=total)
 
     def get_cdisc_ct_pkg(
         self,
         catalogue_name: str | None = None,
         after_date: str | None = None,
-        sort_by: dict | None = None,
+        sort_by: dict[str, bool] | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: dict | None = None,
-        filter_operator: FilterOperator | None = FilterOperator.AND,
+        filter_by: dict[str, dict[str, Any]] | None = None,
+        filter_operator: FilterOperator = FilterOperator.AND,
         total_count: bool = False,
     ) -> GenericFilteringReturn:
         """Query to get the legacy dataset cdisc_ct_pkg."""
@@ -252,7 +252,7 @@ class QueryService:
             sort_by=sort_by,
             page_number=page_number,
             page_size=page_size,
-            filter_by=FilterDict(elements=filter_by),
+            filter_by=FilterDict.model_validate({"elements": filter_by}),
             filter_operator=filter_operator,
             total_count=total_count,
         )
@@ -271,18 +271,18 @@ class QueryService:
             if len(count_result) > 0:
                 total = count_result[0][0]
 
-        return GenericFilteringReturn.create(items=result, total=total)
+        return GenericFilteringReturn(items=result, total=total)
 
     def get_cdisc_ct_list(
         self,
         catalogue_name: str | None = None,
         package: str | None = None,
         after_date: str | None = None,
-        sort_by: dict | None = None,
+        sort_by: dict[str, bool] | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: dict | None = None,
-        filter_operator: FilterOperator | None = FilterOperator.AND,
+        filter_by: dict[str, dict[str, Any]] | None = None,
+        filter_operator: FilterOperator = FilterOperator.AND,
         total_count: bool = False,
     ) -> GenericFilteringReturn:
         """Query to get the legacy dataset cdisc_ct_list."""
@@ -323,7 +323,7 @@ class QueryService:
             sort_by=sort_by,
             page_number=page_number,
             page_size=page_size,
-            filter_by=FilterDict(elements=filter_by),
+            filter_by=FilterDict.model_validate({"elements": filter_by}),
             filter_operator=filter_operator,
             total_count=total_count,
         )
@@ -342,36 +342,36 @@ class QueryService:
             if len(count_result) > 0:
                 total = count_result[0][0]
 
-        return GenericFilteringReturn.create(items=result, total=total)
+        return GenericFilteringReturn(items=result, total=total)
 
     def get_cdisc_ct_val(
         self,
         catalogue_name: str | None = None,
         package: str | None = None,
         after_date: str | None = None,
-        sort_by: dict | None = None,
+        sort_by: dict[str, bool] | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: dict | None = None,
-        filter_operator: FilterOperator | None = FilterOperator.AND,
+        filter_by: dict[str, dict[str, Any]] | None = None,
+        filter_operator: FilterOperator = FilterOperator.AND,
         total_count: bool = False,
     ) -> GenericFilteringReturn:
         """Query to get the legacy dataset cdisc_ct_val."""
-
         match_clause = """
-
             MATCH (cat:CTCatalogue)-[:CONTAINS_PACKAGE]-> (package:CTPackage)-[:CONTAINS_CODELIST]
-            -> (package_codelist:CTPackageCodelist)-[:CONTAINS_TERM] -> (:CTPackageTerm)-[:CONTAINS_ATTRIBUTES]
+            -> (package_codelist:CTPackageCodelist)-[:CONTAINS_TERM] -> (pt:CTPackageTerm)-[:CONTAINS_ATTRIBUTES]
             -> (term_attributes_value:CTTermAttributesValue)
             MATCH (package_codelist)-[:CONTAINS_ATTRIBUTES]-> (codelist_attributes_value:CTCodelistAttributesValue)
+            MATCH (pt)-[:CONTAINS_SUBMISSION_VALUE]->(codelist_term:CTCodelistTerm)
+            //MATCH (codelist_attributes_value)<-[:HAS_VERSION]-(:CTCodelistAttributesRoot)<-[:HAS_ATTRIBUTES_ROOT]-(cl_root:CTCodelistRoot)-[:HAS_TERM]->(codelist_term)
             """
 
         alias_clause = """
 
             term_attributes_value.concept_id                    as ct_cd,
+            codelist_term.submission_value                      as ct_submval,
             codelist_attributes_value.submission_value          as ct_cd_list_submval,
             cat.name                                            as ct_scope,
-            term_attributes_value.code_submission_value         as ct_submval,
             toString(date(package.effective_date))              as ct_ver,
             term_attributes_value.definition                    as definition,
             term_attributes_value.preferred_term                as nci_pref_term,
@@ -392,7 +392,7 @@ class QueryService:
             sort_by=sort_by,
             page_number=page_number,
             page_size=page_size,
-            filter_by=FilterDict(elements=filter_by),
+            filter_by=FilterDict.model_validate({"elements": filter_by}),
             filter_operator=filter_operator,
             total_count=total_count,
         )
@@ -411,7 +411,7 @@ class QueryService:
             if len(count_result) > 0:
                 total = count_result[0][0]
 
-        return GenericFilteringReturn.create(items=result, total=total)
+        return GenericFilteringReturn(items=result, total=total)
 
     def get_tv(
         self,
@@ -425,13 +425,27 @@ class QueryService:
         query = (
             query
             + """
+        // Query to retrieve TV data from the Study Visit table
+        // We are looking for the latest visit name, study day, and study week values associated with a specific study value version or all (latest) study versions.
+        // The query filters by domain (TV), selecting the 'StudID', 'VisitNum', 'StudyDayValue' (or 'StudyWeekValue'), 'ArmCD', 'Arm', and any other fields we want to include.
+        // We use optional matches for the visit name, day, and week to avoid errors in case these fields are missing. We also add a condition to handle the situation when only one of these fields is present.
         MATCH (sv)-[:HAS_STUDY_VISIT]->(v:StudyVisit)
         OPTIONAL MATCH  (v)-->(nr:VisitNameRoot)-[:LATEST]->(nv:VisitNameValue),
-                        (v)-->(dr:StudyDayRoot)-[:LATEST]->(dv:StudyDayValue)
+                        (v)-->(dr:StudyDayRoot)-[:LATEST]->(dv:StudyDayValue),
+                        (v)-->(wr:StudyWeekRoot)-[:LATEST]->(wv:StudyWeekValue)
+        OPTIONAL MATCH (udv:UnitDefinitionValue)-[:LATEST_FINAL]-(udr:UnitDefinitionRoot)--(stf:StudyTimeField)--(sv)
+            WHERE stf.field_name = "soa_preferred_time_unit"
+
         RETURN toUpper(sv.study_id_prefix + '-' + sv.study_number) AS STUDYID,
             'TV' AS DOMAIN,
             toInteger(v.unique_visit_number) AS VISITNUM,
-            toUpper(nv.name) AS VISIT,
+            CASE
+                // WEEK
+                WHEN udv.name = "week" THEN toUpper(nv.name + " (" +udv.name + " "+toInteger(wv.value)+")")
+                // DAY
+                WHEN udv.name = "day" THEN toUpper(nv.name + " (" +udv.name + " "+toInteger(dv.value)+")")
+            ELSE toUpper(nv.name)
+            END AS VISIT,
             toInteger(dv.value) AS VISITDY,
             NULL AS ARMCD,
             NULL AS ARM,
@@ -466,18 +480,115 @@ class QueryService:
         OPTIONAL MATCH  (v)-->(nr:VisitNameRoot)-[:LATEST]->(nv:VisitNameValue)
         OPTIONAL MATCH  (v)-->(dr:StudyDayRoot)-[:LATEST]->(dv:StudyDayValue)
         OPTIONAL MATCH  (v)-->(wr:StudyWeekRoot)-[:LATEST]->(wv:StudyWeekValue)
-        OPTIONAL MATCH  (v)-[:HAS_VISIT_TYPE]->(:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]-(vtnv:CTTermNameValue)
-        RETURN 
+        OPTIONAL MATCH  (v)-[:HAS_VISIT_TYPE]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]-(vtnv:CTTermNameValue)
+        OPTIONAL MATCH (udv:UnitDefinitionValue)-[:LATEST_FINAL]-(udr:UnitDefinitionRoot)--(stf:StudyTimeField)--(sv)
+            WHERE stf.field_name = "soa_preferred_time_unit"
+        RETURN
             toUpper(sv.study_id_prefix + '-' + sv.study_number) AS STUDYID,
             toInteger(v.unique_visit_number) AS VISIT_NUM,
             toUpper(nv.name) AS VISIT_NAME,
+            CASE
+                // WEEK
+                WHEN udv.name = "week" THEN nv.name + " (" +udv.name + " "+toInteger(wv.value)+")"
+                // DAY
+                WHEN udv.name = "day" THEN nv.name + " (" +udv.name + " "+toInteger(dv.value)+")"
+            ELSE NULL
+            END AS AVISIT,
             toInteger(dv.value) AS DAY_VALUE,
             v.short_visit_label as VISIT_SHORT_LABEL,
             dv.name AS DAY_NAME,
             wv.name AS WEEK_NAME,
-            toInteger(wv.value) AS WEEK_VALUE,   
+            toInteger(wv.value) AS WEEK_VALUE,
             vtnv.name as VISIT_TYPE_NAME
         ORDER BY VISIT_NUM;
+        """
+        )
+        result_array = db.cypher_query(
+            query=query,
+            params={
+                "study_uid": str(study_uid),
+                "study_value_version": str(study_value_version),
+            },
+        )
+
+        return utils.db_result_to_list(result_array)
+
+    def get_mdflow(
+        self,
+        study_uid: str,
+        study_value_version: str | None = None,
+    ) -> list[Any]:
+        if study_value_version:
+            query = MATCH_SPECIFIC_STUDY_VERSION
+        else:
+            query = MATCH_LATEST_STUDY
+        query = (
+            query
+            + """
+        MATCH (sv)--(sact_schedule:StudyActivitySchedule)
+        MATCH (sact_schedule)--(v:StudyVisit)--(sv)
+        OPTIONAL MATCH (v)-[:HAS_VISIT_TYPE]-(:CTTermRoot)-[:HAS_NAME_ROOT]-(:CTTermNameRoot)-[:LATEST_FINAL]-(ctterm_name_value_visit_type:CTTermNameValue)
+            where v.is_global_anchor_visit = True
+        OPTIONAL MATCH  (v)-->(nr:VisitNameRoot)-[:LATEST_FINAL]->(nv:VisitNameValue)
+        MATCH (sact_schedule)--(sact:StudyActivity)--(sv)
+        OPTIONAL MATCH (sact)--(sactins:StudyActivityInstance)--(sv)
+        OPTIONAL MATCH (sactins)--(act_inst_value:ActivityInstanceValue)
+        OPTIONAL MATCH (act_inst_value)-[:ACTIVITY_INSTANCE_CLASS]-(aicr:ActivityInstanceClassRoot)-[:LATEST_FINAL]-(aicv:ActivityInstanceClassValue)
+            WHERE aicv.name = "NumericFinding" 
+                OR aicv.name = "CategoricFinding" 
+                OR aicv.name = "TextualFinding" 
+
+        OPTIONAL MATCH (act_inst_value:ActivityInstanceValue)--(act_item:ActivityItem)--(unit_definition_root:UnitDefinitionRoot)-[:LATEST]-(unit_definition_value:UnitDefinitionValue)
+            WHERE aicv.name = "NumericFinding" 
+
+        OPTIONAL MATCH  (v)-->(dr:StudyDayRoot)-[:LATEST]->(dv:StudyDayValue)
+        OPTIONAL MATCH  (v)-->(wr:StudyWeekRoot)-[:LATEST]->(wv:StudyWeekValue)
+        OPTIONAL MATCH (udv:UnitDefinitionValue)-[:LATEST_FINAL]-(udr:UnitDefinitionRoot)--(stf:StudyTimeField)--(sv)
+            WHERE stf.field_name = "soa_preferred_time_unit"
+        WITH  toUpper(sv.study_id_prefix + '-' + sv.study_number) AS STUDYID_FLOWCHART,
+            v.unique_visit_number AS AVISITN,
+            act_inst_value.adam_param_code AS PARAMCD,
+            CASE 
+                // WEEK
+                WHEN udv.name = "week" THEN nv.name + " (" +udv.name + " "+toInteger(wv.value)+")"
+                // DAY
+                WHEN udv.name = "day" THEN nv.name + " (" +udv.name + " "+toInteger(dv.value)+")"
+            ELSE NULL
+            END AS AVISIT,
+            CASE 
+                WHEN (NOT aicv IS NULL) THEN 
+                    CASE 
+                        WHEN aicv.name = "NumericFinding" AND NOT unit_definition_value IS NULL THEN act_inst_value.adam_param_code+" ("+unit_definition_value.name+")"
+                    ELSE act_inst_value.adam_param_code
+                    END
+                ELSE NULL
+            END AS PARAM,
+            sact.order AS PARAMN,
+            NULL AS ATPTN,
+            NULL AS ATPT,
+            act_inst_value.topic_code AS TOPICCD,
+            CASE 
+                WHEN v.is_global_anchor_visit THEN ctterm_name_value_visit_type.name 
+                ELSE NULL
+            END AS BASETYPE,
+            CASE
+                WHEN v.is_global_anchor_visit THEN "Y"
+                ELSE NULL
+            END AS ABLFL,
+            ctterm_name_value_visit_type.name AS ASSMTYPE
+        RETURN distinct  STUDYID_FLOWCHART,
+            AVISITN,
+            PARAMCD,
+            AVISIT,
+            PARAM,
+            PARAMN,
+            ATPTN,
+            ATPT,
+            TOPICCD,
+            BASETYPE,
+            ABLFL,
+            ASSMTYPE
+        ORDER BY STUDYID_FLOWCHART, AVISITN, PARAMN;
         """
         )
         result_array = db.cypher_query(
@@ -506,14 +617,14 @@ class QueryService:
             + """
         MATCH (s_v)-[:HAS_STUDY_OBJECTIVE]-(s_obj:StudyObjective)
         // fetch objective data
-        OPTIONAL MATCH (s_obj)-[:HAS_OBJECTIVE_LEVEL]->(:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(obj_lev:CTTermNameValue)
+        OPTIONAL MATCH (s_obj)-[:HAS_OBJECTIVE_LEVEL]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(obj_lev:CTTermNameValue)
         OPTIONAL MATCH (s_obj)-[:HAS_SELECTED_OBJECTIVE]->(obj_val:ObjectiveValue)<--(obj_roo:ObjectiveRoot)
         OPTIONAL MATCH (s_obj)<-[:STUDY_ENDPOINT_HAS_STUDY_OBJECTIVE]-(s_end:StudyEndpoint)<-[:HAS_STUDY_ENDPOINT]-(s_v)
         // fetch endpoint data
-        OPTIONAL MATCH (s_end)-[:HAS_ENDPOINT_LEVEL]->(:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(end_lev:CTTermNameValue)
-        OPTIONAL MATCH (s_end)-[:HAS_ENDPOINT_SUB_LEVEL]->(:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(end_sublev:CTTermNameValue)
+        OPTIONAL MATCH (s_end)-[:HAS_ENDPOINT_LEVEL]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(end_lev:CTTermNameValue)
+        OPTIONAL MATCH (s_end)-[:HAS_ENDPOINT_SUB_LEVEL]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(end_sublev:CTTermNameValue)
         OPTIONAL MATCH (s_end)-[:HAS_SELECTED_ENDPOINT]->(end_val:EndpointValue)<--(end_roo:EndpointRoot)
-        OPTIONAL MATCH (s_end)-[:HAS_UNIT]->(:UnitDefinitionRoot)-[:LATEST]->(uni_value:UnitDefinitionValue)-[:HAS_CT_UNIT]->(uni_ctt_roo:CTTermRoot)
+        OPTIONAL MATCH (s_end)-[:HAS_UNIT]->(:UnitDefinitionRoot)-[:LATEST]->(uni_value:UnitDefinitionValue)-[:HAS_CT_UNIT]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(uni_ctt_roo:CTTermRoot)
         OPTIONAL MATCH (s_end)-[:HAS_SELECTED_TIMEFRAME]->(tim_fra_val:TimeframeValue)<--(tim_fra_roo:TimeframeRoot)
         // fetch any Activities instantiated in ObjectiveTemplate or EndpointTemplate
         OPTIONAL MATCH (study_end_obj)-[:HAS_SELECTED_ENDPOINT|HAS_SELECTED_OBJECTIVE|HAS_SELECTED_TIMEFRAME]->(:SyntaxInstanceValue)-[:USES_VALUE]->(activity_tem_par_root)<-[:HAS_PARAMETER_TERM]-(t:TemplateParameter)
@@ -549,7 +660,7 @@ class QueryService:
             COLLECT(DISTINCT activity_group_tem_par_value.name) as activity_group_tem_par_root_uid_collected,
             COLLECT(DISTINCT activity_instance_tem_par_value.name) as activity_instance_tem_par_root_uid_collected
         return 
-            s_r.uid as STUDYID, 
+            DISTINCT s_r.uid as STUDYID_OBJ, 
             obj_lev.name AS OBJTVLVL,
             obj_val.name AS OBJTV,
             obj_val.name_plain AS OBJTVPT,
@@ -565,7 +676,7 @@ class QueryService:
             activity_subgroup_tem_par_root_uid_collected AS RACTSGRP,
             activity_group_tem_par_root_uid_collected AS RACTGRP,
             activity_instance_tem_par_root_uid_collected AS RACTINST
-        ORDER BY STUDYID, OBJTV, ENDPNT, TMFRM
+        ORDER BY STUDYID_OBJ, OBJTV, ENDPNT, TMFRM
         """
         )
         result_array = db.cypher_query(
@@ -598,7 +709,7 @@ class QueryService:
             (sd)-[:STUDY_EPOCH_HAS_DESIGN_CELL]-(sep:StudyEpoch)-[:HAS_STUDY_EPOCH]-(sv),
             (sv) -[:HAS_STUDY_ARM] -(sar:StudyArm)-[:STUDY_ARM_HAS_DESIGN_CELL]-(sd)
             OPTIONAL MATCH (sv) -[:HAS_STUDY_BRANCH_ARM]-(sba:StudyBranchArm)-[:STUDY_BRANCH_ARM_HAS_DESIGN_CELL] -(sd)
-            OPTIONAL MATCH (sep) - [:HAS_EPOCH] - (:CTTermRoot) - [:HAS_NAME_ROOT] - (:CTTermNameRoot) -[:LATEST]- (sep_term:CTTermNameValue)
+            OPTIONAL MATCH (sep) - [:HAS_EPOCH] - (:CTTermContext) - [:HAS_SELECTED_TERM] - (:CTTermRoot) - [:HAS_NAME_ROOT] - (:CTTermNameRoot) -[:LATEST]- (sep_term:CTTermNameValue)
             RETURN toUpper(sv.study_id_prefix + '-' + sv.study_number) AS STUDYID,
                 'TA' AS DOMAIN,
                 se.name AS ELEMENT,
@@ -619,7 +730,7 @@ class QueryService:
             (sd)-[:STUDY_EPOCH_HAS_DESIGN_CELL]-(sep:StudyEpoch)-[:HAS_STUDY_EPOCH]-(sv),
             (sv) -[:HAS_STUDY_BRANCH_ARM]-(sba:StudyBranchArm)-[:STUDY_BRANCH_ARM_HAS_DESIGN_CELL] -(sd),
             (sba)-[:STUDY_ARM_HAS_BRANCH_ARM]-(sar:StudyArm)-[:HAS_STUDY_ARM]-(sv)
-            OPTIONAL MATCH (sep) - [:HAS_EPOCH] - (:CTTermRoot) - [:HAS_NAME_ROOT] - (:CTTermNameRoot) -[:LATEST]- (sep_term:CTTermNameValue)
+            OPTIONAL MATCH (sep) - [:HAS_EPOCH] - (:CTTermContext) - [:HAS_SELECTED_TERM] - (:CTTermRoot) - [:HAS_NAME_ROOT] - (:CTTermNameRoot) -[:LATEST]- (sep_term:CTTermNameValue)
             RETURN toUpper(sv.study_id_prefix + '-' + sv.study_number) AS STUDYID,
                 'TA' AS DOMAIN,
                 se.name AS ELEMENT,
@@ -674,13 +785,14 @@ class QueryService:
             query
             + """
         MATCH (sv)-->(sc:StudyCriteria)
-        MATCH (sc)-->(cv:CriteriaValue)<-[:LATEST]-(cr:CriteriaRoot)<--(ctr:CriteriaTemplateRoot)-->(i:CTTermRoot)-->(atr:CTTermAttributesRoot)-[:LATEST]->(atv:CTTermAttributesValue)
+        MATCH (sc)-->(cv:CriteriaValue)<-[:LATEST]-(cr:CriteriaRoot)<--(ctr:CriteriaTemplateRoot)-[:HAS_TYPE]->(ctx:CTTermContext)-[:HAS_SELECTED_TERM]->(tr:CTTermRoot)-->(atr:CTTermAttributesRoot)-[:LATEST]->(atv:CTTermAttributesValue)
         WHERE atv.concept_id = 'C25532' or atv.concept_id = 'C25370'
+        MATCH (ctx)-[:HAS_SELECTED_CODELIST]->(clr:CTCodelistRoot)-[ht:HAS_TERM]-(clterm:CTCodelistTerm)-[:HAS_TERM_ROOT]->(tr)
         RETURN  toUpper(sv.study_id_prefix) + '-' + toUpper(sv.study_number) AS STUDYID,
                 'TI' AS DOMAIN,
-                TOUPPER(substring(atv.code_submission_value,0,1)) + toInteger(sc.order) AS IETESTCD,
+                TOUPPER(substring(clterm.submission_value,0,1)) + toInteger(sc.order) AS IETESTCD,
                 cv.name_plain AS IETEST,
-                atv.code_submission_value AS IECAT,
+                clterm.submission_value AS IECAT,
                 '' AS IESCAT,
                 '' AS TIRL,
                 '' AS TIVERS
@@ -713,55 +825,58 @@ class QueryService:
         CALL {{
         WITH sr, sv
         MATCH (sv)-->(sf:StudyField)
-        OPTIONAL MATCH  (sf)-->(ctr:CTTermRoot)-->(ctar:CTTermAttributesRoot)-[:LATEST_FINAL]->(ctav:CTTermAttributesValue)<--(:CTPackageTerm)<--(:CTPackageCodelist)<--(ctp:CTPackage)
+        OPTIONAL MATCH  (sf)-->(:CTTermContext)-[:HAS_SELECTED_TERM]->(ctr:CTTermRoot)-->
+          (ctar:CTTermAttributesRoot)-[:LATEST_FINAL]->(ctav:CTTermAttributesValue)<--(:CTPackageTerm)<--(:CTPackageCodelist)<--(ctp:CTPackage)
         OPTIONAL MATCH (sf)-->(dtr:DictionaryTermRoot)-->(dtv:DictionaryTermValue)
-        OPTIONAL MATCH (sf)-[:HAS_REASON_FOR_NULL_VALUE]->(ct_null:CTTermRoot{{uid:'{CT_UID_NA_VALUE}'}})
-        OPTIONAL MATCH (sf)-[:HAS_REASON_FOR_NULL_VALUE]->(ct_pinf:CTTermRoot{{uid:'{CT_UID_POSITIVE_INFINITY}'}})
+        OPTIONAL MATCH (sf)-[:HAS_REASON_FOR_NULL_VALUE]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(ct_null:CTTermRoot{{uid:'{settings.ct_uid_na_value}'}})
+        OPTIONAL MATCH (sf)-[:HAS_REASON_FOR_NULL_VALUE]->(pinf_ctx:CTTermContext)-[:HAS_SELECTED_TERM]->(ct_pinf:CTTermRoot)
+        WHERE (pinf_ctx)-[:HAS_SELECTED_CODELIST]->(:CTCodelistRoot)-[:HAS_TERM]->
+          (:CTCodelistTerm {{submission_value:'{settings.ct_submval_positive_infinity}'}})-[:HAS_TERM_ROOT]->(ctr)
         WITH *,
         CASE sf.field_name
-            WHEN 'disease_condition_or_indication_codes' THEN 'C112038_INDIC'
-            WHEN 'stratification_factor' THEN 'C16153_STRATFCT'
-            WHEN 'stable_disease_minimum_duration' THEN 'C98783_SDMDUR'
-            WHEN 'relapse_criteria' THEN 'C117961_RLPSCRIT'
-            WHEN 'eudract_id' THEN 'C98714_REGID'
-            WHEN 'ct_gov_id' THEN 'C98714_REGID'
-            WHEN 'universal_trial_number_utn' THEN 'C98714_REGID'
-            WHEN 'investigational_new_drug_application_number_ind' THEN 'C98714_REGID'
-            WHEN 'japanese_trial_registry_id_japic' THEN 'C98714_REGID'
-            WHEN 'eu_trial_number' THEN 'C98714_REGID'
-            WHEN 'civ_id_sin_number' THEN 'C98714_REGID'
-            WHEN 'national_clinical_trial_number' THEN 'C98714_REGID'
-            WHEN 'japanese_trial_registry_number_jrct' THEN 'C98714_REGID'
-            WHEN 'national_medical_products_administration_nmpa_number' THEN 'C98714_REGID'
-            WHEN 'eudamed_srn_number' THEN 'C98714_REGID'
-            WHEN 'investigational_device_exemption_ide_number' THEN 'C98714_REGID'
-            WHEN 'confirmed_response_minimum_duration' THEN 'C98715_CRMDUR'
-            WHEN 'is_adaptive_design' THEN 'C146995_ADAPT'
-            WHEN 'study_stop_rules' THEN 'C49698_STOPRULE'
-            WHEN 'trial_phase_code' THEN 'C48281_TPHASE'
-            WHEN 'rare_disease_indicator' THEN 'C126070_RDIND'
-            WHEN 'study_title' THEN 'C49802_TITLE'
-            WHEN 'study_type_code' THEN 'C142175_STYPE'
-            WHEN 'trial_type_codes' THEN 'C49660_TTYPE'
-            WHEN 'is_extension_trial' THEN 'C139274_EXTTIND'
-            WHEN 'healthy_subject_indicator' THEN 'C98737_HLTSUBJI'
-            WHEN 'pediatric_investigation_plan_indicator' THEN 'C126069_PIPIND'
-            WHEN 'pediatric_study_indicator' THEN 'C123632_PDSTIND'
-            WHEN 'pediatric_postmarket_study_indicator' THEN 'C123631_PDPSTIND'
-            WHEN 'therapeutic_area_codes' THEN 'C101302_THERAREA'
-            WHEN 'diagnosis_group_codes' THEN 'C49650_TDIGRP'
-            WHEN 'sex_of_participants_code' THEN 'C49696_SEXPOP'
-            WHEN 'planned_maximum_age_of_subjects' THEN 'C49694_AGEMAX'
-            WHEN 'planned_minimum_age_of_subjects' THEN 'C49693_AGEMIN'
-            WHEN 'number_of_expected_subjects' THEN 'C49692_PLANSUB'
-            WHEN 'control_type_code' THEN 'C49647_TCNTRL'
-            WHEN 'trial_blinding_schema_code' THEN 'C49658_TBLIND'
-            WHEN 'intervention_model_code' THEN 'C98746_INTMODEL'
-            WHEN 'is_trial_randomised' THEN 'C25196_RANDOM'
-            WHEN 'add_on_to_existing_treatments' THEN 'C49703_ADDON'
-            WHEN 'trial_intent_types_codes' THEN 'C49652_TINDTP'
-            WHEN 'planned_study_length' THEN 'C49697_LENGTH'
-            WHEN 'intervention_type_code' THEN 'C98747_INTTYPE'
+            WHEN 'disease_condition_or_indication_codes' THEN 'C112038'
+            WHEN 'stratification_factor' THEN 'C16153'
+            WHEN 'stable_disease_minimum_duration' THEN 'C98783'
+            WHEN 'relapse_criteria' THEN 'C117961'
+            WHEN 'eudract_id' THEN 'C98714'
+            WHEN 'ct_gov_id' THEN 'C98714'
+            WHEN 'universal_trial_number_utn' THEN 'C98714'
+            WHEN 'investigational_new_drug_application_number_ind' THEN 'C98714'
+            WHEN 'japanese_trial_registry_id_japic' THEN 'C98714'
+            WHEN 'eu_trial_number' THEN 'C98714'
+            WHEN 'civ_id_sin_number' THEN 'C98714'
+            WHEN 'national_clinical_trial_number' THEN 'C98714'
+            WHEN 'japanese_trial_registry_number_jrct' THEN 'C98714'
+            WHEN 'national_medical_products_administration_nmpa_number' THEN 'C98714'
+            WHEN 'eudamed_srn_number' THEN 'C98714'
+            WHEN 'investigational_device_exemption_ide_number' THEN 'C98714'
+            WHEN 'confirmed_response_minimum_duration' THEN 'C98715'
+            WHEN 'is_adaptive_design' THEN 'C146995'
+            WHEN 'study_stop_rules' THEN 'C49698'
+            WHEN 'trial_phase_code' THEN 'C48281'
+            WHEN 'rare_disease_indicator' THEN 'C126070'
+            WHEN 'study_title' THEN 'C49802'
+            WHEN 'study_type_code' THEN 'C142175'
+            WHEN 'trial_type_codes' THEN 'C49660'
+            WHEN 'is_extension_trial' THEN 'C139274'
+            WHEN 'healthy_subject_indicator' THEN 'C98737'
+            WHEN 'pediatric_investigation_plan_indicator' THEN 'C126069'
+            WHEN 'pediatric_study_indicator' THEN 'C123632'
+            WHEN 'pediatric_postmarket_study_indicator' THEN 'C123631'
+            WHEN 'therapeutic_area_codes' THEN 'C101302'
+            WHEN 'diagnosis_group_codes' THEN 'C49650'
+            WHEN 'sex_of_participants_code' THEN 'C49696'
+            WHEN 'planned_maximum_age_of_subjects' THEN 'C49694'
+            WHEN 'planned_minimum_age_of_subjects' THEN 'C49693'
+            WHEN 'number_of_expected_subjects' THEN 'C49692'
+            WHEN 'control_type_code' THEN 'C49647'
+            WHEN 'trial_blinding_schema_code' THEN 'C49658'
+            WHEN 'intervention_model_code' THEN 'C98746'
+            WHEN 'is_trial_randomised' THEN 'C25196'
+            WHEN 'add_on_to_existing_treatments' THEN 'C49703'
+            WHEN 'trial_intent_types_codes' THEN 'C49652'
+            WHEN 'planned_study_length' THEN 'C49697'
+            WHEN 'intervention_type_code' THEN 'C98747'
         END AS term_uid,
         CASE
             // for StudyTimeFields and StudyIntFields we want to display
@@ -789,14 +904,16 @@ class QueryService:
             ELSE 'Not Controlled'
         END AS controlled_by
         MATCH (tr:CTTermRoot {{uid:term_uid}})-->(tar:CTTermAttributesRoot)-[:LATEST_FINAL]->(tav:CTTermAttributesValue)
+        MATCH (:CTCodelistRoot {{uid:'C66738'}})-[:HAS_TERM]->(cclt:CTCodelistTerm)-[:HAS_TERM_ROOT]->(tr)
+        MATCH (:CTCodelistRoot {{uid:'C67152'}})-[:HAS_TERM]->(nclt:CTCodelistTerm)-[:HAS_TERM_ROOT]->(tr)
         RETURN DISTINCT 
         sv.study_id_prefix+'-'+sv.study_number AS STUDYID,
         'TS' AS DOMAIN,
-        tav.code_submission_value AS TSPARMCD,
-        tav.name_submission_value AS TSPARM,
+        cclt.submission_value AS TSPARMCD,
+        nclt.submission_value AS TSPARM,
         controlled_by AS controlled_by,
         CASE
-        WHEN controlled_by = 'CDISC' AND ct_null IS NULL THEN ctav.code_submission_value
+        WHEN controlled_by = 'CDISC' AND ct_null IS NULL THEN cclt.submission_value
         WHEN controlled_by = 'Dictionary' THEN dtv.name
         WHEN sf.value = [] THEN NULL
         ELSE sf.value
@@ -821,13 +938,15 @@ class QueryService:
         '' AS TSVCDVER
         UNION
         WITH sr, sv
-        MATCH (sv)-[:HAS_STUDY_OBJECTIVE]->(so:StudyObjective)-[:HAS_OBJECTIVE_LEVEL]->(objlv)-->(octar:CTTermAttributesRoot)-[:LATEST_FINAL]->(octav:CTTermAttributesValue)
+        MATCH (sv)-[:HAS_STUDY_OBJECTIVE]->(so:StudyObjective)-[:HAS_OBJECTIVE_LEVEL]->(ctx:CTTermContext)-[:HAS_SELECTED_TERM]->(objlv)-->(octar:CTTermAttributesRoot)-[:LATEST_FINAL]->(octav:CTTermAttributesValue)
+        MATCH (ctx)-[:HAS_SELECTED_CODELIST]->(clr:CTCodelistRoot)-[:HAS_TERM]-(cclt:CTCodelistTerm)-[:HAS_TERM_ROOT]->(objlv)
+        OPTIONAL MATCH (clr)<-[:PAIRED_CODE_CODELIST]-(nclr:CTCodelistRoot)-[:HAS_TERM]->(nclt:CTCodelistTerm)-[:HAS_TERM_ROOT]->(objlv)
         MATCH (so)-[:HAS_SELECTED_OBJECTIVE]->(obj)
         RETURN
         sv.study_id_prefix+'-'+sv.study_number AS STUDYID,
         'TS' AS DOMAIN,
-        octav.code_submission_value AS TSPARMCD,
-        octav.name_submission_value AS TSPARM,
+        cclt.submission_value AS TSPARMCD,
+        nclt.submission_value AS TSPARM,
         '' AS controlled_by,
         obj.name_plain AS TSVAL,
         '' AS TSVALNF,
@@ -836,16 +955,18 @@ class QueryService:
         '' AS TSVCDVER
         UNION
         WITH sr, sv
-        MATCH (sv)-[:HAS_STUDY_ENDPOINT]->(send)-[:HAS_ENDPOINT_LEVEL]->(endplv)-->(ectar:CTTermAttributesRoot)-[:LATEST_FINAL]->(ectav:CTTermAttributesValue) 
+        MATCH (sv)-[:HAS_STUDY_ENDPOINT]->(send)-[:HAS_ENDPOINT_LEVEL]->(ctx:CTTermContext)-[:HAS_SELECTED_TERM]->(endplv)-->(ectar:CTTermAttributesRoot)-[:LATEST_FINAL]->(ectav:CTTermAttributesValue) 
+        MATCH (ctx)-[:HAS_SELECTED_CODELIST]->(clr:CTCodelistRoot)-[:HAS_TERM]-(cclt:CTCodelistTerm)-[:HAS_TERM_ROOT]->(endplv)
+        OPTIONAL MATCH (clr)<-[:PAIRED_CODE_CODELIST]-(nclr:CTCodelistRoot)-[:HAS_TERM]->(nclt:CTCodelistTerm)-[:HAS_TERM_ROOT]->(endplv)
         MATCH (send)-[:HAS_SELECTED_TIMEFRAME]->(tf:TimeframeValue)
         MATCH (send)-[:HAS_SELECTED_ENDPOINT]->(endp:EndpointValue)
-        OPTIONAL MATCH (send)-[:HAS_ENDPOINT_SUB_LEVEL]->(:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(end_sublev:CTTermNameValue)
+        OPTIONAL MATCH (send)-[:HAS_ENDPOINT_SUB_LEVEL]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(end_sublev:CTTermNameValue)
         OPTIONAL MATCH (send)-[:HAS_SELECTED_ENDPOINT]->(end_val:EndpointValue)<--(end_roo:EndpointRoot)
-        OPTIONAL MATCH (send)-[:HAS_UNIT]->(:UnitDefinitionRoot)-[:LATEST]->(uni_value:UnitDefinitionValue)-[:HAS_CT_UNIT]->(uni_ctt_roo:CTTermRoot)
+        OPTIONAL MATCH (send)-[:HAS_UNIT]->(:UnitDefinitionRoot)-[:LATEST]->(uni_value:UnitDefinitionValue)-[:HAS_CT_UNIT]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(uni_ctt_roo:CTTermRoot)
         OPTIONAL MATCH (send)-[:HAS_SELECTED_TIMEFRAME]->(tim_fra_val:TimeframeValue)<--(tim_fra_roo:TimeframeRoot)
         CALL {{
                 WITH send
-                OPTIONAL MATCH (send)-[:HAS_UNIT]->(:UnitDefinitionRoot)-[:LATEST]->(uni_value:UnitDefinitionValue)-[:HAS_CT_UNIT]->(uni_ctt_roo:CTTermRoot)
+                OPTIONAL MATCH (send)-[:HAS_UNIT]->(:UnitDefinitionRoot)-[:LATEST]->(uni_value:UnitDefinitionValue)-[:HAS_CT_UNIT]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(uni_ctt_roo:CTTermRoot)
                 OPTIONAL MATCH (send)-[:HAS_CONJUNCTION]->(con:Conjunction)
                 WITH distinct send,collect(distinct uni_value.name) as units,
                 CASE
@@ -861,8 +982,8 @@ class QueryService:
         RETURN
         DISTINCT sv.study_id_prefix+'-'+sv.study_number AS STUDYID,
         'TS' AS DOMAIN,
-        ectav.code_submission_value AS TSPARMCD,
-        ectav.name_submission_value AS TSPARM,
+        cclt.submission_value AS TSPARMCD,
+        nclt.submission_value AS TSPARM,
         '' AS controlled_by,
         endp.name_plain + unit_str +' Time frame: ' + tf.name_plain + '.'AS TSVAL,
         '' AS TSVALNF,
@@ -872,12 +993,14 @@ class QueryService:
         UNION
         WITH sr, sv
         MATCH (sv)-[:HAS_STUDY_COHORT]->(sch:StudyCohort)
-        MATCH (tr:CTTermRoot {{uid:'C126063_NCOHORT'}})-->(tar:CTTermAttributesRoot)-[:LATEST_FINAL]->(tav:CTTermAttributesValue)
+        MATCH (tr:CTTermRoot {{uid:'C126063'}})-->(tar:CTTermAttributesRoot)-[:LATEST_FINAL]->(tav:CTTermAttributesValue)
+        MATCH (:CTCodelistRoot {{uid:'C66738'}})-[:HAS_TERM]->(cclt:CTCodelistTerm)-[:HAS_TERM_ROOT]->(tr)
+        MATCH (:CTCodelistRoot {{uid:'C67152'}})-[:HAS_TERM]->(nclt:CTCodelistTerm)-[:HAS_TERM_ROOT]->(tr)
         RETURN 
             sv.study_id_prefix+'-'+sv.study_number AS STUDYID,
             'TS' AS DOMAIN,
-            tav.code_submission_value AS TSPARMCD,
-            tav.name_submission_value AS TSPARM,
+            cclt.submission_value AS TSPARMCD,
+            nclt.submission_value AS TSPARM,
             '' AS controlled_by,
             count(sch) AS TSVAL,
             '' AS TSVALNF,
@@ -895,9 +1018,11 @@ class QueryService:
             (sd)-[:STUDY_EPOCH_HAS_DESIGN_CELL]-(sep:StudyEpoch)-[:HAS_STUDY_EPOCH]-(innver_sv),
             (innver_sv) -[:HAS_STUDY_ARM] -(sar:StudyArm)-[:STUDY_ARM_HAS_DESIGN_CELL]-(sd)
             OPTIONAL MATCH (innver_sv) -[:HAS_STUDY_BRANCH_ARM]-(sba:StudyBranchArm)-[:STUDY_BRANCH_ARM_HAS_DESIGN_CELL] -(sd)
-            OPTIONAL MATCH (sep) - [:HAS_EPOCH] - (:CTTermRoot) - [:HAS_NAME_ROOT] - (:CTTermNameRoot) -[:LATEST]- (sep_term:CTTermNameValue)
-            MATCH (tr:CTTermRoot {{uid:'C98771_NARMS'}})-->(tar:CTTermAttributesRoot)-[:LATEST_FINAL]->(tav:CTTermAttributesValue)
-            RETURN distinct inner_sr,innver_sv, sar,sba, tav
+            OPTIONAL MATCH (sep)-[:HAS_EPOCH]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(:CTTermRoot)-[:HAS_NAME_ROOT]-(:CTTermNameRoot)-[:LATEST]->(sep_term:CTTermNameValue)
+            MATCH (tr:CTTermRoot {{uid:'C98771'}})-->(tar:CTTermAttributesRoot)-[:LATEST_FINAL]->(tav:CTTermAttributesValue)
+            MATCH (:CTCodelistRoot {{uid:'C66738'}})-[:HAS_TERM]->(cclt:CTCodelistTerm)-[:HAS_TERM_ROOT]->(tr)
+            MATCH (:CTCodelistRoot {{uid:'C67152'}})-[:HAS_TERM]->(nclt:CTCodelistTerm)-[:HAS_TERM_ROOT]->(tr)
+            RETURN distinct inner_sr,innver_sv, sar,sba, tav, cclt, nclt
             union all
             WITH sr, sv
             WITH sr as inner_sr, sv as innver_sv
@@ -906,16 +1031,18 @@ class QueryService:
             (sd)-[:STUDY_EPOCH_HAS_DESIGN_CELL]-(sep:StudyEpoch)-[:HAS_STUDY_EPOCH]-(innver_sv),
             (innver_sv) -[:HAS_STUDY_BRANCH_ARM]-(sba:StudyBranchArm)-[:STUDY_BRANCH_ARM_HAS_DESIGN_CELL] -(sd),
             (sba)-[:STUDY_ARM_HAS_BRANCH_ARM]-(sar:StudyArm)-[:HAS_STUDY_ARM]-(innver_sv)
-            OPTIONAL MATCH (sep) - [:HAS_EPOCH] - (:CTTermRoot) - [:HAS_NAME_ROOT] - (:CTTermNameRoot) -[:LATEST]- (sep_term:CTTermNameValue)
-            MATCH (tr:CTTermRoot {{uid:'C98771_NARMS'}})-->(tar:CTTermAttributesRoot)-[:LATEST_FINAL]->(tav:CTTermAttributesValue)
-            RETURN distinct inner_sr,innver_sv, sar,sba, tav
+            OPTIONAL MATCH (sep)-[:HAS_EPOCH]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(:CTTermRoot)-[:HAS_NAME_ROOT]-(:CTTermNameRoot)-[:LATEST]-(sep_term:CTTermNameValue)
+            MATCH (tr:CTTermRoot {{uid:'C98771'}})-->(tar:CTTermAttributesRoot)-[:LATEST_FINAL]->(tav:CTTermAttributesValue)
+            MATCH (:CTCodelistRoot {{uid:'C66738'}})-[:HAS_TERM]->(cclt:CTCodelistTerm)-[:HAS_TERM_ROOT]->(tr)
+            MATCH (:CTCodelistRoot {{uid:'C67152'}})-[:HAS_TERM]->(nclt:CTCodelistTerm)-[:HAS_TERM_ROOT]->(tr)
+            RETURN distinct inner_sr,innver_sv, sar,sba, tav, cclt, nclt
             }}
-        with   tav, inner_sr, innver_sv, count(*) as counter
+        with   tav, inner_sr, innver_sv, count(*) as counter, cclt, nclt
         return
             innver_sv.study_id_prefix+'-'+innver_sv.study_number AS STUDYID,
             'TS' AS DOMAIN,
-            tav.code_submission_value AS TSPARMCD,
-            tav.name_submission_value AS TSPARM,
+            cclt.submission_value AS TSPARMCD,
+            nclt.submission_value AS TSPARM,
             '' AS controlled_by,
             counter AS TSVAL,
             '' AS TSVALNF,
@@ -924,47 +1051,41 @@ class QueryService:
             '' AS TSVCDVER
         UNION
             WITH sr, sv
-            MATCH (sv)-[:HAS_STUDY_COMPOUND]->(sc:StudyCompound)-[:HAS_TYPE_OF_TREATMENT]->(cttr:CTTermRoot)
+            MATCH (sv)-[:HAS_STUDY_COMPOUND]->(sc:StudyCompound)-[:HAS_TYPE_OF_TREATMENT]->(ctx:CTTermContext)-[:HAS_SELECTED_TERM]->(cttr:CTTermRoot)
             -[:HAS_ATTRIBUTES_ROOT]->(ctar:CTTermAttributesRoot)-[:LATEST_FINAL]->(ctav:CTTermAttributesValue)
+            MATCH (ctx)-[:HAS_SELECTED_CODELIST]->(clr:CTCodelistRoot)-[:HAS_TERM]-(cclt:CTCodelistTerm)-[:HAS_TERM_ROOT]->(endplv)
+            OPTIONAL MATCH (clr)<-[:PAIRED_CODE_CODELIST]-(nclr:CTCodelistRoot)-[:HAS_TERM]->(nclt:CTCodelistTerm)-[:HAS_TERM_ROOT]->(endplv)
             MATCH (sc)-[:HAS_SELECTED_COMPOUND]->(cav:CompoundAliasValue)-[:IS_COMPOUND]->(cr:CompoundRoot)-[:LATEST_FINAL]->(cv:CompoundValue)
             -[:HAS_UNII_VALUE]->(uniir:UNIITermRoot)-[:LATEST_FINAL]->(uniiv:UNIITermValue)
             MATCH (uniir)<-[:CONTAINS_DICTIONARY_TERM]-(lib:Library)
-            with sv,uniiv,lib,ctav
-            MATCH (tr1:CTTermRoot {{uid:'C41161_TRT'}})-->(tar1:CTTermAttributesRoot)-[:LATEST_FINAL]->(tav1:CTTermAttributesValue)
-            MATCH (tr2:CTTermRoot {{uid:'C68612_COMPTRT'}})-->(tar2:CTTermAttributesRoot)-[:LATEST_FINAL]->(tav2:CTTermAttributesValue)
-            MATCH (tr3:CTTermRoot {{uid:'C85582_CURTRT'}})-->(tar3:CTTermAttributesRoot)-[:LATEST_FINAL]->(tav3:CTTermAttributesValue)
-            with tav1,tav2,tav3 , sv, uniiv, lib,
-            case ctav.code_submission_value
-                WHEN 'INVESTIGATIONAL PRODUCT TYPE OF TREATMENT' THEN
-                    tav1 
-                WHEN 'COMPARATIVE TREATMENT TYPE OF TREATMENT' THEN
-                    tav2 
-                WHEN 'CURRENT TREATMENT TYPE OF TREATMENT' THEN
-                    tav3 
-            end as tav
+            with sv,uniiv,lib,ctav, cclt, nclt
             RETURN
                 sv.study_id_prefix+'-'+sv.study_number as STUDYID,
                 'TS' as DOMAIN,
-                tav.code_submission_value as TSPARMCD,
-                tav.name_submission_value as TSPARM,
+                cclt.submission_value as TSPARMCD,
+                nclt.submission_value as TSPARM,
                 '' AS controlled_by,
                 uniiv.name as TSVAL,
                 '' AS TSVALNF,
                 uniiv.dictionary_id as TSVALCD,
                 lib.name as TSVCDREF,
                 '' AS TSVCDVER
-        UNION 
+        UNION
             WITH sr, sv
-            MATCH (ctav:CTTermAttributesValue {{code_submission_value:'INVESTIGATIONAL PRODUCT TYPE OF TREATMENT'}})
-            match (sv)-[:HAS_STUDY_COMPOUND]->(sc:StudyCompound)-[:HAS_TYPE_OF_TREATMENT]->(cttr:CTTermRoot)-[:HAS_ATTRIBUTES_ROOT]->(ctar:CTTermAttributesRoot)-[:LATEST_FINAL]->(ctav)
+            match (sv)-[:HAS_STUDY_COMPOUND]->(sc:StudyCompound)-[:HAS_TYPE_OF_TREATMENT]->(ctx:CTTermContext)-[:HAS_SELECTED_TERM]->(cttr:CTTermRoot)
+            WHERE (ctx)-[:HAS_SELECTED_CODELIST]->(:CTCodelistRoot)-[:HAS_TERM]-(:CTCodelistTerm {{submission_value:'INVESTIGATIONAL PRODUCT TYPE OF TREATMENT'}})-[:HAS_TERM_ROOT]->(cttr)
+            WITH sr, sc, sv
             match (sc)-[:HAS_SELECTED_COMPOUND]->(cav:CompoundAliasValue)
-            match (cav)-[:IS_COMPOUND]->(cr:CompoundRoot)-[:LATEST_FINAL]->(cv:CompoundValue)-[:HAS_UNII_VALUE]->(uniir:UNIITermRoot)-[:LATEST_FINAL]->(uniiv:UNIITermValue)-[:HAS_PCLASS]->(pclass_root:DictionaryTermRoot)-[:LATEST_FINAL]->(medrt:DictionaryTermValue)
+            match (cav)-[:IS_COMPOUND]->(cr:CompoundRoot)-[:LATEST_FINAL]->(cv:CompoundValue)-[:HAS_UNII_VALUE]->
+              (uniir:UNIITermRoot)-[:LATEST_FINAL]->(uniiv:UNIITermValue)-[:HAS_PCLASS]->(pclass_root:DictionaryTermRoot)-[:LATEST_FINAL]->(medrt:DictionaryTermValue)
             match (pclass_root)<-[:CONTAINS_DICTIONARY_TERM]-(lib:Library)
-            match (tr:CTTermRoot {{uid:'C98768_PCLAS'}})-->(tar:CTTermAttributesRoot)-[:LATEST_FINAL]->(tav:CTTermAttributesValue)
+            match (tr:CTTermRoot {{uid:'C98768'}})-->(tar:CTTermAttributesRoot)-[:LATEST_FINAL]->(tav:CTTermAttributesValue)
+            MATCH (:CTCodelistRoot {{uid:'C66738'}})-[:HAS_TERM]->(cclt:CTCodelistTerm)-[:HAS_TERM_ROOT]->(tr)
+            MATCH (:CTCodelistRoot {{uid:'C67152'}})-[:HAS_TERM]->(nclt:CTCodelistTerm)-[:HAS_TERM_ROOT]->(tr)
             RETURN sv.study_id_prefix+'-'+sv.study_number as STUDYID,
                 'TS' as DOMAIN,
-                tav.code_submission_value as TSPARMCD,
-                tav.name_submission_value as TSPARM,
+                cclt.submission_value as TSPARMCD,
+                nclt.submission_value as TSPARM,
                 '' AS controlled_by,
                 medrt.name as TSVAL,
                 '' AS TSVALNF,
@@ -973,7 +1094,7 @@ class QueryService:
                 '' AS TSVCDVER
         UNION
             WITH sr, sv
-            match (:CTTermRoot{{uid : 'C49488_Y'}})-[:HAS_TYPE]-(sf:StudyField{{ field_name : 'is_trial_randomised'}})-[:HAS_BOOLEAN_FIELD]- (sv)
+            match (:CTTermRoot{{uid : 'C49488'}})<-[:HAS_SELECTED_TERM]-(:CTTermContext)<-[:HAS_TYPE]-(sf:StudyField{{ field_name : 'is_trial_randomised'}})-[:HAS_BOOLEAN_FIELD]-(sv)
             match (init_arms:StudyArm)-[:HAS_STUDY_ARM]-(sv)
             with distinct init_arms, sv
             with count( init_arms) as counter_arms,  sum( init_arms.number_of_subjects) as all_num_sub, sv
@@ -982,7 +1103,8 @@ class QueryService:
             call{{
                 with sv
                 match (inv_arms:StudyArm)-[:HAS_STUDY_ARM]-(sv)
-                match  (inv_arms)-[:HAS_ARM_TYPE]-(:CTTermRoot)-[:HAS_NAME_ROOT]-(:CTTermNameRoot)-[:LATEST_FINAL]-(:CTTermNameValue{{name:"Investigational Arm"}})
+                match (inv_arms)-[:HAS_ARM_TYPE]->(st:CTTermContext)-[:HAS_SELECTED_TERM]->
+                  (:CTTermRoot)-[:HAS_NAME_ROOT]-(:CTTermNameRoot)-[:LATEST_FINAL]-(:CTTermNameValue{{name:"Investigational Arm"}})
                 with collect(distinct inv_arms) as collected_inv_arms
                 unwind collected_inv_arms as unwind_inv_arms
                 with sum( unwind_inv_arms.number_of_subjects) as inv_num_sub
@@ -994,13 +1116,15 @@ class QueryService:
                 when 0 then 'NA'
                 else round(toFloat(inv_num_sub)/all_num_sub,4)
             end as rand_quotient, sv
-            match (tr:CTTermRoot {{uid:'C98775_RANDQT'}})-->(tar:CTTermAttributesRoot)-[:LATEST_FINAL]->(tav:CTTermAttributesValue)
-            with tav, rand_quotient, sv
+            match (tr:CTTermRoot {{uid:'C98775'}})-->(tar:CTTermAttributesRoot)-[:LATEST_FINAL]->(tav:CTTermAttributesValue)
+            MATCH (:CTCodelistRoot {{uid:'C66738'}})-[:HAS_TERM]->(cclt:CTCodelistTerm)-[:HAS_TERM_ROOT]->(tr)
+            MATCH (:CTCodelistRoot {{uid:'C67152'}})-[:HAS_TERM]->(nclt:CTCodelistTerm)-[:HAS_TERM_ROOT]->(tr)
+            with tav, rand_quotient, sv, cclt, nclt
             RETURN 
                 sv.study_id_prefix+'-'+sv.study_number as STUDYID,
                 'TS' as DOMAIN,
-                tav.code_submission_value as TSPARMCD,
-                tav.name_submission_value as TSPARM,
+                cclt.submission_value as TSPARMCD,
+                nclt.submission_value as TSPARM,
                 '' AS controlled_by,
                 rand_quotient as TSVAL,
                 '' AS TSVALNF,
@@ -1069,7 +1193,7 @@ class QueryService:
             query
             + """
         MATCH (sv)-[:HAS_STUDY_DISEASE_MILESTONE]->(sdm:StudyDiseaseMilestone)
-        MATCH (sdm)-[:HAS_DISEASE_MILESTONE_TYPE]-(tr:CTTermRoot)-[:HAS_NAME_ROOT]-(:CTTermNameRoot)-[:LATEST]-(sdm_term:CTTermNameValue)
+        MATCH (sdm)-[:HAS_DISEASE_MILESTONE_TYPE]-(:CTTermContext)-[:HAS_SELECTED_TERM]->(tr:CTTermRoot)-[:HAS_NAME_ROOT]-(:CTTermNameRoot)-[:LATEST]-(sdm_term:CTTermNameValue)
         MATCH (tr)-[HAS_ATTRIBUTES_ROOT]->(CTTermAttributesRoot)-[LATEST]->(ctav:CTTermAttributesValue)
         RETURN DISTINCT toUpper(sv.study_id_prefix + '-' + sv.study_number) AS STUDYID,
             'TM' AS DOMAIN,

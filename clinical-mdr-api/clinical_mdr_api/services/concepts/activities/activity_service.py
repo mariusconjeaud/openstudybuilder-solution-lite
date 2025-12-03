@@ -1,5 +1,5 @@
 import datetime
-from typing import Iterable
+from typing import Any, Iterable
 
 from neomodel import db
 
@@ -25,12 +25,15 @@ from clinical_mdr_api.models.concepts.activities.activity import (
     ActivityRequestRejectInput,
     ActivityVersion,
     ActivityVersionDetail,
+    CompactActivity,
 )
 from clinical_mdr_api.models.concepts.activities.activity_instance import (
     ActivityInstanceDetail,
     ActivityInstanceEditInput,
+    ActivityInstanceGrouping,
 )
 from clinical_mdr_api.models.utils import GenericFilteringReturn
+from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.services._utils import is_library_editable
 from clinical_mdr_api.services.concepts import constants
 from clinical_mdr_api.services.concepts.activities.activity_instance_service import (
@@ -41,7 +44,7 @@ from clinical_mdr_api.services.concepts.concept_generic_service import (
     _AggregateRootType,
 )
 from clinical_mdr_api.utils import normalize_string
-from common.config import REQUESTED_LIBRARY_NAME
+from common.config import settings
 from common.exceptions import BusinessLogicException, NotFoundException
 
 
@@ -58,7 +61,7 @@ class ActivityService(ConceptGenericService[ActivityAR]):
 
     def _get_activity_groups_and_subgroups_from_activity_groupings(
         self, activity_groupings: Iterable[ActivityGrouping | ActivityGroupingVO]
-    ) -> tuple[dict[str:_AggregateRootType], dict[str:_AggregateRootType]]:
+    ) -> tuple[dict[str, _AggregateRootType], dict[str, _AggregateRootType]]:
         """Returns activity groups and subgroups from db by uids from activity groupings"""
 
         activity_group_uids = set()
@@ -69,21 +72,17 @@ class ActivityService(ConceptGenericService[ActivityAR]):
             activity_subgroup_uids.add(activity_grouping.activity_subgroup_uid)
 
         if activity_group_uids:
-            activity_groups_by_uid = (
-                self._repos.activity_group_repository.get_all_by_uid(
-                    activity_group_uids,
-                    get_latest_final=True,
-                )
+            activity_groups_by_uid = self._repos.activity_group_repository.get_all_by_uid(
+                activity_group_uids,
+                get_latest_final=False,  # Get latest version regardless of status to validate it's Final
             )
         else:
             activity_groups_by_uid = {}
 
         if activity_subgroup_uids:
-            activity_subgroups_by_uid = (
-                self._repos.activity_subgroup_repository.get_all_by_uid(
-                    activity_subgroup_uids,
-                    get_latest_final=True,
-                )
+            activity_subgroups_by_uid = self._repos.activity_subgroup_repository.get_all_by_uid(
+                activity_subgroup_uids,
+                get_latest_final=False,  # Get latest version regardless of status to validate it's Final
             )
         else:
             activity_subgroups_by_uid = {}
@@ -115,11 +114,48 @@ class ActivityService(ConceptGenericService[ActivityAR]):
         self,
         activity_groupings: Iterable[ActivityGrouping | ActivityGroupingVO],
     ) -> list[ActivityGroupingVO]:
-        activity_groups_by_uid, activity_subgroups_by_uid = (
+        acg_and_acsg_by_uid: tuple[Any, ...] = (
             self._get_activity_groups_and_subgroups_from_activity_groupings(
                 activity_groupings
             )
         )
+        activity_groups_by_uid: dict[Any, Any] = acg_and_acsg_by_uid[0]
+        activity_subgroups_by_uid: dict[Any, Any] = acg_and_acsg_by_uid[1]
+
+        # Validate that all activity groups and subgroups are in Final status
+        for activity_grouping in activity_groupings:
+            # Check activity group status
+            if activity_grouping.activity_group_uid in activity_groups_by_uid:
+                activity_group = activity_groups_by_uid[
+                    activity_grouping.activity_group_uid
+                ]
+                if activity_group.item_metadata.status != LibraryItemStatus.FINAL:
+                    group_name = (
+                        activity_group.concept_vo.name
+                        if hasattr(activity_group, "concept_vo")
+                        else "Unknown"
+                    )
+                    raise BusinessLogicException(
+                        msg=f"Activity Group '{group_name}' ({activity_grouping.activity_group_uid}) is in status '{activity_group.item_metadata.status.value}'. "
+                        f"Activities can only be connected to Activity Groups in 'Final' status."
+                    )
+
+            # Check activity subgroup status
+            if activity_grouping.activity_subgroup_uid in activity_subgroups_by_uid:
+                activity_subgroup = activity_subgroups_by_uid[
+                    activity_grouping.activity_subgroup_uid
+                ]
+                if activity_subgroup.item_metadata.status != LibraryItemStatus.FINAL:
+                    subgroup_name = (
+                        activity_subgroup.concept_vo.name
+                        if hasattr(activity_subgroup, "concept_vo")
+                        else "Unknown"
+                    )
+                    raise BusinessLogicException(
+                        msg=f"Activity Subgroup '{subgroup_name}' ({activity_grouping.activity_subgroup_uid}) is in status '{activity_subgroup.item_metadata.status.value}'. "
+                        f"Activities can only be connected to Activity Subgroups in 'Final' status."
+                    )
+
         return [
             self._to_activity_grouping_vo(
                 activity_grouping,
@@ -130,8 +166,10 @@ class ActivityService(ConceptGenericService[ActivityAR]):
         ]
 
     def _create_aggregate_root(
-        self, concept_input: ActivityCreateInput, library: LibraryVO
-    ) -> _AggregateRootType:
+        self,
+        concept_input: ActivityCreateInput | ActivityFromRequestInput,
+        library: LibraryVO,
+    ) -> ActivityAR:
         # resolve names of activity groupings
         activity_groupings = (
             self._to_activity_grouping_vos(concept_input.activity_groupings)
@@ -167,24 +205,28 @@ class ActivityService(ConceptGenericService[ActivityAR]):
     def _edit_aggregate(
         self, item: ActivityAR, concept_edit_input: ActivityEditInput
     ) -> ActivityAR:
+        activity_groups_by_uid: dict[Any, Any] | set
+        activity_subgroups_by_uid: dict[Any, Any] | set
+
         if "activity_groupings" in concept_edit_input.model_fields_set:
-            activity_groups_by_uid, activity_subgroups_by_uid = (
-                self._get_activity_groups_and_subgroups_from_activity_groupings(
-                    concept_edit_input.activity_groupings
-                )
-            )
+            # Use _to_activity_grouping_vos which includes validation
             activity_groupings = (
-                [
-                    self._to_activity_grouping_vo(
-                        activity_grouping,
-                        activity_groups_by_uid,
-                        activity_subgroups_by_uid,
-                    )
-                    for activity_grouping in concept_edit_input.activity_groupings
-                ]
+                self._to_activity_grouping_vos(concept_edit_input.activity_groupings)
                 if concept_edit_input.activity_groupings
                 else []
             )
+            # Get the activity groups and subgroups for domain validation
+            if concept_edit_input.activity_groupings:
+                acg_and_acsg_by_uid: tuple[Any, ...] = (
+                    self._get_activity_groups_and_subgroups_from_activity_groupings(
+                        concept_edit_input.activity_groupings
+                    )
+                )
+                activity_groups_by_uid = acg_and_acsg_by_uid[0]
+                activity_subgroups_by_uid = acg_and_acsg_by_uid[1]
+            else:
+                activity_groups_by_uid = {}
+                activity_subgroups_by_uid = {}
         else:
             activity_groupings = []
             activity_groups_by_uid = set()
@@ -255,7 +297,7 @@ class ActivityService(ConceptGenericService[ActivityAR]):
         )
         self.repository.save(activity_request_ar)
 
-        concept_ar = self._create_aggregate_root(
+        concept_ar: ActivityAR = self._create_aggregate_root(
             concept_input=sponsor_activity_input, library=library_vo
         )
         concept_ar.approve(
@@ -288,7 +330,7 @@ class ActivityService(ConceptGenericService[ActivityAR]):
             msg=f"To reject Activity Request with Name '{activity_request_ar.name}' it has to be in Final state.",
         )
         BusinessLogicException.raise_if(
-            activity_request_ar.library.name != REQUESTED_LIBRARY_NAME,
+            activity_request_ar.library.name != settings.requested_library_name,
             msg="Only Requested Activities can be rejected.",
         )
         activity_request_ar.create_new_version(author_id=self.author_id)
@@ -345,15 +387,17 @@ class ActivityService(ConceptGenericService[ActivityAR]):
         )
         return ActivityOverview.from_repository_input(overview=overview)
 
-    def get_cosmos_activity_overview(self, activity_uid: str) -> dict:
+    def get_cosmos_activity_overview(self, activity_uid: str) -> dict[str, Any]:
         NotFoundException.raise_if_not(
             self.repository.exists_by("uid", activity_uid, True),
             "Activity",
             activity_uid,
         )
 
-        data: dict = self.repository.get_cosmos_activity_overview(uid=activity_uid)
-        result: dict = {
+        data: dict[str, Any] = self.repository.get_cosmos_activity_overview(
+            uid=activity_uid
+        )
+        result: dict[str, Any] = {
             "packageDate": datetime.date.today().isoformat(),
             "packageType": "bc",
             "conceptId": data["activity_value"]["nci_concept_id"],
@@ -413,10 +457,8 @@ class ActivityService(ConceptGenericService[ActivityAR]):
         instance_service = ActivityInstanceService()
 
         for instance in linked_instances.get("activity_instances", []):
-            if instance["version"]["status"] not in (
-                LibraryItemStatus.DRAFT.value,
-                LibraryItemStatus.FINAL.value,
-            ):
+            # Only process FINAL status instances - skip DRAFT instances entirely
+            if instance["version"]["status"] != LibraryItemStatus.FINAL.value:
                 continue
 
             instance_groupings = []
@@ -427,21 +469,26 @@ class ActivityService(ConceptGenericService[ActivityAR]):
                     "activity_subgroup_uid": grouping.activity_subgroup_uid,
                 }
                 if grp in instance["activity_groupings"]:
-                    instance_groupings.append(grp)
+                    instance_groupings.append(ActivityInstanceGrouping(**grp))
 
             if not instance_groupings:
                 # No matching groupings found, skip this instance
                 continue
 
-            if instance["version"]["status"] == LibraryItemStatus.FINAL.value:
-                instance_service.non_transactional_create_new_version(instance["uid"])
+            # For FINAL instances: create new version, edit, and approve
+            instance_service.non_transactional_create_new_version(instance["uid"])
+
             edit_input = ActivityInstanceEditInput(
-                change_description="Cascade edit", activity_groupings=instance_groupings
+                change_description="Cascade edit",
+                activity_groupings=instance_groupings,
+                name=instance["name"],
+                name_sentence_case=instance["name_sentence_case"],
             )
             instance_service.non_transactional_edit(
                 uid=instance["uid"], concept_edit_input=edit_input, patch_mode=False
             )
-            instance_service.non_transactional_approve(instance["uid"])
+
+            instance_service.approve(instance["uid"])
 
     def get_specific_activity_version_groupings(
         self,
@@ -450,7 +497,7 @@ class ActivityService(ConceptGenericService[ActivityAR]):
         page_number: int = 1,
         page_size: int = 10,
         total_count: bool = False,
-    ) -> ActivityVersionDetail | dict:
+    ) -> ActivityVersionDetail | GenericFilteringReturn[ActivityVersionDetail]:
         """
         Get activity groupings information for a specific version of an activity with pagination support.
 
@@ -483,12 +530,12 @@ class ActivityService(ConceptGenericService[ActivityAR]):
             items = [
                 ActivityVersionDetail.from_repository_input(item) for item in data.items
             ]
-            return GenericFilteringReturn.create(items=items, total=data.total)
+            return GenericFilteringReturn(items=items, total=data.total)
 
         # Handle non-paginated response for backward compatibility
         return ActivityVersionDetail.from_repository_input(data=data)
 
-    def specific_version_exists(self, uid: str, version: str) -> bool:
+    def specific_version_exists(self, uid: str, version: str | None) -> bool:
         """Checks if a specific version exists for a given concept UID."""
         # This could be implemented in the repository if preferred, but here it's in the service
         query = """
@@ -544,4 +591,111 @@ class ActivityService(ConceptGenericService[ActivityAR]):
         # Transform each instance dict into a model
         instance_models = [ActivityInstanceDetail(**instance) for instance in instances]
 
-        return GenericFilteringReturn.create(items=instance_models, total=total_count)
+        return GenericFilteringReturn(items=instance_models, total=total_count)
+
+    def get_flattened_activity_instances_for_version(
+        self,
+        activity_uid: str,
+        version: str | None,
+        page_number: int = 1,
+        page_size: int = 10,
+    ) -> GenericFilteringReturn[ActivityInstanceDetail]:
+        """
+        Get flattened activity instances for export where parent and children are separate rows.
+
+        Args:
+            activity_uid: The unique ID of the activity.
+            version: The specific version of the activity.
+            page_number: The page number for pagination.
+            page_size: The number of items per page (0 for all).
+
+        Returns:
+            A paginated response with flattened activity instances.
+        """
+        # Get all instances without pagination first
+        result = self.get_activity_instances_for_version(
+            activity_uid=activity_uid,
+            version=version,
+            page_number=1,
+            page_size=0,  # Get all
+        )
+
+        # Flatten the parent-child hierarchy
+        flattened_items = []
+        for parent_instance in result.items:
+            # Add the parent instance
+            flattened_items.append(parent_instance)
+
+            # Add all child versions as separate items
+            if hasattr(parent_instance, "children") and parent_instance.children:
+                for child in parent_instance.children:
+                    # Convert child dict to ActivityInstanceDetail if needed
+                    if isinstance(child, dict):
+                        child_instance = ActivityInstanceDetail(**child)
+                    else:
+                        child_instance = child
+                    flattened_items.append(child_instance)
+
+        # Apply pagination to flattened list
+        total = len(flattened_items)
+        if page_size > 0:
+            start_idx = (page_number - 1) * page_size
+            end_idx = start_idx + page_size
+            paginated_items = flattened_items[start_idx:end_idx]
+        else:
+            paginated_items = flattened_items
+
+        return GenericFilteringReturn(items=paginated_items, total=total)
+
+    def get_compact_activity_with_splitted_groupings(
+        self,
+        library: str | None = None,
+        sort_by: dict[str, bool] | None = None,
+        page_number: int = 1,
+        page_size: int = 0,
+        filter_by: dict[str, dict[str, Any]] | None = None,
+        filter_operator: FilterOperator = FilterOperator.AND,
+        total_count: bool = False,
+    ) -> GenericFilteringReturn[CompactActivity]:
+        self.enforce_library(library)
+
+        items, total = self.repository.get_compact_activity_with_splitted_groupings(
+            library=library,
+            total_count=total_count,
+            sort_by=sort_by,
+            filter_by=filter_by,
+            filter_operator=filter_operator,
+            page_number=page_number,
+            page_size=page_size,
+        )
+
+        all_concepts = GenericFilteringReturn(items=items, total=total)
+        all_concepts.items = [
+            CompactActivity.from_repository_output(item) for item in all_concepts.items
+        ]
+
+        return all_concepts
+
+    def get_compact_activity_with_splitted_groupings_distinct_values_for_header(
+        self,
+        library: str | None,
+        field_name: str,
+        search_string: str = "",
+        filter_by: dict[str, dict[str, Any]] | None = None,
+        filter_operator: FilterOperator = FilterOperator.AND,
+        page_size: int = 10,
+        **kwargs,
+    ) -> list[Any]:
+        self.enforce_library(library)
+
+        header_values = self.repository.get_compact_activity_with_splitted_groupings_distinct_headers(
+            library=library,
+            field_name=field_name,
+            search_string=search_string,
+            filter_by=filter_by,
+            filter_operator=filter_operator,
+            page_size=page_size,
+            **kwargs,
+        )
+
+        return header_values

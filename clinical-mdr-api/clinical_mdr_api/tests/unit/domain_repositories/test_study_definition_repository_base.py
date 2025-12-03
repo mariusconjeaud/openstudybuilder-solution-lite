@@ -31,7 +31,7 @@ from clinical_mdr_api.models.utils import GenericFilteringReturn
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.services._utils import service_level_generic_filtering
 from clinical_mdr_api.tests.unit.domain.utils import random_str
-from common.config import DEFAULT_STUDY_FIELD_CONFIG_FILE
+from common.config import settings
 from common.exceptions import BusinessLogicException
 
 T = TypeVar("T")
@@ -115,7 +115,7 @@ class StudyDefinitionsDBFake(GenericInMemoryDB[StudyDefinitionSnapshot]):
     """
 
     def _get_id_for_aggregate(self, aggregate: StudyDefinitionSnapshot) -> str:
-        return aggregate.uid  # type: ignore
+        return aggregate.uid
 
     def _serialize_aggregate_for_storage(
         self, aggregate: StudyDefinitionSnapshot
@@ -215,11 +215,11 @@ class StudyDefinitionRepositoryFake(StudyDefinitionRepository):
         has_study_criteria: bool | None = None,
         has_study_activity: bool | None = None,
         has_study_activity_instruction: bool | None = None,
-        sort_by: dict | None = None,
+        sort_by: dict[str, bool] | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: dict | None = None,
-        filter_operator: FilterOperator | None = FilterOperator.AND,
+        filter_by: dict[str, dict[str, Any]] | None = None,
+        filter_operator: FilterOperator = FilterOperator.AND,
         total_count: bool = False,
         deleted: bool = False,
     ) -> GenericFilteringReturn[StudyDefinitionSnapshot]:
@@ -287,7 +287,9 @@ class TestStudyDefinitionsRepositoryBase(unittest.TestCase):
     def setUpClass(cls) -> None:
         cls.patcher = patch(
             target=study_configuration.__name__ + ".from_database",
-            new=lambda: study_configuration.from_file(DEFAULT_STUDY_FIELD_CONFIG_FILE),
+            new=lambda: study_configuration.from_file(
+                settings.default_study_field_config_file
+            ),
         )
         cls.patcher.start()
 
@@ -331,7 +333,9 @@ class TestStudyDefinitionsRepositoryBase(unittest.TestCase):
             project_number=random_str(),
         )
         study.edit_metadata(
-            new_id_metadata=new_id_metadata, project_exists_callback=(lambda _: True)
+            new_id_metadata=new_id_metadata,
+            project_exists_callback=lambda _: True,
+            author_id=random_str(),
         )
 
     @staticmethod
@@ -373,10 +377,11 @@ class TestStudyDefinitionsRepositoryBase(unittest.TestCase):
             # pylint: disable=unnecessary-lambda
             generate_uid_callback=lambda: random_str(),
             initial_id_metadata=new_id_metadata,
-            project_exists_callback=(lambda _: True),
-            study_number_exists_callback=(lambda _x, y: False),
-            study_title_exists_callback=(lambda _, study_number: False),
-            study_short_title_exists_callback=(lambda _, study_number: False),
+            project_exists_callback=lambda _: True,
+            study_number_exists_callback=lambda _x, y: False,
+            study_title_exists_callback=lambda _, study_number: False,
+            study_short_title_exists_callback=lambda _, study_number: False,
+            author_id=random_str(),
         )
 
     @staticmethod
@@ -391,27 +396,32 @@ class TestStudyDefinitionsRepositoryBase(unittest.TestCase):
         study = TestStudyDefinitionsRepositoryBase.create_random_study()
         while random.random() > 0.2:
             study.edit_metadata(
-                study_title_exists_callback=(lambda _, study_number: False),
-                study_short_title_exists_callback=(lambda _, study_number: False),
+                study_title_exists_callback=lambda _, study_number: False,
+                study_short_title_exists_callback=lambda _, study_number: False,
                 new_study_description=StudyDescriptionVO.from_input_values(
                     study_title="new_study_title", study_short_title="study_short_title"
                 ),
+                author_id=random_str(),
             )
             study.lock(version_description=random_str(), author_id=random_str())
-            study.unlock()
+            study.unlock(random_str())
             TestStudyDefinitionsRepositoryBase.make_random_study_edit(study)
         if random.random() < 0.667:
             if random.random() < 0.5:
-                study.release(change_description="making a release in test")
+                study.release(
+                    change_description="making a release in test",
+                    author_id=random_str(),
+                )
                 TestStudyDefinitionsRepositoryBase.make_random_study_edit(study)
             else:
                 study.edit_metadata(
-                    study_title_exists_callback=(lambda _, study_number: False),
-                    study_short_title_exists_callback=(lambda _, study_number: False),
+                    study_title_exists_callback=lambda _, study_number: False,
+                    study_short_title_exists_callback=lambda _, study_number: False,
                     new_study_description=StudyDescriptionVO.from_input_values(
                         study_title="new_study_title",
                         study_short_title="study_short_title",
                     ),
+                    author_id=random_str(),
                 )
                 study.lock(version_description=random_str(), author_id=random_str())
         return study
@@ -463,7 +473,7 @@ class TestStudyDefinitionsRepositoryBase(unittest.TestCase):
                         modified_study
                     )
                 else:
-                    modified_study.unlock()
+                    modified_study.unlock(random_str())
 
                 # when
                 studies_repository.save(modified_study)

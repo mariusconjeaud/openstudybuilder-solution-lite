@@ -1,6 +1,6 @@
 import copy
 from abc import ABC, abstractmethod
-from typing import Any
+from typing import Any, Generic
 
 from neo4j.graph import Node
 from neomodel import db
@@ -26,8 +26,7 @@ from clinical_mdr_api.domain_repositories.models.generic import (
 from clinical_mdr_api.domain_repositories.models.template_parameter import (
     TemplateParameterTermRoot,
 )
-from clinical_mdr_api.domains._utils import ObjectStatus
-from clinical_mdr_api.domains.concepts.concept_base import ConceptARBase
+from clinical_mdr_api.models.utils import BaseModel
 from clinical_mdr_api.repositories._utils import (
     CypherQueryBuilder,
     FilterDict,
@@ -37,15 +36,17 @@ from clinical_mdr_api.repositories._utils import (
 )
 
 
-class ConceptGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType], ABC):
+class ConceptGenericRepository(
+    LibraryItemRepositoryImplBase, Generic[_AggregateRootType], ABC
+):
     root_class = type
     value_class = type
-    return_model = type
-    filter_query_parameters = {}
+    return_model: type = BaseModel
+    filter_query_parameters: dict[Any, Any] = {}
 
     @abstractmethod
     def _create_aggregate_root_instance_from_cypher_result(
-        self, input_dict: dict
+        self, input_dict: dict[str, Any]
     ) -> _AggregateRootType:
         raise NotImplementedError
 
@@ -53,7 +54,7 @@ class ConceptGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType]
     def _create_aggregate_root_instance_from_version_root_relationship_and_value(
         self,
         root: VersionRoot,
-        library: Library | None,
+        library: Library,
         relationship: VersionRelationship,
         value: VersionValue,
         **_kwargs,
@@ -61,9 +62,7 @@ class ConceptGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType]
         raise NotImplementedError
 
     @abstractmethod
-    def specific_alias_clause(
-        self, only_specific_status: str = ObjectStatus.LATEST.name, **kwargs
-    ) -> str:
+    def specific_alias_clause(self, **kwargs) -> str:
         """
         Methods is overridden in the ConceptGenericRepository subclasses
         and it contains matches and traversals specific for domain object represented by subclass repository.
@@ -73,8 +72,15 @@ class ConceptGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType]
     def specific_header_match_clause(self) -> str | None:
         return None
 
+    # pylint: disable=unused-argument
+    def specific_header_match_clause_lite(self, field_name: str) -> str | None:
+        """This is a lightweight version of the header match clause.
+        It should fetch only the required field, without supporting wildcard filtering.
+        """
+        return None
+
     def _create_new_value_node(self, ar: _AggregateRootType) -> VersionValue:
-        return self.value_class(
+        return self.value_class(  # type: ignore[call-overload]
             nci_concept_id=getattr(ar.concept_vo, "nci_concept_id", None),
             nci_concept_name=getattr(ar.concept_vo, "nci_concept_name", None),
             name=ar.concept_vo.name,
@@ -101,24 +107,32 @@ class ConceptGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType]
     def generate_uid(self) -> str:
         return self.root_class.get_next_free_uid_and_increment_counter()
 
-    # pylint: disable=unused-argument
-    def generic_match_clause(
-        self,
-        only_specific_status: str = ObjectStatus.LATEST.name,
-        **kwargs,
-    ):
+    def generic_match_clause(self, **kwargs):
         concept_label = self.root_class.__label__
         concept_value_label = self.value_class.__label__
-        return f"""CYPHER runtime=slotted MATCH (concept_root:{concept_label})-[:{only_specific_status}]->(concept_value:{concept_value_label})"""
 
-    # pylint: disable=unused-argument
+        version = kwargs.get("version", None)
+        rel = (
+            "hv:HAS_VERSION WHERE hv.version = $requested_version"
+            if version is not None
+            else ":LATEST"
+        )
+
+        return f"""CYPHER runtime=slotted MATCH (concept_root:{concept_label})-[{rel}]->(concept_value:{concept_value_label})"""
+
     def generic_alias_clause(self, **kwargs):
-        return """
+        version = kwargs.get("version", None)
+        where_version = (
+            "WHERE hv.version = $requested_version" if version is not None else ""
+        )
+
+        return f"""
             DISTINCT concept_root, concept_value,
             head([(library)-[:CONTAINS_CONCEPT]->(concept_root) | library]) AS library
-            CALL {
+            CALL {{
                 WITH concept_root, concept_value
                 MATCH (concept_root)-[hv:HAS_VERSION]-(concept_value)
+                {where_version}
                 WITH hv
                 ORDER BY
                     toInteger(split(hv.version, '.')[0]) ASC,
@@ -127,7 +141,7 @@ class ConceptGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType]
                     hv.start_date ASC
                 WITH collect(hv) as hvs
                 RETURN last(hvs) AS version_rel
-            }
+            }}
             WITH
                 concept_root,
                 concept_root.uid AS uid,
@@ -135,12 +149,12 @@ class ConceptGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType]
                 library.name AS library_name,
                 library.is_editable AS is_library_editable,
                 version_rel
-                CALL {
+                CALL {{
                     WITH version_rel
                     OPTIONAL MATCH (author: User)
                     WHERE author.user_id = version_rel.author_id
                     RETURN author
-                }    
+                }}
             WITH
                 uid,
                 concept_root,
@@ -220,8 +234,7 @@ class ConceptGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType]
 
     def create_query_filter_statement(
         self, library: str | None = None, **kwargs
-    ) -> tuple[str, dict]:
-        # pylint: disable=unused-argument
+    ) -> tuple[str, dict[Any, Any]]:
         filter_parameters = []
         filter_query_parameters = {}
         if library:
@@ -246,14 +259,24 @@ class ConceptGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType]
         """
         return key
 
+    @classmethod
+    def format_filter_sort_keys_for_headers_lite(cls, key: str):
+        """
+        Maps a fieldname as provided by the API query (equal to output model) to the corresponding fieldname as defined in the database and/or Cypher query
+
+        :param key: Fieldname to map
+        :return str:
+        """
+        return key.replace(".", "_")
+
     def find_all(
         self,
         library: str | None = None,
-        sort_by: dict | None = None,
+        sort_by: dict[str, bool] | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: dict | None = None,
-        filter_operator: FilterOperator | None = FilterOperator.AND,
+        filter_by: dict[str, dict[str, Any]] | None = None,
+        filter_operator: FilterOperator = FilterOperator.AND,
         total_count: bool = False,
         return_all_versions: bool = False,
         **kwargs,
@@ -298,12 +321,15 @@ class ConceptGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType]
             sort_by=sort_by,
             page_number=page_number,
             page_size=page_size,
-            filter_by=FilterDict(elements=filter_by),
+            filter_by=FilterDict.model_validate({"elements": filter_by}),
             filter_operator=filter_operator,
             total_count=total_count,
             return_model=self.return_model,
             format_filter_sort_keys=self.format_filter_sort_keys,
         )
+
+        if kwargs.get("version", None) is not None:
+            query.parameters.update({"requested_version": kwargs["version"]})
 
         query.parameters.update(filter_query_parameters)
 
@@ -347,10 +373,10 @@ class ConceptGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType]
     def get_distinct_headers(
         self,
         field_name: str,
-        search_string: str | None = "",
+        search_string: str = "",
         library: str | None = None,
-        filter_by: dict | None = None,
-        filter_operator: FilterOperator | None = FilterOperator.AND,
+        filter_by: dict[str, dict[str, Any]] | None = None,
+        filter_operator: FilterOperator = FilterOperator.AND,
         page_size: int = 10,
         **kwargs,
     ) -> list[Any]:
@@ -389,7 +415,7 @@ class ConceptGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType]
 
         # Use Cypher query class to use reusable helper methods
         query = CypherQueryBuilder(
-            filter_by=FilterDict(elements=filter_by),
+            filter_by=FilterDict.model_validate({"elements": filter_by}),
             filter_operator=filter_operator,
             match_clause=match_clause,
             alias_clause=alias_clause,
@@ -413,12 +439,187 @@ class ConceptGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType]
             else []
         )
 
+    def get_distinct_headers_lite(
+        self,
+        field_name: str,
+        search_string: str = "",
+        library: str | None = None,
+        page_size: int = 10,
+        filter_by: dict[str, Any] | None = None,
+        filter_operator: FilterOperator = FilterOperator.AND,
+        **kwargs,
+    ) -> list[Any]:
+        match_clause = self.generic_match_clause()
+
+        # Set header field name in the `filter_by` dict,
+        # which will be used to generate `WHERE toLower(toString(field_name)) CONTAINS ...` clause
+        filter_by = validate_filters_and_add_search_string(
+            search_string, field_name, filter_by=filter_by
+        )
+
+        # This will allow filtering by library (if specified)
+        filter_statements, filter_query_parameters = self.create_query_filter_statement(
+            library=library, kwargs=kwargs
+        )
+
+        match_clause += filter_statements
+
+        # Specific match clauses for each field, so that only necessary data is fetched
+
+        if field_name in [
+            "abbreviation",
+            "adam_param_code",
+            "analyte_number",
+            "comment",
+            "compatible_types",
+            "contact_person",
+            "context",
+            "conversion_factor_to_master",
+            "convertible_unit",
+            "data_type",
+            "datatype",
+            "definition",
+            "description",
+            "display_in_tree",
+            "display_unit",
+            "effective_date",
+            "external_id",
+            "inn",
+            "instruction",
+            "is_data_collected",
+            "is_data_sharing",
+            "is_default_selected_for_activity",
+            "is_derived",
+            "is_legacy_usage",
+            "is_multiple_selection_allowed",
+            "is_preferred_synonym",
+            "is_reference_data",
+            "is_request_final",
+            "is_request_rejected",
+            "is_required_for_activity",
+            "is_research_lab",
+            "is_sponsor_compound",
+            "language",
+            "legacy_code",
+            "legacy_description",
+            "length",
+            "long_number",
+            "master_unit",
+            "molecular_weight",
+            "name",
+            "name_sentence_case",
+            "nci_concept_id",
+            "nci_concept_name",
+            "oid",
+            "order",
+            "origin",
+            "prefix",
+            "prompt",
+            "purpose",
+            "reason_for_rejecting",
+            "repeating",
+            "request_rationale",
+            "retired_date",
+            "sas_dataset_name",
+            "sas_field_name",
+            "sds_var_name",
+            "short_number",
+            "si_unit",
+            "significant_digits",
+            "sponsor_instruction",
+            "synonyms",
+            "topic_code",
+            "url",
+            "us_conventional_unit",
+            "use_complex_unit_conversion",
+            "use_molecular_weight",
+            "value",
+            "value_regex",
+        ]:
+            match_clause += f"""
+                WITH concept_value.{field_name} AS {field_name}
+            """
+
+        elif field_name in ["version", "start_date", "status"]:
+            match_clause += """
+                CALL {
+                    WITH concept_root, concept_value
+                    MATCH (concept_root)-[hv:HAS_VERSION]-(concept_value)
+                    WITH hv
+                    ORDER BY
+                        toInteger(split(hv.version, '.')[0]) ASC,
+                        toInteger(split(hv.version, '.')[1]) ASC,
+                        hv.start_date ASC
+                    WITH collect(hv) as hvs
+                    RETURN last(hvs) AS version_rel
+                }
+                WITH version_rel.version AS version,
+                     version_rel.start_date AS start_date,
+                     version_rel.status AS status
+            """
+
+        elif field_name == "library_name":
+            match_clause += """
+                WITH DISTINCT concept_root,
+                    head([(library)-[:CONTAINS_CONCEPT]->(concept_root) | library]) AS library
+                WITH library.name AS library_name
+            """
+
+        elif field_name == "author_username":
+            match_clause += """
+                CALL {
+                    WITH concept_root, concept_value
+                    MATCH (concept_root)-[hv:HAS_VERSION]-(concept_value)
+                    WITH hv
+                    ORDER BY
+                        toInteger(split(hv.version, '.')[0]) ASC,
+                        toInteger(split(hv.version, '.')[1]) ASC,
+                        hv.start_date ASC
+                    WITH collect(hv) as hvs
+                    RETURN last(hvs) AS version_rel
+                }
+                CALL {
+                    WITH version_rel
+                    OPTIONAL MATCH (author: User)
+                    WHERE author.user_id = version_rel.author_id
+                    RETURN author
+                }
+                WITH author.username AS author_username
+            """
+
+        else:
+            if self.specific_header_match_clause_lite(field_name):
+                match_clause += self.specific_header_match_clause_lite(field_name)
+
+        query = CypherQueryBuilder(
+            filter_by=FilterDict.model_validate({"elements": filter_by}),
+            match_clause=match_clause,
+            alias_clause=field_name.replace(".", "_"),
+            return_model=self.return_model,
+            format_filter_sort_keys=self.format_filter_sort_keys_for_headers_lite,
+        )
+
+        query.parameters.update(filter_query_parameters)
+
+        query.full_query = query.build_header_query(
+            header_alias=field_name.replace(".", "_"), page_size=page_size
+        )
+        result_array, _ = query.execute()
+
+        return (
+            format_generic_header_values(result_array[0][0])
+            if len(result_array) > 0
+            else []
+        )
+
     @sb_clear_cache(caches=["cache_store_item_by_uid"])
-    def save(self, item: _AggregateRootType) -> None:
+    def save(
+        self, item: _AggregateRootType, force_new_value_node: bool = False
+    ) -> None:
         if item.uid is not None and item.repository_closure_data is None:
             self._create(item)
         elif item.uid is not None and not item.is_deleted:
-            self._update(item)
+            self._update(item, force_new_value_node)
         elif item.is_deleted:
             assert item.uid is not None
             self._soft_delete(item.uid)
@@ -473,6 +674,41 @@ class ConceptGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType]
             return result[0][0]
         return None
 
+    def latest_concept_is_final(self, uid: str) -> bool:
+        """Check if the LATEST version of a concept has Final status.
+        Uses the HAS_VERSION relationship's status property for the current version."""
+        # The current version is determined by HAS_VERSION relationship where end_date IS NULL
+        # This is more reliable than LATEST_* relationships after retire/reactivate cycles
+
+        query = f"""
+            MATCH (concept_root:{self.root_class.__label__} {{uid: $uid}})
+            MATCH (concept_root)-[hv:HAS_VERSION]->(version_value:{self.value_class.__label__})
+            WHERE hv.end_date IS NULL
+            RETURN hv.status = 'Final' as is_final
+            """
+        result, _ = db.cypher_query(query, {"uid": uid})
+
+        if len(result) > 0 and len(result[0]) > 0:
+            return result[0][0] is True
+
+        return False
+
+    def get_latest_concept_name(self, uid: str) -> str | None:
+        """Get the name of the LATEST version of a concept.
+        Uses the HAS_VERSION relationship to find the current version."""
+        query = f"""
+            MATCH (concept_root:{self.root_class.__label__} {{uid: $uid}})
+            MATCH (concept_root)-[hv:HAS_VERSION]->(version_value:{self.value_class.__label__})
+            WHERE hv.end_date IS NULL
+            RETURN version_value.name as name
+            """
+        result, _ = db.cypher_query(query, {"uid": uid})
+
+        if len(result) > 0 and len(result[0]) > 0:
+            return result[0][0]
+
+        return None
+
     def latest_concept_in_library_exists_by_name(
         self, library_name: str, concept_name: str
     ) -> bool:
@@ -501,24 +737,30 @@ class ConceptGenericRepository(LibraryItemRepositoryImplBase[_AggregateRootType]
         )
         return len(result) > 0 and len(result[0]) > 0
 
-    def _is_new_version_necessary(self, ar: ConceptARBase, value: VersionValue) -> bool:
+    def _is_new_version_necessary(
+        self, ar: _AggregateRootType, value: VersionValue
+    ) -> bool:
         return self._has_data_changed(ar, value)
 
     def _get_or_create_value(
-        self, root: VersionRoot, ar: ConceptARBase
+        self,
+        root: VersionRoot,
+        ar: _AggregateRootType,
+        force_new_value_node: bool = False,
     ) -> VersionValue:
-        for itm in root.has_version.all():
-            if not self._has_data_changed(ar, itm):
-                return itm
-        latest_draft = root.latest_draft.get_or_none()
-        if latest_draft and not self._has_data_changed(ar, latest_draft):
-            return latest_draft
-        latest_final = root.latest_final.get_or_none()
-        if latest_final and not self._has_data_changed(ar, latest_final):
-            return latest_final
-        latest_retired = root.latest_retired.get_or_none()
-        if latest_retired and not self._has_data_changed(ar, latest_retired):
-            return latest_retired
+        if not force_new_value_node:
+            for itm in root.has_version.all():
+                if not self._has_data_changed(ar, itm):
+                    return itm
+            latest_draft = root.latest_draft.get_or_none()
+            if latest_draft and not self._has_data_changed(ar, latest_draft):
+                return latest_draft
+            latest_final = root.latest_final.get_or_none()
+            if latest_final and not self._has_data_changed(ar, latest_final):
+                return latest_final
+            latest_retired = root.latest_retired.get_or_none()
+            if latest_retired and not self._has_data_changed(ar, latest_retired):
+                return latest_retired
         new_value = self._create_new_value_node(ar=ar)
         self._db_save_node(new_value)
         return new_value

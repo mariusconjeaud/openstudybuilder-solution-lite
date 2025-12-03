@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 from typing import AbstractSet, Callable, Self
 
+from pydantic import BaseModel
+
 from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryItemAggregateRootBase,
     LibraryItemMetadataVO,
@@ -22,6 +24,12 @@ class ActivityInstanceClassActivityItemClassRelVO:
     is_adam_param_specific_enabled: bool
 
 
+class CTTermItem(BaseModel):
+    uid: str
+    name: str | None = None
+    codelist_uid: str | None = None
+
+
 @dataclass(frozen=True)
 class ActivityItemClassVO:
     """
@@ -33,12 +41,9 @@ class ActivityItemClassVO:
     nci_concept_id: str | None
     order: int
     activity_instance_classes: list[ActivityInstanceClassActivityItemClassRelVO]
-    data_type_uid: str
-    data_type_name: str | None
-    role_uid: str
-    role_name: str | None
+    data_type: CTTermItem
+    role: CTTermItem
     variable_class_uids: list[str] | None
-    codelist_uids: list[str] | None
 
     @classmethod
     def from_repository_values(
@@ -46,25 +51,19 @@ class ActivityItemClassVO:
         name: str,
         order: int,
         activity_instance_classes: list[ActivityInstanceClassActivityItemClassRelVO],
-        data_type_uid: str,
-        role_uid: str,
+        data_type: CTTermItem,
+        role: CTTermItem,
         definition: str | None = None,
         nci_concept_id: str | None = None,
-        data_type_name: str | None = None,
-        role_name: str | None = None,
         variable_class_uids: list[str] | None = None,
-        codelist_uids: list[str] | None = None,
     ) -> Self:
         activity_item_class_vo = cls(
             name=name,
             order=order,
             activity_instance_classes=activity_instance_classes,
-            data_type_uid=data_type_uid,
-            data_type_name=data_type_name,
-            role_uid=role_uid,
-            role_name=role_name,
+            data_type=data_type,
+            role=role,
             variable_class_uids=variable_class_uids,
-            codelist_uids=codelist_uids,
             definition=definition,
             nci_concept_id=nci_concept_id,
         )
@@ -76,7 +75,6 @@ class ActivityItemClassVO:
         activity_item_class_exists_by_name_callback: Callable[[str], bool],
         activity_instance_class_exists: Callable[[str], bool],
         ct_term_exists: Callable[[str], bool],
-        ct_codelist_exists: Callable[[str], bool],
         previous_name: str | None = None,
     ) -> None:
         AlreadyExistsException.raise_if(
@@ -87,23 +85,17 @@ class ActivityItemClassVO:
             "Name",
         )
         BusinessLogicException.raise_if_not(
-            ct_term_exists(self.role_uid),
-            msg=f"Activity Item Class tried to connect to non-existent or non-final CT Term for Role with UID '{self.role_uid}'.",
+            ct_term_exists(self.role.uid),
+            msg=f"Activity Item Class tried to connect to non-existent or non-final CT Term for Role with UID '{self.role.uid}'.",
         )
         BusinessLogicException.raise_if_not(
-            ct_term_exists(self.data_type_uid),
-            msg=f"Activity Item Class tried to connect to non-existent or non-final CT Term for Data type with UID '{self.data_type_uid}'.",
+            ct_term_exists(self.data_type.uid),
+            msg=f"Activity Item Class tried to connect to non-existent or non-final CT Term for Data type with UID '{self.data_type.uid}'.",
         )
         for activity_instance_class in self.activity_instance_classes:
             BusinessLogicException.raise_if_not(
                 activity_instance_class_exists(activity_instance_class.uid),
                 msg=f"Activity Item Class tried to connect to non-existent or non-final Activity Instance Class with UID '{activity_instance_class.uid}'.",
-            )
-
-        for codelist_uid in self.codelist_uids or []:
-            BusinessLogicException.raise_if_not(
-                ct_codelist_exists(codelist_uid),
-                msg=f"Activity Item Class tried to connect to non-existent Codelist with UID '{codelist_uid}'.",
             )
 
 
@@ -119,6 +111,10 @@ class ActivityItemClassAR(LibraryItemAggregateRootBase):
     def activity_item_class_vo(self) -> ActivityItemClassVO:
         return self._activity_item_class_vo
 
+    @activity_item_class_vo.setter
+    def activity_item_class_vo(self, activity_item_class_vo: ActivityItemClassVO):
+        self._activity_item_class_vo = activity_item_class_vo
+
     @property
     def name(self) -> str:
         return self._activity_item_class_vo.name
@@ -131,16 +127,12 @@ class ActivityItemClassAR(LibraryItemAggregateRootBase):
     def nci_concept_id(self) -> str | None:
         return self._activity_item_class_vo.nci_concept_id
 
-    @activity_item_class_vo.setter
-    def activity_item_class_vo(self, activity_item_class_vo: ActivityItemClassVO):
-        self._activity_item_class_vo = activity_item_class_vo
-
     @classmethod
     def from_repository_values(
         cls,
         uid: str,
         activity_item_class_vo: ActivityItemClassVO,
-        library: LibraryVO | None,
+        library: LibraryVO,
         item_metadata: LibraryItemMetadataVO,
     ) -> Self:
         activity_item_class_ar = cls(
@@ -161,8 +153,7 @@ class ActivityItemClassAR(LibraryItemAggregateRootBase):
         activity_instance_class_exists: Callable[[str], bool],
         activity_item_class_exists_by_name_callback: Callable[[str], bool],
         ct_term_exists: Callable[[str], bool],
-        ct_codelist_exists: Callable[[str], bool],
-        generate_uid_callback: Callable[[], str | None] = (lambda: None),
+        generate_uid_callback: Callable[[], str | None] = lambda: None,
     ) -> Self:
         item_metadata = LibraryItemMetadataVO.get_initial_item_metadata(
             author_id=author_id
@@ -175,7 +166,6 @@ class ActivityItemClassAR(LibraryItemAggregateRootBase):
             activity_instance_class_exists=activity_instance_class_exists,
             activity_item_class_exists_by_name_callback=activity_item_class_exists_by_name_callback,
             ct_term_exists=ct_term_exists,
-            ct_codelist_exists=ct_codelist_exists,
         )
         activity_item_class_ar = cls(
             _uid=generate_uid_callback(),
@@ -188,12 +178,11 @@ class ActivityItemClassAR(LibraryItemAggregateRootBase):
     def edit_draft(
         self,
         author_id: str,
-        change_description: str | None,
+        change_description: str,
         activity_item_class_vo: ActivityItemClassVO,
         activity_instance_class_exists: Callable[[str], bool],
         activity_item_class_exists_by_name_callback: Callable[[str], bool],
         ct_term_exists: Callable[[str], bool],
-        ct_codelist_exists: Callable[[str], bool],
     ) -> None:
         """
         Creates a new draft version for the object.
@@ -204,7 +193,6 @@ class ActivityItemClassAR(LibraryItemAggregateRootBase):
             activity_item_class_exists_by_name_callback=activity_item_class_exists_by_name_callback,
             previous_name=self.name,
             ct_term_exists=ct_term_exists,
-            ct_codelist_exists=ct_codelist_exists,
         )
         if self._activity_item_class_vo != activity_item_class_vo:
             super()._edit_draft(

@@ -1,9 +1,13 @@
 import datetime
 from dataclasses import dataclass
+from typing import Any
 
 from neomodel import db
 
 from clinical_mdr_api import utils
+from clinical_mdr_api.domain_repositories._utils.helpers import (
+    acquire_write_lock_study_value,
+)
 from clinical_mdr_api.domain_repositories.models.study import StudyRoot, StudyValue
 from clinical_mdr_api.domain_repositories.models.study_audit_trail import (
     Create,
@@ -34,7 +38,7 @@ class SelectionHistory:
     change_type: str
     start_date: datetime.datetime
     criteria_type_uid: str | None
-    criteria_type_order: int | None
+    criteria_type_order: int
     status: str | None
     end_date: datetime.datetime | None
     syntax_object_version: str | None
@@ -43,16 +47,6 @@ class SelectionHistory:
 
 
 class StudySelectionCriteriaRepository:
-    @staticmethod
-    def _acquire_write_lock_study_value(uid: str) -> None:
-        db.cypher_query(
-            """
-             MATCH (sr:StudyRoot {uid: $uid})
-             REMOVE sr.__WRITE_LOCK__
-             RETURN true
-            """,
-            {"uid": uid},
-        )
 
     def _retrieves_all_data(
         self,
@@ -63,7 +57,7 @@ class StudySelectionCriteriaRepository:
         study_value_version: str | None = None,
     ) -> tuple[StudySelectionCriteriaVO]:
         query = ""
-        query_parameters = {}
+        query_parameters: dict[str, Any] = {}
         if study_uids:
             if isinstance(study_uids, str):
                 study_uid_statement = "{uid: $uids}"
@@ -111,14 +105,16 @@ class StudySelectionCriteriaRepository:
             MATCH (sv)-[:HAS_STUDY_CRITERIA]->(sc:StudyCriteria)
             CALL {{
                 WITH sc
-                MATCH (sc)-[:HAS_SELECTED_CRITERIA]->(:CriteriaValue)<-[ver]-(cr:CriteriaRoot)<-[:HAS_CRITERIA]-(:CriteriaTemplateRoot)-[:HAS_TYPE]->(term:CTTermRoot)
+                MATCH (sc)-[:HAS_SELECTED_CRITERIA]->(:CriteriaValue)<-[ver]-(cr:CriteriaRoot)<-[:HAS_CRITERIA]-
+                  (:CriteriaTemplateRoot)-[:HAS_TYPE]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(term:CTTermRoot)
                 WHERE ver.status = "Final" {criteria_type_query}
                 RETURN ver as ver, cr as obj, term.uid as term_uid, true as is_instance
                 ORDER BY ver.start_date DESC
                 LIMIT 1
             UNION
                 WITH sc
-                MATCH (sc)-[:HAS_SELECTED_CRITERIA_TEMPLATE]->(:CriteriaTemplateValue)<-[ver]-(ctr:CriteriaTemplateRoot)-[:HAS_TYPE]->(term:CTTermRoot)
+                MATCH (sc)-[:HAS_SELECTED_CRITERIA_TEMPLATE]->(:CriteriaTemplateValue)<-[ver]-
+                  (ctr:CriteriaTemplateRoot)-[:HAS_TYPE]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(term:CTTermRoot)
                 WHERE ver.status = "Final" {criteria_type_query}
                 RETURN ver as ver, ctr as obj, term.uid as term_uid, false as is_instance
                 ORDER BY ver.start_date DESC
@@ -179,7 +175,7 @@ class StudySelectionCriteriaRepository:
             study_uids=study_uids,
         )
         # Create a dictionary, with study_uid as key, and list of selections as value
-        selection_aggregate_dict = {}
+        selection_aggregate_dict: dict[Any, Any] = {}
         selection_aggregates = []
         for selection in all_selections:
             if selection.study_uid in selection_aggregate_dict:
@@ -202,7 +198,7 @@ class StudySelectionCriteriaRepository:
         for_update: bool = False,
         study_value_version: str | None = None,
         criteria_type_name: str | None = None,
-    ) -> StudySelectionCriteriaAR | None:
+    ) -> StudySelectionCriteriaAR:
         """
         Finds all the selected study criteria for a given study, and creates the aggregate
         :param study_uid:
@@ -211,7 +207,7 @@ class StudySelectionCriteriaRepository:
         """
 
         if for_update:
-            self._acquire_write_lock_study_value(study_uid)
+            acquire_write_lock_study_value(study_uid)
         all_selections = self._retrieves_all_data(
             study_uid,
             study_value_version=study_value_version,
@@ -264,8 +260,8 @@ class StudySelectionCriteriaRepository:
         return study_root_node, latest_study_value_node
 
     def _list_selections_to_add_or_remove(
-        self, closure: dict, criteria: dict
-    ) -> tuple[dict, dict]:
+        self, closure: dict[Any, Any], criteria: dict[Any, Any]
+    ) -> tuple[dict[Any, Any], dict[Any, Any]]:
         """Compares the current and target state of the selection and returns the lists of objects to add/remove to/from the selection
 
         Args:
@@ -276,7 +272,7 @@ class StudySelectionCriteriaRepository:
             tuple[dict, dict]: Returns two lists of selections to add and to remove
         """
         selections_to_remove = {}
-        selections_to_add = {}
+        selections_to_add: dict[Any, Any] = {}
 
         # First, check for any removed items
         for criteria_type, criteria_list in closure.items():
@@ -331,13 +327,13 @@ class StudySelectionCriteriaRepository:
             study_uid=study_selection.study_uid
         )
         # group closure by criteria type
-        closure_group_by_type = {}
+        closure_group_by_type: dict[Any, Any] = {}
         for selected_object in study_selection.repository_closure_data:
             closure_group_by_type.setdefault(
                 selected_object.criteria_type_uid, []
             ).append(selected_object)
         # group criteria by type
-        criteria_group_by_type = {}
+        criteria_group_by_type: dict[Any, Any] = {}
         for selected_object in study_selection.study_criteria_selection:
             criteria_group_by_type.setdefault(
                 selected_object.criteria_type_uid, []
@@ -510,7 +506,7 @@ class StudySelectionCriteriaRepository:
             CALL {
                 WITH all_sc
                 MATCH (all_sc)-[:HAS_SELECTED_CRITERIA]->(:CriteriaValue)<-[ver]-(cr:CriteriaRoot)<-[:HAS_CRITERIA]
-                -(:CriteriaTemplateRoot)-[:HAS_TYPE]->(term:CTTermRoot)
+                -(:CriteriaTemplateRoot)-[:HAS_TYPE]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(term:CTTermRoot)
                 WHERE ver.status = 'Final'"""
             + (" AND term.uid=$criteria_type_uid" if criteria_type_uid else "")
             + """
@@ -519,7 +515,7 @@ class StudySelectionCriteriaRepository:
                 LIMIT 1
             UNION
                 WITH all_sc
-                MATCH (all_sc)-[:HAS_SELECTED_CRITERIA_TEMPLATE]->(:CriteriaTemplateValue)<-[ver]-(ctr:CriteriaTemplateRoot)-[:HAS_TYPE]->(term:CTTermRoot)
+                MATCH (all_sc)-[:HAS_SELECTED_CRITERIA_TEMPLATE]->(:CriteriaTemplateValue)<-[ver]-(ctr:CriteriaTemplateRoot)-[:HAS_TYPE]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(term:CTTermRoot)
                 WHERE ver.status = 'Final'"""
             + (" AND term.uid=$criteria_type_uid" if criteria_type_uid else "")
             + """
@@ -590,7 +586,7 @@ class StudySelectionCriteriaRepository:
         study_uid: str,
         criteria_type_uid: str | None = None,
         study_selection_uid: str | None = None,
-    ) -> list[dict | None]:
+    ) -> list[SelectionHistory]:
         """
         Simple method to return all versions of a study criteria for a study.
         Optionally a specific selection uid is given to see only the response for a specific selection.

@@ -1,5 +1,6 @@
 import datetime
 from dataclasses import dataclass
+from typing import Any
 
 from clinical_mdr_api.domain_repositories.generic_repository import (
     manage_previous_connected_study_selection_relationships,
@@ -32,12 +33,12 @@ class SelectionHistory:
     """Class for selection history items"""
 
     study_selection_uid: str
-    study_activity_subgroup_uid: str
+    study_activity_subgroup_uid: str | None
     study_activity_subgroup_order: int | None
-    activity_subgroup_uid: str
-    study_activity_group_uid: str
+    activity_subgroup_uid: str | None
+    study_activity_group_uid: str | None
     study_activity_group_order: int | None
-    activity_group_uid: str
+    activity_group_uid: str | None
     activity_uid: str
     soa_group_term_uid: str
     study_soa_group_uid: str
@@ -48,8 +49,8 @@ class SelectionHistory:
     show_activity_group_in_protocol_flowchart: bool | None
     show_activity_subgroup_in_protocol_flowchart: bool | None
     show_activity_in_protocol_flowchart: bool | None
-    show_soa_group_in_protocol_flowchart: bool | None
-    order: int | None
+    show_soa_group_in_protocol_flowchart: bool
+    order: int
     end_date: datetime.datetime | None
     activity_version: str | None
 
@@ -60,7 +61,7 @@ class StudySelectionActivityRepository(
     _aggregate_root_type = StudySelectionActivityAR
 
     def _create_value_object_from_repository(
-        self, selection: dict, acv: bool
+        self, selection: dict[Any, Any], acv: bool
     ) -> StudySelectionActivityVO:
         study_activity_subgroup = selection.get("study_activity_subgroup") or {}
         study_activity_group = selection.get("study_activity_group") or {}
@@ -82,27 +83,28 @@ class StudySelectionActivityRepository(
             activity_name=selection["activity_name"],
             activity_version=selection["activity_version"],
             activity_library_name=selection["activity_library_name"],
-            soa_group_term_uid=study_soa_group.get("soa_group_term_uid"),
+            soa_group_term_uid=study_soa_group["soa_group_term_uid"],
             soa_group_term_name=study_soa_group.get("soa_group_term_name"),
-            study_soa_group_uid=study_soa_group.get("selection_uid"),
+            study_soa_group_uid=study_soa_group["selection_uid"],
             study_soa_group_order=study_soa_group.get("order"),
             order=selection["order"],
             show_activity_in_protocol_flowchart=selection[
                 "show_activity_in_protocol_flowchart"
             ],
             show_activity_group_in_protocol_flowchart=study_activity_group.get(
-                "show_activity_group_in_protocol_flowchart"
+                "show_activity_group_in_protocol_flowchart", False
             ),
             show_activity_subgroup_in_protocol_flowchart=study_activity_subgroup.get(
-                "show_activity_subgroup_in_protocol_flowchart"
+                "show_activity_subgroup_in_protocol_flowchart", False
             ),
             show_soa_group_in_protocol_flowchart=study_soa_group.get(
-                "show_soa_group_in_protocol_flowchart"
+                "show_soa_group_in_protocol_flowchart", False
             ),
             start_date=convert_to_datetime(value=selection["start_date"]),
             author_id=selection["author_id"],
             author_username=selection["author_username"],
             accepted_version=acv,
+            keep_old_version=selection["keep_old_version"],
         )
 
     def _additional_match(self) -> str:
@@ -114,9 +116,7 @@ class StudySelectionActivityRepository(
                 OPTIONAL MATCH (sv)-[:HAS_STUDY_STANDARD_VERSION]->(study_standard_version:StudyStandardVersion)<-[:AFTER]-(:StudyAction)<-[:AUDIT_TRAIL]-(sr)
                 OPTIONAL MATCH (study_standard_version)-[:HAS_CT_PACKAGE]->(ct_package:CTPackage)
                 WHERE ct_package.uid CONTAINS "SDTM CT"
-                RETURN datetime(ct_package.effective_date + 'T23:59:59.999999000Z') AS terms_at_specific_datetime
-                ORDER BY study_standard_version.uid //sic
-                LIMIT 1
+                RETURN datetime(toString(date(ct_package.effective_date)) + 'T23:59:59.999999000Z') AS terms_at_specific_datetime
             }
             
             MATCH (sv)-[:HAS_STUDY_ACTIVITY]->(sa:StudyActivity)-[:HAS_SELECTED_ACTIVITY]->(av:ActivityValue)<-[ver:HAS_VERSION]-(ar:ActivityRoot)<-[:CONTAINS_CONCEPT]-(lib:Library)
@@ -125,7 +125,7 @@ class StudySelectionActivityRepository(
             
             CALL {
                 WITH sa, terms_at_specific_datetime
-                MATCH (sa)-[:STUDY_ACTIVITY_HAS_STUDY_SOA_GROUP]->(soa_group:StudySoAGroup)-[:HAS_FLOWCHART_GROUP]->(soa_group_term_root:CTTermRoot)
+                MATCH (sa)-[:STUDY_ACTIVITY_HAS_STUDY_SOA_GROUP]->(soa_group:StudySoAGroup)-[:HAS_FLOWCHART_GROUP]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(soa_group_term_root:CTTermRoot)
                 MATCH (soa_group)<-[:AFTER]-(after_action:StudyAction)
                 WITH *
                 ORDER BY after_action.date DESC
@@ -142,7 +142,7 @@ class StudySelectionActivityRepository(
             }
         """
 
-    def _filter_clause(self, query_parameters: dict, **kwargs) -> str:
+    def _filter_clause(self, query_parameters: dict[Any, Any], **kwargs) -> str:
         # Filter on Activity, ActivityGroup or ActivityGroupNames if provided as a specific filter
         # This improves performance vs full service level filter
         activity_names = kwargs.get("activity_names")
@@ -240,11 +240,15 @@ class StudySelectionActivityRepository(
                 sac.author_id AS author_id,
                 COALESCE(head([(user:User)-[*0]-() WHERE user.user_id=sac.author_id | user.username]), sac.author_id) AS author_username,
                 hv_ver.version AS activity_version,
-                lib.name as activity_library_name
+                lib.name as activity_library_name,
+                coalesce(sa.keep_old_version, false) AS keep_old_version
             """
 
     def get_selection_history(
-        self, selection: dict, change_type: str, end_date: datetime
+        self,
+        selection: dict[Any, Any],
+        change_type: str,
+        end_date: datetime.datetime | None,
     ):
         study_activity_subgroup = selection.get("study_activity_subgroup") or {}
         study_activity_group = selection.get("study_activity_group") or {}
@@ -260,8 +264,8 @@ class StudySelectionActivityRepository(
             activity_uid=selection["activity_uid"],
             order=selection["order"],
             activity_version=selection["activity_version"],
-            soa_group_term_uid=study_soa_group.get("soa_group_term_uid"),
-            study_soa_group_uid=study_soa_group.get("selection_uid"),
+            soa_group_term_uid=study_soa_group["soa_group_term_uid"],
+            study_soa_group_uid=study_soa_group["selection_uid"],
             study_soa_group_order=study_soa_group.get("order"),
             author_id=selection["author_id"],
             change_type=change_type,
@@ -275,13 +279,13 @@ class StudySelectionActivityRepository(
             show_activity_subgroup_in_protocol_flowchart=study_activity_subgroup.get(
                 "show_activity_subgroup_in_protocol_flowchart"
             ),
-            show_soa_group_in_protocol_flowchart=study_soa_group.get(
+            show_soa_group_in_protocol_flowchart=study_soa_group[
                 "show_soa_group_in_protocol_flowchart"
-            ),
+            ],
             end_date=end_date,
         )
 
-    def get_audit_trail_query(self, study_selection_uid: str):
+    def get_audit_trail_query(self, study_selection_uid: str | None):
         if study_selection_uid:
             audit_trail_cypher = """
             MATCH (sr:StudyRoot { uid: $study_uid})-[:AUDIT_TRAIL]->(:StudyAction)-[:BEFORE|AFTER]->(sa:StudyActivity { uid: $study_selection_uid})
@@ -315,7 +319,7 @@ class StudySelectionActivityRepository(
                         all_sa.order AS order,
                         all_sa.uid AS study_selection_uid,
                         all_sa.show_activity_in_protocol_flowchart AS show_activity_in_protocol_flowchart,
-                        head(apoc.coll.sortMulti([(all_sa)-[:STUDY_ACTIVITY_HAS_STUDY_SOA_GROUP]->(soa_group:StudySoAGroup)-[:HAS_FLOWCHART_GROUP]->(soa_group_term_root:CTTermRoot) | 
+                        head(apoc.coll.sortMulti([(all_sa)-[:STUDY_ACTIVITY_HAS_STUDY_SOA_GROUP]->(soa_group:StudySoAGroup)-[:HAS_FLOWCHART_GROUP]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(soa_group_term_root:CTTermRoot) | 
                         {
                             selection_uid: soa_group.uid, 
                             soa_group_term_uid: soa_group_term_root.uid,
@@ -377,6 +381,7 @@ class StudySelectionActivityRepository(
         study_activity_selection_node = StudyActivity(
             order=order,
             show_activity_in_protocol_flowchart=selection.show_activity_in_protocol_flowchart,
+            keep_old_version=selection.keep_old_version,
         )
         study_activity_selection_node.uid = selection.study_selection_uid
         study_activity_selection_node.accepted_version = selection.accepted_version

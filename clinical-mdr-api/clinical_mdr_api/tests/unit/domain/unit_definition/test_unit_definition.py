@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from datetime import datetime, timezone
+from typing import Any, Self
 
 import pytest
 from hypothesis import HealthCheck, assume, given, settings
@@ -112,6 +113,40 @@ class CTTermNameAR:
         return self._term_vo
 
 
+@dataclass(frozen=True)
+class CTSimpleCodelistTermVO:
+    """
+    The CTSimpleCodelistTermVO acts as the value object for a single CT simple codelist term
+    """
+
+    term_uid: str
+    term_name: str
+    submission_value: str
+    order: int | None
+    codelist_uid: str | None
+    codelist_name: str | None
+    codelist_submission_value: str | None
+
+
+@dataclass
+class CTSimpleCodelistTermAR:
+    _ct_simple_codelist_term_vo: CTSimpleCodelistTermVO
+
+    @property
+    def ct_simple_codelist_term_vo(self) -> CTSimpleCodelistTermVO:
+        return self._ct_simple_codelist_term_vo
+
+    @classmethod
+    def from_repository_values(
+        cls,
+        ct_simple_codelist_term_vo: CTSimpleCodelistTermVO,
+    ) -> Self:
+        ct_simple_codelist_term_ar = cls(
+            _ct_simple_codelist_term_vo=ct_simple_codelist_term_vo,
+        )
+        return ct_simple_codelist_term_ar
+
+
 def get_mock_ct_item(name):
     return CTTermNameAR(name=name)
 
@@ -175,13 +210,13 @@ def unit_definition_values(draw, valid_unit_ct_uid_set: list[str] | None = None)
         legacy_code=draw(one_of(none(), stripped_non_empty_strings())),
         use_molecular_weight=False,
         conversion_factor_to_master=conversion_factor_to_master,
-        unit_ct_uid_exists_callback=(lambda _: True),
+        unit_ct_uid_exists_callback=lambda _: True,
         unit_dimension_uid=unit_dimension,
         ucum_uid=draw(one_of(none(), stripped_non_empty_strings())),
         order=draw(integers(1, 20)),
         comment=draw(one_of(none(), stripped_non_empty_strings())),
         definition=draw(one_of(none(), stripped_non_empty_strings())),
-        ucum_uid_exists_callback=(lambda _: True),
+        ucum_uid_exists_callback=lambda _: True,
         find_term_by_uid=lambda _: get_mock_ct_item(unit_dimension),
         is_template_parameter=False,
     )
@@ -315,8 +350,8 @@ def unit_definitions(
 )
 def test__unit_definition_value_vo__from_repository__existing_unit_ct_id__success(
     name: str,
-    ct_units: list,
-    unit_subsets: list,
+    ct_units: list[Any],
+    unit_subsets: list[Any],
     convertible_unit: bool,
     display_unit: bool,
     master_unit: bool,
@@ -401,8 +436,8 @@ def test__unit_definition_value_vo__from_repository__existing_unit_ct_id__succes
 )
 def test__unit_definition_value_vo__from_input__existing_unit_ct_id__success(
     name: str,
-    ct_units: list,
-    unit_subsets: list,
+    ct_units: list[Any],
+    unit_subsets: list[Any],
     convertible_unit: bool,
     display_unit: bool,
     master_unit: bool,
@@ -437,12 +472,12 @@ def test__unit_definition_value_vo__from_input__existing_unit_ct_id__success(
         use_molecular_weight=use_molecular_weight,
         unit_dimension_uid=unit_dimension,
         convertible_unit=convertible_unit,
-        unit_ct_uid_exists_callback=(lambda _: True),
+        unit_ct_uid_exists_callback=lambda _: True,
         ucum_uid=ucum_uid,
         definition=definition,
         order=order,
         comment=comment,
-        ucum_uid_exists_callback=(lambda _: True),
+        ucum_uid_exists_callback=lambda _: True,
         find_term_by_uid=lambda _: get_mock_ct_item(unit_dimension),
         is_template_parameter=False,
     )
@@ -496,8 +531,8 @@ def test__unit_definition_value_vo__from_input__existing_unit_ct_id__success(
 )
 def test__unit_definition_value_vo__from_input__non_existent_unit_ct_id__failure(
     name: str,
-    ct_units: list,
-    unit_subsets: list,
+    ct_units: list[Any],
+    unit_subsets: list[Any],
     convertible_unit: bool,
     display_unit: bool,
     master_unit: bool,
@@ -530,12 +565,12 @@ def test__unit_definition_value_vo__from_input__non_existent_unit_ct_id__failure
             use_molecular_weight=use_molecular_weight,
             unit_dimension_uid=unit_dimension,
             convertible_unit=convertible_unit,
-            unit_ct_uid_exists_callback=(lambda _: False),
+            unit_ct_uid_exists_callback=lambda _: False,
             ucum_uid=ucum_uid,
             definition=definition,
             order=order,
             comment=comment,
-            ucum_uid_exists_callback=(lambda _: True),
+            ucum_uid_exists_callback=lambda _: True,
             find_term_by_uid=lambda _: get_mock_ct_item(unit_dimension),
             is_template_parameter=False,
         )
@@ -568,7 +603,7 @@ def test__unit_definition_ar__from_input_values__success(
     unit_definition_ar = UnitDefinitionAR.from_input_values(
         library=library,
         author_id=author_id,
-        uid_supplier=(lambda: uid),
+        uid_supplier=lambda: uid,
         unit_definition_value=unit_definition_value,
         concept_exists_by_callback=lambda x, y, z: y != unit_definition_value.name,
         master_unit_exists_for_dimension_predicate=lambda _: _
@@ -636,7 +671,7 @@ def test__unit_definition_ar__from_input_values__non_unique_name__failure(
         UnitDefinitionAR.from_input_values(
             library=library,
             author_id=author_id,
-            uid_supplier=(lambda: uid),
+            uid_supplier=lambda: uid,
             unit_definition_value=unit_definition_value,
             concept_exists_by_callback=lambda x, y, z: y == unit_definition_value.name,
             master_unit_exists_for_dimension_predicate=lambda _: False,
@@ -664,7 +699,7 @@ def test__unit_definition_ar__from_input_values__non_unique_legacy_code__failure
         UnitDefinitionAR.from_input_values(
             library=library,
             author_id=author_id,
-            uid_supplier=(lambda: uid),
+            uid_supplier=lambda: uid,
             unit_definition_value=unit_definition_value,
             concept_exists_by_callback=lambda x, y, z: False,
             master_unit_exists_for_dimension_predicate=lambda _: False,
@@ -703,7 +738,7 @@ def test__unit_definition_ar__from_input_values__non_editable_library__failure(
         UnitDefinitionAR.from_input_values(
             library=library,
             author_id=author_id,
-            uid_supplier=(lambda: uid),
+            uid_supplier=lambda: uid,
             unit_definition_value=unit_definition_value,
             concept_exists_by_callback=lambda x, y, z: False,
             master_unit_exists_for_dimension_predicate=lambda _: False,
@@ -1213,13 +1248,13 @@ def test__unit_definition_value_vo__from_input_values__non_1_conversion_factor_f
             legacy_code=unit_definition_value.legacy_code,
             use_molecular_weight=unit_definition_value.use_molecular_weight,
             conversion_factor_to_master=non_1_conversion_factor,
-            unit_ct_uid_exists_callback=(lambda _: True),
+            unit_ct_uid_exists_callback=lambda _: True,
             unit_dimension_uid=unit_definition_value.unit_dimension_uid,
             ucum_uid=unit_definition_value.ucum_uid,
             definition=unit_definition_value.definition,
             order=unit_definition_value.order,
             comment=unit_definition_value.comment,
-            ucum_uid_exists_callback=(lambda _: True),
+            ucum_uid_exists_callback=lambda _: True,
             find_term_by_uid=lambda _: get_mock_ct_item(
                 unit_definition_value.unit_dimension_uid
             ),
@@ -1248,13 +1283,13 @@ def test__unit_definition_value_vo__from_input_values__molecular_weight_conv_exp
             legacy_code=unit_definition_value.legacy_code,
             use_molecular_weight=None,
             conversion_factor_to_master=unit_definition_value.conversion_factor_to_master,
-            unit_ct_uid_exists_callback=(lambda _: True),
+            unit_ct_uid_exists_callback=lambda _: True,
             unit_dimension_uid=CONCENTRATION_UNIT_DIMENSION_VALUE,
             ucum_uid=unit_definition_value.ucum_uid,
             definition=unit_definition_value.definition,
             order=unit_definition_value.order,
             comment=unit_definition_value.comment,
-            ucum_uid_exists_callback=(lambda _: True),
+            ucum_uid_exists_callback=lambda _: True,
             find_term_by_uid=lambda _: get_mock_ct_item(
                 CONCENTRATION_UNIT_DIMENSION_VALUE
             ),

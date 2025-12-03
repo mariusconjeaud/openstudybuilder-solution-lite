@@ -1,3 +1,5 @@
+from typing import Any
+
 from neomodel import db  # type: ignore
 
 from clinical_mdr_api.domains.projects.project import ProjectAR
@@ -17,18 +19,18 @@ from common.auth.user import user
 
 
 class ProjectService:
-    author_id: str | None
+    author_id: str
 
     def __init__(self):
         self.author_id = user().id()
 
     def get_all_projects(
         self,
-        sort_by: dict | None = None,
+        sort_by: dict[str, bool] | None = None,
         page_number: int = 1,
         page_size: int = 10,
-        filter_by: dict | None = None,
-        filter_operator: FilterOperator | None = FilterOperator.AND,
+        filter_by: dict[str, dict[str, Any]] | None = None,
+        filter_operator: FilterOperator = FilterOperator.AND,
         total_count: bool = False,
     ) -> GenericFilteringReturn[Project]:
         repos = MetaRepository()
@@ -50,8 +52,8 @@ class ProjectService:
                 page_number=page_number,
                 page_size=page_size,
             )
-            return GenericFilteringReturn.create(
-                filtered_items.items, filtered_items.total
+            return GenericFilteringReturn(
+                items=filtered_items.items, total=filtered_items.total
             )
         finally:
             repos.close()
@@ -59,9 +61,9 @@ class ProjectService:
     def get_project_headers(
         self,
         field_name: str,
-        search_string: str | None = "",
-        filter_by: dict | None = None,
-        filter_operator: FilterOperator | None = FilterOperator.AND,
+        search_string: str = "",
+        filter_by: dict[str, dict[str, Any]] | None = None,
+        filter_operator: FilterOperator = FilterOperator.AND,
         page_size: int = 10,
     ):
         repos = MetaRepository()

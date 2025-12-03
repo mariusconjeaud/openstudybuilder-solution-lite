@@ -1,5 +1,6 @@
 from codecs import iterdecode
 from csv import DictReader
+from xml.dom.minicompat import NodeList
 from xml.dom.minidom import Document
 
 from fastapi import UploadFile
@@ -43,7 +44,7 @@ def map_xml(xml_document: Document, mapper: UploadFile | None):
     dict_reader = DictReader(iterdecode(mapper.file, "utf-8"))
 
     BusinessLogicException.raise_if_not(
-        MANDATORY_MAPPER_FIELDS.issubset(dict_reader.fieldnames),
+        MANDATORY_MAPPER_FIELDS.issubset(dict_reader.fieldnames or {}),
         msg=f"These headers must be present: {sorted(MANDATORY_MAPPER_FIELDS)}",
     )
 
@@ -84,7 +85,7 @@ def _get_elements(xml_document: Document, name: str, parent: str):
     if parent == "*":
         return xml_document.getElementsByTagName(name)
 
-    elements = []
+    elements: NodeList = NodeList()
     parent_elements = xml_document.getElementsByTagName(parent)
     for parent_element in parent_elements:
         elements += parent_element.getElementsByTagName(name)

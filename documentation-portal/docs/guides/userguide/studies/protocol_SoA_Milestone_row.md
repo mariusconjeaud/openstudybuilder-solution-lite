@@ -4,13 +4,13 @@ This is a guide for marking visit types as SoA milestones and displaying them in
 
 ## Introduction
 
-This guide explains how to create the protocol milestone row in the Protocol SoA generated from StudyBuilder. 
+This guide explains how to create the protocol milestone row in the Protocol SoA generated from OpenStudyBuilder. 
 Protocol milestones are NN defined events that are relevant for the study design overview and the sites using the Protocol. 
 By creating the protocol milestone row, you can easily identify and communicate the SoA milestones to the stakeholders and reviewers.
 
 ## Prerequisites
 
-To create the protocol milestone row, you need to have the following in StudyBuilder:
+To create the protocol milestone row, you need to have the following in OpenStudyBuilder:
  - A study with at least one visit type defined in the study structure
  - Access to the study structure, study activities, and SoA modules
 

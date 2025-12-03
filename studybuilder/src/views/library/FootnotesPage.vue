@@ -8,16 +8,16 @@
       <v-tab
         v-for="type in footnoteTypes"
         :key="type.term_uid"
-        :value="type.name.sponsor_preferred_name"
+        :value="type.sponsor_preferred_name"
       >
-        {{ type.name.sponsor_preferred_name }}
+        {{ type.sponsor_preferred_name }}
       </v-tab>
     </v-tabs>
     <v-window v-model="tab">
       <v-window-item
         v-for="type in footnoteTypes"
         :key="type.term_uid"
-        :value="type.name.sponsor_preferred_name"
+        :value="type.sponsor_preferred_name"
       >
         <FootnoteTable :key="type.refreshKey" :footnote-type="type" />
       </v-window-item>
@@ -51,7 +51,7 @@ export default {
   watch: {
     tab(newValue) {
       for (const type of this.footnoteTypes) {
-        if (type.name.sponsor_preferred_name === newValue) {
+        if (type.sponsor_preferred_name === newValue) {
           type.refreshKey++
           break
         }
@@ -64,13 +64,12 @@ export default {
     },
   },
   mounted() {
-    terms.getByCodelist('footnoteTypes').then((resp) => {
+    terms.getTermsByCodelist('footnoteTypes').then((resp) => {
       this.footnoteTypes = resp.data.items.map((item) => {
         return { ...item, refreshKey: 1 }
       })
       this.tab =
-        this.$route.params.tab ||
-        this.footnoteTypes[0].name.sponsor_preferred_name
+        this.$route.params.tab || this.footnoteTypes[0].sponsor_preferred_name
     })
   },
 }

@@ -44,7 +44,7 @@ class FootnotePreInstanceRepository(
             sequence_id=root.sequence_id,
             library=LibraryVO.from_input_values_2(
                 library_name=library.name,
-                is_library_editable_callback=(lambda _: library.is_editable),
+                is_library_editable_callback=lambda _: library.is_editable,
             ),
             item_metadata=self._library_item_metadata_vo_from_relation(relationship),
             template=self.get_template_vo(root, value, kwargs["instance_template"]),
@@ -57,9 +57,6 @@ class FootnotePreInstanceRepository(
                     ],
                 ),
                 attributes=SimpleTermAttributes(
-                    code_submission_value=kwargs["template_type"][
-                        "code_submission_value"
-                    ],
                     nci_preferred_name=kwargs["template_type"]["preferred_term"],
                 ),
             ),
@@ -122,10 +119,13 @@ class FootnotePreInstanceRepository(
 
         for indication in item.indications or []:
             root.has_indication.connect(self._get_indication(indication.term_uid))
+
         for activity in item.activities or []:
             root.has_activity.connect(self._get_activity(activity.uid))
+
         for group in item.activity_groups or []:
             root.has_activity_group.connect(self._get_activity_group(group.uid))
+
         for group in item.activity_subgroups or []:
             root.has_activity_subgroup.connect(self._get_activity_subgroup(group.uid))
 

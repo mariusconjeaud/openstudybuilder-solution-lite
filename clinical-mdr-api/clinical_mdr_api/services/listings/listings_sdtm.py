@@ -1,3 +1,5 @@
+from typing import Any
+
 from neomodel import db
 
 from clinical_mdr_api.listings.query_service import QueryService
@@ -22,11 +24,11 @@ class SDTMListingsService:
     def list_tv(
         self,
         study_uid: str,
-        sort_by: dict | None = None,
+        sort_by: dict[str, bool] | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: dict | None = None,
-        filter_operator: FilterOperator | None = FilterOperator.AND,
+        filter_by: dict[str, dict[str, Any]] | None = None,
+        filter_operator: FilterOperator = FilterOperator.AND,
         total_count: bool = False,
         study_value_version: str | None = None,
     ) -> GenericFilteringReturn[StudyVisitListing]:
@@ -35,7 +37,7 @@ class SDTMListingsService:
         )
         result = list(map(StudyVisitListing.from_query, data))
 
-        filtered_items = service_level_generic_filtering(
+        return service_level_generic_filtering(
             items=result,
             filter_by=filter_by,
             filter_operator=filter_operator,
@@ -45,17 +47,15 @@ class SDTMListingsService:
             page_size=page_size,
         )
 
-        return filtered_items
-
     @db.transaction
     def list_ta(
         self,
         study_uid: str,
-        sort_by: dict | None = None,
+        sort_by: dict[str, bool] | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: dict | None = None,
-        filter_operator: FilterOperator | None = FilterOperator.AND,
+        filter_by: dict[str, dict[str, Any]] | None = None,
+        filter_operator: FilterOperator = FilterOperator.AND,
         total_count: bool = False,
         study_value_version: str | None = None,
     ) -> GenericFilteringReturn[StudyArmListing]:
@@ -64,7 +64,7 @@ class SDTMListingsService:
         )
         result = list(map(StudyArmListing.from_query, data))
 
-        filtered_items = service_level_generic_filtering(
+        return service_level_generic_filtering(
             items=result,
             filter_by=filter_by,
             filter_operator=filter_operator,
@@ -74,17 +74,15 @@ class SDTMListingsService:
             page_size=page_size,
         )
 
-        return filtered_items
-
     @db.transaction
     def list_ti(
         self,
         study_uid: str,
-        sort_by: dict | None = None,
+        sort_by: dict[str, bool] | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: dict | None = None,
-        filter_operator: FilterOperator | None = FilterOperator.AND,
+        filter_by: dict[str, dict[str, Any]] | None = None,
+        filter_operator: FilterOperator = FilterOperator.AND,
         total_count: bool = False,
         study_value_version: str | None = None,
     ) -> GenericFilteringReturn[StudyCriterionListing]:
@@ -93,7 +91,7 @@ class SDTMListingsService:
         )
         result = list(map(StudyCriterionListing.from_query, data))
 
-        filtered_items = service_level_generic_filtering(
+        return service_level_generic_filtering(
             items=result,
             filter_by=filter_by,
             filter_operator=filter_operator,
@@ -103,17 +101,15 @@ class SDTMListingsService:
             page_size=page_size,
         )
 
-        return filtered_items
-
     @db.transaction
     def list_ts(
         self,
         study_uid: str,
-        sort_by: dict | None = None,
+        sort_by: dict[str, bool] | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: dict | None = None,
-        filter_operator: FilterOperator | None = FilterOperator.AND,
+        filter_by: dict[str, dict[str, Any]] | None = None,
+        filter_operator: FilterOperator = FilterOperator.AND,
         total_count: bool = False,
         study_value_version: str | None = None,
     ) -> GenericFilteringReturn[StudySummaryListing]:
@@ -122,7 +118,7 @@ class SDTMListingsService:
         )
         result = list(map(StudySummaryListing.from_query, data))
 
-        filtered_items = service_level_generic_filtering(
+        return service_level_generic_filtering(
             items=result,
             filter_by=filter_by,
             filter_operator=filter_operator,
@@ -132,17 +128,15 @@ class SDTMListingsService:
             page_size=page_size,
         )
 
-        return filtered_items
-
     @db.transaction
     def list_te(
         self,
         study_uid: str,
-        sort_by: dict | None = None,
+        sort_by: dict[str, bool] | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: dict | None = None,
-        filter_operator: FilterOperator | None = FilterOperator.AND,
+        filter_by: dict[str, dict[str, Any]] | None = None,
+        filter_operator: FilterOperator = FilterOperator.AND,
         total_count: bool = False,
         study_value_version: str | None = None,
     ) -> GenericFilteringReturn[StudyElementListing]:
@@ -151,7 +145,7 @@ class SDTMListingsService:
         )
         result = list(map(StudyElementListing.from_query, data))
 
-        filtered_items = service_level_generic_filtering(
+        return service_level_generic_filtering(
             items=result,
             filter_by=filter_by,
             filter_operator=filter_operator,
@@ -161,17 +155,15 @@ class SDTMListingsService:
             page_size=page_size,
         )
 
-        return filtered_items
-
     @db.transaction
     def list_tdm(
         self,
         study_uid: str,
-        sort_by: dict | None = None,
+        sort_by: dict[str, bool] | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: dict | None = None,
-        filter_operator: FilterOperator | None = FilterOperator.AND,
+        filter_by: dict[str, dict[str, Any]] | None = None,
+        filter_operator: FilterOperator = FilterOperator.AND,
         total_count: bool = False,
         study_value_version: str | None = None,
     ) -> GenericFilteringReturn[StudyDiseaseMilestoneListing]:
@@ -180,7 +172,7 @@ class SDTMListingsService:
         )
         result = list(map(StudyDiseaseMilestoneListing.from_query, data))
 
-        filtered_items = service_level_generic_filtering(
+        return service_level_generic_filtering(
             items=result,
             filter_by=filter_by,
             filter_operator=filter_operator,
@@ -189,5 +181,3 @@ class SDTMListingsService:
             page_number=page_number,
             page_size=page_size,
         )
-
-        return filtered_items

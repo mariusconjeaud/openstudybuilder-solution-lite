@@ -6,6 +6,7 @@ import copy
 import json
 import logging
 from functools import reduce
+from typing import Any
 from unittest import mock
 
 import pytest
@@ -86,7 +87,7 @@ weight_sas: StudyActivitySchedule
 study_epoch: StudyEpoch
 first_visit: StudyVisit
 second_visit: StudyVisit
-sa_weight: StudySelectionActivity
+new_soa_footnote_uid: str
 
 
 @pytest.fixture(scope="module")
@@ -102,7 +103,7 @@ def test_data():
     db_name = "studysoafootnotesapi"
     inject_and_clear_db(db_name)
     global second_study
-    second_study = inject_base_data()
+    second_study, _test_data_dict = inject_base_data()
     global study
     study = TestUtils.create_study()
     TestUtils.set_study_standard_version(study_uid=study.uid)
@@ -141,12 +142,23 @@ def test_data():
     text_value_1 = TestUtils.create_text_value()
     text_value_2 = TestUtils.create_text_value()
 
+    type_codelist = TestUtils.create_ct_codelist(
+        name="Footnote Type",
+        submission_value="FTNTTP",
+        extensible=True,
+        approve=True,
+    )
+
     # Create Dictionary/CT Terms
     ct_term_schedule_of_activities = TestUtils.create_ct_term(
-        sponsor_preferred_name="Schedule of Activities"
+        sponsor_preferred_name="Schedule of Activities",
+        codelist_uid=type_codelist.codelist_uid,
     )
     flowchart_group_codelist = TestUtils.create_ct_codelist(
-        sponsor_preferred_name="Flowchart Group", extensible=True, approve=True
+        sponsor_preferred_name="Flowchart Group",
+        extensible=True,
+        approve=True,
+        submission_value="FLWCRTGRP",
     )
     flowchart_group = TestUtils.create_ct_term(
         sponsor_preferred_name="Subject Information",
@@ -344,6 +356,17 @@ def test_data():
         ],
     )
     soa_footnotes.append(weight_sas_footnote)
+    soa_footnote_to_delete = TestUtils.create_study_soa_footnote(
+        study_uid=study.uid,
+        footnote_template_uid=footnote_templates[1].uid,
+        referenced_items=[
+            ReferencedItem(
+                item_uid=weight_sas.study_activity_schedule_uid,
+                item_type=SoAItemType.STUDY_ACTIVITY_SCHEDULE,
+            )
+        ],
+    )
+    soa_footnotes.append(soa_footnote_to_delete)
     yield
 
 
@@ -370,6 +393,22 @@ STUDY_FOOTNOTE_FIELDS_NOT_NULL = [
     "accepted_version",
 ]
 
+STUDY_FOOTNOTE_FIELDS_ALL_MINIMAL_RESPONSE = [
+    "uid",
+    "study_uid",
+    "order",
+    "referenced_items",
+    "footnote",
+    "template",
+]
+
+STUDY_FOOTNOTE_FIELDS_NOT_NULL_MINIMAL_RESPONSE = [
+    "uid",
+    "study_uid",
+    "order",
+    "referenced_items",
+]
+
 
 def test_get_study_soa_footnote(api_client):
     response = api_client.get(
@@ -381,7 +420,7 @@ def test_get_study_soa_footnote(api_client):
 
     # Check fields included in the response
     fields_all_set = set(STUDY_FOOTNOTE_FIELDS_ALL)
-    assert set(list(res.keys())) == fields_all_set
+    assert set(res.keys()) == fields_all_set
     for key in STUDY_FOOTNOTE_FIELDS_NOT_NULL:
         assert res[key] is not None
     assert res["uid"] == soa_footnotes[0].uid
@@ -399,30 +438,70 @@ def test_get_study_soa_footnote(api_client):
     assert res["template"]["uid"] == footnote_templates[0].uid
 
 
+def test_get_study_soa_footnotes_minimal_response(api_client):
+    response = api_client.get(
+        f"/studies/{study.uid}/study-soa-footnotes", params={"minimal_response": True}
+    )
+    assert_response_status_code(response, 200)
+
+    study_soa_footnotes = response.json()["items"]
+    for order, study_soa_footnote in enumerate(study_soa_footnotes, start=1):
+        # Check fields included in the response
+        fields_all_set = set(STUDY_FOOTNOTE_FIELDS_ALL_MINIMAL_RESPONSE)
+        assert set(study_soa_footnote.keys()) == fields_all_set
+        for key in STUDY_FOOTNOTE_FIELDS_NOT_NULL_MINIMAL_RESPONSE:
+            assert study_soa_footnote[key] is not None
+        assert study_soa_footnote["uid"] is not None
+        assert study_soa_footnote["study_uid"] == study.uid
+        assert study_soa_footnote["order"] == order
+        for ref_item in study_soa_footnote["referenced_items"]:
+            assert ref_item["item_uid"] is not None
+            assert ref_item["item_type"] is not None
+            assert "item_name" not in ref_item
+            assert "visible_in_protocol_soa" not in ref_item
+
+        assert study_soa_footnote["template"]["uid"] is not None
+        assert study_soa_footnote["template"]["name"] is not None
+        assert study_soa_footnote["template"]["name_plain"] is not None
+        assert "library_name" not in study_soa_footnote["template"]
+        assert "version" not in study_soa_footnote["template"]
+        assert "parameters" not in study_soa_footnote["template"]
+
+        assert "version" not in study_soa_footnote["template"]
+        assert "library_name" not in study_soa_footnote["template"]
+        assert "parameters" not in study_soa_footnote["template"]
+        assert study_soa_footnote["footnote"] is None
+        assert "latest_footnote" not in study_soa_footnote
+        assert "modified" not in study_soa_footnote
+        assert "accepted_version" not in study_soa_footnote
+        assert "author_username" not in study_soa_footnote
+        assert "study_version" not in study_soa_footnote
+
+
 def test_get_soa_footnotes_pagination(api_client):
     url = f"/studies/{study.uid}/study-soa-footnotes"
-    results_paginated: dict = {}
+    results_paginated: dict[Any, Any] = {}
     sort_by = '{"uid": true}'
     for page_number in range(1, 4):
         response = api_client.get(
             f"{url}?page_number={page_number}&page_size=10&sort_by={sort_by}"
         )
         res = response.json()
-        res_uids = list(map(lambda x: x["uid"], res["items"]))
+        res_uids = [item["uid"] for item in res["items"]]
         results_paginated[page_number] = res_uids
         log.info("Page %s: %s", page_number, res_uids)
 
     log.info("All pages: %s", results_paginated)
 
     results_paginated_merged = list(
-        list(reduce(lambda a, b: a + b, list(results_paginated.values())))
+        list(reduce(lambda a, b: list(a) + list(b), list(results_paginated.values())))
     )
     log.info("All rows returned by pagination: %s", results_paginated_merged)
 
     res_all = api_client.get(
         f"{url}?page_number=1&page_size=100&sort_by={sort_by}"
     ).json()
-    results_all_in_one_page = list(map(lambda x: x["uid"], res_all["items"]))
+    results_all_in_one_page = [item["uid"] for item in res_all["items"]]
     log.info("All rows in one page: %s", results_all_in_one_page)
     assert len(results_all_in_one_page) == len(results_paginated_merged)
 
@@ -430,12 +509,12 @@ def test_get_soa_footnotes_pagination(api_client):
 @pytest.mark.parametrize(
     "page_size, page_number, total_count, sort_by, expected_result_len",
     [
-        pytest.param(None, None, True, None, 2),
-        pytest.param(3, 1, True, None, 2),
+        pytest.param(None, None, True, None, 3),
+        pytest.param(3, 1, True, None, 3),
         pytest.param(3, 2, True, None, 0),
         pytest.param(10, 2, True, None, 0),
         pytest.param(10, 3, True, None, 0),
-        pytest.param(10, 1, True, '{"uid": false}', 2),
+        pytest.param(10, 1, True, '{"uid": false}', 3),
         pytest.param(10, 2, True, '{"uid": true}', 0),
     ],
 )
@@ -465,11 +544,7 @@ def test_get_study_soa_footnotes(
     # Check fields included in the response
     assert list(res.keys()) == ["items", "total", "page", "size"]
     assert len(res["items"]) == expected_result_len
-    assert res["total"] == (
-        len([footnote for footnote in footnotes if footnote.status == "Final"])
-        if total_count
-        else 0
-    )
+    assert res["total"] == (len(soa_footnotes) if total_count else 0)
     assert res["page"] == (page_number if page_number else 1)
     assert res["size"] == (page_size if page_size else 10)
 
@@ -593,7 +668,7 @@ def test_footnote_reordering_when_adding_new_footnote(api_client):
     assert_response_status_code(response, 200)
     res = response.json()["items"]
 
-    assert len(res) == 2
+    assert len(res) == 3
 
     assert (
         res[0]["referenced_items"][0]["item_uid"]
@@ -639,7 +714,7 @@ def test_footnote_reordering_when_adding_new_footnote(api_client):
     assert_response_status_code(response, 200)
     res = response.json()["items"]
 
-    assert len(res) == 3
+    assert len(res) == 4
 
     assert (
         res[0]["referenced_items"][0]["item_uid"]
@@ -707,7 +782,13 @@ def test_edit(api_client):
 
     assert_response_status_code(response, 200)
     res = response.json()
-    assert res["order"] == 3
+    assert (
+        res["referenced_items"][0]["item_uid"] == weight_sas.study_activity_schedule_uid
+    )
+    assert (
+        res["referenced_items"][0]["item_type"]
+        == SoAItemType.STUDY_ACTIVITY_SCHEDULE.value
+    )
 
     response = api_client.patch(
         f"/studies/{study.uid}/study-soa-footnotes/{soa_footnotes[1].uid}",
@@ -751,17 +832,17 @@ def test_edit(api_client):
 
 def test_delete(api_client):
     response = api_client.get(
-        f"/studies/{study.uid}/study-soa-footnotes/{soa_footnotes[0].uid}"
+        f"/studies/{study.uid}/study-soa-footnotes/{soa_footnotes[2].uid}"
     )
     assert_response_status_code(response, 200)
 
     response = api_client.delete(
-        f"/studies/{study.uid}/study-soa-footnotes/{soa_footnotes[0].uid}"
+        f"/studies/{study.uid}/study-soa-footnotes/{soa_footnotes[2].uid}"
     )
     assert_response_status_code(response, 204)
 
     response = api_client.get(
-        f"/studies/{study.uid}/study-soa-footnotes/{soa_footnotes[0].uid}"
+        f"/studies/{study.uid}/study-soa-footnotes/{soa_footnotes[2].uid}"
     )
     assert_response_status_code(response, 404)
 
@@ -894,12 +975,10 @@ def test_preview_study_soa_footnote(api_client):
     )
     assert_response_status_code(response, 200)
     res = response.json()
-    assert res["footnote"]["parameter_terms"][0]["terms"][0]["uid"] == text_value1.uid
-    assert res["footnote"]["template"]["uid"] == footnote_templates[0].uid
-    assert res["footnote"]["template"]["name"] == footnote_templates[0].name
-    assert res["footnote"]["template"]["name_plain"] == footnote_templates[
-        0
-    ].name.replace("[TextValue]", text_value1.name_sentence_case)
+    assert res["footnote"]["template_uid"] == footnote_templates[0].uid
+    assert res["footnote"]["name_plain"] == footnote_templates[0].name.replace(
+        "[TextValue]", text_value1.name_sentence_case
+    )
 
 
 @pytest.mark.parametrize(
@@ -986,6 +1065,9 @@ def test_audit_trail_specific_soa_footnote(api_client):
     assert_response_status_code(response, 201)
     res = response.json()
     uid = res["uid"]
+    global new_soa_footnote_uid
+    new_soa_footnote_uid = uid
+
     response = api_client.patch(
         f"/studies/{study.uid}/study-soa-footnotes/{uid}",
         json={
@@ -1004,12 +1086,11 @@ def test_audit_trail_specific_soa_footnote(api_client):
     assert_response_status_code(response, 200)
     res = response.json()
 
-    assert len(res) == 3
-    assert set(res[0]["changes"]) == set(["order", "start_date", "end_date"])
-    assert set(res[1]["changes"]) == set(
+    assert len(res) == 2
+    assert set(res[0]["changes"]) == set(
         ["referenced_items", "change_type", "start_date", "end_date"]
     )
-    assert res[-1]["changes"] == []
+    assert res[1]["changes"] == []
 
 
 def test_add_footnotes_to_subgroup_and_group(api_client):
@@ -1067,12 +1148,16 @@ def test_modify_actions_on_locked_study(api_client):
             "guidance_text": "don't know",
         },
     )
+    assert_response_status_code(response, 201)
     response = api_client.post(
         f"/footnote-templates/{footnote_templates[0].uid}/approvals?cascade=true"
     )
+    assert_response_status_code(response, 201)
+
+    study_soa_footnote_uid = soa_footnotes[0].uid
 
     response = api_client.patch(
-        f"/studies/{study.uid}/study-soa-footnotes/StudySoAFootnote_000008",
+        f"/studies/{study.uid}/study-soa-footnotes/{study_soa_footnote_uid}",
         json={
             "referenced_items": [
                 {
@@ -1124,7 +1209,7 @@ def test_modify_actions_on_locked_study(api_client):
     ]
 
     response = api_client.get(
-        f"/studies/{study.uid}/study-soa-footnotes/StudySoAFootnote_000008"
+        f"/studies/{study.uid}/study-soa-footnotes/{study_soa_footnote_uid}"
     )
     res = response.json()
     assert_response_status_code(response, 200)
@@ -1200,7 +1285,7 @@ def test_modify_actions_on_locked_study(api_client):
 
     # test cannot delete
     response = api_client.delete(
-        f"/studies/{study.uid}/study-soa-footnotes/StudySoAFootnote_000008"
+        f"/studies/{study.uid}/study-soa-footnotes/{study_soa_footnote_uid}"
     )
     assert_response_status_code(response, 400)
     assert response.json()["message"] == f"Study with UID '{study.uid}' is locked."
@@ -1211,7 +1296,7 @@ def test_modify_actions_on_locked_study(api_client):
 
     # edit study soa footnote
     response = api_client.patch(
-        f"/studies/{study.uid}/study-soa-footnotes/StudySoAFootnote_000008",
+        f"/studies/{study.uid}/study-soa-footnotes/{study_soa_footnote_uid}",
         json={
             "referenced_items": [
                 {
@@ -1266,11 +1351,15 @@ def test_modify_actions_on_locked_study(api_client):
     res = response.json()
     assert_response_status_code(response, 200)
     before_unlock["study_version"] = mock.ANY
-    assert res["items"][2] == before_unlock
+
+    to_compare = next(
+        item for item in res["items"] if item["uid"] == before_unlock["uid"]
+    )
+    assert to_compare == before_unlock
 
     # get specific study soa footnote of a specific study version
     response = api_client.get(
-        f"/studies/{study.uid}/study-soa-footnotes/StudySoAFootnote_000008?study_value_version=1",
+        f"/studies/{study.uid}/study-soa-footnotes/{study_soa_footnote_uid}?study_value_version=1",
     )
     res = response.json()
     assert_response_status_code(response, 200)
@@ -1332,7 +1421,10 @@ def test_modify_actions_on_locked_study(api_client):
     )
     res = response.json()
     assert_response_status_code(response, 200)
-    assert res["items"][2]["referenced_items"] == [
+    to_compare = next(
+        item for item in res["items"] if item["uid"] == study_soa_footnote_uid
+    )
+    assert to_compare["referenced_items"] == [
         {
             "item_name": "V1",
             "item_type": "StudyVisit",
@@ -1343,7 +1435,7 @@ def test_modify_actions_on_locked_study(api_client):
 
     # get specific study soa footnote
     response = api_client.get(
-        f"/studies/{study.uid}/study-soa-footnotes/StudySoAFootnote_000008",
+        f"/studies/{study.uid}/study-soa-footnotes/{study_soa_footnote_uid}",
     )
     res = response.json()
     assert_response_status_code(response, 200)
@@ -1372,15 +1464,15 @@ def test_update_footnote_library_items_of_relationship_to_value_nodes(api_client
     StudySoAFootnote is connected to value nodes:
     - FootnoteTemplate
     """
-    study_soa_footnote_uid = "StudySoAFootnote_000008"
+    study_soa_footnote_uid = new_soa_footnote_uid
     # get specific study soa footnote
     response = api_client.get(
         f"/studies/{study.uid}/study-soa-footnotes/{study_soa_footnote_uid}",
     )
-    res = response.json()
     assert_response_status_code(response, 200)
-    library_template_footnote_uid = res["footnote"]["template"]["uid"]
-    initial_footnote_name = res["footnote"]["template"]["name"]
+    res = response.json()
+    library_template_footnote_uid = res["footnote"]["template_uid"]
+    initial_footnote_name = res["footnote"]["name"]
 
     text_value_2_name = "3rdname"
     # change footnote name and approve the version
@@ -1408,7 +1500,8 @@ def test_update_footnote_library_items_of_relationship_to_value_nodes(api_client
     )
     res = response.json()
     assert_response_status_code(response, 200)
-    assert res["footnote"]["template"]["name"] == initial_footnote_name
+    assert res["footnote"]["name"] == initial_footnote_name
+    assert res["template"] is None
 
     # check that the StudySelection can approve the current version
     response = api_client.post(
@@ -1417,8 +1510,6 @@ def test_update_footnote_library_items_of_relationship_to_value_nodes(api_client
     res = response.json()
     assert_response_status_code(response, 200)
     assert res["accepted_version"] is True
-    assert res["footnote"]["template"]["name"] == initial_footnote_name
-    assert res["latest_footnote"]["template"]["name"] == text_value_2_name
 
     response = api_client.get(
         f"/studies/{study.uid}/study-soa-footnotes/{study_soa_footnote_uid}/audit-trail"
@@ -1431,9 +1522,7 @@ def test_update_footnote_library_items_of_relationship_to_value_nodes(api_client
     response = api_client.post(
         f"/studies/{study.uid}/study-soa-footnotes/{study_soa_footnote_uid}/sync-latest-version",
     )
-    res = response.json()
     assert_response_status_code(response, 200)
-    assert res["footnote"]["template"]["name"] == text_value_2_name
 
     response = api_client.get(
         f"/studies/{study.uid}/study-soa-footnotes/{study_soa_footnote_uid}/audit-trail"
@@ -1470,6 +1559,7 @@ def test_update_footnote_library_items_of_relationship_to_value_nodes(api_client
         cloned_footnotes_any["items"][i]["study_uid"] = mock.ANY
         cloned_footnotes_any["items"][i]["modified"] = mock.ANY
         cloned_footnotes_any["items"][i]["uid"] = mock.ANY
+        cloned_footnotes_any["items"][i]["order"] = mock.ANY
         for j, __ in enumerate(cloned_footnotes_any["items"][i]["referenced_items"]):
             cloned_footnotes_any["items"][i]["referenced_items"][j][
                 "item_uid"
@@ -1480,7 +1570,7 @@ def test_update_footnote_library_items_of_relationship_to_value_nodes(api_client
     # Standardize original footnotes and filter unwanted items
     normalized_footnotes = []
     for footnote in final_footnotes["items"]:
-        if footnote["uid"] == "StudySoAFootnote_000003":
+        if footnote["uid"] in ["StudySoAFootnote_000003", "StudySoAFootnote_000004"]:
             continue  # Skip specific footnote
         if [
             True
@@ -1494,6 +1584,7 @@ def test_update_footnote_library_items_of_relationship_to_value_nodes(api_client
                 "study_uid": mock.ANY,
                 "modified": mock.ANY,
                 "uid": mock.ANY,
+                "order": mock.ANY,
             }
         )
 
@@ -1509,7 +1600,14 @@ def test_update_footnote_library_items_of_relationship_to_value_nodes(api_client
     final_footnotes["items"] = normalized_footnotes
 
     # Validate that the cloned study matches the original after processing
-    assert cloned_footnotes_any == final_footnotes
+    for idx, cloned_footnote in enumerate(cloned_footnotes_any["items"]):
+        # If original Footnote referenced some items, the order must be same in the cloned Study
+        if cloned_footnote["referenced_items"]:
+            assert cloned_footnote == final_footnotes["items"][idx]
+        # If original Footnote did not referenced any items the order does not have to be reflected in the cloned Study
+        # but it must exist in the cloned Study
+        else:
+            assert cloned_footnote in final_footnotes["items"]
 
     study_cloned = api_client.post(
         f"/studies/{study.uid}/clone",
@@ -1563,6 +1661,7 @@ def test_update_footnote_library_items_of_relationship_to_value_nodes(api_client
         cloned_footnotes_any["items"][i]["study_uid"] = mock.ANY
         cloned_footnotes_any["items"][i]["modified"] = mock.ANY
         cloned_footnotes_any["items"][i]["uid"] = mock.ANY
+        cloned_footnotes_any["items"][i]["order"] = mock.ANY
         for j, __ in enumerate(cloned_footnotes_any["items"][i]["referenced_items"]):
             cloned_footnotes_any["items"][i]["referenced_items"][j][
                 "item_uid"
@@ -1573,7 +1672,7 @@ def test_update_footnote_library_items_of_relationship_to_value_nodes(api_client
     # Standardize original footnotes and filter unwanted items
     normalized_footnotes = []
     for footnote in final_footnotes["items"]:
-        if footnote["uid"] == "StudySoAFootnote_000003":
+        if footnote["uid"] in ["StudySoAFootnote_000003", "StudySoAFootnote_000004"]:
             continue  # Skip specific footnote
         if [
             True
@@ -1587,6 +1686,7 @@ def test_update_footnote_library_items_of_relationship_to_value_nodes(api_client
                 "study_uid": mock.ANY,
                 "modified": mock.ANY,
                 "uid": mock.ANY,
+                "order": mock.ANY,
             }
         )
 
@@ -1601,4 +1701,11 @@ def test_update_footnote_library_items_of_relationship_to_value_nodes(api_client
     # Assign filtered list back to final_footnotes
     final_footnotes["items"] = normalized_footnotes
     # Validate that the cloned study matches the original after processing
-    assert cloned_footnotes_any == final_footnotes
+    for idx, cloned_footnote in enumerate(cloned_footnotes_any["items"]):
+        # If original Footnote referenced some items, the order must be same in the cloned Study
+        if cloned_footnote["referenced_items"]:
+            assert cloned_footnote == final_footnotes["items"][idx]
+        # If original Footnote did not referenced any items the order does not have to be reflected in the cloned Study
+        # but it must exist in the cloned Study
+        else:
+            assert cloned_footnote in final_footnotes["items"]

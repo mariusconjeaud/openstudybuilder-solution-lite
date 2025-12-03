@@ -6,10 +6,11 @@
       :open="open"
       max-width="1200px"
       no-saving
-      @close="cancel"
+      @close="close"
     >
       <template #body>
         <NNTable
+          ref="table"
           :headers="headers"
           item-value="uid"
           :items-length="total"
@@ -46,8 +47,8 @@
                   <div class="mt-3 ml-4">
                     {{
                       item.type
-                        ? $t('CrfExtensions.attribute')
-                        : $t('CrfExtensions.element')
+                        ? $t('CRFExtensions.attribute')
+                        : $t('CRFExtensions.element')
                     }}
                   </div>
                 </v-row>
@@ -86,7 +87,7 @@
                         <v-btn icon variant="text" />
                         <ActionsMenu :actions="actions" :item="item" />
                         <div class="mt-3 ml-4">
-                          {{ $t('CrfExtensions.attribute') }}
+                          {{ $t('CRFExtensions.attribute') }}
                         </div>
                       </v-row>
                     </td>
@@ -110,20 +111,22 @@
               dark
               color="crfGroup"
               rounded
+              :disabled="!accessGuard.checkPermission($roles.LIBRARY_WRITE)"
               @click="addElement"
             >
               <v-icon dark> mdi-plus </v-icon>
-              {{ $t('CrfExtensions.element') }}
+              {{ $t('CRFExtensions.element') }}
             </v-btn>
             <v-btn
               class="ml-2 mb-2"
               dark
               color="crfItem"
               rounded
+              :disabled="!accessGuard.checkPermission($roles.LIBRARY_WRITE)"
               @click="addAttribute"
             >
               <v-icon dark> mdi-plus </v-icon>
-              {{ $t('CrfExtensions.attribute') }}
+              {{ $t('CRFExtensions.attribute') }}
             </v-btn>
           </template>
         </NNTable>
@@ -139,270 +142,272 @@
     <CrfElementForm
       :parent-uid="editItem.uid"
       :open="showElementForm"
-      :attributes="attributes"
       :edit-item="elementToEdit"
       @close="closeElementForm"
     />
   </div>
 </template>
 
-<script>
+<script setup>
+import { computed, inject, onMounted, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import SimpleFormDialog from '@/components/tools/SimpleFormDialog.vue'
 import NNTable from '@/components/tools/NNTable.vue'
 import CrfAttributeForm from '@/components/library/crfs/CrfAttributeForm.vue'
 import CrfElementForm from '@/components/library/crfs/CrfElementForm.vue'
 import crfs from '@/api/crfs'
 import ActionsMenu from '@/components/tools/ActionsMenu.vue'
-import constants from '@/constants/statuses'
 import StatusChip from '@/components/tools/StatusChip.vue'
 import crfTypes from '@/constants/crfTypes'
+import { useAccessGuard } from '@/composables/accessGuard'
 
-export default {
-  components: {
-    SimpleFormDialog,
-    NNTable,
-    CrfAttributeForm,
-    CrfElementForm,
-    ActionsMenu,
-    StatusChip,
+const roles = inject('roles')
+const { t } = useI18n()
+const emit = defineEmits(['close'])
+const accessGuard = useAccessGuard()
+
+const props = defineProps({
+  open: Boolean,
+  editItem: {
+    type: Object,
+    default: null,
   },
-  props: {
-    open: Boolean,
-    editItem: {
-      type: Object,
-      default: null,
-    },
+})
+
+const table = ref()
+
+const elements = ref([])
+const total = ref(0)
+const headers = [
+  { title: t('_global.type'), key: 'type' },
+  { title: t('_global.name'), key: 'name' },
+  { title: t('_global.version'), key: 'version' },
+  { title: t('_global.status'), key: 'status' },
+]
+const showAttributeForm = ref(false)
+const showElementForm = ref(false)
+const attributes = ref([])
+const actions = [
+  {
+    label: t('_global.edit'),
+    icon: 'mdi-pencil-outline',
+    iconColor: 'primary',
+    condition: (item) =>
+      item.possible_actions.find((action) => action === 'edit'),
+    accessRole: roles.LIBRARY_WRITE,
+    click: editElement,
   },
-  emits: ['close'],
-  data() {
-    return {
-      elements: [],
-      total: 0,
-      headers: [
-        { title: this.$t('_global.type'), key: 'type' },
-        { title: this.$t('_global.name'), key: 'name' },
-        { title: this.$t('_global.version'), key: 'version' },
-        { title: this.$t('_global.status'), key: 'status' },
-      ],
-      showAttributeForm: false,
-      showElementForm: false,
-      attributes: [],
-      actions: [
-        {
-          label: this.$t('_global.edit'),
-          icon: 'mdi-pencil-outline',
-          iconColor: 'primary',
-          accessRole: this.$roles.LIBRARY_WRITE,
-          click: this.editElement,
-        },
-        {
-          label: this.$t('CrfExtensions.add_new_attr'),
-          icon: 'mdi-plus',
-          iconColor: 'primary',
-          condition: (item) => !item.type,
-          accessRole: this.$roles.LIBRARY_WRITE,
-          click: this.addAttribute,
-        },
-        {
-          label: this.$t('_global.approve'),
-          icon: 'mdi-check-decagram',
-          iconColor: 'success',
-          condition: (item) =>
-            item.possible_actions.find((action) => action === 'approve'),
-          accessRole: this.$roles.LIBRARY_WRITE,
-          click: this.approve,
-        },
-        {
-          label: this.$t('_global.new_version'),
-          icon: 'mdi-plus-circle-outline',
-          iconColor: 'primary',
-          condition: (item) =>
-            item.possible_actions.find((action) => action === 'new_version'),
-          accessRole: this.$roles.LIBRARY_WRITE,
-          click: this.newVersion,
-        },
-        {
-          label: this.$t('_global.inactivate'),
-          icon: 'mdi-close-octagon-outline',
-          iconColor: 'primary',
-          condition: (item) =>
-            item.possible_actions.find((action) => action === 'inactivate'),
-          accessRole: this.$roles.LIBRARY_WRITE,
-          click: this.inactivate,
-        },
-        {
-          label: this.$t('_global.reactivate'),
-          icon: 'mdi-undo-variant',
-          iconColor: 'primary',
-          condition: (item) =>
-            item.possible_actions.find((action) => action === 'reactivate'),
-          accessRole: this.$roles.LIBRARY_WRITE,
-          click: this.reactivate,
-        },
-        {
-          label: this.$t('_global.delete'),
-          icon: 'mdi-delete-outline',
-          iconColor: 'error',
-          condition: (item) =>
-            item.possible_actions.find((action) => action === 'delete'),
-          accessRole: this.$roles.LIBRARY_WRITE,
-          click: this.delete,
-        },
-      ],
-      elementToEdit: {},
-      parentType: '',
-      parentUid: '',
-      tableElements: [],
-    }
+  {
+    label: t('CRFExtensions.add_new_attr'),
+    icon: 'mdi-plus',
+    iconColor: 'primary',
+    condition: (item) =>
+      !item.type && item.possible_actions.find((action) => action === 'edit'),
+    accessRole: roles.LIBRARY_WRITE,
+    click: addAttribute,
   },
-  computed: {
-    title() {
-      return this.$t('CrfExtensions.extension') + this.editItem.name
-    },
+  {
+    label: t('_global.approve'),
+    icon: 'mdi-check-decagram',
+    iconColor: 'success',
+    condition: (item) =>
+      item.possible_actions.find((action) => action === 'approve'),
+    accessRole: roles.LIBRARY_WRITE,
+    click: approve,
   },
-  watch: {
-    editItem() {
-      this.getNamespaceData()
-    },
+  {
+    label: t('_global.new_version'),
+    icon: 'mdi-plus-circle-outline',
+    iconColor: 'primary',
+    condition: (item) =>
+      item.possible_actions.find((action) => action === 'new_version'),
+    accessRole: roles.LIBRARY_WRITE,
+    click: newVersion,
   },
-  created() {
-    this.constants = constants
+  {
+    label: t('_global.inactivate'),
+    icon: 'mdi-close-octagon-outline',
+    iconColor: 'primary',
+    condition: (item) =>
+      item.possible_actions.find((action) => action === 'inactivate'),
+    accessRole: roles.LIBRARY_WRITE,
+    click: inactivate,
   },
-  mounted() {
-    this.getNamespaceData()
+  {
+    label: t('_global.reactivate'),
+    icon: 'mdi-undo-variant',
+    iconColor: 'primary',
+    condition: (item) =>
+      item.possible_actions.find((action) => action === 'reactivate'),
+    accessRole: roles.LIBRARY_WRITE,
+    click: reactivate,
   },
-  methods: {
-    paginateResults(filters, options) {
-      const firstIndex = (options.page - 1) * options.itemsPerPage
-      const lastIndex = options.page * options.itemsPerPage
-      this.tableElements = this.elements.slice(firstIndex, lastIndex)
+  {
+    label: t('_global.delete'),
+    icon: 'mdi-delete-outline',
+    iconColor: 'error',
+    condition: (item) =>
+      item.possible_actions.find((action) => action === 'delete'),
+    accessRole: roles.LIBRARY_WRITE,
+    click: remove,
+  },
+]
+const elementToEdit = ref({})
+const parentType = ref('')
+const parentUid = ref('')
+const tableElements = ref([])
+
+const title = computed(() => {
+  return t('CRFExtensions.extension') + props.editItem.name
+})
+
+watch(
+  () => props.editItem,
+  () => {
+    getNamespaceData()
+  }
+)
+
+onMounted(() => {
+  getNamespaceData()
+})
+
+function paginateResults(filters, options) {
+  const firstIndex = (options.page - 1) * options.itemsPerPage
+  const lastIndex = options.page * options.itemsPerPage
+  tableElements.value = elements.value.slice(firstIndex, lastIndex)
+}
+
+function approve(item) {
+  const type = item.type === 'attr' ? 'vendor-attributes' : 'vendor-elements'
+  crfs.approve(type, item.uid).then(() => {
+    getNamespaceData()
+  })
+}
+
+function inactivate(item) {
+  const type = item.type === 'attr' ? 'vendor-attributes' : 'vendor-elements'
+  crfs.inactivate(type, item.uid).then(() => {
+    getNamespaceData()
+  })
+}
+
+function reactivate(item) {
+  const type = item.type === 'attr' ? 'vendor-attributes' : 'vendor-elements'
+  crfs.reactivate(type, item.uid).then(() => {
+    getNamespaceData()
+  })
+}
+
+async function newVersion(item) {
+  const type = item.type === 'attr' ? 'vendor-attributes' : 'vendor-elements'
+  crfs.newVersion(type, item.uid).then(() => {
+    getNamespaceData()
+  })
+}
+
+function addElement() {
+  showElementForm.value = true
+}
+
+function closeElementForm() {
+  showElementForm.value = false
+  elementToEdit.value = {}
+  getNamespaceData()
+}
+
+function addAttribute(item) {
+  if (item.uid) {
+    parentType.value = crfTypes.ELEMENT
+    parentUid.value = item.uid
+  } else {
+    parentType.value = crfTypes.NAMESPACE
+    parentUid.value = props.editItem.uid
+  }
+  showAttributeForm.value = true
+}
+
+function closeAttributeForm() {
+  showAttributeForm.value = false
+  parentType.value = ''
+  parentUid.value = ''
+  elementToEdit.value = {}
+  getNamespaceData()
+}
+
+function editElement(item) {
+  elementToEdit.value = item
+  if (item.type === 'attr') {
+    parentType.value = item.vendor_namespace
+      ? crfTypes.NAMESPACE
+      : crfTypes.ELEMENT
+    showAttributeForm.value = true
+  } else {
+    showElementForm.value = true
+  }
+}
+
+function remove(item) {
+  if (item.type) {
+    crfs.delete('vendor-attributes', item.uid).then(() => {
+      getNamespaceData()
+    })
+  } else {
+    crfs.delete('vendor-elements', item.uid).then(() => {
+      getNamespaceData()
+    })
+  }
+}
+
+function close() {
+  emit('close')
+}
+
+async function getElementsAttributes() {
+  const params = {
+    page_size: 0,
+    filters: {
+      'vendor_element.uid': { v: elements.value.map((el) => el.uid) },
+      uid: { v: attributes.value.map((attr) => attr.uid) },
     },
-    approve(item) {
-      const type =
-        item.type === 'attr' ? 'vendor-attributes' : 'vendor-elements'
-      crfs.approve(type, item.uid).then(() => {
-        this.getNamespaceData()
-      })
-    },
-    inactivate(item) {
-      const type =
-        item.type === 'attr' ? 'vendor-attributes' : 'vendor-elements'
-      crfs.inactivate(type, item.uid).then(() => {
-        this.getNamespaceData()
-      })
-    },
-    reactivate(item) {
-      const type =
-        item.type === 'attr' ? 'vendor-attributes' : 'vendor-elements'
-      crfs.reactivate(type, item.uid).then(() => {
-        this.getNamespaceData()
-      })
-    },
-    async newVersion(item) {
-      const type =
-        item.type === 'attr' ? 'vendor-attributes' : 'vendor-elements'
-      crfs.newVersion(type, item.uid).then(() => {
-        this.getNamespaceData()
-      })
-    },
-    addElement() {
-      this.showElementForm = true
-    },
-    closeElementForm() {
-      this.showElementForm = false
-      this.elementToEdit = {}
-      this.getNamespaceData()
-    },
-    addAttribute(item) {
-      if (item.uid) {
-        this.parentType = crfTypes.ELEMENT
-        this.parentUid = item.uid
-      } else {
-        this.parentType = crfTypes.NAMESPACE
-        this.parentUid = this.editItem.uid
-      }
-      this.showAttributeForm = true
-    },
-    closeAttributeForm() {
-      this.showAttributeForm = false
-      this.parentType = ''
-      this.parentUid = ''
-      this.elementToEdit = {}
-      this.getNamespaceData()
-    },
-    editElement(item) {
-      this.elementToEdit = item
-      if (item.type === 'attr') {
-        this.parentType = item.vendor_namespace
-          ? crfTypes.NAMESPACE
-          : crfTypes.ELEMENT
-        this.showAttributeForm = true
-      } else {
-        this.showElementForm = true
-      }
-    },
-    delete(item) {
-      if (item.type) {
-        crfs.delete('vendor-attributes', item.uid).then(() => {
-          this.getNamespaceData()
-        })
-      } else {
-        crfs.delete('vendor-elements', item.uid).then(() => {
-          this.getNamespaceData()
-        })
-      }
-    },
-    cancel() {
-      this.close()
-    },
-    close() {
-      this.$emit('close')
-    },
-    async getElementsAttributes() {
-      const params = {
-        page_size: 0,
-        filters: {
-          'vendor_element.uid': { v: this.elements.map((el) => el.uid) },
-          uid: { v: this.attributes.map((attr) => attr.uid) },
-        },
-        operator: 'or',
-      }
-      await crfs.getAllAttributes(params).then((resp) => {
-        this.attributes = resp.data.items
-        this.attributes.forEach((attr) => (attr.type = 'attr'))
-      })
-    },
-    async getNamespaceData() {
-      this.elements = []
-      this.attributes = []
-      if (this.editItem.uid) {
-        await crfs.getNamespace(this.editItem.uid).then((resp) => {
-          this.elements = resp.data.vendor_elements
-          this.attributes = resp.data.vendor_attributes
-        })
-        await this.getElementsAttributes()
-        for (const attr of this.attributes) {
-          if (attr.vendor_element) {
-            const index = this.elements.indexOf(
-              this.elements.find((ele) => ele.uid === attr.vendor_element.uid)
-            )
-            if (this.elements[index]) {
-              if (!this.elements[index].attributes) {
-                this.elements[index].attributes = []
-              }
-              this.elements[index].attributes.push(attr)
-              this.attributes[this.attributes.indexOf(attr)] = null
-            }
+    operator: 'or',
+  }
+  await crfs.getAllAttributes(params).then((resp) => {
+    attributes.value = resp.data.items
+    attributes.value.forEach((attr) => (attr.type = 'attr'))
+  })
+}
+
+async function getNamespaceData() {
+  elements.value = []
+  attributes.value = []
+  if (props.editItem.uid) {
+    await crfs.getNamespace(props.editItem.uid).then((resp) => {
+      elements.value = resp.data.vendor_elements
+      attributes.value = resp.data.vendor_attributes
+    })
+    await getElementsAttributes()
+    for (const attr of attributes.value) {
+      if (attr.vendor_element) {
+        const index = elements.value.indexOf(
+          elements.value.find((ele) => ele.uid === attr.vendor_element.uid)
+        )
+        if (elements.value[index]) {
+          if (!elements.value[index].attributes) {
+            elements.value[index].attributes = []
           }
+          elements.value[index].attributes.push(attr)
+          attributes.value[attributes.value.indexOf(attr)] = null
         }
-        this.attributes = this.attributes.filter(function (el) {
-          return el != null
-        })
-        this.elements = [...this.elements, ...this.attributes]
-        this.total = this.elements.length
       }
-    },
-  },
+    }
+    attributes.value = attributes.value.filter(function (el) {
+      return el != null
+    })
+    elements.value = [...elements.value, ...attributes.value]
+    total.value = elements.value.length
+    table.value.filterTable()
+  }
 }
 </script>
 

@@ -1,7 +1,29 @@
 <template>
   <div>
+    <!-- Status filter tabs -->
+    <div
+      v-if="!requested && showStatusTabs"
+      class="d-flex justify-center mb-4 mt-4"
+    >
+      <v-btn-toggle
+        v-model="selectedStatusTab"
+        mandatory
+        density="compact"
+        color="nnBaseBlue"
+        divided
+        variant="outlined"
+        class="layoutSelector"
+        @update:model-value="onStatusTabChange"
+      >
+        <v-btn v-for="tab in statusTabs" :key="tab.value" :value="tab.value">
+          {{ tab.label }}
+        </v-btn>
+      </v-btn-toggle>
+    </div>
+
     <NNTable
       ref="tableRef"
+      :key="`activities-table-${selectedStatusTab}-${source}`"
       :headers="currentHeaders"
       :items="activities"
       export-object-label="Activities"
@@ -20,12 +42,12 @@
       :disable-filtering="source === 'activities-by-grouping'"
       :hide-search-field="source === 'activities-by-grouping'"
       :history-title="$t('_global.audit_trail')"
+      :initial-sort-by="[{ key: 'name', order: 'asc' }]"
       :history-data-fetcher="
         source !== 'activities-by-grouping' ? fetchGlobalAuditTrail : null
       "
       history-change-field="change_description"
       :history-excluded-headers="historyExcludedHeaders"
-      :default-filters="setDefaultFilters()"
       @filter="fetchActivities"
       @update:expanded="getSubGroups"
     >
@@ -126,6 +148,9 @@
       <template #[`item.synonyms`]="{ item }">
         <div v-html="sanitizeHTML(synonymsDisplay(item.synonyms))" />
       </template>
+      <template #[`item.definition`]="{ item }">
+        {{ item.definition || '-' }}
+      </template>
       <template #[`item.status`]="{ item }">
         <StatusChip :status="item.status" />
       </template>
@@ -170,42 +195,62 @@
           <div v-if="Array.isArray(item.activity_group.name)">
             <template v-if="item.activity_group.name.length === 1">
               <router-link
+                v-if="
+                  (item.activity_groupings &&
+                    item.activity_groupings[0] &&
+                    item.activity_groupings[0].activity_group_uid) ||
+                  item.activity_group.name[0].uid
+                "
                 :to="{
                   name: 'GroupOverview',
-                  params: { id: getActivityGroupUID(item) },
+                  params: {
+                    id:
+                      item.activity_group.name[0].uid ||
+                      item.activity_groupings[0].activity_group_uid,
+                  },
                 }"
               >
-                {{ item.activity_group.name[0] }}
+                {{
+                  item.activity_group.name[0].name ||
+                  item.activity_group.name[0]
+                }}
               </router-link>
+              <span v-else>{{
+                item.activity_group.name[0].name || item.activity_group.name[0]
+              }}</span>
             </template>
-            <template v-else>
+            <template v-else-if="item.activity_group.name.length > 1">
               <div
-                v-for="(gName, idx) in item.activity_group.name"
+                v-for="(group, idx) in item.activity_group.name"
                 :key="idx"
                 style="margin-bottom: 4px"
               >
                 <span>&#9679; </span>
                 <router-link
+                  v-if="
+                    (item.activity_groupings &&
+                      item.activity_groupings[idx] &&
+                      item.activity_groupings[idx].activity_group_uid) ||
+                    group.uid
+                  "
                   :to="{
                     name: 'GroupOverview',
-                    params: { id: getActivityGroupUID(item) },
+                    params: {
+                      id:
+                        group.uid ||
+                        item.activity_groupings[idx]?.activity_group_uid,
+                    },
                   }"
                 >
-                  {{ gName }}
+                  {{ group.name || group }}
                 </router-link>
+                <span v-else>{{ group.name || group }}</span>
               </div>
             </template>
           </div>
 
           <div v-else>
-            <router-link
-              :to="{
-                name: 'GroupOverview',
-                params: { id: getActivityGroupUID(item) },
-              }"
-            >
-              {{ item.activity_group.name }}
-            </router-link>
+            <span>{{ item.activity_group.name }}</span>
           </div>
         </div>
       </template>
@@ -215,42 +260,63 @@
           <div v-if="Array.isArray(item.activity_subgroup.name)">
             <template v-if="item.activity_subgroup.name.length === 1">
               <router-link
+                v-if="
+                  (item.activity_groupings &&
+                    item.activity_groupings[0] &&
+                    item.activity_groupings[0].activity_subgroup_uid) ||
+                  item.activity_subgroup.name[0].uid
+                "
                 :to="{
                   name: 'SubgroupOverview',
-                  params: { id: getActivitySubgroupUID(item) },
+                  params: {
+                    id:
+                      item.activity_subgroup.name[0].uid ||
+                      item.activity_groupings[0].activity_subgroup_uid,
+                  },
                 }"
               >
-                {{ item.activity_subgroup.name[0] }}
+                {{
+                  item.activity_subgroup.name[0].name ||
+                  item.activity_subgroup.name[0]
+                }}
               </router-link>
+              <span v-else>{{
+                item.activity_subgroup.name[0].name ||
+                item.activity_subgroup.name[0]
+              }}</span>
             </template>
-            <template v-else>
+            <template v-else-if="item.activity_subgroup.name.length > 1">
               <div
-                v-for="(subName, idx) in item.activity_subgroup.name"
+                v-for="(subgroup, idx) in item.activity_subgroup.name"
                 :key="idx"
                 style="margin-bottom: 4px"
               >
                 <span>&#9679; </span>
                 <router-link
+                  v-if="
+                    (item.activity_groupings &&
+                      item.activity_groupings[idx] &&
+                      item.activity_groupings[idx].activity_subgroup_uid) ||
+                    subgroup.uid
+                  "
                   :to="{
                     name: 'SubgroupOverview',
-                    params: { id: getActivitySubgroupUID(item) },
+                    params: {
+                      id:
+                        subgroup.uid ||
+                        item.activity_groupings[idx]?.activity_subgroup_uid,
+                    },
                   }"
                 >
-                  {{ subName }}
+                  {{ subgroup.name || subgroup }}
                 </router-link>
+                <span v-else>{{ subgroup.name || subgroup }}</span>
               </div>
             </template>
           </div>
 
           <div v-else>
-            <router-link
-              :to="{
-                name: 'SubgroupOverview',
-                params: { id: getActivitySubgroupUID(item) },
-              }"
-            >
-              {{ item.activity_subgroup.name }}
-            </router-link>
+            <span>{{ item.activity_subgroup.name }}</span>
           </div>
         </div>
       </template>
@@ -398,7 +464,7 @@
       <template #actions="">
         <slot name="extraActions" />
         <v-btn
-          v-if="source !== 'activities-by-grouping'"
+          v-if="source !== 'activities-by-grouping' && !requested"
           class="ml-2"
           size="small"
           variant="outlined"
@@ -560,7 +626,8 @@ const actions = [
     icon: 'mdi-pencil-outline',
     iconColor: 'primary',
     condition: (item) =>
-      item.possible_actions.find((action) => action === 'edit'),
+      item.possible_actions.find((action) => action === 'edit') &&
+      !props.requested,
     accessRole: roles.LIBRARY_WRITE,
     click: editItem,
   },
@@ -647,6 +714,10 @@ const activitiesHeaders = [
     key: 'synonyms',
   },
   {
+    title: t('ActivityTable.definition'),
+    key: 'definition',
+  },
+  {
     title: t('ActivityTable.nci_concept_id'),
     key: 'nci_concept_id',
   },
@@ -665,7 +736,7 @@ const activitiesHeaders = [
   },
   { title: t('_global.modified'), key: 'start_date' },
   { title: t('_global.modified_by'), key: 'author_username' },
-  { title: t('_global.status'), key: 'status' },
+  { title: t('_global.status'), key: 'status', noFilter: true },
   { title: t('_global.version'), key: 'version' },
 ]
 const instantiationsHeaders = [
@@ -739,13 +810,13 @@ const instantiationsHeaders = [
   },
   { title: t('_global.modified'), key: 'start_date' },
   { title: t('_global.modified_by'), key: 'author_username' },
-  { title: t('_global.status'), key: 'status' },
+  { title: t('_global.status'), key: 'status', noFilter: true },
   { title: t('_global.version'), key: 'version' },
 ]
 const groupsHeaders = [
   { title: t('ActivityTable.group_or_subgroup'), key: 'name' },
   { title: t('_global.modified'), key: 'start_date' },
-  { title: t('_global.status'), key: 'status' },
+  { title: t('_global.status'), key: 'status', noFilter: true },
   { title: t('_global.version'), key: 'version' },
 ]
 const requestedHeaders = [
@@ -780,7 +851,7 @@ const requestedHeaders = [
   { title: t('ActivityTable.study_id'), key: 'requester_study_id' },
   { title: t('_global.modified'), key: 'start_date' },
   { title: t('_global.modified_by'), key: 'author_username' },
-  { title: t('_global.status'), key: 'status' },
+  { title: t('_global.status'), key: 'status', noFilter: true },
   { title: t('_global.version'), key: 'version' },
 ]
 const activityGroupHeaders = [
@@ -793,7 +864,7 @@ const activityGroupHeaders = [
   { title: t('ActivityTable.abbreviation'), key: 'abbreviation' },
   { title: t('_global.definition'), key: 'definition' },
   { title: t('_global.modified'), key: 'start_date' },
-  { title: t('_global.status'), key: 'status' },
+  { title: t('_global.status'), key: 'status', noFilter: true },
   { title: t('_global.version'), key: 'version' },
 ]
 const activitySubgroupHeaders = [
@@ -817,7 +888,7 @@ const activitySubgroupHeaders = [
   { title: t('ActivityTable.abbreviation'), key: 'abbreviation' },
   { title: t('_global.definition'), key: 'definition' },
   { title: t('_global.modified'), key: 'start_date' },
-  { title: t('_global.status'), key: 'status' },
+  { title: t('_global.status'), key: 'status', noFilter: true },
   { title: t('_global.version'), key: 'version' },
 ]
 const groupMode = ref(false)
@@ -833,6 +904,14 @@ const showInstantiationsForm = ref(false)
 const showSponsorFromRequestedForm = ref(false)
 const activeItem = ref(null)
 const showFinalised = ref(false)
+const selectedStatusTab = ref('final') // Default to 'final' tab
+
+const statusTabs = [
+  { value: 'all', label: 'All' },
+  { value: 'final', label: 'Final' },
+  { value: 'retired', label: 'Retired' },
+  { value: 'draft', label: 'Draft' },
+]
 
 const itemCreationTitle = computed(() => {
   if (props.source === 'activities') {
@@ -892,6 +971,15 @@ const newWizardStepper = computed(() => {
   return featureFlagsStore.getFeatureFlag(
     'new_activity_instance_wizard_stepper'
   )
+})
+
+const showStatusTabs = computed(() => {
+  return [
+    'activities',
+    'activity-groups',
+    'activity-sub-groups',
+    'activity-instances',
+  ].includes(props.source)
 })
 
 onMounted(() => {
@@ -967,15 +1055,43 @@ function transformItems(items) {
     }
   } else if (props.source === 'activity-instances') {
     for (const item of items) {
-      if (item.activity_groupings.length > 0) {
-        item.activities = [item.activity_groupings[0].activity]
-        item.activity_group = item.activity_groupings[0].activity_group
-        item.activity_subgroup = item.activity_groupings[0].activity_subgroup
+      if (item.activity_groupings && item.activity_groupings.length > 0) {
+        const groups = []
+        const subgroups = []
+        // Set activities from the first grouping if it exists
+        const itemActivities = item.activity_groupings[0]?.activity
+          ? [item.activity_groupings[0].activity]
+          : item.activities || []
+
+        for (const grouping of item.activity_groupings) {
+          groups.push({
+            name: grouping.activity_group.name,
+            uid: grouping.activity_group.uid,
+          })
+          subgroups.push({
+            name: grouping.activity_subgroup.name,
+            uid: grouping.activity_subgroup.uid,
+          })
+        }
+        // Remove existing activity_group and activity_subgroup to avoid conflicts
+        const cleanItem = { ...item }
+        delete cleanItem.activity_group
+        delete cleanItem.activity_subgroup
+        activities.push({
+          ...cleanItem,
+          activities: itemActivities,
+          activity_group: { name: groups },
+          activity_subgroup: { name: subgroups },
+          item_key: item.uid,
+        })
       } else {
-        item.activities = []
+        activities.push({
+          ...item,
+          activity_group: { name: '' },
+          activity_subgroup: { name: '' },
+          item_key: item.uid,
+        })
       }
-      item.item_key = item.uid
-      activities.push(item)
     }
   } else if (props.source === 'activity-groups') {
     for (const item of items) {
@@ -1000,6 +1116,13 @@ function transformItems(items) {
     }
   }
   return activities
+}
+
+function onStatusTabChange() {
+  // Trigger a new fetch when tab changes
+  if (tableRef.value) {
+    tableRef.value.filterTable()
+  }
 }
 
 function fetchActivities(filters, options, filtersUpdated) {
@@ -1052,9 +1175,11 @@ function fetchActivities(filters, options, filtersUpdated) {
       delete filtersObj['activity_subgroup.name']
     }
     if (filtersObj.name) {
-      params.activity_names = []
+      let param =
+        props.source === 'activity-instances' ? 'names' : 'activity_names'
+      params[param] = []
       filtersObj.name.v.forEach((value) => {
-        params.activity_names.push(value)
+        params[param].push(value)
       })
       delete filtersObj.name
     }
@@ -1100,6 +1225,35 @@ function fetchActivities(filters, options, filtersUpdated) {
   } else if (savedFilters.value !== undefined && savedFilters.value !== '{}') {
     params.filters = savedFilters.value
   }
+
+  // Apply status filtering based on selected tab
+  if (!props.requested && showStatusTabs.value) {
+    let statusFilter = {}
+
+    if (selectedStatusTab.value === 'final') {
+      // Show only Sponsored and Final status
+      statusFilter = { status: { v: ['Sponsored', statuses.FINAL] } }
+    } else if (selectedStatusTab.value === 'retired') {
+      statusFilter = { status: { v: [statuses.RETIRED] } }
+    } else if (selectedStatusTab.value === 'draft') {
+      statusFilter = { status: { v: [statuses.DRAFT] } }
+    }
+    // 'all' tab doesn't apply any status filter
+
+    if (selectedStatusTab.value !== 'all') {
+      if (_isEmpty(params.filters)) {
+        params.filters = statusFilter
+      } else {
+        const filtersObj =
+          typeof params.filters === 'string'
+            ? JSON.parse(params.filters)
+            : params.filters
+        Object.assign(filtersObj, statusFilter)
+        params.filters = filtersObj
+      }
+    }
+  }
+
   if (props.requested) {
     if (_isEmpty(params.filters)) {
       params.filters = {
@@ -1113,6 +1267,12 @@ function fetchActivities(filters, options, filtersUpdated) {
       params.filters = filtersObj
     }
   }
+
+  // Ensure filters are stringified if they're objects
+  if (params.filters && typeof params.filters === 'object') {
+    params.filters = JSON.stringify(params.filters)
+  }
+
   const source =
     props.source !== 'activities-by-grouping' ? props.source : 'activity-groups'
   activitiesApi.get(params, source).then((resp) => {
@@ -1175,6 +1335,23 @@ function modifyFilters(jsonFilter, params) {
     })
     delete jsonFilter.specimen
   }
+
+  // Apply status filtering based on selected tab for filter dropdowns
+  if (!props.requested && showStatusTabs.value) {
+    if (selectedStatusTab.value === 'final') {
+      // Show only Sponsored and Final status
+      jsonFilter.status = { v: ['Sponsored', statuses.FINAL] }
+    } else if (selectedStatusTab.value === 'retired') {
+      jsonFilter.status = { v: [statuses.RETIRED] }
+    } else if (selectedStatusTab.value === 'draft') {
+      jsonFilter.status = { v: [statuses.DRAFT] }
+    }
+    // 'all' tab doesn't apply any status filter, so we remove it if it exists
+    else if (selectedStatusTab.value === 'all' && jsonFilter.status) {
+      delete jsonFilter.status
+    }
+  }
+
   return {
     jsonFilter: jsonFilter,
     params: params,
@@ -1396,20 +1573,14 @@ function closeForm() {
   activeItem.value = null
   tableRef.value.filterTable()
 }
-
-function setDefaultFilters() {
-  if (props.source === 'activity-instances') {
-    return [
-      {
-        title: t('ActivityTable.activity'),
-        key: 'activity_name',
-        disableColumnFilters: true,
-      },
-      { title: t('ActivityTable.instance'), key: 'name' },
-      { title: t('_global.status'), key: 'status' },
-      { title: t('ActivityTable.topic_code'), key: 'topic_code' },
-      { title: t('ActivityTable.is_legacy_usage'), key: 'is_legacy_usage' },
-    ]
-  }
-}
 </script>
+
+<style scoped>
+.layoutSelector {
+  border-color: rgb(var(--v-theme-nnBaseBlue));
+}
+
+.layoutSelector :deep(.v-btn) {
+  text-transform: none;
+}
+</style>

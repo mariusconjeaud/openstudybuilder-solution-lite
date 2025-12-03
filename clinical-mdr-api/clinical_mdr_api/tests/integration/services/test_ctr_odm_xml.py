@@ -28,7 +28,7 @@ def test_database():
     log.info(
         "test_database fixture: injecting base data into database: %s", TEST_DB_NAME
     )
-    study = inject_base_data()
+    study, _test_data_dict = inject_base_data()
     return study
 
 

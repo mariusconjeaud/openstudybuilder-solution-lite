@@ -36,10 +36,6 @@ from clinical_mdr_api.models.study_selections.study import (
     StudyPatchRequestJsonModel,
 )
 from clinical_mdr_api.models.study_selections.study_selection import EndpointUnitsInput
-from clinical_mdr_api.models.study_selections.study_standard_version import (
-    StudyStandardVersion,
-    StudyStandardVersionVersion,
-)
 from clinical_mdr_api.services.studies.study import StudyService
 from clinical_mdr_api.tests.integration.utils.api import (
     inject_and_clear_db,
@@ -51,10 +47,14 @@ from clinical_mdr_api.tests.integration.utils.method_library import (
     get_catalogue_name_library_name,
     input_metadata_in_study,
 )
-from clinical_mdr_api.tests.integration.utils.utils import PROJECT_NUMBER, TestUtils
+from clinical_mdr_api.tests.integration.utils.utils import (
+    CT_CODELIST_UIDS,
+    PROJECT_NUMBER,
+    TestUtils,
+)
 from clinical_mdr_api.tests.unit.domain.utils import AUTHOR_USERNAME
 from clinical_mdr_api.tests.utils.checks import assert_response_status_code
-from common.config import STUDY_ENDPOINT_TP_NAME
+from common.config import settings
 
 log = logging.getLogger(__name__)
 
@@ -65,6 +65,8 @@ day_unit_definition: UnitDefinitionModel
 days_unit_definition: UnitDefinitionModel
 week_unit_definition: UnitDefinitionModel
 ct_term_study_standard_test: ct_term.CTTerm
+study_with_subparts: Study
+subpart_studies: Sequence[Study]
 
 
 @pytest.fixture(scope="module")
@@ -98,24 +100,58 @@ def test_data():
 
     catalogue_name, library_name = get_catalogue_name_library_name(use_test_utils=True)
     # Create a study selection
+
+    # NUll flavor codelist
     ct_term_codelist = create_codelist(
         name="Null Flavor",
         uid="CTCodelist",
         catalogue=catalogue_name,
         library=library_name,
+        submission_value="NULLFLVR",
     )
 
     global ct_term_study_standard_test
-    ct_term_name = "Not Applicable"
+    na_name = "Not Applicable"
+    na_submvalue = "NA"
     ct_term_study_standard_test = TestUtils.create_ct_term(
         codelist_uid=ct_term_codelist.codelist_uid,
-        name_submission_value=ct_term_name,
-        sponsor_preferred_name=ct_term_name,
+        submission_value=na_submvalue,
+        sponsor_preferred_name=na_name,
         order=1,
         catalogue_name=catalogue_name,
         library_name=library_name,
         effective_date=datetime.datetime(2020, 3, 25, tzinfo=datetime.timezone.utc),
         approve=True,
+    )
+
+    # yes no response codelist
+    yesno_codelist = create_codelist(
+        name="YesNo",
+        uid="C66742",
+        catalogue=catalogue_name,
+        library=library_name,
+    )
+    TestUtils.create_ct_term(
+        codelist_uid=yesno_codelist.codelist_uid,
+        submission_value="Y",
+        sponsor_preferred_name="Yes",
+        order=1,
+        catalogue_name=catalogue_name,
+        library_name=library_name,
+        effective_date=datetime.datetime(2020, 3, 25, tzinfo=datetime.timezone.utc),
+        approve=True,
+        term_uid="C49488",
+    )
+    TestUtils.create_ct_term(
+        codelist_uid=yesno_codelist.codelist_uid,
+        submission_value="N",
+        sponsor_preferred_name="No",
+        order=1,
+        catalogue_name=catalogue_name,
+        library_name=library_name,
+        effective_date=datetime.datetime(2020, 3, 25, tzinfo=datetime.timezone.utc),
+        approve=True,
+        term_uid="C49487",
     )
 
     cdisc_package_name = "SDTM CT 2020-03-27"
@@ -262,6 +298,12 @@ def test_study_delete_successful(api_client):
     assert len(res["items"]) == 1
     assert res["items"][0]["uid"] == study_to_delete.uid
 
+    response = api_client.get("/studies/list", params={"deleted": True})
+    assert_response_status_code(response, 200)
+    res = response.json()
+    assert len(res) == 1
+    assert res[0]["uid"] == study_to_delete.uid
+
     # try to update the deleted study
     response = api_client.patch(
         f"/studies/{study_to_delete.uid}",
@@ -337,7 +379,7 @@ def test_get_snapshot_history(api_client):
     response = api_client.get(
         f"/studies/{study_with_history.uid}/study-standard-versions/",
     )
-    res: Sequence[StudyStandardVersion] = response.json()
+    res = response.json()
     assert_response_status_code(response, 200)
     assert res[0]["automatically_created"] is True
 
@@ -368,7 +410,7 @@ def test_get_snapshot_history(api_client):
     response = api_client.get(
         f"/studies/{study_with_history.uid}/study-standard-versions/",
     )
-    res: StudyStandardVersion = response.json()
+    res = response.json()
     assert_response_status_code(response, 200)
     assert len(res) == 0
 
@@ -376,7 +418,7 @@ def test_get_snapshot_history(api_client):
     response = api_client.get(
         f"/studies/{study_with_history.uid}/study-standard-versions/audit-trail/",
     )
-    res: Sequence[StudyStandardVersionVersion] = response.json()
+    res = response.json()
     assert_response_status_code(response, 200)
     assert res[0]["automatically_created"] is True
 
@@ -658,18 +700,79 @@ def test_get_protocol_title_for_specific_version(api_client):
     TestUtils.create_library(name="UCUM", is_editable=True)
     codelist = TestUtils.create_ct_codelist()
     TestUtils.create_study_ct_data_map(codelist_uid=codelist.codelist_uid)
+    library_name = "Sponsor"
+    catalogue_name = "SDTM CT"
 
     # Create CT Terms
-    ct_term_dosage = TestUtils.create_ct_term(sponsor_preferred_name="dosage_form_1")
-    ct_term_delivery_device = TestUtils.create_ct_term(
-        sponsor_preferred_name="delivery_device_1"
+
+    ct_term_dosage = create_ct_term(
+        "dosage_form_1",
+        "dosage_form_1",
+        catalogue_name,
+        library_name,
+        codelists=[
+            {
+                "uid": "C66726",
+                "order": 1,
+                "submission_value": "Dosage Form 1",
+            }
+        ],
     )
-    ct_term_dose_frequency = TestUtils.create_ct_term(
-        sponsor_preferred_name="dose_frequency_1"
+
+    ct_term_delivery_device = create_ct_term(
+        "delivery_device_1",
+        "delivery_device_1",
+        catalogue_name,
+        library_name,
+        codelists=[
+            {
+                "uid": CT_CODELIST_UIDS.delivery_device,
+                "order": 1,
+                "submission_value": "DD 1",
+            }
+        ],
     )
-    ct_term_dispenser = TestUtils.create_ct_term(sponsor_preferred_name="dispenser_1")
-    ct_term_roa = TestUtils.create_ct_term(
-        sponsor_preferred_name="route_of_administration_1"
+
+    ct_term_dose_frequency = create_ct_term(
+        "dose_frequency_1",
+        "dose_frequency_1",
+        catalogue_name,
+        library_name,
+        codelists=[
+            {
+                "uid": CT_CODELIST_UIDS.frequency,
+                "order": 1,
+                "submission_value": "Freq 1",
+            }
+        ],
+    )
+
+    ct_term_dispenser = create_ct_term(
+        "dispenser_1",
+        "dispenser_1",
+        catalogue_name,
+        library_name,
+        codelists=[
+            {
+                "uid": CT_CODELIST_UIDS.dispenser,
+                "order": 1,
+                "submission_value": "Disp 1",
+            }
+        ],
+    )
+
+    ct_term_roa = create_ct_term(
+        "route_of_administration_1",
+        "route_of_administration_1",
+        catalogue_name,
+        library_name,
+        codelists=[
+            {
+                "uid": CT_CODELIST_UIDS.roa,
+                "order": 1,
+                "submission_value": "ROA 1",
+            }
+        ],
     )
 
     # Create Numeric values with unit
@@ -686,23 +789,29 @@ def test_get_protocol_title_for_specific_version(api_client):
     catalogue_name, library_name = get_catalogue_name_library_name(use_test_utils=True)
     type_of_trt_codelist = create_codelist(
         name="Type of Treatment",
-        uid="CTCodelist_00009",
+        uid="CTCodelist_00999",
         catalogue=catalogue_name,
         library=library_name,
+        submission_value=settings.type_of_treatment_cl_submval,
     )
     type_of_treatment = create_ct_term(
-        codelist=type_of_trt_codelist.codelist_uid,
         name="Investigational Product",
         uid="type_of_treatment_00001",
-        order=1,
         catalogue_name=catalogue_name,
         library_name=library_name,
+        codelists=[
+            {
+                "uid": type_of_trt_codelist.codelist_uid,
+                "order": 1,
+                "submission_value": "Investigational Product",
+            }
+        ],
     )
 
     pharmaceutical_product1 = TestUtils.create_pharmaceutical_product(
         external_id="external_id1",
-        dosage_form_uids=[ct_term_dosage.term_uid],
-        route_of_administration_uids=[ct_term_roa.term_uid],
+        dosage_form_uids=[ct_term_dosage.uid],
+        route_of_administration_uids=[ct_term_roa.uid],
         formulations=[],
         approve=True,
     )
@@ -710,9 +819,9 @@ def test_get_protocol_title_for_specific_version(api_client):
         name="medicinal_product1",
         external_id="external_id1",
         dose_value_uids=[dose_value.uid],
-        dose_frequency_uid=ct_term_dose_frequency.term_uid,
-        delivery_device_uid=ct_term_delivery_device.term_uid,
-        dispenser_uid=ct_term_dispenser.term_uid,
+        dose_frequency_uid=ct_term_dose_frequency.uid,
+        delivery_device_uid=ct_term_delivery_device.uid,
+        dispenser_uid=ct_term_dispenser.uid,
         pharmaceutical_product_uids=[pharmaceutical_product1.uid],
         compound_uid=compound.uid,
         approve=True,
@@ -1330,11 +1439,15 @@ def test_cascade_of_study_parent_part(api_client):
 
 
 def test_reordering_study_subparts(api_client):
+    global study_with_subparts
+    global subpart_studies
     parent_study = TestUtils.create_study()
+    study_with_subparts = parent_study
     new_studies = [
         TestUtils.create_study(study_parent_part_uid=parent_study.uid)
         for _ in range(10)
     ]
+    subpart_studies = new_studies
 
     response = api_client.patch(
         f"/studies/{parent_study.uid}/order",
@@ -1675,7 +1788,7 @@ def test_remove_study_subpart_from_parent_part(api_client):
 
 # pylint: disable=too-many-statements
 def test_get_audit_trail_of_all_study_subparts_of_study(api_client):
-    response = api_client.get("/studies/Study_000025/audit-trail")
+    response = api_client.get(f"/studies/{study_with_subparts.uid}/audit-trail")
     assert_response_status_code(response, 200)
     res = response.json()
     for i in [
@@ -1767,21 +1880,22 @@ def test_get_audit_trail_of_all_study_subparts_of_study(api_client):
 
     # update study title to be able to lock it
     response = api_client.patch(
-        "/studies/Study_000025",
+        f"/studies/{study_with_subparts.uid}",
         json={"current_metadata": {"study_description": {"study_title": "new title"}}},
     )
     assert_response_status_code(response, 200)
 
-    TestUtils.set_study_standard_version(study_uid="Study_000025")
+    TestUtils.set_study_standard_version(study_uid=study_with_subparts.uid)
 
     # Lock
     response = api_client.post(
-        "/studies/Study_000025/locks", json={"change_description": "version Lock"}
+        f"/studies/{study_with_subparts.uid}/locks",
+        json={"change_description": "version Lock"},
     )
     assert_response_status_code(response, 201)
 
     # Unlock
-    response = api_client.delete("/studies/Study_000025/locks")
+    response = api_client.delete(f"/studies/{study_with_subparts.uid}/locks")
     assert_response_status_code(response, 200)
 
     response = api_client.patch(
@@ -1799,15 +1913,18 @@ def test_get_audit_trail_of_all_study_subparts_of_study(api_client):
 
     # Lock
     response = api_client.post(
-        "/studies/Study_000025/locks", json={"change_description": "version Lock"}
+        f"/studies/{study_with_subparts.uid}/locks",
+        json={"change_description": "version Lock"},
     )
     assert_response_status_code(response, 201)
 
     # Unlock
-    response = api_client.delete("/studies/Study_000025/locks")
+    response = api_client.delete(f"/studies/{study_with_subparts.uid}/locks")
     assert_response_status_code(response, 200)
 
-    response = api_client.get("/studies/Study_000025/audit-trail?study_value_version=1")
+    response = api_client.get(
+        f"/studies/{study_with_subparts.uid}/audit-trail?study_value_version=1"
+    )
     assert_response_status_code(response, 200)
     res = response.json()
     assert all(i["end_date"] for i in res if i["subpart_uid"] == "Study_000026")
@@ -2449,15 +2566,26 @@ def test_get_pharma_cm_representation(
     assert res["study_arms"] == []
 
     # Create CT Terms
+    criteria_cl = TestUtils.create_ct_codelist(
+        name="Criteria Type",
+        submission_value="CRITRTP",
+        codelist_uid="CriteriaTypeCodelistUid",
+        catalogue_name="SDTM CT",
+        library_name="Sponsor",
+        extensible=True,
+        approve=True,
+    )
     inclusion_criteria_term = "INCLUSION CRITERIA"
     ct_term_inclusion_criteria = TestUtils.create_ct_term(
         sponsor_preferred_name=inclusion_criteria_term,
         sponsor_preferred_name_sentence_case=inclusion_criteria_term.lower(),
+        codelist_uid=criteria_cl.codelist_uid,
     )
     exclusion_criteria_term = "EXCLUSION CRITERIA"
     ct_term_exclusion_criteria = TestUtils.create_ct_term(
         sponsor_preferred_name=exclusion_criteria_term,
         sponsor_preferred_name_sentence_case=exclusion_criteria_term.lower(),
+        codelist_uid=criteria_cl.codelist_uid,
     )
 
     # Create criteria templates
@@ -2509,7 +2637,7 @@ def test_get_pharma_cm_representation(
     timeframe = TestUtils.create_timeframe(
         timeframe_template_uid=timeframe_template.uid
     )
-    TestUtils.create_template_parameter(STUDY_ENDPOINT_TP_NAME)
+    TestUtils.create_template_parameter(settings.study_endpoint_tp_name)
 
     # Create study endpoints
     TestUtils.create_study_endpoint(
@@ -2557,10 +2685,20 @@ def test_get_pharma_cm_representation(
     assert res["number_of_arms"] == 0
     assert res["study_arms"] == []
 
+    # yes no response codelist
+    arm_type_codelist = create_codelist(
+        name="Arm Type",
+        submission_value="ARMTTP",
+        uid="ArmTypeCodelistUid",
+        catalogue="SDTM CT",
+        library="Sponsor",
+    )
+
     arm_type = "Investigational Arm"
     investigational_arm = TestUtils.create_ct_term(
         sponsor_preferred_name=arm_type,
         sponsor_preferred_name_sentence_case=arm_type.lower(),
+        codelist_uid=arm_type_codelist.codelist_uid,
     )
     arm_with_type = TestUtils.create_study_arm(
         study_uid=study.uid,
@@ -2609,7 +2747,9 @@ def test_get_pharma_cm_representation(
         }
     ]
     assert (
-        res["number_of_subjects"]
+        arm_with_type.number_of_subjects
+        and arm_without_type.number_of_subjects
+        and res["number_of_subjects"]
         == arm_with_type.number_of_subjects + arm_without_type.number_of_subjects
     )
     assert res["number_of_arms"] == 2
@@ -2848,3 +2988,71 @@ def test_study_structure_statistics(
     assert content["branch_count"] == 0
     assert content["epoch_footnote_count"] == 0
     assert content["visit_footnote_count"] == 0
+
+
+# pylint: disable=invalid-name
+def test_get_studies_list(api_client):
+    STUDY_MINIMAL_FIELDS = [
+        "uid",
+        "id",
+        "acronym",
+    ]
+    STUDY_MINIMAL_FIELDS_NOT_NULL = [
+        "uid",
+    ]
+    STUDY_SIMPLE_FIELDS = [
+        "uid",
+        "id",
+        "acronym",
+        "number",
+        "title",
+        "subpart_id",
+        "subpart_acronym",
+        "clinical_programme_name",
+        "project_number",
+        "project_name",
+        "version_author",
+        "version_status",
+        "version_start_date",
+        "version_number",
+        "latest_locked_version",
+        "latest_released_version",
+    ]
+    STUDY_SIMPLE_FIELDS_NOT_NULL = [
+        "uid",
+        "clinical_programme_name",
+        "project_number",
+        "project_name",
+        "version_author",
+        "version_status",
+        "version_start_date",
+    ]
+
+    response = api_client.get("/studies/list")
+    assert_response_status_code(response, 200)
+    for item in response.json():
+        TestUtils.assert_response_shape_ok(
+            item, STUDY_MINIMAL_FIELDS, STUDY_MINIMAL_FIELDS_NOT_NULL
+        )
+
+    response = api_client.get("/studies/list?minimal_response=true")
+    assert_response_status_code(response, 200)
+    for item in response.json():
+        TestUtils.assert_response_shape_ok(
+            item, STUDY_MINIMAL_FIELDS, STUDY_MINIMAL_FIELDS_NOT_NULL
+        )
+
+    response = api_client.get("/studies/list?minimal_response=false")
+    assert_response_status_code(response, 200)
+    for item in response.json():
+        TestUtils.assert_response_shape_ok(
+            item, STUDY_SIMPLE_FIELDS, STUDY_SIMPLE_FIELDS_NOT_NULL
+        )
+
+
+def test_get_study_complexity_score(api_client):
+    response = api_client.get(f"/studies/{study.uid}/complexity-score")
+    assert_response_status_code(response, 200)
+    res = response.json()
+    assert isinstance(res, float)
+    assert res >= 0

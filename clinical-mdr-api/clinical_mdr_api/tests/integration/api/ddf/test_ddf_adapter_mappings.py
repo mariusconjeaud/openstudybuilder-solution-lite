@@ -65,14 +65,13 @@ def test_data():
 
 @pytest.fixture(scope="module")
 def ddf_mapper(tst_study):
-    study_uid = tst_study.uid
     mapper = USDMMapper(
         get_osb_study_design_cells=StudyDesignCellService().get_all_design_cells,
         get_osb_study_arms=StudyArmSelectionService().get_all_selection,
-        get_osb_study_epochs=StudyEpochService().get_all_epochs,
+        get_osb_study_epochs=StudyEpochService.get_all_epochs,
         get_osb_study_elements=StudyElementSelectionService().get_all_selection,
         get_osb_study_endpoints=StudyEndpointSelectionService().get_all_selection,
-        get_osb_study_visits=StudyVisitService(study_uid).get_all_visits,
+        get_osb_study_visits=StudyVisitService.get_all_visits,
         get_osb_study_activities=StudyActivitySelectionService().get_all_selection,
         get_osb_activity_schedules=StudyActivityScheduleService().get_all_schedules,
     )
@@ -154,5 +153,5 @@ def test_study_identifier(ddf_mapper, tst_study):
         study_patch_request=study_patch_request,
     )
 
-    ddf_study_identifier = ddf_mapper._get_study_identifier(patched_study)
+    ddf_study_identifier = ddf_mapper._get_study_identifiers(patched_study)
     assert ddf_study_identifier is not None

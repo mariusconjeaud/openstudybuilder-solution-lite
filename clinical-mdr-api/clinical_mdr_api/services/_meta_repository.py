@@ -37,20 +37,11 @@ from clinical_mdr_api.domain_repositories.concepts.compound_repository import (
 from clinical_mdr_api.domain_repositories.concepts.medicinal_product_repository import (
     MedicinalProductRepository,
 )
-from clinical_mdr_api.domain_repositories.concepts.odms.alias_repository import (
-    AliasRepository,
-)
 from clinical_mdr_api.domain_repositories.concepts.odms.condition_repository import (
     ConditionRepository,
 )
-from clinical_mdr_api.domain_repositories.concepts.odms.description_repository import (
-    DescriptionRepository,
-)
 from clinical_mdr_api.domain_repositories.concepts.odms.form_repository import (
     FormRepository,
-)
-from clinical_mdr_api.domain_repositories.concepts.odms.formal_expression_repository import (
-    FormalExpressionRepository,
 )
 from clinical_mdr_api.domain_repositories.concepts.odms.item_group_repository import (
     ItemGroupRepository,
@@ -139,6 +130,9 @@ from clinical_mdr_api.domain_repositories.controlled_terminologies.ct_term_attri
 from clinical_mdr_api.domain_repositories.controlled_terminologies.ct_term_name_repository import (
     CTTermNameRepository,
 )
+from clinical_mdr_api.domain_repositories.data_suppliers.data_supplier_repository import (
+    DataSupplierRepository,
+)
 from clinical_mdr_api.domain_repositories.dictionaries.dictionary_codelist_repository import (
     DictionaryCodelistGenericRepository,
 )
@@ -216,6 +210,9 @@ from clinical_mdr_api.domain_repositories.study_selections.study_criteria_reposi
 from clinical_mdr_api.domain_repositories.study_selections.study_design_cell_repository import (
     StudyDesignCellRepository,
 )
+from clinical_mdr_api.domain_repositories.study_selections.study_design_class_repository import (
+    StudyDesignClassRepository,
+)
 from clinical_mdr_api.domain_repositories.study_selections.study_disease_milestone_repository import (
     StudyDiseaseMilestoneRepository,
 )
@@ -236,6 +233,9 @@ from clinical_mdr_api.domain_repositories.study_selections.study_soa_footnote_re
 )
 from clinical_mdr_api.domain_repositories.study_selections.study_soa_group_repository import (
     StudySoAGroupRepository,
+)
+from clinical_mdr_api.domain_repositories.study_selections.study_source_variable_repository import (
+    StudySourceVariableRepository,
 )
 from clinical_mdr_api.domain_repositories.study_selections.study_standard_version_repository import (
     StudyStandardVersionRepository,
@@ -363,6 +363,10 @@ class MetaRepository:
         return ActivityInstanceClassRepository()
 
     @property
+    def data_supplier_repository(self) -> DataSupplierRepository:
+        return DataSupplierRepository()
+
+    @property
     def data_model_ig_repository(self) -> DataModelIGRepository:
         return DataModelIGRepository()
 
@@ -471,10 +475,6 @@ class MetaRepository:
         return ConditionRepository()
 
     @property
-    def odm_formal_expression_repository(self) -> FormalExpressionRepository:
-        return FormalExpressionRepository()
-
-    @property
     def odm_form_repository(self) -> FormRepository:
         return FormRepository()
 
@@ -489,14 +489,6 @@ class MetaRepository:
     @property
     def odm_study_event_repository(self) -> StudyEventRepository:
         return StudyEventRepository()
-
-    @property
-    def odm_description_repository(self) -> DescriptionRepository:
-        return DescriptionRepository()
-
-    @property
-    def odm_alias_repository(self) -> AliasRepository:
-        return AliasRepository()
 
     @property
     def odm_vendor_namespace_repository(self) -> VendorNamespaceRepository:
@@ -728,7 +720,7 @@ class MetaRepository:
 
     @property
     def study_epoch_repository(self) -> StudyEpochRepository:
-        return StudyEpochRepository(self._author_id)
+        return StudyEpochRepository()
 
     @property
     def study_disease_milestone_repository(self) -> StudyDiseaseMilestoneRepository:
@@ -740,7 +732,7 @@ class MetaRepository:
 
     @property
     def study_visit_repository(self) -> StudyVisitRepository:
-        return StudyVisitRepository(self._author_id)
+        return StudyVisitRepository()
 
     @property
     def ct_config_repository(self) -> CTConfigRepository:
@@ -763,3 +755,11 @@ class MetaRepository:
     @property
     def study_cohort_repository(self) -> StudySelectionCohortRepository:
         return StudySelectionCohortRepository()
+
+    @property
+    def study_design_class_repository(self) -> StudyDesignClassRepository:
+        return StudyDesignClassRepository()
+
+    @property
+    def study_source_variable_repository(self) -> StudySourceVariableRepository:
+        return StudySourceVariableRepository()

@@ -1,12 +1,14 @@
 <template>
   <div>
-    <v-card :elevation="elevation" class="rounded-0">
+    <v-card :elevation="elevation" class="rounded-0 pt-6">
       <v-card-title
+        v-if="!noTitle"
         style="z-index: 3; position: relative"
         class="d-flex align-center"
         :class="props.noPadding ? 'pa-0' : 'pt-0'"
       >
         <div class="search-container d-flex align-center pl-0">
+          <slot name="beforeSearch" />
           <v-text-field
             v-if="!hideSearchField || onlyTextSearch"
             v-model="search"
@@ -78,12 +80,12 @@
             data-cy="filters-button"
             :active="showFilterBar"
             icon="mdi-filter-outline"
-            @click="showFilterBar = !showFilterBar"
+            @click="enableFiltering"
           />
           <v-menu rounded offset-y :close-on-content-click="false">
             <template #activator="{ props }">
               <v-btn
-                v-if="modifiableTable && !onlyTextSearch"
+                v-if="(modifiableTable || modifyOnlyColumns) && !onlyTextSearch"
                 class="ml-2"
                 size="small"
                 variant="outlined"
@@ -146,6 +148,7 @@
         <slot name="beforeTable" />
       </v-card-title>
       <v-card-text :class="{ 'pa-0': props.noPadding }">
+        <slot name="customFiltering" />
         <v-fade-transition>
           <v-toolbar
             v-show="showFilterBar"
@@ -158,6 +161,7 @@
               <FilterAutocomplete
                 v-for="item in itemsToFilter"
                 :key="item.text"
+                :load-filters="loadFilters"
                 :clear-input="trigger"
                 :item="item"
                 :filters="savedFilters"
@@ -165,6 +169,7 @@
                 :resource="[columnDataResource, codelistUid]"
                 :parameters="columnDataParameters"
                 :initial-data="getColumnInitialData(item)"
+                :fixed-data="getColumnFixedData(item)"
                 :selected-data="getColumnSelectedData(item)"
                 :filters-modify-function="filtersModifyFunction"
                 :table-items="items"
@@ -206,9 +211,11 @@
               :headers="shownColumns"
               :fixed-header="fixedHeader"
               :no-data-text="noDataText"
+              :hide-default-footer="hideDefaultFooter"
               disable-sort
               v-bind="$attrs"
               @update:options="filterTable"
+              @update:sort-by="customSort"
             >
               <template
                 v-for="header in shownColumns"
@@ -280,6 +287,7 @@
                       </template>
                     </v-list>
                   </v-menu>
+                  <div v-else style="width: 50px"></div>
                 </div>
               </template>
               <template
@@ -349,7 +357,6 @@
 import { computed, onMounted, onUpdated, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/stores/app'
-import { useFilteringParamsStore } from '@/stores/filtering-params'
 import { useTablesLayoutStore } from '@/stores/library-tableslayout'
 import ConfirmDialog from '@/components/tools/ConfirmDialog.vue'
 import DataTableExportButton from '@/components/tools/DataTableExportButton.vue'
@@ -368,10 +375,6 @@ const props = defineProps({
   defaultHeaders: {
     type: Array,
     default: () => [],
-  },
-  useCachedFiltering: {
-    type: Boolean,
-    default: true,
   },
   items: {
     type: Array,
@@ -456,9 +459,13 @@ const props = defineProps({
     type: Object,
     default: undefined,
   },
+  fixedColumnData: {
+    type: Object,
+    default: undefined,
+  },
   codelistUid: {
     type: String,
-    default: '',
+    default: undefined,
   },
   subTables: {
     type: Boolean,
@@ -523,6 +530,10 @@ const props = defineProps({
     type: Boolean,
     default: true,
   },
+  modifyOnlyColumns: {
+    type: Boolean,
+    default: false,
+  },
   fixedHeader: {
     type: Boolean,
     default: true,
@@ -566,12 +577,19 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  noTitle: {
+    type: Boolean,
+    default: false,
+  },
+  hideDefaultFooter: {
+    type: Boolean,
+    default: false,
+  },
 })
-const emit = defineEmits(['filter'])
+const emit = defineEmits(['filter', 'customSort'])
 
 const { t } = useI18n()
 const appStore = useAppStore()
-const filteringParamsStore = useFilteringParamsStore()
 const tablesLayoutStore = useTablesLayoutStore()
 const route = useRoute()
 
@@ -593,6 +611,7 @@ const sortBy = ref(props.initialSortBy)
 const selectedColumnData = ref({})
 const confirm = ref()
 const selectedColumns = ref([])
+const loadFilters = ref(false)
 
 const headerActions = [
   {
@@ -620,7 +639,6 @@ let timeout
 let savedOptions
 let savedFilters = '{}'
 
-const filteringParams = computed(() => filteringParamsStore.filteringParams)
 const computedItemsPerPage = computed(() => {
   return props.itemsPerPage ? props.itemsPerPage : appStore.userData.rows
 })
@@ -695,7 +713,6 @@ watch(itemsToFilter, () => {
 onMounted(() => {
   showSelectBoxes.value = props.showSelect
   tablesLayoutStore.initiateColumns()
-  filteringParamsStore.initiateFilteringParams()
   updateColumns()
   if (props.showFilterBarByDefault) {
     itemsToFilter.value = props.headers.filter(
@@ -714,32 +731,6 @@ onMounted(() => {
   }
   if (props.items && props.items.length) {
     loading.value = false
-  }
-  // For now we will implement saving of latest filtering only for Library and Studies Activities, it might change in the future
-  if (
-    props.useCachedFiltering &&
-    filteringParams.value.tableName === window.location.pathname &&
-    (window.location.pathname.indexOf('library/activities') > 0 ||
-      window.location.pathname.indexOf('activities/list'))
-  ) {
-    const map = JSON.parse(filteringParams.value.apiParams)
-    for (const key in map) {
-      if (key !== '*') {
-        const newItem = shownColumns.value.find(
-          (column) => column.value === key
-        )
-        if (
-          newItem !== undefined &&
-          !itemsToFilter.value.find((item) => item.text === newItem.text)
-        ) {
-          itemsToFilter.value.push(newItem)
-        }
-        apiParams.set(key, map[key])
-      } else {
-        search.value = map[key][0]
-      }
-    }
-    selectedColumnData.value = map
   }
   if (props.initialFilters !== undefined) {
     selectedColumnData.value = props.initialFilters
@@ -772,8 +763,14 @@ onUpdated(() => {
     })
   }
 })
+
+function enableFiltering() {
+  showFilterBar.value = !showFilterBar.value
+  loadFilters.value = true
+}
+
 function updateColumns() {
-  if (!props.modifiableTable) {
+  if (!props.modifiableTable && !props.modifyOnlyColumns) {
     if (props.defaultHeaders && props.defaultHeaders.length !== 0) {
       shownColumns.value = props.defaultHeaders
     } else {
@@ -813,6 +810,9 @@ function getColumnInitialData(column) {
   return props.initialColumnData
     ? props.initialColumnData[column.key]
     : undefined
+}
+function getColumnFixedData(column) {
+  return props.fixedColumnData ? props.fixedColumnData[column.key] : undefined
 }
 function getColumnSelectedData(column) {
   return selectedColumnData.value
@@ -875,8 +875,10 @@ function clearFilters() {
 }
 function columnFilter(params) {
   apiParams.set(params.column, params.data)
+  savedOptions.page = 1
   filterTable()
 }
+
 function filterTable(options) {
   loading.value = true
   if (timeout) clearTimeout(timeout)
@@ -914,18 +916,6 @@ function filterTable(options) {
         savedFilters.substring(0, bracketIndex) +
         getDatesOperator() +
         savedFilters.substring(bracketIndex)
-    }
-    // For now we will implement saving of latest filtering only for Library and Studies Activities, it might change in the future
-    if (
-      (props.useCachedFiltering &&
-        window.location.pathname.indexOf('library/activities') >= 0) ||
-      window.location.pathname.indexOf('activities/list')
-    ) {
-      filteringParamsStore.setFilteringParams({
-        filters: savedFilters,
-        tableName: window.location.pathname,
-        apiParams: JSON.stringify(Object.fromEntries(apiParams)),
-      })
     }
     emit('filter', savedFilters, options, filtersUpdated)
   }, 500)
@@ -966,9 +956,13 @@ async function openHistory() {
 function closeHistory() {
   showHistory.value = false
 }
+function customSort(data) {
+  emit('customSort', data)
+}
 
 defineExpose({
   filterTable,
+  search,
   selectedColumns,
 })
 </script>

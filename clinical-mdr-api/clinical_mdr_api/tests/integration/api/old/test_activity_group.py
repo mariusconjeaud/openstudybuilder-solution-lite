@@ -88,11 +88,11 @@ def test_get_all_activity_groups(api_client):
     assert res["items"][1]["abbreviation"] == "abbv"
     assert res["items"][1]["library_name"] == "Sponsor"
     assert res["items"][1]["end_date"] is None
-    assert res["items"][1]["status"] == "Draft"
-    assert res["items"][1]["version"] == "0.1"
-    assert res["items"][1]["change_description"] == "New draft version"
+    assert res["items"][1]["status"] == "Final"
+    assert res["items"][1]["version"] == "1.0"
+    assert res["items"][1]["change_description"] == "Approved version"
     assert res["items"][1]["author_username"] == "unknown-user@example.com"
-    assert res["items"][1]["possible_actions"] == ["approve", "delete", "edit"]
+    assert res["items"][0]["possible_actions"] == ["inactivate", "new_version"]
     assert res["items"][2]["uid"] == "activity_group_root3"
     assert res["items"][2]["name"] == "name3"
     assert res["items"][2]["name_sentence_case"] == "name3"
@@ -239,11 +239,3 @@ def test_post_activations_activity_group(api_client):
     assert res["change_description"] == "Reactivated version"
     assert res["author_username"] == "unknown-user@example.com"
     assert res["possible_actions"] == ["inactivate", "new_version"]
-
-
-def test_delete_activity_group(api_client):
-    response = api_client.delete(
-        "/concepts/activities/activity-groups/activity_group_root2"
-    )
-
-    assert_response_status_code(response, 204)

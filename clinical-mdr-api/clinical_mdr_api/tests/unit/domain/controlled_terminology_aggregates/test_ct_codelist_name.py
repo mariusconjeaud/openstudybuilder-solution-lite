@@ -14,7 +14,7 @@ from clinical_mdr_api.tests.unit.domain.utils import AUTHOR_ID, random_str
 
 def create_random_ct_codelist_name_vo(catalogue: str = "Catalogue") -> CTCodelistNameVO:
     random_ct_codelist_name_vo = CTCodelistNameVO.from_repository_values(
-        catalogue_name=catalogue, name=random_str(), is_template_parameter=False
+        catalogue_names=[catalogue], name=random_str(), is_template_parameter=False
     )
     return random_ct_codelist_name_vo
 
@@ -113,7 +113,7 @@ class TestCTCodelistNameAR(unittest.TestCase):
             ct_codelist_name_ar.ct_codelist_vo.is_template_parameter,
             codelist_name_vo.is_template_parameter,
         )
-        self.assertEqual(
-            ct_codelist_name_ar.ct_codelist_vo.catalogue_name,
-            codelist_name_vo.catalogue_name,
+        self.assertListEqual(
+            ct_codelist_name_ar.ct_codelist_vo.catalogue_names,
+            codelist_name_vo.catalogue_names,
         )

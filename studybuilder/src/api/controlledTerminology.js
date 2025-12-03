@@ -89,6 +89,36 @@ export default {
       `${resource}/codelists/${codelistUid}/attributes/approvals`
     )
   },
+  getPairedCodelists(codelistUid) {
+    return repository.get(`${resource}/codelists/${codelistUid}/paired`)
+  },
+  updatePairedCodelists(codelistUid, data) {
+    return repository.patch(`${resource}/codelists/${codelistUid}/paired`, data)
+  },
+  getTermCodelists(termUid) {
+    return repository.get(`${resource}/terms/${termUid}/codelists`)
+  },
+  getTermParents(termUid) {
+    return repository.get(`${resource}/terms/${termUid}/parents`)
+  },
+  addTermParent(termUid, parentUid, relationshipType) {
+    const params = {
+      parent_uid: parentUid,
+      relationship_type: relationshipType,
+    }
+    return repository.post(
+      `${resource}/terms/${termUid}/parents`,
+      {},
+      { params }
+    )
+  },
+  deleteTermParent(termUid, parentUid, relationshipType) {
+    const params = {
+      parent_uid: parentUid,
+      relationship_type: relationshipType,
+    }
+    return repository.delete(`${resource}/terms/${termUid}/parents`, { params })
+  },
   getCodelistTerms(params) {
     return repository.get(`${resource}/terms`, { params })
   },
@@ -151,11 +181,7 @@ export default {
   createCodelistTerm(data) {
     return repository.post(`${resource}/terms`, data)
   },
-  addTermToCodelist(codelistUid, termUid) {
-    const data = {
-      term_uid: termUid,
-      order: 999999,
-    }
+  addTermToCodelist(codelistUid, data) {
     return repository.post(`${resource}/codelists/${codelistUid}/terms`, data)
   },
   removeTermFromCodelist(codelistUid, termUid) {
@@ -163,8 +189,8 @@ export default {
       `${resource}/codelists/${codelistUid}/terms/${termUid}`
     )
   },
-  updateCodelistTermOrder(termUid, data) {
-    return repository.patch(`${resource}/terms/${termUid}/order`, data)
+  updateCodelistTermOrderSubmval(termUid, data) {
+    return repository.patch(`${resource}/terms/${termUid}/codelists`, data)
   },
   updateCodelistTermNames(termUid, data) {
     return repository.patch(`${resource}/terms/${termUid}/names`, data)

@@ -1,0 +1,8 @@
+[run]
+omit = **/tests/*
+data_file = reports/.coverage
+branch = True
+include =
+    clinical_mdr_api/*
+    consumer_api/*
+    common/*

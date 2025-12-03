@@ -223,7 +223,7 @@ const headers = ref([
   { title: '', key: 'actions', width: '1%' },
   { title: '#', key: 'order', width: '5%' },
   {
-    title: props.criteriaType.name.sponsor_preferred_name,
+    title: props.criteriaType.sponsor_preferred_name,
     key: 'criteria.name',
     width: '30%',
   },
@@ -295,7 +295,7 @@ const exportDataUrlParams = computed(() => {
   return {
     filters: JSON.stringify({
       'criteria_type.sponsor_preferred_name_sentence_case': {
-        v: [props.criteriaType.name.sponsor_preferred_name_sentence_case],
+        v: [props.criteriaType.sponsor_preferred_name_sentence_case],
       },
     }),
   }
@@ -420,7 +420,7 @@ function getStudyCriteria(filters, options, filtersUpdated) {
   try {
     filters = JSON.parse(filters)
     filters['criteria_type.sponsor_preferred_name_sentence_case'] = {
-      v: [props.criteriaType.name.sponsor_preferred_name_sentence_case],
+      v: [props.criteriaType.sponsor_preferred_name_sentence_case],
     }
   } catch (error) {
     console.error(error)
@@ -557,7 +557,7 @@ async function updateVersion(item) {
 function addTypeFilterToHeader(jsonFilter, params) {
   if (params.field_name === 'criteria.name') {
     jsonFilter['criteria_type.sponsor_preferred_name_sentence_case'] = {
-      v: [props.criteriaType.name.sponsor_preferred_name_sentence_case],
+      v: [props.criteriaType.sponsor_preferred_name_sentence_case],
     }
   }
   return {

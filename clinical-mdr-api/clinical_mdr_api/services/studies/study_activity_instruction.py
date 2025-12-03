@@ -1,6 +1,7 @@
 """Service for study activity instructions."""
 
 import datetime
+from typing import Any
 
 from fastapi import status
 from neomodel import db
@@ -49,11 +50,11 @@ class StudyActivityInstructionService(StudySelectionMixin):
     @db.transaction
     def get_all_instructions_for_all_studies(
         self,
-        sort_by: dict | None = None,
+        sort_by: dict[str, bool] | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: dict | None = None,
-        filter_operator: FilterOperator | None = FilterOperator.AND,
+        filter_by: dict[str, dict[str, Any]] | None = None,
+        filter_operator: FilterOperator = FilterOperator.AND,
         total_count: bool = False,
     ) -> GenericFilteringReturn[StudyActivityInstruction]:
         query = StudyActivityInstructionNeoModel.nodes.fetch_relations(
@@ -68,7 +69,7 @@ class StudyActivityInstructionService(StudySelectionMixin):
         ]
 
         # Do filtering, sorting, pagination and count
-        filtered_items = service_level_generic_filtering(
+        return service_level_generic_filtering(
             items=items,
             filter_by=filter_by,
             filter_operator=filter_operator,
@@ -77,7 +78,6 @@ class StudyActivityInstructionService(StudySelectionMixin):
             page_number=page_number,
             page_size=page_size,
         )
-        return filtered_items
 
     @db.transaction
     def get_all_instructions(
@@ -119,6 +119,7 @@ class StudyActivityInstructionService(StudySelectionMixin):
                     activity_instruction_name=i_study_activity_instruction_ogm.activity_instruction_name,
                     start_date=i_study_activity_instruction_ogm.start_date,
                     author_username=i_study_activity_instruction_ogm.author_username,
+                    author_id=self.author,
                 ),
                 study_value_version=study_value_version,
             )
@@ -150,7 +151,7 @@ class StudyActivityInstructionService(StudySelectionMixin):
     def _create_activity_instruction(
         self, activity_instruction_data: ActivityInstructionCreateInput
     ) -> ActivityInstructionAR:
-        service = ActivityInstructionService()
+        service: ActivityInstructionService = ActivityInstructionService()
         activity_instruction_ar = service.create_ar_from_input_values(
             activity_instruction_data
         )
@@ -202,7 +203,7 @@ class StudyActivityInstructionService(StudySelectionMixin):
         else:
             # Link to an existing activity instruction
             activity_instruction_uid = (
-                study_activity_instruction_input.activity_instruction_uid
+                study_activity_instruction_input.activity_instruction_uid or ""
             )
         instruction_vo = self._repos.study_activity_instruction_repository.save(
             self._from_input_values(
@@ -229,12 +230,18 @@ class StudyActivityInstructionService(StudySelectionMixin):
     ) -> list[StudyActivityInstructionBatchOutput]:
         results = []
         for operation in operations:
-            result = {}
             item = None
             try:
                 if operation.method == "POST":
-                    item = self.create(study_uid, operation.content)
-                    response_code = status.HTTP_201_CREATED
+                    if isinstance(
+                        operation.content, StudyActivityInstructionCreateInput
+                    ):
+                        item = self.create(study_uid, operation.content)
+                        response_code = status.HTTP_201_CREATED
+                    else:
+                        raise exceptions.ValidationException(
+                            msg="POST operation requires StudyActivityInstructionCreateInput as request payload."
+                        )
                 elif operation.method == "DELETE":
                     self.delete(
                         study_uid, operation.content.study_activity_instruction_uid
@@ -242,10 +249,11 @@ class StudyActivityInstructionService(StudySelectionMixin):
                     response_code = status.HTTP_204_NO_CONTENT
                 else:
                     raise exceptions.MethodNotAllowedException(method=operation.method)
-                result["response_code"] = response_code
-                if item:
-                    result["content"] = item.model_dump()
-                results.append(StudyActivityInstructionBatchOutput(**result))
+                results.append(
+                    StudyActivityInstructionBatchOutput(
+                        response_code=response_code, content=item
+                    )
+                )
             except exceptions.MDRApiBaseException as error:
                 results.append(
                     StudyActivityInstructionBatchOutput.model_construct(

@@ -2,10 +2,11 @@ const { Given, When, Then } = require("@badeball/cypress-cucumber-preprocessor")
 
 let topicCode, instanceName
 
+Then("Topic code is changed to the unique one", () => cy.contains('.v-stepper-window-item .v-input', 'Topic code').clear().type(Date.now()))
+
 Then("Created activity is visible in table", () => cy.searchAndCheckPresence(instanceName, true))
 
 Then("Activity instance is not visible in table", () => cy.searchAndCheckPresence(instanceName, false))
-
 
 Given("The Activity Instance Wizard Stepper {string} page is displayed", (stepperPage) => {
     cy.contains('.v-stepper-item', stepperPage).should('have.class', 'v-stepper-item--selected')
@@ -37,7 +38,7 @@ Then("The Required Activity Item Classes field is displayed", () => cy.contains(
 
 Then("Warning is displayed for mandatory field {string}", (fieldName) => warningIsDisplayed(fieldName))
 
-Then("Warning about not matching name and sentence case name is displayed", () => warningIsDisplayed('Sentence case name', "Sentence case name value must be identical to name value"))
+Then("Warning about not matching name and sentence case name is displayed", () => warningIsDisplayed('Sentence case name', "Sentence case name can only differ in case compared to name value"))
 
 Then("Warning about already existing topic code is displayed", () => cy.checkSnackbarMessage(`Activity Instance with Topic Code '${topicCode}' already exists`))
 

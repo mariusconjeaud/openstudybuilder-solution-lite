@@ -4,25 +4,198 @@
       {{ $t('StudyManageView.title') }}
       <HelpButton :help-text="$t('_help.SelectOrAddStudyTable.general')" />
     </div>
-    <NavigationTabs :tabs="tabs" :breadcrumbs-level="2">
+    <NavigationTabs
+      ref="navigationTabs"
+      :tabs="tabs"
+      :breadcrumbs-level="2"
+      @tab-changed="clearFilters()"
+    >
       <template #default="{ tabKeys }">
         <v-window-item :key="`active-${tabKeys.active}`" value="active">
           <StudyTable
-            key="activeStudiesTable"
-            :items="activeStudies"
+            ref="activeStudiesTable"
+            v-bind="$attrs"
+            :items="paginatedStudies"
             :items-length="totalActiveStudies"
             @filter="fetchActiveStudies"
-            @refresh-studies="activeStudiesTable.filterTable()"
-          />
+            @refresh-studies="reloadStudies"
+            @enable-filtering="openFiltering = !openFiltering"
+            @sort="sort"
+          >
+            <template #customSearch>
+              <v-text-field
+                v-model="searchString"
+                clearable
+                clear-icon="mdi-close"
+                density="compact"
+                prepend-inner-icon="mdi-magnify"
+                :label="$t('_global.search')"
+                single-line
+                color="nnBaseBlue"
+                hide-details
+                style="min-width: 240px; max-width: 300px"
+                rounded="lg"
+                autocomplete="off"
+                class="searchFieldLabel ml-0"
+                data-cy="search-field"
+                variant="outlined"
+              />
+            </template>
+            <template #customFiltering>
+              <v-toolbar
+                v-if="openFiltering"
+                flat
+                class="filteringBar pt-1"
+                color="nnGray200"
+              >
+                <v-slide-group show-arrows class="mb-5">
+                  <v-autocomplete
+                    v-for="header in headers"
+                    :key="header.key"
+                    ref="select"
+                    v-model="columnFilters[header.key]"
+                    density="compact"
+                    clearable
+                    multiple
+                    variant="outlined"
+                    width="240px"
+                    :label="header.title"
+                    rounded="lg"
+                    color="nnBaseBlue"
+                    bg-color="nnWhite"
+                    class="filterAutocompleteLabel ml-1"
+                    :items="getHeaderFilterData(header.key)"
+                    clear-on-select
+                    hide-details
+                    autocomplete="off"
+                    single-line
+                    @update:model-value="activeStudiesTable.filter()"
+                  >
+                    <template #selection="{ index }">
+                      <div v-if="index === 0">
+                        <span class="items-font-size">{{
+                          typeof columnFilters[header.key][0] !== 'boolean' &&
+                          typeof columnFilters[header.key][0] !== 'number' &&
+                          columnFilters[header.key][0].length > 12
+                            ? columnFilters[header.key][0].substring(0, 12) +
+                              '...'
+                            : columnFilters[header.key][0]
+                        }}</span>
+                      </div>
+                      <span
+                        v-if="index === 1"
+                        class="text-grey text-caption mr-1"
+                      >
+                        (+{{ columnFilters[header.key].length - 1 }})
+                      </span>
+                    </template>
+                  </v-autocomplete>
+                </v-slide-group>
+                <v-spacer />
+                <v-btn
+                  prepend-icon="mdi-close"
+                  color="nnWhite"
+                  variant="flat"
+                  class="mr-3 mb-5 clearAllBtn"
+                  rounded
+                  :text="$t('NNTableTooltips.clear_filters_content')"
+                  @click="clearFilters()"
+                />
+              </v-toolbar>
+            </template>
+          </StudyTable>
         </v-window-item>
         <v-window-item :key="`deleted-${tabKeys.deleted}`" value="deleted">
           <StudyTable
-            key="deletedStudies"
-            :items="deletedStudies"
+            ref="deletedStudiesTable"
+            :items="paginatedStudies"
             :items-length="totalDeletedStudies"
             read-only
             @filter="fetchDeletedStudies"
-          />
+            @refresh-studies="reloadStudies"
+            @enable-filtering="openFiltering = !openFiltering"
+            @sort="sort"
+          >
+            <template #customSearch>
+              <v-text-field
+                v-model="searchString"
+                clearable
+                clear-icon="mdi-close"
+                density="compact"
+                prepend-inner-icon="mdi-magnify"
+                :label="$t('_global.search')"
+                single-line
+                color="nnBaseBlue"
+                hide-details
+                style="min-width: 240px; max-width: 300px"
+                rounded="lg"
+                class="searchFieldLabel ml-0"
+                data-cy="search-field"
+                variant="outlined"
+              />
+            </template>
+            <template #customFiltering>
+              <v-toolbar
+                v-if="openFiltering"
+                flat
+                class="filteringBar pt-1"
+                color="nnGray200"
+              >
+                <v-slide-group show-arrows class="mb-5">
+                  <v-autocomplete
+                    v-for="header in headers"
+                    :key="header.key"
+                    ref="select"
+                    v-model="columnFilters[header.key]"
+                    density="compact"
+                    clearable
+                    multiple
+                    variant="outlined"
+                    width="240px"
+                    :label="header.title"
+                    rounded="lg"
+                    color="nnBaseBlue"
+                    bg-color="nnWhite"
+                    class="filterAutocompleteLabel ml-1"
+                    :items="getHeaderFilterData(header.key)"
+                    hide-details
+                    autocomplete="off"
+                    single-line
+                    @update:model-value="deletedStudiesTable.filter()"
+                  >
+                    <template #selection="{ index }">
+                      <div v-if="index === 0">
+                        <span class="items-font-size">{{
+                          typeof columnFilters[header.key][0] !== 'boolean' &&
+                          typeof columnFilters[header.key][0] !== 'number' &&
+                          columnFilters[header.key][0].length > 12
+                            ? columnFilters[header.key][0].substring(0, 12) +
+                              '...'
+                            : columnFilters[header.key][0]
+                        }}</span>
+                      </div>
+                      <span
+                        v-if="index === 1"
+                        class="text-grey text-caption mr-1"
+                      >
+                        (+{{ columnFilters[header.key].length - 1 }})
+                      </span>
+                    </template>
+                  </v-autocomplete>
+                </v-slide-group>
+                <v-spacer />
+                <v-btn
+                  prepend-icon="mdi-close"
+                  color="nnWhite"
+                  variant="flat"
+                  class="mr-3 mb-5 clearAllBtn"
+                  rounded
+                  :text="$t('NNTableTooltips.clear_filters_content')"
+                  @click="clearFilters()"
+                />
+              </v-toolbar>
+            </template>
+          </StudyTable>
         </v-window-item>
       </template>
     </NavigationTabs>
@@ -32,7 +205,6 @@
 <script setup>
 import { ref, watch } from 'vue'
 import api from '@/api/study'
-import _isEmpty from 'lodash/isEmpty'
 import filteringParameters from '@/utils/filteringParameters'
 import StudyTable from '@/components/studies/StudyTable.vue'
 import HelpButton from '@/components/tools/HelpButton.vue'
@@ -44,66 +216,238 @@ const studiesManageStore = useStudiesManageStore()
 const { t } = useI18n()
 
 const activeStudies = ref([])
-const activeOptions = ref({})
 const deletedStudies = ref([])
-const deletedOptions = ref({})
 const totalActiveStudies = ref(0)
 const totalDeletedStudies = ref(0)
 const savedFilters = ref('')
+const searchString = ref('')
+const filteredStudies = ref([])
+const paginatedStudies = ref([])
+const columnFilters = ref({})
+const openFiltering = ref(false)
+const fullRefresh = ref(false)
+
+const headers = [
+  {
+    title: t('StudyTable.clinical_programme'),
+    key: 'clinical_programme_name',
+  },
+  {
+    title: t('StudyTable.project_id'),
+    key: 'project_number',
+  },
+  {
+    title: t('StudyTable.project_name'),
+    key: 'project_name',
+  },
+  {
+    title: t('StudyTable.number'),
+    key: 'number',
+  },
+  {
+    title: t('StudyTable.id'),
+    key: 'id',
+  },
+  {
+    title: t('StudyTable.subpart_id'),
+    key: 'subpart_id',
+  },
+  {
+    title: t('StudyTable.acronym'),
+    key: 'acronym',
+  },
+  {
+    title: t('StudyTable.subpart_acronym'),
+    key: 'subpart_acronym',
+  },
+  {
+    title: t('StudyTable.title'),
+    key: 'title',
+  },
+  {
+    title: t('_global.status'),
+    key: 'version_status',
+  },
+  {
+    title: t('StudyTable.lts_version'),
+    key: 'version_number',
+  },
+  {
+    title: t('StudyTable.lts_locked_ver'),
+    key: 'latest_locked_version',
+  },
+  {
+    title: t('StudyTable.lts_released_ver'),
+    key: 'latest_released_version',
+  },
+  {
+    title: t('_global.modified'),
+    key: 'version_start_date',
+  },
+  {
+    title: t('_global.modified_by'),
+    key: 'version_author',
+  },
+]
 
 const activeStudiesTable = ref()
+const deletedStudiesTable = ref()
+const navigationTabs = ref()
 
 const tabs = [
   { tab: 'active', name: t('SelectOrAddStudyTable.tab1_title') },
   { tab: 'deleted', name: t('SelectOrAddStudyTable.tab2_title') },
 ]
 
-watch(activeOptions, () => {
-  fetchActiveStudies()
-})
-watch(deletedOptions, () => {
-  fetchDeletedStudies()
+watch(searchString, () => {
+  filterTable()
 })
 
-function fetchActiveStudies(filters, options, filtersUpdated) {
-  if (filters) {
-    savedFilters.value = filters
+function reloadStudies() {
+  fullRefresh.value = true
+  activeStudiesTable.value.filter()
+}
+
+function sort(data) {
+  try {
+    if (data[0]?.order === 'asc') {
+      filteredStudies.value.sort((a, b) => {
+        if (a[data[0].key] === null) return 1
+        if (b[data[0].key] === null) return -1
+        return a[data[0].key]
+          .toString()
+          .localeCompare(b[data[0].key].toString())
+      })
+    } else if (data[0]?.order === 'desc') {
+      filteredStudies.value.sort((a, b) => {
+        if (b[data[0].key] === null) return 1
+        if (a[data[0].key] === null) return -1
+        return b[data[0].key]
+          .toString()
+          .localeCompare(a[data[0].key].toString())
+      })
+    }
+  } catch (error) {
+    console.error(error)
   }
+}
+
+async function fetchActiveStudies(filters, options, filtersUpdated) {
   const params = filteringParameters.prepareParameters(
     options,
     savedFilters.value,
     filtersUpdated
   )
-  if (options.sortBy && _isEmpty(options.sortBy)) {
-    params.sort_by = JSON.stringify({
-      'current_metadata.identification_metadata.study_id': true,
-    })
+  try {
+    if (activeStudies.value.length === 0 || fullRefresh.value) {
+      await api.getAllList().then((resp) => {
+        resp.data.forEach((study) => {
+          if (study.latest_locked_version) {
+            study.latest_locked_version = `${study.latest_locked_version.version_number} ${study.latest_locked_version.change_description}`
+          }
+          if (study.latest_released_version) {
+            study.latest_released_version = `${study.latest_released_version.version_number} ${study.latest_released_version.change_description}`
+          }
+        })
+        activeStudies.value = resp.data
+        fullRefresh.value = false
+      })
+    }
+
+    filteredStudies.value = activeStudies.value
+    handleFiltering(params)
+  } catch (error) {
+    console.error(error)
   }
-  api.get(params).then((resp) => {
-    activeStudies.value = resp.data.items
-    totalActiveStudies.value = resp.data.total
-  })
 }
 
-function fetchDeletedStudies(filters, options, filtersUpdated) {
+function handleFiltering(params) {
+  // Column filtering
+  for (const key in columnFilters.value) {
+    if (
+      Array.isArray(columnFilters.value[key]) &&
+      columnFilters.value[key].length === 0
+    ) {
+      delete columnFilters.value[key]
+    }
+  }
+  for (let key in columnFilters.value) {
+    filteredStudies.value = filteredStudies.value.filter((study) => {
+      return columnFilters.value[key].indexOf(study[key]) !== -1
+    })
+  }
+
+  // Free text search
+  let filteredTotal = 0
+  if (searchString.value?.length >= 3) {
+    filteredStudies.value = filteredStudies.value.filter((obj) =>
+      Object.values(obj).some((value) =>
+        String(value).toLowerCase().includes(searchString.value.toLowerCase())
+      )
+    )
+  }
+
+  // Pagination
+  filteredTotal = filteredStudies.value.length
+  paginatedStudies.value =
+    params.page_size > 0
+      ? filteredStudies.value.slice(
+          (params.page_number - 1) * params.page_size,
+          params.page_number * params.page_size
+        )
+      : filteredStudies.value
+
+  if (navigationTabs.value.tab === 'active') {
+    totalActiveStudies.value = filteredTotal
+  } else {
+    totalDeletedStudies.value = filteredTotal
+  }
+}
+
+function getHeaderFilterData(key) {
+  if (navigationTabs.value.tab === 'active') {
+    return [...new Set(activeStudies.value.map((obj) => obj[[key]]))]
+      .filter((item) => item !== null && item !== undefined)
+      .sort()
+  }
+  return [...new Set(deletedStudies.value.map((obj) => obj[[key]]))]
+    .filter((item) => item !== null && item !== undefined)
+    .sort()
+}
+
+function clearFilters() {
+  columnFilters.value = {}
+  filterTable()
+}
+
+async function fetchDeletedStudies(filters, options, filtersUpdated) {
   const params = filteringParameters.prepareParameters(
     options,
-    filters,
+    savedFilters.value,
     filtersUpdated
   )
-  params.deleted = true
-  api.get(params).then((resp) => {
-    deletedStudies.value = resp.data.items
-    totalDeletedStudies.value = resp.data.total
-  })
+  try {
+    if (deletedStudies.value.length === 0 || fullRefresh.value) {
+      await api.getAllList(true).then((resp) => {
+        deletedStudies.value = resp.data
+        fullRefresh.value = false
+      })
+    }
+
+    filteredStudies.value = deletedStudies.value
+    handleFiltering(params)
+  } catch (error) {
+    console.error(error)
+  }
 }
-function initialSortByDate() {
-  activeOptions.value.sortBy = [
-    'current_metadata.version_metadata.version_timestamp',
-  ]
-  activeOptions.value.sortDesc = [true]
+
+function filterTable() {
+  if (navigationTabs.value.tab === 'active') {
+    activeStudiesTable.value.filter()
+  } else {
+    deletedStudiesTable.value.filter()
+  }
 }
 
 studiesManageStore.fetchProjects()
-initialSortByDate()
 </script>

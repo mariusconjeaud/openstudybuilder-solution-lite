@@ -4,6 +4,9 @@ from typing import Any, TypeVar
 from neomodel import Q, db
 from neomodel.sync_.match import NodeNameResolver, Optional
 
+from clinical_mdr_api.domain_repositories.controlled_terminologies.ct_codelist_attributes_repository import (
+    CTCodelistAttributesRepository,
+)
 from clinical_mdr_api.domain_repositories.generic_repository import (
     manage_previous_connected_study_selection_relationships,
 )
@@ -36,6 +39,7 @@ from clinical_mdr_api.repositories._utils import (
     transform_filters_into_neomodel,
     validate_filters_and_add_search_string,
 )
+from common.config import settings
 from common.exceptions import ValidationException
 from common.utils import validate_page_number_and_page_size
 
@@ -46,7 +50,7 @@ _StandardsReturnType = TypeVar("_StandardsReturnType")
 def get_ctlist_terms_by_name_and_definition(code_list_name: str):
     cypher_query = """
         MATCH (:CTCodelistNameValue {name: $code_list_name})<-[:LATEST_FINAL]-(:CTCodelistNameRoot)<-[:HAS_NAME_ROOT]-
-        (:CTCodelistRoot)-[:HAS_TERM]->
+        (:CTCodelistRoot)-[ht:HAS_TERM WHERE ht.end_date IS NULL]->(:CTCodelistTerm)-[:HAS_TERM_ROOT]->
         (tr:CTTermRoot)-[:HAS_NAME_ROOT]->
         (:CTTermNameRoot)-[:LATEST_FINAL]->
         (ctnv:CTTermNameValue)
@@ -67,11 +71,11 @@ class StudyDiseaseMilestoneRepository:
     def find_all_disease_milestone(
         self,
         study_uid: str | None = None,
-        sort_by: dict | None = None,
+        sort_by: dict[str, bool] | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: dict | None = None,
-        filter_operator: FilterOperator | None = FilterOperator.AND,
+        filter_by: dict[str, dict[str, Any]] | None = None,
+        filter_operator: FilterOperator = FilterOperator.AND,
         total_count: bool = False,
         study_value_version: str | None = None,
         **kwargs,
@@ -92,8 +96,8 @@ class StudyDiseaseMilestoneRepository:
         nodes = ListDistinct(
             StudyDiseaseMilestone.nodes.fetch_relations(
                 "has_after__audit_trail",
-                "has_disease_milestone_type__has_name_root__latest_final",
-                "has_disease_milestone_type__has_attributes_root__latest_final",
+                "has_disease_milestone_type__has_selected_term__has_name_root__latest_final",
+                "has_disease_milestone_type__has_selected_term__has_attributes_root__latest_final",
             )
             .order_by(sort_paths[0] if len(sort_paths) > 0 else "uid")
             .filter(*q_filters)[start:end]
@@ -114,7 +118,7 @@ class StudyDiseaseMilestoneRepository:
         self,
         study_uid: str | None = None,
         study_value_version: str | None = None,
-        filter_by: dict | None = None,
+        filter_by: dict[str, dict[str, Any]] | None = None,
     ) -> tuple[dict, list[Q]]:
         q_filters = transform_filters_into_neomodel(
             filter_by=filter_by, model=StudyDiseaseMilestoneOGM
@@ -131,14 +135,14 @@ class StudyDiseaseMilestoneRepository:
 
     def find_all_disease_milestones_by_study(
         self, study_uid: str
-    ) -> _StandardsReturnType | None:
+    ) -> list[StudyDiseaseMilestoneOGM]:
         all_disease_milestones = [
             StudyDiseaseMilestoneOGM.model_validate(sas_node)
             for sas_node in ListDistinct(
                 StudyDiseaseMilestone.nodes.fetch_relations(
                     "has_after__audit_trail",
-                    "has_disease_milestone_type__has_name_root__latest_final",
-                    "has_disease_milestone_type__has_attributes_root__latest_final",
+                    "has_disease_milestone_type__has_selected_term__has_name_root__latest_final",
+                    "has_disease_milestone_type__has_selected_term__has_attributes_root__latest_final",
                 )
                 .filter(study_value__latest_value__uid=study_uid)
                 .order_by("order")
@@ -152,8 +156,8 @@ class StudyDiseaseMilestoneRepository:
             StudyDiseaseMilestone.nodes.fetch_relations(
                 "has_after__audit_trail",
                 "study_value__latest_value",
-                "has_disease_milestone_type__has_name_root__latest_final",
-                "has_disease_milestone_type__has_attributes_root__latest_final",
+                "has_disease_milestone_type__has_selected_term__has_name_root__latest_final",
+                "has_disease_milestone_type__has_selected_term__has_attributes_root__latest_final",
             )
             .filter(uid=uid)
             .resolve_subgraph()
@@ -177,8 +181,8 @@ class StudyDiseaseMilestoneRepository:
                 for se_node in ListDistinct(
                     StudyDiseaseMilestone.nodes.fetch_relations(
                         "has_after__audit_trail",
-                        "has_disease_milestone_type__has_name_root__latest_final",
-                        "has_disease_milestone_type__has_attributes_root__latest_final",
+                        "has_disease_milestone_type__has_selected_term__has_name_root__latest_final",
+                        "has_disease_milestone_type__has_selected_term__has_attributes_root__latest_final",
                         Optional("has_before"),
                     )
                     .filter(uid=uid, has_after__audit_trail__uid=study_uid)
@@ -196,8 +200,8 @@ class StudyDiseaseMilestoneRepository:
                 for se_node in (
                     StudyDiseaseMilestone.nodes.fetch_relations(
                         "has_after__audit_trail",
-                        "has_disease_milestone_type__has_name_root__latest_final",
-                        "has_disease_milestone_type__has_attributes_root__latest_final",
+                        "has_disease_milestone_type__has_selected_term__has_name_root__latest_final",
+                        "has_disease_milestone_type__has_selected_term__has_attributes_root__latest_final",
                         Optional("has_before"),
                     )
                     .filter(has_after__audit_trail__uid=study_uid)
@@ -248,8 +252,14 @@ class StudyDiseaseMilestoneRepository:
         if item.uid is None:
             item.uid = new_study_disease_milestone.uid
         ct_disease_milestone_type = CTTermRoot.nodes.get(uid=item.dm_type.name)
+        selected_term_node = (
+            CTCodelistAttributesRepository().get_or_create_selected_term(
+                ct_disease_milestone_type,
+                codelist_submission_value=settings.disease_milestone_cl_submval,
+            )
+        )
         new_study_disease_milestone.has_disease_milestone_type.connect(
-            ct_disease_milestone_type
+            selected_term_node
         )
 
         if create:
@@ -335,9 +345,9 @@ class StudyDiseaseMilestoneRepository:
     def get_distinct_headers(
         self,
         field_name: str,
-        search_string: str | None = "",
-        filter_by: dict | None = None,
-        filter_operator: FilterOperator | None = FilterOperator.AND,
+        search_string: str = "",
+        filter_by: dict[str, dict[str, Any]] | None = None,
+        filter_operator: FilterOperator = FilterOperator.AND,
         page_size: int = 10,
     ) -> list[Any]:
         """

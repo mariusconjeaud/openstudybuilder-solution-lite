@@ -35,8 +35,6 @@ class CTTermNameService(CTTermGenericService[CTTermNameAR]):
             author_id=self.author_id,
             change_description=term_input.change_description,
             ct_term_vo=CTTermNameVO.from_input_values(
-                codelists=item.ct_term_vo.codelists,
-                catalogue_name=item.ct_term_vo.catalogue_name,
                 name=self.get_input_or_previous_property(
                     term_input.sponsor_preferred_name, item.ct_term_vo.name
                 ),
@@ -44,11 +42,9 @@ class CTTermNameService(CTTermGenericService[CTTermNameAR]):
                     term_input.sponsor_preferred_name_sentence_case,
                     item.ct_term_vo.name_sentence_case,
                 ),
-                # passing always True callbacks, as we can't change catalogue
-                # in scope of CTTermName or CTTermAttributes, it can be only changed via CTTermRoot
-                codelist_exists_callback=lambda _: True,
-                catalogue_exists_callback=lambda _: True,
+                catalogue_names=item.ct_term_vo.catalogue_names,
             ),
+            term_uid=term_uid,
             term_exists_by_name_in_codelists_callback=self._repos.ct_term_name_repository.term_specific_exists_by_name_in_codelists,
         )
         self.repository.save(item)

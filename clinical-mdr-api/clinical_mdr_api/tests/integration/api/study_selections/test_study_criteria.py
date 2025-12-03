@@ -11,6 +11,7 @@ import copy
 import json
 import logging
 from datetime import datetime, timezone
+from typing import Any
 from unittest import mock
 
 import pytest
@@ -47,19 +48,19 @@ excl_criteria_template_1: CriteriaTemplate
 excl_criteria_template_2: CriteriaTemplate
 excl_criteria_template_with_param: CriteriaTemplate
 expected_criteria_with_param_name: str
-inclusion_type_output: dict
-exclusion_type_output: dict
-incl_criteria_template_1_output: dict
-incl_criteria_template_2_output: dict
-excl_criteria_template_1_output: dict
-excl_criteria_template_2_output: dict
-excl_criteria_template_with_param_output: dict
-default_study_criteria_input: dict
-default_study_criteria_output: dict
+inclusion_type_output: dict[Any, Any]
+exclusion_type_output: dict[Any, Any]
+incl_criteria_template_1_output: dict[Any, Any]
+incl_criteria_template_2_output: dict[Any, Any]
+excl_criteria_template_1_output: dict[Any, Any]
+excl_criteria_template_2_output: dict[Any, Any]
+excl_criteria_template_with_param_output: dict[Any, Any]
+default_study_criteria_input: dict[Any, Any]
+default_study_criteria_output: dict[Any, Any]
 change_description_approve: str
 initial_ct_term_study_standard_test: CTTerm
 incl_criteria_template_for_study_standard_test: CriteriaTemplate
-study_criteria_for_study_standard_input: dict
+study_criteria_for_study_standard_input: dict[Any, Any]
 
 
 @pytest.fixture(scope="module")
@@ -97,7 +98,7 @@ def test_data():
 
     # Initialize test data
     inject_and_clear_db("studycriteria.api")
-    study = inject_base_data()
+    study, _test_data_dict = inject_base_data()
     study_uid = study.uid
     url_prefix = f"/studies/{study_uid}/study-criteria"
     change_description_approve = "Approved version"
@@ -106,36 +107,88 @@ def test_data():
     parameter_name = "TextValue"
     TestUtils.create_template_parameter(parameter_name)
 
+    ct_term_start_date = datetime(2020, 3, 25, tzinfo=timezone.utc)
+
     # Create CT Terms
+    ct_codelist = TestUtils.create_ct_codelist(
+        sponsor_preferred_name="Criteria Type CL",
+        catalogue_name="SDTM CT",
+        submission_value="CRITRTP",
+        extensible=True,
+        approve=True,
+    )
     ct_term_inclusion_criteria = TestUtils.create_ct_term(
-        sponsor_preferred_name="INCLUSION CRITERIA"
+        sponsor_preferred_name="INCLUSION CRITERIA",
+        nci_preferred_name="Inclusion Criteria",
+        catalogue_name="SDTM CT",
+        codelist_uid=ct_codelist.codelist_uid,
+        submission_value="Inclusion",
+        effective_date=ct_term_start_date,
     )
     ct_term_exclusion_criteria = TestUtils.create_ct_term(
-        sponsor_preferred_name="EXCLUSION CRITERIA"
+        sponsor_preferred_name="EXCLUSION CRITERIA",
+        nci_preferred_name="Exclusion Criteria",
+        catalogue_name="SDTM CT",
+        codelist_uid=ct_codelist.codelist_uid,
+        submission_value="Exclusion",
+        effective_date=ct_term_start_date,
     )
 
     catalogue_name, library_name = get_catalogue_name_library_name(use_test_utils=True)
     ct_term_name = "Criteria Type Name For StudyStandardVersioning test"
-    ct_term_start_date = datetime(2020, 3, 25, tzinfo=timezone.utc)
+
     initial_ct_term_study_standard_test = TestUtils.create_ct_term(
-        name_submission_value=ct_term_name,
+        submission_value=ct_term_name,
         sponsor_preferred_name=ct_term_name,
         order=1,
+        codelist_uid=ct_codelist.codelist_uid,
         catalogue_name=catalogue_name,
         library_name=library_name,
         effective_date=ct_term_start_date,
         approve=True,
     )
     # patch the date of the latest HAS_VERSION FINAL relationship so it can be detected by the selected study_standard_Version
+    for term_uid in (
+        initial_ct_term_study_standard_test.term_uid,
+        ct_term_inclusion_criteria.term_uid,
+        ct_term_exclusion_criteria.term_uid,
+    ):
+        params = {
+            "uid": term_uid,
+            "date": datetime(2020, 3, 26, tzinfo=timezone.utc),
+        }
+        db.cypher_query(
+            """
+                        MATCH (n)-[:HAS_NAME_ROOT]-(ct_name:CTTermNameRoot)-[has_version:HAS_VERSION]-(val) 
+                        where 
+                            n.uid =$uid AND EXISTS((ct_name)-[:LATEST]-(val)) 
+                            AND has_version.status ='Final' 
+                        SET has_version.start_date = $date
+                    """,
+            params=params,
+        )
+
+    # adjust codelist name start and end date
     params = {
-        "uid": initial_ct_term_study_standard_test.term_uid,
+        "uid": ct_codelist.codelist_uid,
         "date": datetime(2020, 3, 26, tzinfo=timezone.utc),
     }
     db.cypher_query(
         """
-                    MATCH (n)-[:HAS_NAME_ROOT]-(ct_name:CTTermNameRoot)-[has_version:HAS_VERSION]-(val) 
+                    MATCH (n)-[:HAS_NAME_ROOT]-(ct_name:CTCodelistNameRoot)-[has_version:HAS_VERSION]-(val) 
                     where 
                         n.uid =$uid AND EXISTS((ct_name)-[:LATEST]-(val)) 
+                        AND has_version.status ='Final' 
+                    SET has_version.start_date = $date
+                """,
+        params=params,
+    )
+    # adjust codelist attributes start_date of the 1.0 final
+    db.cypher_query(
+        """
+                    MATCH (n)-[:HAS_ATTRIBUTES_ROOT]-(ct_attrs:CTCodelistAttributesRoot)-[has_version:HAS_VERSION]-(val) 
+                    where 
+                        n.uid =$uid AND EXISTS((ct_attrs)-[:LATEST]-(val)) 
                         AND has_version.status ='Final' 
                     SET has_version.start_date = $date
                 """,
@@ -166,14 +219,14 @@ def test_data():
     # Define default expected outputs
     inclusion_type_output = {
         "term_uid": ct_term_inclusion_criteria.term_uid,
-        "catalogue_name": ct_term_inclusion_criteria.catalogue_name,
-        "codelists": [
-            {
-                "codelist_uid": ct_term_inclusion_criteria.codelists[0].codelist_uid,
-                "order": None,
-                "library_name": ct_term_inclusion_criteria.codelists[0].library_name,
-            }
-        ],
+        "catalogue_names": ct_term_inclusion_criteria.catalogue_names,
+        # "codelists": [
+        #    {
+        #        "codelist_uid": ct_term_inclusion_criteria.codelists[0].codelist_uid,
+        #        "order": None,
+        #        "library_name": ct_term_inclusion_criteria.codelists[0].library_name,
+        #    }
+        # ],
         "sponsor_preferred_name": ct_term_inclusion_criteria.sponsor_preferred_name,
         "sponsor_preferred_name_sentence_case": ct_term_inclusion_criteria.sponsor_preferred_name_sentence_case,
         "library_name": ct_term_inclusion_criteria.library_name,
@@ -186,14 +239,14 @@ def test_data():
     }
     exclusion_type_output = {
         "term_uid": ct_term_exclusion_criteria.term_uid,
-        "catalogue_name": ct_term_exclusion_criteria.catalogue_name,
-        "codelists": [
-            {
-                "codelist_uid": ct_term_exclusion_criteria.codelists[0].codelist_uid,
-                "order": None,
-                "library_name": ct_term_exclusion_criteria.codelists[0].library_name,
-            }
-        ],
+        "catalogue_names": ct_term_exclusion_criteria.catalogue_names,
+        # "codelists": [
+        #    {
+        #        "codelist_uid": ct_term_exclusion_criteria.codelists[0].codelist_uid,
+        #        "order": None,
+        #        "library_name": ct_term_exclusion_criteria.codelists[0].library_name,
+        #    }
+        # ],
         "sponsor_preferred_name": ct_term_exclusion_criteria.sponsor_preferred_name,
         "sponsor_preferred_name_sentence_case": ct_term_exclusion_criteria.sponsor_preferred_name_sentence_case,
         "library_name": ct_term_exclusion_criteria.library_name,
@@ -334,7 +387,18 @@ def test_crud_study_criteria(api_client):
 
     assert_response_status_code(response, 200)
     expected_criteria = default_study_criteria_output
-    expected_criteria["criteria_type"] = inclusion_type_output
+    expected_criteria["criteria_type"] = {
+        "term_uid": "CTTerm_000005",
+        "term_name": "INCLUSION CRITERIA",
+        "preferred_term": "Inclusion Criteria",
+        "codelist_uid": "CTCodelist_000005",
+        "codelist_name": "Criteria Type CL",
+        "codelist_submission_value": "CRITRTP",
+        "order": None,
+        "submission_value": "Inclusion",
+        "queried_effective_date": "dummy",
+        "date_conflict": False,
+    }
     expected_criteria["criteria"] = {
         "uid": "preview",
         "name": incl_criteria_template_1.name,
@@ -356,6 +420,7 @@ def test_crud_study_criteria(api_client):
         *CRITERIA_IGNORED_FIELDS,
         *CRITERIA_TYPE_IGNORED_FIELDS,
     }
+
     assert not DeepDiff(res, expected_criteria, exclude_paths=full_exclude_paths)
 
     # Create selection
@@ -409,7 +474,18 @@ def test_crud_study_criteria(api_client):
 
     expected_excl_criteria_1["study_criteria_uid"] = "StudyCriteria_000003"
     expected_excl_criteria_1["order"] = 1
-    expected_excl_criteria_1["criteria_type"] = exclusion_type_output
+    expected_excl_criteria_1["criteria_type"] = {
+        "term_uid": "CTTerm_000006",
+        "term_name": "EXCLUSION CRITERIA",
+        "preferred_term": "Exclusion Criteria",
+        "codelist_uid": "CTCodelist_000005",
+        "codelist_name": "Criteria Type CL",
+        "codelist_submission_value": "CRITRTP",
+        "order": None,
+        "submission_value": "Exclusion",
+        "queried_effective_date": "dummy",
+        "date_conflict": False,
+    }
     expected_excl_criteria_1["criteria"]["uid"] = "Criteria_000003"
     expected_excl_criteria_1["criteria"]["name"] = excl_criteria_template_1.name
     expected_excl_criteria_1["criteria"][
@@ -419,7 +495,18 @@ def test_crud_study_criteria(api_client):
 
     expected_excl_criteria_2["study_criteria_uid"] = "StudyCriteria_000004"
     expected_excl_criteria_2["order"] = 2
-    expected_excl_criteria_2["criteria_type"] = exclusion_type_output
+    expected_excl_criteria_2["criteria_type"] = {
+        "term_uid": "CTTerm_000006",
+        "term_name": "EXCLUSION CRITERIA",
+        "preferred_term": "Exclusion Criteria",
+        "codelist_uid": "CTCodelist_000005",
+        "codelist_name": "Criteria Type CL",
+        "codelist_submission_value": "CRITRTP",
+        "order": None,
+        "submission_value": "Exclusion",
+        "queried_effective_date": "dummy",
+        "date_conflict": False,
+    }
     expected_excl_criteria_2["criteria"]["uid"] = "Criteria_000004"
     expected_excl_criteria_2["criteria"]["name"] = excl_criteria_template_2.name
     expected_excl_criteria_2["criteria"][
@@ -1068,7 +1155,6 @@ def test_study_criteria_version_selecting_ct_package(api_client):
     study_selection_breadcrumb = "study-criteria"
     study_selection_ctterm_keys = "criteria_type"
     study_selection_ctterm_uid_key = "term_uid"
-    study_selection_ctterm_name_key = "sponsor_preferred_name"
     ctterm_uid = initial_ct_term_study_standard_test.term_uid
     study_for_ctterm_versioning = TestUtils.create_study()
 
@@ -1112,10 +1198,7 @@ def test_study_criteria_version_selecting_ct_package(api_client):
     assert (
         res[study_selection_ctterm_keys][study_selection_ctterm_uid_key] == ctterm_uid
     )
-    assert (
-        res[study_selection_ctterm_keys][study_selection_ctterm_name_key]
-        == new_ctterm_name
-    )
+    assert res[study_selection_ctterm_keys]["term_name"] == new_ctterm_name
 
     TestUtils.set_study_standard_version(
         study_uid=study_for_ctterm_versioning.uid,
@@ -1133,7 +1216,7 @@ def test_study_criteria_version_selecting_ct_package(api_client):
         res[study_selection_ctterm_keys][study_selection_ctterm_uid_key] == ctterm_uid
     )
     assert (
-        res[study_selection_ctterm_keys][study_selection_ctterm_name_key]
+        res[study_selection_ctterm_keys]["term_name"]
         == initial_ct_term_study_standard_test.sponsor_preferred_name
     )
 
@@ -1148,7 +1231,6 @@ def test_study_criteria_ct_term_retrieval_at_date(api_client):
     study_selection_breadcrumb = "study-criteria"
     study_selection_ctterm_keys = "criteria_type"
     study_selection_ctterm_uid_key = "term_uid"
-    study_selection_ctterm_name_key = "sponsor_preferred_name"
     ctterm_uid = initial_ct_term_study_standard_test.term_uid
     study_for_queried_effective_date = TestUtils.create_study()
 
@@ -1190,10 +1272,7 @@ def test_study_criteria_ct_term_retrieval_at_date(api_client):
     assert (
         res[study_selection_ctterm_keys][study_selection_ctterm_uid_key] == ctterm_uid
     )
-    assert (
-        res[study_selection_ctterm_keys][study_selection_ctterm_name_key]
-        == new_ctterm_name
-    )
+    assert res[study_selection_ctterm_keys]["term_name"] == new_ctterm_name
 
     # get ct_packages
     response = api_client.get(
@@ -1229,6 +1308,6 @@ def test_study_criteria_ct_term_retrieval_at_date(api_client):
         res[study_selection_ctterm_keys][study_selection_ctterm_uid_key] == ctterm_uid
     )
     assert (
-        res[study_selection_ctterm_keys][study_selection_ctterm_name_key]
+        res[study_selection_ctterm_keys]["term_name"]
         == initial_ct_term_study_standard_test.sponsor_preferred_name
     )

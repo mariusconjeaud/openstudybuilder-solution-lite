@@ -26,7 +26,7 @@
                 :rules="[formRules.required]"
                 density="compact"
                 clearable
-                :readonly="readOnly"
+                :disabled="readOnly"
               />
             </v-col>
             <v-col cols="6">
@@ -36,7 +36,7 @@
                 data-cy="item-oid"
                 density="compact"
                 clearable
-                :readonly="readOnly"
+                :disabled="readOnly"
               />
             </v-col>
           </v-row>
@@ -47,27 +47,27 @@
                 :label="$t('CRFItems.data_type') + '*'"
                 data-cy="item-data-type"
                 :items="dataTypes"
-                item-title="code_submission_value"
-                item-value="code_submission_value"
+                item-title="submission_value"
+                item-value="submission_value"
                 :rules="[formRules.required]"
                 density="compact"
                 clearable
                 class="mt-3"
-                :readonly="readOnly"
+                :disabled="readOnly"
                 @update:model-value="checkIfNumeric()"
               />
             </v-col>
             <v-col v-if="lengthFieldCheck" cols="4">
               <v-text-field
-                v-if="form.datatype !== crfTypes.COMMENT"
                 v-model="form.length"
                 :label="$t('CRFItems.length')"
                 data-cy="item-length"
                 density="compact"
+                :rules="[lengthRequired]"
                 clearable
                 class="mt-3"
                 type="number"
-                :readonly="readOnly"
+                :disabled="readOnly"
               />
             </v-col>
             <v-col v-if="digitsFieldCheck" cols="4">
@@ -76,16 +76,17 @@
                 :label="$t('CRFItems.significant_digits')"
                 data-cy="item-significant-digits"
                 density="compact"
+                :rules="[significantDigitsRequired]"
                 clearable
                 class="mt-3"
                 type="number"
-                :readonly="readOnly"
+                :disabled="readOnly"
               />
             </v-col>
           </v-row>
           <v-row>
             <v-col cols="6">
-              <div class="subtitle-2 text--disabled">
+              <div class="subtitle-2">
                 {{ $t('_global.description') }}
               </div>
               <div v-show="readOnly">
@@ -109,8 +110,8 @@
               </div>
             </v-col>
             <v-col cols="6">
-              <div class="subtitle-2 text--disabled">
-                {{ $t('CRFItems.impl_notes') }}
+              <div class="subtitle-2">
+                {{ $t('CRFDescriptions.sponsor_instruction') }}
               </div>
               <div v-show="readOnly">
                 <QuillEditor
@@ -127,7 +128,7 @@
                   v-model:content="engDescription.sponsor_instruction"
                   content-type="html"
                   :toolbar="customToolbar"
-                  :placeholder="$t('CRFItems.impl_notes')"
+                  :placeholder="$t('CRFDescriptions.sponsor_instruction')"
                   :disabled="readOnly"
                 />
               </div>
@@ -142,16 +143,16 @@
             <v-col cols="3">
               <v-text-field
                 v-model="engDescription.name"
-                :label="$t('CRFForms.displayed_text')"
+                :label="$t('CRFDescriptions.name')"
                 data-cy="form-oid-name"
                 density="compact"
                 clearable
-                :readonly="readOnly"
+                :disabled="readOnly"
               />
             </v-col>
             <v-col cols="9">
-              <div class="subtitle-2 text--disabled">
-                {{ $t('CRFItems.compl_instructions') }}
+              <div class="subtitle-2">
+                {{ $t('CRFDescriptions.instruction') }}
               </div>
               <div v-show="readOnly">
                 <QuillEditor
@@ -168,7 +169,7 @@
                   v-model:content="engDescription.instruction"
                   content-type="html"
                   :toolbar="customToolbar"
-                  :placeholder="$t('CRFItems.compl_instructions')"
+                  :placeholder="$t('CRFDescriptions.instruction')"
                   :disabled="readOnly"
                 />
               </div>
@@ -187,7 +188,7 @@
                 data-cy="item-sas-name"
                 density="compact"
                 clearable
-                :readonly="readOnly"
+                :disabled="readOnly"
               />
             </v-col>
             <v-col cols="6">
@@ -197,7 +198,7 @@
                 data-cy="item-sds-name"
                 density="compact"
                 clearable
-                :readonly="readOnly"
+                :disabled="readOnly"
               />
             </v-col>
           </v-row>
@@ -212,7 +213,7 @@
                 item-value="nci_preferred_name"
                 density="compact"
                 clearable
-                :readonly="readOnly"
+                :disabled="readOnly"
               />
             </v-col>
             <v-col cols="8">
@@ -222,7 +223,7 @@
                 data-cy="item-comment"
                 density="compact"
                 clearable
-                :readonly="readOnly"
+                :disabled="readOnly"
               />
             </v-col>
           </v-row>
@@ -239,92 +240,31 @@
     </template>
     <template #[`step.alias`]="{ step }">
       <v-form :ref="`observer_${step}`">
-        <div class="mb-5">
-          {{ $t('CRFItemGroups.create') }}
-        </div>
-        <v-row>
-          <v-col>
-            <v-text-field
-              v-model="alias.context"
-              :label="$t('CRFItems.context')"
-              data-cy="item-aliast-context"
-              density="compact"
-              clearable
-              :readonly="readOnly"
-            />
-          </v-col>
-        </v-row>
-        <v-row>
-          <v-col cols="10">
-            <v-text-field
-              v-model="alias.name"
-              :label="$t('CRFItems.name')"
-              data-cy="item-alias-name"
-              density="compact"
-              clearable
-              :readonly="readOnly"
-            />
-          </v-col>
-          <v-col>
-            <v-btn
-              data-cy="save-button"
-              color="secondary"
-              class="mr-2"
-              :disabled="readOnly"
-              @click="createAlias"
-            >
-              {{ $t('_global.save') }}
-            </v-btn>
-          </v-col>
-        </v-row>
-        <div class="mb-5">
-          {{ $t('CRFItemGroups.select') }}
-        </div>
-        <v-select
-          v-model="form.alias_uids"
-          :items="aliases"
-          multiple
-          :label="$t('CRFItemGroups.aliases')"
-          data-cy="item-aliases"
-          density="compact"
-          clearable
-          :item-title="getAliasDisplay"
-          item-value="uid"
-          :readonly="readOnly"
-        >
-          <template #selection="{ item, index }">
-            <div v-if="index === 0">
-              <span>{{ item.title }}</span>
-            </div>
-            <span v-if="index === 1" class="grey--text text-caption">
-              (+{{ form.alias_uids.length - 1 }})
-            </span>
-          </template>
-        </v-select>
+        <CrfAliasSelection v-model="form.aliases" :disabled="readOnly" />
       </v-form>
     </template>
     <template #[`step.description`]="{ step }">
       <v-form :ref="`observer_${step}`">
-        <CrfDescriptionTable
-          :edit-descriptions="desc"
-          :read-only="readOnly"
-          @set-desc="setDesc"
-        />
+        <CrfDescriptionSelection v-model="desc" :disabled="readOnly" />
       </v-form>
     </template>
     <template #[`step.codelist`]="{ step }">
       <v-form :ref="`observer_${step}`">
         <v-data-table
+          height="135px"
           :headers="selectedCodelistHeaders"
           :items="selectedCodelists"
         >
           <template #[`item.allowsMultiChoice`]>
-            <v-checkbox v-model="form.allows_multi_choice" />
+            <v-checkbox v-model="form.allows_multi_choice" class="mb-n4" />
           </template>
           <template #[`item.delete`]="{ item }">
             <v-btn
               icon="mdi-delete-outline"
               class="mt-1"
+              size="small"
+              variant="outlined"
+              color="nnBaseBlue"
               :disabled="readOnly"
               @click="removeCodelist(item)"
             />
@@ -345,45 +285,13 @@
           column-data-resource="ct/codelists"
           @filter="fetchCodelists"
         >
-          <template #afterFilter="">
-            <v-autocomplete
-              v-model="selectedFilteringTerms"
-              v-model:search-input="search"
-              :label="$t('CodelistTable.search_with_terms')"
-              :items="filteringTerms"
-              item-title="name.sponsor_preferred_name"
-              item-value="term_uid"
-              density="compact"
-              class="mt-5 max-width-300"
-              clearable
-              return-object
-              multiple
-            >
-              <template #selection="{ index }">
-                <div v-if="index === 0">
-                  <span class="items-font-size">{{
-                    selectedFilteringTerms[0].name.sponsor_preferred_name.substring(
-                      0,
-                      12
-                    )
-                  }}</span>
-                </div>
-                <span v-if="index === 1" class="grey--text text-caption mr-1">
-                  (+{{ selectedFilteringTerms.length - 1 }})
-                </span>
-              </template>
-            </v-autocomplete>
-            <v-select
-              v-model="termsFilterOperator"
-              :items="operators"
-              :label="$t('_global.operator')"
-              class="mt-5 max-width-100"
-            />
-          </template>
-          <template #[`item.add`]="{ item }">
+          <template #[`item.actions`]="{ item }">
             <v-btn
               icon="mdi-plus"
               class="mt-1"
+              size="small"
+              variant="outlined"
+              color="nnBaseBlue"
               :disabled="readOnly"
               @click="addCodelist(item)"
             />
@@ -395,12 +303,12 @@
       <v-form :ref="`observer_${step}`">
         <v-data-table :headers="selectedTermsHeaders" :items="selectedTerms">
           <template #[`item.mandatory`]="{ item }">
-            <v-checkbox v-model="item.mandatory" :readonly="readOnly" />
+            <v-checkbox v-model="item.mandatory" :disabled="readOnly" />
           </template>
           <template #[`item.display_text`]="{ item }">
             <v-text-field
               v-model="item.display_text"
-              :readonly="readOnly"
+              :disabled="readOnly"
               density="compact"
             />
           </template>
@@ -449,7 +357,7 @@
           :headers="unitHeaders"
           item-value="uid"
           disable-filtering
-          :items="choosenUnits"
+          :items="chosenUnits"
           hide-export-button
           hide-default-switches
         >
@@ -467,7 +375,7 @@
           </template>
           <template #[`item.name`]="{ index }">
             <v-autocomplete
-              v-model="choosenUnits[index].name"
+              v-model="chosenUnits[index].name"
               :items="units"
               :label="$t('CRFItems.unit_name')"
               data-cy="item-unit-name"
@@ -476,12 +384,12 @@
               item-title="name"
               item-value="name"
               return-object
-              :readonly="readOnly"
-              @change="setUnit(index)"
+              :disabled="readOnly"
+              @update:model-value="setUnit(index)"
             />
           </template>
           <template #[`item.mandatory`]="{ item }">
-            <v-checkbox v-model="item.mandatory" :readonly="readOnly" />
+            <v-checkbox v-model="item.mandatory" :disabled="readOnly" />
           </template>
           <template #[`item.delete`]="{ index }">
             <v-btn
@@ -505,7 +413,7 @@
               data-cy="item-change-description"
               :rules="[formRules.required]"
               clearable
-              :readonly="readOnly"
+              :disabled="readOnly"
             />
           </v-col>
         </v-row>
@@ -522,6 +430,8 @@
     @close="closeLinkForm"
   />
   <ConfirmDialog ref="confirm" :text-cols="6" :action-cols="5" />
+  <CrfApprovalSummaryConfirmDialog ref="confirmApproval" />
+  <CrfNewVersionSummaryConfirmDialog ref="confirmNewVersion" />
 </template>
 
 <script>
@@ -531,7 +441,8 @@ import terms from '@/api/controlledTerminology/terms'
 import HorizontalStepperForm from '@/components/tools/HorizontalStepperForm.vue'
 import controlledTerminology from '@/api/controlledTerminology'
 import constants from '@/constants/libraries'
-import CrfDescriptionTable from '@/components/library/crfs/CrfDescriptionTable.vue'
+import CrfAliasSelection from '@/components/library/crfs/CrfAliasSelection.vue'
+import CrfDescriptionSelection from '@/components/library/crfs/CrfDescriptionSelection.vue'
 import { QuillEditor } from '@vueup/vue-quill'
 import '@vueup/vue-quill/dist/vue-quill.snow.css'
 import crfTypes from '@/constants/crfTypes'
@@ -545,17 +456,23 @@ import { useAppStore } from '@/stores/app'
 import { computed } from 'vue'
 import { useUnitsStore } from '@/stores/units'
 import filteringParameters from '@/utils/filteringParameters'
+import regex from '@/utils/regex'
+import CrfNewVersionSummaryConfirmDialog from '@/components/library/crfs/CrfNewVersionSummaryConfirmDialog.vue'
+import CrfApprovalSummaryConfirmDialog from '@/components/library/crfs/CrfApprovalSummaryConfirmDialog.vue'
 
 export default {
   components: {
     NNTable,
     HorizontalStepperForm,
-    CrfDescriptionTable,
+    CrfAliasSelection,
+    CrfDescriptionSelection,
     QuillEditor,
     ActionsMenu,
     CrfActivitiesModelsLinkForm,
     CrfExtensionsManagementTable,
     ConfirmDialog,
+    CrfNewVersionSummaryConfirmDialog,
+    CrfApprovalSummaryConfirmDialog,
   },
   inject: ['eventBusEmit', 'formRules'],
   props: {
@@ -577,6 +494,7 @@ export default {
       fetchUnits: unitsStore.fetchUnits,
       userData: computed(() => appStore.userData),
       units: computed(() => unitsStore.units),
+      clearEmptyHtml: regex.clearEmptyHtml,
     }
   },
   data() {
@@ -587,18 +505,18 @@ export default {
         'CRFItems.data_type',
         'CRFItems.length',
         'CRFItems.significant_digits',
-        'CRFItems.impl_notes',
-        'CRFItems.compl_instructions',
+        'CRFItems.sponsor_instruction',
+        'CRFItems.instruction',
         'CRFItems.sas_name',
         'CRFItems.sds_name',
         'CRFItems.origin',
         'CRFItems.comment',
         'CRFItems.context',
-        'CRFItems.name',
       ],
       form: {
         oid: 'I.',
-        alias_uids: [],
+        aliases: [],
+        descriptions: [],
       },
       desc: [],
       selectedExtensions: [],
@@ -630,7 +548,7 @@ export default {
           title: this.$t('CtCatalogueTable.nci_pref_name'),
           key: 'attributes.nci_preferred_name',
         },
-        { title: '', key: 'add' },
+        { title: '', key: 'actions' },
       ],
       unitHeaders: [
         { title: this.$t('CRFItemGroups.name'), key: 'name', width: '25%' },
@@ -665,6 +583,7 @@ export default {
         { title: '', key: 'delete', width: '1%' },
       ],
       aliases: [],
+      aliasesTotal: 0,
       alias: {},
       steps: [],
       createSteps: [
@@ -693,7 +612,7 @@ export default {
         { name: 'change_description', title: this.$t('CRFForms.change_desc') },
       ],
       origins: [],
-      choosenUnits: [{ name: '', mandatory: true }],
+      chosenUnits: [{ name: '', mandatory: true }],
       codelists: [],
       selectedCodelists: [],
       options: {},
@@ -745,7 +664,7 @@ export default {
           click: this.delete,
         },
         {
-          label: this.$t('CrfLinikingForm.link_activities'),
+          label: this.$t('CRFLinkingForm.link_activities'),
           icon: 'mdi-plus',
           iconColor: 'primary',
           condition: () => this.readOnly,
@@ -850,14 +769,13 @@ export default {
   },
   mounted() {
     this.fetchCodelists()
-    terms.getAttributesByCodelist('originType').then((resp) => {
+    terms.getTermsByCodelist('originType').then((resp) => {
       this.origins = resp.data.items
     })
-    terms.getAttributesByCodelist('dataType').then((resp) => {
-      this.dataTypes = resp.data.items
-    })
-    crfs.getAliases().then((resp) => {
-      this.aliases = resp.data.items
+    terms.getTermsByCodelist('dataType').then((resp) => {
+      this.dataTypes = resp.data.items.sort((a, b) =>
+        a.submission_value.localeCompare(b.submission_value)
+      )
     })
     this.fetchUnits({ page_size: 0 })
     if (this.isEdit()) {
@@ -872,40 +790,38 @@ export default {
     }
   },
   methods: {
+    lengthRequired(value) {
+      if (
+        ['STRING', 'TEXT'].includes(this.form.datatype) ||
+        (this.form.significant_digits !== null &&
+          this.form.significant_digits !== undefined)
+      ) {
+        return this.formRules.required(value)
+      }
+      return true
+    },
+    significantDigitsRequired(value) {
+      if (this.form.length !== null && this.form.length !== undefined) {
+        return this.formRules.required(value)
+      }
+      return true
+    },
     checkFieldAvailable(dataType) {
-      this.lengthFieldCheck = false
       this.digitsFieldCheck = false
       this.originFieldCheck = true
-      switch (dataType) {
-        case 'BOOLEAN':
-        case 'URI':
-          break
-        case 'COMMENT':
-          this.originFieldCheck = false
-          break
-        case 'FLOAT':
-        case 'DOUBLE':
-        case 'HEXBINARY':
-        case 'BASE64BINARY':
-        case 'HEXFLOAT':
-        case 'BASE64FLOAT':
-          this.lengthFieldCheck = true
-          this.digitsFieldCheck = true
-          break
-        case 'DATE':
-          this.lengthFieldCheck = true
-          this.form.length = 10
-          break
-        case 'TIME':
-          this.lengthFieldCheck = true
-          this.form.length = 5
-          break
-        case 'DATETIME':
-          this.lengthFieldCheck = true
-          this.form.length = 16
-          break
-        default:
-          this.lengthFieldCheck = true
+      this.lengthFieldCheck = true
+
+      if (!['TEXT', 'STRING', 'INTEGER', 'FLOAT'].includes(dataType)) {
+        this.lengthFieldCheck = false
+        this.form.length = null
+      }
+
+      if (dataType === 'FLOAT') {
+        this.digitsFieldCheck = true
+      }
+
+      if (dataType === 'COMMENT') {
+        this.originFieldCheck = false
       }
     },
     getItem() {
@@ -921,44 +837,41 @@ export default {
       this.getItem()
     },
     async newVersion() {
-      let relationships = 0
-      await crfs
-        .getRelationships(this.selectedItem.uid, 'items')
-        .then((resp) => {
-          if (resp.data.OdmItemGroup && resp.data.OdmItemGroup.length > 0) {
-            relationships = resp.data.OdmItemGroup.length
-          }
-        })
-      const options = {
-        type: 'warning',
-        cancelLabel: this.$t('_global.cancel'),
-        agreeLabel: this.$t('_global.continue'),
-      }
       if (
-        relationships > 1 &&
-        (await this.$refs.confirm.open(
-          `${this.$t('CRFForms.new_version_warning')}`,
-          options
-        ))
+        await this.$refs.confirmNewVersion.open({
+          agreeLabel: this.$t('CRFItems.create_new_version'),
+          item: this.selectedItem,
+        })
       ) {
         crfs.newVersion('items', this.selectedItem.uid).then((resp) => {
-          this.$emit('updateItem', { type: crfTypes.ITEM, element: resp.data })
+          this.$emit('updateItem', resp.data)
           this.readOnly = false
           this.getItem()
-        })
-      } else if (relationships <= 1) {
-        crfs.newVersion('items', this.selectedItem.uid).then((resp) => {
-          this.$emit('updateItem', { type: crfTypes.ITEM, element: resp.data })
-          this.readOnly = false
-          this.getItem()
+
+          this.eventBusEmit('notification', {
+            msg: this.$t('_global.new_version_success'),
+          })
         })
       }
     },
     async approve() {
-      crfs.approve('items', this.selectedItem.uid).then(() => {
-        this.readOnly = true
-        this.getItem()
-      })
+      if (
+        await this.$refs.confirmApproval.open({
+          agreeLabel: this.$t('CRFItems.approve_item'),
+          item: this.selectedItem,
+        })
+      ) {
+        crfs.approve('items', this.selectedItem.uid).then((resp) => {
+          this.$emit('updateItem', resp.data)
+          this.readOnly = true
+          this.close()
+          this.getItem()
+
+          this.eventBusEmit('notification', {
+            msg: this.$t('CRFItems.approved'),
+          })
+        })
+      }
     },
     async delete() {
       let relationships = 0
@@ -977,7 +890,7 @@ export default {
       if (
         relationships > 0 &&
         (await this.$refs.confirm.open(
-          `${this.$t('CRFItems.delete_warning_1')} ${relationships} ${this.$t('CRFItems.delete_warning_2')}`,
+          `${this.$t('CRFItems.delete_warning', { count: relationships })}`,
           options
         ))
       ) {
@@ -1060,10 +973,10 @@ export default {
     close() {
       this.form = {
         oid: 'I.',
-        alias_uids: [],
+        aliases: [],
       }
       this.desc = []
-      this.choosenUnits = [{ name: '', mandatory: true }]
+      this.chosenUnits = [{ name: '', mandatory: true }]
       this.selectedCodelists = []
       this.selectedTerms = []
       this.selectedExtensions = []
@@ -1111,18 +1024,18 @@ export default {
         this.close()
         return
       }
-      await this.createOrUpdateDescription()
+      await this.setDescription()
       this.form.library_name = constants.LIBRARY_SPONSOR
       if (this.form.oid === 'I.') {
         this.form.oid = null
       }
-      this.choosenUnits = this.choosenUnits.filter((el) => {
+      this.chosenUnits = this.chosenUnits.filter((el) => {
         return el.name !== ''
       })
       this.form.unit_definitions =
-        this.choosenUnits.length === 0
+        this.chosenUnits.length === 0
           ? []
-          : this.choosenUnits.map((e) => ({
+          : this.chosenUnits.map((e) => ({
               uid: e.uid ? e.uid : e.name.uid,
               mandatory: e.mandatory,
             }))
@@ -1139,11 +1052,14 @@ export default {
           display_text: el.display_text,
         }))
       }
+      if (this.form.length == '') {
+        this.form.length = null
+      }
+      if (this.form.significant_digits == '') {
+        this.form.significant_digits = null
+      }
       try {
         if (this.isEdit()) {
-          this.form.alias_uids = this.form.alias_uids.map((alias) =>
-            alias.uid ? alias.uid : alias
-          )
           await crfs
             .updateItem(this.form, this.selectedItem.uid)
             .then(async () => {
@@ -1174,9 +1090,6 @@ export default {
       let elements = []
       let attributes = []
       let eleAttributes = []
-      this.selectedExtensions = this.selectedExtensions.filter((ex) => {
-        return ex.library_name
-      })
       this.selectedExtensions.forEach((ex) => {
         if (ex.type) {
           attributes.push(ex)
@@ -1195,59 +1108,73 @@ export default {
       await crfs.setExtensions('items', uid, data)
     },
     addUnit() {
-      this.choosenUnits.push({ name: '', mandatory: true })
+      this.chosenUnits.push({ name: '', mandatory: true })
     },
     removeUnit(index) {
-      this.choosenUnits.splice(index, 1)
+      this.chosenUnits.splice(index, 1)
     },
     setUnit(index) {
-      this.choosenUnits[index].ucum = this.choosenUnits[index].name.ucum
-        ? this.choosenUnits[index].name.ucum.name
+      this.chosenUnits[index].ucum = this.chosenUnits[index].name.ucum
+        ? this.chosenUnits[index].name.ucum.name
         : ''
-      this.choosenUnits[index].oid = this.choosenUnits[index].name.name
-      this.choosenUnits[index].terms = this.choosenUnits[index].name.ct_units[0]
-        ? this.choosenUnits[index].name.ct_units[0].name
+      this.chosenUnits[index].oid = this.chosenUnits[index].name.name
+      this.chosenUnits[index].terms = this.chosenUnits[index].name.ct_units[0]
+        ? this.chosenUnits[index].name.ct_units[0].term_name
         : ''
-      this.choosenUnits[index].uid = this.choosenUnits[index].name.uid
+      this.chosenUnits[index].uid = this.chosenUnits[index].name.uid
     },
-    async createAlias() {
-      this.alias.library_name = constants.LIBRARY_SPONSOR
-      await crfs.createAlias(this.alias).then((resp) => {
-        this.form.alias_uids.push(resp.data.uid)
-        crfs.getAliases().then((resp) => {
-          this.aliases = resp.data.items
-          this.alias = {}
-          this.eventBusEmit('notification', {
-            msg: this.$t('CRFItemGroups.alias_created'),
-          })
-        })
+    getAliases(filters, options, filtersUpdated) {
+      const params = filteringParameters.prepareParameters(
+        options,
+        filters,
+        filtersUpdated
+      )
+      crfs.getAliases(params).then((resp) => {
+        this.aliases = resp.data.items
+        this.aliasesTotal = resp.data.total
       })
     },
-    async createOrUpdateDescription() {
+    addAlias() {
+      if (!this.alias.name || !this.alias.context) {
+        return
+      }
+      const alias = {
+        name: this.alias.name,
+        context: this.alias.context,
+      }
+
+      const isDuplicate = this.aliases.some(
+        (a) => a.name === alias.name && a.context === alias.context
+      )
+
+      if (!isDuplicate) {
+        this.aliases.push({ ...alias })
+      }
+
+      this.form.aliases.push({ ...alias })
+      this.alias = {}
+    },
+    async setDescription() {
       const descArray = []
-      this.desc.forEach((e) => {
-        if (e.uid) {
-          e.change_description = this.$t(
-            'CRFItems.description_change_description'
-          )
-          descArray.push(e)
-        } else {
-          e.library_name = constants.LIBRARY_SPONSOR
-          descArray.push(e)
-        }
-      })
+
       if (!this.engDescription.name) {
         this.engDescription.name = this.form.name
       }
-      this.engDescription.change_description = this.$t(
-        'CRFItems.description_change_description'
+      this.engDescription.description = this.clearEmptyHtml(
+        this.engDescription.description
+      )
+      this.engDescription.instruction = this.clearEmptyHtml(
+        this.engDescription.instruction
+      )
+      this.engDescription.sponsor_instruction = this.clearEmptyHtml(
+        this.engDescription.sponsor_instruction
       )
       descArray.push(this.engDescription)
-      this.form.descriptions = descArray
+      this.form.descriptions = [...descArray, ...this.desc]
     },
     async initForm(item) {
       this.form = item
-      this.form.alias_uids = item.aliases
+      this.form.aliases = item.aliases
       if (item.descriptions.find((el) => el.language === parameters.ENG)) {
         this.engDescription = item.descriptions.find(
           (el) => el.language === parameters.ENG
@@ -1257,11 +1184,11 @@ export default {
         (el) => el.language !== parameters.ENG
       )
       if (!item.unit_definitions || item.unit_definitions.length === 0) {
-        this.choosenUnits = []
+        this.chosenUnits = []
       } else {
         item.unit_definitions.forEach((e) => {
-          if (!this.choosenUnits.some((el) => el.uid === e.uid)) {
-            this.choosenUnits.unshift({
+          if (!this.chosenUnits.some((el) => el.uid === e.uid)) {
+            this.chosenUnits.unshift({
               uid: e.uid,
               oid: e.name,
               name: e.name,
@@ -1282,17 +1209,21 @@ export default {
           },
         })
       }
+      if (item.terms) {
+        this.selectedTerms = item.terms
+      }
       this.form.change_description = this.$t('_global.draft_change')
       this.checkIfNumeric()
       item.vendor_attributes.forEach((attr) => (attr.type = 'attr'))
+      item.vendor_elements.forEach((element) => {
+        element.vendor_attributes = item.vendor_element_attributes.filter(
+          (attribute) => attribute.vendor_element_uid === element.uid
+        )
+      })
       this.selectedExtensions = [
         ...item.vendor_attributes,
-        ...item.vendor_element_attributes,
         ...item.vendor_elements,
       ]
-    },
-    getAliasDisplay(item) {
-      return `${item.context} - ${item.name}`
     },
     isEdit() {
       if (this.selectedItem) {

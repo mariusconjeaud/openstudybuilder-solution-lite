@@ -1,16 +1,16 @@
 # Introduction to documentation
 
-This site holds the online documentation for the StudyBuilder solution.
+This site holds the online documentation for the OpenStudyBuilder solution.
 
-The StudyBuilder is a new approach to working with studies that, once fully implemented, will drive end-to-end consistency and more efficient processes - all the way from protocol development and CRF design- to creation of datasets, analysis, reporting and public disclosure of study information.
+The OpenStudyBuilder is a new approach to working with studies that, once fully implemented, will drive end-to-end consistency and more efficient processes - all the way from protocol development and CRF design- to creation of datasets, analysis, reporting and public disclosure of study information.
 
-The StudyBuilder consists of:
+The OpenStudyBuilder consists of:
 
-- the **StudyBuilder app** (web-based user interface)
+- the **OpenStudyBuilder app** (web-based user interface)
 - the new **clinical Metadata Repository** (central repository for all study specification data)
 - the **API layer** (allowing interoperability with other systems)
 
-The solution design is inspired by the CDISC 360 POC and the intention is for the solution to become compliant with the TransCelerate Digital Data Flow (DDF) reference implementation. The complete StudyBuilder solution is planned to be made available as an Open Source project.
+The solution design is inspired by the CDISC 360 POC and the intention is for the solution to become compliant with the TransCelerate Digital Data Flow (DDF) reference implementation. The complete OpenStudyBuilder solution is planned to be made available as an Open Source project.
 
 ![Study Builder](~@source/images/studybuilder-system.png)
 
@@ -30,7 +30,7 @@ The solution design is inspired by the CDISC 360 POC and the intention is for th
 
 [![Conceptual Model](~@source/images/clinical-mdr-vision-v2.png)](../images/clinical-mdr-vision-v2.png)
 
-# The StudyBuilder includes
+# The OpenStudyBuilder includes
 
 - A **Studies** part for specification of studies, including disease area and study type, objectives and endpoints, population, interventions, study design and schedule, activities and assessments
 

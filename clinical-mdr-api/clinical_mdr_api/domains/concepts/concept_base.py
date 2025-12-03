@@ -1,6 +1,6 @@
 from abc import abstractmethod
 from dataclasses import dataclass
-from typing import AbstractSet, Callable, Self, TypeVar
+from typing import AbstractSet, Callable, Generic, Self, TypeVar
 
 from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryItemAggregateRootBase,
@@ -30,7 +30,7 @@ class ConceptVO:
 
     def validate_uniqueness(
         self,
-        lookup_callback: Callable[[str, str], str],
+        lookup_callback: Callable[[str, str], str | None],
         uid: str,
         property_name: str,
         value: str,
@@ -152,7 +152,7 @@ _AggregateRootType = TypeVar("_AggregateRootType")
 
 
 @dataclass
-class ConceptARBase(LibraryItemAggregateRootBase):
+class ConceptARBase(LibraryItemAggregateRootBase, Generic[_ConceptVOType]):
     """
     An abstract generic activity item aggregate for versioned activity items
     """
@@ -173,7 +173,7 @@ class ConceptARBase(LibraryItemAggregateRootBase):
         cls,
         uid: str,
         concept_vo: _ConceptVOType,
-        library: LibraryVO | None,
+        library: LibraryVO,
         item_metadata: LibraryItemMetadataVO,
     ) -> Self:
         concept_ar = cls(
@@ -194,7 +194,7 @@ class ConceptARBase(LibraryItemAggregateRootBase):
         concept_exists_by_callback: Callable[
             [str, str, bool], bool
         ] = lambda x, y, z: True,
-        generate_uid_callback: Callable[[], str | None] = (lambda: None),
+        generate_uid_callback: Callable[[], str | None] = lambda: None,
     ) -> Self:
         item_metadata = LibraryItemMetadataVO.get_initial_item_metadata(
             author_id=author_id
@@ -206,7 +206,7 @@ class ConceptARBase(LibraryItemAggregateRootBase):
         )
 
         ConceptVO.duplication_check(
-            [("name", concept_vo.name, None)], concept_exists_by_callback
+            [("name", concept_vo.name or "", None)], concept_exists_by_callback
         )
         concept_ar = cls(
             _uid=generate_uid_callback(),
@@ -219,7 +219,7 @@ class ConceptARBase(LibraryItemAggregateRootBase):
     def edit_draft(
         self,
         author_id: str,
-        change_description: str | None,
+        change_description: str,
         concept_vo: _ConceptVOType,
         concept_exists_by_callback: Callable[
             [str, str, bool], bool
@@ -229,7 +229,7 @@ class ConceptARBase(LibraryItemAggregateRootBase):
         Creates a new draft version for the object.
         """
         ConceptVO.duplication_check(
-            [("name", concept_vo.name, self.name)], concept_exists_by_callback
+            [("name", concept_vo.name or "", self.name)], concept_exists_by_callback
         )
         if self._concept_vo != concept_vo:
             super()._edit_draft(

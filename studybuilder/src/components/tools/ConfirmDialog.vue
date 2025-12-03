@@ -2,6 +2,7 @@
   <v-dialog
     :model-value="dialog"
     :max-width="options.width"
+    persistent
     :style="{ zIndex: options.zIndex }"
     @keydown.esc="cancel"
   >
@@ -12,7 +13,12 @@
       <v-card-text v-if="savedMessage" class="pt-2 dialogText">
         <v-row no-gutters class="align-center pa-2">
           <v-col cols="12">
-            <div class="text-body-1 mt-1" v-html="sanitizeHTML(savedMessage)" />
+            <slot name="body">
+              <div
+                class="text-body-1 mt-1"
+                v-html="sanitizeHTML(savedMessage)"
+              />
+            </slot>
           </v-col>
         </v-row>
         <v-divider class="pa-2" />
@@ -20,7 +26,9 @@
           <v-col class="text-center">
             <v-btn
               v-if="!options.noCancel"
-              variant="outlined"
+              :color="options.cancelIsPrimaryAction ? btnClasses : ''"
+              :variant="options.cancelIsPrimaryAction ? 'elevated' : 'outlined'"
+              :disabled="props.cancelDisabled"
               data-cy="cancel-popup"
               class="mr-4"
               rounded="xl"
@@ -31,7 +39,11 @@
             <slot name="actions">
               <v-btn
                 v-if="options.redirect === null"
-                :color="btnClasses"
+                :color="options.cancelIsPrimaryAction ? '' : btnClasses"
+                :variant="
+                  options.cancelIsPrimaryAction ? 'outlined' : 'elevated'
+                "
+                :disabled="props.agreeDisabled"
                 rounded="xl"
                 data-cy="continue-popup"
                 @click="agree"
@@ -41,7 +53,11 @@
               <v-btn
                 v-else
                 data-cy="continue-popup"
-                variant="outlined"
+                :color="options.cancelIsPrimaryAction ? '' : btnClasses"
+                :variant="
+                  options.cancelIsPrimaryAction ? 'outlined' : 'elevated'
+                "
+                :disabled="props.agreeAndRedirectDisabled"
                 rounded="xl"
                 @click="agreeAndRedirect"
               >
@@ -64,6 +80,12 @@ import { escapeHTML, sanitizeHTML } from '@/utils/sanitize'
 const { t } = useI18n()
 const router = useRouter()
 
+const props = defineProps({
+  cancelDisabled: { type: Boolean, default: false },
+  agreeDisabled: { type: Boolean, default: false },
+  agreeAndRedirectDisabled: { type: Boolean, default: false },
+})
+
 const dialog = ref(false)
 let savedResolve = null
 const savedMessage = ref(null)
@@ -83,7 +105,9 @@ const cardClasses = computed(() => {
   return btnClasses.value + ' lg opacity-100'
 })
 const btnClasses = computed(() => {
-  if (options.value.type === 'warning') {
+  if (options.value.type === 'error') {
+    return 'error'
+  } else if (options.value.type === 'warning') {
     return 'warning'
   } else if (options.value.type === 'info') {
     return 'info'
@@ -92,10 +116,24 @@ const btnClasses = computed(() => {
   }
 })
 
-const open = (message_plain, extraOptions) => {
+const open = (messagePlain, extraOptions, callback) => {
   dialog.value = true
-  savedMessage.value = escapeHTML(message_plain).replace(/\n+/g, '<br />')
+  savedMessage.value = escapeHTML(messagePlain).replace(/\n+/g, '<br />')
   options.value = Object.assign(options.value, extraOptions)
+
+  callback?.()
+
+  return new Promise((resolve) => {
+    savedResolve = resolve
+  })
+}
+const openHtml = (messageHtml, extraOptions, callback) => {
+  dialog.value = true
+  savedMessage.value = messageHtml
+  options.value = Object.assign(options.value, extraOptions)
+
+  callback?.()
+
   return new Promise((resolve) => {
     savedResolve = resolve
   })
@@ -115,6 +153,7 @@ const cancel = () => {
 
 defineExpose({
   open,
+  openHtml,
   cancel,
 })
 </script>

@@ -45,7 +45,7 @@
               :label="$t('UnitForm.ct_term')"
               data-cy="unit-codelist-term"
               :items="unitTerms"
-              item-title="name.sponsor_preferred_name"
+              item-title="sponsor_preferred_name"
               item-value="term_uid"
               single-line
               multiple
@@ -62,7 +62,7 @@
               label="Unit Subset"
               data-cy="unit-subset"
               :items="unitSubsets"
-              item-title="name.sponsor_preferred_name"
+              item-title="sponsor_preferred_name"
               item-value="term_uid"
               single-line
               multiple
@@ -132,7 +132,7 @@
               :label="$t('UnitForm.dimension')"
               data-cy="unit-dimension"
               :items="unitDimensions"
-              item-title="name.sponsor_preferred_name"
+              item-title="sponsor_preferred_name"
               item-value="term_uid"
               clearable
               density="compact"
@@ -253,13 +253,13 @@ watch(
 )
 
 onMounted(() => {
-  terms.getByCodelist('units', { all: true }).then((resp) => {
+  terms.getTermsByCodelist('units', { all: true }).then((resp) => {
     unitTerms.value = resp.data.items
   })
-  terms.getByCodelist('unitDimensions').then((resp) => {
+  terms.getTermsByCodelist('unitDimensions').then((resp) => {
     unitDimensions.value = resp.data.items
   })
-  terms.getByCodelist('unitSubsets').then((resp) => {
+  terms.getTermsByCodelist('unitSubsets').then((resp) => {
     unitSubsets.value = resp.data.items
   })
   librariesApi.get(1).then((resp) => {

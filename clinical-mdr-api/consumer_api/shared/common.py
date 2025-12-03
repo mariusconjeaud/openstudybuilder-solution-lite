@@ -6,8 +6,8 @@ from typing import Any
 
 from neomodel.sync_.core import db
 
-APP_ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../"))
-
+from common.exceptions import ValidationException
+from common.utils import filter_sort_valid_keys_re, get_db_result_as_dict
 
 log = logging.getLogger(__name__)
 
@@ -19,7 +19,7 @@ class SortByType(Enum):
 
 def query(
     cypher_query,
-    params: dict = None,
+    params: dict[Any, Any] | None = None,
     handle_unique: bool = True,
     retry_on_session_expire: bool = False,
     resolve_objects: bool = False,
@@ -32,6 +32,9 @@ def query(
     list[dict] | tuple: If `to_dict_list` is True, returns a list of dictionaries representing the query results.
                         If `to_dict_list` is False, returns a tuple containing the rows and columns from the query.
     """
+    if params is None:
+        params = {}
+
     rows, columns = db.cypher_query(
         query=cypher_query,
         params=params,
@@ -56,20 +59,21 @@ def urlencode_link(link: str) -> str:
     return urllib.parse.urlunparse(url)
 
 
-def get_db_result_as_dict(row: list[Any], columns: list[str]) -> dict:
-    item = {}
-    for key, value in zip(columns, row):
-        item[key] = value
-    return item
-
-
 def db_pagination_clause(page_size: int, page_number: int) -> str:
+    # Ensure Cypher injection would not be possible even if values weren't integer types
+    if not isinstance(page_size, int) or not isinstance(page_number, int):
+        raise TypeError("Expected page_size and page_number to be integers")
+
     return f"SKIP {page_number - 1} * {page_size} LIMIT {page_size}"
 
 
 def db_sort_clause(
     sort_by: str, sort_order: str = "ASC", sort_by_type: SortByType = SortByType.STRING
 ) -> str:
+    # Ensure Cypher injection would not be exploitable even if sort_by keys were not checked
+    if not filter_sort_valid_keys_re.fullmatch(sort_by):
+        raise ValidationException(msg=f"Invalid sorting key: {sort_by}")
+
     if sort_by_type == SortByType.NUMBER:
         return f"ORDER BY toFloat({sort_by}) {sort_order}"
 

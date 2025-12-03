@@ -2,9 +2,9 @@ import abc
 import copy
 from datetime import datetime
 from threading import Lock
-from typing import Any, Iterable, Mapping, TypeVar
+from typing import Any, Iterable, Literal, Mapping, TypeVar, overload
 
-import neo4j
+import neo4j.time
 from cachetools import TTLCache, cached
 from cachetools.keys import hashkey
 from neomodel import (
@@ -44,7 +44,7 @@ from clinical_mdr_api.repositories._utils import (
 )
 from clinical_mdr_api.services.user_info import UserInfoService
 from clinical_mdr_api.utils import convert_to_plain, validate_dict
-from common import config
+from common.config import settings
 from common.exceptions import (
     BusinessLogicException,
     NotFoundException,
@@ -65,22 +65,33 @@ class LibraryItemRepositoryImplBase(
     RepositoryImpl, GenericRepository[_AggregateRootType], abc.ABC
 ):
     cache_store_item_by_uid = TTLCache(
-        maxsize=config.CACHE_MAX_SIZE, ttl=config.CACHE_TTL
+        maxsize=settings.cache_max_size, ttl=settings.cache_ttl
     )
     lock_store_item_by_uid = Lock()
+    cache_store_term_by_uid_and_submval = TTLCache(
+        maxsize=settings.cache_max_size, ttl=settings.cache_ttl
+    )
+    lock_store_term_by_uid_and_submval = Lock()
     has_library = True
 
     @abc.abstractmethod
     def _create_aggregate_root_instance_from_version_root_relationship_and_value(
         self,
         root: VersionRoot,
-        library: Library,
+        library: Library | None,
         relationship: VersionRelationship,
         value: VersionValue,
         study_count: int = 0,
         counts: InstantiationCountsVO | None = None,
     ) -> _AggregateRootType:
         raise NotImplementedError
+
+    def _connect_relationships_to_new_value_node(
+        self, root: VersionRoot, value: VersionValue
+    ) -> None:
+        """
+        Upgrades all connected nodes to their latest version.
+        """
 
     @abc.abstractmethod
     def _maintain_parameters(
@@ -108,12 +119,14 @@ class LibraryItemRepositoryImplBase(
         """
         if not on_root:
             query = f"""
-                MATCH (or:{self.root_class.__label__})-[:LATEST_FINAL|LATEST_DRAFT|LATEST_RETIRED|LATEST]->(:{self.value_class.__label__} {{{property_name}: ${property_name}}})
+                MATCH (or:{self.root_class.__label__})-[:LATEST]->(:{self.value_class.__label__} {{{property_name}: ${property_name}}})
+                WHERE any(label IN labels(or) WHERE NOT label STARTS WITH 'Deleted')
                 RETURN or
                 """
         else:
             query = f"""
-                MATCH (or:{self.root_class.__label__} {{{property_name}: ${property_name}}})-[:LATEST_FINAL|LATEST_DRAFT|LATEST_RETIRED|LATEST]->(:{self.value_class.__label__})
+                MATCH (or:{self.root_class.__label__} {{{property_name}: ${property_name}}})-[:LATEST]->(:{self.value_class.__label__})
+                WHERE any(label IN labels(or) WHERE NOT label STARTS WITH 'Deleted')
                 RETURN or
                 """
 
@@ -172,27 +185,31 @@ class LibraryItemRepositoryImplBase(
 
     @sb_clear_cache(caches=["cache_store_item_by_uid"])
     def _get_or_create_value(
-        self, root: VersionRoot, ar: _AggregateRootType
+        self,
+        root: VersionRoot,
+        ar: _AggregateRootType,
+        force_new_value_node: bool = False,
     ) -> VersionValue:
-        (
-            has_version_rel,
-            _,
-            latest_draft_rel,
-            latest_final_rel,
-            latest_retired_rel,
-        ) = self._get_version_relation_keys(root)
-        for itm in has_version_rel.filter(name=ar.name):
-            return itm
+        if not force_new_value_node:
+            (
+                has_version_rel,
+                _,
+                latest_draft_rel,
+                latest_final_rel,
+                latest_retired_rel,
+            ) = self._get_version_relation_keys(root)
+            for itm in has_version_rel.filter(name=ar.name):
+                return itm
 
-        latest_draft = latest_draft_rel.get_or_none()
-        if latest_draft and not self._has_data_changed(ar, latest_draft):
-            return latest_draft
-        latest_final = latest_final_rel.get_or_none()
-        if latest_final and not self._has_data_changed(ar, latest_final):
-            return latest_final
-        latest_retired = latest_retired_rel.get_or_none()
-        if latest_retired and not self._has_data_changed(ar, latest_retired):
-            return latest_retired
+            latest_draft = latest_draft_rel.get_or_none()
+            if latest_draft and not self._has_data_changed(ar, latest_draft):
+                return latest_draft
+            latest_final = latest_final_rel.get_or_none()
+            if latest_final and not self._has_data_changed(ar, latest_final):
+                return latest_final
+            latest_retired = latest_retired_rel.get_or_none()
+            if latest_retired and not self._has_data_changed(ar, latest_retired):
+                return latest_retired
 
         additional_props = {}
 
@@ -212,7 +229,9 @@ class LibraryItemRepositoryImplBase(
     ) -> bool:
         return self._has_data_changed(ar, value)
 
-    def _update(self, versioned_object: _AggregateRootType):
+    def _update(
+        self, versioned_object: _AggregateRootType, force_new_value_node: bool = False
+    ) -> _AggregateRootType:
         """
         Updates the state of the versioned object in the graph.
 
@@ -276,9 +295,11 @@ class LibraryItemRepositoryImplBase(
             versioned_object, previous_versioned_object
         )
         new_version_needed = self._is_new_version_necessary(versioned_object, value)
-        if changes_possible and new_version_needed:
+        if (changes_possible and new_version_needed) or force_new_value_node:
             # Creating nev value object if necessary
-            new_value = self._get_or_create_value(root, versioned_object)
+            new_value = self._get_or_create_value(
+                root, versioned_object, force_new_value_node
+            )
 
             # recreating latest_value relationship
             self._db_remove_relationship(has_latest_value_rel)
@@ -310,6 +331,8 @@ class LibraryItemRepositoryImplBase(
 
             # close all previous HAS_VERSIONs
             self._close_previous_versions(root, versioning_data)
+
+        self._connect_relationships_to_new_value_node(root, new_value)
 
         # recreating parameters connections
         self._maintain_parameters(versioned_object, root, new_value)
@@ -447,7 +470,7 @@ class LibraryItemRepositoryImplBase(
         *,
         status: LibraryItemStatus | None = None,
         library_name: str | None = None,
-        return_study_count: bool | None = False,
+        return_study_count: bool = False,
     ) -> Iterable[_AggregateRootType]:
         """
         GetAll implementation - gets all objects. Ignores versions.
@@ -477,14 +500,15 @@ class LibraryItemRepositoryImplBase(
             if library and library_name is not None and library_name != library.name:
                 continue
 
+            value: VersionValue
             if status is None:
-                value: VersionValue = has_latest_value_rel.single()
+                value = has_latest_value_rel.single()
             elif status == LibraryItemStatus.FINAL:
-                value: VersionValue = latest_final_rel.single()
+                value = latest_final_rel.single()
             elif status == LibraryItemStatus.DRAFT:
-                value: VersionValue = latest_draft_rel.single()
+                value = latest_draft_rel.single()
             elif status == LibraryItemStatus.RETIRED:
-                value: VersionValue = latest_retired_rel.single()
+                value = latest_retired_rel.single()
 
             relationship: VersionRelationship = self._get_latest_version(root, value)
 
@@ -635,7 +659,7 @@ class LibraryItemRepositoryImplBase(
         return versions, latest_draft, latest_final
 
     def get_all_versions_2(
-        self, uid: str, return_study_count: bool | None = False
+        self, uid: str, return_study_count: bool = False
     ) -> Iterable[_AggregateRootType]:
         library: Library | None = None
         # condition added because ControlledTerminology items are versioned slightly different than other library items:
@@ -647,21 +671,22 @@ class LibraryItemRepositoryImplBase(
         if not self._is_repository_related_to_ct():
             root: VersionRoot | None = self.root_class.nodes.get_or_none(uid=uid)
             if root is not None:
+
                 if self.has_library:
-                    library: Library = root.has_library.get()
+                    library = root.has_library.get()
                 else:
                     library = None
         else:
             # ControlledTerminology version root items don't contain uid - then we have to get object by it's id
-            result, _ = db.cypher_query(
+            _result, _ = db.cypher_query(
                 MATCH_NODE_BY_ID,
                 {"id": uid},
                 resolve_objects=True,
             )
-            root = result[0][0]
+            root = _result[0][0]
             if root is not None:
                 if self.has_library:
-                    library: Library = root.has_root.single().has_library.get()
+                    library = root.has_root.single().has_library.get()
                 else:
                     library = None
 
@@ -707,7 +732,7 @@ class LibraryItemRepositoryImplBase(
         status: LibraryItemStatus | None = None,
         at_specific_date: datetime | None = None,
         for_update: bool = False,
-        return_study_count: bool | None = False,
+        return_study_count: bool = False,
         return_instantiation_counts: bool = False,
     ):
         """
@@ -732,7 +757,7 @@ class LibraryItemRepositoryImplBase(
 
     def _create_aggregate_root_instance_based_on_return_counts(
         self,
-        library: Library,
+        library: Library | None,
         root: VersionRoot,
         value: VersionValue,
         relationship: VersionRelationship,
@@ -767,12 +792,13 @@ class LibraryItemRepositoryImplBase(
         at_specific_date: datetime,
         status=None,
     ) -> tuple[VersionValue | None, VersionRelationship | None]:
+        matching_values: list[VersionValue]
         if status:
-            matching_values: list[VersionValue] = has_version_rel.match(
+            matching_values = has_version_rel.match(
                 start_date__lte=at_specific_date, status__exact=status.value
             )
         else:
-            matching_values: list[VersionValue] = has_version_rel.match(
+            matching_values = has_version_rel.match(
                 start_date__lte=at_specific_date,
             )
         latest_matching_relationship: VersionRelationship | None = None
@@ -813,7 +839,7 @@ class LibraryItemRepositoryImplBase(
         status: LibraryItemStatus | None = None,
         at_specific_date: datetime | None = None,
         for_update: bool = False,
-        return_study_count: bool | None = False,
+        return_study_count: bool = False,
         return_instantiation_counts: bool = False,
     ) -> _AggregateRootType | None:
         if for_update and (
@@ -848,6 +874,8 @@ class LibraryItemRepositoryImplBase(
                 if at_specific_date is None:
                     # Find the latest version (regardless of status)
                     value = has_latest_value_rel.single()
+                    if value is None:
+                        raise ValueError("No version found.")
                     relationship = self._get_latest_version(root, value)
                 else:
                     # Find the latest version (regardless of status) that exists at the specified date
@@ -924,7 +952,7 @@ class LibraryItemRepositoryImplBase(
         latest_retired_rel: RelationshipManager,
     ) -> tuple[VersionValue | None, VersionRelationship | None]:
         relationship: VersionRelationship | None = None
-        value: VersionValue | None = None
+        value: VersionValue
 
         relationship_manager_to_use: RelationshipManager = latest_retired_rel
         if status == LibraryItemStatus.FINAL:
@@ -957,8 +985,9 @@ class LibraryItemRepositoryImplBase(
                 ) from exc
             if root is None:
                 return None, None
+            library: Library | None
             if self.has_library:
-                library: Library = root.has_library.get()
+                library = root.has_library.get()
             else:
                 library = None
         else:
@@ -972,7 +1001,7 @@ class LibraryItemRepositoryImplBase(
                 return None, None
             ct_root = root.has_root.single()
             if self.has_library:
-                library: Library = ct_root.has_library.get()
+                library = ct_root.has_library.get()
             else:
                 library = None
         return root, library
@@ -990,12 +1019,14 @@ class LibraryItemRepositoryImplBase(
         value: VersionValue | ControlledTerminology,
         relation: VersionRelationship,
     ) -> tuple[Mapping, VersionValue, VersionRelationship]:
+        library: Library | None
+
         if not self.has_library:
             library = None
         elif not self._is_repository_related_to_ct():
-            library: Library = item.has_library.get()
+            library = item.has_library.get()
         else:
-            library: Library = item.has_root.single().has_library.get()
+            library = item.has_root.single().has_library.get()
         data = value.to_dict()
         rdata = data.copy()
         rdata.update(relation.to_dict())
@@ -1120,11 +1151,17 @@ class LibraryItemRepositoryImplBase(
             {"uid": uid},
         )
 
-    def check_exists_final_version(self, uid: str) -> bool:
-        root_node = self.root_class.nodes.get_or_none(uid=uid)
-        if root_node is not None:
-            return root_node.latest_final.get_or_none() is not None
-        return False
+    def check_exists_final_version(self, uid: str | None) -> bool:
+        if uid is None:
+            return False
+
+        query = f"""
+            MATCH (root:{self.root_class.__label__} {{uid: $uid}})-[:LATEST]->(value:{self.value_class.__label__})
+            WHERE (root)-[:LATEST_FINAL]->(value)
+            RETURN root
+            """
+        result, _ = db.cypher_query(query, {"uid": uid})
+        return len(result) > 0 and len(result[0]) > 0
 
     def close(self) -> None:
         # Our repository guidelines state that repos should have a close method
@@ -1153,7 +1190,7 @@ class LibraryItemRepositoryImplBase(
         library_name: str | None = None,
         status: LibraryItemStatus | None = None,
         version: str | None = None,
-        return_study_count: bool | None = False,
+        return_study_count: bool = False,
         for_audit_trail: bool = False,
         at_specific_date: datetime | None = None,
         include_retired_versions: bool = False,
@@ -1180,6 +1217,34 @@ class LibraryItemRepositoryImplBase(
             include_retired_versions,
         )
 
+    @overload
+    def find_by_uid_optimized(
+        self,
+        uid: str | None,
+        *,
+        for_update: bool = False,
+        library_name: str | None = None,
+        status: LibraryItemStatus | None = None,
+        version: str | None = None,
+        return_study_count: bool = False,
+        for_audit_trail: Literal[False],
+        at_specific_date: datetime | None = None,
+        include_retired_versions: bool = False,
+    ) -> _AggregateRootType: ...
+    @overload
+    def find_by_uid_optimized(
+        self,
+        uid: str | None,
+        *,
+        for_update: bool = False,
+        library_name: str | None = None,
+        status: LibraryItemStatus | None = None,
+        version: str | None = None,
+        return_study_count: bool = False,
+        for_audit_trail: Literal[True],
+        at_specific_date: datetime | None = None,
+        include_retired_versions: bool = False,
+    ) -> list[_AggregateRootType]: ...
     @cached(
         cache=cache_store_item_by_uid,
         key=hashkey_library_item_with_metadata_find_by_uid,
@@ -1187,17 +1252,22 @@ class LibraryItemRepositoryImplBase(
     )
     def find_by_uid_optimized(
         self,
-        uid: str,
+        uid: str | None,
         *,
         for_update: bool = False,
         library_name: str | None = None,
         status: LibraryItemStatus | None = None,
         version: str | None = None,
-        return_study_count: bool | None = False,
+        return_study_count: bool = False,
         for_audit_trail: bool = False,
         at_specific_date: datetime | None = None,
         include_retired_versions: bool = False,
     ) -> _AggregateRootType | list[_AggregateRootType]:
+        if uid is None:
+            raise NotFoundException(
+                msg=f"UID wasn't provided for {self.root_class.__label__}."
+            )
+
         if for_update and (version is not None or status is not None):
             raise NotImplementedError(
                 "Retrieval for update supported only for latest version."
@@ -1219,7 +1289,7 @@ class LibraryItemRepositoryImplBase(
             include_retired_versions=include_retired_versions,
         )
 
-        params = {"uid": uid}
+        params: dict[str, Any] = {"uid": uid}
         if status:
             params["status"] = status.value
         if version:
@@ -1368,15 +1438,15 @@ class LibraryItemRepositoryImplBase(
         *,
         status: LibraryItemStatus | None = None,
         library_name: str | None = None,
-        return_study_count: bool | None = False,
-        sort_by: dict | None = None,
+        return_study_count: bool = False,
+        sort_by: dict[str, bool] | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: dict | None = None,
-        filter_operator: FilterOperator | None = FilterOperator.AND,
+        filter_by: dict[str, dict[str, Any]] | None = None,
+        filter_operator: FilterOperator = FilterOperator.AND,
         total_count: bool = False,
         for_audit_trail: bool = False,
-        version_specific_uids: dict | None = None,
+        version_specific_uids: dict[Any, Any] | None = None,
         at_specific_date: datetime | None = None,
         include_retired_versions: bool = False,
         get_latest_final: bool = False,
@@ -1419,19 +1489,19 @@ class LibraryItemRepositoryImplBase(
         *,
         status: LibraryItemStatus | None = None,
         library_name: str | None = None,
-        return_study_count: bool | None = False,
-        sort_by: dict | None = None,
+        return_study_count: bool = False,
+        sort_by: dict[str, bool] | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: dict | None = None,
-        filter_operator: FilterOperator | None = FilterOperator.AND,
+        filter_by: dict[str, dict[str, Any]] | None = None,
+        filter_operator: FilterOperator = FilterOperator.AND,
         total_count: bool = False,
         for_audit_trail: bool = False,
         version_specific_uids: dict[str, Iterable[str]] | None = None,
         at_specific_date: datetime | None = None,
         include_retired_versions: bool = False,
         get_latest_final: bool = False,
-    ) -> tuple[list, int]:
+    ) -> tuple[list[Any], int]:
         validate_dict(filter_by, "filters")
         validate_dict(sort_by, "sort_by")
         validate_max_skip_clause(page_number=page_number, page_size=page_size)
@@ -1615,7 +1685,7 @@ class LibraryItemRepositoryImplBase(
         self,
         uids: Iterable[str],
         get_latest_final: bool = False,
-    ) -> dict[str:LibraryItemAggregateRootBase]:
+    ) -> dict[str, LibraryItemAggregateRootBase]:
         """get all items where uid is IN a list of uids, and return them as a dictionary with item uid as key"""
 
         if not isinstance(uids, list):
@@ -1633,9 +1703,9 @@ class LibraryItemRepositoryImplBase(
         *,
         field_name: str,
         status: LibraryItemStatus | None = None,
-        search_string: str | None = "",
-        filter_by: dict | None = None,
-        filter_operator: FilterOperator | None = FilterOperator.AND,
+        search_string: str = "",
+        filter_by: dict[str, dict[str, Any]] | None = None,
+        filter_operator: FilterOperator = FilterOperator.AND,
         page_size: int = 10,
     ):
         if page_size <= 0:
@@ -1742,7 +1812,7 @@ class LibraryItemRepositoryImplBase(
                 "type.term_uid": "type_root.uid",
                 "type.name.sponsor_preferred_name": "type_ct_term_name_value.name",
                 "type.name.sponsor_preferred_name_sentence_case": "type_ct_term_name_value.name_sentence_case",
-                "type.attributes.code_submission_value": "type_ct_term_attributes_value.code_submission_value",
+                "type.attributes.submission_value": "type_ct_term_attributes_value.submission_value",
                 "type.attributes.preferred_term": "type_ct_term_attributes_value.preferred_term",
             }
 
@@ -1751,7 +1821,7 @@ class LibraryItemRepositoryImplBase(
                 "categories.term_uid": "category_root.uid",
                 "categories.name.sponsor_preferred_name": "category_ct_term_name_value.name",
                 "categories.name.sponsor_preferred_name_sentence_case": "category_ct_term_name_value.name_sentence_case",
-                "categories.attributes.code_submission_value": "category_ct_term_attributes_value.code_submission_value",
+                "categories.attributes.submission_value": "category_ct_term_attributes_value.submission_value",
                 "categories.attributes.preferred_term": "category_ct_term_attributes_value.preferred_term",
             }
 
@@ -1760,12 +1830,12 @@ class LibraryItemRepositoryImplBase(
                 "sub_categories.term_uid": "subcategory_root.uid",
                 "sub_categories.name.sponsor_preferred_name": "subcategory_ct_term_name_value.name",
                 "sub_categories.name.sponsor_preferred_name_sentence_case": "subcategory_ct_term_name_value.name_sentence_case",
-                "sub_categories.attributes.code_submission_value": "subcategory_ct_term_attributes_value.code_submission_value",
+                "sub_categories.attributes.submission_value": "subcategory_ct_term_attributes_value.submission_value",
                 "sub_categories.attributes.preferred_term": "subcategory_ct_term_attributes_value.preferred_term",
                 "subCategories.term_uid": "subcategory_root.uid",
                 "subCategories.name.sponsor_preferred_name": "subcategory_ct_term_name_value.name",
                 "subCategories.name.sponsor_preferred_name_sentence_case": "subcategory_ct_term_name_value.name_sentence_case",
-                "subCategories.attributes.code_submission_value": "subcategory_ct_term_attributes_value.code_submission_value",
+                "subCategories.attributes.submission_value": "subcategory_ct_term_attributes_value.submission_value",
                 "subCategories.attributes.preferred_term": "subcategory_ct_term_attributes_value.preferred_term",
             }
 
@@ -1809,12 +1879,12 @@ class LibraryItemRepositoryImplBase(
 
     def _where_stmt_optimized(
         self,
-        filter_by: dict | None = None,
+        filter_by: dict[str, dict[str, Any]] | None = None,
         filter_operator: FilterOperator = FilterOperator.AND,
         version_specific_uids: dict[str, Iterable[str]] | None = None,
     ):
-        def date_stmt(name: str):
-            if name in filter_by:
+        def date_stmt(filter_by: dict[str, dict[str, Any]], name: str):
+            if name in filter_by:  # type: ignore[operator]
                 if (
                     "op" not in filter_by[name]
                     or filter_by[name]["op"] in ComparisonOperator.EQUALS.value
@@ -1878,8 +1948,8 @@ END
                 params["uids"] = filter_by["uid"]["v"]
                 filter_by.pop("uid", None)
 
-            date_stmt("start_date")
-            date_stmt("end_date")
+            date_stmt(filter_by, "start_date")
+            date_stmt(filter_by, "end_date")
 
             filter_by.pop("*", None)
             for filter_name, items in filter_by.items():
@@ -1965,7 +2035,7 @@ END
 
         return "WHERE " + where_stmt, params
 
-    def _sort_stmt(self, sort_by: dict | None = None):
+    def _sort_stmt(self, sort_by: dict[str, bool] | None = None):
         if not sort_by:
             return "ORDER BY root.uid DESC"
 
@@ -2107,7 +2177,7 @@ END
         with_versions_in_where: bool = False,
         return_study_count: bool = False,
         where_stmt: str = "",
-        sort_by: dict | None = None,
+        sort_by: dict[str, bool] | None = None,
         uid: str | None = None,
         for_audit_trail: bool = False,
         include_retired_versions: bool = False,
@@ -2169,10 +2239,10 @@ END
                     WITH root
                     MATCH (root)-[ver_rel:HAS_VERSION]->()
                     WITH * ORDER BY ver_rel.start_date DESC LIMIT 1
-                    {"""
+                    {'''
                         WHERE
                             $status <> "Final"                                      // WHEN THE USER DOESN'T ASK FOR FINAL --THEN--> PASS EVERYTHING
-                            OR (ver_rel.status <> 'Retired' AND $status = 'Final')  // WHEN USER ASKS FOR FINAL --THEN--> THE LATEST SHOULD NOT BE RETIRED"""
+                            OR (ver_rel.status <> 'Retired' AND $status = 'Final')  // WHEN USER ASKS FOR FINAL --THEN--> THE LATEST SHOULD NOT BE RETIRED'''
                     if not include_retired_versions
                     else ""}
                     MATCH (_root)-[ver_rel]->()
@@ -2442,25 +2512,14 @@ END
 
     def _ctterm_name_match_return_stmt(self):
         match_stmt = """
-            MATCH (root)<-[root_has_name_root__ctterm_root:HAS_NAME_ROOT]-(ctterm_root)
-            CALL{
-                WITH ctterm_root
-                MATCH (ctterm_root)<-[ctterm_root__ct_codelist_root:HAS_TERM]-(ctcodelist_root:CTCodelistRoot)<-[:HAS_CODELIST]-(ct_catalogue:CTCatalogue)
-                MATCH (ctcodelist_root)<-[:CONTAINS_CODELIST]-(codelist_library:Library)
-                RETURN collect(DISTINCT {
-                    uid: ctcodelist_root.uid
-                    ,order: ctterm_root__ct_codelist_root.order
-                    ,codelist_library_name: codelist_library.name
-                    ,ct_catalogue_name: ct_catalogue.name
-                }) as codelists
-            } 
+            MATCH (root)<-[:HAS_NAME_ROOT]-(ctterm_root)
+            OPTIONAL MATCH (ctterm_root)<-[:HAS_TERM_ROOT]-(ctcodelistterm)<-[ctterm_root__ct_codelist_root]-(ctcodelist_root:CTCodelistRoot)<-[:CONTAINS_CODELIST]-(codelist_library:Library)
+            OPTIONAL MATCH (ctcodelist_root)<-[:HAS_CODELIST]-(ct_catalogue:CTCatalogue)
         """
         ctterm_names_return = """,
             {
-                ctterm_root_uid: ctterm_root.uid
-                ,catalogue: codelists[0].ct_catalogue_name
-                ,codelists: codelists
-                ,ctterm_name_element_id: elementID(root)
+                ctterm_root_uid: ctterm_root.uid,
+                ctterm_name_element_id: elementID(root)
             } as ctterm_name
         """
         return match_stmt, ctterm_names_return
@@ -2518,7 +2577,7 @@ END
                 //ACTIVITY ITEM CTTERMS
                 CALL{
                     WITH activity_item
-                    MATCH (activity_item)-[:HAS_CT_TERM]->(activity_item_ctterm_root:CTTermRoot)
+                    MATCH (activity_item)-[:HAS_CT_TERM]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(activity_item_ctterm_root:CTTermRoot)
                     MATCH (activity_item_ctterm_root)-->(:CTTermNameRoot)-[:LATEST_FINAL]->(ct_name_value:CTTermNameValue)
                     RETURN collect(DISTINCT {uid:activity_item_ctterm_root.uid, name:ct_name_value.name }) as ct_terms
                 }
@@ -2528,6 +2587,18 @@ END
                     MATCH (activity_item)-[:HAS_UNIT_DEFINITION]->(activity_item_unit_definition_root:UnitDefinitionRoot)
                     MATCH (activity_item_unit_definition_root)-[:LATEST]->(activity_item_unit_definition_value:UnitDefinitionValue)
                     RETURN collect(DISTINCT {uid:activity_item_unit_definition_root.uid, name:activity_item_unit_definition_value.name }) as unit_definitions
+                }
+                CALL{
+                    WITH activity_item
+                    MATCH (activity_item)-[:HAS_ODM_FORM]->(odm_form_root:OdmFormRoot)
+                    MATCH (odm_form_root)-[:LATEST]->(odm_form_value:OdmFormValue)
+                    RETURN collect(DISTINCT {uid: odm_form_root.uid, oid: odm_form_value.oid, name: odm_form_value.name}) AS odm_forms
+                }
+                CALL{
+                    WITH activity_item
+                    MATCH (activity_item)-[:HAS_ODM_ITEM_GROUP]->(odm_item_group_root:OdmItemRoot)
+                    MATCH (odm_item_group_root)-[:LATEST]->(odm_item_group_value:OdmItemValue)
+                    RETURN collect(DISTINCT {uid: odm_item_group_root.uid, oid: odm_item_group_value.oid, name: odm_item_group_value.name}) AS odm_item_groups
                 }
                 CALL{
                     WITH activity_item
@@ -2541,6 +2612,8 @@ END
                     ct_terms:ct_terms, 
                     unit_definitions: unit_definitions,
                     is_adam_param_specific: activity_item.is_adam_param_specific,
+                    odm_forms: odm_forms,
+                    odm_item_groups: odm_item_groups,
                     odm_items: odm_items
                 }) as activity_items
             }
@@ -2577,7 +2650,7 @@ END
                 WITH *, [(root)-[ver_rel]->(activity_value:ActivityValue)-[:HAS_GROUPING]->(:ActivityGrouping)-[:IN_SUBGROUP]->(activity_valid_group:ActivityValidGroup) | 
                     {
                         activity_subgroup: head(apoc.coll.sortMulti([(activity_valid_group)<-[:HAS_GROUP]-(activity_subgroup_value:ActivitySubGroupValue)<-[has_version:HAS_VERSION]-
-                            (activity_subgroup_root:ActivitySubGroupRoot) | 
+                            (activity_subgroup_root:ActivitySubGroupRoot) WHERE has_version.status in ["Final", "Retired"]| 
                             {
                                 uid:activity_subgroup_root.uid,
                                 major_version: toInteger(split(has_version.version,'.')[0]),
@@ -2585,7 +2658,7 @@ END
                                 name: activity_subgroup_value.name
                             }], ['major_version', 'minor_version'])), 
                         activity_group: head(apoc.coll.sortMulti([(activity_valid_group)-[:IN_GROUP]-(activity_group_value:ActivityGroupValue)<-[has_version:HAS_VERSION]-
-                            (activity_group_root:ActivityGroupRoot) | 
+                            (activity_group_root:ActivityGroupRoot) WHERE has_version.status in ["Final", "Retired"] | 
                             {
                                 uid:activity_group_root.uid,
                                 major_version: toInteger(split(has_version.version,'.')[0]),
@@ -2651,7 +2724,7 @@ END
                 MATCH (root)-[:LATEST]->(:UnitDefinitionValue)-[:HAS_UNIT_SUBSET]-(ct_unit_subset:CTTermRoot)-->(:CTTermNameRoot)-[:LATEST_FINAL]->(name_value:CTTermNameValue)
                 return collect(DISTINCT {uid:ct_unit_subset.uid, name:name_value.name})  as unit_subsets
             }
-            OPTIONAL MATCH (root)-[:LATEST]->(:UnitDefinitionValue)-[:HAS_CT_DIMENSION]->(ct_dimension:CTTermRoot)
+            OPTIONAL MATCH (root)-[:LATEST]->(:UnitDefinitionValue)-[:HAS_CT_DIMENSION]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(ct_dimension:CTTermRoot)
             OPTIONAL MATCH (root)-[:LATEST]->(:UnitDefinitionValue)-[:HAS_UCUM_TERM]->(ucum_term_root:UCUMTermRoot)
 
         """
@@ -2722,7 +2795,7 @@ WHERE cnt > 0
 
     def _subcategory_match_return_stmt(self):
         match_stmt = """
-            OPTIONAL MATCH (root)-[:HAS_SUBCATEGORY]->(subcategory_root:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(subcategory_ct_term_name_value:CTTermNameValue)
+            OPTIONAL MATCH (root)-[:HAS_SUBCATEGORY]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(subcategory_root:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(subcategory_ct_term_name_value:CTTermNameValue)
             OPTIONAL MATCH (subcategory_root:CTTermRoot)-[:HAS_ATTRIBUTES_ROOT]->(:CTTermAttributesRoot)-[:LATEST]->(subcategory_ct_term_attributes_value:CTTermAttributesValue)
         """
 
@@ -2731,7 +2804,7 @@ WHERE cnt > 0
                 term_uid: subcategory_root.uid,
                 name: subcategory_ct_term_name_value.name,
                 name_sentence_case: subcategory_ct_term_name_value.name_sentence_case,
-                code_submission_value: subcategory_ct_term_attributes_value.code_submission_value,
+                submission_value: subcategory_ct_term_attributes_value.submission_value,
                 preferred_term: subcategory_ct_term_attributes_value.preferred_term
             }) as subcategories
         """
@@ -2740,7 +2813,7 @@ WHERE cnt > 0
 
     def _category_match_return_stmt(self):
         match_stmt = """
-            OPTIONAL MATCH (root)-[:HAS_CATEGORY]->(category_root:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(category_ct_term_name_value:CTTermNameValue)
+            OPTIONAL MATCH (root)-[:HAS_CATEGORY]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(category_root:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(category_ct_term_name_value:CTTermNameValue)
             OPTIONAL MATCH (category_root:CTTermRoot)-[:HAS_ATTRIBUTES_ROOT]->(:CTTermAttributesRoot)-[:LATEST]->(category_ct_term_attributes_value:CTTermAttributesValue)
         """
 
@@ -2749,7 +2822,7 @@ WHERE cnt > 0
                 term_uid: category_root.uid,
                 name: category_ct_term_name_value.name,
                 name_sentence_case: category_ct_term_name_value.name_sentence_case,
-                code_submission_value: category_ct_term_attributes_value.code_submission_value,
+                submission_value: category_ct_term_attributes_value.submission_value,
                 preferred_term: category_ct_term_attributes_value.preferred_term
             }) as categories
         """
@@ -2777,7 +2850,8 @@ WHERE cnt > 0
                     ORDER BY template_rel.start_date DESC
                     LIMIT 1
                 }}
-                OPTIONAL MATCH (template_root)-[:HAS_TYPE]->(type_root:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(type_ct_term_name_value:CTTermNameValue)
+                OPTIONAL MATCH (template_root)-[:HAS_TYPE]->(:CTTermContext)-[:HAS_SELECTED_TERM]->
+                  (type_root:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(type_ct_term_name_value:CTTermNameValue)
                 OPTIONAL MATCH (type_root)-[:HAS_ATTRIBUTES_ROOT]->(:CTTermAttributesRoot)-[:LATEST]->(type_ct_term_attributes_value:CTTermAttributesValue)
             """
 
@@ -2791,7 +2865,7 @@ WHERE cnt > 0
                     term_uid: type_root.uid,
                     name: type_ct_term_name_value.name,
                     name_sentence_case: type_ct_term_name_value.name_sentence_case,
-                    code_submission_value: type_ct_term_attributes_value.code_submission_value,
+                    submission_value: type_ct_term_attributes_value.submission_value,
                     preferred_term: type_ct_term_attributes_value.preferred_term
                 } as instance_template_return
             """
@@ -2816,7 +2890,7 @@ WHERE cnt > 0
     def _template_type_match_return_stmt(self):
         if hasattr(self.root_class, "has_type"):
             match_stmt = """
-                OPTIONAL MATCH (root)-[:HAS_TYPE]->(type_root:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(type_ct_term_name_value:CTTermNameValue)
+                OPTIONAL MATCH (root)-[:HAS_TYPE]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(type_root:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(type_ct_term_name_value:CTTermNameValue)
                 OPTIONAL MATCH (type_root)-[:HAS_ATTRIBUTES_ROOT]->(:CTTermAttributesRoot)-[:LATEST]->(type_ct_term_attributes_value:CTTermAttributesValue)
             """
 
@@ -2825,13 +2899,13 @@ WHERE cnt > 0
                     term_uid: type_root.uid,
                     name: type_ct_term_name_value.name,
                     name_sentence_case: type_ct_term_name_value.name_sentence_case,
-                    code_submission_value: type_ct_term_attributes_value.code_submission_value,
+                    submission_value: type_ct_term_attributes_value.submission_value,
                     preferred_term: type_ct_term_attributes_value.preferred_term
                 } as template_type
             """
         else:
             match_stmt = """
-                OPTIONAL MATCH (root)-[:CREATED_FROM]->(template_root)-[:HAS_TYPE]->(type_root:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(type_ct_term_name_value:CTTermNameValue)
+                OPTIONAL MATCH (root)-[:CREATED_FROM]->(template_root)-[:HAS_TYPE]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(type_root:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(type_ct_term_name_value:CTTermNameValue)
                 OPTIONAL MATCH (type_root)-[:HAS_ATTRIBUTES_ROOT]->(:CTTermAttributesRoot)-[:LATEST]->(type_ct_term_attributes_value:CTTermAttributesValue)
                 OPTIONAL MATCH (template_root)-[:LATEST]->(template_value)
             """
@@ -2841,7 +2915,7 @@ WHERE cnt > 0
                     term_uid: type_root.uid,
                     name: type_ct_term_name_value.name,
                     name_sentence_case: type_ct_term_name_value.name_sentence_case,
-                    code_submission_value: type_ct_term_attributes_value.code_submission_value,
+                    submission_value: type_ct_term_attributes_value.submission_value,
                     preferred_term: type_ct_term_attributes_value.preferred_term
                 } as template_type
             """

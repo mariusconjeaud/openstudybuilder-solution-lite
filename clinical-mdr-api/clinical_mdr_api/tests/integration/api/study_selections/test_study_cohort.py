@@ -46,7 +46,7 @@ def test_data():
     inject_and_clear_db(db_name)
 
     global study
-    study = inject_base_data()
+    study, _test_data_dict = inject_base_data()
     global study_arm
     study_arm = TestUtils.create_study_arm(
         study_uid=study.uid,
@@ -66,7 +66,6 @@ def test_cohort_modify_actions_on_locked_study(api_client):
             "code": "Cohort_code_1",
         },
     )
-    res = response.json()
     assert_response_status_code(response, 201)
 
     # get all cohorts
@@ -140,7 +139,6 @@ def test_study_cohort_study_value_version(api_client):
             "short_name": "BranchArm_Short_Name_1",
             "code": "BranchArm_code_1",
             "description": "desc...",
-            "colour_code": "desc...",
             "randomization_group": "Randomization_Group_1",
             "number_of_subjects": 1,
             "arm_uid": study_arm.arm_uid,
@@ -223,8 +221,8 @@ def test_study_cohort_study_value_version(api_client):
             f"/studies/{study.uid}/study-arms?study_value_version=2"
         ).json()
     )
-    for i, _ in enumerate(before_unlock_branch_arms):
-        before_unlock_branch_arms[i]["study_version"] = mock.ANY
+    for i, _ in enumerate(before_unlock_branch_arms["items"]):
+        before_unlock_branch_arms["items"][i]["study_version"] = mock.ANY
     assert (
         before_unlock_branch_arms
         == api_client.get(

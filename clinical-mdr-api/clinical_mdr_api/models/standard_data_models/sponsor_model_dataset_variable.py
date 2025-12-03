@@ -104,25 +104,6 @@ class SponsorModelDatasetVariable(SponsorModelBase):
             },
         ),
     ] = None
-    xml_codelist: Annotated[
-        str | None,
-        Field(
-            json_schema_extra={
-                "source": "has_sponsor_model_instance.xml_codelist",
-                "nullable": True,
-            },
-        ),
-    ] = None
-    xml_codelist_multi: Annotated[
-        list[str] | None,
-        Field(
-            json_schema_extra={
-                "source": "has_sponsor_model_instance.xml_codelist_multi",
-                "nullable": True,
-                "remove_from_wildcard": True,
-            },
-        ),
-    ] = None
     core: Annotated[
         str | None,
         Field(
@@ -334,16 +315,6 @@ class SponsorModelDatasetVariable(SponsorModelBase):
             },
         ),
     ] = None
-    xml_codelist_values: Annotated[
-        bool | None,
-        Field(
-            json_schema_extra={
-                "source": "has_sponsor_model_instance.xml_codelist_values",
-                "nullable": True,
-                "remove_from_wildcard": True,
-            },
-        ),
-    ] = None
 
     @classmethod
     def from_sponsor_model_dataset_variable_ar(
@@ -353,15 +324,12 @@ class SponsorModelDatasetVariable(SponsorModelBase):
         return cls(
             uid=sponsor_model_dataset_variable_ar.uid,
             is_basic_std=sponsor_model_dataset_variable_ar.sponsor_model_dataset_variable_vo.is_basic_std,
-            implemented_dataset_variable=sponsor_model_dataset_variable_ar.sponsor_model_dataset_variable_vo.implemented_variable_class,
             label=sponsor_model_dataset_variable_ar.sponsor_model_dataset_variable_vo.label,
             order=sponsor_model_dataset_variable_ar.sponsor_model_dataset_variable_vo.order,
             variable_type=sponsor_model_dataset_variable_ar.sponsor_model_dataset_variable_vo.variable_type,
             length=sponsor_model_dataset_variable_ar.sponsor_model_dataset_variable_vo.length,
             display_format=sponsor_model_dataset_variable_ar.sponsor_model_dataset_variable_vo.display_format,
             xml_datatype=sponsor_model_dataset_variable_ar.sponsor_model_dataset_variable_vo.xml_datatype,
-            xml_codelist=sponsor_model_dataset_variable_ar.sponsor_model_dataset_variable_vo.xml_codelist,
-            xml_codelist_multi=sponsor_model_dataset_variable_ar.sponsor_model_dataset_variable_vo.xml_codelist_multi,
             core=sponsor_model_dataset_variable_ar.sponsor_model_dataset_variable_vo.core,
             origin=sponsor_model_dataset_variable_ar.sponsor_model_dataset_variable_vo.origin,
             origin_type=sponsor_model_dataset_variable_ar.sponsor_model_dataset_variable_vo.origin_type,
@@ -385,7 +353,6 @@ class SponsorModelDatasetVariable(SponsorModelBase):
             value_lvl_ct_codelist_id_col=sponsor_model_dataset_variable_ar.sponsor_model_dataset_variable_vo.value_lvl_ct_codelist_id_col,
             enrich_build_order=sponsor_model_dataset_variable_ar.sponsor_model_dataset_variable_vo.enrich_build_order,
             enrich_rule=sponsor_model_dataset_variable_ar.sponsor_model_dataset_variable_vo.enrich_rule,
-            xml_codelist_values=sponsor_model_dataset_variable_ar.sponsor_model_dataset_variable_vo.xml_codelist_values,
             library_name=Library.from_library_vo(
                 sponsor_model_dataset_variable_ar.library
             ).name,
@@ -416,7 +383,7 @@ class SponsorModelDatasetVariableInput(InputModel):
             min_length=1,
         ),
     ]
-    is_basic_std: Annotated[bool | None, Field()] = None
+    is_basic_std: Annotated[bool, Field()]
     implemented_parent_dataset_class: Annotated[
         str | None,
         Field(
@@ -437,8 +404,8 @@ class SponsorModelDatasetVariableInput(InputModel):
     length: Annotated[int | None, Field()] = None
     display_format: Annotated[str | None, Field()] = None
     xml_datatype: Annotated[str | None, Field()] = None
-    xml_codelist: Annotated[str | None, Field()] = None
-    xml_codelist_multi: Annotated[list[str] | None, Field()] = None
+    references_codelists: Annotated[list[str] | None, Field()] = None
+    references_terms: Annotated[list[str] | None, Field()] = None
     core: Annotated[str | None, Field()] = None
     origin: Annotated[str | None, Field()] = None
     origin_type: Annotated[str | None, Field()] = None
@@ -447,22 +414,21 @@ class SponsorModelDatasetVariableInput(InputModel):
     term: Annotated[str | None, Field()] = None
     algorithm: Annotated[str | None, Field()] = None
     qualifiers: Annotated[list[str] | None, Field()] = None
-    is_cdisc_std: Annotated[bool | None, Field()] = True
+    is_cdisc_std: Annotated[bool, Field()]
     comment: Annotated[str | None, Field()] = None
     ig_comment: Annotated[str | None, Field()] = None
     class_table: Annotated[str | None, Field()] = None
     class_column: Annotated[str | None, Field()] = None
     map_var_flag: Annotated[str | None, Field()] = None
     fixed_mapping: Annotated[str | None, Field()] = None
-    include_in_raw: Annotated[bool | None, Field()] = None
-    nn_internal: Annotated[bool | None, Field()] = None
+    include_in_raw: Annotated[bool, Field()] = False
+    nn_internal: Annotated[bool, Field()] = False
     value_lvl_where_cols: Annotated[str | None, Field()] = None
     value_lvl_label_col: Annotated[str | None, Field()] = None
     value_lvl_collect_ct_val: Annotated[str | None, Field()] = None
     value_lvl_ct_codelist_id_col: Annotated[str | None, Field()] = None
     enrich_build_order: Annotated[int | None, Field()] = None
     enrich_rule: Annotated[str | None, Field()] = None
-    xml_codelist_values: Annotated[bool | None, Field()] = None
     library_name: Annotated[
         str | None, Field(description="Defaults to CDISC", min_length=1)
     ] = "CDISC"

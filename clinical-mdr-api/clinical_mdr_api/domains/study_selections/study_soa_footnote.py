@@ -2,9 +2,6 @@ from dataclasses import dataclass, replace
 from datetime import datetime
 from typing import Callable, Self
 
-from clinical_mdr_api.domains.study_definition_aggregates.study_metadata import (
-    StudyStatus,
-)
 from clinical_mdr_api.domains.study_selections.study_selection_base import SoAItemType
 from common.exceptions import AlreadyExistsException
 
@@ -15,6 +12,7 @@ class ReferencedItemVO:
     item_uid: str
     item_name: str | None = None
     visible_in_protocol_soa: bool | None = None
+    order: list[int] | None = None
 
 
 @dataclass
@@ -23,15 +21,15 @@ class StudySoAFootnoteVOHistory:
     study_uid: str
     footnote_uid: str | None
     footnote_version: str | None
+    footnote_name_plain: str | None
     footnote_template_uid: str | None
     footnote_template_version: str | None
+    footnote_template_name_plain: str | None
     referenced_items: list[ReferencedItemVO]
-    footnote_number: int
     start_date: datetime
     end_date: datetime | None
     change_type: str
-    status: StudyStatus | None = None
-    author_id: str | None = None
+    author_id: str
     author_username: str | None = None
     is_deleted: bool = False
     accepted_version: bool = False
@@ -43,13 +41,21 @@ class StudySoAFootnoteVO:
     study_uid: str
     footnote_uid: str | None
     footnote_version: str | None
+    footnote_name: str | None
+    footnote_name_plain: str | None
+    footnote_library_name: str | None
+    footnote_status: str | None
+    latest_footnote_version: str | None
+    latest_footnote_name_plain: str | None
     footnote_template_uid: str | None
     footnote_template_version: str | None
+    footnote_template_name: str | None
+    footnote_template_name_plain: str | None
+    footnote_template_library_name: str | None
+    footnote_template_parameters: list[str] | None
     referenced_items: list[ReferencedItemVO]
-    footnote_number: int
+    author_id: str | None
     modified: datetime | None = None
-    status: StudyStatus | None = None
-    author_id: str | None = None
     author_username: str | None = None
     is_deleted: bool = False
     accepted_version: bool = False
@@ -58,16 +64,24 @@ class StudySoAFootnoteVO:
     def from_input_values(
         cls,
         study_uid: str,
-        footnote_uid: str,
+        footnote_uid: str | None,
         footnote_version: str | None,
-        footnote_template_uid: str,
+        footnote_name_plain: str | None,
+        footnote_name: str | None,
+        footnote_library_name: str | None,
+        footnote_status: str | None,
+        latest_footnote_version: str | None,
+        latest_footnote_name_plain: str | None,
+        footnote_template_uid: str | None,
         footnote_template_version: str | None,
+        footnote_template_name: str | None,
+        footnote_template_name_plain: str | None,
+        footnote_template_library_name: str | None,
+        footnote_template_parameters: list[str] | None,
         referenced_items: list[ReferencedItemVO],
-        footnote_number: int,
-        author_id: str,
-        status: StudyStatus,
+        author_id: str | None,
         modified: datetime | None = None,
-        generate_uid_callback: Callable[[], str | None] = (lambda: None),
+        generate_uid_callback: Callable[[], str] = lambda: "",
         accepted_version: bool = False,
         author_username: str | None = None,
     ) -> Self:
@@ -76,13 +90,21 @@ class StudySoAFootnoteVO:
             study_uid=study_uid,
             footnote_uid=footnote_uid,
             footnote_version=footnote_version,
+            footnote_name_plain=footnote_name_plain,
+            footnote_name=footnote_name,
+            footnote_library_name=footnote_library_name,
+            footnote_status=footnote_status,
+            latest_footnote_name_plain=latest_footnote_name_plain,
+            latest_footnote_version=latest_footnote_version,
             footnote_template_uid=footnote_template_uid,
             footnote_template_version=footnote_template_version,
-            footnote_number=footnote_number,
+            footnote_template_name=footnote_template_name,
+            footnote_template_name_plain=footnote_template_name_plain,
+            footnote_template_library_name=footnote_template_library_name,
+            footnote_template_parameters=footnote_template_parameters,
             referenced_items=referenced_items,
             author_id=author_id,
             author_username=author_username,
-            status=status,
             modified=modified,
             accepted_version=accepted_version,
         )
@@ -92,17 +114,25 @@ class StudySoAFootnoteVO:
     def from_repository_values(
         cls,
         study_uid: str,
-        footnote_uid: str,
-        footnote_template_uid: str,
+        footnote_uid: str | None,
+        footnote_template_uid: str | None,
         referenced_items: list[ReferencedItemVO],
-        footnote_number: int,
         uid: str,
-        modified: datetime,
-        author_id: str,
-        status: StudyStatus,
+        modified: datetime | None,
+        author_id: str | None,
         accepted_version: bool,
-        footnote_version: str = None,
-        footnote_template_version: str = None,
+        footnote_version: str | None = None,
+        footnote_name_plain: str | None = None,
+        footnote_name: str | None = None,
+        footnote_library_name: str | None = None,
+        footnote_status: str | None = None,
+        latest_footnote_version: str | None = None,
+        latest_footnote_name_plain: str | None = None,
+        footnote_template_version: str | None = None,
+        footnote_template_name: str | None = None,
+        footnote_template_name_plain: str | None = None,
+        footnote_template_library_name: str | None = None,
+        footnote_template_parameters: list[str] | None = None,
         author_username: str | None = None,
     ) -> Self:
         footnote_ar = cls(
@@ -110,14 +140,22 @@ class StudySoAFootnoteVO:
             study_uid=study_uid,
             footnote_uid=footnote_uid,
             footnote_version=footnote_version,
+            footnote_name=footnote_name,
+            footnote_name_plain=footnote_name_plain,
+            footnote_library_name=footnote_library_name,
+            footnote_status=footnote_status,
+            latest_footnote_name_plain=latest_footnote_name_plain,
+            latest_footnote_version=latest_footnote_version,
             footnote_template_uid=footnote_template_uid,
+            footnote_template_name=footnote_template_name,
             footnote_template_version=footnote_template_version,
-            footnote_number=footnote_number,
+            footnote_template_name_plain=footnote_template_name_plain,
+            footnote_template_library_name=footnote_template_library_name,
+            footnote_template_parameters=footnote_template_parameters,
             referenced_items=referenced_items,
             modified=modified,
             author_id=author_id,
             author_username=author_username,
-            status=status,
             accepted_version=accepted_version,
         )
         return footnote_ar

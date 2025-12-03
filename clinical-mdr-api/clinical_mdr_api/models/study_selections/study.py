@@ -2,7 +2,7 @@
 
 from datetime import datetime
 from decimal import Decimal
-from typing import Annotated, Callable, Collection, Iterable, Self
+from typing import Annotated, Any, Callable, Collection, Self, overload
 
 from pydantic import ConfigDict, Field
 
@@ -40,7 +40,7 @@ from clinical_mdr_api.models.controlled_terminologies.ct_term import (
 )
 from clinical_mdr_api.models.study_selections.duration import DurationJsonModel
 from clinical_mdr_api.models.utils import BaseModel, PatchInputModel, PostInputModel
-from common import config
+from common.config import settings
 from common.exceptions import (
     BusinessLogicException,
     NotFoundException,
@@ -49,7 +49,11 @@ from common.exceptions import (
 
 
 def update_study_subpart_properties(study: "Study | CompactStudy"):
-    if study.study_parent_part and study.study_parent_part.study_id:
+    if (
+        study.study_parent_part
+        and study.study_parent_part.study_id
+        and study.current_metadata.identification_metadata.subpart_id is not None
+    ):
         study.current_metadata.identification_metadata.study_id = (
             study.study_parent_part.study_id
             + "-"
@@ -92,21 +96,20 @@ class StudySoaPreferencesInput(PatchInputModel):
         populate_by_name=True, title="Study SoA Preferences input"
     )
 
-    show_epochs: bool = Field(
+    show_epochs: bool = Field(  # type: ignore[literal-required]
         True,
         description="Show study epochs in detailed SoA",
-        alias=config.STUDY_FIELD_SOA_SHOW_EPOCHS,
+        alias=settings.study_field_soa_show_epochs,
     )
-    show_milestones: bool = Field(
+    show_milestones: bool = Field(  # type: ignore[literal-required]
         False,
         description="Show study milestones in detailed SoA",
-        alias=config.STUDY_FIELD_SOA_SHOW_MILESTONES,
+        alias=settings.study_field_soa_show_milestones,
     )
-    baseline_as_time_zero: bool = Field(
+    baseline_as_time_zero: bool = Field(  # type: ignore[literal-required]
         False,
-        title="Baseline shown as time 0",
         description="Show the baseline visit as time 0 in all SoA layouts",
-        alias=config.STUDY_FIELD_SOA_BASELINE_AS_TIME_ZERO,
+        alias=settings.study_field_soa_baseline_as_time_zero,
     )
 
 
@@ -118,8 +121,7 @@ class StudySoaPreferences(StudySoaPreferencesInput):
 
 class RegistryIdentifiersJsonModel(BaseModel):
     model_config = ConfigDict(
-        title="RegistryIdentifiersMetadata",
-        description="RegistryIdentifiersMetadata metadata for study definition.",
+        title="RegistryIdentifiersMetadata metadata for study definition"
     )
 
     ct_gov_id: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = None
@@ -209,12 +211,13 @@ class RegistryIdentifiersJsonModel(BaseModel):
     def from_study_registry_identifiers_vo(
         cls,
         registry_identifiers_vo: RegistryIdentifiersVO,
-        find_term_by_uids: Callable[[str], CTTermNameAR | None],
+        find_term_by_uids: Callable[..., list[CTTermNameAR] | None],
         terms_at_specific_datetime: datetime | None = None,
     ) -> Self:
-        c_codes = list(
-            set(
-                [
+        c_codes = [
+            code
+            for code in list(
+                {
                     registry_identifiers_vo.ct_gov_id_null_value_code,
                     registry_identifiers_vo.eudract_id_null_value_code,
                     registry_identifiers_vo.universal_trial_number_utn_null_value_code,
@@ -227,12 +230,13 @@ class RegistryIdentifiersJsonModel(BaseModel):
                     registry_identifiers_vo.national_medical_products_administration_nmpa_number_null_value_code,
                     registry_identifiers_vo.eudamed_srn_number_null_value_code,
                     registry_identifiers_vo.investigational_device_exemption_ide_number_null_value_code,
-                ]
+                }
             )
-        )
+            if code is not None
+        ]
 
-        if None in c_codes:
-            c_codes.remove(None)
+        terms: dict[str, SimpleCTTermNameWithConflictFlag]
+
         if ct_term_generic_repository.__name__ == find_term_by_uids.__module__:
             terms = {
                 term.term_uid: term
@@ -245,7 +249,7 @@ class RegistryIdentifiersJsonModel(BaseModel):
         else:
             terms = {
                 c_code: SimpleCTTermNameWithConflictFlag.from_ct_code(
-                    c_code=c_code,
+                    c_code=c_code or "",
                     at_specific_date=terms_at_specific_datetime,
                     find_term_by_uid=find_term_by_uids,
                 )
@@ -342,10 +346,7 @@ class RegistryIdentifiersJsonModel(BaseModel):
 
 
 class StudyIdentificationMetadataJsonModel(BaseModel):
-    model_config = ConfigDict(
-        title="StudyIdentificationMetadata",
-        description="Identification metadata for study definition.",
-    )
+    model_config = ConfigDict(title="Identification metadata for study definition")
 
     study_number: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = (
         None
@@ -376,13 +377,33 @@ class StudyIdentificationMetadataJsonModel(BaseModel):
         RegistryIdentifiersJsonModel | None, Field(json_schema_extra={"nullable": True})
     ] = None
 
+    @overload
+    @classmethod
+    def from_study_identification_vo(
+        cls,
+        study_identification_o: StudyIdentificationMetadataVO,
+        find_project_by_project_number: Callable[[str], ProjectAR],
+        find_clinical_programme_by_uid: Callable[[str], ClinicalProgrammeAR],
+        find_term_by_uids: Callable[..., list[CTTermNameAR] | None],
+        terms_at_specific_datetime: datetime | None = None,
+    ) -> Self: ...
+    @overload
+    @classmethod
+    def from_study_identification_vo(
+        cls,
+        study_identification_o: None,
+        find_project_by_project_number: Callable[[str], ProjectAR],
+        find_clinical_programme_by_uid: Callable[[str], ClinicalProgrammeAR],
+        find_term_by_uids: Callable[..., list[CTTermNameAR] | None],
+        terms_at_specific_datetime: datetime | None = None,
+    ) -> None: ...
     @classmethod
     def from_study_identification_vo(
         cls,
         study_identification_o: StudyIdentificationMetadataVO | None,
         find_project_by_project_number: Callable[[str], ProjectAR],
         find_clinical_programme_by_uid: Callable[[str], ClinicalProgrammeAR],
-        find_term_by_uids: Callable[[str], CTTermNameAR | None],
+        find_term_by_uids: Callable[..., list[CTTermNameAR] | None],
         terms_at_specific_datetime: datetime | None = None,
     ) -> Self | None:
         if study_identification_o is None:
@@ -415,10 +436,7 @@ class StudyIdentificationMetadataJsonModel(BaseModel):
 
 
 class CompactStudyIdentificationMetadataJsonModel(BaseModel):
-    model_config = ConfigDict(
-        title="CompactStudyIdentificationMetadata",
-        description="Identification metadata for study definition.",
-    )
+    model_config = ConfigDict(title="Identification metadata for study definition")
 
     study_number: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = (
         None
@@ -476,10 +494,7 @@ class CompactStudyIdentificationMetadataJsonModel(BaseModel):
 
 
 class StudyVersionMetadataJsonModel(BaseModel):
-    model_config = ConfigDict(
-        title="StudyVersionMetadata",
-        description="Version metadata for study definition.",
-    )
+    model_config = ConfigDict(title="Version metadata for study definition")
 
     study_status: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = (
         None
@@ -515,8 +530,7 @@ class StudyVersionMetadataJsonModel(BaseModel):
 
 class HighLevelStudyDesignJsonModel(BaseModel):
     model_config = ConfigDict(
-        title="high_level_study_design",
-        description="High level study design parameters for study definition.",
+        title="High level study design parameters for study definition"
     )
 
     study_type_code: Annotated[
@@ -586,37 +600,56 @@ class HighLevelStudyDesignJsonModel(BaseModel):
         Field(json_schema_extra={"nullable": True}),
     ] = None
 
+    @overload
+    @classmethod
+    def from_high_level_study_design_vo(
+        cls,
+        high_level_study_design_vo: HighLevelStudyDesignVO,
+        find_term_by_uids: Callable[..., list[CTTermNameAR] | None],
+        find_all_study_time_units: Callable[[str], tuple[list[UnitDefinitionAR], int]],
+        terms_at_specific_datetime: datetime | None = None,
+    ) -> Self: ...
+    @overload
+    @classmethod
+    def from_high_level_study_design_vo(
+        cls,
+        high_level_study_design_vo: None,
+        find_term_by_uids: Callable[..., list[CTTermNameAR] | None],
+        find_all_study_time_units: Callable[[str], tuple[list[UnitDefinitionAR], int]],
+        terms_at_specific_datetime: datetime | None = None,
+    ) -> None: ...
     @classmethod
     def from_high_level_study_design_vo(
         cls,
         high_level_study_design_vo: HighLevelStudyDesignVO | None,
-        find_term_by_uids: Callable[[str], CTTermNameAR | None],
-        find_all_study_time_units: Callable[[str], Iterable[UnitDefinitionAR]],
+        find_term_by_uids: Callable[..., list[CTTermNameAR] | None],
+        find_all_study_time_units: Callable[[str], tuple[list[UnitDefinitionAR], int]],
         terms_at_specific_datetime: datetime | None = None,
     ) -> Self | None:
         if high_level_study_design_vo is None:
             return None
 
-        c_codes = list(
-            set(
-                [
-                    high_level_study_design_vo.study_type_code,
-                    high_level_study_design_vo.study_type_null_value_code,
-                    high_level_study_design_vo.trial_type_null_value_code,
-                    high_level_study_design_vo.trial_phase_code,
-                    high_level_study_design_vo.trial_phase_null_value_code,
-                    high_level_study_design_vo.is_extension_trial_null_value_code,
-                    high_level_study_design_vo.is_adaptive_design_null_value_code,
-                    high_level_study_design_vo.study_stop_rules_null_value_code,
-                    high_level_study_design_vo.confirmed_response_minimum_duration_null_value_code,
-                    high_level_study_design_vo.post_auth_indicator_null_value_code,
-                ]
-                + high_level_study_design_vo.trial_type_codes
-            )
+        _c_codes = list(
+            {
+                high_level_study_design_vo.study_type_code,
+                high_level_study_design_vo.study_type_null_value_code,
+                high_level_study_design_vo.trial_type_null_value_code,
+                high_level_study_design_vo.trial_phase_code,
+                high_level_study_design_vo.trial_phase_null_value_code,
+                high_level_study_design_vo.is_extension_trial_null_value_code,
+                high_level_study_design_vo.is_adaptive_design_null_value_code,
+                high_level_study_design_vo.study_stop_rules_null_value_code,
+                high_level_study_design_vo.confirmed_response_minimum_duration_null_value_code,
+                high_level_study_design_vo.post_auth_indicator_null_value_code,
+            }
         )
 
-        if None in c_codes:
-            c_codes.remove(None)
+        for trial_type_code in high_level_study_design_vo.trial_type_codes:
+            if trial_type_code is not None:
+                _c_codes.append(trial_type_code)
+
+        c_codes = [code for code in _c_codes if code is not None]
+
         if ct_term_generic_repository.__name__ == find_term_by_uids.__module__:
             terms = {
                 term.term_uid: term
@@ -629,7 +662,7 @@ class HighLevelStudyDesignJsonModel(BaseModel):
         else:
             terms = {
                 c_code: SimpleCTTermNameWithConflictFlag.from_ct_code(
-                    c_code=c_code,
+                    c_code=c_code or "",
                     at_specific_date=terms_at_specific_datetime,
                     find_term_by_uid=find_term_by_uids,
                 )
@@ -708,10 +741,7 @@ class HighLevelStudyDesignJsonModel(BaseModel):
 
 
 class StudyPopulationJsonModel(BaseModel):
-    model_config = ConfigDict(
-        title="study_population",
-        description="Study population parameters for study definition.",
-    )
+    model_config = ConfigDict(title="Study population parameters for study definition")
 
     therapeutic_area_codes: Annotated[
         list[SimpleTermModel] | None, Field(json_schema_extra={"nullable": True})
@@ -826,21 +856,42 @@ class StudyPopulationJsonModel(BaseModel):
         Field(json_schema_extra={"nullable": True}),
     ] = None
 
+    @overload
+    @classmethod
+    def from_study_population_vo(
+        cls,
+        study_population_vo: StudyPopulationVO,
+        find_all_study_time_units: Callable[[str], tuple[list[UnitDefinitionAR], int]],
+        find_term_by_uids: Callable[..., list[CTTermNameAR] | None],
+        find_dictionary_term_by_uid: Callable[[str], DictionaryTermAR | None],
+        terms_at_specific_datetime: datetime | None = None,
+    ) -> Self: ...
+    @overload
+    @classmethod
+    def from_study_population_vo(
+        cls,
+        study_population_vo: None,
+        find_all_study_time_units: Callable[[str], tuple[list[UnitDefinitionAR], int]],
+        find_term_by_uids: Callable[..., list[CTTermNameAR] | None],
+        find_dictionary_term_by_uid: Callable[[str], DictionaryTermAR | None],
+        terms_at_specific_datetime: datetime | None = None,
+    ) -> None: ...
     @classmethod
     def from_study_population_vo(
         cls,
         study_population_vo: StudyPopulationVO | None,
-        find_all_study_time_units: Callable[[str], Iterable[UnitDefinitionAR]],
-        find_term_by_uids: Callable[[str], CTTermNameAR | None],
+        find_all_study_time_units: Callable[[str], tuple[list[UnitDefinitionAR], int]],
+        find_term_by_uids: Callable[..., list[CTTermNameAR] | None],
         find_dictionary_term_by_uid: Callable[[str], DictionaryTermAR | None],
         terms_at_specific_datetime: datetime | None = None,
     ) -> Self | None:
         if study_population_vo is None:
             return None
 
-        c_codes = list(
-            set(
-                [
+        c_codes = [
+            code
+            for code in list(
+                {
                     study_population_vo.therapeutic_area_null_value_code,
                     study_population_vo.diagnosis_group_null_value_code,
                     study_population_vo.disease_condition_or_indication_null_value_code,
@@ -856,12 +907,11 @@ class StudyPopulationJsonModel(BaseModel):
                     study_population_vo.pediatric_investigation_plan_indicator_null_value_code,
                     study_population_vo.relapse_criteria_null_value_code,
                     study_population_vo.number_of_expected_subjects_null_value_code,
-                ]
+                }
             )
-        )
+            if code is not None
+        ]
 
-        if None in c_codes:
-            c_codes.remove(None)
         if ct_term_generic_repository.__name__ == find_term_by_uids.__module__:
             terms = {
                 term.term_uid: term
@@ -874,7 +924,7 @@ class StudyPopulationJsonModel(BaseModel):
         else:
             terms = {
                 c_code: SimpleCTTermNameWithConflictFlag.from_ct_code(
-                    c_code=c_code,
+                    c_code=c_code or "",
                     at_specific_date=terms_at_specific_datetime,
                     find_term_by_uid=find_term_by_uids,
                 )
@@ -1028,8 +1078,7 @@ class StudyPopulationJsonModel(BaseModel):
 
 class StudyInterventionJsonModel(BaseModel):
     model_config = ConfigDict(
-        title="study_intervention",
-        description="Study interventions parameters for study definition.",
+        title="Study interventions parameters for study definition"
     )
 
     intervention_type_code: Annotated[
@@ -1109,38 +1158,59 @@ class StudyInterventionJsonModel(BaseModel):
         Field(json_schema_extra={"nullable": True}),
     ] = None
 
+    @overload
+    @classmethod
+    def from_study_intervention_vo(
+        cls,
+        study_intervention_vo: StudyInterventionVO,
+        find_all_study_time_units: Callable[[str], tuple[list[UnitDefinitionAR], int]],
+        find_term_by_uids: Callable[..., list[CTTermNameAR] | None],
+        terms_at_specific_datetime: datetime | None = None,
+    ) -> Self: ...
+    @overload
+    @classmethod
+    def from_study_intervention_vo(
+        cls,
+        study_intervention_vo: None,
+        find_all_study_time_units: Callable[[str], tuple[list[UnitDefinitionAR], int]],
+        find_term_by_uids: Callable[..., list[CTTermNameAR] | None],
+        terms_at_specific_datetime: datetime | None = None,
+    ) -> None: ...
     @classmethod
     def from_study_intervention_vo(
         cls,
         study_intervention_vo: StudyInterventionVO | None,
-        find_all_study_time_units: Callable[[str], Iterable[UnitDefinitionAR]],
-        find_term_by_uids: Callable[[str], CTTermNameAR | None],
+        find_all_study_time_units: Callable[[str], tuple[list[UnitDefinitionAR], int]],
+        find_term_by_uids: Callable[..., list[CTTermNameAR] | None],
         terms_at_specific_datetime: datetime | None = None,
     ) -> Self | None:
         if study_intervention_vo is None:
             return None
-        c_codes = list(
-            set(
-                [
-                    study_intervention_vo.intervention_type_code,
-                    study_intervention_vo.intervention_type_null_value_code,
-                    study_intervention_vo.add_on_to_existing_treatments_null_value_code,
-                    study_intervention_vo.control_type_code,
-                    study_intervention_vo.control_type_null_value_code,
-                    study_intervention_vo.intervention_model_code,
-                    study_intervention_vo.intervention_model_null_value_code,
-                    study_intervention_vo.is_trial_randomised_null_value_code,
-                    study_intervention_vo.stratification_factor_null_value_code,
-                    study_intervention_vo.trial_blinding_schema_code,
-                    study_intervention_vo.trial_blinding_schema_null_value_code,
-                    study_intervention_vo.planned_study_length_null_value_code,
-                    study_intervention_vo.trial_intent_type_null_value_code,
-                ]
-                + study_intervention_vo.trial_intent_types_codes
-            )
+
+        _c_codes = list(
+            {
+                study_intervention_vo.intervention_type_code,
+                study_intervention_vo.intervention_type_null_value_code,
+                study_intervention_vo.add_on_to_existing_treatments_null_value_code,
+                study_intervention_vo.control_type_code,
+                study_intervention_vo.control_type_null_value_code,
+                study_intervention_vo.intervention_model_code,
+                study_intervention_vo.intervention_model_null_value_code,
+                study_intervention_vo.is_trial_randomised_null_value_code,
+                study_intervention_vo.stratification_factor_null_value_code,
+                study_intervention_vo.trial_blinding_schema_code,
+                study_intervention_vo.trial_blinding_schema_null_value_code,
+                study_intervention_vo.planned_study_length_null_value_code,
+                study_intervention_vo.trial_intent_type_null_value_code,
+            }
         )
-        if None in c_codes:
-            c_codes.remove(None)
+
+        for trial_intent_types_code in study_intervention_vo.trial_intent_types_codes:
+            if trial_intent_types_code is not None:
+                _c_codes.append(trial_intent_types_code)
+
+        c_codes = [code for code in _c_codes if code is not None]
+
         if ct_term_generic_repository.__name__ == find_term_by_uids.__module__:
             terms = {
                 term.term_uid: term
@@ -1153,7 +1223,7 @@ class StudyInterventionJsonModel(BaseModel):
         else:
             terms = {
                 c_code: SimpleCTTermNameWithConflictFlag.from_ct_code(
-                    c_code=c_code,
+                    c_code=c_code or "",
                     at_specific_date=terms_at_specific_datetime,
                     find_term_by_uid=find_term_by_uids,
                 )
@@ -1246,10 +1316,7 @@ class StudyInterventionJsonModel(BaseModel):
 
 
 class StudyDescriptionJsonModel(BaseModel):
-    model_config = ConfigDict(
-        title="study_description",
-        description="Study description for the study definition.",
-    )
+    model_config = ConfigDict(title="Study description for the study definition")
 
     study_title: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = (
         None
@@ -1258,6 +1325,14 @@ class StudyDescriptionJsonModel(BaseModel):
         str | None, Field(json_schema_extra={"nullable": True})
     ] = None
 
+    @overload
+    @classmethod
+    def from_study_description_vo(
+        cls, study_description_vo: StudyDescriptionVO
+    ) -> Self: ...
+    @overload
+    @classmethod
+    def from_study_description_vo(cls, study_description_vo: None) -> None: ...
     @classmethod
     def from_study_description_vo(
         cls, study_description_vo: StudyDescriptionVO | None
@@ -1271,7 +1346,7 @@ class StudyDescriptionJsonModel(BaseModel):
 
 
 class CompactStudyMetadataJsonModel(BaseModel):
-    model_config = ConfigDict(title="StudyMetadata", description="Study metadata")
+    model_config = ConfigDict(title="Compact Study Metadata")
 
     identification_metadata: Annotated[
         CompactStudyIdentificationMetadataJsonModel | None,
@@ -1308,7 +1383,7 @@ class CompactStudyMetadataJsonModel(BaseModel):
 
 
 class StudyMetadataJsonModel(BaseModel):
-    model_config = ConfigDict(title="StudyMetadata", description="Study metadata")
+    model_config = ConfigDict(title="Study Metadata")
 
     identification_metadata: Annotated[
         StudyIdentificationMetadataJsonModel | None,
@@ -1338,8 +1413,8 @@ class StudyMetadataJsonModel(BaseModel):
         study_metadata_vo: StudyMetadataVO,
         find_project_by_project_number: Callable[[str], ProjectAR],
         find_clinical_programme_by_uid: Callable[[str], ClinicalProgrammeAR],
-        find_all_study_time_units: Callable[[str], Iterable[UnitDefinitionAR]],
-        find_term_by_uids: Callable[[str], CTTermNameAR | None],
+        find_all_study_time_units: Callable[[str], tuple[list[UnitDefinitionAR], int]],
+        find_term_by_uids: Callable[..., list[CTTermNameAR] | None],
         find_dictionary_term_by_uid: Callable[[str], DictionaryTermAR | None],
         terms_at_specific_datetime: datetime | None = None,
     ) -> Self:
@@ -1380,10 +1455,7 @@ class StudyMetadataJsonModel(BaseModel):
 
 
 class StudyPatchRequestJsonModel(PatchInputModel):
-    model_config = ConfigDict(
-        title="StudyPatchRequest",
-        description="Identification metadata for study definition.",
-    )
+    model_config = ConfigDict(title="StudyPatchRequest")
 
     study_parent_part_uid: Annotated[
         str | None, Field(description="UID of the Study Parent Part")
@@ -1418,7 +1490,7 @@ class StudyParentPart(BaseModel):
         cls,
         study_uid: str | None,
         find_study_parent_part_by_uid: Callable[[str], StudyDefinitionAR | None],
-        find_term_by_uids: Callable[[str], CTTermNameAR | None],
+        find_term_by_uids: Callable[..., list[CTTermNameAR] | None],
     ) -> Self:
         if not study_uid:
             return None
@@ -1446,18 +1518,22 @@ class StudyParentPart(BaseModel):
 
 class StudyStructureOverview(BaseModel):
     study_ids: Annotated[list[str], Field()]
-    arms: Annotated[int, Field(title="Number of Study Arms")]
+    arms: Annotated[int, Field(description="Number of Study Arms")]
     pre_treatment_epochs: Annotated[
-        int, Field(title="Number of Study Pre Treatment Epochs")
+        int, Field(description="Number of Study Pre Treatment Epochs")
     ]
-    treatment_epochs: Annotated[int, Field(title="Number of Treatment Epochs")]
-    no_treatment_epochs: Annotated[int, Field(title="Number of No Treatment Epochs")]
+    treatment_epochs: Annotated[int, Field(description="Number of Treatment Epochs")]
+    no_treatment_epochs: Annotated[
+        int, Field(description="Number of No Treatment Epochs")
+    ]
     post_treatment_epochs: Annotated[
-        int, Field(title="Number of Post Treatment Epochs")
+        int, Field(description="Number of Post Treatment Epochs")
     ]
-    treatment_elements: Annotated[int, Field(title="Number of Treatment Elements")]
+    treatment_elements: Annotated[
+        int, Field(description="Number of Treatment Elements")
+    ]
     no_treatment_elements: Annotated[
-        int, Field(title="Number of No Treatment Elements")
+        int, Field(description="Number of No Treatment Elements")
     ]
     cohorts_in_study: Annotated[str, Field()]
 
@@ -1495,7 +1571,7 @@ class CompactStudy(BaseModel):
         find_project_by_project_number: Callable[[str], ProjectAR],
         find_clinical_programme_by_uid: Callable[[str], ClinicalProgrammeAR],
         find_study_parent_part_by_uid: Callable[[str], StudyDefinitionAR | None],
-        find_term_by_uids: Callable[[str], CTTermNameAR | None],
+        find_term_by_uids: Callable[..., list[CTTermNameAR] | None],
     ) -> Self:
         study = cls(
             uid=study_definition_ar.uid,
@@ -1518,6 +1594,98 @@ class CompactStudy(BaseModel):
         update_study_subpart_properties(study)
 
         return study
+
+
+class StudyMinimal(BaseModel):
+    uid: Annotated[str, Field(description="UID of the study, e.g. 'Study_000001'")]
+    id: Annotated[
+        str | None,
+        Field(
+            description="ID of the study, e.g. 'NN1234-56789'",
+            json_schema_extra={"nullable": True},
+        ),
+    ] = None
+    acronym: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = None
+
+    @classmethod
+    def from_input(
+        cls,
+        val: dict[str, Any],
+    ) -> Self:
+        return cls(
+            uid=val["uid"],
+            acronym=val["acronym"],
+            id=val["id"],
+        )
+
+
+class StudySimple(StudyMinimal):
+    class VersionInfo(BaseModel):
+        version_number: Annotated[
+            str | None, Field(json_schema_extra={"nullable": True})
+        ] = None
+        change_description: Annotated[
+            str | None, Field(json_schema_extra={"nullable": True})
+        ] = None
+
+    number: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = None
+    title: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = None
+    subpart_id: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = (
+        None
+    )
+    subpart_acronym: Annotated[
+        str | None, Field(json_schema_extra={"nullable": True})
+    ] = None
+    clinical_programme_name: Annotated[str, Field()]
+    project_number: Annotated[str, Field()]
+    project_name: Annotated[str, Field()]
+    version_author: Annotated[str, Field()]
+    version_status: Annotated[StudyStatus, Field()]
+    version_start_date: Annotated[datetime, Field()]
+    version_number: Annotated[
+        str | None, Field(json_schema_extra={"nullable": True})
+    ] = None
+    latest_locked_version: Annotated[
+        VersionInfo | None, Field(json_schema_extra={"nullable": True})
+    ] = None
+    latest_released_version: Annotated[
+        VersionInfo | None, Field(json_schema_extra={"nullable": True})
+    ] = None
+
+    @classmethod
+    def from_input(
+        cls,
+        val: dict[str, Any],
+        deleted: bool = False,
+    ) -> Self:
+        return cls(
+            uid=val["uid"],
+            acronym=val.get("acronym"),
+            number=val.get("study_number"),
+            id=val["id"],
+            title=val.get("title"),
+            subpart_id=val.get("subpart_id"),
+            subpart_acronym=val.get("subpart_acronym"),
+            clinical_programme_name=val["clinical_programme_name"],
+            project_number=val["project_number"],
+            project_name=val["project_name"],
+            version_author=val["version_author"],
+            version_status=(
+                StudyStatus.DELETED if deleted else StudyStatus(val["version_status"])
+            ),
+            version_start_date=val["version_start_date"],
+            version_number=val["version_number"],
+            latest_locked_version=(
+                cls.VersionInfo(**val["latest_locked_version"])
+                if val.get("latest_locked_version") is not None
+                else None
+            ),
+            latest_released_version=(
+                cls.VersionInfo(**val["latest_released_version"])
+                if val.get("latest_released_version") is not None
+                else None
+            ),
+        )
 
 
 class Study(BaseModel):
@@ -1546,9 +1714,9 @@ class Study(BaseModel):
         study_definition_ar: StudyDefinitionAR,
         find_project_by_project_number: Callable[[str], ProjectAR],
         find_clinical_programme_by_uid: Callable[[str], ClinicalProgrammeAR],
-        find_all_study_time_units: Callable[[str], Iterable[UnitDefinitionAR]],
+        find_all_study_time_units: Callable[[str], tuple[list[UnitDefinitionAR], int]],
         find_study_parent_part_by_uid: Callable[[str], StudyDefinitionAR | None],
-        find_term_by_uids: Callable[[str], CTTermNameAR | None],
+        find_term_by_uids: Callable[..., list[CTTermNameAR] | None],
         find_dictionary_term_by_uid: Callable[[str], DictionaryTermAR | None],
         # pylint: disable=unused-argument
         at_specified_date_time: datetime | None = None,
@@ -1732,7 +1900,7 @@ class StudyFieldAuditTrailEntry(BaseModel):
                     c_code=action.before_value, find_term_by_uid=find_term_by_uid
                 ),
                 after_value=SimpleTermModel.from_ct_code(
-                    c_code=action.after_value, find_term_by_uid=find_term_by_uid
+                    c_code=action.after_value or "", find_term_by_uid=find_term_by_uid
                 ),
             )
             for action in study_field_audit_trail_vo.actions

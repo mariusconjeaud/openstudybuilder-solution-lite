@@ -43,6 +43,7 @@ Feature: Studies - About Studies
             Various kinds of listings of the study specification data defined for your study.
             """
 
+    @smoke_test
     Scenario Outline: [Navigation] User must be able to use tile dropdowns to navigate to the pages
         Given A test study is selected
         And The '/studies' page is opened

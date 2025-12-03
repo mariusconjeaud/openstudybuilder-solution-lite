@@ -4,7 +4,7 @@ from typing import Optional
 
 from ..utils.metrics import Metrics
 
-loglevel = environ.get("LOG_LEVEL", "INFO")
+loglevel = environ.get("LOG_LEVEL", "WARNING")
 numeric_level = getattr(logging, loglevel.upper(), None)
 if not isinstance(numeric_level, int):
     raise ValueError("Invalid log level: %s" % loglevel)
@@ -18,7 +18,7 @@ metrics = Metrics()
 
 def load_env(key: str, default: Optional[str] = None):
     value = environ.get(key)
-    logger.info("%s=%s", key, value)
+    logger.debug("%s=%s", key, value)
     if value is None and default is None:
         logger.error("%s is not set and no default was provided", key)
         raise EnvironmentError("Failed because {} is not set.".format(key))
@@ -63,7 +63,7 @@ def camel_case_data(datadict):
 
 
 def create_logger(name):
-    loglevel = environ.get("LOG_LEVEL", "INFO")
+    loglevel = environ.get("LOG_LEVEL", "WARNING")
     numeric_level = getattr(logging, loglevel.upper(), None)
     if not isinstance(numeric_level, int):
         raise ValueError("Invalid log level: %s" % loglevel)

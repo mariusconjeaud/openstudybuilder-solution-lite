@@ -1,5 +1,6 @@
 import csv
 from dataclasses import dataclass
+from typing import Any
 
 from clinical_mdr_api.domain_repositories.controlled_terminologies.configuration_repository import (
     CTConfigRepository,
@@ -114,9 +115,8 @@ def from_database():
     repo = CTConfigRepository()
     items = repo.find_all()
     for item in items:
-        line = item
-        linedata = line.model_dump()
-        data = {}
+        linedata = item.model_dump()
+        data: dict[str, Any] = {}
         for k, value in linedata.items():
             if k in fieldnames:
                 if k == "study_field_data_type":
@@ -142,13 +142,12 @@ def from_database():
                         raise exceptions.ValidationException(
                             msg=f"Unknown field '{value}'"
                         )
-        item = StudyFieldConfigurationEntry(**data)
-        dataset.append(item)
+        dataset.append(StudyFieldConfigurationEntry(**data))  # type: ignore[arg-type]
     return dataset
 
 
 class FieldConfiguration:
-    field_config = []
+    field_config: list[Any] = []
 
     @classmethod
     def default_field_config(cls):

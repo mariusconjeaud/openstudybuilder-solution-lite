@@ -1,5 +1,529 @@
 # OpenStudyBuilder (OSB) Commits changelog
 
+## V 2.1
+
+New Features and Enhancements
+============
+
+### Fixes and Enhancements
+
+- The current implementation of the CRF library definitions of forms, item groups and item was individually versioned, and the aggregated definition of forms and collection of forms was based on root relationship, i.e. not versioned relationships. This has been changed so all aggregate definition of CRF collections, forms, item groups and items now is based on versioned relationships when these are in final state. When editing these in draft state the reference will always be to the latest draft version. Be aware that when you want to use a new version of an element, then you need also to modify the parent.
+- Enhancements to the wizard stepper now allow the linking of activity instances with sponsor values, including codelists like LBTEST/LBTESTCD.
+- The selection of the --TEST/TESTCD codelist is now possible for instance classes that represent categorical and textual findings.
+- The option to add and edit a requested activity from the 'Requested Activities' page in the Library has been removed
+- The link to the 'Operation SoA' has been removed from the Detailed SoA page under the Study Activities menu
+- The 'Visit window unit' warning text has been updated to make it more clear that the unit selected for the FIRST visit will be used for ALL visits in the study
+
+### New Feature
+
+- The Activities tab of the Library presents the Activity Instance Classes, including various hierarchical levels of instance classes, along with the Activity Item classes linked to different instance classes, all arranged in a tabular layout.
+- The Library's Activities tab now displays the overview of Activity Instance Classes and Activity Item classes.
+- The CRF is able to display layers of  Completion instructions, Design Notes, CDASH, SDTM, Topic Codes, ADaM, and internal keys using floating buttons to switch them on an off independently, provided that the information exists.
+- New version or NeoDash report called "External Data File Specifications" released to PRD.
+
+### End-to-End Automated test enhancements
+- Various code improvements to ensure easier maintenance and overall tests stability.
+- Library > Admin Definitions > Data Suppliers: Added Gherkin specifications and partial tests implementation.
+- Library > Data Collection Standards > CRFs: Adjustments connected to the split into CRF Viewer and CRF Builder.
+- Library > Data Collection Standards > CRF Viewer > CRF Viewer: Added Falcon download Gherkin specifications.
+- Library > Data Collection Standards > CRF Builder > CRF Tree: Added CRF tree Gherkin specifications.
+- Library > Data Collection Standards > CRF Builder > CRF Versioning: Add CRF versioning automation test implementation.
+- Library > Concepts > Activities > Activity Group: Added Gherkin specification for group linking verification.
+- Library > Concepts > Activities > Activity Subgroup: Added Gherkin specification for subgroup linking verification.
+- Library > Concepts > Activities > Activity Instance Classes: Added Gherkin specification and tests implementation for Activity Instance Classes table.
+- Library > Concepts > Activities > Activity Item Classes: Added Gherkin specification and tests implementation for Activity Item Classes table.
+- Library > Concepts > Activities > Activity Instance Classes > Overview Page: Added Gherkin specification and tests implementation for Activity Instance Classes Overview Page.
+- Library > Concepts > Activities > Activity Item Classes > Overview Page: Added Gherkin specification and tests implementation for Activity Item Classes Overview Page.
+- Library > Concepts > Activities > Requested Activities: Updated tests implementation to reflect removal of create option from Library level.
+- Studies > Define Studies > Study Activities > SoA: Updated tests implementation to reflect removal of Operational SoA view.
+
+Solved Bugs
+============
+
+### Library
+
+ **Code lists -> Terms** 
+
+- Removed terms are being added to the table
+
+ **Codelists -> Sponsor CT Packages** 
+
+- Cypher query error on sponsor CT package table
+
+ **Concepts -> Activities -> Activities** 
+
+- Cached filtering in NNTable.vue and ActivitiesTable.vue
+- Filter drop-down on Activities table do not take status selection into account
+- Instances shown in different groupings depending on the view
+
+ **Concepts -> Activities -> Activity Instances** 
+
+- Link to NCI changed
+- Missing Author ID in overview pages and NCI details in activity instance overview
+
+ **Concepts -> Activities ->Activity Subgroups** 
+
+- Issue with searching activity on activity subgroup page
+
+ **Concepts -> CRF Builder -> CRF viewer** 
+
+- Encountered an error message for ODM element type 'Template'
+
+ **Concepts -> CRF Builder -> Items** 
+
+- Vendor extension value are not recorded for an Odm Element
+
+### Studies
+
+ **Define Study -> Study Activities -> Schedule of Activities** 
+
+- Detailed SOA in some Study: Study Activity Schedule creation & deletion must acquire Study write lock
+
+ **Define Study -> Study Properties -> Study Type** 
+
+- Study Properties are locked for a substudy
+
+ **Define Study -> Study Strucutre -> Study Visits** 
+
+- api sometimes gives visits the wrong unique visit number
+
+ **Manage Study -> Study -> Study Status** 
+
+- Encountered an error when unlocking a study
+- Problem in locked vs Draft status
+
+## V 2.0
+
+New Features and Enhancements
+============
+
+### Fixes and Enhancements
+
+- Study List page performance was improved including data loading, filtering and searching. 
+2 new columns were added for Study List table: 
+  - Latest released version
+  - Latest locked version
+
+### New Feature
+
+- A new model for Controlled Terminology (CT) has been implemented. The new model is compatible with the CDISC rules for Code Lists and Terms, this avoids many limitations and work around which otherwise have been needed.
+The change is transparent for users only using the Studies module - i.e., they will not notice any impact of this change.
+For Library users a Terms page has been added under Code Lists that makes it easier to search and explore Terms. The interface for adding terms to Code Lists has been improved and the overview pages for Terms and Code Lists have been extended with more information and functionality.   
+
+### End-to-End Automated test enhancements
+ 
+- Various code improvements to ensure easier maintenance and overall tests stability.
+- Library > Code Lists > CT Catalogues: Extended tests scope.
+- Library > Code Lists > Sponsor: Extended tests scope.
+- Library > Code Lists > Terms: Extended tests scope.
+
+Solved Bugs
+============
+
+### Studies
+
+ **-> Study List -> Deleted Studies** 
+
+- Deleted studies appear in the Select study list, but cannot be selected
+
+
+## V 0.21
+
+New Features and Enhancements
+============
+
+### Fixes and Enhancements
+
+- Introduced the Lab Spec Report (neodash report) that can replace/support the current Excel-based specification.
+- Vendor extension is updated in order to improve the management of them for each eCRF elements. The Alias management is also improved by replacing the drop-down menu by a searchable table.
+- All StudyBuilder references replaced with OpenStudyBuilder.
+- Minor improvements to neodash reports for study metadata comparison, data exchange data models, and syntax template dashboards.
+
+### New Feature
+
+- A new menu item has been added to Library->Admin Definitions: Data Suppliers. Functionality for listing, creating, updating, retiring, reactivating and viewing the history of Data Suppliers is available in this new page.
+
+### Performance Improvement
+
+- Faster loading of 'Study Activity Instances' table.
+- Faster loading of filters on 'Library Activities' and 'Library Activity Instances' pages.
+
+### End-to-End Automated test enhancements
+ 
+- Various code improvements to ensure easier maintenance and overall tests stability.
+- Library > Admin Definitions > Data Suppliers: Added Gherkin specifications and partial tests implementation.
+- Library > Data Collection Standards > CRFs: Adjustments connected to the split into CRF Viewer and CRF Builder.
+- Library > Data Collection Standards > CRF Viewer > CRF Viewer: Added Falcon download Gherkin specifications.
+- Library > Data Collection Standards > CRF Builder > CRF Tree: Added CRF tree Gherkin specifications.
+- Library > Data Collection Standards > CRF Builder > CRF Versioning: Add CRF versioning automation test implementation.
+
+Solved Bugs
+============
+
+### Library
+
+ **Concepts -> Activities -> Activities Groups** 
+
+- StudyActivity should select subgroup and group based on its current version in scope of selected activity
+
+ **Concepts -> Activities -> Activity Instances** 
+
+- Wizard stepper gets stuck when adding a new instance
+
+### Studies
+
+ **Define Study -> Study Activities** 
+
+- Audit trail endpoint fails for a study
+
+ **Define Study -> Study Activities -> Study Activities** 
+
+- When creating StudyActivity from Library and searching for some value in the table, the /activities/headers endpoint fails
+
+ **Define Study -> Study Structure -> Study Visits** 
+
+- Export of study visits: study_id is empty
+
+ **Define Study -> Study Title** 
+
+- User with Read-only permissions - edit button not greyed out
+
+
+## V 0.20
+
+New Features and Enhancements
+============
+
+### Fixes and Enhancements
+
+- The consumer API for Papillon has been updated to include topic codes that have no crosses (i.e. no visits linked to it).
+
+### New Features
+
+- In the Studies module, the Analysis Study Metadata page has been expanded with a MVP of the MDFLOW view.  
+  MDFLOW is a representation of the flowchart (Schedule of Activity) containing one record (row) per parameter per analysis visit. 
+  Organising the SoA in this way helps to generate ADaM datasets.   
+  Please note that the MVP is not compliant with the NN ADaM master model.
+- The users will be able to set up studies with subgroups now. This will allow the users to onboard studies with cohorts as well as disease sub-groups e.g. renal impairment studies.
+
+### Performance improvement
+
+- Introduced compact versions of GET /study-activities, /study-activitiy-instances, /study-soa-footnotes endpoints that are going to be used on the Detailed SoA page in the UI.
+- Introduced compression of API responses.
+- Improved throughput of the Consumer API by allowing it to process multiple requests concurrently.
+
+### End-to-End Automated test enhancements
+ 
+- Various code improvements to ensure easier maintenance and overall tests stability.
+- Library > Concepts > Activities > Overview Pages: Refactored test code and extended test scope.
+- Library > Concepts > CRFs > CRF View: Updated Gherkin specifactions and tests implementation.
+- Studies > Define Study > Study Structure Wizard Stepper: Defined Gherkin specifactions and added tests implementation.
+- Studies > Define Study > Study Activities > Schedule of Activities: Extended scope of tests for Protocol and Detailed view.
+
+Solved Bugs
+============
+
+### Library
+
+ **Code Lists -> Sponsor** 
+
+- Code list table does not refresh after adding a new code list
+- NCI preferred name should not be mandatory when adding a new code list
+
+ **Code lists -> CT catalogues -> Show term -> Add term** 
+
+- Missing check that name and sentence case name match
+
+ **Concepts -> Activities -> Activity Instances** 
+
+- Creating new activity instances error, odm mandatory when they should not.
+- Wizard stepper gets stuck when adding a new instance
+
+ **Concepts -> Activities -> Requested Activities** 
+
+- ActivityRequest get automatically Retired when removing ActivityPlaceholder in a Study
+
+### Studies
+
+ **Define Study -> Data Specifications -> Study Activity Instances** 
+
+- Filtering unstable
+
+ **Define Study -> Study Activities -> Study Activities** 
+
+- The filter restriction carries over when users try to add a new activity
+
+ **Define Study -> Study Structure -> Study Visits** 
+
+- Export of study visits: study_id is empty
+
+ **Manage Study -> Study** 
+
+- User with Read-only permissions allowing to delete the Study in the Application
+
+
+
+## V 0.19
+
+New Features and Enhancements
+============
+
+### Fixes and Enhancements
+
+- The CRF View was updated:
+     - Stylesheets options:
+         - Radio buttons replaced with dropdown
+         - "Blank" option removed
+         - "SDTM Annotation" renamed to "CRF with annotations"
+         - New option "Downloadable Falcon (word)" added
+- Renamed buttons on the "CRF with annotations" view:
+     - "CRF implementation guidelines" is named "Implementation guidelines"
+     - "CRF completion guidelines" is named "Completion guidelines" 
+     - "Sdtm" is named "SDTM"
+- Addition of toggle button for viewing the underlying ODM XML of the CRF report
+- The activity instances can be updated to add relevant activity items. The activity items can be seen in Activity instance overview page in OSB UI.
+- For the Activities pages in the library new filtering options have been added over the tables to provide a more readily available way to filter activities, instances, groups and subgroups between the states "All", "Final", "Retired" and "Draft"
+- The logic behind, when red bells appear in the 'Study Activities' tab and 'Study Activity Instance' tabs have been updated to only appear when an action is needed by the user. The updates ensure that:
+     - Red bells will only appear in the 'Study Activities' tab, if changes are made in the library to the fields: Activity group, Activity subgroup or Activity name 
+     - Red bells will only appear in the 'Study Activities Instances' tab, if changes are made in the library to to the fields: Instance name, Instance Class or TOPICCD
+- IT Security updates are done part of Operations and Maintenance.
+### Performance improvements
+
+- Performance improvements in back-end when listing study visits, epochs and footnotes which also improved the performance of SoA Faster API endpoints for viewing and creating SoA footnotes, which result in improved end-user experience of handling SoA
+
+### Consumer API updates
+
+- The following changes are introduced to the OpenStudyBuilder Cosumer API, refer below:
+   - New endpoints added
+      - GET /v1/studies/{uid}/study-activity-instances
+      - GET /v1/library/activities
+      - GET /v1/library/activity-instances
+   - Changes to existing endpoints: Additional fields are included in the following endpoints' responses.
+      - GET /v1/studies/{uid}/study-activities 
+          Added fields: 
+          - activity_nci_concept_id
+          - activity_nci_concept_name
+      - GET /v1/studies/{uid}/detailed-soa
+         Added fields:
+          - study_activity_uid
+          - activity_uid
+          - activity_nci_concept_id
+          - activity_nci_concept_name
+      - GET /v1/studies/{uid}/operational-soa
+         Added fields:
+         - study_activity_uid
+         - activity_nci_concept_id
+         - activity_nci_concept_name
+         - activity_instance_nci_concept_id
+         - activity_instance_nci_concept_name
+
+### End-to-End Automated test enhancements
+ 
+- Various code improvements to ensure easier maintenance and overall tests stability.
+- Library > Concepts > CRFs > CRF View: Added Gherkins specifications for CRF View page.
+- Library > Concepts > Activities: Added tests for new way of filtering by Status.
+- Studies > Define Study > Study Activities > Study Activities Placeholder: Added tests for red bell.
+
+Solved Bugs
+============
+
+### Library
+
+ **Concepts -> Activities -> Activities** 
+
+- Missing definitions and synonyms to Activity views in Library
+
+ **Concepts -> Activities -> Activities Instances** 
+
+- Error shown when clicks on Hyperlink of 'Chloride Excretion Rate Urine' (one of the Activity Instance)
+
+ **Concepts -> Activities -> Activity Instances** 
+
+- Activity Instance table shows only a single group and subgroup combination for each instance
+- Activity Instances can't be filtered by name column
+
+ **Concepts > Activities > Activity Subgroups** 
+
+- Rows per page not showing correct number of rows
+
+### Reports
+
+ **Neodash** 
+
+- The Landing page is not shown when starting the NeoDash Report module
+
+### Studies
+
+ **Define Study -> Study Activities -> Schedule of Activities** 
+
+- Missing definitions, synonyms and abbreviations to SoA activity selection interface
+
+ **Define Study -> Study Activities -> Schedule of Activities -> Protocol** 
+
+- Download of Protocol SOA in excel or csv doesn't contain the protocol SOA
+
+ **Define Study -> Study Activities -> Study Activities** 
+
+- Misaligned Activity Status returned by study-activities endpoint
+
+ **Define Study -> Study Activities -> Study Visits** 
+
+- History for manually defined visits not working
+
+ **Define Study-> Study Structure -> Study Elements** 
+
+- API Request not triggered on hitting save button
+
+ **Manage Study -> Study** 
+
+- User with Read-only permissions allowing to delete the Study in the Application
+
+
+## V 0.18
+
+New Features and Enhancements
+============
+
+### Fixes and enhancements
+
+- The Activity Instances overview page in the Library module has gotten an visual overhaul as well as new functionality to make it easier for standards developers to view and manage the existing content of activities.
+- Documentation Portal updates - typos are fixed.
+- Added a faster endpoint for fetching a list of studies (used in the 'Select Study' dialog). 
+- Improved speed of endpoints for fetching detailed/operational/protocol SoA.
+
+### End-to-End Automated test enhancements
+ 
+- Various code improvements to ensure easier maintenance and overall tests stability.
+- Library > Concepts > Activity > Overview Pages: Added Gherkins specification for table Filtering.
+- Library > Concepts > Activity > Activity Instance > Overview Page: Enabled tests verifing linked items.
+
+
+Solved Bugs
+============
+
+### API
+
+- Transaction related errors
+
+### Library
+
+ **Concepts -> Activities -> Activities** 
+
+- Version number replicated in the UI for each deactivation and activation
+
+ **Concepts -> Activities -> Activities Instances** 
+
+- Fix activity instance class parent relationship
+
+ **Concepts -> Activities -> Activity Groups** 
+
+- Activity Group Overview not displaying Drafts subgroups
+- Activity group overview page shows the wrong status for linked retired subgroups.
+- Filters on the Overview page shows more data than included in the data table
+
+ **Concepts -> Activities -> Activity Instances** 
+
+- Creating new activity instances for the activity that exist
+- Lack of Alphabetic sorting in the data domain dropdown list when adding activity instance in Step 2
+- Not able to remove molecular weight for Numeric Findings activity instances in StudyBuilder UI
+
+ **Concepts -> CRFs ->CRF View** 
+
+- File extension is missing for downloaded CRFs
+
+ **Syntax Templates -> Objective Templates -> Parent** 
+
+- Scroll bar missing in add or edit parent template stepper
+
+### Reports
+
+ **Neodash** 
+
+- The Landing page is not shown when starting the NeoDash Report module
+
+### Studies
+
+ **Define Study -> Study Activities** 
+
+- The search field in the column filter dropdowns is not working
+- Unchanged 'Activity groups' and 'Activity Subgroups' has to reselect it again
+
+ **Define Study -> Study Activities -> Schedule of Activities -> Operational SoA** 
+
+- Do not collapse visits
+
+ **Define Study -> Study Structure** 
+
+- Broken Study Structure - Study epochs copying is not possible
+
+
+## V 0.17
+
+New Features and Enhancements
+============
+
+### Fixes and enhancements
+
+- The Activity Subgroups overview page in the Library module has gotten an visual overhaul as well as new functionality to make it easier for standards developers to view and manage the existing content of activities.
+
+### New Features
+
+- For Schedule of Activities, requested placeholders can now be shared between studies.  The studies sharing the same request will be informed about the updated information in a small pop-up when clicking on the red (!)-mark. Furthermore, the pop-up functionality is implemented for updates to activities in general to improve the user experience when activities are up-versioned.
+- We will now be able to display collapsed/merged visits as a range or a list depending on requirements. This means that when collapsing 3 or more visits, timing of all visits will remain visible in protocol SoA.
+- The consumer API has been expanded with a first version of a new SoA endpoint tailored for Papillons (Internal SoA consumption tool)
+
+### Performance Improvements
+
+- Improved performance of endpoints for fetching library activities and activity instances.
+
+### End-to-End Automated test enhancements
+ 
+- Various code improvements to ensure easier maintenance and overall tests stability
+- Studies > Define Study > Study Activities > Schedule of Activities: Implemented tests for Handling Collapsed Visits
+- Studies > Define Study > Study Activities > Study Activities: Implemented tests for Study Activities Placeholders
+- Library > Concepts > Activity > Overview Pages: Extended tests scope for Activity, Activity Instance, Activity Group and Activity Subgroup
+- Library > Syntax Templates: Extended tests scope & major refactorization to improve code maintenance
+
+Solved Bugs
+============
+
+### API
+
+ **Miscellaneous** 
+
+- Operational/Detailed SoA issues with Xs and groupings
+
+### Consumer API
+
+ **Miscellaneous** 
+
+- Filtering of Studies is not possible in Consumer API
+
+### Library
+
+ **Concepts -> Activities -> Activity Instances** 
+
+- Creating new activity instances error, odm mandatory when they should not.
+- Creating new activity instances for the activity that exist
+
+### Studies
+
+ **Define Study -> Study Activities -> Schedule of Activities -> Detailed** 
+
+- Operational SoA discrepancy in sorting order
+
+ **Define Study -> Study Structure -> Study Visits** 
+
+- Study visits duplication is possible when created at the same time instead it should not allow it
+
+ **Select Study** 
+
+- Error in study acronym when changing between trials in production
+
+ **View Specifications -> ICH M11** 
+
+- ICH M11 page throwing error as 'list index out of range' with no further response
+
 ## V 0.16.1
 
 ### Fixes and Enhancements

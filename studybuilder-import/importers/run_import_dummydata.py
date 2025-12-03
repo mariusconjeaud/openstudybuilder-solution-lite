@@ -462,39 +462,37 @@ class DummyData(BaseImporter):
 
     @lru_cache(maxsize=10000)
     def lookup_ct_term_uid(
-        self, codelist_name, value, key="sponsor_preferred_name", uid_key="term_uid"
+        self, codelist_name, value, key="sponsor_preferred_name", exact_match=True
     ):
-        filters = {key: {"v": [value]}}
-        if codelist_name in CODELIST_NAME_MAP:
-            self.log.info(
-                f"Looking up term with '{key}' == '{value}' in codelist '{codelist_name}': {CODELIST_NAME_MAP[codelist_name]}, returning uid from '{uid_key}'"
-            )
-            params = {
-                "codelist_uid": CODELIST_NAME_MAP[codelist_name],
-                "page_size": 1,
-                "filters": json.dumps(filters),
-            }
+        if exact_match:
+            op = "eq"
         else:
-            self.log.info(
-                f"Looking up term with '{key}' == '{value}' in codelist '{codelist_name}', returning uid from '{uid_key}'"
+            op = "co"
+        filters = {key: {"v": [value], "op": op}}
+        params = {
+            "page_size": 1,
+            "filters": json.dumps(filters),
+        }
+
+        if codelist_name in CODELIST_NAME_MAP:
+            codelist_uid = CODELIST_NAME_MAP[codelist_name]
+            self.log.debug(
+                f"Looking up term with '{key}' == '{value}' in codelist '{codelist_name}': {codelist_uid}"
             )
-            params = {
-                "codelist_name": codelist_name,
-                "page_size": 1,
-                "filters": json.dumps(filters),
-            }
-        data = self.api.get_all_identifiers(
-            self.api.get_all_from_api("/ct/terms/names", params=params),
-            identifier=key,
-            value=uid_key,
-        )
-        uid = data.get(value, None)
-        if uid:
+            params["codelist_uid"] = codelist_uid
+
+        else:
+            self.log.debug(
+                f"Looking up term with '{key}' == '{value}' in codelist '{codelist_name}'"
+            )
+            params["codelist_name"] = codelist_name
+        data = self.api.get_all_from_api("/ct/codelists/terms", params=params)
+        if data:
+            uid = data[0]["term_uid"]
             self.log.debug(
                 f"Found term with '{key}' == '{value}' in codelist '{codelist_name}', uid '{uid}'"
             )
             return uid
-
         err = f"Could not find term with '{key}' == '{value}' in codelist '{codelist_name}'"
         self.log.error(err)
 
@@ -512,7 +510,7 @@ class DummyData(BaseImporter):
 
     @lru_cache(maxsize=10000)
     def lookup_concept_uid(self, name, endpoint, subset=None):
-        self.log.info(f"Looking up concept {endpoint} with name '{name}'")
+        self.log.debug(f"Looking up concept {endpoint} with name '{name}'")
         filters = {"name": {"v": [name]}}
         path = f"/concepts/{endpoint}"
         params = {"filters": json.dumps(filters)}
@@ -568,7 +566,11 @@ class DummyData(BaseImporter):
                     )
                     if new_version_response.ok:
                         obj_type = obj["path"].split("/")[-1]
-                        if obj_type in ["activities", "activity-groups", "activity-sub-groups"]:
+                        if obj_type in [
+                            "activities",
+                            "activity-groups",
+                            "activity-sub-groups",
+                        ]:
                             method = "PUT"
                         else:
                             method = "PATCH"
@@ -741,7 +743,11 @@ class DummyData(BaseImporter):
     def create_activity_requests(self):
         total = self.simple_get(
             "/concepts/activities/activities",
-            {"library_name": LIBRARY_NAME_REQUESTED, "page_size": 1, "total_count": True},
+            {
+                "library_name": LIBRARY_NAME_REQUESTED,
+                "page_size": 1,
+                "total_count": True,
+            },
             return_key="total",
         )
 
@@ -919,9 +925,6 @@ class DummyData(BaseImporter):
         )
 
         for n in range(self.options.studies):
-            if n in [0, 5, 10, 15]:
-                self.refresh_auth()
-
             payload = study_payload(found + n, self.project["project_number"])
             uid = self.simple_post(payload)
 
@@ -989,10 +992,12 @@ class DummyData(BaseImporter):
                         epoch_uid=epoch_uid,
                         visit_type_uid=visit_type_uids[m % len(visit_type_uids)],
                         time_unit_uid=time_unit_uids[m % len(time_unit_uids)],
-                        time_reference_uid=time_reference_uid
-                        if j != 2
-                        else self.lookup_ct_term_uid(
-                            "Time Point Reference", "Global anchor visit"
+                        time_reference_uid=(
+                            time_reference_uid
+                            if j != 2
+                            else self.lookup_ct_term_uid(
+                                "Time Point Reference", "Global anchor visit"
+                            )
                         ),
                         time_value=None if j != 2 else 0,
                         is_global_anchor_visit=j == 2,
@@ -1035,7 +1040,7 @@ class DummyData(BaseImporter):
         element_type, element_subtype = get_element_types(nbr)
         element_uid = self.lookup_ct_term_uid("Element Type", element_type)
         element_subtype_uid = self.lookup_ct_term_uid(
-            "Element Sub Type", element_subtype
+            "Element Sub Type", element_subtype, exact_match=False
         )
         payload = study_element_payload(
             nbr, element_uid, element_subtype_uid, study_uid
@@ -1045,7 +1050,9 @@ class DummyData(BaseImporter):
             self.studies[study_uid]["elements"].append(uid)
 
     def create_study_epochs(self, study_uid, subtype_name, nbr):
-        epoch_subtype_uid = self.lookup_ct_term_uid("Epoch Sub Type", subtype_name)
+        epoch_subtype_uid = self.lookup_ct_term_uid(
+            "Epoch Sub Type", subtype_name, exact_match=False
+        )
         epoch_uid = self.simple_post(
             {
                 "path": f"/studies/{study_uid}/study-epochs/preview",
@@ -1097,7 +1104,7 @@ class DummyData(BaseImporter):
                     "study_visit_uid": study_visit["uid"],
                 }
 
-                study_activity_schedule_uid = self.simple_post(
+                self.simple_post(
                     {
                         "path": f"/studies/{study_uid}/study-activity-schedules",
                         "body": payload,

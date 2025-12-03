@@ -77,7 +77,7 @@ const routes = [
             },
           },
           {
-            path: ':catalogue_name/:codelist_id/terms/:term_id',
+            path: '/terms/:term_id',
             name: 'CodelistTermDetail',
             component: () => import('../views/library/CodelistTermDetail.vue'),
             meta: {
@@ -169,6 +169,14 @@ const routes = [
         },
       },
       {
+        path: 'terms/:tab?',
+        name: 'TermsPage',
+        component: () => import('../views/library/TermsPage.vue'),
+        meta: {
+          authRequired: true,
+        },
+      },
+      {
         path: 'snomed',
         name: 'Snomed',
         component: () => import('../views/library/SnomedPage.vue'),
@@ -234,6 +242,33 @@ const routes = [
         },
       },
       {
+        path: 'activities/activity-instance-classes/:id/overview/:version?',
+        name: 'ActivityInstanceClassOverview',
+        component: () =>
+          import('../views/library/ActivityInstanceClassOverview.vue'),
+        meta: {
+          authRequired: true,
+        },
+      },
+      {
+        path: 'activities/activity-instance-classes/:id/parent-class-overview/:version?',
+        name: 'ActivityInstanceParentClassOverview',
+        component: () =>
+          import('../views/library/ActivityInstanceParentClassOverview.vue'),
+        meta: {
+          authRequired: true,
+        },
+      },
+      {
+        path: 'activities/activity-item-classes/:id/overview/:version?',
+        name: 'ActivityItemClassOverview',
+        component: () =>
+          import('../views/library/ActivityItemClassOverview.vue'),
+        meta: {
+          authRequired: true,
+        },
+      },
+      {
         path: 'activities/activity-sub-groups/:id/overview/:version?',
         name: 'SubgroupOverview',
         component: () => import('../views/library/SubgroupOverview.vue'),
@@ -268,30 +303,49 @@ const routes = [
         },
       },
       {
-        path: 'crfs/:tab?/:type?/:uid?',
-        name: 'Crfs',
-        component: () => import('../views/library/CrfsPage.vue'),
+        path: 'crf-viewer/:tab?',
+        name: 'CrfViewer',
+        component: () => import('../views/library/CrfViewer.vue'),
         meta: {
           authRequired: true,
         },
       },
-      // Temporarily removed
-      // {
-      //   path: 'compounds/:tab?',
-      //   name: 'Compounds',
-      //   component: () => import('../views/library/CompoundsPage.vue'),
-      //   meta: {
-      //     authRequired: true,
-      //   },
-      // },
-      // {
-      //   path: 'compound/:id',
-      //   name: 'CompoundOverview',
-      //   component: () => import('../views/library/CompoundOverview.vue'),
-      //   meta: {
-      //     authRequired: true,
-      //   },
-      // },
+      {
+        path: 'crf-builder/:tab?/:type?/:uid?',
+        name: 'CrfBuilder',
+        component: () => import('../views/library/CrfBuilder.vue'),
+        meta: {
+          authRequired: true,
+        },
+      },
+      {
+        path: 'compounds/:tab?',
+        name: 'Compounds',
+        component: () => import('../views/library/CompoundsPage.vue'),
+        meta: {
+          authRequired: true,
+          featureFlag: 'compounds_library',
+        },
+      },
+      {
+        path: 'compound/:id',
+        name: 'CompoundOverview',
+        component: () => import('../views/library/CompoundOverview.vue'),
+        meta: {
+          authRequired: true,
+          featureFlag: 'compounds_library',
+        },
+      },
+      {
+        path: 'pharmaceutical_products/:id',
+        name: 'PharmaceuticalProductOverview',
+        component: () =>
+          import('../views/library/PharmaceuticalProductOverview.vue'),
+        meta: {
+          authRequired: true,
+          featureFlag: 'compounds_library',
+        },
+      },
       {
         path: 'objective_templates/:tab?',
         name: 'ObjectiveTemplates',
@@ -512,6 +566,14 @@ const routes = [
         },
       },
       {
+        path: 'data-suppliers',
+        name: 'DataSuppliers',
+        component: () => import('../views/library/DataSuppliersPage.vue'),
+        meta: {
+          authRequired: true,
+        },
+      },
+      {
         path: 'overviews',
         component: () => import('../components/layout/PassThrough.vue'),
         meta: {
@@ -644,16 +706,16 @@ const routes = [
           authRequired: true,
         },
       },
-      // Temporarily removed
-      // {
-      //   path: ':study_id/study_interventions/:tab?',
-      //   name: 'StudyInterventions',
-      //   component: () => import('../views/studies/InterventionsPage.vue'),
-      //   meta: {
-      //     studyRequired: true,
-      //     authRequired: true,
-      //   },
-      // },
+      {
+        path: ':study_id/study_interventions/:tab?',
+        name: 'StudyInterventions',
+        component: () => import('../views/studies/InterventionsPage.vue'),
+        meta: {
+          studyRequired: true,
+          authRequired: true,
+          featureFlag: 'compounds_studies',
+        },
+      },
 
       // {
       //   path: 'standardisation_plan',
@@ -977,17 +1039,17 @@ const routes = [
           authRequired: true,
         },
       },
-      // Temporarily removed
-      // {
-      //   path: ':study_id/study_interventions/study_compounds/:id/overview',
-      //   name: 'StudyCompoundOverview',
-      //   component: () =>
-      //     import('../components/studies/overviews/StudyCompoundOverview.vue'),
-      //   meta: {
-      //     studyRequired: true,
-      //     authRequired: true,
-      //   },
-      // },
+      {
+        path: ':study_id/study_interventions/study_compounds/:id/overview',
+        name: 'StudyCompoundOverview',
+        component: () =>
+          import('../components/studies/overviews/StudyCompoundOverview.vue'),
+        meta: {
+          studyRequired: true,
+          authRequired: true,
+          featureFlag: 'compounds_studies',
+        },
+      },
     ],
   },
   {
@@ -1011,6 +1073,29 @@ const routes = [
         name: 'SystemAnnouncements',
         component: () =>
           import('../views/administration/SystemAnnouncements.vue'),
+        meta: {
+          authRequired: true,
+          section: 'Administration',
+          requiredPermission: roles.ADMIN_READ,
+        },
+      },
+      {
+        path: 'complexity-burdens/:tab?',
+        name: 'ComplexityBurdens',
+        component: () =>
+          import('../views/administration/ComplexityBurdens.vue'),
+        meta: {
+          resetBreadcrumbs: true,
+          authRequired: true,
+          requiredPermission: roles.ADMIN_READ,
+          featureFlag: 'complexity_score_calculation',
+        },
+      },
+      {
+        path: 'odm-vendor-extensions',
+        name: 'OdmVendorExtensions',
+        component: () =>
+          import('../views/administration/OdmVendorExtensions.vue'),
         meta: {
           authRequired: true,
           section: 'Administration',

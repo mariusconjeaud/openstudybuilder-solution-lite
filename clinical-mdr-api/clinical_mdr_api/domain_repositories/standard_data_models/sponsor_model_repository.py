@@ -32,11 +32,11 @@ from clinical_mdr_api.domains.versioned_object_aggregate import (
 )
 from clinical_mdr_api.models.standard_data_models.sponsor_model import SponsorModel
 from clinical_mdr_api.services.user_info import UserInfoService
-from common.config import SPONSOR_MODEL_PREFIX, SPONSOR_MODEL_VERSION_NUMBER_PREFIX
+from common.config import settings
 from common.exceptions import BusinessLogicException
 
 
-class SponsorModelRepository(
+class SponsorModelRepository(  # type: ignore[misc]
     NeomodelExtBaseRepository, LibraryItemRepositoryImplBase[SponsorModelAR]
 ):
     root_class = DataModelIGRoot
@@ -67,9 +67,9 @@ class SponsorModelRepository(
         name = "_".join(
             [
                 str.lower(ig_uid),
-                SPONSOR_MODEL_PREFIX,
+                settings.sponsor_model_prefix,
                 ig_version_number,
-                f"{SPONSOR_MODEL_VERSION_NUMBER_PREFIX}{int(version_number):02}",
+                f"{settings.sponsor_model_version_number_prefix}{int(version_number):02}",
             ]
         )
         return name
@@ -81,7 +81,7 @@ class SponsorModelRepository(
         """
         Overrides generic LibraryItemRepository method
         """
-        relation_data: SponsorModelMetadataVO = item.item_metadata
+        relation_data = item.item_metadata
         root = DataModelIGRoot.nodes.get_or_none(uid=item.uid)
 
         BusinessLogicException.raise_if(root is None, "Implementation Guide", item.uid)
@@ -137,11 +137,15 @@ class SponsorModelRepository(
         )
 
     def _get_or_create_value(
-        self, root: DataModelIGRoot, ar: SponsorModelAR
+        self,
+        root: DataModelIGRoot,
+        ar: SponsorModelAR,
+        force_new_value_node: bool = False,
     ) -> SponsorModelValue:
-        for itm in root.has_sponsor_model_version.all():
-            if not self._has_data_changed(ar, itm):
-                return itm
+        if not force_new_value_node:
+            for itm in root.has_sponsor_model_version.all():
+                if not self._has_data_changed(ar, itm):
+                    return itm
 
         new_value = SponsorModelValue(
             name=ar.sponsor_model_vo.name,
@@ -175,11 +179,11 @@ class SponsorModelRepository(
                 ig_uid=root.uid,
                 ig_version_number=relationship.version,
                 name=value.name,
-                version_number=None,
+                version_number="",
             ),
             library=LibraryVO.from_input_values_2(
                 library_name=library.name,
-                is_library_editable_callback=(lambda _: library.is_editable),
+                is_library_editable_callback=lambda _: library.is_editable,
             ),
             item_metadata=self._library_item_metadata_vo_from_relation(relationship),
         )

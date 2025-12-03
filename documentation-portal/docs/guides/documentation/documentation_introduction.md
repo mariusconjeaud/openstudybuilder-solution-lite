@@ -1,8 +1,8 @@
 # System Documentation
 
-This is the system documentation for the Clinical MDR and StudyBuilder (Technical version).
+This is the system documentation for the Clinical MDR and OpenStudyBuilder (Technical version).
 
-## Conceptual Architecture for Clinical-MDR and StudyBuilder
+## Conceptual Architecture for Clinical-MDR and OpenStudyBuilder
 
 <div style="background: #ffc;font-weight:bold">
 NOTE: Section moved to new section for Solution Architecture !

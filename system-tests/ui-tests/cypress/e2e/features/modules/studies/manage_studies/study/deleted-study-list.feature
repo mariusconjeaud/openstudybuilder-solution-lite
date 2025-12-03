@@ -3,12 +3,14 @@ Feature: Studies - Study List - Deleted Studies
 	Background: User must be logged in
 		Given The user is logged in
 
+    @smoke_test
     Scenario: [Navigation] User must be able to navigate to the Study List page
         Given The '/studies' page is opened
         When The 'Study List' button is clicked
         And The 'Deleted studies' tab is selected
         Then The current URL is '/studies/select_or_add_study/deleted'
 
+    @smoke_test
     Scenario: [Table][Columns][Names] User must be able to see the page table with correct columns
         Given The '/studies/select_or_add_study/deleted' page is opened
         Then A table is visible with following headers
@@ -16,7 +18,6 @@ Feature: Studies - Study List - Deleted Studies
             | Clinical Programme |
             | Project ID         |
             | Project name       |
-            | Brand name         |
             | Study number       |
             | Study ID           |
             | Study acronym      |

@@ -8,19 +8,19 @@
       <v-tab
         v-for="type in criteriaTypes"
         :key="type.term_uid"
-        :value="type.name.sponsor_preferred_name"
+        :value="type.sponsor_preferred_name"
       >
-        {{ type.name.sponsor_preferred_name }}
+        {{ type.sponsor_preferred_name }}
       </v-tab>
     </v-tabs>
     <v-window v-model="tab">
       <v-window-item
         v-for="type in criteriaTypes"
-        :key="`${type.term_uid}-${tabKeys[type.name.sponsor_preferred_name]}`"
-        :value="type.name.sponsor_preferred_name"
+        :key="`${type.term_uid}-${tabKeys[type.sponsor_preferred_name]}`"
+        :value="type.sponsor_preferred_name"
       >
         <CriteriaTemplateTable
-          :ref="(el) => (tableRefs[type.name.sponsor_preferred_name] = el)"
+          :ref="(el) => (tableRefs[type.sponsor_preferred_name] = el)"
           :key="type.term_uid"
           :criteria-type="type"
         />
@@ -60,7 +60,7 @@ watch(tab, (newValue) => {
 watch(
   () => route.params.type,
   (newValue) => {
-    tab.value = newValue || criteriaTypes.value[0].name.sponsor_preferred_name
+    tab.value = newValue || criteriaTypes.value[0].sponsor_preferred_name
     nextTick(() => {
       if (tableRefs.value[newValue]) {
         tableRefs.value[newValue].restoreTab()
@@ -69,10 +69,10 @@ watch(
   }
 )
 
-terms.getByCodelist('criteriaTypes', { unSorted: true }).then((resp) => {
+terms.getTermsByCodelist('criteriaTypes', { unSorted: true }).then((resp) => {
   criteriaTypes.value = resp.data.items
   criteriaTypes.value.forEach((type) => {
-    type.name.sponsor_preferred_name = type.name.sponsor_preferred_name.replace(
+    type.sponsor_preferred_name = type.sponsor_preferred_name.replace(
       ' Criteria',
       ''
     )
@@ -80,7 +80,7 @@ terms.getByCodelist('criteriaTypes', { unSorted: true }).then((resp) => {
   if (route.params.type) {
     tab.value = route.params.type
   } else {
-    tab.value = criteriaTypes.value[0].name.sponsor_preferred_name
+    tab.value = criteriaTypes.value[0].sponsor_preferred_name
   }
   appStore.addBreadcrumbsLevel(tab.value, undefined, 3, true)
 })

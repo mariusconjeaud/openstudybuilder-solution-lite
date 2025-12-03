@@ -5,6 +5,7 @@ Feature: Library - Code Lists - CT Packages
 	Background: User must be logged in
 		Given The user is logged in
 
+	@smoke_test
 	Scenario: [Navigation] User must be able to navigate to the CT Packages page and see it's content
 		Given The '/library' page is opened
 		When The 'CT Packages' submenu is clicked in the 'Code Lists' section
@@ -65,12 +66,11 @@ Feature: Library - Code Lists - CT Packages
 			| Submission value       | SDOMAIN                  |
 
 	Scenario: [Overview] User must be able to open the term CT Package
-		Given The '/library/ct_packages/' page is opened
+		Given The '/library/ct_packages/SEND CT' page is opened
 		And CT Package data is loaded
-		When The 'SEND CT' tab is selected
-		And The last available item from timeline is clicked
+		And The id of the first term on the list is saved
 		And The 'Show terms' option is clicked from the three dot menu list
-		Then The URL should contain '2014-09-26' date selected and 'C106482' ID
+		Then The user is redirected to the term page
 
 	Scenario: [Overview] User must be able to view the Codelist summary for given Codelist in CT Package
 		Given The '/library/ct_packages/SEND CT/SEND CT 2014-09-26/C66729/terms' page is opened

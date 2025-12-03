@@ -1,4 +1,4 @@
-from typing import Annotated
+from typing import Annotated, Any
 
 from pydantic import Field
 
@@ -9,20 +9,8 @@ from clinical_mdr_api.models.utils import BaseModel
 
 
 class SimpleReferencedCodelist(BaseModel):
-    uid: Annotated[
-        str | None,
-        Field(
-            title="The uid of the referenced codelist",
-            json_schema_extra={"nullable": True},
-        ),
-    ] = None
-    name: Annotated[
-        str | None,
-        Field(
-            title="The name of the referenced codelist",
-            json_schema_extra={"nullable": True},
-        ),
-    ] = None
+    uid: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = None
+    name: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = None
 
 
 class SimpleDatasetClass(BaseModel):
@@ -87,9 +75,9 @@ class VariableClass(BaseModel):
     ] = None
 
     @classmethod
-    def from_repository_output(cls, input_dict: dict):
+    def from_repository_output(cls, input_dict: dict[str, Any]):
         return cls(
-            uid=input_dict.get("uid"),
+            uid=input_dict["uid"],
             label=input_dict.get("standard_value").get("label"),
             title=input_dict.get("standard_value").get("title"),
             description=input_dict.get("standard_value").get("description"),
@@ -115,7 +103,7 @@ class VariableClass(BaseModel):
                 "usage_restrictions"
             ),
             examples=input_dict.get("standard_value").get("examples"),
-            catalogue_name=input_dict.get("catalogue_name"),
+            catalogue_name=input_dict["catalogue_name"],
             dataset_class=SimpleDatasetClass(
                 dataset_class_name=input_dict.get("dataset_class").get(
                     "dataset_class_name"
@@ -123,7 +111,7 @@ class VariableClass(BaseModel):
                 ordinal=input_dict.get("dataset_class").get("ordinal"),
             ),
             dataset_variable_name=input_dict.get("dataset_variable_name"),
-            data_model_names=input_dict.get("data_model_names"),
+            data_model_names=input_dict["data_model_names"],
             referenced_codelist=(
                 SimpleReferencedCodelist(
                     uid=input_dict.get("referenced_codelist").get("uid"),

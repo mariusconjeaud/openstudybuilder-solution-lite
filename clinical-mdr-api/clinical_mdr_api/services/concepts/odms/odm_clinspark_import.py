@@ -18,7 +18,11 @@ from clinical_mdr_api.models.controlled_terminologies.ct_codelist import (
 from clinical_mdr_api.models.controlled_terminologies.ct_codelist_attributes import (
     CTCodelistAttributes,
 )
-from clinical_mdr_api.models.controlled_terminologies.ct_term import CTTermCreateInput
+from clinical_mdr_api.models.controlled_terminologies.ct_term import (
+    CTTermCodelistInput,
+    CTTermCreateInput,
+    CTTermNameAndAttributes,
+)
 from clinical_mdr_api.services.concepts.odms.odm_xml_importer import (
     OdmXmlImporterService,
 )
@@ -55,7 +59,7 @@ class OdmClinicalXmlImporterService(OdmXmlImporterService):
         self.ct_term_service = CTTermService()
 
         self.db_ct_codelist_attributes = []
-        self.unit_definition_uids_by = {}
+        self.unit_definition_uids_by: dict[str, str] = {}
         self.measurement_unit_names_by_oid = {}
 
         super().__init__(xml_file, mapper_file)
@@ -90,7 +94,7 @@ class OdmClinicalXmlImporterService(OdmXmlImporterService):
         self.db_unit_definitions = [
             UnitDefinitionModel.from_unit_definition_ar(
                 unit_definition_ar,
-                find_term_by_uid=self._repos.ct_term_name_repository.find_by_uid,
+                find_codelist_term_by_uid_and_submission_value=self._repos.ct_codelist_name_repository.get_codelist_term_by_uid_and_submval,
                 find_dictionary_term_by_uid=self._repos.dictionary_term_generic_repository.find_by_uid,
             )
             for unit_definition_ar in rs
@@ -119,13 +123,15 @@ class OdmClinicalXmlImporterService(OdmXmlImporterService):
         ]
 
     def _set_ct_term_attributes(self):
-        term_attributes = self._get_and_create_term_attributes()
+        rs = self._get_and_create_term_attributes()
 
         self.db_ct_term_attributes = [
-            self.ct_term_attributes_service._transform_aggregate_root_to_pydantic_model(
-                item_ar
+            CTTermNameAndAttributes.from_ct_term_ars(
+                ct_term_name_ar=term_name_ar,
+                ct_term_attributes_ar=term_attributes_ar,
+                ct_term_codelists=ct_term_codelists,
             )
-            for item_ar in term_attributes
+            for term_name_ar, term_attributes_ar, ct_term_codelists in rs
         ]
 
     def _get_and_create_codelists(self):
@@ -133,7 +139,7 @@ class OdmClinicalXmlImporterService(OdmXmlImporterService):
             filter_by={
                 "submission_value": {
                     "v": [
-                        self._get_codelist_submission_value(codelist)
+                        self._get_codelist_description_translatedtext_value(codelist)
                         for codelist in self.codelists
                     ],
                     "op": "eq",
@@ -146,18 +152,21 @@ class OdmClinicalXmlImporterService(OdmXmlImporterService):
 
         new_codelist_uids = set()
         for codelist in self.codelists:
-            submission_value = self._get_codelist_submission_value(codelist)
+            submission_value = self._get_codelist_description_translatedtext_value(
+                codelist
+            )
 
             if submission_value not in existing_codelist_submission_values:
                 ct_codelist = self.ct_codelist_service.non_transactional_create(
                     CTCodelistCreateInput(
-                        catalogue_name="CDASH CT",
+                        catalogue_names=["CDASH CT"],
                         name=codelist.getAttribute("Name"),
                         submission_value=submission_value,
                         nci_preferred_name=codelist.getAttribute("Name"),
                         definition=codelist.getAttribute("Name"),
                         sponsor_preferred_name=codelist.getAttribute("Name"),
                         extensible=True,
+                        ordinal=False,
                         template_parameter=True,
                         parent_codelist_uid=None,
                         library_name="Sponsor",
@@ -184,22 +193,29 @@ class OdmClinicalXmlImporterService(OdmXmlImporterService):
 
     def _get_and_create_term_attributes(self):
         def manage_codelist_item():
-            if (
-                codelist_item.getAttribute("CodedValue")
-                not in term_code_submission_values
-            ):
+            if codelist_item.getAttribute("CodedValue") not in term_submission_values:
+                if active_codelist.codelist_uid is None:
+                    # This should never happen, but we need this check to satisfy the type checker since
+                    # the codelist_uid field on CTCodelistAttributes is optional
+                    return None
+
                 ct_term = self.ct_term_service.non_transactional_create(
                     CTTermCreateInput(
-                        catalogue_name="CDASH CT",
-                        codelist_uid=active_codelist.codelist_uid,
-                        code_submission_value=codelist_item.getAttribute("CodedValue"),
-                        name_submission_value=codelist_item.getAttribute("CodedValue"),
+                        catalogue_names=["CDASH CT"],
+                        codelists=[
+                            CTTermCodelistInput(
+                                codelist_uid=active_codelist.codelist_uid,
+                                submission_value=codelist_item.getAttribute(
+                                    "CodedValue"
+                                ),
+                                order=None,
+                            )
+                        ],
                         nci_preferred_name=translated_txt,
                         definition=translated_txt,
                         sponsor_preferred_name=translated_txt,
                         sponsor_preferred_name_sentence_case=translated_txt.lower(),
                         library_name="Sponsor",
-                        order=999999,
                     )
                 )
                 self.ct_term_name_service.non_transactional_approve(ct_term.term_uid)
@@ -207,15 +223,23 @@ class OdmClinicalXmlImporterService(OdmXmlImporterService):
                     ct_term.term_uid
                 )
                 term_attribute_uids.add(ct_term.term_uid)
-                term_code_submission_values.add(ct_term.code_submission_value)
+                term_submission_value = next(
+                    (
+                        i.submission_value
+                        for i in ct_term.codelists
+                        if i.codelist_uid == active_codelist.codelist_uid
+                    ),
+                    None,
+                )
+                if term_submission_value:
+                    term_submission_values.add(term_submission_value)
                 return True
 
-            for item in rs.items:
+            for item in rs:
                 if (
                     codelist_item.getAttribute("CodedValue")
-                    != item.ct_term_vo.code_submission_value
-                    or item.ct_term_vo.codelists[0].codelist_uid
-                    != active_codelist.codelist_uid
+                    != item[2].codelists[0].submission_value
+                    or item[2].codelists[0].codelist_uid != active_codelist.codelist_uid
                 ):
                     continue
 
@@ -227,42 +251,46 @@ class OdmClinicalXmlImporterService(OdmXmlImporterService):
                     active_codelist.codelist_uid,
                     item.uid,
                     idx,
+                    active_codelist.submission_value,
                 )
                 term_attribute_uids.add(item.uid)
                 return True
 
             return False
 
-        rs = self._repos.ct_term_attributes_repository.find_all(
-            filter_by={
-                "code_submission_value": {
-                    "v": [
-                        codelist_item.getAttribute("CodedValue")
-                        for codelist in self.codelists
-                        for codelist_item in codelist.getElementsByTagName(
-                            "CodeListItem"
-                        )
-                    ],
-                    "op": "eq",
+        rs, _count = (
+            self._repos.ct_term_aggregated_repository.find_all_aggregated_result(
+                filter_by={
+                    "codelists.submission_value": {
+                        "v": [
+                            codelist_item.getAttribute("CodedValue")
+                            for codelist in self.codelists
+                            for codelist_item in codelist.getElementsByTagName(
+                                "CodeListItem"
+                            )
+                        ],
+                        "op": "eq",
+                    }
                 }
-            }
+            )
         )
-        term_codelist_uids = {
-            codelist.codelist_uid
-            for item in rs.items
-            for codelist in item.ct_term_vo.codelists
-        }
-        term_code_submission_values = {
-            item.ct_term_vo.code_submission_value for item in rs.items
-        }
+        term_codelist_uids = set()
+        for item in rs:
+            for codelist in item[2].codelists:
+                term_codelist_uids.add(codelist.codelist_uid)
 
-        term_attribute_uids = set()
+        term_submission_values = set()
+        for item in rs:
+            for codelist in item[2].codelists:
+                term_submission_values.add(codelist.submission_value)
+
+        term_attribute_uids: set[str] = set()
         for codelist in self.codelists:
             try:
                 active_codelist = next(
                     db_ct_codelist_attribute
                     for db_ct_codelist_attribute in self.db_ct_codelist_attributes
-                    if self._get_codelist_submission_value(codelist)
+                    if self._get_codelist_description_translatedtext_value(codelist)
                     == db_ct_codelist_attribute.submission_value
                 )
             except StopIteration as exc:
@@ -282,22 +310,9 @@ class OdmClinicalXmlImporterService(OdmXmlImporterService):
                 if manage_codelist_item():
                     continue
 
-        return self._repos.ct_term_attributes_repository.find_all(
+        return self._repos.ct_term_aggregated_repository.find_all_aggregated_result(
             filter_by={"term_uid": {"v": term_attribute_uids, "op": "eq"}}
-        ).items
-
-    @staticmethod
-    def _get_codelist_submission_value(codelist):
-        try:
-            return (
-                codelist.getElementsByTagName("Description")[0]
-                .getElementsByTagName("TranslatedText")[0]
-                .firstChild.nodeValue
-            )
-        except Exception as exc:
-            raise exceptions.BusinessLogicException(
-                msg=f"Code Submission Value not provided for Codelist with OID '{codelist.getAttribute('OID')}'."
-            ) from exc
+        )[0]
 
     def _get_item_unit_definition_inputs(self, item_def):
         try:
@@ -345,7 +360,7 @@ class OdmClinicalXmlImporterService(OdmXmlImporterService):
                 db_ct_codelist_attribute.codelist_uid
                 for db_ct_codelist_attribute in self.db_ct_codelist_attributes
                 if codelist
-                and self._get_codelist_submission_value(codelist)
+                and self._get_codelist_description_translatedtext_value(codelist)
                 == db_ct_codelist_attribute.submission_value
             ),
             None,
@@ -355,52 +370,52 @@ class OdmClinicalXmlImporterService(OdmXmlImporterService):
         if codelist:
             input_terms = [
                 OdmItemTermRelationshipInput(
-                    uid=db_ct_term_attribute.term_uid,
+                    uid=db_ct_term.term_uid,
                     order=int(float(codelist_item.getAttribute("Rank") or "1")),
                     display_text=codelist_item.getElementsByTagName("TranslatedText")[
                         0
                     ].firstChild.nodeValue,
                 )
                 for codelist_item in codelist.getElementsByTagName("CodeListItem")
-                for db_ct_term_attribute in self.db_ct_term_attributes
+                for db_ct_term in self.db_ct_term_attributes
                 if codelist_item.getAttribute("CodedValue")
-                == db_ct_term_attribute.code_submission_value
-                and db_ct_term_attribute.codelists[0].codelist_uid == codelist_uid
+                == db_ct_term.codelists[0].submission_value
+                and db_ct_term.codelists[0].codelist_uid == codelist_uid
             ]
 
-        return (
-            OdmItemPostInput(
-                oid=item_def.getAttribute("OID"),
-                name=self.get_next_available_name(
-                    item_def.getAttribute("Name"), plausible_duplicates
-                ),
-                prompt=item_def.getAttribute("Prompt"),
-                datatype=item_def.getAttribute("DataType"),
-                length=(
-                    int(item_def.getAttribute("Length"))
-                    if item_def.getAttribute("Length")
-                    else None
-                ),
-                significant_digits=None,
-                sas_field_name=item_def.getAttribute("SASFieldName"),
-                sds_var_name=item_def.getAttribute("SDSVarName"),
-                origin=item_def.getAttribute("Origin"),
-                comment=None,
-                descriptions=[
-                    self._create_description(
-                        name=description["name"],
-                        description=description["description"],
-                        lang=description["lang"],
-                    ).uid
-                    for description in descriptions
-                ],
-                alias_uids=[],
-                unit_definitions=item_unit_definitions,
-                codelist_uid=codelist_uid,
-                terms=input_terms,
+        return OdmItemPostInput(
+            oid=item_def.getAttribute("OID"),
+            name=self.get_next_available_name(
+                item_def.getAttribute("Name"), plausible_duplicates
             ),
-            input_terms,
-            item_unit_definitions,
+            prompt=item_def.getAttribute("Prompt"),
+            datatype=item_def.getAttribute("DataType"),
+            length=(
+                int(item_def.getAttribute("Length"))
+                if item_def.getAttribute("Length")
+                else None
+            ),
+            significant_digits=(
+                int(item_def.getAttribute("SignificantDigits"))
+                if item_def.getAttribute("SignificantDigits")
+                else None
+            ),
+            sas_field_name=item_def.getAttribute("SASFieldName"),
+            sds_var_name=item_def.getAttribute("SDSVarName"),
+            origin=item_def.getAttribute("Origin"),
+            comment=None,
+            descriptions=[
+                self._create_description(
+                    name=description["name"],
+                    description=description["description"],
+                    lang=description["lang"],
+                )
+                for description in descriptions
+            ],
+            aliases=[],
+            unit_definitions=item_unit_definitions,
+            codelist_uid=codelist_uid,
+            terms=input_terms,
         )
 
     def _get_odm_item_group_post_input(self, item_group_def):
@@ -430,10 +445,10 @@ class OdmClinicalXmlImporterService(OdmXmlImporterService):
                     name=description["name"],
                     description=description["description"],
                     lang=description["lang"],
-                ).uid
+                )
                 for description in descriptions
             ],
-            alias_uids=[],
+            aliases=[],
             sdtm_domain_uids=[],
         )
 
@@ -451,16 +466,15 @@ class OdmClinicalXmlImporterService(OdmXmlImporterService):
             ),
             sdtm_version="",
             repeating=form_def.getAttribute("Repeating"),
-            scope_uid=None,
             descriptions=[
                 self._create_description(
                     name=description["name"],
                     description=description["description"],
                     lang=description["lang"],
-                ).uid
+                )
                 for description in descriptions
             ],
-            alias_uids=[],
+            aliases=[],
         )
 
     @staticmethod

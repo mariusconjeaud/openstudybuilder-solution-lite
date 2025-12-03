@@ -1,10 +1,14 @@
 import datetime
 from dataclasses import dataclass
+from typing import Any
 
 from neomodel import db
 
 from clinical_mdr_api import utils
 from clinical_mdr_api.domain_repositories._utils import helpers
+from clinical_mdr_api.domain_repositories.controlled_terminologies.ct_codelist_attributes_repository import (
+    CTCodelistAttributesRepository,
+)
 from clinical_mdr_api.domain_repositories.models.concepts import (
     NumericValueWithUnitRoot,
 )
@@ -25,6 +29,7 @@ from clinical_mdr_api.domains.study_selections.study_compound_dosing import (
     StudyCompoundDosingVO,
     StudySelectionCompoundDosingsAR,
 )
+from common.config import settings
 from common.exceptions import BusinessLogicException, NotFoundException
 from common.utils import convert_to_datetime
 
@@ -168,11 +173,20 @@ class StudyCompoundDosingRepository:
 
             NotFoundException.raise_if(
                 node is None,
-                "CT Term for 'dose form'",
+                "CT Term for 'dose frequency'",
                 field_value=selection.dose_frequency_uid,
             )
 
-            selection_node.has_dose_frequency.connect(node)
+            selected_term_node = (
+                CTCodelistAttributesRepository().get_or_create_selected_term(
+                    node,
+                    codelist_submission_value=settings.dose_frequency_cl_submval,
+                    catalogue_name=settings.sdtm_ct_catalogue_name,
+                )
+            )
+
+            # connect to reason_for_missing node
+            selection_node.has_dose_frequency.connect(selected_term_node)
 
     def _get_audit_node(
         self, study_selection: StudySelectionCompoundDosingsAR, study_selection_uid: str
@@ -320,10 +334,10 @@ class StudyCompoundDosingRepository:
             OPTIONAL MATCH (sc)-[:HAS_SELECTED_COMPOUND]->(:CompoundAliasValue)-[:IS_COMPOUND]->(cr:CompoundRoot)
             OPTIONAL MATCH (sc)-[:HAS_MEDICINAL_PRODUCT]->(:MedicinalProductValue)<-[:HAS_VERSION]-(mpr:MedicinalProductRoot)
             OPTIONAL MATCH (all_scd)-[:HAS_DOSE_VALUE]->(dvr:NumericValueWithUnitRoot)
-            OPTIONAL MATCH (all_scd)-[:HAS_DOSE_FREQUENCY]->(df:CTTermRoot)
+            OPTIONAL MATCH (all_scd)-[:HAS_DOSE_FREQUENCY]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(df:CTTermRoot)
             WITH all_scd, sc, se, asa, bsa, car, cr, mpr, dvr, df
             ORDER BY all_scd.uid, asa.date DESC
-            RETURN
+            RETURN DISTINCT
                 all_scd.uid AS uid,
                 all_scd.order AS order,
                 se.uid AS study_element_uid,
@@ -371,7 +385,7 @@ class StudyCompoundDosingRepository:
 
     def find_selection_history(
         self, study_uid: str, selection_uid: str | None = None
-    ) -> list[dict | None]:
+    ) -> list[SelectionHistory]:
         kwargs = {}
         if selection_uid:
             kwargs["selection_uid"] = selection_uid
@@ -383,7 +397,7 @@ class StudyCompoundDosingRepository:
         study_value_version: str | None = None,
     ) -> tuple[StudyCompoundDosingVO]:
         query = ""
-        query_parameters = {}
+        query_parameters: dict[str, Any] = {}
         if study_uid:
             if study_value_version:
                 query = "MATCH (sr:StudyRoot {uid: $uid})-[l:HAS_VERSION {status:'RELEASED', version: $version}]->(sv:StudyValue)"
@@ -401,10 +415,10 @@ class StudyCompoundDosingRepository:
         OPTIONAL MATCH (scd)<-[:STUDY_COMPOUND_HAS_COMPOUND_DOSING]-(sc)-[:HAS_SELECTED_COMPOUND]->(:CompoundAliasValue)-[:IS_COMPOUND]->(cr:CompoundRoot)
         OPTIONAL MATCH (sc)-[:HAS_MEDICINAL_PRODUCT]->(:MedicinalProductValue)<-[:HAS_VERSION]-(mpr:MedicinalProductRoot)
         OPTIONAL MATCH (scd)<-[:STUDY_ELEMENT_HAS_COMPOUND_DOSING]-(se)--(sv)
-        OPTIONAL MATCH (scd)<-[:STUDY_COMPOUND_HAS_COMPOUND_DOSING]-(sc)--(sv)
+        MATCH (scd)<-[:STUDY_COMPOUND_HAS_COMPOUND_DOSING]-(sc)<-[:HAS_STUDY_COMPOUND]-(sv)
         WITH DISTINCT sr, sv, scd, sc, se, car, cr, mpr
         OPTIONAL MATCH (scd)-[:HAS_DOSE_VALUE]->(dvr:NumericValueWithUnitRoot)
-        OPTIONAL MATCH (scd)-[:HAS_DOSE_FREQUENCY]->(df:CTTermRoot)
+        OPTIONAL MATCH (scd)-[:HAS_DOSE_FREQUENCY]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(df:CTTermRoot)
 
         MATCH (sc)<-[:AFTER]-(sa:StudyAction)
 
@@ -450,7 +464,7 @@ class StudyCompoundDosingRepository:
         study_value_version: str | None = None,
         for_update: bool = False,
         **filters,
-    ) -> StudySelectionCompoundDosingsAR | None:
+    ) -> StudySelectionCompoundDosingsAR:
         """
         Finds all the selected study compounds for a given study
         :param study_uid:
@@ -474,7 +488,7 @@ class StudyCompoundDosingRepository:
         """Find all the selected study compound dosings for all studies."""
         all_selections = self._retrieves_all_data()
         # Create a dictionary, with study_uid as key, and list of selections as value
-        selection_aggregate_dict = {}
+        selection_aggregate_dict: dict[str, Any] = {}
         selection_aggregates = []
         for selection in all_selections:
             if selection.study_uid in selection_aggregate_dict:
@@ -494,12 +508,12 @@ class StudyCompoundDosingRepository:
         self, study_compound_dosing: StudyCompoundDosingVO
     ) -> str | None:
         query = """
-            MATCH (:StudyRoot {uid: $study_uid})-[:LATEST]->(:StudyValue)-[rel:HAS_STUDY_COMPOUND_DOSING]->
-                    (scd:StudyCompoundDosing)-[HAS_DOSE_FREQUENCY]->(dfr:CTTermRoot {uid: $dose_frequency_uid})
+            MATCH (:StudyRoot {uid: $study_uid})-[:LATEST]->(sv:StudyValue)-[rel:HAS_STUDY_COMPOUND_DOSING]->
+                    (scd:StudyCompoundDosing)-[HAS_DOSE_FREQUENCY]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(dfr:CTTermRoot {uid: $dose_frequency_uid})
             WITH *
             MATCH (scd)-[:HAS_DOSE_VALUE]->(dvr:NumericValueWithUnitRoot {uid: $dose_value_uid})
             WITH *
-            MATCH (scd)<-[:STUDY_COMPOUND_HAS_COMPOUND_DOSING]-(sc:StudyCompound {uid: $study_compound_uid})               
+            MATCH (scd)<-[:STUDY_COMPOUND_HAS_COMPOUND_DOSING]-(sc:StudyCompound {uid: $study_compound_uid})<-[:HAS_STUDY_COMPOUND]-(sv)
             RETURN scd
             """
         result, _ = db.cypher_query(

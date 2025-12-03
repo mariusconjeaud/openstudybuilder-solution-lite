@@ -30,7 +30,7 @@ from clinical_mdr_api.tests.integration.utils.method_library import (
 )
 from clinical_mdr_api.tests.integration.utils.utils import TestUtils
 from clinical_mdr_api.tests.utils.checks import assert_response_status_code
-from common.config import CDISC_LIBRARY_NAME, SDTM_CT_CATALOGUE_NAME
+from common.config import settings
 
 study_uid: str
 
@@ -57,9 +57,10 @@ def test_data():
     create_some_visits()
     TestUtils.create_study_fields_configuration()
     # Creating codelists, library and catalogue for study standard version
-    TestUtils.create_library(name=CDISC_LIBRARY_NAME, is_editable=True)
+    TestUtils.create_library(name=settings.cdisc_library_name, is_editable=True)
     TestUtils.create_ct_catalogue(
-        library=CDISC_LIBRARY_NAME, catalogue_name=SDTM_CT_CATALOGUE_NAME
+        library=settings.cdisc_library_name,
+        catalogue_name=settings.sdtm_ct_catalogue_name,
     )
     TestUtils.create_ct_codelists_using_cypher()
     TestUtils.set_study_standard_version(study_uid=study_uid)
@@ -79,7 +80,7 @@ def test_tv_listing(api_client):
             STUDYID="SOME_ID-0",
             DOMAIN="TV",
             VISITNUM=100,
-            VISIT="VISIT 1",
+            VISIT="VISIT 1 (DAY 1)",
             VISITDY=1,
             ARMCD=None,
             ARM=None,
@@ -90,7 +91,7 @@ def test_tv_listing(api_client):
             STUDYID="SOME_ID-0",
             DOMAIN="TV",
             VISITNUM=200,
-            VISIT="VISIT 2",
+            VISIT="VISIT 2 (DAY 11)",
             VISITDY=11,
             ARMCD=None,
             ARM=None,
@@ -101,7 +102,7 @@ def test_tv_listing(api_client):
             STUDYID="SOME_ID-0",
             DOMAIN="TV",
             VISITNUM=300,
-            VISIT="VISIT 3",
+            VISIT="VISIT 3 (DAY 13)",
             VISITDY=13,
             ARMCD=None,
             ARM=None,
@@ -112,7 +113,7 @@ def test_tv_listing(api_client):
             STUDYID="SOME_ID-0",
             DOMAIN="TV",
             VISITNUM=400,
-            VISIT="VISIT 4",
+            VISIT="VISIT 4 (DAY 31)",
             VISITDY=31,
             ARMCD=None,
             ARM=None,
@@ -123,7 +124,7 @@ def test_tv_listing(api_client):
             STUDYID="SOME_ID-0",
             DOMAIN="TV",
             VISITNUM=410,
-            VISIT="VISIT 4",
+            VISIT="VISIT 4 (DAY 62)",
             VISITDY=62,
             ARMCD=None,
             ARM=None,
@@ -134,7 +135,7 @@ def test_tv_listing(api_client):
             STUDYID="SOME_ID-0",
             DOMAIN="TV",
             VISITNUM=500,
-            VISIT="VISIT 5",
+            VISIT="VISIT 5 (DAY 36)",
             VISITDY=36,
             ARMCD=None,
             ARM=None,

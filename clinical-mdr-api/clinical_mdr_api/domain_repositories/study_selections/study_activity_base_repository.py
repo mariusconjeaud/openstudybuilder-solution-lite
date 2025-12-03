@@ -1,10 +1,13 @@
 import abc
 import datetime
-from typing import Generic, TypeVar
+from typing import Any, Generic, TypeVar
 
 from neomodel import db
 
 from clinical_mdr_api import utils
+from clinical_mdr_api.domain_repositories._utils.helpers import (
+    acquire_write_lock_study_value,
+)
 from clinical_mdr_api.domain_repositories.models.study import StudyRoot, StudyValue
 from clinical_mdr_api.domain_repositories.models.study_audit_trail import (
     Create,
@@ -17,27 +20,19 @@ from clinical_mdr_api.domains.study_selections.study_selection_base import (
     StudySelectionBaseAR,
     StudySelectionBaseVO,
 )
+from common.telemetry import trace_calls
 from common.utils import convert_to_datetime, validate_max_skip_clause
 
 _AggregateRootType = TypeVar("_AggregateRootType")
 
 
 class StudySelectionActivityBaseRepository(Generic[_AggregateRootType], abc.ABC):
-    _aggregate_root_type: StudySelectionBaseAR
-
-    @staticmethod
-    def _acquire_write_lock_study_value(uid: str) -> None:
-        db.cypher_query(
-            """
-             MATCH (sr:StudyRoot {uid: $uid})
-             REMOVE sr.__WRITE_LOCK__
-             RETURN true
-            """,
-            {"uid": uid},
-        )
+    _aggregate_root_type: type[_AggregateRootType]
 
     @abc.abstractmethod
-    def _create_value_object_from_repository(self, selection: dict, acv: bool):
+    def _create_value_object_from_repository(
+        self, selection: dict[Any, Any], acv: bool
+    ):
         raise NotImplementedError
 
     @abc.abstractmethod
@@ -47,7 +42,7 @@ class StudySelectionActivityBaseRepository(Generic[_AggregateRootType], abc.ABC)
     @abc.abstractmethod
     def _filter_clause(
         self,
-        query_parameters: dict,
+        query_parameters: dict[Any, Any],
         **kwargs,
     ):
         raise NotImplementedError
@@ -62,17 +57,20 @@ class StudySelectionActivityBaseRepository(Generic[_AggregateRootType], abc.ABC)
 
     @abc.abstractmethod
     def get_selection_history(
-        self, selection: dict, change_type: str, end_date: datetime
+        self,
+        selection: dict[Any, Any],
+        change_type: str,
+        end_date: datetime.datetime | None,
     ):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def get_audit_trail_query(self, study_selection_uid: str):
+    def get_audit_trail_query(self, study_selection_uid: str | None):
         raise NotImplementedError
 
     @abc.abstractmethod
     def get_study_selection_node_from_latest_study_value(
-        self, study_value: StudyValue, study_selection: StudySelection
+        self, study_value: StudyValue, study_selection: StudySelectionBaseVO
     ):
         raise NotImplementedError
 
@@ -114,6 +112,7 @@ class StudySelectionActivityBaseRepository(Generic[_AggregateRootType], abc.ABC)
             MATCH (sa)<-[:AFTER]-(sac:StudyAction)
         """
 
+    @trace_calls
     def _retrieves_all_data(
         self,
         study_uids: str | list[str] | None = None,
@@ -121,8 +120,8 @@ class StudySelectionActivityBaseRepository(Generic[_AggregateRootType], abc.ABC)
         project_number: str | None = None,
         study_value_version: str | None = None,
         **kwargs,
-    ) -> tuple[_AggregateRootType]:
-        query_parameters = {}
+    ) -> tuple[StudySelectionBaseVO, ...]:
+        query_parameters: dict[str, Any] = {}
         if study_uids:
             if isinstance(study_uids, str):
                 study_uid_statement = "{uid: $uids}"
@@ -179,13 +178,14 @@ class StudySelectionActivityBaseRepository(Generic[_AggregateRootType], abc.ABC)
             all_selections.append(selection_vo)
         return tuple(all_selections)
 
+    @trace_calls
     def find_all(
         self,
         project_name: str | None = None,
         project_number: str | None = None,
         study_uids: list[str] | None = None,
         **kwargs,
-    ) -> list[StudySelectionBaseAR]:
+    ) -> StudySelectionBaseAR:
         """
         Finds all the selected study activities for all studies, and create the aggregate
         :return: List of StudySelectionActivityAR, potentially empty
@@ -197,19 +197,20 @@ class StudySelectionActivityBaseRepository(Generic[_AggregateRootType], abc.ABC)
             **kwargs,
         )
         selection_aggregate = self._aggregate_root_type.from_repository_values(
-            study_uid=None, study_objects_selection=all_selections
+            study_uid="", study_objects_selection=all_selections
         )
         return selection_aggregate
 
+    @trace_calls
     def find_by_study(
         self,
         study_uid: str,
         for_update: bool = False,
         study_value_version: str | None = None,
         **kwargs,
-    ) -> StudySelectionBaseAR | None:
+    ) -> StudySelectionBaseAR:
         if for_update:
-            self._acquire_write_lock_study_value(study_uid)
+            acquire_write_lock_study_value(study_uid)
         all_selections = self._retrieves_all_data(
             study_uid,
             study_value_version=study_value_version,
@@ -223,7 +224,7 @@ class StudySelectionActivityBaseRepository(Generic[_AggregateRootType], abc.ABC)
         return selection_aggregate
 
     def _get_audit_node(
-        self, study_selection: _AggregateRootType, study_selection_uid: str
+        self, study_selection: StudySelectionBaseAR, study_selection_uid: str
     ):
         if not any(
             item.study_selection_uid == study_selection_uid
@@ -267,11 +268,11 @@ class StudySelectionActivityBaseRepository(Generic[_AggregateRootType], abc.ABC)
         )
         return audit_node, last_study_selection_node
 
+    @trace_calls
     def save(
         self,
         study_selection: StudySelectionBaseAR,
         author_id: str,
-        make_order_check=True,
     ) -> None:
         assert study_selection.repository_closure_data is not None
         # get the closure_data
@@ -314,6 +315,13 @@ class StudySelectionActivityBaseRepository(Generic[_AggregateRootType], abc.ABC)
                         # update the selection by removing the old if the old exists, and adding new selection
                         selections_to_remove.append((order, closure_data[order - 1]))
                         selections_to_add.append((order, selection))
+                elif (
+                    selection_order := getattr(selection, "order", None)
+                ) and selection_order != order:
+                    selections_to_remove.append(
+                        (selection_order, closure_data[order - 1])
+                    )
+                    selections_to_add.append((order, selection))
             else:
                 # else something new have been added
                 selections_to_add.append((order, selection))
@@ -380,12 +388,10 @@ class StudySelectionActivityBaseRepository(Generic[_AggregateRootType], abc.ABC)
                 audit_node.date = selection.start_date
                 audit_node.save()
                 study_root_node.audit_trail.connect(audit_node)
-            new_order = order
-            if not make_order_check:
-                new_order = selection.order
+
             self._add_new_selection(
                 latest_study_value_node,
-                new_order,
+                order,
                 selection,
                 audit_node,
                 last_study_selection_node,
@@ -407,8 +413,9 @@ class StudySelectionActivityBaseRepository(Generic[_AggregateRootType], abc.ABC)
         study_root_node.audit_trail.connect(audit_node)
         return audit_node
 
+    @trace_calls
     def _get_selection_with_history(
-        self, study_uid: str, study_selection_uid: str = None
+        self, study_uid: str, study_selection_uid: str | None = None
     ):
         """
         returns the audit trail for study activity either for a specific selection or for all study activity for the study
@@ -439,7 +446,7 @@ class StudySelectionActivityBaseRepository(Generic[_AggregateRootType], abc.ABC)
 
     def find_selection_history(
         self, study_uid: str, study_selection_uid: str | None = None
-    ) -> list[dict | None]:
+    ):
         if study_selection_uid:
             return self._get_selection_with_history(
                 study_uid=study_uid, study_selection_uid=study_selection_uid
@@ -451,13 +458,14 @@ class StudySelectionActivityBaseRepository(Generic[_AggregateRootType], abc.ABC)
         # But nothing needs to be done in this one
         pass
 
+    @trace_calls
     def get_detailed_soa_history(
         self, study_uid: str, page_number: int, page_size: int, total_count: bool
-    ) -> tuple[list[dict], int]:
+    ) -> tuple[list[dict[Any, Any]], int]:
         detailed_soa_audit_trail = """
         CALL {
         MATCH (sr:StudyRoot {uid: $study_uid})-[:AUDIT_TRAIL]->(:StudyAction)-[:BEFORE|AFTER]->(all_sa:StudyActivity)
-            -[:STUDY_ACTIVITY_HAS_STUDY_SOA_GROUP]->(study_soa_group:StudySoAGroup)-[:HAS_FLOWCHART_GROUP]->(fgr:CTTermRoot)
+            -[:STUDY_ACTIVITY_HAS_STUDY_SOA_GROUP]->(study_soa_group:StudySoAGroup)-[:HAS_FLOWCHART_GROUP]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(fgr:CTTermRoot)
             -[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(fgr_value:CTTermNameValue)
         MATCH (study_soa_group:StudySoAGroup)<-[:AFTER]-(asa:StudyAction)
         OPTIONAL MATCH (study_soa_group:StudySoAGroup)<-[:BEFORE]-(bsa:StudyAction)
@@ -476,7 +484,7 @@ class StudySelectionActivityBaseRepository(Generic[_AggregateRootType], abc.ABC)
             -[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_GROUP]->(study_activity_group:StudyActivityGroup)
             -[:HAS_SELECTED_ACTIVITY_GROUP]->(activity_group_value:ActivityGroupValue)
         MATCH (all_sa:StudyActivity)-[:STUDY_ACTIVITY_HAS_STUDY_SOA_GROUP]->(study_soa_group:StudySoAGroup)
-            -[:HAS_FLOWCHART_GROUP]->(fgr:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(fgr_value:CTTermNameValue)
+            -[:HAS_FLOWCHART_GROUP]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(fgr:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(fgr_value:CTTermNameValue)
         MATCH (study_activity_group:StudyActivityGroup)<-[:AFTER]-(asa:StudyAction)
         OPTIONAL MATCH (study_activity_group:StudyActivityGroup)<-[:BEFORE]-(bsa:StudyAction)
         WITH DISTINCT all_sa, fgr_value, activity_group_value, asa, bsa, study_activity_group
@@ -496,7 +504,7 @@ class StudySelectionActivityBaseRepository(Generic[_AggregateRootType], abc.ABC)
         MATCH (all_sa:StudyActivity)-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_GROUP]->(study_activity_group:StudyActivityGroup)
             -[:HAS_SELECTED_ACTIVITY_GROUP]->(activity_group_value:ActivityGroupValue)
         MATCH (all_sa:StudyActivity)-[:STUDY_ACTIVITY_HAS_STUDY_SOA_GROUP]->(study_soa_group:StudySoAGroup)
-            -[:HAS_FLOWCHART_GROUP]->(fgr:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(fgr_value:CTTermNameValue)
+            -[:HAS_FLOWCHART_GROUP]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(fgr:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(fgr_value:CTTermNameValue)
         MATCH (study_activity_subgroup:StudyActivitySubGroup)<-[:AFTER]-(asa:StudyAction)
         OPTIONAL MATCH (study_activity_subgroup:StudyActivitySubGroup)<-[:BEFORE]-(bsa:StudyAction)
         WITH DISTINCT all_sa, fgr_value, activity_group_value, activity_subgroup_value, asa, bsa, study_activity_subgroup
@@ -519,7 +527,7 @@ class StudySelectionActivityBaseRepository(Generic[_AggregateRootType], abc.ABC)
         MATCH (all_sa:StudyActivity)-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_GROUP]->(study_activity_group:StudyActivityGroup)
             -[:HAS_SELECTED_ACTIVITY_GROUP]->(activity_group_value:ActivityGroupValue)
         MATCH (all_sa:StudyActivity)-[:STUDY_ACTIVITY_HAS_STUDY_SOA_GROUP]->(study_soa_group:StudySoAGroup)
-            -[:HAS_FLOWCHART_GROUP]->(fgr:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(fgr_value:CTTermNameValue)
+            -[:HAS_FLOWCHART_GROUP]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(fgr:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(fgr_value:CTTermNameValue)
         MATCH (all_sa:StudyActivity)<-[:AFTER]-(asa:StudyAction)
         OPTIONAL MATCH (all_sa:StudyActivity)<-[:BEFORE]-(bsa:StudyAction)
         WITH DISTINCT all_sa, fgr_value, activity_group_value, activity_subgroup_value, av, asa, bsa
@@ -582,7 +590,7 @@ class StudySelectionActivityBaseRepository(Generic[_AggregateRootType], abc.ABC)
         total_count_query = """
                PROFILE CALL {
         MATCH (sr:StudyRoot {uid: $study_uid})-[:AUDIT_TRAIL]->(:StudyAction)-[:BEFORE|AFTER]->(all_sa:StudyActivity)
-            -[:STUDY_ACTIVITY_HAS_STUDY_SOA_GROUP]->(study_soa_group:StudySoAGroup)-[:HAS_FLOWCHART_GROUP]->(fgr:CTTermRoot)
+            -[:STUDY_ACTIVITY_HAS_STUDY_SOA_GROUP]->(study_soa_group:StudySoAGroup)-[:HAS_FLOWCHART_GROUP]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(fgr:CTTermRoot)
             -[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(fgr_value:CTTermNameValue)
         MATCH (study_soa_group:StudySoAGroup)<-[:AFTER]-(asa:StudyAction)
         RETURN count(distinct study_soa_group) as ct
@@ -591,7 +599,7 @@ class StudySelectionActivityBaseRepository(Generic[_AggregateRootType], abc.ABC)
             -[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_GROUP]->(study_activity_group:StudyActivityGroup)
             -[:HAS_SELECTED_ACTIVITY_GROUP]->(activity_group_value:ActivityGroupValue)
         MATCH (all_sa:StudyActivity)-[:STUDY_ACTIVITY_HAS_STUDY_SOA_GROUP]->(study_soa_group:StudySoAGroup)
-            -[:HAS_FLOWCHART_GROUP]->(fgr:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(fgr_value:CTTermNameValue)
+            -[:HAS_FLOWCHART_GROUP]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(fgr:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(fgr_value:CTTermNameValue)
         MATCH (study_activity_group:StudyActivityGroup)<-[:AFTER]-(asa:StudyAction)
         RETURN count(distinct study_activity_group) as ct
         UNION ALL
@@ -601,7 +609,7 @@ class StudySelectionActivityBaseRepository(Generic[_AggregateRootType], abc.ABC)
         MATCH (all_sa:StudyActivity)-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_GROUP]->(study_activity_group:StudyActivityGroup)
             -[:HAS_SELECTED_ACTIVITY_GROUP]->(activity_group_value:ActivityGroupValue)
         MATCH (all_sa:StudyActivity)-[:STUDY_ACTIVITY_HAS_STUDY_SOA_GROUP]->(study_soa_group:StudySoAGroup)
-            -[:HAS_FLOWCHART_GROUP]->(fgr:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(fgr_value:CTTermNameValue)
+            -[:HAS_FLOWCHART_GROUP]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(fgr:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(fgr_value:CTTermNameValue)
         MATCH (study_activity_subgroup:StudyActivitySubGroup)<-[:AFTER]-(asa:StudyAction)
         RETURN count(distinct study_activity_subgroup) as ct
         UNION ALL
@@ -612,7 +620,7 @@ class StudySelectionActivityBaseRepository(Generic[_AggregateRootType], abc.ABC)
         MATCH (all_sa:StudyActivity)-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_GROUP]->(study_activity_group:StudyActivityGroup)
             -[:HAS_SELECTED_ACTIVITY_GROUP]->(activity_group_value:ActivityGroupValue)
         MATCH (all_sa:StudyActivity)-[:STUDY_ACTIVITY_HAS_STUDY_SOA_GROUP]->(study_soa_group:StudySoAGroup)
-            -[:HAS_FLOWCHART_GROUP]->(fgr:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(fgr_value:CTTermNameValue)
+            -[:HAS_FLOWCHART_GROUP]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(fgr:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(fgr_value:CTTermNameValue)
         MATCH (all_sa:StudyActivity)<-[:AFTER]-(asa:StudyAction)
         RETURN count(distinct all_sa) as ct
         UNION ALL

@@ -1,0 +1,5 @@
+CODELIST_SUBMVAL,SPONSOR_NAME,SPONSOR_NAME_SENTENCE_CASE,TERM_SUBMVAL,DEFINITION,ORDER,CONCEPT_ID,NCI_PREFERRED_NAME,CATALOGUES
+RPCAT,Contraceptive Counselling,contraceptive counselling,CONTRACEPTIVE COUNSELLING,Contraceptive Counselling,1,,Contraceptive Counselling,
+RPCAT,Contraceptive Method,contraceptive method,CONTRACEPTIVE METHOD,Contraceptive Method,2,,Contraceptive Method,
+RPCAT,Pregnancy and Delivery,pregnancy and delivery,PREGNANCY AND DELIVERY,Pregnancy and Delivery,3,,Pregnancy and Delivery,
+RPCAT,Maternal Factors,maternal factors,MATERNAL FACTORS,Maternal Factors,4,,Maternal Factors,

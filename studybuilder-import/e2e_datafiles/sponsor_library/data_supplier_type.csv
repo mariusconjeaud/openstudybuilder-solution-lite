@@ -1,0 +1,4 @@
+CODELIST_SUBMVAL,SPONSOR_NAME,SPONSOR_NAME_SENTENCE_CASE,TERM_SUBMVAL,DEFINITION,ORDER,CONCEPT_ID,CATALOGUES,NCI_PREFERRED_NAME
+DATA_SUPPLIER_TYPE,EDC System,EDC system,EDC SYSTEM,EDC system with either API or odm.xml file based integrations,1,,,EDC system
+DATA_SUPPLIER_TYPE,Lab Data Exchange Files,lab data exchange files,LAB DATA EXCHANGE FILES,Lab data exchange files typically in .csv file formats,2,,,Lab Data Exchange Files
+DATA_SUPPLIER_TYPE,eCOA Data Exchange Files,eCOA data exchange files,ECOA DATA EXCHANGE FILES,eCOA data exchange files typically in .csv file formats,3,,,eCOA Data Exchange Files

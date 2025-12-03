@@ -62,7 +62,10 @@
             />
           </v-col>
         </v-row>
-        <DurationField v-model="form.planned_duration" />
+        <div class="label ml-1">
+          {{ $t('StudyElements.planned_duration_time') }}
+          <DurationField v-model="form.planned_duration" />
+        </div>
         <v-row>
           <v-col>
             <v-textarea
@@ -163,7 +166,7 @@ export default {
     title() {
       return this.metadata
         ? this.$t('StudyElements.edit_el')
-        : this.$t('StudyElements.add_el')
+        : this.$t('StudyElements.add_element')
     },
     elementTypes() {
       if (!this.form.element_subtype_uid) {
@@ -227,10 +230,21 @@ export default {
   },
   methods: {
     close() {
-      this.form = {}
+      // Reset form data
+      this.form = {
+        planned_duration: {},
+      }
       this.$emit('close')
       this.colorHash = null
-      this.$refs.observer.reset()
+
+      // Reset form validation and working state
+      if (this.$refs.observer) {
+        this.$refs.observer.reset()
+      }
+      if (this.$refs.form) {
+        this.$refs.form.working = false
+      }
+
       this.formStore.reset()
     },
     async cancel() {
@@ -255,6 +269,9 @@ export default {
       }
     },
     async submit() {
+      if (!this.form.planned_duration.duration_value) {
+        this.form.planned_duration = null
+      }
       if (this.colorHash) {
         this.form.element_colour =
           this.colorHash.hexa !== undefined
@@ -300,3 +317,12 @@ export default {
   },
 }
 </script>
+<style lang="css" scoped>
+.label {
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 24px;
+  letter-spacing: -0.02em;
+  min-height: 24px;
+}
+</style>

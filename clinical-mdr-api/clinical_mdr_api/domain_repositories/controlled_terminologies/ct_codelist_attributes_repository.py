@@ -1,3 +1,5 @@
+from typing import Any
+
 from neomodel import db
 
 from clinical_mdr_api.domain_repositories._generic_repository_interface import (
@@ -28,6 +30,7 @@ from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryVO,
 )
 from clinical_mdr_api.services.user_info import UserInfoService
+from common.exceptions import BusinessLogicException
 from common.utils import convert_to_datetime
 
 
@@ -68,29 +71,31 @@ class CTCodelistAttributesRepository(
         return len(result) > 0
 
     def _create_aggregate_root_instance_from_cypher_result(
-        self, codelist_dict: dict
+        self, codelist_dict: dict[str, Any]
     ) -> CTCodelistAttributesAR:
         rel_data = codelist_dict["rel_data"]
         major, minor = rel_data.get("version").split(".")
 
+        # print(codelist_dict)
         return CTCodelistAttributesAR.from_repository_values(
-            uid=codelist_dict.get("codelist_uid"),
+            uid=codelist_dict["codelist_uid"],
             ct_codelist_attributes_vo=CTCodelistAttributesVO.from_repository_values(
                 name=codelist_dict.get("value_node").get("name"),
-                catalogue_name=codelist_dict.get("catalogue_name"),
+                catalogue_names=codelist_dict.get("catalogue_names", []),
                 parent_codelist_uid=codelist_dict.get("parent_codelist_uid"),
-                child_codelist_uids=codelist_dict.get("child_codelist_uids"),
+                child_codelist_uids=codelist_dict["child_codelist_uids"],
                 submission_value=codelist_dict.get("value_node").get(
                     "submission_value"
                 ),
                 preferred_term=codelist_dict.get("value_node").get("preferred_term"),
                 definition=codelist_dict.get("value_node").get("definition"),
                 extensible=codelist_dict.get("value_node").get("extensible"),
+                ordinal=bool(codelist_dict.get("value_node").get("ordinal")),
             ),
             library=LibraryVO.from_input_values_2(
-                library_name=codelist_dict.get("library_name"),
+                library_name=codelist_dict["library_name"],
                 is_library_editable_callback=(
-                    lambda _: codelist_dict.get("is_library_editable")
+                    lambda _: codelist_dict["is_library_editable"]
                 ),
             ),
             item_metadata=LibraryItemMetadataVO.from_repository_values(
@@ -110,7 +115,7 @@ class CTCodelistAttributesRepository(
     def _create_aggregate_root_instance_from_version_root_relationship_and_value(
         self,
         root: CTCodelistAttributesRoot,
-        library: Library | None,
+        library: Library,
         relationship: VersionRelationship,
         value: CTCodelistAttributesValue,
         **_kwargs,
@@ -128,15 +133,18 @@ class CTCodelistAttributesRepository(
                 child_codelist_uids=[
                     ct.uid for ct in ct_codelist_root_node.has_child_codelist.all()
                 ],
-                catalogue_name=ct_codelist_root_node.has_codelist.single().name,
+                catalogue_names=[
+                    node.name for node in ct_codelist_root_node.has_codelist.all()
+                ],
                 submission_value=value.submission_value,
                 preferred_term=value.preferred_term,
                 definition=value.definition,
                 extensible=value.extensible,
+                ordinal=value.ordinal,
             ),
             library=LibraryVO.from_input_values_2(
                 library_name=library.name,
-                is_library_editable_callback=(lambda _: library.is_editable),
+                is_library_editable_callback=lambda _: library.is_editable,
             ),
             item_metadata=self._library_item_metadata_vo_from_relation(relationship),
         )
@@ -147,31 +155,38 @@ class CTCodelistAttributesRepository(
         return self._has_data_changed(ar, value)
 
     def _get_or_create_value(
-        self, root: CTCodelistAttributesRoot, ar: CTCodelistAttributesAR
+        self,
+        root: CTCodelistAttributesRoot,
+        ar: CTCodelistAttributesAR,
+        force_new_value_node: bool = False,
     ) -> CTCodelistAttributesValue:
-        for itm in root.has_version.filter(
-            name=ar.name,
-            submission_value=ar.ct_codelist_vo.submission_value,
-            preferred_term=ar.ct_codelist_vo.preferred_term,
-            definition=ar.ct_codelist_vo.definition,
-            extensible=ar.ct_codelist_vo.extensible,
-        ):
-            return itm
-        latest_draft = root.latest_draft.get_or_none()
-        if latest_draft and not self._has_data_changed(ar, latest_draft):
-            return latest_draft
-        latest_final = root.latest_final.get_or_none()
-        if latest_final and not self._has_data_changed(ar, latest_final):
-            return latest_final
-        latest_retired = root.latest_retired.get_or_none()
-        if latest_retired and not self._has_data_changed(ar, latest_retired):
-            return latest_retired
+        if not force_new_value_node:
+            for itm in root.has_version.filter(
+                name=ar.name,
+                submission_value=ar.ct_codelist_vo.submission_value,
+                preferred_term=ar.ct_codelist_vo.preferred_term,
+                definition=ar.ct_codelist_vo.definition,
+                extensible=ar.ct_codelist_vo.extensible,
+                ordinal=ar.ct_codelist_vo.ordinal,
+            ):
+                return itm
+            latest_draft = root.latest_draft.get_or_none()
+            if latest_draft and not self._has_data_changed(ar, latest_draft):
+                return latest_draft
+            latest_final = root.latest_final.get_or_none()
+            if latest_final and not self._has_data_changed(ar, latest_final):
+                return latest_final
+            latest_retired = root.latest_retired.get_or_none()
+            if latest_retired and not self._has_data_changed(ar, latest_retired):
+                return latest_retired
+
         new_value = self.value_class(
             name=ar.name,
             submission_value=ar.ct_codelist_vo.submission_value,
             preferred_term=ar.ct_codelist_vo.preferred_term,
             definition=ar.ct_codelist_vo.definition,
             extensible=ar.ct_codelist_vo.extensible,
+            ordinal=ar.ct_codelist_vo.ordinal,
         )
         self._db_save_node(new_value)
         return new_value
@@ -183,6 +198,7 @@ class CTCodelistAttributesRepository(
             or ar.ct_codelist_vo.preferred_term != value.preferred_term
             or ar.ct_codelist_vo.definition != value.definition
             or ar.ct_codelist_vo.extensible != value.extensible
+            or ar.ct_codelist_vo.ordinal != value.ordinal
         )
 
     def _create(self, item: CTCodelistAttributesAR) -> CTCodelistAttributesAR:
@@ -200,6 +216,7 @@ class CTCodelistAttributesRepository(
             preferred_term=item.ct_codelist_vo.preferred_term,
             definition=item.ct_codelist_vo.definition,
             extensible=item.ct_codelist_vo.extensible,
+            ordinal=item.ct_codelist_vo.ordinal,
         )
         self._db_save_node(root)
 
@@ -226,10 +243,13 @@ class CTCodelistAttributesRepository(
         if parent_codelist:
             ct_codelist_root_node.has_parent_codelist.connect(parent_codelist)
 
-        ct_catalogue_node = CTCatalogue.nodes.get_or_none(
-            name=item.ct_codelist_vo.catalogue_name
-        )
-        ct_codelist_root_node.has_codelist.connect(ct_catalogue_node)
+        for catalogue_name in item.ct_codelist_vo.catalogue_names:
+            ct_catalogue_node = CTCatalogue.nodes.get_or_none(name=catalogue_name)
+            if ct_catalogue_node is None:
+                raise BusinessLogicException(
+                    f"Catalogue with name {catalogue_name} does not exist."
+                )
+            ct_codelist_root_node.has_codelist.connect(ct_catalogue_node)
 
         self._maintain_parameters(item, root, value)
 

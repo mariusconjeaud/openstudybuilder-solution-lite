@@ -14,7 +14,11 @@ from clinical_mdr_api.tests.integration.utils.data_library import (
     STARTUP_ACTIVITY_GROUPS,
     STARTUP_ACTIVITY_SUB_GROUPS,
     STARTUP_STUDY_ACTIVITY_CYPHER,
-    get_codelist_with_term_cypher,
+)
+from clinical_mdr_api.tests.integration.utils.factory_controlled_terminology import (
+    create_codelist,
+    create_ct_term,
+    get_catalogue_name_library_name,
 )
 from clinical_mdr_api.tests.utils.checks import assert_response_status_code
 
@@ -30,10 +34,27 @@ def test_data():
     db.cypher_query(STARTUP_ACTIVITY_GROUPS)
     db.cypher_query(STARTUP_ACTIVITY_SUB_GROUPS)
     db.cypher_query(STARTUP_ACTIVITIES)
-    db.cypher_query(
-        get_codelist_with_term_cypher(
-            "EFFICACY", "Flowchart Group", term_uid="term_efficacy_uid"
-        )
+    catalogue_name, library_name = get_catalogue_name_library_name(use_test_utils=True)
+    ct_term_codelist = create_codelist(
+        "Flowchart Group",
+        "CTCodelist_Name",
+        catalogue_name,
+        library_name,
+        submission_value="FLWCRTGRP",
+    )
+    term_efficacy_uid = "term_efficacy_uid"
+    create_ct_term(
+        codelists=[
+            {
+                "uid": ct_term_codelist.codelist_uid,
+                "submission_value": "EFFICACY",
+                "order": 1,
+            },
+        ],
+        name="EFFICACY",
+        catalogue_name=catalogue_name,
+        library_name=library_name,
+        uid=term_efficacy_uid,
     )
     db.cypher_query(STARTUP_STUDY_ACTIVITY_CYPHER)
 

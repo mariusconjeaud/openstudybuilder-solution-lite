@@ -11,6 +11,7 @@ Tests for /studies/{uid}/study-soa-groups endpoints
 
 import logging
 from datetime import datetime, timezone
+from typing import Any
 
 import pytest
 from fastapi.testclient import TestClient
@@ -32,11 +33,9 @@ from clinical_mdr_api.tests.integration.utils.api import (
     inject_and_clear_db,
     inject_base_data,
 )
-from clinical_mdr_api.tests.integration.utils.data_library import (
-    get_codelist_with_term_cypher,
-)
 from clinical_mdr_api.tests.integration.utils.factory_controlled_terminology import (
     create_codelist,
+    create_ct_term,
     get_catalogue_name_library_name,
 )
 from clinical_mdr_api.tests.integration.utils.utils import TestUtils
@@ -56,6 +55,7 @@ project: Project
 initial_ct_term_study_standard_test: ct_term.CTTerm
 term_efficacy_uid: str
 informed_consent_uid: str
+flowchart_group_codelist_uid: str
 
 
 @pytest.fixture(scope="module")
@@ -71,13 +71,7 @@ def test_data():
     db_name = "study-soa-group.api"
     inject_and_clear_db(db_name)
     global study
-    study = inject_base_data()
-
-    db.cypher_query(
-        get_codelist_with_term_cypher(
-            "EFFICACY", "Flowchart Group", term_uid="term_efficacy_uid"
-        )
-    )
+    study, _test_data_dict = inject_base_data()
 
     global general_activity_group
     global randomisation_activity_subgroup
@@ -125,30 +119,53 @@ def test_data():
     )
     catalogue_name, library_name = get_catalogue_name_library_name(use_test_utils=True)
     # Create a study selection
-    ct_term_codelist = create_codelist(
-        "Flowchart Group", "CTCodelist_Name", catalogue_name, library_name
-    )
 
+    ct_term_codelist = create_codelist(
+        "Flowchart Group",
+        "CTCodelist_Name",
+        catalogue_name,
+        library_name,
+        submission_value="FLWCRTGRP",
+    )
+    global flowchart_group_codelist_uid
+    flowchart_group_codelist_uid = ct_term_codelist.codelist_uid
     global term_efficacy_uid
     term_efficacy_uid = "term_efficacy_uid"
-    db.cypher_query(
-        get_codelist_with_term_cypher(
-            "EFFICACY", "Flowchart Group", term_uid=term_efficacy_uid
-        )
+    create_ct_term(
+        codelists=[
+            {
+                "uid": ct_term_codelist.codelist_uid,
+                "submission_value": "EFFICACY",
+                "order": 1,
+            },
+        ],
+        name="EFFICACY",
+        catalogue_name=catalogue_name,
+        library_name=library_name,
+        uid=term_efficacy_uid,
     )
     global informed_consent_uid
     informed_consent_uid = "informed_consent_uid"
-    db.cypher_query(
-        get_codelist_with_term_cypher(
-            "SAFETY", "Flowchart Group", term_uid=informed_consent_uid
-        )
+    create_ct_term(
+        codelists=[
+            {
+                "uid": ct_term_codelist.codelist_uid,
+                "submission_value": "SAFETY",
+                "order": 2,
+            },
+        ],
+        name="SAFETY",
+        catalogue_name=catalogue_name,
+        library_name=library_name,
+        uid=informed_consent_uid,
     )
+
     global initial_ct_term_study_standard_test
     ct_term_name = "Flowchart Group Name"
     ct_term_start_date = datetime(2020, 3, 25, tzinfo=timezone.utc)
     initial_ct_term_study_standard_test = TestUtils.create_ct_term(
         codelist_uid=ct_term_codelist.codelist_uid,
-        name_submission_value=ct_term_name,
+        submission_value=ct_term_name,
         sponsor_preferred_name=ct_term_name,
         order=1,
         catalogue_name=catalogue_name,
@@ -186,14 +203,22 @@ def test_data():
 
 
 def test_post_and_get_all_study_soa_groups(api_client):
-    study_soa_group_into_study_activity_group_mapping: dict[str, list] = {}
-    study_soa_group_into_soa_group_term_group_mapping: dict[str, list] = {}
+    study_soa_group_into_study_activity_group_mapping: dict[str, list[Any]] = {}
+    study_soa_group_into_soa_group_term_group_mapping: dict[str, list[Any]] = {}
     for i in range(20):
         soa_group_term_uid = f"SoAGroup uid{i}"
-        db.cypher_query(
-            get_codelist_with_term_cypher(
-                f"SoAGroup {i}", "Flowchart Group", term_uid=soa_group_term_uid
-            )
+        create_ct_term(
+            codelists=[
+                {
+                    "uid": flowchart_group_codelist_uid,
+                    "submission_value": soa_group_term_uid,
+                    "order": i + 1,
+                },
+            ],
+            name=f"SoAGroup {i}",
+            catalogue_name="SDTM CT",
+            library_name=initial_ct_term_study_standard_test.library_name,
+            uid=soa_group_term_uid,
         )
         randomized_activity = TestUtils.create_activity(
             name=f"Randomized {i}",
@@ -439,3 +464,39 @@ def test_study_soa_group_reordering(api_client):
     assert study_activities[3]["study_activity_group"]["order"] == 1
     assert study_activities[3]["study_activity_subgroup"]["order"] == 1
     assert study_activities[3]["order"] == 3
+
+    # Change SoAGroup of SA to check whether SoAGroups orders are updated when there is 0 StudyActivities in a SoAGroup after update
+    response = api_client.patch(
+        f"/studies/{test_study.uid}/study-activities/{weight_sa1.study_activity_uid}",
+        json={
+            "soa_group_term_uid": term_efficacy_uid,
+        },
+    )
+    assert_response_status_code(response, 200)
+
+    # Get all SA after StudyActivity SoAGroup patch
+    response = api_client.get(f"/studies/{test_study.uid}/study-activities")
+    assert_response_status_code(response, 200)
+    study_activities = response.json()["items"]
+    assert len(study_activities) == 4
+
+    assert study_activities[0]["activity"]["uid"] == randomized_sa.activity.uid
+    assert study_activities[0]["study_soa_group"]["order"] == 1
+    assert study_activities[0]["study_activity_group"]["order"] == 1
+    assert study_activities[0]["study_activity_subgroup"]["order"] == 1
+    assert study_activities[0]["order"] == 1
+    assert study_activities[1]["activity"]["uid"] == body_measurement_sa.activity.uid
+    assert study_activities[1]["study_soa_group"]["order"] == 1
+    assert study_activities[1]["study_activity_group"]["order"] == 1
+    assert study_activities[1]["study_activity_subgroup"]["order"] == 1
+    assert study_activities[1]["order"] == 2
+    assert study_activities[2]["activity"]["uid"] == weight_sa2.activity.uid
+    assert study_activities[2]["study_soa_group"]["order"] == 1
+    assert study_activities[2]["study_activity_group"]["order"] == 1
+    assert study_activities[2]["study_activity_subgroup"]["order"] == 1
+    assert study_activities[2]["order"] == 3
+    assert study_activities[3]["activity"]["uid"] == weight_sa1.activity.uid
+    assert study_activities[3]["study_soa_group"]["order"] == 1
+    assert study_activities[3]["study_activity_group"]["order"] == 1
+    assert study_activities[3]["study_activity_subgroup"]["order"] == 2
+    assert study_activities[3]["order"] == 1

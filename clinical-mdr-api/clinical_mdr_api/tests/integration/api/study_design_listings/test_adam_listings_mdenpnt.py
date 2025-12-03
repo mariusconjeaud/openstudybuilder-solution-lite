@@ -36,12 +36,19 @@ from clinical_mdr_api.tests.integration.utils.data_library import (
     STARTUP_STUDY_ENDPOINT_CYPHER,
     STARTUP_STUDY_OBJECTIVE_CYPHER,
 )
+from clinical_mdr_api.tests.integration.utils.method_library import (
+    create_codelist,
+    create_ct_term,
+    get_catalogue_name_library_name,
+)
 from clinical_mdr_api.tests.integration.utils.utils import TestUtils
 from clinical_mdr_api.tests.utils.checks import assert_response_status_code
+from common.config import settings
 
 log = logging.getLogger(__name__)
 study: Study
 objective_uid: str
+test_data_dict = {}
 
 
 @pytest.fixture(scope="module")
@@ -73,7 +80,92 @@ def test_data():
     TimeframeTemplateRoot.generate_node_uids_if_not_present()
     TimeframeRoot.generate_node_uids_if_not_present()
 
-    yield
+    _catalogue_name, library_name = get_catalogue_name_library_name()
+    catalogue_name = "SDTM CT"
+
+    objective_level_codelist = create_codelist(
+        "Objective Level",
+        "CTCodelist_ObjectiveLevel",
+        catalogue_name,
+        library_name,
+        submission_value=settings.study_objective_level_cl_submval,
+    )
+    objective_level_term = create_ct_term(
+        "Objective Level 1",
+        "ObjectiveLevel_0001",
+        catalogue_name,
+        library_name,
+        codelists=[
+            {
+                "uid": objective_level_codelist.codelist_uid,
+                "order": 1,
+                "submission_value": "Objective level 1 submval",
+            }
+        ],
+    )
+    test_data_dict["objective_level_term"] = objective_level_term
+
+    # Create a endpoint level codelist
+    endpoint_level_codelist = create_codelist(
+        "Endpoint Level",
+        "CTCodelist_EndpointLevel",
+        catalogue_name,
+        library_name,
+        submission_value=settings.study_endpoint_level_cl_submval,
+    )
+    test_data_dict["endpoint_type_codelist"] = endpoint_level_codelist
+    endpoint_level_term = create_ct_term(
+        "Endpoint Level 1",
+        "EndpointLevel_0001",
+        catalogue_name,
+        library_name,
+        codelists=[
+            {
+                "uid": endpoint_level_codelist.codelist_uid,
+                "order": 1,
+                "submission_value": "Endpoint level 1 submval",
+            }
+        ],
+    )
+    test_data_dict["endpoint_level_term"] = endpoint_level_term
+    endpoint_level_term_2 = create_ct_term(
+        "Endpoint Level 2",
+        "EndpointLevel_0002",
+        catalogue_name,
+        library_name,
+        codelists=[
+            {
+                "uid": endpoint_level_codelist.codelist_uid,
+                "order": 2,
+                "submission_value": "Endpoint level 2 submval",
+            }
+        ],
+    )
+    test_data_dict["endpoint_level_term_2"] = endpoint_level_term_2
+    # Create a endpoint sublevel codelist
+    endpoint_sublevel_codelist = create_codelist(
+        "Endpoint Sublevel",
+        "CTCodelist_EndpointSublevel",
+        catalogue_name,
+        library_name,
+        submission_value=settings.study_endpoint_sublevel_cl_submval,
+    )
+    test_data_dict["endpoint_sublevel_codelist"] = endpoint_sublevel_codelist
+    endpoint_sublevel_term = create_ct_term(
+        "Endpoint Sublevel 1",
+        "EndpointSublevel_0001",
+        catalogue_name,
+        library_name,
+        codelists=[
+            {
+                "uid": endpoint_sublevel_codelist.codelist_uid,
+                "order": 1,
+                "submission_value": "Endpoint sublevel 1 submval",
+            }
+        ],
+    )
+    test_data_dict["endpoint_sublevel_term"] = endpoint_sublevel_term
+    yield test_data_dict
 
 
 def test_adam_listing_mdendpnt(api_client):
@@ -81,42 +173,39 @@ def test_adam_listing_mdendpnt(api_client):
         f"/studies/{study.uid}/study-objectives",
         json={
             "objective_uid": "Objective_000001",
-            "objective_level_uid": "term_root_final",
+            "objective_level_uid": test_data_dict["objective_level_term"].uid,
         },
     )
+    assert_response_status_code(response, 201)
     res = response.json()
     global objective_uid
     objective_uid = res["study_objective_uid"]
-    assert_response_status_code(response, 201)
 
     # create en endpoint 1
     response = api_client.post(
         f"/studies/{study.uid}/study-endpoints",
         json={"endpoint_uid": "Endpoint_000001", "study_objective_uid": objective_uid},
     )
-    res = response.json()
     assert_response_status_code(response, 201)
 
     # create endpoint 2
     response = api_client.post(
         f"/studies/{study.uid}/study-endpoints",
         json={
-            "endpoint_level_uid": "term_root_final",
-            "endpoint_sublevel_uid": "term_root_final_non_edit",
+            "endpoint_level_uid": test_data_dict["endpoint_level_term"].uid,
+            "endpoint_sublevel_uid": test_data_dict["endpoint_sublevel_term"].uid,
             "endpoint_uid": "Endpoint_000001",
             "endpoint_units": {"separator": "string", "units": ["unit 1", "unit 2"]},
             "timeframe_uid": "Timeframe_000001",
             "study_objective_uid": objective_uid,
         },
     )
-    res = response.json()
     assert_response_status_code(response, 201)
 
     # get all endpoints
     response = api_client.get(
         f"/studies/{study.uid}/study-endpoints/audit-trail/",
     )
-    res = response.json()
     assert_response_status_code(response, 200)
 
     response = api_client.get(
@@ -128,12 +217,12 @@ def test_adam_listing_mdendpnt(api_client):
     assert res is not None
 
     expected_output = StudyEndpntAdamListing(
-        STUDYID="Study_000002",
-        OBJTVLVL="term_value_name1",
+        STUDYID_OBJ="Study_000002",
+        OBJTVLVL="Objective Level 1",
         OBJTV="objective_1",
         OBJTVPT="objective_1",
-        ENDPNTLVL="term_value_name1",
-        ENDPNTSL="term_value_name3",
+        ENDPNTLVL="Endpoint Level 1",
+        ENDPNTSL="Endpoint Sublevel 1",
         ENDPNT="endpoint_1",
         ENDPNTPT="endpoint_1",
         UNITDEF=None,
@@ -209,11 +298,13 @@ def test_adam_listing_mdendpnt_versioning(api_client):
         f"/studies/{study.uid}/study-endpoints/StudyEndpoint_000001",
         json={
             "endpoint_uid": "Endpoint_000001",
-            "endpoint_level_uid": "term_root_final5",
+            "endpoint_level_uid": test_data_dict["endpoint_level_term_2"].uid,
         },
     )
     res = response.json()
-    assert res["endpoint_level"]["term_uid"] == "term_root_final5"
+    assert (
+        res["endpoint_level"]["term_uid"] == test_data_dict["endpoint_level_term_2"].uid
+    )
     assert_response_status_code(response, 200)
 
     # get all study mdendpts of a specific study version
@@ -222,7 +313,7 @@ def test_adam_listing_mdendpnt_versioning(api_client):
     )
     res = response.json()
     assert_response_status_code(response, 200)
-    assert res["items"][1]["ENDPNTLVL"] == "term_value_name1"
+    assert res["items"][1]["ENDPNTLVL"] == "Endpoint Level 2"
 
     # get all mdendpts of a specific study version
     response = api_client.get(
@@ -239,7 +330,7 @@ def test_adam_listing_mdendpnt_versioning(api_client):
     )
     res = response.json()
     assert_response_status_code(response, 200)
-    assert "term_value_name1" in res
+    assert "Objective Level 1" in res
 
     # get study mdendpt headers
     response = api_client.get(

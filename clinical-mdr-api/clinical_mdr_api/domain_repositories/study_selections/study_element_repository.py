@@ -1,9 +1,16 @@
 import datetime
 from dataclasses import dataclass
+from typing import Any
 
 from neomodel import db
 
 from clinical_mdr_api import utils
+from clinical_mdr_api.domain_repositories._utils.helpers import (
+    acquire_write_lock_study_value,
+)
+from clinical_mdr_api.domain_repositories.controlled_terminologies.ct_codelist_attributes_repository import (
+    CTCodelistAttributesRepository,
+)
 from clinical_mdr_api.domain_repositories.generic_repository import (
     manage_previous_connected_study_selection_relationships,
 )
@@ -22,7 +29,7 @@ from clinical_mdr_api.domains.study_selections.study_selection_element import (
     StudySelectionElementAR,
     StudySelectionElementVO,
 )
-from common import config as settings
+from common.config import settings
 from common.exceptions import BusinessLogicException
 from common.utils import convert_to_datetime
 
@@ -44,7 +51,7 @@ class SelectionHistoryElement:
     element_subtype: str | None
     # Study selection Versioning
     start_date: datetime.datetime
-    author_id: str | None
+    author_id: str
     change_type: str
     end_date: datetime.datetime | None
     order: int
@@ -53,33 +60,23 @@ class SelectionHistoryElement:
 
 
 class StudySelectionElementRepository:
-    @staticmethod
-    def _acquire_write_lock_study_value(uid: str) -> None:
-        db.cypher_query(
-            """
-             MATCH (sr:StudyRoot {uid: $uid})
-             REMOVE sr.__WRITE_LOCK__
-             RETURN true
-            """,
-            {"uid": uid},
-        )
 
     def get_allowed_configs(self):
         cypher_query = """
         MATCH (:CTCodelistNameValue {name: $code_list_name})<-[:LATEST_FINAL]-(:CTCodelistNameRoot)<-[:HAS_NAME_ROOT]
-        -(:CTCodelistRoot)-[:HAS_TERM]->(term_subtype_root:CTTermRoot)-[:HAS_NAME_ROOT]->
+        -(:CTCodelistRoot)-[ht:HAS_TERM WHERE ht.end_Date IS NULL]->(:CTCodelistTerm)-[:HAS_TERM_ROOT]->(term_subtype_root:CTTermRoot)-[:HAS_NAME_ROOT]->
         (term_subtype_name_root:CTTermNameRoot)-[:LATEST_FINAL]->(term_subtype_name_value:CTTermNameValue)
         MATCH (term_subtype_root)-[:HAS_PARENT_TYPE]->(term_type_root:CTTermRoot)-
         [:HAS_NAME_ROOT]->(term_type_name_root)-[:LATEST_FINAL]->(term_type_name_value:CTTermNameValue)
         return term_subtype_root.uid, term_subtype_name_value.name, term_type_root.uid, term_type_name_value.name
         """
         items, _ = db.cypher_query(
-            cypher_query, {"code_list_name": settings.STUDY_ELEMENT_SUBTYPE_NAME}
+            cypher_query, {"code_list_name": settings.study_element_subtype_name}
         )
         return items
 
     def get_element_type_term_uid_by_element_subtype_term_uid(
-        self, element_subtype_term_uid: str
+        self, element_subtype_term_uid: str | None
     ) -> str | None:
         if element_subtype_term_uid is not None:
             mapping = [
@@ -98,7 +95,7 @@ class StudySelectionElementRepository:
         study_value_version: str | None = None,
     ) -> tuple[StudySelectionElementVO]:
         query = ""
-        query_parameters = {}
+        query_parameters: dict[str, Any] = {}
         if study_uid:
             if study_value_version:
                 query = "MATCH (sr:StudyRoot { uid: $uid})-[l:HAS_VERSION{status:'RELEASED', version:$study_value_version}]->(sv:StudyValue)"
@@ -133,7 +130,7 @@ class StudySelectionElementRepository:
             MATCH (sv)-[:HAS_STUDY_ELEMENT]->(sar:StudyElement)
             WITH DISTINCT sr, sar 
             
-            OPTIONAL MATCH (sar)-[:HAS_ELEMENT_SUBTYPE]->(elr:CTTermRoot)
+            OPTIONAL MATCH (sar)-[:HAS_ELEMENT_SUBTYPE]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(elr:CTTermRoot)
             OPTIONAL MATCH (sar)-[:STUDY_ELEMENT_HAS_COMPOUND_DOSING]->(scd)<-[:HAS_STUDY_COMPOUND_DOSING]-(StudyValue)
 
             MATCH (sar)<-[:AFTER]-(sa:StudyAction)
@@ -191,7 +188,7 @@ class StudySelectionElementRepository:
         study_uid: str,
         for_update: bool = False,
         study_value_version: str | None = None,
-    ) -> StudySelectionElementAR | None:
+    ) -> StudySelectionElementAR:
         """
         Finds all the selected study endpoints for a given study, and creates the aggregate
         :param study_uid:
@@ -199,7 +196,7 @@ class StudySelectionElementRepository:
         :return:
         """
         if for_update:
-            self._acquire_write_lock_study_value(study_uid)
+            acquire_write_lock_study_value(study_uid)
         # take the selections from the db
         all_selections = self._retrieves_all_data(
             study_uid, study_value_version=study_value_version
@@ -231,7 +228,7 @@ class StudySelectionElementRepository:
         query += """
         -[:HAS_STUDY_ELEMENT]->(se:StudyElement {uid: $study_element_uid})
         WITH sr, sv, se
-        OPTIONAL MATCH (se)-[:HAS_ELEMENT_SUBTYPE]->(elr:CTTermRoot)
+        OPTIONAL MATCH (se)-[:HAS_ELEMENT_SUBTYPE]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(elr:CTTermRoot)
         OPTIONAL MATCH (se)-[:STUDY_ELEMENT_HAS_COMPOUND_DOSING]->(scd)<-[:HAS_STUDY_COMPOUND_DOSING]-(sv)
         MATCH (se)<-[:AFTER]-(sa:StudyAction)
         RETURN DISTINCT
@@ -480,9 +477,14 @@ class StudySelectionElementRepository:
             study_element_subtype = CTTermRoot.nodes.get(
                 uid=selection.element_subtype_uid
             )
-            # connect to node
-            # pylint: disable=no-member
-            study_element_selection_node.element_subtype.connect(study_element_subtype)
+            selected_term_node = (
+                CTCodelistAttributesRepository().get_or_create_selected_term(
+                    study_element_subtype,
+                    codelist_submission_value=settings.study_element_subtype_cl_submval,
+                    catalogue_name=settings.sdtm_ct_catalogue_name,
+                )
+            )
+            study_element_selection_node.element_subtype.connect(selected_term_node)
 
     def generate_uid(self) -> str:
         return StudyElement.get_next_free_uid_and_increment_counter()
@@ -509,7 +511,7 @@ class StudySelectionElementRepository:
             cypher
             + """
             WITH DISTINCT all_sa
-            OPTIONAL MATCH (all_sa)-[:HAS_ELEMENT_SUBTYPE]->(at:CTTermRoot)
+            OPTIONAL MATCH (all_sa)-[:HAS_ELEMENT_SUBTYPE]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(at:CTTermRoot)
             WITH DISTINCT all_sa, at
             ORDER BY all_sa.order ASC
             MATCH (all_sa)<-[:AFTER]-(asa:StudyAction)

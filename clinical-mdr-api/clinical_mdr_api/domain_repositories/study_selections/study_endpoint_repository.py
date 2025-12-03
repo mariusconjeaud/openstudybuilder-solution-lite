@@ -1,8 +1,15 @@
 import datetime
+from typing import Any
 
 from neomodel import db
 
 from clinical_mdr_api import utils
+from clinical_mdr_api.domain_repositories._utils.helpers import (
+    acquire_write_lock_study_value,
+)
+from clinical_mdr_api.domain_repositories.controlled_terminologies.ct_codelist_attributes_repository import (
+    CTCodelistAttributesRepository,
+)
 from clinical_mdr_api.domain_repositories.models.concepts import UnitDefinitionRoot
 from clinical_mdr_api.domain_repositories.models.controlled_terminology import (
     CTTermRoot,
@@ -29,22 +36,12 @@ from clinical_mdr_api.domains.study_selections.study_selection_endpoint import (
     StudySelectionEndpointsAR,
     StudySelectionEndpointVO,
 )
-from common.config import STUDY_ENDPOINT_TP_NAME
+from common.config import settings
 from common.exceptions import BusinessLogicException
 from common.utils import convert_to_datetime
 
 
 class StudySelectionEndpointRepository:
-    @staticmethod
-    def _acquire_write_lock_study_value(uid: str) -> None:
-        db.cypher_query(
-            """
-             MATCH (sr:StudyRoot {uid: $uid})
-             REMOVE sr.__WRITE_LOCK__
-             RETURN true
-            """,
-            {"uid": uid},
-        )
 
     def _retrieves_all_data(
         self,
@@ -54,7 +51,7 @@ class StudySelectionEndpointRepository:
         study_value_version: str | None = None,
     ) -> tuple[StudySelectionEndpointVO]:
         query = ""
-        query_parameters = {}
+        query_parameters: dict[str, Any] = {}
 
         if study_uids:
             if isinstance(study_uids, str):
@@ -121,9 +118,9 @@ class StudySelectionEndpointRepository:
             }
             WITH DISTINCT sr, se, obj, tr, timeframe_ver, ver, is_instance
 
-            OPTIONAL MATCH (se)-[:HAS_ENDPOINT_LEVEL]->(elr:CTTermRoot)<-[has_term:HAS_TERM]-(:CTCodelistRoot)
-            -[:HAS_NAME_ROOT]->(:CTCodelistNameRoot)-[:LATEST_FINAL]->(:CTCodelistNameValue {name: "Endpoint Level"})
-            OPTIONAL MATCH (se)-[:HAS_ENDPOINT_SUB_LEVEL]->(endpoint_sublevel_root:CTTermRoot)
+            OPTIONAL MATCH (se)-[:HAS_ENDPOINT_LEVEL]->(level_term_context:CTTermContext)-[:HAS_SELECTED_TERM]->(elr:CTTermRoot)
+            OPTIONAL MATCH (level_term_context)-[:HAS_SELECTED_CODELIST]->(:CTCodelistRoot)-[has_term:HAS_TERM WHERE has_term.end_date IS NULL]->(:CTCodelistTerm)-[:HAS_TERM_ROOT]->(elr)
+            OPTIONAL MATCH (se)-[:HAS_ENDPOINT_SUB_LEVEL]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(endpoint_sublevel_root:CTTermRoot)
         """
         if study_value_version:
             query += """
@@ -229,13 +226,13 @@ class StudySelectionEndpointRepository:
             study_uids=study_uids,
         )
         # Create a dictionary, with study_uid as key, and list of selections as value
-        selection_aggregate_dict = {}
+        selection_aggregate_dict: dict[str, Any] = {}
         selection_aggregates = []
         for selection in all_selections:
             if selection.study_uid in selection_aggregate_dict:
                 selection_aggregate_dict[selection.study_uid].append(selection)
             else:
-                selection_aggregate_dict[selection.study_uid] = [selection]
+                selection_aggregate_dict[selection.study_uid] = [selection]  # type: ignore[index]
         # Then, create the list of VO from the dictionary
         for study_uid, selections in selection_aggregate_dict.items():
             selection_aggregates.append(
@@ -250,7 +247,7 @@ class StudySelectionEndpointRepository:
         study_uid: str,
         for_update: bool = False,
         study_value_version: str | None = None,
-    ) -> StudySelectionEndpointsAR | None:
+    ) -> StudySelectionEndpointsAR:
         """
         Finds all the selected study endpoints for a given study, and creates the aggregate
         :param study_uid:
@@ -258,7 +255,7 @@ class StudySelectionEndpointRepository:
         :return:
         """
         if for_update:
-            self._acquire_write_lock_study_value(study_uid)
+            acquire_write_lock_study_value(study_uid)
         all_selections = self._retrieves_all_data(
             study_uid, study_value_version=study_value_version
         )
@@ -446,7 +443,7 @@ class StudySelectionEndpointRepository:
         study_endpoint_selection_node.save()
 
         # Connect new node with StudyEndpoint template parameter
-        _ = TemplateParameter.nodes.get(name=STUDY_ENDPOINT_TP_NAME)
+        _ = TemplateParameter.nodes.get(name=settings.study_endpoint_tp_name)
         db.cypher_query(
             """
             MATCH (se:StudyEndpoint) WHERE elementId(se)=$element_id SET se:TemplateParameterTermRoot
@@ -456,7 +453,7 @@ class StudySelectionEndpointRepository:
         """,
             {
                 "element_id": study_endpoint_selection_node.element_id,
-                "tp_name": STUDY_ENDPOINT_TP_NAME,
+                "tp_name": settings.study_endpoint_tp_name,
             },
         )
 
@@ -476,6 +473,8 @@ class StudySelectionEndpointRepository:
                 endpoint_root_node: EndpointRoot = EndpointRoot.nodes.get(
                     uid=selection.endpoint_uid
                 )
+                if selection.endpoint_version is None:
+                    raise ValueError("endpoint_version must not be None")
                 latest_endpoint_value_node = endpoint_root_node.get_value_for_version(
                     selection.endpoint_version
                 )
@@ -487,6 +486,8 @@ class StudySelectionEndpointRepository:
                 endpoint_template_root_node: EndpointTemplateRoot = (
                     EndpointTemplateRoot.nodes.get(uid=selection.endpoint_uid)
                 )
+                if selection.endpoint_version is None:
+                    raise ValueError("endpoint_version must not be None")
                 latest_endpoint_template_value_node = (
                     endpoint_template_root_node.get_value_for_version(
                         selection.endpoint_version
@@ -520,11 +521,25 @@ class StudySelectionEndpointRepository:
         # Set endpoint level if exists
         if selection.endpoint_level_uid:
             ct_term_root = CTTermRoot.nodes.get(uid=selection.endpoint_level_uid)
-            study_endpoint_selection_node.has_endpoint_level.connect(ct_term_root)
+            selected_term_node = (
+                CTCodelistAttributesRepository().get_or_create_selected_term(
+                    ct_term_root,
+                    codelist_submission_value=settings.study_endpoint_level_cl_submval,
+                    catalogue_name=settings.sdtm_ct_catalogue_name,
+                )
+            )
+            study_endpoint_selection_node.has_endpoint_level.connect(selected_term_node)
         # Set endpoint sub level if exists
         if selection.endpoint_sublevel_uid:
             ct_term_root = CTTermRoot.nodes.get(uid=selection.endpoint_sublevel_uid)
-            study_endpoint_selection_node.has_endpoint_sublevel.connect(ct_term_root)
+            selected_term_node = CTCodelistAttributesRepository().get_or_create_selected_term(
+                ct_term_root,
+                codelist_submission_value=settings.study_endpoint_sublevel_cl_submval,
+                catalogue_name=settings.sdtm_ct_catalogue_name,
+            )
+            study_endpoint_selection_node.has_endpoint_sublevel.connect(
+                selected_term_node
+            )
         # for all units which was set
         for index, unit in enumerate(selection.endpoint_units, start=1):
             # get unit definition node
@@ -607,8 +622,8 @@ class StudySelectionEndpointRepository:
             }
             WITH DISTINCT all_se, er, tr, timeframe_ver, endpoint_ver
 
-            OPTIONAL MATCH (all_se)-[:HAS_ENDPOINT_LEVEL]->(elr:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST_FINAL]->(:CTTermNameValue)
-            OPTIONAL MATCH (all_se)-[:HAS_ENDPOINT_SUB_LEVEL]->(endpoint_sublevel:CTTermRoot)
+            OPTIONAL MATCH (all_se)-[:HAS_ENDPOINT_LEVEL]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(elr:CTTermRoot)
+            OPTIONAL MATCH (all_se)-[:HAS_ENDPOINT_SUB_LEVEL]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(endpoint_sublevel:CTTermRoot)
             OPTIONAL MATCH (all_se)-[:STUDY_ENDPOINT_HAS_STUDY_OBJECTIVE]->(so:StudyObjective)
 
             WITH all_se, er, tr, elr, so, timeframe_ver, endpoint_ver, endpoint_sublevel
@@ -709,7 +724,10 @@ class StudySelectionEndpointRepository:
         pass
 
     def quantity_of_study_endpoints_in_study_objective_uid(
-        self, study_uid: str, study_objective_uid: str, study_value_version: str = None
+        self,
+        study_uid: str,
+        study_objective_uid: str,
+        study_value_version: str | None = None,
     ) -> int:
         if study_value_version:
             root_match = "MATCH (sr:StudyRoot{uid:$study_uid})-[:HAS_VERSION{version:$study_value_version}]-(sv:StudyValue)"

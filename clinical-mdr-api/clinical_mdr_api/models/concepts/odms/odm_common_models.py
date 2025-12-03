@@ -1,10 +1,11 @@
-from typing import Annotated, Callable, Self
+from typing import Annotated, Callable, Self, overload
 
-from pydantic import Field
+from pydantic import Field, StringConstraints, field_validator
 
 from clinical_mdr_api.domains.concepts.concept_base import ConceptARBase
 from clinical_mdr_api.domains.concepts.odms.vendor_attribute import OdmVendorAttributeAR
 from clinical_mdr_api.models.utils import BaseModel, PostInputModel
+from clinical_mdr_api.models.validators import is_language_supported
 
 
 class OdmElementWithParentUid(BaseModel):
@@ -15,12 +16,12 @@ class OdmElementWithParentUid(BaseModel):
 
 class OdmVendorRelationPostInput(PostInputModel):
     uid: Annotated[str, Field(min_length=1)]
-    value: Annotated[str, Field(min_length=1)]
+    value: Annotated[str | None, Field(min_length=1)] = None
 
 
 class OdmVendorElementRelationPostInput(PostInputModel):
     uid: Annotated[str, Field(min_length=1)]
-    value: Annotated[str | None, Field(min_length=1)]
+    value: Annotated[str | None, Field(min_length=1)] = None
 
 
 class OdmVendorsPostInput(PostInputModel):
@@ -34,13 +35,31 @@ class OdmRefVendorPostInput(PostInputModel):
 
 
 class OdmRefVendorAttributeModel(BaseModel):
+    @overload
     @classmethod
     def from_uid(
         cls,
         uid: str,
         value: str,
         find_odm_vendor_attribute_by_uid: Callable[[str], OdmVendorAttributeAR | None],
+    ) -> Self: ...
+    @overload
+    @classmethod
+    def from_uid(
+        cls,
+        uid: None,
+        value: str,
+        find_odm_vendor_attribute_by_uid: Callable[[str], OdmVendorAttributeAR | None],
+    ) -> None: ...
+    @classmethod
+    def from_uid(
+        cls,
+        uid: str | None,
+        value: str,
+        find_odm_vendor_attribute_by_uid: Callable[[str], OdmVendorAttributeAR | None],
     ) -> Self | None:
+        odm_vendor_element_ref_model = None
+
         if uid is not None:
             odm_vendor_attribute_ar = find_odm_vendor_attribute_by_uid(uid)
             if odm_vendor_attribute_ar is not None:
@@ -61,8 +80,6 @@ class OdmRefVendorAttributeModel(BaseModel):
                     value=None,
                     vendor_namespace_uid=None,
                 )
-        else:
-            odm_vendor_element_ref_model = None
         return odm_vendor_element_ref_model
 
     uid: Annotated[str, Field()]
@@ -82,12 +99,28 @@ class OdmRefVendor(BaseModel):
 
 
 class OdmVendorNamespaceSimpleModel(BaseModel):
+    @overload
     @classmethod
     def from_odm_vendor_namespace_uid(
         cls,
         uid: str,
         find_odm_vendor_namespace_by_uid: Callable[[str], ConceptARBase | None],
+    ) -> Self: ...
+    @overload
+    @classmethod
+    def from_odm_vendor_namespace_uid(
+        cls,
+        uid: None,
+        find_odm_vendor_namespace_by_uid: Callable[[str], ConceptARBase | None],
+    ) -> None: ...
+    @classmethod
+    def from_odm_vendor_namespace_uid(
+        cls,
+        uid: str | None,
+        find_odm_vendor_namespace_by_uid: Callable[[str], ConceptARBase | None],
     ) -> Self | None:
+        simple_odm_vendor_namespace_model = None
+
         if uid is not None:
             odm_vendor_namespace = find_odm_vendor_namespace_by_uid(uid)
 
@@ -113,8 +146,6 @@ class OdmVendorNamespaceSimpleModel(BaseModel):
                     version=None,
                     possible_actions=[],
                 )
-        else:
-            simple_odm_vendor_namespace_model = None
         return simple_odm_vendor_namespace_model
 
     uid: Annotated[str, Field()]
@@ -129,12 +160,28 @@ class OdmVendorNamespaceSimpleModel(BaseModel):
 
 
 class OdmVendorAttributeSimpleModel(BaseModel):
+    @overload
     @classmethod
     def from_odm_vendor_attribute_uid(
         cls,
         uid: str,
         find_odm_vendor_attribute_by_uid: Callable[[str], ConceptARBase | None],
+    ) -> Self: ...
+    @overload
+    @classmethod
+    def from_odm_vendor_attribute_uid(
+        cls,
+        uid: None,
+        find_odm_vendor_attribute_by_uid: Callable[[str], ConceptARBase | None],
+    ) -> None: ...
+    @classmethod
+    def from_odm_vendor_attribute_uid(
+        cls,
+        uid: str | None,
+        find_odm_vendor_attribute_by_uid: Callable[[str], ConceptARBase | None],
     ) -> Self | None:
+        simple_odm_vendor_attribute_model = None
+
         if uid is not None:
             odm_vendor_attribute = find_odm_vendor_attribute_by_uid(uid)
 
@@ -152,10 +199,13 @@ class OdmVendorAttributeSimpleModel(BaseModel):
                 )
             else:
                 simple_odm_vendor_attribute_model = cls(
-                    uid=uid, name=None, status=None, version=None, possible_actions=[]
+                    uid=uid,
+                    name=None,
+                    status=None,
+                    version=None,
+                    compatible_types=[],
+                    possible_actions=[],
                 )
-        else:
-            simple_odm_vendor_attribute_model = None
         return simple_odm_vendor_attribute_model
 
     uid: Annotated[str, Field()]
@@ -170,12 +220,28 @@ class OdmVendorAttributeSimpleModel(BaseModel):
 
 
 class OdmVendorElementSimpleModel(BaseModel):
+    @overload
     @classmethod
     def from_odm_vendor_element_uid(
         cls,
         uid: str,
         find_odm_vendor_element_by_uid: Callable[[str], ConceptARBase | None],
+    ) -> Self: ...
+    @overload
+    @classmethod
+    def from_odm_vendor_element_uid(
+        cls,
+        uid: None,
+        find_odm_vendor_element_by_uid: Callable[[str], ConceptARBase | None],
+    ) -> None: ...
+    @classmethod
+    def from_odm_vendor_element_uid(
+        cls,
+        uid: str | None,
+        find_odm_vendor_element_by_uid: Callable[[str], ConceptARBase | None],
     ) -> Self | None:
+        simple_odm_vendor_element_model = None
+
         if uid is not None:
             odm_vendor_element = find_odm_vendor_element_by_uid(uid)
 
@@ -192,10 +258,13 @@ class OdmVendorElementSimpleModel(BaseModel):
                 )
             else:
                 simple_odm_vendor_element_model = cls(
-                    uid=uid, name=None, status=None, version=None, possible_actions=[]
+                    uid=uid,
+                    name=None,
+                    status=None,
+                    version=None,
+                    compatible_types=[],
+                    possible_actions=[],
                 )
-        else:
-            simple_odm_vendor_element_model = None
         return simple_odm_vendor_element_model
 
     uid: Annotated[str, Field()]
@@ -206,3 +275,31 @@ class OdmVendorElementSimpleModel(BaseModel):
     possible_actions: Annotated[
         list[str] | None, Field(json_schema_extra={"nullable": True})
     ] = None
+
+
+class OdmAliasModel(BaseModel, frozen=True):  # type: ignore[misc]
+    name: Annotated[str, Field(min_length=1)]
+    context: Annotated[str, Field(min_length=1)]
+
+
+class OdmDescriptionModel(BaseModel, frozen=True):  # type: ignore[misc]
+    name: Annotated[str, Field(min_length=1)]
+    language: Annotated[
+        str, StringConstraints(to_lower=True, strip_whitespace=True, min_length=1)
+    ]
+    description: Annotated[
+        str | None, Field(json_schema_extra={"nullable": True, "format": "html"})
+    ] = None
+    instruction: Annotated[
+        str | None, Field(json_schema_extra={"nullable": True, "format": "html"})
+    ] = None
+    sponsor_instruction: Annotated[
+        str | None, Field(json_schema_extra={"nullable": True, "format": "html"})
+    ] = None
+
+    _language_validator = field_validator("language")(is_language_supported)
+
+
+class OdmFormalExpressionModel(BaseModel, frozen=True):  # type: ignore[misc]
+    context: Annotated[str, Field(min_length=1)]
+    expression: Annotated[str, Field(min_length=1)]

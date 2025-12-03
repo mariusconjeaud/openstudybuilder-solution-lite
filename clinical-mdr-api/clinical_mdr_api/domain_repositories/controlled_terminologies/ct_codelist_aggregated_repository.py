@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Any
 
 from neomodel import db
@@ -14,19 +15,24 @@ from clinical_mdr_api.domain_repositories.models._utils import (
 )
 from clinical_mdr_api.domains.controlled_terminologies.ct_codelist_attributes import (
     CTCodelistAttributesAR,
+    CTPairedCodelists,
 )
 from clinical_mdr_api.domains.controlled_terminologies.ct_codelist_name import (
     CTCodelistNameAR,
 )
+from clinical_mdr_api.domains.controlled_terminologies.ct_codelist_term import (
+    CTCodelistTermAR,
+)
+from clinical_mdr_api.models.controlled_terminologies.ct_codelist import CTCodelistTerm
 from clinical_mdr_api.models.controlled_terminologies.ct_stats import CodelistCount
-from clinical_mdr_api.models.utils import GenericFilteringReturn
 from clinical_mdr_api.repositories._utils import (
+    ComparisonOperator,
     CypherQueryBuilder,
     FilterDict,
     FilterOperator,
     validate_filters_and_add_search_string,
 )
-from common.exceptions import ValidationException
+from common.exceptions import BusinessLogicException, ValidationException
 
 
 class CTCodelistAggregatedRepository:
@@ -47,7 +53,7 @@ class CTCodelistAggregatedRepository:
             codelist_root.uid AS codelist_uid,
             head([(codelist_root)-[:HAS_PARENT_CODELIST]->(ccr:CTCodelistRoot) | ccr.uid]) AS parent_codelist_uid,
             [(codelist_root)<-[:HAS_PARENT_CODELIST]-(ccr:CTCodelistRoot) | ccr.uid] AS child_codelist_uids,
-            catalogue.name AS catalogue_name,
+            catalogue_names,
             codelist_attributes_value AS value_node_attributes,
             codelist_name_value AS value_node_name,
             CASE WHEN codelist_name_value:TemplateParameter THEN true ELSE false END AS is_template_parameter,
@@ -70,13 +76,15 @@ class CTCodelistAggregatedRepository:
                 change_description: rel_data_name.change_description,
                 author_id: rel_data_name.author_id,
                 author_username: coalesce(name_author.username, rel_data_name.author_id)
-            } AS rel_data_name
+            } AS rel_data_name,
+            head([(codelist_root)-[:PAIRED_CODE_CODELIST]->(paired_codes_cl_root:CTCodelistRoot) | paired_codes_cl_root.uid]) AS paired_codes_codelist_uid,
+            head([(codelist_root)<-[:PAIRED_CODE_CODELIST]-(paired_names_cl_root:CTCodelistRoot) | paired_names_cl_root.uid]) AS paired_names_codelist_uid
     """
     generic_alias_clause = f"""
         DISTINCT codelist_root, codelist_name_root, codelist_name_value, codelist_attributes_root, codelist_attributes_value
         ORDER BY codelist_root.uid
         WITH DISTINCT codelist_root, codelist_name_root, codelist_name_value, codelist_attributes_root, codelist_attributes_value, 
-        head([(cat:CTCatalogue)-[:HAS_CODELIST]->(codelist_root) | cat]) AS catalogue,
+        [(cat:CTCatalogue)-[:HAS_CODELIST]->(codelist_root) | cat.name] AS catalogue_names,
         head([(lib)-[:CONTAINS_CODELIST]->(codelist_root) | lib]) AS library
         CALL {{
                 WITH codelist_attributes_root, codelist_attributes_value
@@ -109,14 +117,14 @@ class CTCodelistAggregatedRepository:
         ORDER BY codelist_root.uid
         WITH DISTINCT codelist_root, codelist_name_root, codelist_name_value, codelist_attributes_root, codelist_attributes_value,
         attr_v_rel AS rel_data_attributes, name_v_rel AS rel_data_name,
-        head([(cat:CTCatalogue)-[:HAS_CODELIST]->(codelist_root) | cat]) AS catalogue,
+        [(cat:CTCatalogue)-[:HAS_CODELIST]->(codelist_root) | cat.name] AS catalogue_names,
         head([(lib)-[:CONTAINS_CODELIST]->(codelist_root) | lib]) AS library
         {generic_final_alias_clause}
     """
 
     def _create_codelist_aggregate_instances_from_cypher_result(
-        self, codelist_dict: dict
-    ) -> tuple[CTCodelistNameAR, CTCodelistAttributesAR]:
+        self, codelist_dict: dict[str, Any]
+    ) -> tuple[CTCodelistNameAR, CTCodelistAttributesAR, CTPairedCodelists]:
         """
         Method creates a tuple of CTCodelistNameAR and CTCodelistAttributesAR objects for one CTCodelistRoot node.
         The term_dict is a find_all_aggregated_result method result for one CTCodelistRoot node.
@@ -132,7 +140,11 @@ class CTCodelistAggregatedRepository:
                 codelist_dict=codelist_dict, is_aggregated_query=True
             )
         )
-        return codelist_name_ar, codelist_attributes_ar
+        paired_codelists = CTPairedCodelists(
+            paired_names_codelist_uid=codelist_dict.get("paired_names_codelist_uid"),
+            paired_codes_codelist_uid=codelist_dict.get("paired_codes_codelist_uid"),
+        )
+        return codelist_name_ar, codelist_attributes_ar, paired_codelists
 
     def find_all_aggregated_result(
         self,
@@ -140,14 +152,16 @@ class CTCodelistAggregatedRepository:
         library: str | None = None,
         package: str | None = None,
         is_sponsor: bool = False,
-        sort_by: dict | None = None,
+        sort_by: dict[str, bool] | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: dict | None = None,
-        filter_operator: FilterOperator | None = FilterOperator.AND,
+        filter_by: dict[str, dict[str, Any]] | None = None,
+        filter_operator: FilterOperator = FilterOperator.AND,
         total_count: bool = False,
-        term_filter: dict | None = None,
-    ) -> GenericFilteringReturn[tuple[CTCodelistNameAR, CTCodelistAttributesAR]]:
+        term_filter: dict[str, str | list[Any]] | None = None,
+    ) -> tuple[
+        list[tuple[CTCodelistNameAR, CTCodelistAttributesAR, CTPairedCodelists]], int
+    ]:
         """
         Method runs a cypher query to fetch all data related to the CTCodelistName* and CTCodelistAttributes*.
         It allows to filter the query output by catalogue_name, library and package.
@@ -196,7 +210,7 @@ class CTCodelistAggregatedRepository:
             sort_by=sort_by,
             page_number=page_number,
             page_size=page_size,
-            filter_by=FilterDict(elements=filter_by),
+            filter_by=FilterDict.model_validate({"elements": filter_by}),
             filter_operator=filter_operator,
             total_count=total_count,
             wildcard_properties_list=list_codelist_wildcard_properties(),
@@ -225,7 +239,7 @@ class CTCodelistAggregatedRepository:
             if len(count_result) > 0:
                 total = count_result[0][0]
 
-        return GenericFilteringReturn.create(items=codelists_ars, total=total)
+        return codelists_ars, total
 
     def get_distinct_headers(
         self,
@@ -234,9 +248,9 @@ class CTCodelistAggregatedRepository:
         library: str | None = None,
         package: str | None = None,
         is_sponsor: bool = False,
-        search_string: str | None = "",
-        filter_by: dict | None = None,
-        filter_operator: FilterOperator | None = FilterOperator.AND,
+        search_string: str = "",
+        filter_by: dict[str, dict[str, Any]] | None = None,
+        filter_operator: FilterOperator = FilterOperator.AND,
         page_size: int = 10,
     ) -> list[Any]:
         """
@@ -280,7 +294,7 @@ class CTCodelistAggregatedRepository:
 
         # Use Cypher query class to use reusable helper methods
         query = CypherQueryBuilder(
-            filter_by=FilterDict(elements=filter_by),
+            filter_by=FilterDict.model_validate({"elements": filter_by}),
             filter_operator=filter_operator,
             match_clause=match_clause,
             alias_clause=alias_clause,
@@ -307,7 +321,7 @@ class CTCodelistAggregatedRepository:
         library_name: str | None = None,
         package: str | None = None,
         is_sponsor: bool = False,
-        term_filter: dict | None = None,
+        term_filter: dict[str, str | list[Any]] | None = None,
     ):
         match_clause = ""
 
@@ -326,15 +340,15 @@ class CTCodelistAggregatedRepository:
                 if "operator" in term_filter and term_filter["operator"] != "and":
                     operation_function = "any"
 
-                match_clause += f"""MATCH (codelist_root:CTCodelistRoot)-[:HAS_TERM]->(ct_term:CTTermRoot)
-                WHERE ct_term.uid IN {term_filter["term_uids"]}
+                match_clause += f"""MATCH (codelist_root:CTCodelistRoot)-[_has_term:HAS_TERM]->(:CTCodelistTerm)-[:HAS_TERM_ROOT]->(ct_term:CTTermRoot)
+                WHERE ct_term.uid IN {term_filter["term_uids"]} AND _has_term.end_date IS NULL
                 WITH codelist_root, collect(ct_term.uid) as ct_term_uids
                 WHERE {operation_function}(term_uid IN {term_filter["term_uids"]} WHERE term_uid IN ct_term_uids)
                 """
 
             match_clause += f"""
                 MATCH (package:CTPackage)-[:EXTENDS_PACKAGE]->(parent_package:CTPackage)
-                WITH package, parent_package, datetime(package.effective_date + "T23:59:59") AS exact_datetime
+                WITH package, parent_package, datetime(toString(date(package.effective_date)) + 'T23:59:59') AS exact_datetime
                 {"WHERE package.name=$package_name" if package else ""}
                 """
 
@@ -393,8 +407,8 @@ class CTCodelistAggregatedRepository:
                 if "operator" in term_filter and term_filter["operator"] != "and":
                     operation_function = "any"
 
-                match_clause += f"""MATCH (codelist_root:CTCodelistRoot)-[:HAS_TERM]->(ct_term:CTTermRoot)
-                WHERE ct_term.uid IN {term_filter["term_uids"]}
+                match_clause += f"""MATCH (codelist_root:CTCodelistRoot)-[_has_term:HAS_TERM]->(:CTCodelistTerm)-[:HAS_TERM_ROOT]->(ct_term:CTTermRoot)
+                WHERE ct_term.uid IN {term_filter["term_uids"]} AND _has_term.end_date IS NULL
                 WITH codelist_root, collect(ct_term.uid) as ct_term_uids
                 WHERE {operation_function}(term_uid IN {term_filter["term_uids"]} WHERE term_uid IN ct_term_uids)
                 """
@@ -448,3 +462,380 @@ class CTCodelistAggregatedRepository:
         # Our repository guidelines state that repos should have a close method
         # But nothing needs to be done in this one
         pass
+
+    def find_all_terms_aggregated_result(
+        self,
+        codelist_uid: str | None = None,
+        codelist_submission_value: str | None = None,
+        codelist_name: str | None = None,
+        package: str | None = None,
+        include_removed: bool | None = None,
+        at_specific_date_time: datetime | None = None,
+        sort_by: dict[str, bool] | None = None,
+        page_number: int = 1,
+        page_size: int = 0,
+        filter_by: dict[str, dict[str, Any]] | None = None,
+        filter_operator: FilterOperator = FilterOperator.AND,
+        total_count: bool = False,
+    ) -> tuple[list[CTCodelistTermAR], int]:
+        BusinessLogicException.raise_if_not(
+            codelist_uid or codelist_submission_value or codelist_name,
+            msg="At least one of codelist_uid, submission_value or name must be provided.",
+        )
+        if at_specific_date_time:
+            end_date_where = "WHERE (ht.end_date IS NULL OR ht.end_date > datetime($at_specific_date_time)) AND ht.start_date <= datetime($at_specific_date_time)"
+        elif not include_removed:
+            end_date_where = "WHERE ht.end_date IS NULL"
+        else:
+            end_date_where = ""
+        # Build match_clause
+        if codelist_uid:
+            root_match_clause = (
+                "MATCH (codelist_root:CTCodelistRoot {uid: $codelist_uid})"
+            )
+        elif codelist_submission_value:
+            root_match_clause = """
+                                MATCH (codelist_root:CTCodelistRoot)-[:HAS_ATTRIBUTES_ROOT]->
+                                (:CTCodelistAttributesRoot)-[:LATEST]->(:CTCodelistAttributesValue {submission_value: $codelist_submission_value})
+                                """
+        else:
+            root_match_clause = """
+                                MATCH (codelist_root:CTCodelistRoot)-[:HAS_NAME_ROOT]->
+                                (:CTCodelistNameRoot)-[:LATEST]->(:CTCodelistNameValue {name: $codelist_name})
+                                """
+        if package:
+            match_clause = f"""
+                {root_match_clause}
+                MATCH (codelist_root)-[:HAS_ATTRIBUTES_ROOT]->(:CTCodelistAttributesRoot)-[:HAS_VERSION]->
+                    (:CTCodelistAttributesValue)<-[:CONTAINS_ATTRIBUTES]-(pcl:CTPackageCodelist)<-[:CONTAINS_CODELIST]-(:CTPackage {{name: $package}})
+                MATCH (codelist_root)-[ht:HAS_TERM]->(ct_cl_term:CTCodelistTerm)-[:HAS_TERM_ROOT]->(ct_term_root:CTTermRoot)-[:HAS_ATTRIBUTES_ROOT]->
+                    (tar:CTTermAttributesRoot)-[hav:HAS_VERSION {{status: "Final"}}]->(tav:CTTermAttributesValue)<-[:CONTAINS_ATTRIBUTES]-(:CTPackageTerm)<-[:CONTAINS_TERM]-(pcl)
+                MATCH (library:Library)-[:CONTAINS_TERM]->(ct_term_root)-[:HAS_NAME_ROOT]->(tnr:CTTermNameRoot)-[:LATEST]->(tnv:CTTermNameValue)
+            """
+        else:
+            # TODO if at_specific_date_time is provided, the query should fetch the term name and attributes
+            # at the specific date time, not the latest ones.
+            match_clause = f"""
+                {root_match_clause}
+                MATCH (codelist_root)-[ht:HAS_TERM]->(ct_cl_term:CTCodelistTerm)-[:HAS_TERM_ROOT]->(ct_term_root:CTTermRoot)<-[:CONTAINS_TERM]-(library:Library)
+                {end_date_where}
+                MATCH (ct_term_root)-[:HAS_NAME_ROOT]->(tnr:CTTermNameRoot)-[:LATEST]->(tnv:CTTermNameValue)
+                MATCH (ct_term_root)-[:HAS_ATTRIBUTES_ROOT]->(tar:CTTermAttributesRoot)-[:LATEST]->(tav:CTTermAttributesValue)
+            """
+
+        if package:
+            alias_clause = """
+                DISTINCT codelist_root, ht, ct_cl_term, ct_term_root, tnr, tnv, tav, library, hav AS rel_data_attributes
+                CALL {
+                    WITH tnr, tnv
+                    MATCH (tnr)-[hv:HAS_VERSION]->(tnv)
+                    WITH hv
+                    ORDER BY
+                        toInteger(split(hv.version, '.')[0]) ASC,
+                        toInteger(split(hv.version, '.')[1]) ASC,
+                        hv.end_date ASC,
+                        hv.start_date ASC
+                    WITH collect(hv) as hvs
+                    RETURN last(hvs) AS rel_data_name
+                }
+            """
+        else:
+            alias_clause = """
+                DISTINCT codelist_root, ht, ct_cl_term, ct_term_root, tnr, tnv, tar, tav, library
+                CALL {
+                    WITH tar, tav
+                    MATCH (tar)-[hv:HAS_VERSION]->(tav)
+                    WITH hv 
+                    ORDER BY
+                        toInteger(split(hv.version, '.')[0]) ASC,
+                        toInteger(split(hv.version, '.')[1]) ASC,
+                        hv.end_date ASC,
+                        hv.start_date ASC
+                    WITH collect(hv) as hvs
+                    RETURN last(hvs) AS rel_data_attributes
+                }
+                CALL {
+                    WITH tnr, tnv
+                    MATCH (tnr)-[hv:HAS_VERSION]->(tnv)
+                    WITH hv
+                    ORDER BY
+                        toInteger(split(hv.version, '.')[0]) ASC,
+                        toInteger(split(hv.version, '.')[1]) ASC,
+                        hv.end_date ASC,
+                        hv.start_date ASC
+                    WITH collect(hv) as hvs
+                    RETURN last(hvs) AS rel_data_name
+                }
+            """
+
+        final_alias_clause = f"""
+            {alias_clause}
+            WITH
+            ct_term_root.uid AS term_uid,
+            ct_cl_term.submission_value AS submission_value,
+            ht.order AS order,
+            ht.start_date AS start_date,
+            ht.end_date AS end_date,
+            tav.definition AS definition,
+            tav.concept_id AS concept_id,
+            tav.preferred_term AS nci_preferred_name,
+            rel_data_attributes.start_date AS attributes_date,
+            rel_data_attributes.status AS attributes_status,
+            tnv.name AS sponsor_preferred_name,
+            tnv.name_sentence_case AS sponsor_preferred_name_sentence_case,
+            rel_data_name.start_date AS name_date,
+            rel_data_name.status AS name_status,
+            library.name AS library_name
+
+        """
+
+        if sort_by is None:
+            sort_by = {"order": True}
+
+        query = CypherQueryBuilder(
+            filter_by=FilterDict.model_validate({"elements": filter_by}),
+            filter_operator=filter_operator,
+            match_clause=match_clause,
+            alias_clause=final_alias_clause,
+            wildcard_properties_list=list_codelist_wildcard_properties(
+                target_model=CTCodelistTerm, transform=False
+            ),
+            # format_filter_sort_keys=format_codelist_filter_sort_keys,
+            sort_by=sort_by,
+            page_number=page_number,
+            page_size=page_size,
+            total_count=total_count,
+        )
+        query.parameters.update({"codelist_uid": codelist_uid})
+        if package:
+            query.parameters.update({"package": package})
+        if at_specific_date_time:
+            query.parameters.update({"at_specific_date_time": at_specific_date_time})
+        if codelist_uid:
+            query.parameters.update({"codelist_uid": codelist_uid})
+        if codelist_submission_value:
+            query.parameters.update(
+                {"codelist_submission_value": codelist_submission_value}
+            )
+        if codelist_name:
+            query.parameters.update({"codelist_name": codelist_name})
+
+        result_array, attributes_names = query.execute()
+
+        codelist_term_ars = []
+        for term in result_array:
+            term_dictionary = {}
+            for term_property, attribute_name in zip(term, attributes_names):
+                term_dictionary[attribute_name] = term_property
+            codelist_term_ars.append(CTCodelistTermAR.from_result_dict(term_dictionary))
+
+        total = 0
+        if total_count:
+            count_result, _ = db.cypher_query(
+                query=query.count_query, params=query.parameters
+            )
+            if len(count_result) > 0:
+                total = count_result[0][0]
+
+        return codelist_term_ars, total
+
+    def get_distinct_term_headers(
+        self,
+        codelist_uid: str,
+        field_name: str,
+        package: str | None = None,
+        include_removed: bool | None = None,
+        search_string: str | None = "",
+        filter_by: dict[str, dict[str, Any]] | None = None,
+        filter_operator: FilterOperator = FilterOperator.AND,
+        page_size: int = 10,
+    ) -> list[Any]:
+        """
+        Method runs a cypher query to fetch possible values for a given field_name, with a limit of page_size.
+        It uses generic filtering capability, on top of filtering the field_name with provided search_string.
+
+        :param codelist_uid: UID of the Codelist for which to return possible values
+        :param field_name: Field name for which to return possible values
+        :param package:
+        :param search_string:
+        :param filter_by:
+        :param filter_operator: Same as for generic filtering
+        :param page_size: Max number of values to return. Default 10
+        :return list[Any]:
+        """
+
+        # Add header field name to filter_by, to filter with a CONTAINS pattern
+        if search_string != "":
+            if filter_by is None:
+                filter_by = {}
+            filter_by[field_name] = {
+                "v": [search_string],
+                "op": ComparisonOperator.CONTAINS,
+            }
+
+        if not include_removed:
+            end_date_where = "WHERE ht.end_date IS NULL"
+        else:
+            end_date_where = ""
+
+        # Build match_clause
+        if package:
+            match_clause = """
+                MATCH (codelist_root:CTCodelistRoot {uid: $codelist_uid})-[:HAS_ATTRIBUTES_ROOT]->(:CTCodelistAttributesRoot)-[:HAS_VERSION]->(:CTCodelistAttributesValue)<-[:CONTAINS_ATTRIBUTES]-(pcl:CTPackageCodelist)<-[:CONTAINS_CODELIST]-(:CTPackage {name: $package})
+                MATCH (codelist_root)-[ht:HAS_TERM]->(ct_cl_term:CTCodelistTerm)-[:HAS_TERM_ROOT]->(ct_term_root:CTTermRoot)-[:HAS_ATTRIBUTES_ROOT]->(tar:CTTermAttributesRoot)-[hav:HAS_VERSION {status: "Final"}]->(tav:CTTermAttributesValue)<-[:CONTAINS_ATTRIBUTES]-(:CTPackageTerm)<-[:CONTAINS_TERM]-(pcl)
+                MATCH (library:Library)-[:CONTAINS_TERM]->(ct_term_root)-[:HAS_NAME_ROOT]->(tnr:CTTermNameRoot)-[:LATEST]->(tnv:CTTermNameValue)
+            """
+        else:
+            match_clause = f"""
+                MATCH (codelist_root:CTCodelistRoot {{uid: $codelist_uid}})-[ht:HAS_TERM]->(ct_cl_term:CTCodelistTerm)-[:HAS_TERM_ROOT]->(ct_term_root:CTTermRoot)<-[:CONTAINS_TERM]-(library:Library)
+                {end_date_where}
+                MATCH (ct_term_root)-[:HAS_NAME_ROOT]->(tnr:CTTermNameRoot)-[:LATEST]->(tnv:CTTermNameValue)
+                MATCH (ct_term_root)-[:HAS_ATTRIBUTES_ROOT]->(tar:CTTermAttributesRoot)-[:LATEST]->(tav:CTTermAttributesValue)
+            """
+
+        if package:
+            alias_clause = """
+                DISTINCT codelist_root, ht, ct_cl_term, ct_term_root, tnr, tnv, tav, library, hav AS rel_data_attributes
+                CALL {
+                    WITH tnr, tnv
+                    MATCH (tnr)-[hv:HAS_VERSION]->(tnv)
+                    WITH hv
+                    ORDER BY
+                        toInteger(split(hv.version, '.')[0]) ASC,
+                        toInteger(split(hv.version, '.')[1]) ASC,
+                        hv.end_date ASC,
+                        hv.start_date ASC
+                    WITH collect(hv) as hvs
+                    RETURN last(hvs) AS rel_data_name
+                }
+            """
+        else:
+            alias_clause = """
+                DISTINCT codelist_root, ht, ct_cl_term, ct_term_root, tnr, tnv, tar, tav, library
+                CALL {
+                    WITH tar, tav
+                    MATCH (tar)-[hv:HAS_VERSION]->(tav)
+                    WITH hv 
+                    ORDER BY
+                        toInteger(split(hv.version, '.')[0]) ASC,
+                        toInteger(split(hv.version, '.')[1]) ASC,
+                        hv.end_date ASC,
+                        hv.start_date ASC
+                    WITH collect(hv) as hvs
+                    RETURN last(hvs) AS rel_data_attributes
+                }
+                CALL {
+                    WITH tnr, tnv
+                    MATCH (tnr)-[hv:HAS_VERSION]->(tnv)
+                    WITH hv
+                    ORDER BY
+                        toInteger(split(hv.version, '.')[0]) ASC,
+                        toInteger(split(hv.version, '.')[1]) ASC,
+                        hv.end_date ASC,
+                        hv.start_date ASC
+                    WITH collect(hv) as hvs
+                    RETURN last(hvs) AS rel_data_name
+                }
+            """
+
+        final_alias_clause = f"""
+            {alias_clause}
+            WITH
+            ct_term_root.uid AS term_uid,
+            ct_cl_term.submission_value AS submission_value,
+            ht.order AS order,
+            ht.start_date AS start_date,
+            ht.end_date AS end_date,
+            tav.definition AS definition,
+            tav.concept_id AS concept_id,
+            tav.nci_preferred_name AS nci_preferred_name,
+            rel_data_attributes.start_date AS attributes_date,
+            rel_data_attributes.status AS attributes_status,
+            tnv.name AS sponsor_preferred_name,
+            tnv.name_sentence_case AS sponsor_preferred_name_sentence_case,
+            rel_data_name.start_date AS name_date,
+            rel_data_name.status AS name_status,
+            library.name AS library_name
+
+        """
+
+        # Use Cypher query class to use reusable helper methods
+        query = CypherQueryBuilder(
+            filter_by=FilterDict.model_validate({"elements": filter_by}),
+            filter_operator=filter_operator,
+            match_clause=match_clause,
+            alias_clause=final_alias_clause,
+            wildcard_properties_list=list_codelist_wildcard_properties(
+                target_model=CTCodelistTerm
+            ),
+            # format_filter_sort_keys=format_codelist_filter_sort_keys,
+        )
+        query.parameters.update({"codelist_uid": codelist_uid})
+        if package:
+            query.parameters.update({"package": package})
+
+        query.full_query = query.build_header_query(
+            header_alias=field_name,
+            page_size=page_size,
+        )
+
+        result_array, _ = query.execute()
+
+        return (
+            format_generic_header_values(result_array[0][0])
+            if len(result_array) > 0
+            else []
+        )
+
+    def merge_link_to_codes_codelist(self, codelist_uid: str, codes_codelist_uid: str):
+        """
+        Create a PAIRED_CODE_CODELIST relationship between two CTCodelistRoot nodes.
+        """
+        query = """
+            MATCH (names_codelist_root:CTCodelistRoot {uid: $codelist_uid}), (codes_codelist_root:CTCodelistRoot {uid: $codes_codelist_uid})
+            OPTIONAL MATCH (names_codelist_root)-[existing_codes:PAIRED_CODE_CODELIST]->(:CTCodelistRoot)
+            OPTIONAL MATCH (codes_codelist_root)<-[existing_names:PAIRED_CODE_CODELIST]-(:CTCodelistRoot)
+            DELETE existing_codes
+            DELETE existing_names
+            MERGE (names_codelist_root)-[:PAIRED_CODE_CODELIST]->(codes_codelist_root)
+        """
+        db.cypher_query(
+            query,
+            {"codelist_uid": codelist_uid, "codes_codelist_uid": codes_codelist_uid},
+        )
+
+    def remove_link_to_codes_codelist(self, codelist_uid: str):
+        """
+        Remove a PAIRED_CODE_CODELIST relationship between two CTCodelistRoot nodes.
+        """
+        query = """
+            MATCH (codelist_root:CTCodelistRoot {uid: $codelist_uid})-[pcl:PAIRED_CODE_CODELIST]->(:CTCodelistRoot)
+            DELETE pcl
+        """
+        db.cypher_query(query, {"codelist_uid": codelist_uid})
+
+    def remove_link_from_codes_codelist(self, codelist_uid: str):
+        """
+        Remove a PAIRED_CODE_CODELIST relationship between two CTCodelistRoot nodes.
+        """
+        query = """
+            MATCH (codelist_root:CTCodelistRoot {uid: $codelist_uid})<-[pcl:PAIRED_CODE_CODELIST]-(:CTCodelistRoot)
+            DELETE pcl
+        """
+        db.cypher_query(query, {"codelist_uid": codelist_uid})
+
+    def get_paired_codelist_uids(
+        self, codelist_uid: str
+    ) -> tuple[str | None, str | None]:
+        """
+        Get the UID of the linked codes codelist for a given codelist.
+        Returns None if no linked codes codelist exists.
+        """
+        query = """
+            MATCH (codelist_root:CTCodelistRoot {uid: $codelist_uid})
+            OPTIONAL MATCH (codelist_root)-[:PAIRED_CODE_CODELIST]->(codes_codelist_root:CTCodelistRoot)
+            OPTIONAL MATCH (codelist_root)<-[:PAIRED_CODE_CODELIST]-(names_codelist_root:CTCodelistRoot)
+            RETURN codes_codelist_root.uid AS codes_codelist_uid, names_codelist_root.uid AS names_codelist_uid
+        """
+        result, _ = db.cypher_query(query, {"codelist_uid": codelist_uid})
+        return result[0] if result else (None, None)

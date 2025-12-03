@@ -1,8 +1,11 @@
+from typing import Any
+
 from neomodel import db
 
 from clinical_mdr_api.domains.listings.utils import AdamReport
 from clinical_mdr_api.listings.query_service import QueryService
 from clinical_mdr_api.models.listings.listings_adam import (
+    FlowchartMetadataAdamListing,
     StudyEndpntAdamListing,
     StudyVisitAdamListing,
 )
@@ -22,6 +25,18 @@ class ADAMListingsService:
         self._query_service = QueryService()
 
     @db.transaction
+    def list_mdflow(
+        self,
+        study_uid: str,
+        study_value_version: str | None = None,
+    ) -> list[FlowchartMetadataAdamListing]:
+        data = self._query_service.get_mdflow(
+            study_uid=study_uid, study_value_version=study_value_version
+        )
+        result = [FlowchartMetadataAdamListing.from_query(item) for item in data]
+        return result
+
+    @db.transaction
     def list_mdvisit(
         self,
         study_uid: str,
@@ -30,7 +45,7 @@ class ADAMListingsService:
         data = self._query_service.get_mdvisit(
             study_uid=study_uid, study_value_version=study_value_version
         )
-        result = list(map(StudyVisitAdamListing.from_query, data))
+        result = [StudyVisitAdamListing.from_query(item) for item in data]
         return result
 
     @db.transaction
@@ -42,23 +57,24 @@ class ADAMListingsService:
         data = self._query_service.get_mdendpnt(
             study_uid=study_uid, study_value_version=study_value_version
         )
-        result = list(map(StudyEndpntAdamListing.from_query, data))
+        result = [StudyEndpntAdamListing.from_query(item) for item in data]
         return result
 
     def get_report(
         self,
         adam_report: AdamReport,
         study_uid: str,
-        sort_by: dict | None = None,
+        sort_by: dict[str, bool] | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: dict | None = None,
-        filter_operator: FilterOperator | None = FilterOperator.AND,
+        filter_by: dict[str, dict[str, Any]] | None = None,
+        filter_operator: FilterOperator = FilterOperator.AND,
         total_count: bool = False,
         study_value_version: str | None = None,
     ) -> (
         GenericFilteringReturn[StudyVisitAdamListing]
         | GenericFilteringReturn[StudyEndpntAdamListing]
+        | GenericFilteringReturn[FlowchartMetadataAdamListing]
     ):
         result = []
 
@@ -70,8 +86,12 @@ class ADAMListingsService:
             result = self.list_mdendpnt(
                 study_uid, study_value_version=study_value_version
             )
+        elif adam_report == AdamReport.MDFLOW:
+            result = self.list_mdflow(
+                study_uid, study_value_version=study_value_version
+            )
 
-        filtered_items = service_level_generic_filtering(
+        return service_level_generic_filtering(
             items=result,
             filter_by=filter_by,
             filter_operator=filter_operator,
@@ -80,16 +100,15 @@ class ADAMListingsService:
             page_number=page_number,
             page_size=page_size,
         )
-        return filtered_items
 
     def get_distinct_adam_listing_values_for_headers(
         self,
         field_name: str,
         adam_report: AdamReport,
         study_uid: str,
-        search_string: str | None = "",
-        filter_by: dict | None = None,
-        filter_operator: FilterOperator | None = FilterOperator.AND,
+        search_string: str = "",
+        filter_by: dict[str, dict[str, Any]] | None = None,
+        filter_operator: FilterOperator = FilterOperator.AND,
         page_size: int = 10,
         study_value_version: str | None = None,
     ):
@@ -101,6 +120,10 @@ class ADAMListingsService:
             )
         elif adam_report == AdamReport.MDENDPNT:
             result = self.list_mdendpnt(
+                study_uid, study_value_version=study_value_version
+            )
+        elif adam_report == AdamReport.MDFLOW:
+            result = self.list_mdflow(
                 study_uid, study_value_version=study_value_version
             )
 

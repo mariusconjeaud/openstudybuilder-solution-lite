@@ -1,3 +1,5 @@
+from typing import Any
+
 from neomodel import db
 
 from clinical_mdr_api.domain_repositories.concepts.unit_definitions.unit_definition_repository import (
@@ -31,8 +33,8 @@ class UnitDefinitionService(ConceptGenericService[UnitDefinitionAR]):
     ) -> UnitDefinitionModel:
         return UnitDefinitionModel.from_unit_definition_ar(
             item_ar,
-            find_term_by_uid=self._repos.ct_term_name_repository.find_by_uid,
             find_dictionary_term_by_uid=self._repos.dictionary_term_generic_repository.find_by_uid,
+            find_codelist_term_by_uid_and_submission_value=self._repos.ct_codelist_name_repository.get_codelist_term_by_uid_and_submval,
         )
 
     def _create_aggregate_root(
@@ -77,7 +79,7 @@ class UnitDefinitionService(ConceptGenericService[UnitDefinitionAR]):
             author_id=self.author_id,
             change_description=concept_edit_input.change_description,
             new_unit_definition_value=UnitDefinitionValueVO.from_input_values(
-                name=concept_edit_input.name,
+                name=concept_edit_input.name or item.name,
                 definition=concept_edit_input.definition,
                 ct_units=concept_edit_input.ct_units,
                 unit_subsets=concept_edit_input.unit_subsets,
@@ -118,19 +120,19 @@ class UnitDefinitionService(ConceptGenericService[UnitDefinitionAR]):
         library_name: str | None,
         dimension: str | None = None,
         subset: str | None = None,
-        sort_by: dict | None = None,
+        sort_by: dict[str, bool] | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: dict | None = None,
-        filter_operator: FilterOperator | None = FilterOperator.AND,
+        filter_by: dict[str, dict[str, Any]] | None = None,
+        filter_operator: FilterOperator = FilterOperator.AND,
         total_count: bool = False,
     ) -> GenericFilteringReturn[UnitDefinitionModel]:
         # for unit-definitions we want to return the shortest unit-definitions first
         if sort_by is None:
-            sort_by = {"size(name)": "true"}
+            sort_by = {"size(name)": True}
         else:
             validate_is_dict("sort_by", sort_by)
-            sort_by["size(name)"] = "true"
+            sort_by["size(name)"] = True
 
         return self.non_transactional_get_all_concepts(
             library=library_name,

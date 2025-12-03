@@ -12,98 +12,153 @@ from clinical_mdr_api.tests.integration.utils.factory_controlled_terminology imp
 
 
 def create_study_epoch_codelists_ret_cat_and_lib(use_test_utils: bool = False):
-    catalogue_name, library_name = get_catalogue_name_library_name(use_test_utils)
+    _catalogue_name, library_name = get_catalogue_name_library_name(use_test_utils)
+    # Catalogue name must be SDTM CT
+    catalogue_name = "SDTM CT"
     ct_term_service = CTTermService()
     codelist = create_codelist(
-        "Epoch Type", "CTCodelist_00002", catalogue_name, library_name
+        "Epoch Type",
+        "CTCodelist_00002",
+        catalogue_name,
+        library_name,
+        submission_value="EPOCHTP",
     )
     type1 = create_ct_term(
-        codelist.codelist_uid,
         "Epoch Type",
         "EpochType_0001",
-        1,
         catalogue_name,
         library_name,
+        codelists=[
+            {
+                "uid": codelist.codelist_uid,
+                "order": 1,
+                "submission_value": "EPOCHTYPE1",
+            }
+        ],
     )
     type2 = create_ct_term(
-        codelist.codelist_uid,
         "Epoch Type1",
         "EpochType_0002",
-        2,
         catalogue_name,
         library_name,
+        codelists=[
+            {
+                "uid": codelist.codelist_uid,
+                "order": 2,
+                "submission_value": "EPOCHTYPE2",
+            }
+        ],
     )
     type3 = create_ct_term(
-        codelist.codelist_uid,
         "Epoch Type2",
         "EpochType_0003",
-        3,
         catalogue_name,
         library_name,
+        codelists=[
+            {
+                "uid": codelist.codelist_uid,
+                "order": 3,
+                "submission_value": "EPOCHTYPE3",
+            }
+        ],
     )
     type4 = create_ct_term(
-        codelist.codelist_uid,
         "Epoch Type3",
         "EpochType_0004",
-        4,
         catalogue_name,
         library_name,
+        codelists=[
+            {
+                "uid": codelist.codelist_uid,
+                "order": 4,
+                "submission_value": "EPOCHTYPE4",
+            }
+        ],
     )
 
     codelist = create_codelist(
-        "Epoch Sub Type", "CTCodelist_00003", catalogue_name, library_name
-    )
-    subtype1 = create_ct_term(
-        codelist.codelist_uid,
-        "Epoch Subtype",
-        "EpochSubType_0001",
-        1,
+        "Epoch Sub Type",
+        "CTCodelist_00003",
         catalogue_name,
         library_name,
+        submission_value="EPOCHSTP",
+    )
+    subtype1 = create_ct_term(
+        "Epoch Subtype",
+        "EpochSubType_0001",
+        catalogue_name,
+        library_name,
+        codelists=[
+            {
+                "uid": codelist.codelist_uid,
+                "order": 1,
+                "submission_value": "EPOCHSUBTYPE1",
+            }
+        ],
     )
     ct_term_service.add_parent(
         term_uid=subtype1.uid, parent_uid=type1.uid, relationship_type="type"
     )
     subtype2 = create_ct_term(
-        codelist.codelist_uid,
         "Epoch Subtype1",
         "EpochSubType_0002",
-        2,
         catalogue_name,
         library_name,
+        codelists=[
+            {
+                "uid": codelist.codelist_uid,
+                "order": 2,
+                "submission_value": "EPOCHSUBTYPE2",
+            }
+        ],
     )
     ct_term_service.add_parent(
         term_uid=subtype2.uid, parent_uid=type2.uid, relationship_type="type"
     )
     subtype3 = create_ct_term(
-        codelist.codelist_uid,
         "Epoch Subtype2",
         "EpochSubType_0003",
-        3,
         catalogue_name,
         library_name,
+        codelists=[
+            {
+                "uid": codelist.codelist_uid,
+                "order": 3,
+                "submission_value": "EPOCHSUBTYPE3",
+            }
+        ],
     )
     ct_term_service.add_parent(
         term_uid=subtype3.uid, parent_uid=type3.uid, relationship_type="type"
     )
     subtype4 = create_ct_term(
-        codelist.codelist_uid,
         "Epoch Subtype3",
         "EpochSubType_0004",
-        4,
         catalogue_name,
         library_name,
+        codelists=[
+            {
+                "uid": codelist.codelist_uid,
+                "order": 4,
+                "submission_value": "EPOCHSUBTYPE4",
+            }
+        ],
     )
     ct_term_service.add_parent(
         term_uid=subtype4.uid, parent_uid=type4.uid, relationship_type="type"
     )
     supplemental_subtype = create_ct_term(
-        codelist.codelist_uid,
         "Basic",
         "Basic_uid",
-        5,
         catalogue_name,
         library_name,
+        codelists=[
+            {
+                "uid": codelist.codelist_uid,
+                "order": 5,
+                "submission_value": "BASIC",
+            }
+        ],
     )
     ct_term_service.add_parent(
         term_uid=supplemental_subtype.uid,
@@ -111,116 +166,168 @@ def create_study_epoch_codelists_ret_cat_and_lib(use_test_utils: bool = False):
         relationship_type="type",
     )
     information_subtype = create_ct_term(
-        codelist.codelist_uid,
         "Information",
         "information_epoch_subtype_uid",
-        6,
         catalogue_name,
         library_name,
+        codelists=[
+            {
+                "uid": codelist.codelist_uid,
+                "order": 6,
+                "submission_value": "INFOSUBTYPE",
+            }
+        ],
     )
     ct_term_service.add_parent(
         term_uid=information_subtype.uid, parent_uid=type1.uid, relationship_type="type"
     )
-    codelist = create_codelist("Epoch", "C99079", catalogue_name, library_name)
+    codelist = create_codelist(
+        "Epoch", "C99079", catalogue_name, library_name, submission_value="EPOCH"
+    )
 
     ep1 = create_ct_term(
-        codelist.codelist_uid,
         "Epoch Subtype 1",
         "Epoch_0001",
-        2,
         catalogue_name,
         library_name,
+        codelists=[
+            {
+                "uid": codelist.codelist_uid,
+                "order": 2,
+                "submission_value": "EPOCH_SUBTYPE_1",
+            }
+        ],
     )
     ct_term_service.add_parent(
         term_uid=ep1.uid, parent_uid=subtype1.uid, relationship_type="subtype"
     )
     ep2 = create_ct_term(
-        codelist.codelist_uid,
         "Epoch Subtype 2",
         "Epoch_0002",
-        3,
         catalogue_name,
         library_name,
+        codelists=[
+            {
+                "uid": codelist.codelist_uid,
+                "order": 3,
+                "submission_value": "EPOCH_SUBTYPE_2",
+            }
+        ],
     )
     ct_term_service.add_parent(
         term_uid=ep2.uid, parent_uid=subtype1.uid, relationship_type="subtype"
     )
     ep3 = create_ct_term(
-        codelist.codelist_uid,
         "Epoch Subtype 3",
         "Epoch_0003",
-        4,
         catalogue_name,
         library_name,
+        codelists=[
+            {
+                "uid": codelist.codelist_uid,
+                "order": 4,
+                "submission_value": "EPOCH_SUBTYPE_3",
+            }
+        ],
     )
     ct_term_service.add_parent(
         term_uid=ep3.uid, parent_uid=subtype1.uid, relationship_type="subtype"
     )
 
     ep4 = create_ct_term(
-        codelist.codelist_uid,
         "Epoch Subtype1 1",
         "Epoch_0004",
-        6,
         catalogue_name,
         library_name,
+        codelists=[
+            {
+                "uid": codelist.codelist_uid,
+                "order": 6,
+                "submission_value": "EPOCH_SUBTYPE_1_1",
+            }
+        ],
     )
     ct_term_service.add_parent(
         term_uid=ep4.uid, parent_uid=subtype2.uid, relationship_type="subtype"
     )
     ep5 = create_ct_term(
-        codelist.codelist_uid,
         "Epoch Subtype1 2",
         "Epoch_0005",
-        7,
         catalogue_name,
         library_name,
+        codelists=[
+            {
+                "uid": codelist.codelist_uid,
+                "order": 7,
+                "submission_value": "EPOCH_SUBTYPE_1_2",
+            }
+        ],
     )
     ct_term_service.add_parent(
         term_uid=ep5.uid, parent_uid=subtype2.uid, relationship_type="subtype"
     )
 
     ep6 = create_ct_term(
-        codelist.codelist_uid,
         "Epoch Subtype2 1",
         "Epoch_0006",
-        9,
         catalogue_name,
         library_name,
+        codelists=[
+            {
+                "uid": codelist.codelist_uid,
+                "order": 9,
+                "submission_value": "EPOCH_SUBTYPE_2_1",
+            }
+        ],
     )
     ct_term_service.add_parent(
         term_uid=ep6.uid, parent_uid=subtype3.uid, relationship_type="subtype"
     )
     ep7 = create_ct_term(
-        codelist.codelist_uid,
         "Epoch Subtype2 2",
         "Epoch_0007",
-        10,
         catalogue_name,
         library_name,
+        codelists=[
+            {
+                "uid": codelist.codelist_uid,
+                "order": 10,
+                "submission_value": "EPOCH_SUBTYPE_2_2",
+            }
+        ],
     )
     ct_term_service.add_parent(
         term_uid=ep7.uid, parent_uid=subtype3.uid, relationship_type="subtype"
     )
 
     ep8 = create_ct_term(
-        codelist.codelist_uid,
         "Epoch Subtype3 1",
         "Epoch_0008",
-        12,
         catalogue_name,
         library_name,
+        codelists=[
+            {
+                "uid": codelist.codelist_uid,
+                "order": 12,
+                "submission_value": "EPOCH_SUBTYPE_3_1",
+            }
+        ],
     )
     ct_term_service.add_parent(
         term_uid=ep8.uid, parent_uid=subtype3.uid, relationship_type="subtype"
     )
     ep9 = create_ct_term(
-        codelist.codelist_uid,
         "Epoch Subtype3 2",
         "Epoch_0009",
-        13,
         catalogue_name,
         library_name,
+        codelists=[
+            {
+                "uid": codelist.codelist_uid,
+                "order": 13,
+                "submission_value": "EPOCH_SUBTYPE_3_2",
+            }
+        ],
     )
     ct_term_service.add_parent(
         term_uid=ep9.uid, parent_uid=subtype3.uid, relationship_type="subtype"

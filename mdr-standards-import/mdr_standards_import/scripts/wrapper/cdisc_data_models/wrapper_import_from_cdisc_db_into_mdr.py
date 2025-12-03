@@ -21,6 +21,7 @@ from mdr_standards_import.scripts.utils import (
     get_cdisc_neo4j_driver,
     get_mdr_neo4j_driver,
     get_ordered_data_model_versions,
+    get_catalogue_filter,
 )
 from mdr_standards_import.scripts.entities.cdisc_data_models.data_model_type import (
     DataModelType,
@@ -32,13 +33,13 @@ MDR_DATABASE = environ.get("NEO4J_MDR_DATABASE", "neo4j")
 
 
 def wrapper_import_cdisc_data_models_from_cdisc_db_into_mdr(
-    author_id: str, json_data_directory: str
+    author_id: str, json_data_directory: str, catalogue_filter: str = None
 ):
     cdisc_neo4j_driver = get_cdisc_neo4j_driver()
     mdr_neo4j_driver = get_mdr_neo4j_driver()
 
     data_model_versions = get_ordered_data_model_versions(
-        path.join(json_data_directory, "cdisc_data_models")
+        path.join(json_data_directory, "cdisc_data_models"), catalogue_filter
     )
 
     # We need to ensure that all Data Models are created before their Implementation Guides
@@ -122,5 +123,5 @@ def _get_data_model_types(tx):
 
 if __name__ == "__main__":
     wrapper_import_cdisc_data_models_from_cdisc_db_into_mdr(
-        get_author_id(1), get_directory_name(2)
+        get_author_id(1), get_directory_name(2), get_catalogue_filter(3)
     )

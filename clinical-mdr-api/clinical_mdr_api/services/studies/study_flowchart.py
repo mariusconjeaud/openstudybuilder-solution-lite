@@ -1,10 +1,12 @@
 import logging
 from collections import defaultdict
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
-from typing import Iterable, Mapping, Sequence
+from typing import Any, Iterable, Mapping, Sequence, TypeVar
 
 from docx.enum.style import WD_STYLE_TYPE
 from neomodel import db
+from opencensus.common.runtime_context import RuntimeContext
 from openpyxl.workbook import Workbook
 
 from clinical_mdr_api.domain_repositories.study_selections.study_soa_repository import (
@@ -15,16 +17,16 @@ from clinical_mdr_api.domains.study_definition_aggregates.study_metadata import 
     StudyStatus,
 )
 from clinical_mdr_api.domains.study_selections.study_selection_base import SoAItemType
-from clinical_mdr_api.domains.study_selections.study_visit import VisitClass
 from clinical_mdr_api.models.study_selections.study import (
     Study,
     StudySoaPreferences,
     StudySoaPreferencesInput,
 )
-from clinical_mdr_api.models.study_selections.study_epoch import StudyEpoch
+from clinical_mdr_api.models.study_selections.study_epoch import StudyEpochTiny
 from clinical_mdr_api.models.study_selections.study_selection import (
     CellCoordinates,
     ReferencedItem,
+    SimpleStudySoAGroup,
     SoACellReference,
     SoAFootnoteReference,
     StudyActivityGroup,
@@ -55,7 +57,6 @@ from clinical_mdr_api.services.studies.study_activity_selection import (
 from clinical_mdr_api.services.studies.study_activity_subgroup import (
     StudyActivitySubGroupService,
 )
-from clinical_mdr_api.services.studies.study_epoch import StudyEpochService
 from clinical_mdr_api.services.studies.study_soa_footnote import StudySoAFootnoteService
 from clinical_mdr_api.services.studies.study_soa_group import StudySoAGroupService
 from clinical_mdr_api.services.studies.study_visit import StudyVisitService
@@ -71,12 +72,13 @@ from clinical_mdr_api.services.utils.table_f import (
     table_to_xlsx,
 )
 from clinical_mdr_api.utils import enumerate_letters
-from common import config
 from common.auth.user import user
+from common.config import settings
 from common.exceptions import BusinessLogicException, NotFoundException
 from common.telemetry import trace_calls
+from common.utils import VisitClass
 
-NUM_OPERATIONAL_CODE_ROWS = 2
+NUM_OPERATIONAL_CODE_COLS = 2
 SOA_CHECK_MARK = "X"
 
 # Strings prepared for localization
@@ -91,14 +93,15 @@ _T = {
     "visit_window": "Visit window ({unit_name})",
     "protocol_flowchart": "Protocol Flowchart",
     "operational_soa": "Operational SoA",
+    "detailed_soa": "Detailed SoA",
     "no_study_group": "(not selected)",
     "no_study_subgroup": "(not selected)",
     "topic_code": "Topic Code",
     "adam_param_code": "ADaM Param Code",
-    "soagroup": "soagroup",
+    "soagroup": "soa-group",
     "group": "group",
     "subgroup": "subgroup",
-    "activity": "Activity",
+    "activity": "activity",
 }.get
 
 log = logging.getLogger(__name__)
@@ -154,6 +157,8 @@ OPERATIONAL_XLSX_STYLES = {
     None: "Normal",
     "activitySchedule": "Normal",
 }
+
+DETAILED_SOA_XLSX_STYLES = OPERATIONAL_XLSX_STYLES
 
 
 class StudyFlowchartService:
@@ -226,28 +231,12 @@ class StudyFlowchartService:
         )
 
     @trace_calls
-    def _get_study_epochs(
-        self, study_uid: str, study_value_version: str | None = None
-    ) -> list[StudyEpoch]:
-        return (
-            StudyEpochService(
-                study_uid=study_uid, study_value_version=study_value_version
-            )
-            .get_all_epochs(study_uid, study_value_version=study_value_version)
-            .items
-        )
-
-    @trace_calls
     def _get_study_visits(
         self, study_uid: str, study_value_version: str | None = None
     ) -> list[StudyVisit]:
-        return (
-            StudyVisitService(
-                study_uid=study_uid, study_value_version=study_value_version
-            )
-            .get_all_visits(study_uid, study_value_version=study_value_version)
-            .items
-        )
+        return StudyVisitService.get_all_visits(
+            study_uid, study_value_version=study_value_version
+        ).items
 
     @trace_calls
     def _get_study_footnotes(
@@ -257,21 +246,7 @@ class StudyFlowchartService:
             study_uid,
             sort_by={"order": True},
             study_value_version=study_value_version,
-        ).items
-
-    @trace_calls
-    def _get_study_activities(
-        self, study_uid: str, study_value_version: str | None = None
-    ) -> list[StudySelectionActivity]:
-        return self._study_activity_selection_service.get_all_selection(
-            study_uid,
-            study_value_version=study_value_version,
-            sort_by={
-                "study_soa_group.order": True,
-                "study_activity_group.order": True,
-                "study_activity_subgroup.order": True,
-                "order": True,
-            },
+            minimal_response=True,
         ).items
 
     @trace_calls
@@ -316,21 +291,29 @@ class StudyFlowchartService:
             .items
         )
 
-    @trace_calls
-    def _get_study_activity_instances(
-        self, study_uid: str, study_value_version: str | None = None
+    @staticmethod
+    @trace_calls(args=[0, 1], kwargs=["study_uid", "study_value_version"])
+    def fetch_study_activities(
+        study_uid: str, study_value_version: str | None = None
     ) -> list[StudySelectionActivity]:
-        return self._study_activity_instance_selection_service.get_all_selection(
-            study_uid,
+        results, _ = StudySoARepository.query_study_activities(
+            study_uid=study_uid,
             study_value_version=study_value_version,
-            # filter-out activity placeholders
-            filter_by={
-                "activity.library_name": {
-                    "v": [config.REQUESTED_LIBRARY_NAME],
-                    "op": "ne",
-                }
-            },
-        ).items
+            get_instances=False,
+        )
+        return [StudySelectionActivity(**result[0]) for result in results]
+
+    @staticmethod
+    @trace_calls(args=[0, 1], kwargs=["study_uid", "study_value_version"])
+    def fetch_study_activity_instances(
+        study_uid: str, study_value_version: str | None = None
+    ) -> list[StudySelectionActivityInstance]:
+        results, _ = StudySoARepository.query_study_activities(
+            study_uid=study_uid,
+            study_value_version=study_value_version,
+            get_instances=True,
+        )
+        return [StudySelectionActivityInstance(**result[0]) for result in results]
 
     @staticmethod
     @trace_calls(args=[1], kwargs=["hide_soa_groups"])
@@ -340,10 +323,10 @@ class StudyFlowchartService:
     ):
         """Sort StudySelectionActivities in place, grouping by SoAGroup, ActivityGroup, ActivitySubgroup"""
 
-        soa_groups = {}
-        activity_groups = {}
-        activity_subgroups = {}
-        order_keys = {}
+        soa_groups: dict[Any, Any] = {}
+        activity_groups: dict[Any, Any] = {}
+        activity_subgroups: dict[Any, Any] = {}
+        order_keys: dict[Any, Any] = {}
 
         for activity in study_selection_activities:
             key = []
@@ -381,25 +364,26 @@ class StudyFlowchartService:
 
         list.sort(
             study_selection_activities,
-            key=lambda activity: order_keys.get(activity.study_activity_uid),
+            key=lambda activity: order_keys[activity.study_activity_uid],
         )
 
     @staticmethod
     @trace_calls
     def _group_visits(
         visits: Iterable[StudyVisit],
+        collapse_visit_groups: bool = True,
     ) -> dict[str, dict[str, list[StudyVisit]]]:
         """
         Builds a graph of visits from nested dict of
         study_epoch_uid -> [ consecutive_visit_group | visit_uid ] -> [Visits]
         """
 
-        grouped = {}
-        visits: list[StudyVisit] = sorted(visits, key=lambda v: v.order)
+        grouped: dict[Any, Any] = {}
+        visits = sorted(visits, key=lambda v: v.order)
 
         for visit in visits:
             grouped.setdefault(visit.study_epoch_uid, {}).setdefault(
-                visit.consecutive_visit_group or visit.uid, []
+                collapse_visit_groups and visit.consecutive_visit_group or visit.uid, []
             ).append(visit)
 
         return grouped
@@ -476,7 +460,7 @@ class StudyFlowchartService:
         }
 
         study_selection_activities: list[StudySelectionActivity] = (
-            self._get_study_activities(
+            self.fetch_study_activities(
                 study_uid, study_value_version=study_value_version
             )
         )
@@ -503,9 +487,12 @@ class StudyFlowchartService:
 
         row = 4
 
-        prev_soa_group_uid, soa_group_row = False, None
-        prev_activity_group_uid, activity_group_row = False, None
-        prev_activity_subgroup_uid, activity_subgroup_row = False, None
+        prev_activity_group_uid: str | None
+        prev_activity_subgroup_uid: str | None
+
+        prev_soa_group_uid, soa_group_row = "", 0
+        prev_activity_group_uid, activity_group_row = "", 0
+        prev_activity_subgroup_uid, activity_subgroup_row = "", 0
 
         study_selection_activity: StudySelectionActivity
         for study_selection_activity in study_selection_activities:
@@ -513,8 +500,8 @@ class StudyFlowchartService:
 
             if soa_group_uid != prev_soa_group_uid:
                 prev_soa_group_uid, soa_group_row = soa_group_uid, row
-                prev_activity_group_uid, activity_group_row = False, None
-                prev_activity_subgroup_uid, activity_subgroup_row = False, None
+                prev_activity_group_uid, activity_group_row = "", 0
+                prev_activity_subgroup_uid, activity_subgroup_row = "", 0
                 row += 1
 
             coordinates[
@@ -527,7 +514,7 @@ class StudyFlowchartService:
 
             if prev_activity_group_uid != activity_group_uid:
                 prev_activity_group_uid, activity_group_row = activity_group_uid, row
-                prev_activity_subgroup_uid, activity_subgroup_row = False, None
+                prev_activity_subgroup_uid, activity_subgroup_row = "", 0
                 row += 1
 
             if study_selection_activity.study_activity_group.study_activity_group_uid:
@@ -551,7 +538,7 @@ class StudyFlowchartService:
                     study_selection_activity.study_activity_subgroup.study_activity_subgroup_uid
                 ] = CellCoordinates(activity_subgroup_row, 0)
 
-            coordinates[study_selection_activity.study_activity_uid] = CellCoordinates(
+            coordinates[study_selection_activity.study_activity_uid] = CellCoordinates(  # type: ignore[index]
                 row,
                 0,
             )
@@ -562,9 +549,13 @@ class StudyFlowchartService:
                     col += 1
 
                     for visit in group:
-                        study_activity_schedule: StudyActivitySchedule = (
+                        study_activity_schedule: StudyActivitySchedule | None = (
                             study_activity_schedules_mapping.get(
-                                (study_selection_activity.study_activity_uid, visit.uid)
+                                (
+                                    (study_selection_activity.study_activity_uid or ""),
+                                    visit.uid,
+                                ),
+                                None,
                             )
                         )
 
@@ -639,10 +630,6 @@ class StudyFlowchartService:
             TableWithFootnotes: SoA flowchart table with footnotes.
         """
 
-        soa_preferences = self._get_soa_preferences(
-            study_uid, study_value_version=study_value_version
-        )
-
         if not time_unit:
             time_unit = self.get_preferred_time_unit(
                 study_uid, study_value_version=study_value_version
@@ -652,24 +639,61 @@ class StudyFlowchartService:
             study_uid, study_value_version=study_value_version, time_unit=time_unit
         )
 
-        selection_activities = self._get_study_selection_activities_sorted(
-            study_uid=study_uid,
-            study_value_version=study_value_version,
-            layout=layout,
-        )
+        # Fetch database objects in parallel
+        with ThreadPoolExecutor() as executor:
+            soa_preferences_future = executor.submit(
+                RuntimeContext.with_current_context(self._get_soa_preferences),
+                study_uid,
+                study_value_version=study_value_version,
+            )
 
-        activity_schedules: list[StudyActivitySchedule] = (
-            self._get_study_activity_schedules(
+            selection_activities_future = executor.submit(
+                RuntimeContext.with_current_context(
+                    self._get_study_selection_activities_sorted
+                ),
+                study_uid=study_uid,
+                study_value_version=study_value_version,
+                layout=layout,
+            )
+
+            activity_schedules_future = executor.submit(
+                RuntimeContext.with_current_context(self._get_study_activity_schedules),
                 study_uid,
                 study_value_version=study_value_version,
                 operational=(layout == SoALayout.OPERATIONAL),
             )
+
+            visits_future = executor.submit(
+                RuntimeContext.with_current_context(
+                    self._get_study_visits_dict_filtered
+                ),
+                study_uid,
+                study_value_version,
+            )
+
+            if layout != SoALayout.OPERATIONAL:
+                footnotes_future = executor.submit(
+                    RuntimeContext.with_current_context(self._get_study_footnotes),
+                    study_uid,
+                    study_value_version=study_value_version,
+                )
+
+        soa_preferences: StudySoaPreferences = soa_preferences_future.result()
+
+        selection_activities: list[
+            StudySelectionActivity | StudySelectionActivityInstance
+        ] = selection_activities_future.result()
+
+        activity_schedules: list[StudyActivitySchedule] = (
+            activity_schedules_future.result()
         )
 
-        visits = self._get_study_visits_dict_filtered(study_uid, study_value_version)
+        visits: dict[str, StudyVisit] = visits_future.result()
 
         # group visits in nested dict: study_epoch_uid -> [ consecutive_visit_group |  visit_uid ] -> [Visits]
-        grouped_visits = self._group_visits(visits.values())
+        grouped_visits = self._group_visits(
+            visits.values(), collapse_visit_groups=(layout != SoALayout.OPERATIONAL)
+        )
 
         # first 4 rows of protocol SoA flowchart contains epochs & visits
         header_rows = self._get_header_rows(
@@ -692,10 +716,7 @@ class StudyFlowchartService:
         )
 
         if layout != SoALayout.OPERATIONAL:
-            footnotes: list[StudySoAFootnote] = self._get_study_footnotes(
-                study_uid, study_value_version=study_value_version
-            )
-
+            footnotes: list[StudySoAFootnote] = footnotes_future.result()
             self.add_footnotes(table, footnotes)
 
         return table
@@ -707,18 +728,17 @@ class StudyFlowchartService:
         study_value_version: str,
         layout: SoALayout,
     ) -> list[StudySelectionActivity | StudySelectionActivityInstance]:
+        selection_activities: (
+            list[StudySelectionActivityInstance] | list[StudySelectionActivity]
+        )
         if layout == SoALayout.OPERATIONAL:
-            selection_activities: list[StudySelectionActivityInstance] = (
-                self._get_study_activity_instances(
-                    study_uid, study_value_version=study_value_version
-                )
+            selection_activities = self.fetch_study_activity_instances(
+                study_uid, study_value_version=study_value_version
             )
 
         else:
-            selection_activities: list[StudySelectionActivity] = (
-                self._get_study_activities(
-                    study_uid, study_value_version=study_value_version
-                )
+            selection_activities = self.fetch_study_activities(
+                study_uid, study_value_version=study_value_version
             )
         if layout == SoALayout.PROTOCOL:
             self._sort_study_activities(selection_activities, hide_soa_groups=True)
@@ -726,7 +746,9 @@ class StudyFlowchartService:
         return selection_activities
 
     @trace_calls
-    def _get_study_visits_dict_filtered(self, study_uid, study_value_version):
+    def _get_study_visits_dict_filtered(
+        self, study_uid, study_value_version
+    ) -> dict[str, StudyVisit]:
         # get visits
         visits = self._get_study_visits(
             study_uid, study_value_version=study_value_version
@@ -738,7 +760,8 @@ class StudyFlowchartService:
             for visit in visits
             if (
                 visit.show_visit
-                and visit.study_epoch.sponsor_preferred_name != config.BASIC_EPOCH_NAME
+                and visit.study_epoch.sponsor_preferred_name
+                != settings.basic_epoch_name
             )
         }
 
@@ -819,11 +842,33 @@ class StudyFlowchartService:
                 else DOCX_STYLES
             ),
             template=(
-                config.OPERATIONAL_SOA_DOCX_TEMPLATE
+                settings.operational_soa_docx_template
                 if layout == SoALayout.OPERATIONAL
                 else None
             ),
         )
+
+    @trace_calls
+    def get_study_flowchart_xlsx(
+        self,
+        study_uid: str,
+        study_value_version: str | None,
+        layout: SoALayout,
+        time_unit: str | None,
+    ) -> Workbook:
+        # build internal representation of flowchart
+        table = self.get_flowchart_table(
+            study_uid=study_uid,
+            layout=layout,
+            study_value_version=study_value_version,
+            time_unit=time_unit,
+        )
+
+        # layout alterations
+        if layout != SoALayout.PROTOCOL:
+            self.show_hidden_rows(table.rows)
+
+        return table_to_xlsx(table, styles=OPERATIONAL_XLSX_STYLES)
 
     @trace_calls
     def get_operational_soa_xlsx(
@@ -835,8 +880,9 @@ class StudyFlowchartService:
         # build internal representation of flowchart
         table = self.get_operational_spreadsheet(
             study_uid=study_uid,
-            time_unit=time_unit,
             study_value_version=study_value_version,
+            layout=SoALayout.OPERATIONAL,
+            time_unit=time_unit,
         )
 
         return table_to_xlsx(table, styles=OPERATIONAL_XLSX_STYLES)
@@ -850,8 +896,45 @@ class StudyFlowchartService:
     ) -> str:
         table = self.get_operational_spreadsheet(
             study_uid=study_uid,
-            time_unit=time_unit,
             study_value_version=study_value_version,
+            layout=SoALayout.OPERATIONAL,
+            time_unit=time_unit,
+        )
+        return table_to_html(
+            table,
+            css_style="table, th { border: 2px solid black; border-collapse: collapse; }\n"
+            "td { border: 1px solid black; }",
+        )
+
+    @trace_calls
+    def get_detailed_soa_xlsx(
+        self,
+        study_uid: str,
+        study_value_version: str | None,
+        time_unit: str | None,
+    ) -> Workbook:
+        # build internal representation of flowchart
+        table = self.get_operational_spreadsheet(
+            study_uid=study_uid,
+            study_value_version=study_value_version,
+            layout=SoALayout.DETAILED,
+            time_unit=time_unit,
+        )
+
+        return table_to_xlsx(table, styles=DETAILED_SOA_XLSX_STYLES)
+
+    @trace_calls
+    def get_detailed_soa_html(
+        self,
+        study_uid: str,
+        study_value_version: str | None,
+        time_unit: str | None,
+    ) -> str:
+        table = self.get_operational_spreadsheet(
+            study_uid=study_uid,
+            study_value_version=study_value_version,
+            layout=SoALayout.DETAILED,
+            time_unit=time_unit,
         )
         return table_to_html(
             table,
@@ -863,8 +946,9 @@ class StudyFlowchartService:
     def get_operational_spreadsheet(
         self,
         study_uid: str,
-        time_unit: str | None = None,
         study_value_version: str | None = None,
+        layout: SoALayout = SoALayout.OPERATIONAL,
+        time_unit: str | None = None,
     ) -> TableWithFootnotes:
         """
         Builds operational SoA table in spreadsheet format
@@ -892,21 +976,23 @@ class StudyFlowchartService:
         selection_activities = self._get_study_selection_activities_sorted(
             study_uid=study_uid,
             study_value_version=study_value_version,
-            layout=SoALayout.OPERATIONAL,
+            layout=layout,
         )
 
         study_activity_schedules: list[StudyActivitySchedule] = (
             self._get_study_activity_schedules(
                 study_uid,
                 study_value_version=study_value_version,
-                operational=True,
+                operational=layout == SoALayout.OPERATIONAL,
             )
         )
 
         visits = self._get_study_visits_dict_filtered(study_uid, study_value_version)
 
-        # group visits in nested dict: study_epoch_uid -> [ consecutive_visit_group |  visit_uid ] -> [Visits]
-        grouped_visits = self._group_visits(visits.values())
+        # group visits in nested dict: study_epoch_uid -> [ visit_uid ] -> [Visits]
+        grouped_visits = self._group_visits(
+            visits.values(), collapse_visit_groups=False
+        )
 
         # StudyActivitySchedules indexed by tuple of [uid, StudyVisit.uid]
         study_activity_schedules_mapping = {
@@ -918,76 +1004,95 @@ class StudyFlowchartService:
         }
 
         # header rows
-        rows = [
-            TableRow(
-                cells=[
-                    TableCell(
-                        f"study_version: {study_version(study)}",
-                        span=3,
-                        style="studyVersion",
-                    )
-                ]
-                + [TableCell(span=0, style="studyVersion")] * 2
-            ),
-            TableRow(
-                cells=[
-                    TableCell(
-                        f"study_number: {study.current_metadata.identification_metadata.study_id}",
-                        span=3,
-                        style="studyNumber",
-                    )
-                ]
-                + [TableCell(span=0, style="studyNumber")] * 2
-            ),
-            TableRow(
-                cells=[
-                    TableCell(
-                        f"Date/time of extraction: {datetime.now().strftime('%Y-%m-%d %H:%M:%S Z')}",
-                        span=3,
-                        style="dateTime",
-                    ),
-                    TableCell(span=0, style="dateTime"),
-                    TableCell(span=0, style="dateTime"),
-                    TableCell(f"By: {user().id()}", span=2, style="extractedBy"),
-                    TableCell(span=0, style="extractedBy"),
-                    TableCell(span=2),
-                    TableCell("Epochs", style="header1"),
-                ]
-            ),
-            TableRow(
-                cells=[
-                    TableCell("lowest visibility layer", style="header3"),
-                    TableCell("SoA group", style="header3"),
-                    TableCell("Group", style="header3"),
-                    TableCell("Subgroup", style="header3"),
-                    TableCell("Activity", style="header3"),
-                    TableCell("Topic Code", style="header3"),
-                    TableCell("ADaM Param Code", style="header3"),
-                    TableCell("Visits", style="header1"),
-                ]
-            ),
-        ]
+        if layout == SoALayout.OPERATIONAL:
+            rows = [
+                TableRow(
+                    cells=[
+                        TableCell(
+                            f"study_version: {get_study_version(study)}",
+                            span=3,
+                            style="studyVersion",
+                        )
+                    ]
+                    + [TableCell(span=0, style="studyVersion")] * 2
+                ),
+                TableRow(
+                    cells=[
+                        TableCell(
+                            f"study_number: {study.current_metadata.identification_metadata.study_id}",
+                            span=3,
+                            style="studyNumber",
+                        )
+                    ]
+                    + [TableCell(span=0, style="studyNumber")] * 2
+                ),
+                TableRow(
+                    cells=[
+                        TableCell(
+                            f"Date/time of extraction: {datetime.now().strftime('%Y-%m-%d %H:%M:%S Z')}",
+                            span=3,
+                            style="dateTime",
+                        ),
+                        TableCell(span=0, style="dateTime"),
+                        TableCell(span=0, style="dateTime"),
+                        TableCell(f"By: {user().id()}", span=2, style="extractedBy"),
+                        TableCell(span=0, style="extractedBy"),
+                        TableCell(),
+                        TableCell(),
+                        TableCell("Epochs", style="header1"),
+                    ]
+                ),
+                TableRow(
+                    cells=[
+                        TableCell("lowest visibility layer", style="header3"),
+                        TableCell("SoA group", style="header3"),
+                        TableCell("Group", style="header3"),
+                        TableCell("Subgroup", style="header3"),
+                        TableCell("Activity", style="header3"),
+                        TableCell("Topic Code", style="header3"),
+                        TableCell("ADaM Param Code", style="header3"),
+                        TableCell("Visits", style="header1"),
+                    ]
+                ),
+            ]
+
+        elif layout == SoALayout.DETAILED:
+            rows = [
+                TableRow(
+                    cells=[
+                        TableCell("SoA group", style="header3"),
+                        TableCell("Group", style="header3"),
+                        TableCell("Subgroup", style="header3"),
+                        TableCell("Activity", style="header3"),
+                        TableCell("Visibility", style="header3"),
+                    ]
+                ),
+            ]
+
+        else:
+            raise NotImplementedError(f"SoA layout '{layout.value}' is not implemented")
 
         # add epoch and visit cells to header rows
         perv_study_epoch_uid = None
-        for study_epoch_uid, visit_groups in grouped_visits.items():
-            for group in visit_groups.values():
+        for study_epoch_uid, _visit_groups in grouped_visits.items():
+            for group in _visit_groups.values():
                 visit: StudyVisit = group[0]
 
-                # Epoch
-                if perv_study_epoch_uid != study_epoch_uid:
-                    perv_study_epoch_uid = study_epoch_uid
+                if layout == SoALayout.OPERATIONAL:
+                    # Epoch
+                    if perv_study_epoch_uid != study_epoch_uid:
+                        perv_study_epoch_uid = study_epoch_uid
 
-                    rows[-2].cells.append(
-                        TableCell(
-                            text=visit.study_epoch.sponsor_preferred_name,
-                            span=len(visit_groups),
-                            style="header2",
+                        rows[-2].cells.append(
+                            TableCell(
+                                text=visit.study_epoch.sponsor_preferred_name,
+                                span=len(_visit_groups),
+                                style="header2",
+                            )
                         )
-                    )
 
-                else:
-                    rows[-2].cells.append(TableCell(span=0, style="header2"))
+                    else:
+                        rows[-2].cells.append(TableCell(span=0, style="header2"))
 
                 # Visit
                 rows[-1].cells.append(
@@ -1010,7 +1115,9 @@ class StudyFlowchartService:
 
         for study_selection_activity in selection_activities:
             # Do not show activity instance placeholders
-            if not getattr(study_selection_activity, "activity_instance", None):
+            if layout == SoALayout.OPERATIONAL and not getattr(
+                study_selection_activity, "activity_instance", None
+            ):
                 continue
 
             rows.append(row := TableRow())
@@ -1019,25 +1126,28 @@ class StudyFlowchartService:
             if getattr(
                 study_selection_activity, "show_activity_in_protocol_flowchart", True
             ):
-                row.cells.append(TableCell(_T("activity"), style="visibility"))
+                visibility = _T("activity")
             elif getattr(
                 study_selection_activity,
                 "show_activity_subgroup_in_protocol_flowchart",
                 True,
             ):
-                row.cells.append(TableCell(_T("subgroup"), style="visibility"))
+                visibility = _T("subgroup")
             elif getattr(
                 study_selection_activity,
                 "show_activity_group_in_protocol_flowchart",
                 True,
             ):
-                row.cells.append(TableCell(_T("group"), style="visibility"))
+                visibility = _T("group")
             elif getattr(
                 study_selection_activity, "show_soa_group_in_protocol_flowchart", True
             ):
-                row.cells.append(TableCell(_T("soagroup"), style="visibility"))
+                visibility = _T("soagroup")
             else:
-                row.cells.append(TableCell(style="visibility"))
+                visibility = None
+
+            if layout == SoALayout.OPERATIONAL:
+                row.cells.append(TableCell(visibility, style="visibility"))
 
             # SoA Group
             row.cells.append(
@@ -1076,52 +1186,61 @@ class StudyFlowchartService:
                 TableCell(study_selection_activity.activity.name, style="activity")
             )
 
-            # Topic Code
-            row.cells.append(
-                TableCell(
-                    (
-                        study_selection_activity.activity_instance.topic_code
-                        if study_selection_activity.activity_instance
-                        else ""
-                    ),
-                    style="topicCode",
+            if layout == SoALayout.OPERATIONAL:
+                # Topic Code
+                row.cells.append(
+                    TableCell(
+                        (
+                            study_selection_activity.activity_instance.topic_code
+                            if study_selection_activity.activity_instance
+                            else ""
+                        ),
+                        style="topicCode",
+                    )
                 )
-            )
 
-            # ADaM Param Code
-            row.cells.append(
-                TableCell(
-                    (
-                        study_selection_activity.activity_instance.adam_param_code
-                        if study_selection_activity.activity_instance
-                        else ""
-                    ),
-                    style="adamCode",
+                # ADaM Param Code
+                row.cells.append(
+                    TableCell(
+                        (
+                            study_selection_activity.activity_instance.adam_param_code
+                            if study_selection_activity.activity_instance
+                            else ""
+                        ),
+                        style="adamCode",
+                    )
                 )
-            )
 
-            # Empty header column
-            row.cells.append(TableCell())
+                # Empty header column
+                row.cells.append(TableCell())
+
+            # Visibility
+            if layout == SoALayout.DETAILED:
+                row.cells.append(TableCell(visibility, style="visibility"))
 
             # Scheduling crosses
             self._append_activity_crosses(
                 row,
                 visit_groups,
                 study_activity_schedules_mapping,
-                study_selection_activity.study_activity_instance_uid,
+                (
+                    study_selection_activity.study_activity_instance_uid
+                    if layout == SoALayout.OPERATIONAL
+                    else study_selection_activity.study_activity_uid
+                ),
             )
 
         table = TableWithFootnotes(
             rows=rows,
-            num_header_rows=4,
-            num_header_cols=7,
-            title=_T("operational_soa"),
+            num_header_rows=4 if layout == SoALayout.OPERATIONAL else 1,
+            num_header_cols=4 if layout == SoALayout.OPERATIONAL else 5,
+            title=_T(f"{layout.value}_soa"),
         )
 
         return table
 
     @classmethod
-    @trace_calls(args=[1, 2, 3], kwargs=["time_unit", "soa_preferences", "layout"])
+    @trace_calls(args=[2, 3, 4], kwargs=["time_unit", "soa_preferences", "layout"])
     def _get_header_rows(
         cls,
         grouped_visits: dict[str, dict[str, list[StudyVisit]]],
@@ -1188,11 +1307,12 @@ class StudyFlowchartService:
                 TableCell(text=_T("adam_param_code"), style="header2")
             )
             for row in rows[1:]:
-                for _j in range(NUM_OPERATIONAL_CODE_ROWS):
+                for _j in range(NUM_OPERATIONAL_CODE_COLS):
                     row.cells.append(TableCell())
 
         perv_study_epoch_uid = None
         prev_visit_type_uid = None
+        prev_milestone_cell: TableCell | None = None
         for study_epoch_uid, visit_groups in grouped_visits.items():
             for group in visit_groups.values():
                 visit: StudyVisit = group[0]
@@ -1252,7 +1372,15 @@ class StudyFlowchartService:
                         getattr(visit, visit_timing_prop) is None
                         or getattr(group[-1], visit_timing_prop) is None
                     ):
-                        visit_timing = f"{getattr(visit, visit_timing_prop):d}-{getattr(group[-1], visit_timing_prop):d}"
+                        # If there is a comma it means that group was made in the LIST grouping way
+                        if visit_name and "," in visit_name:
+                            visit_timings = [
+                                f"{getattr(visit, visit_timing_prop):d}"
+                                for visit in group
+                            ]
+                            visit_timing = ",".join(visit_timings)
+                        else:
+                            visit_timing = f"{getattr(visit, visit_timing_prop):d}-{getattr(group[-1], visit_timing_prop):d}"
 
                 # Single Visit
                 else:
@@ -1292,7 +1420,7 @@ class StudyFlowchartService:
 
     @staticmethod
     def _get_visit_timing_property(
-        time_unit: str, soa_preferences: StudySoaPreferencesInput
+        time_unit: str | None, soa_preferences: StudySoaPreferencesInput
     ) -> str:
         if time_unit == "day":
             if soa_preferences.baseline_as_time_zero:
@@ -1345,16 +1473,19 @@ class StudyFlowchartService:
             if visit.min_visit_window_value == visit.max_visit_window_value == 0:
                 # visit window is zero
                 return "0"
-            if visit.min_visit_window_value * -1 == visit.max_visit_window_value:
+            if (
+                visit.min_visit_window_value is not None
+                and visit.min_visit_window_value * -1 == visit.max_visit_window_value
+            ):
                 # plus-minus sign can be used
                 return f"±{visit.max_visit_window_value:d}"
             # plus and minus windows are different
             if visit.min_visit_window_value == 0:
-                min_visit_window = visit.min_visit_window_value
+                min_visit_window = f"{visit.min_visit_window_value}"
             else:
                 min_visit_window = f"{visit.min_visit_window_value:+d}"
             if visit.max_visit_window_value == 0:
-                max_visit_window = visit.max_visit_window_value
+                max_visit_window = f"{visit.max_visit_window_value}"
             else:
                 max_visit_window = f"{visit.max_visit_window_value:+d}"
             visit_window = f"{min_visit_window}/{max_visit_window}"
@@ -1362,6 +1493,7 @@ class StudyFlowchartService:
         return ""
 
     @classmethod
+    @trace_calls
     def _get_activity_rows(
         cls,
         study_selection_activities: Sequence[
@@ -1382,7 +1514,7 @@ class StudyFlowchartService:
 
         num_cols = len(visit_groups) + 1
         if layout == SoALayout.OPERATIONAL:
-            num_cols += NUM_OPERATIONAL_CODE_ROWS
+            num_cols += NUM_OPERATIONAL_CODE_COLS
 
         # StudyActivitySchedules indexed by tuple of [uid, StudyVisit.uid]
         study_activity_schedules_mapping = {
@@ -1395,10 +1527,10 @@ class StudyFlowchartService:
 
         rows = []
 
-        prev_soa_group_uid = False
-        prev_activity_group_uids = set()
-        prev_activity_subgroup_uids = set()
-        prev_study_selection_id = False
+        prev_soa_group_uid = None
+        prev_activity_group_keys: set[tuple[str | None, str | None] | str] = set()
+        prev_activity_subgroup_keys: set[tuple[str | None, str | None] | str] = set()
+        prev_study_selection_id = None
 
         study_selection_activity: (
             StudySelectionActivity | StudySelectionActivityInstance
@@ -1414,9 +1546,9 @@ class StudyFlowchartService:
                 # Add SoA Group row
                 if soa_group_uid != prev_soa_group_uid:
                     prev_soa_group_uid = soa_group_uid
-                    prev_activity_group_uids = set()
-                    prev_activity_subgroup_uids = set()
-                    prev_study_selection_id = False
+                    prev_activity_group_keys = set()
+                    prev_activity_subgroup_keys = set()
+                    prev_study_selection_id = None
 
                     soa_group_row = cls._get_soa_group_row(
                         study_selection_activity, num_cols
@@ -1424,15 +1556,25 @@ class StudyFlowchartService:
                     rows.append(soa_group_row)
 
             # Add Activity Group row
-            if (
-                activity_group_uid := study_selection_activity.study_activity_group.activity_group_uid
-            ) not in prev_activity_group_uids:
-                prev_activity_group_uids.add(activity_group_uid)
-                prev_activity_group_uids.add(
+            activity_group_key = (
+                study_selection_activity.study_activity_group.activity_group_uid,
+                study_selection_activity.study_activity_group.activity_group_name,
+            )
+            if activity_group_key not in prev_activity_group_keys:
+                if (
+                    study_selection_activity.study_activity_group.activity_group_uid
+                    is not None
+                ):
+                    prev_activity_group_keys.add(activity_group_key)
+                if (
                     study_selection_activity.study_activity_group.study_activity_group_uid
-                )
-                prev_activity_subgroup_uids = set()
-                prev_study_selection_id = False
+                    is not None
+                ):
+                    prev_activity_group_keys.add(
+                        study_selection_activity.study_activity_group.study_activity_group_uid
+                    )
+                prev_activity_subgroup_keys = set()
+                prev_study_selection_id = None
 
                 activity_group_row = cls._get_activity_group_row(
                     study_selection_activity, num_cols
@@ -1443,9 +1585,11 @@ class StudyFlowchartService:
                 if (
                     # ActivityRequests may have no study_activity_group_uid
                     study_activity_group_uid := study_selection_activity.study_activity_group.study_activity_group_uid
-                ) and study_activity_group_uid not in prev_activity_group_uids:
+                ) and study_activity_group_uid not in prev_activity_group_keys:
                     # Reference uids of merged StudyActivityGroups
-                    prev_activity_group_uids.add(study_activity_group_uid)
+                    prev_activity_group_keys.add(
+                        study_activity_group_uid,
+                    )
                     activity_group_row.cells[0].refs.insert(
                         -1,
                         Ref(
@@ -1463,18 +1607,24 @@ class StudyFlowchartService:
                     activity_group_row.hide = False
 
             # Add Activity Sub-Group row
-            activity_subgroup_uid = (
-                study_selection_activity.study_activity_subgroup.activity_subgroup_uid
+            activity_subgroup_key = (
+                study_selection_activity.study_activity_subgroup.activity_subgroup_uid,
+                study_selection_activity.study_activity_subgroup.activity_subgroup_name,
             )
-
-            if (
-                activity_subgroup_uid := study_selection_activity.study_activity_subgroup.activity_subgroup_uid
-            ) not in prev_activity_subgroup_uids:
-                prev_activity_subgroup_uids.add(activity_subgroup_uid)
-                prev_activity_subgroup_uids.add(
+            if activity_subgroup_key not in prev_activity_subgroup_keys:
+                if (
+                    study_selection_activity.study_activity_subgroup.activity_subgroup_uid
+                    is not None
+                ):
+                    prev_activity_subgroup_keys.add(activity_subgroup_key)
+                if (
                     study_selection_activity.study_activity_subgroup.study_activity_subgroup_uid
-                )
-                prev_study_selection_id = False
+                    is not None
+                ):
+                    prev_activity_subgroup_keys.add(
+                        study_selection_activity.study_activity_subgroup.study_activity_subgroup_uid
+                    )
+                prev_study_selection_id = None
 
                 activity_subgroup_row = cls._get_activity_subgroup_row(
                     study_selection_activity, num_cols
@@ -1485,7 +1635,7 @@ class StudyFlowchartService:
                 if (
                     # ActivityRequests may have no study_activity_subgroup_uid
                     study_activity_subgroup_uid := study_selection_activity.study_activity_subgroup.study_activity_subgroup_uid
-                ) and study_activity_subgroup_uid not in prev_activity_subgroup_uids:
+                ) and study_activity_subgroup_uid not in prev_activity_subgroup_keys:
                     # Reference uids of merged StudyActivitySubGroups
                     activity_subgroup_row.cells[0].refs.insert(
                         -1,
@@ -1506,7 +1656,10 @@ class StudyFlowchartService:
             # Add Activity row
             study_selection_id = study_selection_activity.study_activity_uid
 
-            if prev_study_selection_id != study_selection_id:
+            if (
+                prev_study_selection_id != study_selection_id
+                and study_selection_activity.study_activity_uid
+            ):
                 prev_study_selection_id = study_selection_id
 
                 row = cls._get_activity_row(study_selection_activity, layout=layout)
@@ -1521,7 +1674,10 @@ class StudyFlowchartService:
                 )
 
             # Add Activity Instance row
-            if getattr(study_selection_activity, "activity_instance", None):
+            if (
+                getattr(study_selection_activity, "activity_instance", None)
+                and study_selection_activity.study_activity_instance_uid
+            ):
                 row = cls._get_activity_instance_row(study_selection_activity)
 
                 rows.append(row)
@@ -1559,14 +1715,16 @@ class StudyFlowchartService:
         row.cells.append(cls._get_study_activity_cell(study_selection_activity))
 
         if layout == SoALayout.OPERATIONAL:
-            for _ in range(NUM_OPERATIONAL_CODE_ROWS):
+            for _ in range(NUM_OPERATIONAL_CODE_COLS):
                 row.cells.append(TableCell())
 
         return row
 
     @staticmethod
     def _get_study_activity_cell(
-        study_selection_activity: StudySelectionActivity,
+        study_selection_activity: (
+            StudySelectionActivity | StudySelectionActivityInstance
+        ),
     ) -> TableCell:
         return TableCell(
             study_selection_activity.activity.name,
@@ -1597,18 +1755,18 @@ class StudyFlowchartService:
         # Iterate over visit groups to look up scheduled Activities
         for visit_group in visit_groups:
             # Look up scheduled activities from (activity_id, visit_uid)->schedule mapping
-            study_activity_schedules = (
+            study_activity_schedules = [
                 study_activity_schedules_mapping.get((activity_id, visit.uid))
                 for visit in visit_group
-            )
+            ]
             # filter None values returned by mapping.get()
-            study_activity_schedules = filter(None, study_activity_schedules)
+            study_activity_schedules = list(filter(None, study_activity_schedules))
             # get StudyActivitySchedule.uids
-            study_activity_schedule_uids = map(
-                lambda sas: sas.study_activity_schedule_uid, study_activity_schedules
-            )
+            study_activity_schedule_uids: list[str] = [
+                sas.study_activity_schedule_uid for sas in study_activity_schedules
+            ]
             # remove duplicates preserving order
-            study_activity_schedule_uids: list[str] = list(
+            study_activity_schedule_uids = list(
                 dict.fromkeys(study_activity_schedule_uids)
             )
 
@@ -1634,7 +1792,9 @@ class StudyFlowchartService:
 
     @staticmethod
     def _get_activity_instance_row(
-        study_selection_activity: StudySelectionActivityInstance,
+        study_selection_activity: (
+            StudySelectionActivityInstance | StudySelectionActivity
+        ),
     ) -> TableRow:
         """returns TableRow for Activity Instance row"""
 
@@ -1672,7 +1832,9 @@ class StudyFlowchartService:
     @classmethod
     def _get_soa_group_row(
         cls,
-        study_selection_activity: StudySelectionActivity,
+        study_selection_activity: (
+            StudySelectionActivity | StudySelectionActivityInstance
+        ),
         num_cols: int,
     ) -> TableRow:
         """returns TableRow for SoA Group row"""
@@ -1685,6 +1847,9 @@ class StudyFlowchartService:
             ),
         )
 
+        if study_selection_activity.study_soa_group is None:
+            raise BusinessLogicException(msg="Study SoA Group is None")
+
         row.cells.append(
             cls._get_soa_group_cell(study_selection_activity.study_soa_group)
         )
@@ -1695,7 +1860,9 @@ class StudyFlowchartService:
         return row
 
     @staticmethod
-    def _get_soa_group_cell(study_soa_group: StudySoAGroup) -> TableCell:
+    def _get_soa_group_cell(
+        study_soa_group: StudySoAGroup | SimpleStudySoAGroup,
+    ) -> TableCell:
         return TableCell(
             study_soa_group.soa_group_term_name,
             style="soaGroup",
@@ -1713,7 +1880,9 @@ class StudyFlowchartService:
 
     @staticmethod
     def _get_activity_group_row(
-        study_selection_activity: StudySelectionActivity,
+        study_selection_activity: (
+            StudySelectionActivity | StudySelectionActivityInstance
+        ),
         num_cols: int,
     ) -> TableRow:
         """returns TableRow for Activity Group row"""
@@ -1789,7 +1958,9 @@ class StudyFlowchartService:
 
     @staticmethod
     def _get_activity_subgroup_row(
-        study_selection_activity: StudySelectionActivity,
+        study_selection_activity: (
+            StudySelectionActivity | StudySelectionActivityInstance
+        ),
         num_cols: int,
     ) -> TableRow:
         """returns TableRow for Activity SubGroup row"""
@@ -1880,10 +2051,14 @@ class StudyFlowchartService:
         ) = cls._mk_simple_footnotes(footnotes)
         for row in table.rows:
             for cell in row.cells:
-                footnotes = set(cell.footnotes or [])
+                _footnotes = set(cell.footnotes or [])
                 for ref in cell.refs or []:
-                    footnotes.update(footnote_symbols_by_ref_uid.get(ref.uid, []))
-                cell.footnotes = sorted(list(footnotes)) if footnotes else None
+                    _footnotes.update(footnote_symbols_by_ref_uid.get(ref.uid, []))
+                cell.footnotes = (
+                    sorted(str(_footnote) for _footnote in _footnotes)
+                    if _footnotes
+                    else None
+                )
 
         table.footnotes = simple_footnotes_by_symbol
 
@@ -1983,11 +2158,11 @@ class StudyFlowchartService:
 
     @staticmethod
     @trace_calls
-    def amend_procedure_label(rows: Iterable[TableRow]):
+    def amend_procedure_label(rows: Sequence[TableRow]):
         """Overwrite text in the first column of the first visible row (among the first two rows)"""
         for row in rows[: min(3, len(rows))]:
             if not row.hide:
-                row.cells[0].text = _T("procedure_label")
+                row.cells[0].text = _T("procedure_label", "")
                 break
 
     @staticmethod
@@ -2024,6 +2199,7 @@ class StudyFlowchartService:
             study_value_version=study_value_version,
         ).time_unit_name
 
+    @trace_calls
     def _get_soa_preferences(
         self, study_uid: str, study_value_version: str | None = None
     ) -> StudySoaPreferences:
@@ -2039,7 +2215,7 @@ class StudyFlowchartService:
         study_uid: str,
         study_value_version: str | None = None,
         protocol_flowchart: bool = False,
-    ) -> list[dict]:
+    ) -> list[dict[Any, Any]]:
         if not study_value_version:
             query = "MATCH (study_root:StudyRoot{uid:$study_uid})-[has_version:LATEST]-(study_value:StudyValue)"
         else:
@@ -2071,14 +2247,14 @@ class StudyFlowchartService:
                         order: study_activity_group.order
                     }]) as study_activity_group,
             head([(study_activity)-[:STUDY_ACTIVITY_HAS_STUDY_SOA_GROUP]->(study_soa_group:StudySoAGroup)
-                -[:HAS_FLOWCHART_GROUP]->(:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(term_name_value:CTTermNameValue) 
+                -[:HAS_FLOWCHART_GROUP]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(term_name_value:CTTermNameValue) 
                 | {
                     term_name_value:term_name_value,
                     order: study_soa_group.order
                     }]) as study_soa_group,
-            head([(study_epoch)-[:HAS_EPOCH]->(:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]-
+            head([(study_epoch)-[:HAS_EPOCH]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]-
                 (epoch_term:CTTermNameValue) | epoch_term.name]) as epoch_name,
-            head([(study_visit)-[:HAS_VISIT_TYPE]->(:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]-
+            head([(study_visit)-[:HAS_VISIT_TYPE]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]-
                 (visity_type_term:CTTermNameValue) | 
                 {
                     is_soa_milestone:study_visit.is_soa_milestone,
@@ -2134,7 +2310,7 @@ class StudyFlowchartService:
     def download_operational_soa_content(
         study_uid: str,
         study_value_version: str | None = None,
-    ) -> list[dict]:
+    ) -> list[dict[Any, Any]]:
         if not study_value_version:
             query = "MATCH (study_root:StudyRoot{uid:$study_uid})-[has_version:LATEST]-(study_value:StudyValue)"
         else:
@@ -2146,10 +2322,10 @@ class StudyFlowchartService:
             MATCH (study_activity_schedule)<-[:STUDY_ACTIVITY_HAS_SCHEDULE]-(study_activity:StudyActivity)
                 -[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_INSTANCE]->(study_activity_instance:StudyActivityInstance)
                 <-[:HAS_STUDY_ACTIVITY_INSTANCE]-(study_value)
-            WITH has_version,study_value, study_activity_schedule, study_visit, study_epoch, study_activity_instance, study_activity,
-                head([(study_activity)-[:HAS_SELECTED_ACTIVITY]->(activity_value:ActivityValue) | activity_value]) as activity,
-                head([(study_activity_instance)-[:HAS_SELECTED_ACTIVITY_INSTANCE]->(activity_instance_value:ActivityInstanceValue) | 
-                    activity_instance_value]) as activity_instance,
+            WHERE NOT (study_activity)-[:BEFORE]-()
+            MATCH (study_activity_instance)-[:HAS_SELECTED_ACTIVITY_INSTANCE]->(activity_instance_value:ActivityInstanceValue)
+            WITH has_version,study_value, study_activity_schedule, study_visit, study_epoch, study_activity_instance, study_activity, activity_instance_value,
+            head([(study_activity)-[:HAS_SELECTED_ACTIVITY]->(activity_value:ActivityValue) | activity_value]) as activity,
             head([(study_activity)-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_SUBGROUP]->(study_activity_subgroup:StudyActivitySubGroup)
                 -[:HAS_SELECTED_ACTIVITY_SUBGROUP]->(activity_subgroup_value:ActivitySubGroupValue) 
                     | {
@@ -2163,12 +2339,12 @@ class StudyFlowchartService:
                         order: study_activity_group.order
                     }]) as study_activity_group,
             head([(study_activity)-[:STUDY_ACTIVITY_HAS_STUDY_SOA_GROUP]->(study_soa_group:StudySoAGroup)
-                -[:HAS_FLOWCHART_GROUP]->(:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(term_name_value:CTTermNameValue) 
+                -[:HAS_FLOWCHART_GROUP]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]->(term_name_value:CTTermNameValue) 
                 | {
                     term_name_value:term_name_value,
                     order: study_soa_group.order
                     }]) as study_soa_group,
-                head([(study_epoch)-[:HAS_EPOCH]->(:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]-
+                head([(study_epoch)-[:HAS_EPOCH]->(:CTTermContext)-[:HAS_SELECTED_TERM]->(:CTTermRoot)-[:HAS_NAME_ROOT]->(:CTTermNameRoot)-[:LATEST]-
                     (epoch_term:CTTermNameValue) | epoch_term.name]) as epoch_name
             ORDER BY study_soa_group.order, study_activity_group.order, study_activity_subgroup.order, study_activity.order, study_visit.visit_number
             RETURN DISTINCT
@@ -2181,9 +2357,9 @@ class StudyFlowchartService:
                 study_visit.short_visit_label AS visit,
                 epoch_name AS epoch,
                 activity.name AS activity,
-                activity_instance.name AS activity_instance,
-                activity_instance.topic_code AS topic_code,
-                activity_instance.adam_param_code AS param_code,
+                activity_instance_value.name AS activity_instance,
+                activity_instance_value.topic_code AS topic_code,
+                activity_instance_value.adam_param_code AS param_code,
                 study_activity_subgroup.activity_subgroup_value.name AS activity_subgroup,
                 study_activity_group.activity_group_value.name AS activity_group,
                 study_soa_group.term_name_value.name as soa_group,
@@ -2229,33 +2405,9 @@ class StudyFlowchartService:
         return cell_references, footnote_references
 
     @trace_calls
-    @ensure_transaction(db)
-    def load_soa_snapshot(
-        self,
-        study_uid: str,
-        study_value_version: str | None = None,
-        layout: SoALayout = SoALayout.PROTOCOL,
-        time_unit: str | None = None,
-    ) -> TableWithFootnotes:
-        """Loads SoA snapshot from db, and reconstructs SoA table and footnotes"""
-
-        self._study_service.check_if_study_uid_and_version_exists(
-            study_uid, study_value_version=study_value_version
-        )
-
-        soa_cell_references, soa_footnote_references = self.repository.load(
-            study_uid=study_uid, study_value_version=study_value_version, layout=layout
-        )
-
-        NotFoundException.raise_if_not(
-            soa_cell_references,
-            msg=f"No SoA snapshot found for Study with uid '{study_uid}' and version '{study_value_version}'",
-        )
-
-        soa_preferences = self._get_soa_preferences(
-            study_uid, study_value_version=study_value_version
-        )
-
+    def _fetch_soa_snapshot_data(
+        self, study_uid, study_value_version, layout, time_unit
+    ):
         if not time_unit:
             time_unit = self.get_preferred_time_unit(
                 study_uid, study_value_version=study_value_version
@@ -2265,39 +2417,133 @@ class StudyFlowchartService:
             study_uid, study_value_version=study_value_version, time_unit=time_unit
         )
 
-        study_epochs_by_uid = self._map_by_uid(
-            self._get_study_epochs(
-                study_uid=study_uid, study_value_version=study_value_version
+        # Fetch database objects in parallel
+        with ThreadPoolExecutor() as executor:
+            soa_preferences_future = executor.submit(
+                RuntimeContext.with_current_context(self._get_soa_preferences),
+                study_uid,
+                study_value_version=study_value_version,
             )
-        )
-        study_visits_by_uid = self._map_by_uid(
-            self._get_study_visits(
-                study_uid=study_uid, study_value_version=study_value_version
+
+            soa_snapshot_future = executor.submit(
+                RuntimeContext.with_current_context(self.repository.load),
+                study_uid=study_uid,
+                study_value_version=study_value_version,
+                layout=layout,
             )
+
+            study_visits_future = executor.submit(
+                RuntimeContext.with_current_context(self._get_study_visits),
+                study_uid=study_uid,
+                study_value_version=study_value_version,
+            )
+
+            study_soa_groups_future = executor.submit(
+                RuntimeContext.with_current_context(self._get_study_soa_groups),
+                study_uid=study_uid,
+                study_value_version=study_value_version,
+            )
+
+            study_activity_groups_future = executor.submit(
+                RuntimeContext.with_current_context(self._get_study_activity_groups),
+                study_uid=study_uid,
+                study_value_version=study_value_version,
+            )
+
+            study_activity_subgroups_future = executor.submit(
+                RuntimeContext.with_current_context(self._get_study_activity_subgroups),
+                study_uid=study_uid,
+                study_value_version=study_value_version,
+            )
+
+            study_activities_future = executor.submit(
+                RuntimeContext.with_current_context(self.fetch_study_activities),
+                study_uid=study_uid,
+                study_value_version=study_value_version,
+            )
+
+            study_footnotes_future = executor.submit(
+                RuntimeContext.with_current_context(self._get_study_footnotes),
+                study_uid,
+                study_value_version=study_value_version,
+            )
+
+        soa_preferences: StudySoaPreferences = soa_preferences_future.result()
+
+        soa_cell_references, soa_footnote_references = soa_snapshot_future.result()
+
+        NotFoundException.raise_if_not(
+            soa_cell_references,
+            msg=f"No SoA snapshot found for Study with uid '{study_uid}' and version '{study_value_version}'",
         )
+
+        study_visits_by_uid: Mapping[str, StudyVisit] = self._map_by_uid(
+            study_visits_future.result()
+        )
+
+        study_epochs_by_uid: Mapping[str, StudyEpochTiny] = self._map_by_uid(
+            StudyEpochTiny.from_study_visit(study_visit)
+            for study_visit in study_visits_by_uid.values()
+        )
+
         study_soa_groups_by_uid = self._map_by_uid(
-            self._get_study_soa_groups(
-                study_uid=study_uid, study_value_version=study_value_version
-            ),
+            study_soa_groups_future.result(),
             "study_soa_group_uid",
         )
+
         study_activity_groups_by_uid = self._map_by_uid(
-            self._get_study_activity_groups(
-                study_uid=study_uid, study_value_version=study_value_version
-            ),
+            study_activity_groups_future.result(),
             "study_activity_group_uid",
         )
+
         study_activity_subgroups_by_uid = self._map_by_uid(
-            self._get_study_activity_subgroups(
-                study_uid=study_uid, study_value_version=study_value_version
-            ),
+            study_activity_subgroups_future.result(),
             "study_activity_subgroup_uid",
         )
+
         study_activities_by_uid = self._map_by_uid(
-            self._get_study_activities(
-                study_uid=study_uid, study_value_version=study_value_version
-            ),
+            study_activities_future.result(),
             "study_activity_uid",
+        )
+
+        return (
+            soa_cell_references,
+            soa_footnote_references,
+            soa_preferences,
+            study_activities_by_uid,
+            study_activity_groups_by_uid,
+            study_activity_subgroups_by_uid,
+            study_epochs_by_uid,
+            study_footnotes_future,
+            study_soa_groups_by_uid,
+            study_visits_by_uid,
+            time_unit,
+        )
+
+    @trace_calls
+    def load_soa_snapshot(
+        self,
+        study_uid: str,
+        study_value_version: str | None = None,
+        layout: SoALayout = SoALayout.PROTOCOL,
+        time_unit: str | None = None,
+    ) -> TableWithFootnotes:
+        """Loads SoA snapshot from db, and reconstructs SoA table and footnotes"""
+
+        (
+            soa_cell_references,
+            soa_footnote_references,
+            soa_preferences,
+            study_activities_by_uid,
+            study_activity_groups_by_uid,
+            study_activity_subgroups_by_uid,
+            study_epochs_by_uid,
+            study_footnotes_future,
+            study_soa_groups_by_uid,
+            study_visits_by_uid,
+            time_unit,
+        ) = self._fetch_soa_snapshot_data(
+            study_uid, study_value_version, layout, time_unit
         )
 
         epoch_references: dict[int, SoACellReference] = {}
@@ -2343,7 +2589,9 @@ class StudyFlowchartService:
         epoch_row.cells[0] = TableCell(text=_T("study_epoch"), style="header1")
 
         for col_idx, ref in epoch_references.items():
-            study_epoch = study_epochs_by_uid[ref.referenced_item.item_uid]
+            study_epoch: StudyEpochTiny = study_epochs_by_uid[
+                ref.referenced_item.item_uid
+            ]
             epoch_row.cells[col_idx] = TableCell(
                 text=study_epoch.epoch_name,
                 span=ref.span,
@@ -2393,12 +2641,12 @@ class StudyFlowchartService:
         )
 
         prev_visit_type_uid = None
-        prev_milestone_cell = None
+        prev_milestone_cell: TableCell | None = None
         for col_idx, refs in visit_references.items():
             visits_in_group = [
                 study_visits_by_uid[ref.referenced_item.item_uid] for ref in refs
             ]
-            visit = visits_in_group[0]
+            visit: StudyVisit = visits_in_group[0]
 
             if visit.is_soa_milestone:
                 if prev_visit_type_uid == visit.visit_type_uid:
@@ -2515,9 +2763,7 @@ class StudyFlowchartService:
         table.rows = header_rows + table.rows
 
         study_soa_footnotes_by_uid: dict[str, StudySoAFootnote] = self._map_by_uid(
-            self._get_study_footnotes(
-                study_uid, study_value_version=study_value_version
-            )
+            study_footnotes_future.result()
         )
 
         table.footnotes = {
@@ -2537,8 +2783,12 @@ class StudyFlowchartService:
 
         return table
 
+    BaseModelType = TypeVar("BaseModelType", bound=BaseModel)
+
     @staticmethod
-    def _map_by_uid(items: Iterable[BaseModel], uid_property_name: str = "uid"):
+    def _map_by_uid(
+        items: Iterable[BaseModelType], uid_property_name: str = "uid"
+    ) -> dict[str, BaseModelType]:
         return {getattr(item, uid_property_name): item for item in items}
 
     @trace_calls
@@ -2586,31 +2836,13 @@ class StudyFlowchartService:
         ]
         return footnote_references
 
-    def _get_study_visits_dict_filtered(self, study_uid, study_value_version):
-        # get visits
-        visits = self._get_study_visits(
-            study_uid, study_value_version=study_value_version
-        )
-
-        # filter for visible visits
-        visits = {
-            visit.uid: visit
-            for visit in visits
-            if (
-                visit.show_visit
-                and visit.study_epoch.sponsor_preferred_name != config.BASIC_EPOCH_NAME
-            )
-        }
-
-        return visits
-
     @staticmethod
     def _get_visit_refs(header_rows: Iterable[TableRow]) -> dict[int, Ref]:
         """Extracts StudyVisit references from SoA table header rows, indexed by column index"""
 
-        visit_refs: dict[int, Ref] = {}
+        visit_refs: dict[int, ReferencedItem] = {}
 
-        for i, cell in enumerate(header_rows[-3].cells):
+        for i, cell in enumerate(header_rows[-3].cells):  # type: ignore[index]
             if cell.refs:
                 for ref in cell.refs:
                     if ref.type == SoAItemType.STUDY_VISIT.value:
@@ -2639,7 +2871,7 @@ class StudyFlowchartService:
             row_idx: int,
             col_idx: int,
             cell: TableCell,
-            accepted_ref_types: Iterable[str],
+            accepted_ref_types: Iterable,
             is_propagated=False,
             order: int = 0,
         ):
@@ -2666,7 +2898,7 @@ class StudyFlowchartService:
 
         num_header_cols = table.num_header_cols
         if layout == SoALayout.OPERATIONAL:
-            num_header_cols += NUM_OPERATIONAL_CODE_ROWS
+            num_header_cols += NUM_OPERATIONAL_CODE_COLS
 
         # collect references from table header (Epochs and Visits)
         for row in table.rows[: table.num_header_rows]:
@@ -2717,7 +2949,7 @@ class StudyFlowchartService:
         return references
 
 
-def study_version(study: Study) -> str:
+def get_study_version(study: Study) -> str:
     """Returns study version as string"""
     if (
         study.current_metadata.version_metadata.study_status

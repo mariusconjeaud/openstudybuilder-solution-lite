@@ -16,15 +16,16 @@ from clinical_mdr_api.models.syntax_instances.timeframe import (
     TimeframeVersion,
 )
 from clinical_mdr_api.models.syntax_templates.template_parameter import (
-    ComplexTemplateParameter,
+    TemplateParameter,
 )
 from clinical_mdr_api.models.utils import CustomPage
 from clinical_mdr_api.repositories._utils import FilterOperator
 from clinical_mdr_api.routers import _generic_descriptions, decorators
 from clinical_mdr_api.routers._generic_descriptions import study_section_description
 from clinical_mdr_api.services.syntax_instances.timeframes import TimeframeService
-from common import config
 from common.auth import rbac
+from common.auth.dependencies import security
+from common.config import settings
 from common.models.error import ErrorResponse
 
 # Prefixed with "/timeframes"
@@ -38,7 +39,7 @@ TimeframeUID = Path(description="The unique id of the timeframe.")
 
 @router.get(
     "",
-    dependencies=[rbac.LIBRARY_READ],
+    dependencies=[security, rbac.LIBRARY_READ],
     summary="Returns all timeframes in their latest/newest version.",
     description=_generic_descriptions.DATA_EXPORTS_HEADER,
     status_code=200,
@@ -97,16 +98,16 @@ def get_all(
         Json | None, Query(description=_generic_descriptions.SORT_BY)
     ] = None,
     page_number: Annotated[
-        int | None, Query(ge=1, description=_generic_descriptions.PAGE_NUMBER)
-    ] = config.DEFAULT_PAGE_NUMBER,
+        int, Query(ge=1, description=_generic_descriptions.PAGE_NUMBER)
+    ] = settings.default_page_number,
     page_size: Annotated[
-        int | None,
+        int,
         Query(
             ge=0,
-            le=config.MAX_PAGE_SIZE,
+            le=settings.max_page_size,
             description=_generic_descriptions.PAGE_SIZE,
         ),
-    ] = config.DEFAULT_PAGE_SIZE,
+    ] = settings.default_page_size,
     filters: Annotated[
         Json | None,
         Query(
@@ -115,10 +116,10 @@ def get_all(
         ),
     ] = None,
     operator: Annotated[
-        str | None, Query(description=_generic_descriptions.FILTER_OPERATOR)
-    ] = config.DEFAULT_FILTER_OPERATOR,
+        str, Query(description=_generic_descriptions.FILTER_OPERATOR)
+    ] = settings.default_filter_operator,
     total_count: Annotated[
-        bool | None, Query(description=_generic_descriptions.TOTAL_COUNT)
+        bool, Query(description=_generic_descriptions.TOTAL_COUNT)
     ] = False,
 ) -> CustomPage[Timeframe]:
     data = Service().get_all(
@@ -131,14 +132,14 @@ def get_all(
         filter_operator=FilterOperator.from_str(operator),
         sort_by=sort_by,
     )
-    return CustomPage.create(
+    return CustomPage(
         items=data.items, total=data.total, page=page_number, size=page_size
     )
 
 
 @router.get(
     "/headers",
-    dependencies=[rbac.LIBRARY_READ],
+    dependencies=[security, rbac.LIBRARY_READ],
     summary="Returns possible values from the database for a given header",
     description="""Allowed parameters include : field name for which to get possible
     values, search string to provide filtering for the field name, additional filters to apply on other fields""",
@@ -167,7 +168,7 @@ def get_distinct_values_for_header(
         ),
     ] = None,
     search_string: Annotated[
-        str | None, Query(description=_generic_descriptions.HEADER_SEARCH_STRING)
+        str, Query(description=_generic_descriptions.HEADER_SEARCH_STRING)
     ] = "",
     filters: Annotated[
         Json | None,
@@ -177,11 +178,11 @@ def get_distinct_values_for_header(
         ),
     ] = None,
     operator: Annotated[
-        str | None, Query(description=_generic_descriptions.FILTER_OPERATOR)
-    ] = config.DEFAULT_FILTER_OPERATOR,
+        str, Query(description=_generic_descriptions.FILTER_OPERATOR)
+    ] = settings.default_filter_operator,
     page_size: Annotated[
-        int | None, Query(description=_generic_descriptions.HEADER_PAGE_SIZE)
-    ] = config.DEFAULT_HEADER_PAGE_SIZE,
+        int, Query(description=_generic_descriptions.HEADER_PAGE_SIZE)
+    ] = settings.default_header_page_size,
 ) -> list[Any]:
     return Service().get_distinct_values_for_header(
         status=status,
@@ -195,7 +196,7 @@ def get_distinct_values_for_header(
 
 @router.get(
     "/audit-trail",
-    dependencies=[rbac.LIBRARY_READ],
+    dependencies=[security, rbac.LIBRARY_READ],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -204,16 +205,16 @@ def get_distinct_values_for_header(
 )
 def retrieve_audit_trail(
     page_number: Annotated[
-        int | None, Query(ge=1, description=_generic_descriptions.PAGE_NUMBER)
-    ] = config.DEFAULT_PAGE_NUMBER,
+        int, Query(ge=1, description=_generic_descriptions.PAGE_NUMBER)
+    ] = settings.default_page_number,
     page_size: Annotated[
-        int | None,
+        int,
         Query(
             ge=0,
-            le=config.MAX_PAGE_SIZE,
+            le=settings.max_page_size,
             description=_generic_descriptions.PAGE_SIZE,
         ),
-    ] = config.DEFAULT_PAGE_SIZE,
+    ] = settings.default_page_size,
     filters: Annotated[
         Json | None,
         Query(
@@ -222,10 +223,10 @@ def retrieve_audit_trail(
         ),
     ] = None,
     operator: Annotated[
-        str | None, Query(description=_generic_descriptions.FILTER_OPERATOR)
-    ] = config.DEFAULT_FILTER_OPERATOR,
+        str, Query(description=_generic_descriptions.FILTER_OPERATOR)
+    ] = settings.default_filter_operator,
     total_count: Annotated[
-        bool | None, Query(description=_generic_descriptions.TOTAL_COUNT)
+        bool, Query(description=_generic_descriptions.TOTAL_COUNT)
     ] = False,
 ) -> CustomPage[Timeframe]:
     results = Service().get_all(
@@ -237,14 +238,14 @@ def retrieve_audit_trail(
         for_audit_trail=True,
     )
 
-    return CustomPage.create(
+    return CustomPage(
         items=results.items, total=results.total, page=page_number, size=page_size
     )
 
 
 @router.get(
     "/{timeframe_uid}",
-    dependencies=[rbac.LIBRARY_READ],
+    dependencies=[security, rbac.LIBRARY_READ],
     summary="Returns the latest/newest version of a specific timeframe identified by 'timeframe_uid'.",
     description="""If multiple request query parameters are used, then they need to
     match all at the same time (they are combined with the AND operation).""",
@@ -285,7 +286,7 @@ def get(
 
 @router.get(
     "/{timeframe_uid}/versions",
-    dependencies=[rbac.LIBRARY_READ],
+    dependencies=[security, rbac.LIBRARY_READ],
     summary="Returns the version history of a specific timeframe identified by 'timeframe_uid'.",
     description="The returned versions are ordered by\n"
     "0. start_date descending (newest entries first)",
@@ -304,7 +305,7 @@ def get_versions(timeframe_uid: Annotated[str, TimeframeUID]) -> list[TimeframeV
 
 @router.post(
     "",
-    dependencies=[rbac.LIBRARY_WRITE_OR_STUDY_WRITE],
+    dependencies=[security, rbac.LIBRARY_WRITE_OR_STUDY_WRITE],
     summary="Creates a new timeframe in 'Draft' status.",
     description="""This request is only valid if
 * the specified timeframe template is in 'Final' status and
@@ -346,7 +347,7 @@ def create(
 
 @router.post(
     "/preview",
-    dependencies=[rbac.LIBRARY_WRITE_OR_STUDY_WRITE],
+    dependencies=[security, rbac.LIBRARY_WRITE_OR_STUDY_WRITE],
     summary="Previews the creation of a new timeframe.",
     description="""This request is only valid if
 * the specified timeframe template is in 'Final' status and
@@ -388,7 +389,7 @@ def preview(
 
 @router.patch(
     "/{timeframe_uid}",
-    dependencies=[rbac.LIBRARY_WRITE],
+    dependencies=[security, rbac.LIBRARY_WRITE],
     summary="Updates the timeframe identified by 'timeframe_uid'.",
     description="""This request is only valid if the timeframe
 * is in 'Draft' status and
@@ -431,7 +432,7 @@ def edit(
 
 @router.post(
     "/{timeframe_uid}/approvals",
-    dependencies=[rbac.LIBRARY_WRITE_OR_STUDY_WRITE],
+    dependencies=[security, rbac.LIBRARY_WRITE_OR_STUDY_WRITE],
     summary="Approves the timeframe identified by 'timeframe_uid'.",
     description="""This request is only valid if the timeframe
 * is in 'Draft' status and
@@ -464,7 +465,7 @@ def approve(timeframe_uid: Annotated[str, TimeframeUID]) -> Timeframe:
 
 @router.delete(
     "/{timeframe_uid}/activations",
-    dependencies=[rbac.LIBRARY_WRITE],
+    dependencies=[security, rbac.LIBRARY_WRITE],
     summary="Inactivates/deactivates the timeframe identified by 'timeframe_uid'.",
     description="""This request is only valid if the timeframe
 * is in 'Final' status only (so no latest 'Draft' status exists).
@@ -496,7 +497,7 @@ def inactivate(timeframe_uid: Annotated[str, TimeframeUID]) -> Timeframe:
 # TODO check if * there is no other timeframe with the same name (it may be that one had been created after inactivating this one here)
 @router.post(
     "/{timeframe_uid}/activations",
-    dependencies=[rbac.LIBRARY_WRITE],
+    dependencies=[security, rbac.LIBRARY_WRITE],
     summary="Reactivates the timeframe identified by 'timeframe_uid'.",
     description="""This request is only valid if the timeframe
 * is in 'Retired' status only (so no latest 'Draft' status exists).
@@ -527,7 +528,7 @@ def reactivate(timeframe_uid: Annotated[str, TimeframeUID]) -> Timeframe:
 
 @router.delete(
     "/{timeframe_uid}",
-    dependencies=[rbac.LIBRARY_WRITE],
+    dependencies=[security, rbac.LIBRARY_WRITE],
     summary="Deletes the timeframe identified by 'timeframe_uid'.",
     description="""This request is only valid if \n
 * the timeframe is in 'Draft' status and
@@ -555,7 +556,7 @@ def delete(timeframe_uid: Annotated[str, TimeframeUID]):
 
 @router.get(
     "/{timeframe_uid}/studies",
-    dependencies=[rbac.STUDY_READ],
+    dependencies=[security, rbac.STUDY_READ],
     status_code=200,
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -586,7 +587,7 @@ def get_studies(
 
 @router.get(
     "/{timeframe_uid}/parameters",
-    dependencies=[rbac.LIBRARY_READ],
+    dependencies=[security, rbac.LIBRARY_READ],
     summary="Returns all template parameters available for the timeframe identified by 'timeframe_uid'. Includes the available values per parameter.",
     description="Returns all template parameters used in the timeframe template "
     "that is the basis for the timeframe identified by 'timeframe_uid'. "
@@ -605,5 +606,5 @@ def get_parameters(
             description="if specified only valid parameters for a given study will be returned.",
         ),
     ] = None,
-) -> list[ComplexTemplateParameter]:
+) -> list[TemplateParameter]:
     return Service().get_parameters(timeframe_uid, study_uid=study_uid)

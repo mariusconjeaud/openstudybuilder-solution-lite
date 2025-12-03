@@ -8,7 +8,7 @@
       <v-tab
         v-for="type in criteriaTypes"
         :key="type.term_uid"
-        :value="type.name.sponsor_preferred_name"
+        :value="type.sponsor_preferred_name"
       >
         {{ type.name.sponsor_preferred_name }}
       </v-tab>
@@ -17,10 +17,10 @@
       <v-window-item
         v-for="type in criteriaTypes"
         :key="type.term_uid"
-        :value="type.name.sponsor_preferred_name"
+        :value="type.sponsor_preferred_name"
       >
         <CriteriaTable
-          :key="`${type.name.sponsor_preferred_name}-${tabKeys[type.name.sponsor_preferred_name]}`"
+          :key="`${type.sponsor_preferred_name}-${tabKeys[type.sponsor_preferred_name]}`"
           :criteria-type="type"
         />
       </v-window-item>
@@ -55,10 +55,10 @@ watch(tab, (newValue) => {
 })
 
 onMounted(() => {
-  terms.getByCodelist('criteriaTypes', { unSorted: true }).then((resp) => {
+  terms.getTermsByCodelist('criteriaTypes', { unSorted: true }).then((resp) => {
     criteriaTypes.value = resp.data.items
     tab.value =
-      route.params.tab || criteriaTypes.value[0].name.sponsor_preferred_name
+      route.params.tab || criteriaTypes.value[0].sponsor_preferred_name
   })
 })
 </script>

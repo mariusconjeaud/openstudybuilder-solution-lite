@@ -43,7 +43,7 @@
           </td>
           <td>{{ objective.order }}</td>
           <td>
-            <CTTermDisplay :term="objective.objective_level" />
+            <CTCodelistTermDisplay :term="objective.objective_level" />
           </td>
           <td>
             <NNParameterHighlighter
@@ -91,8 +91,8 @@
         :show-prefix-and-postfix="false"
       />
     </template>
-    <template #[`item.objective_level.sponsor_preferred_name`]="{ item }">
-      <CTTermDisplay :term="item.objective_level" />
+    <template #[`item.objective_level.term_name`]="{ item }">
+      <CTCodelistTermDisplay :term="item.objective_level" />
     </template>
     <template #[`item.start_date`]="{ item }">
       {{ $filters.date(item.start_date) }}
@@ -151,7 +151,7 @@
 import { useI18n } from 'vue-i18n'
 import study from '@/api/study'
 import ActionsMenu from '@/components/tools/ActionsMenu.vue'
-import CTTermDisplay from '@/components/tools/CTTermDisplay.vue'
+import CTCodelistTermDisplay from '../tools/CTCodelistTermDisplay.vue'
 import NNParameterHighlighter from '@/components/tools/NNParameterHighlighter.vue'
 import NNTable from '@/components/tools/NNTable.vue'
 import ObjectiveEditForm from '@/components/studies/ObjectiveEditForm.vue'
@@ -228,7 +228,7 @@ const headers = [
   { title: t('StudyObjectivesTable.order'), key: 'order', width: '3%' },
   {
     title: t('StudyObjectivesTable.objective_level'),
-    key: 'objective_level.sponsor_preferred_name',
+    key: 'objective_level.term_name',
   },
   { title: t('_global.objective'), key: 'name', width: '30%' },
   { title: t('StudyObjectivesTable.endpoint_count'), key: 'endpoint_count' },

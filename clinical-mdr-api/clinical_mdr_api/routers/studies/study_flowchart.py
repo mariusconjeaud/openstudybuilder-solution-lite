@@ -2,7 +2,7 @@
 
 import io
 import os
-from typing import Annotated
+from typing import Annotated, Any
 
 from fastapi import Path, Query
 from fastapi.responses import HTMLResponse, StreamingResponse
@@ -21,8 +21,9 @@ from clinical_mdr_api.services.studies.study_activity_selection import (
 )
 from clinical_mdr_api.services.studies.study_flowchart import StudyFlowchartService
 from clinical_mdr_api.services.utils.table_f import TableWithFootnotes
-from common import config
 from common.auth import rbac
+from common.auth.dependencies import security
+from common.config import settings
 
 LAYOUT_QUERY = Query(
     description="The requested layout or detail level of Schedule of Activities"
@@ -43,7 +44,7 @@ TIME_UNIT_QUERY = Query(
 
 @router.get(
     "/{study_uid}/flowchart/coordinates",
-    dependencies=[rbac.STUDY_READ],
+    dependencies=[security, rbac.STUDY_READ],
     summary="Returns uid to [row,column] coordinates mapping of items included in SoA Protocol Flowchart table",
     status_code=200,
     responses={
@@ -65,7 +66,7 @@ def get_study_flowchart_coordinates(
 
 @router.get(
     "/{study_uid}/flowchart",
-    dependencies=[rbac.STUDY_READ],
+    dependencies=[security, rbac.STUDY_READ],
     summary="Protocol, Detailed or Operational SoA table with footnotes as JSON",
     status_code=200,
     responses={
@@ -82,7 +83,7 @@ def get_study_flowchart(
     time_unit: Annotated[str | None, TIME_UNIT_QUERY] = None,
     layout: Annotated[SoALayout, LAYOUT_QUERY] = SoALayout.PROTOCOL,
     force_build: Annotated[
-        bool | None,
+        bool,
         Query(description="Force building of SoA without using any saved snapshot"),
     ] = False,
 ) -> TableWithFootnotes:
@@ -99,7 +100,7 @@ def get_study_flowchart(
 
 @router.get(
     "/{study_uid}/flowchart.html",
-    dependencies=[rbac.STUDY_READ],
+    dependencies=[security, rbac.STUDY_READ],
     summary="Builds and returns an HTML document with Protocol, Detailed or Operational SoA table with footnotes",
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -139,7 +140,7 @@ def get_study_flowchart_html(
 
 @router.get(
     "/{study_uid}/flowchart.docx",
-    dependencies=[rbac.STUDY_READ],
+    dependencies=[security, rbac.STUDY_READ],
     summary="Builds and returns an DOCX document with Protocol, Detailed or Operational SoA table with footnotes",
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -174,8 +175,44 @@ def get_study_flowchart_docx(
 
 
 @router.get(
+    "/{study_uid}/flowchart.xlsx",
+    dependencies=[security, rbac.STUDY_READ],
+    summary="Builds and returns an XLSX document with Protocol, Detailed or Operational SoA table with footnotes",
+    responses={
+        403: _generic_descriptions.ERROR_403,
+        200: {"content": {MIME_TYPE_XLSX: {}}},
+        404: _generic_descriptions.ERROR_404,
+    },
+)
+def get_study_flowchart_xlsx(
+    study_uid: Annotated[str, STUDY_UID_PATH],
+    study_value_version: Annotated[
+        str | None, _generic_descriptions.STUDY_VALUE_VERSION_QUERY
+    ] = None,
+    time_unit: Annotated[str | None, TIME_UNIT_QUERY] = None,
+    layout: Annotated[SoALayout, LAYOUT_QUERY] = SoALayout.PROTOCOL,
+) -> StreamingResponse:
+    workbook = StudyFlowchartService().get_study_flowchart_xlsx(
+        study_uid=study_uid,
+        study_value_version=study_value_version,
+        layout=layout,
+        time_unit=time_unit,
+    )
+
+    # render document into Bytes stream
+    stream = io.BytesIO()
+    workbook.save(stream)
+
+    study_id = _get_study_id(study_uid, study_value_version)
+    filename = f"{study_id or study_uid} {layout.value} SoA.xlsx"
+    mime_type = MIME_TYPE_XLSX
+
+    return _streaming_response(stream, filename, mime_type)
+
+
+@router.get(
     "/{study_uid}/operational-soa.xlsx",
-    dependencies=[rbac.STUDY_READ],
+    dependencies=[security, rbac.STUDY_READ],
     summary="Builds and returns an XLSX document with Operational SoA",
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -210,7 +247,7 @@ def get_operational_soa_xlsx(
 
 @router.get(
     "/{study_uid}/operational-soa.html",
-    dependencies=[rbac.STUDY_READ],
+    dependencies=[security, rbac.STUDY_READ],
     summary="Builds and returns an HTML document with Operational SoA",
     responses={
         403: _generic_descriptions.ERROR_403,
@@ -235,8 +272,69 @@ def get_operational_soa_html(
 
 
 @router.get(
+    "/{study_uid}/detailed-soa.xlsx",
+    dependencies=[security, rbac.STUDY_READ],
+    summary="Builds and returns an XLSX document with Detailed SoA",
+    responses={
+        403: _generic_descriptions.ERROR_403,
+        200: {"content": {MIME_TYPE_XLSX: {}}},
+        404: _generic_descriptions.ERROR_404,
+    },
+)
+def get_detailed_soa_xlsx(
+    study_uid: Annotated[str, STUDY_UID_PATH],
+    study_value_version: Annotated[
+        str | None, _generic_descriptions.STUDY_VALUE_VERSION_QUERY
+    ] = None,
+    time_unit: Annotated[str | None, TIME_UNIT_QUERY] = None,
+) -> StreamingResponse:
+    layout = SoALayout.DETAILED
+    xlsx = StudyFlowchartService().get_detailed_soa_xlsx(
+        study_uid=study_uid,
+        time_unit=time_unit,
+        study_value_version=study_value_version,
+    )
+
+    # render document into Bytes stream
+    stream = io.BytesIO()
+    xlsx.save(stream)
+
+    study_id = _get_study_id(study_uid, study_value_version)
+    filename = f"{study_id or study_uid} {layout.value} SoA.xlsx"
+    mime_type = MIME_TYPE_XLSX
+
+    return _streaming_response(stream, filename, mime_type)
+
+
+@router.get(
+    "/{study_uid}/detailed-soa.html",
+    dependencies=[security, rbac.STUDY_READ],
+    summary="Builds and returns an HTML document with Detailed SoA",
+    responses={
+        403: _generic_descriptions.ERROR_403,
+        200: {"content": {"text/html": {}}},
+        404: _generic_descriptions.ERROR_404,
+    },
+)
+def get_detailed_soa_html(
+    study_uid: Annotated[str, STUDY_UID_PATH],
+    study_value_version: Annotated[
+        str | None, _generic_descriptions.STUDY_VALUE_VERSION_QUERY
+    ] = None,
+    time_unit: Annotated[str | None, TIME_UNIT_QUERY] = None,
+) -> HTMLResponse:
+    return HTMLResponse(
+        StudyFlowchartService().get_detailed_soa_html(
+            study_uid=study_uid,
+            time_unit=time_unit,
+            study_value_version=study_value_version,
+        )
+    )
+
+
+@router.get(
     "/{study_uid}/detailed-soa-history",
-    dependencies=[rbac.STUDY_READ],
+    dependencies=[security, rbac.STUDY_READ],
     summary="Returns the history of changes performed to a specific detailed SoA",
     status_code=200,
     responses={
@@ -247,18 +345,18 @@ def get_operational_soa_html(
 def get_detailed_soa_history(
     study_uid: Annotated[str, STUDY_UID_PATH],
     page_number: Annotated[
-        int | None, Query(ge=1, description=_generic_descriptions.PAGE_NUMBER)
-    ] = config.DEFAULT_PAGE_NUMBER,
+        int, Query(ge=1, description=_generic_descriptions.PAGE_NUMBER)
+    ] = settings.default_page_number,
     page_size: Annotated[
-        int | None,
+        int,
         Query(
             ge=0,
-            le=config.MAX_PAGE_SIZE,
+            le=settings.max_page_size,
             description=_generic_descriptions.PAGE_SIZE,
         ),
-    ] = config.DEFAULT_PAGE_SIZE,
+    ] = settings.default_page_size,
     total_count: Annotated[
-        bool | None, Query(description=_generic_descriptions.TOTAL_COUNT)
+        bool, Query(description=_generic_descriptions.TOTAL_COUNT)
     ] = False,
 ) -> CustomPage[DetailedSoAHistory]:
     detailed_soa_history = StudyActivitySelectionService().get_detailed_soa_history(
@@ -267,7 +365,7 @@ def get_detailed_soa_history(
         page_number=page_number,
         total_count=total_count,
     )
-    return CustomPage.create(
+    return CustomPage(
         items=detailed_soa_history.items,
         total=detailed_soa_history.total,
         page=page_number,
@@ -277,7 +375,7 @@ def get_detailed_soa_history(
 
 @router.get(
     "/{study_uid}/detailed-soa-exports",
-    dependencies=[rbac.STUDY_READ],
+    dependencies=[security, rbac.STUDY_READ],
     summary="Exports the Detailed SoA content",
     status_code=200,
     responses={
@@ -316,7 +414,7 @@ def export_detailed_soa_content(
     study_value_version: Annotated[
         str | None, _generic_descriptions.STUDY_VALUE_VERSION_QUERY
     ] = None,
-) -> list[dict]:
+) -> list[dict[str, Any]]:
     soa_content = StudyFlowchartService().download_detailed_soa_content(
         study_uid=study_uid,
         study_value_version=study_value_version,
@@ -326,7 +424,7 @@ def export_detailed_soa_content(
 
 @router.get(
     "/{study_uid}/operational-soa-exports",
-    dependencies=[rbac.STUDY_READ],
+    dependencies=[security, rbac.STUDY_READ],
     summary="Exports the Operational SoA content",
     status_code=200,
     responses={
@@ -377,7 +475,7 @@ def export_operational_soa_content(
     study_value_version: Annotated[
         str | None, _generic_descriptions.STUDY_VALUE_VERSION_QUERY
     ] = None,
-) -> list[dict]:
+) -> list[dict[str, Any]]:
     soa_content = StudyFlowchartService().download_operational_soa_content(
         study_uid=study_uid,
         study_value_version=study_value_version,
@@ -387,7 +485,7 @@ def export_operational_soa_content(
 
 @router.get(
     "/{study_uid}/protocol-soa-exports",
-    dependencies=[rbac.STUDY_READ],
+    dependencies=[security, rbac.STUDY_READ],
     summary="Exports the Protocol SoA content",
     status_code=200,
     responses={
@@ -425,7 +523,7 @@ def export_protocol_soa_content(
     study_value_version: Annotated[
         str | None, _generic_descriptions.STUDY_VALUE_VERSION_QUERY
     ] = None,
-) -> list[dict]:
+) -> list[dict[str, Any]]:
     soa_content = StudyFlowchartService().download_detailed_soa_content(
         study_uid=study_uid,
         study_value_version=study_value_version,
@@ -460,6 +558,8 @@ def _streaming_response(
         headers={
             "Content-Disposition": f'attachment; filename="{filename}"',
             "Content-Length": f"{filesize:d}",
+            "X-Content-Type-Options": "nosniff",
+            "Content-Security-Policy": "default-src 'none'",
         },
     )
 

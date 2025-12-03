@@ -1,5 +1,15 @@
 const { When, Then } = require("@badeball/cypress-cucumber-preprocessor");
 
+When('User waits for the table', () => cy.longWaitForTable(60000))
+
+When('User adds column {string} to filters', (headerName) => cy.tableHeaderActions(headerName, 'Add to filter'))
+
+When('User sets status filter to {string}', (filterValue) => {
+    cy.get(`.layoutSelector button[value=${filterValue}]`).filter(':visible').click()
+})
+
+When('User searches for {string}', (value) => cy.searchAndCheckPresence(value, true))
+
 Then('The item has status {string} and version {string}', (status, version) => {
     cy.checkRowByIndex(0, 'Status', status)
     cy.checkRowByIndex(0, 'Version', version)
@@ -47,9 +57,9 @@ Then('The results are shown in the table', () => {
     })
 })
 
-When('The {string} option is clicked from the three dot menu list', (action) => {
-    cy.performActionOnSearchedItem(action)
-})
+When('The {string} option is clicked from the three dot menu list', (action) => cy.performActionOnSearchedItem(action))
+
+When('The {string} option is clicked for flagged item', (action) => cy.performActionOnFlaggedItem(action))
 
 When('The item actions button is clicked', () => cy.clickTableActionsButton(0))
 
@@ -59,13 +69,19 @@ When('{string} action is not available', action => cy.get(`[data-cy="${action}"]
 
 Then('More than one result is found', () => cy.checkIfMoreThanOneResultFound())
 
-Then('The not existing item is searched for', () => cy.searchFor('gregsfs', false))
+Then('The not existing item is searched for', () => cy.searchFor('gregsfs'))
 
-Then('The existing item is searched for by partial name', () => cy.searchFor('SearchTest', false))
+Then('The existing item is searched for by partial name', () => cy.searchFor('SearchTest'))
 
-Then('The existing item in search by lowercased name', () => cy.searchFor('searchtest', false))
+Then('The existing item in search by lowercased name', () => cy.searchFor('searchtest'))
 
 Then('The item is not found and table is correctly filtered', () => cy.confirmNoResultsFound())
+
+Then('Only actions that should be avaiable for the Codelist are displayed', () => {
+    const allowedActions = ['Edit', 'Show terms', 'History']
+    const notAllowedActions = ['New version', 'Inactivate', 'Reactivate', 'Delete', 'Approve']
+    checkActionsAvailability(allowedActions, notAllowedActions)
+})
 
 Then('Only actions that should be avaiable for the Draft item are displayed', () => {
     const allowedActions = ['Approve', 'Edit', 'Delete', 'History']

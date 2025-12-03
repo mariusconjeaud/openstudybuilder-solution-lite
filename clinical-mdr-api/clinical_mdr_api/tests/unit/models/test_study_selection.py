@@ -192,7 +192,6 @@ def test__study_selection_objective__from_study_selection_objectives_ar_and_orde
         accepted_version=False,
         get_objective_by_uid_callback=lambda _: test_tuple.objective,
         get_objective_by_uid_version_callback=lambda x, y: test_tuple.objective,
-        get_ct_term_by_uid=lambda x, y, z=None: None,
         get_study_endpoint_count_callback=lambda x, y, study_value_version: sum(
             _.study_objective_uid
             == test_tuple.study_selection_objectives_ar.study_objectives_selection[
@@ -201,6 +200,7 @@ def test__study_selection_objective__from_study_selection_objectives_ar_and_orde
             for _ in test_tuple.study_selection_endpoints_ar.study_endpoints_selection
         ),
         find_project_by_study_uid=lambda x: test_tuple.project,
+        find_codelist_term_by_uid_and_submval=lambda x, y, z: None,
         terms_at_specific_datetime=None,
     )
 

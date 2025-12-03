@@ -1,6 +1,8 @@
 const { Given, When, Then } = require("@badeball/cypress-cucumber-preprocessor");
 import { formatDateToMMMDDYYYY, getCurrentStudyId } from '../../support/helper_functions'
 
+When('User waits for {int} seconds', (waitTime) => cy.wait(waitTime * 1000))
+
 When('The first column is selected from Select Columns option for table with actions', () => {
     const columnVisibilityCheckbox = '[data-cy="show-columns-form"] [type="checkbox"]'
     cy.clickButton('columns-layout-button')
@@ -25,6 +27,8 @@ Then('The UI is showing the UTF-8 charset correctly', () => {
 Then('The pop up displays {string}', (message) => {
   cy.checkSnackbarMessage(message)
 })
+
+Then('Validation message {string} is displayed', (message) => cy.contains('.v-messages', message))
 
 Then('The table contain only selected column', () => {
     checkTableHeaders(false)

@@ -2,17 +2,18 @@
 
 import re
 from datetime import datetime, timezone
+from typing import Any
 
 from pydantic import ValidationInfo
 
 from clinical_mdr_api.domains._utils import get_iso_lang_data
+from clinical_mdr_api.domains.concepts.utils import EN_LANGUAGE, ENG_LANGUAGE
 from common.exceptions import ValidationException
 
 FLOAT_REGEX = "^[0-9]+\\.?[0-9]*$"
 
 
-# pylint: disable=unused-argument
-def validate_string_represents_boolean(cls, value, info: ValidationInfo):
+def validate_string_represents_boolean(value, info: ValidationInfo):
     """
     Validates whether a string value represents a boolean value.
 
@@ -41,7 +42,7 @@ def validate_string_represents_boolean(cls, value, info: ValidationInfo):
     return value
 
 
-def validate_name_only_contains_letters(cls, value, info: ValidationInfo):
+def validate_name_only_contains_letters(value, info: ValidationInfo):
     """
     Validates whether a string value contains only letters.
 
@@ -63,7 +64,7 @@ def validate_name_only_contains_letters(cls, value, info: ValidationInfo):
     return value
 
 
-def validate_regex(cls, value, info: ValidationInfo):
+def validate_regex(value, info: ValidationInfo):
     """
     Validates whether a string value is a valid regular expression.
 
@@ -89,8 +90,7 @@ def validate_regex(cls, value, info: ValidationInfo):
     return value
 
 
-# pylint: disable=unused-argument
-def transform_to_utc(cls, value: datetime | None, info: ValidationInfo):
+def transform_to_utc(value: datetime | None, info: ValidationInfo):
     if not value:
         return None
 
@@ -104,8 +104,7 @@ def transform_to_utc(cls, value: datetime | None, info: ValidationInfo):
         ) from exc
 
 
-# pylint: disable=unused-argument
-def is_language_supported(cls, value: str):
+def is_language_supported(value: str):
     if not value:
         return None
 
@@ -114,10 +113,34 @@ def is_language_supported(cls, value: str):
     for key in keys:
         try:
             # This function will throw an exception if the language isn't found
-            get_iso_lang_data(query=value, key=key, return_key=key)
+            get_iso_lang_data(query=value, key=key, return_key=key)  # type: ignore[call-overload]
             return value
         except ValidationException:
             if key == keys[-1]:
                 raise
 
     return None
+
+
+def has_english_description(descriptions: list[Any]):
+    """
+    Ensures that at least one description is in English (`eng` or `en`).
+
+    Args:
+        descriptions (list[Any]): List of descriptions.
+
+    Returns:
+        list[Any]: The original list if valid.
+
+    Raises:
+        ValidationException: If no English description is found.
+    """
+
+    if not descriptions or any(
+        desc.language in {ENG_LANGUAGE, EN_LANGUAGE} for desc in descriptions
+    ):
+        return descriptions
+
+    raise ValidationException(
+        msg="At least one description must be in English ('eng' or 'en')."
+    )

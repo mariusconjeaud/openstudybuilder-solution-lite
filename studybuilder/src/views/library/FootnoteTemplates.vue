@@ -8,16 +8,16 @@
       <v-tab
         v-for="type in footnoteTypes"
         :key="type.term_uid"
-        :value="type.name.sponsor_preferred_name"
+        :value="type.sponsor_preferred_name"
       >
-        {{ type.name.sponsor_preferred_name }}
+        {{ type.sponsor_preferred_name }}
       </v-tab>
     </v-tabs>
     <v-window v-model="tab">
       <v-window-item
         v-for="type in footnoteTypes"
         :key="type.term_uid"
-        :value="type.name.sponsor_preferred_name"
+        :value="type.sponsor_preferred_name"
       >
         <FootnoteTemplateTable :key="type.term_uid" :footnote-type="type" />
       </v-window-item>
@@ -58,9 +58,9 @@ watch(
 )
 
 onMounted(() => {
-  terms.getByCodelist('footnoteTypes').then((resp) => {
+  terms.getTermsByCodelist('footnoteTypes').then((resp) => {
     footnoteTypes.value = resp.data.items
-    tab.value = footnoteTypes.value[0].name.sponsor_preferred_name
+    tab.value = footnoteTypes.value[0].sponsor_preferred_name
     setTimeout(() => {
       appStore.addBreadcrumbsLevel(tab.value, undefined, 3, true)
     }, 100)

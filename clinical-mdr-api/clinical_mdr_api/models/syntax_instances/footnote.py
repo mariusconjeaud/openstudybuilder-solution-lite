@@ -1,13 +1,17 @@
 from datetime import datetime
-from typing import Annotated, Any, Callable, Self
+from typing import Annotated, Any, Callable, Self, overload
 
 from pydantic.fields import Field
 
 from clinical_mdr_api.descriptions.general import CHANGES_FIELD_DESC
-from clinical_mdr_api.domain_repositories.models.syntax import FootnoteTemplateRoot
+from clinical_mdr_api.domain_repositories.models.syntax import (
+    FootnoteTemplateRoot,
+    SyntaxTemplateRoot,
+)
 from clinical_mdr_api.domains.syntax_instances.footnote import FootnoteAR
 from clinical_mdr_api.models.controlled_terminologies.ct_term import (
     CTTermNameAndAttributes,
+    CTTermVO,
 )
 from clinical_mdr_api.models.libraries.library import Library
 from clinical_mdr_api.models.syntax_templates.footnote_template import (
@@ -78,11 +82,26 @@ class Footnote(BaseModel):
         int, Field(description="Count of studies referencing footnote")
     ] = 0
 
+    @overload
     @classmethod
     def from_footnote_ar(
         cls,
         footnote_ar: FootnoteAR,
-    ) -> Self:
+    ) -> Self: ...
+    @overload
+    @classmethod
+    def from_footnote_ar(
+        cls,
+        footnote_ar: None,
+    ) -> None: ...
+    @classmethod
+    def from_footnote_ar(
+        cls,
+        footnote_ar: FootnoteAR | None,
+    ) -> Self | None:
+        if footnote_ar is None:
+            return None
+
         parameter_terms: list[MultiTemplateParameterTerm] = []
         for position, parameter in enumerate(footnote_ar.get_parameters()):
             terms: list[IndexedTemplateParameterTerm] = []
@@ -135,8 +154,8 @@ class FootnoteWithType(Footnote):
         cls,
         footnote_ar: FootnoteAR,
         syntax_template_node: FootnoteTemplateRoot,
-        get_footnote_type_name: Callable[[str], Any],
-        get_footnote_type_attributes: Callable[[str], Any],
+        get_footnote_type_name: Callable[[SyntaxTemplateRoot], Any],
+        get_footnote_type_attributes: Callable[[SyntaxTemplateRoot], Any],
     ) -> Self:
         parameter_terms: list[MultiTemplateParameterTerm] = []
         for position, parameter in enumerate(footnote_ar.get_parameters()):
@@ -179,6 +198,7 @@ class FootnoteWithType(Footnote):
                     ct_term_attributes_ar=get_footnote_type_attributes(
                         syntax_template_node
                     ),
+                    ct_term_codelists=CTTermVO([], []),
                 ),
                 library_name=footnote_ar.template_library_name,
             ),

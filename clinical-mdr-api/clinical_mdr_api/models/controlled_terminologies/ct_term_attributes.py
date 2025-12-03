@@ -7,11 +7,8 @@ from clinical_mdr_api.descriptions.general import CHANGES_FIELD_DESC
 from clinical_mdr_api.domains.controlled_terminologies.ct_term_attributes import (
     CTTermAttributesAR,
 )
-from clinical_mdr_api.models.controlled_terminologies.ct_term_codelist import (
-    CTTermCodelist,
-)
 from clinical_mdr_api.models.libraries.library import Library
-from clinical_mdr_api.models.utils import BaseModel, PatchInputModel
+from clinical_mdr_api.models.utils import BaseModel
 
 
 class CTTermAttributes(BaseModel):
@@ -19,18 +16,8 @@ class CTTermAttributes(BaseModel):
     def from_ct_term_ar(cls, ct_term_attributes_ar: CTTermAttributesAR) -> Self:
         return cls(
             term_uid=ct_term_attributes_ar.uid,
-            catalogue_name=ct_term_attributes_ar.ct_term_vo.catalogue_name,
-            codelists=[
-                CTTermCodelist(
-                    codelist_uid=x.codelist_uid,
-                    order=x.order,
-                    library_name=x.library_name,
-                )
-                for x in ct_term_attributes_ar.ct_term_vo.codelists
-            ],
+            catalogue_names=ct_term_attributes_ar.ct_term_vo.catalogue_names,
             concept_id=ct_term_attributes_ar.ct_term_vo.concept_id,
-            code_submission_value=ct_term_attributes_ar.ct_term_vo.code_submission_value,
-            name_submission_value=ct_term_attributes_ar.ct_term_vo.name_submission_value,
             nci_preferred_name=ct_term_attributes_ar.ct_term_vo.preferred_term,
             definition=ct_term_attributes_ar.ct_term_vo.definition,
             library_name=Library.from_library_vo(ct_term_attributes_ar.library).name,
@@ -51,8 +38,6 @@ class CTTermAttributes(BaseModel):
     ) -> Self:
         return cls(
             concept_id=ct_term_attributes_ar.ct_term_vo.concept_id,
-            code_submission_value=ct_term_attributes_ar.ct_term_vo.code_submission_value,
-            name_submission_value=ct_term_attributes_ar.ct_term_vo.name_submission_value,
             nci_preferred_name=ct_term_attributes_ar.ct_term_vo.preferred_term,
             definition=ct_term_attributes_ar.ct_term_vo.definition,
             possible_actions=sorted(
@@ -66,25 +51,15 @@ class CTTermAttributes(BaseModel):
             author_username=ct_term_attributes_ar.item_metadata.author_username,
         )
 
-    term_uid: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = None
+    term_uid: Annotated[str, Field()] = ""
 
-    catalogue_name: Annotated[
-        str | None, Field(json_schema_extra={"nullable": True})
-    ] = None
-
-    codelists: list[CTTermCodelist] = Field(default_factory=list)
+    catalogue_names: list[str] = Field(
+        default_factory=list, json_schema_extra={"remove_from_wildcard": True}
+    )
 
     concept_id: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = (
         None
     )
-
-    code_submission_value: Annotated[
-        str | None, Field(json_schema_extra={"nullable": True})
-    ] = None
-
-    name_submission_value: Annotated[
-        str | None, Field(json_schema_extra={"nullable": True})
-    ] = None
 
     nci_preferred_name: Annotated[
         str | None, Field(json_schema_extra={"nullable": True})
@@ -126,9 +101,20 @@ class CTTermAttributesVersion(CTTermAttributes):
     changes: list[str] = Field(description=CHANGES_FIELD_DESC, default_factory=list)
 
 
-class CTTermAttributesEditInput(PatchInputModel):
-    code_submission_value: Annotated[str | None, Field(min_length=1)] = None
-    name_submission_value: Annotated[str | None, Field(min_length=1)] = None
-    nci_preferred_name: Annotated[str | None, Field(min_length=1)] = None
-    definition: Annotated[str | None, Field()] = None
+class CTTermAttributesInput(BaseModel):
+    concept_id: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = (
+        None
+    )
+
+    nci_preferred_name: Annotated[
+        str | None,
+        Field(json_schema_extra={"nullable": True}),
+    ] = None
+
+    definition: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = (
+        None
+    )
+
+
+class CTTermAttributesEditInput(CTTermAttributesInput):
     change_description: Annotated[str | None, Field(min_length=1)] = None

@@ -1,4 +1,6 @@
-# pylint: disable=unused-argument, redefined-outer-name, too-many-arguments, line-too-long, too-many-statements
+# pylint: disable=unused-argument
+# pylint: disable=redefined-outer-name
+# pylint: disable=too-many-arguments
 
 # pytest fixture functions have other fixture functions as arguments,
 # which pylint interprets as unused arguments
@@ -23,7 +25,13 @@ from clinical_mdr_api.tests.integration.utils.data_library import (
     STARTUP_STUDY_CYPHER,
     library_data,
 )
+from clinical_mdr_api.tests.integration.utils.method_library import (
+    create_codelist,
+    create_ct_term,
+    get_catalogue_name_library_name,
+)
 from clinical_mdr_api.tests.utils.checks import assert_response_status_code
+from common.config import settings
 
 
 @pytest.fixture(scope="module")
@@ -51,6 +59,28 @@ def test_data():
     if isinstance(objective_template, BaseModel):
         objective_template = objective_template.model_dump()
     ObjectiveTemplateService().approve(objective_template["uid"])
+    _catalogue_name, library_name = get_catalogue_name_library_name()
+    catalogue_name = "SDTM CT"
+    objective_level_codelist = create_codelist(
+        "Objective Level",
+        "CTCodelist_ObjectiveLevel",
+        catalogue_name,
+        library_name,
+        submission_value=settings.study_objective_level_cl_submval,
+    )
+    create_ct_term(
+        "Objective Level 1",
+        "ObjectiveLevel_0001",
+        catalogue_name,
+        library_name,
+        codelists=[
+            {
+                "uid": objective_level_codelist.codelist_uid,
+                "order": 1,
+                "submission_value": "Objective level 1 submval",
+            }
+        ],
+    )
 
     yield
 
@@ -67,7 +97,7 @@ def test_name_generation_of_study_objective_with_0_template_parameters_values(
             "objective_template_uid": "ObjectiveTemplate_000001",
             "parameter_terms": [{"position": 1, "conjunction": "and", "terms": []}],
         },
-        "objective_level_uid": "term_root_final",
+        "objective_level_uid": "ObjectiveLevel_0001",
     }
     response = api_client.post(
         "/studies/study_root/study-objectives?create_objective=true", json=data
@@ -83,30 +113,15 @@ def test_name_generation_of_study_objective_with_0_template_parameters_values(
     assert res["project_number"] == "123"
     assert res["project_name"] == "Project ABC"
     assert res["study_objective_uid"] == "StudyObjective_000001"
-    assert res["objective_level"]["term_uid"] == "term_root_final"
-    assert res["objective_level"]["catalogue_name"] == "SDTM CT"
-    assert len(res["objective_level"]["codelists"]) == 1
-    assert res["objective_level"]["codelists"][0]["codelist_uid"] == "editable_cr"
-    assert res["objective_level"]["codelists"][0]["order"] == 1
-    assert res["objective_level"]["codelists"][0]["library_name"] == "Sponsor"
-    assert res["objective_level"]["sponsor_preferred_name"] == "term_value_name1"
-    assert (
-        res["objective_level"]["sponsor_preferred_name_sentence_case"]
-        == "term_value_name_sentence_case"
-    )
-    assert res["objective_level"]["library_name"] == "Sponsor"
-    assert res["objective_level"]["start_date"]
-    assert res["objective_level"]["end_date"] is None
-    assert res["objective_level"]["status"] == "Final"
-    assert res["objective_level"]["version"] == "1.0"
-    assert res["objective_level"]["change_description"] == "Approved version"
-    assert res["objective_level"]["author_username"] == "unknown-user@example.com"
+    assert res["objective_level"]["term_uid"] == "ObjectiveLevel_0001"
+    assert res["objective_level"]["term_name"] == "Objective Level 1"
+    assert res["objective_level"]["codelist_uid"] == "CTCodelist_ObjectiveLevel"
+    assert res["objective_level"]["codelist_name"] == "Objective Level"
+    assert res["objective_level"]["codelist_submission_value"] == "OBJTLEVL"
+    assert res["objective_level"]["order"] == 1
+    assert res["objective_level"]["submission_value"] == "Objective level 1 submval"
     assert res["objective_level"]["queried_effective_date"] is None
     assert res["objective_level"]["date_conflict"] is False
-    assert res["objective_level"]["possible_actions"] == [
-        "inactivate",
-        "new_version",
-    ]
     assert res["objective"]["uid"] == "Objective_000001"
     assert res["objective"]["name"] == "To investigate"
     assert res["objective"]["name_plain"] == "To investigate"
@@ -158,7 +173,7 @@ def test_name_generation_of_study_objective_with_1_template_parameters_value(
                 }
             ],
         },
-        "objective_level_uid": "term_root_final",
+        "objective_level_uid": "ObjectiveLevel_0001",
     }
     response = api_client.post(
         "/studies/study_root/study-objectives?create_objective=true", json=data
@@ -174,27 +189,15 @@ def test_name_generation_of_study_objective_with_1_template_parameters_value(
     assert res["project_number"] == "123"
     assert res["project_name"] == "Project ABC"
     assert res["study_objective_uid"] == "StudyObjective_000002"
-    assert res["objective_level"]["term_uid"] == "term_root_final"
-    assert res["objective_level"]["catalogue_name"] == "SDTM CT"
-    assert len(res["objective_level"]["codelists"]) == 1
-    assert res["objective_level"]["codelists"][0]["codelist_uid"] == "editable_cr"
-    assert res["objective_level"]["codelists"][0]["order"] == 1
-    assert res["objective_level"]["codelists"][0]["library_name"] == "Sponsor"
-    assert res["objective_level"]["sponsor_preferred_name"] == "term_value_name1"
-    assert (
-        res["objective_level"]["sponsor_preferred_name_sentence_case"]
-        == "term_value_name_sentence_case"
-    )
-    assert res["objective_level"]["library_name"] == "Sponsor"
-    assert res["objective_level"]["start_date"]
-    assert res["objective_level"]["end_date"] is None
-    assert res["objective_level"]["status"] == "Final"
-    assert res["objective_level"]["version"] == "1.0"
-    assert res["objective_level"]["change_description"] == "Approved version"
-    assert res["objective_level"]["author_username"] == "unknown-user@example.com"
+    assert res["objective_level"]["term_uid"] == "ObjectiveLevel_0001"
+    assert res["objective_level"]["term_name"] == "Objective Level 1"
+    assert res["objective_level"]["codelist_uid"] == "CTCodelist_ObjectiveLevel"
+    assert res["objective_level"]["codelist_name"] == "Objective Level"
+    assert res["objective_level"]["codelist_submission_value"] == "OBJTLEVL"
+    assert res["objective_level"]["order"] == 1
+    assert res["objective_level"]["submission_value"] == "Objective level 1 submval"
     assert res["objective_level"]["queried_effective_date"] is None
     assert res["objective_level"]["date_conflict"] is False
-    assert res["objective_level"]["possible_actions"] == ["inactivate", "new_version"]
     assert res["objective"]["uid"] == "Objective_000002"
     assert res["objective"]["name"] == "To investigate [type 2 diabetes]"
     assert res["objective"]["name_plain"] == "To investigate type 2 diabetes"
@@ -260,7 +263,7 @@ def test_name_generation_of_study_objective_with_2_template_parameters_values(
                 }
             ],
         },
-        "objective_level_uid": "term_root_final",
+        "objective_level_uid": "ObjectiveLevel_0001",
     }
     response = api_client.post(
         "/studies/study_root/study-objectives?create_objective=true", json=data
@@ -276,26 +279,15 @@ def test_name_generation_of_study_objective_with_2_template_parameters_values(
     assert res["project_number"] == "123"
     assert res["project_name"] == "Project ABC"
     assert res["study_objective_uid"] == "StudyObjective_000003"
-    assert res["objective_level"]["term_uid"] == "term_root_final"
-    assert res["objective_level"]["catalogue_name"] == "SDTM CT"
-    assert len(res["objective_level"]["codelists"]) == 1
-    assert res["objective_level"]["codelists"][0]["codelist_uid"] == "editable_cr"
-    assert res["objective_level"]["codelists"][0]["order"] == 1
-    assert res["objective_level"]["codelists"][0]["library_name"] == "Sponsor"
-    assert res["objective_level"]["sponsor_preferred_name"] == "term_value_name1"
-    assert (
-        res["objective_level"]["sponsor_preferred_name_sentence_case"]
-        == "term_value_name_sentence_case"
-    )
-    assert res["objective_level"]["library_name"] == "Sponsor"
-    assert res["objective_level"]["end_date"] is None
-    assert res["objective_level"]["status"] == "Final"
-    assert res["objective_level"]["version"] == "1.0"
-    assert res["objective_level"]["change_description"] == "Approved version"
-    assert res["objective_level"]["author_username"] == "unknown-user@example.com"
+    assert res["objective_level"]["term_uid"] == "ObjectiveLevel_0001"
+    assert res["objective_level"]["term_name"] == "Objective Level 1"
+    assert res["objective_level"]["codelist_uid"] == "CTCodelist_ObjectiveLevel"
+    assert res["objective_level"]["codelist_name"] == "Objective Level"
+    assert res["objective_level"]["codelist_submission_value"] == "OBJTLEVL"
+    assert res["objective_level"]["order"] == 1
+    assert res["objective_level"]["submission_value"] == "Objective level 1 submval"
     assert res["objective_level"]["queried_effective_date"] is None
     assert res["objective_level"]["date_conflict"] is False
-    assert res["objective_level"]["possible_actions"] == ["inactivate", "new_version"]
     assert res["objective"]["uid"] == "Objective_000003"
     assert (
         res["objective"]["name"]
@@ -382,7 +374,7 @@ def test_name_generation_of_study_objective_with_3_template_parameters_values(
                 }
             ],
         },
-        "objective_level_uid": "term_root_final",
+        "objective_level_uid": "ObjectiveLevel_0001",
     }
     response = api_client.post(
         "/studies/study_root/study-objectives?create_objective=true", json=data
@@ -398,30 +390,15 @@ def test_name_generation_of_study_objective_with_3_template_parameters_values(
     assert res["project_number"] == "123"
     assert res["project_name"] == "Project ABC"
     assert res["study_objective_uid"] == "StudyObjective_000004"
-    assert res["objective_level"]
-    assert res["objective_level"]["term_uid"] == "term_root_final"
-    assert res["objective_level"]["catalogue_name"] == "SDTM CT"
-    assert len(res["objective_level"]["codelists"]) == 1
-    assert res["objective_level"]["codelists"][0]["codelist_uid"] == "editable_cr"
-    assert res["objective_level"]["codelists"][0]["order"] == 1
-    assert res["objective_level"]["codelists"][0]["library_name"] == "Sponsor"
-    assert res["objective_level"]["sponsor_preferred_name"] == "term_value_name1"
-    assert (
-        res["objective_level"]["sponsor_preferred_name_sentence_case"]
-        == "term_value_name_sentence_case"
-    )
-    assert res["objective_level"]["library_name"] == "Sponsor"
-    assert res["objective_level"]["end_date"] is None
-    assert res["objective_level"]["status"] == "Final"
-    assert res["objective_level"]["version"] == "1.0"
-    assert res["objective_level"]["change_description"] == "Approved version"
-    assert res["objective_level"]["author_username"] == "unknown-user@example.com"
+    assert res["objective_level"]["term_uid"] == "ObjectiveLevel_0001"
+    assert res["objective_level"]["term_name"] == "Objective Level 1"
+    assert res["objective_level"]["codelist_uid"] == "CTCodelist_ObjectiveLevel"
+    assert res["objective_level"]["codelist_name"] == "Objective Level"
+    assert res["objective_level"]["codelist_submission_value"] == "OBJTLEVL"
+    assert res["objective_level"]["order"] == 1
+    assert res["objective_level"]["submission_value"] == "Objective level 1 submval"
     assert res["objective_level"]["queried_effective_date"] is None
     assert res["objective_level"]["date_conflict"] is False
-    assert res["objective_level"]["possible_actions"] == [
-        "inactivate",
-        "new_version",
-    ]
     assert res["objective"]["uid"] == "Objective_000004"
     assert (
         res["objective"]["name"]

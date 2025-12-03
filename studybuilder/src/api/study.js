@@ -4,6 +4,9 @@ import repository from './repository'
 const resource = 'studies'
 
 export default {
+  getIds() {
+    return repository.get(`${resource}/list`)
+  },
   get(options) {
     const params = {
       ...options,
@@ -11,6 +14,11 @@ export default {
     return repository.get(
       `${resource}?include_sections=${constants.DESCRIPTION_METADATA}`,
       { params }
+    )
+  },
+  getAllList(deleted = false) {
+    return repository.get(
+      `${resource}/list?minimal_response=false&deleted=${deleted}`
     )
   },
   projects_all() {
@@ -307,9 +315,10 @@ export default {
       `studies/${studyUid}/study-compounds/${studyCompoundUid}`
     )
   },
-  getStudyCompoundDosings(studyUid) {
+  getStudyCompoundDosings(studyUid, options) {
     const params = {
       page_size: 0,
+      ...options,
     }
     return repository.get(`studies/${studyUid}/study-compound-dosings`, {
       params,
@@ -371,8 +380,13 @@ export default {
   },
   batchSelectStudyActivityInstances(studyUid, data) {
     return repository.post(
-      `studies/${studyUid}/study-activity-instances/batch-select`,
+      `studies/${studyUid}/study-activity-instances/batch`,
       data
+    )
+  },
+  deleteStudyActivityInstance(studyUid, instanceUid) {
+    return repository.delete(
+      `studies/${studyUid}/study-activity-instances/${instanceUid}`
     )
   },
   getStudyActivityInstancesAuditTrail(studyUid) {
@@ -459,9 +473,10 @@ export default {
       `studies/${studyUid}/study-activities/${studyActivityUid}/activity-requests-approvals`
     )
   },
-  updateToLatestActivityVersion(studyUid, studyActivityUid) {
+  updateToLatestActivityVersion(studyUid, studyActivityUid, data) {
     return repository.post(
-      `studies/${studyUid}/study-activities/${studyActivityUid}/sync-latest-version`
+      `studies/${studyUid}/study-activities/${studyActivityUid}/sync-latest-version`,
+      data
     )
   },
   getStudyActivitySchedules(studyUid, options) {
@@ -507,14 +522,14 @@ export default {
     if (!params.filters) {
       params.filters = {
         'criteria_type.sponsor_preferred_name_sentence_case': {
-          v: [criteriaType.name.sponsor_preferred_name_sentence_case],
+          v: [criteriaType.sponsor_preferred_name_sentence_case],
         },
       }
     } else {
       JSON.parse(params.filters)[
         'criteria_type.sponsor_preferred_name_sentence_case'
       ] = {
-        v: [criteriaType.name.sponsor_preferred_name_sentence_case],
+        v: [criteriaType.sponsor_preferred_name_sentence_case],
       }
     }
     return repository.get(`studies/${studyUid}/study-criteria`, { params })
@@ -677,7 +692,7 @@ export default {
       Accept:
         'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     }
-    return repository.get(`${resource}/${studyUid}/detailed-soa-exports`, {
+    return repository.get(`${resource}/${studyUid}/detailed-soa.xlsx`, {
       headers,
       responseType: 'blob',
     })
@@ -699,13 +714,14 @@ export default {
       responseType: 'blob',
     })
   },
-  exportStudyProtocolSoaExcel(studyUid) {
+  exportStudyProtocolSoaExcel(studyUid, params) {
     const headers = {
       Accept:
         'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     }
-    return repository.get(`${resource}/${studyUid}/protocol-soa-exports`, {
+    return repository.get(`${resource}/${studyUid}/flowchart.xlsx`, {
       headers,
+      params,
       responseType: 'blob',
     })
   },
@@ -913,5 +929,8 @@ export default {
   },
   getStructureStatistics(studyUid) {
     return repository.get(`${resource}/${studyUid}/structure-statistics`)
+  },
+  getComplexityScore(studyUid) {
+    return repository.get(`${resource}/${studyUid}/complexity-score`)
   },
 }

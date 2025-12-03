@@ -44,7 +44,7 @@ class DictionaryCodelistGenericService:
     version_class = DictionaryCodelistVersion
     repository_interface = DictionaryCodelistGenericRepository
     _repos: MetaRepository
-    author_id: str | None
+    author_id: str
 
     def __init__(self):
         self.author_id = user().id()
@@ -80,18 +80,18 @@ class DictionaryCodelistGenericService:
     def get_all_dictionary_codelists(
         self,
         library: str,
-        sort_by: dict | None = None,
+        sort_by: dict[str, bool] | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: dict | None = None,
-        filter_operator: FilterOperator | None = FilterOperator.AND,
+        filter_by: dict[str, dict[str, Any]] | None = None,
+        filter_operator: FilterOperator = FilterOperator.AND,
         total_count: bool = False,
-    ) -> GenericFilteringReturn[BaseModel]:
+    ) -> GenericFilteringReturn[DictionaryCodelist]:
         self.enforce_library(library)
 
         dictionary_type = self.get_dictionary_type(library=library)
 
-        items, total = self.repository.find_all(
+        item_ars, total = self.repository.find_all(
             library_name=dictionary_type,
             sort_by=sort_by,
             filter_by=filter_by,
@@ -101,21 +101,19 @@ class DictionaryCodelistGenericService:
             total_count=total_count,
         )
 
-        all_dictionary_codelists = GenericFilteringReturn.create(items, total)
-        all_dictionary_codelists.items = [
+        items = [
             DictionaryCodelist.from_dictionary_codelist_ar(dictionary_codelist_ar)
-            for dictionary_codelist_ar in all_dictionary_codelists.items
+            for dictionary_codelist_ar in item_ars
         ]
-
-        return all_dictionary_codelists
+        return GenericFilteringReturn(items=items, total=total)
 
     def get_distinct_values_for_header(
         self,
         library: str,
         field_name: str,
-        search_string: str | None = "",
-        filter_by: dict | None = None,
-        filter_operator: FilterOperator | None = FilterOperator.AND,
+        search_string: str = "",
+        filter_by: dict[str, dict[str, Any]] | None = None,
+        filter_operator: FilterOperator = FilterOperator.AND,
         page_size: int = 10,
     ) -> list[str]:
         self.enforce_library(library)
@@ -141,7 +139,7 @@ class DictionaryCodelistGenericService:
 
     @db.transaction
     def get_by_uid(self, codelist_uid: str, version: str | None = None) -> BaseModel:
-        item = self._find_by_uid_or_raise_not_found(
+        item: DictionaryCodelistAR = self._find_by_uid_or_raise_not_found(
             codelist_uid=codelist_uid, version=version
         )
         return DictionaryCodelist.from_dictionary_codelist_ar(item)
@@ -150,8 +148,8 @@ class DictionaryCodelistGenericService:
         self,
         codelist_uid: str,
         version: str | None = None,
-        for_update: bool | None = False,
-    ) -> _AggregateRootType:
+        for_update: bool = False,
+    ) -> DictionaryCodelistAR:
         item = self.repository.find_by_uid_2(
             uid=codelist_uid, version=version, for_update=for_update
         )
@@ -212,7 +210,9 @@ class DictionaryCodelistGenericService:
 
     @db.transaction
     def create_new_version(self, codelist_uid: str) -> BaseModel:
-        item = self._find_by_uid_or_raise_not_found(codelist_uid, for_update=True)
+        item: DictionaryCodelistAR = self._find_by_uid_or_raise_not_found(
+            codelist_uid, for_update=True
+        )
         item.create_new_version(author_id=self.author_id)
         self.repository.save(item)
         return DictionaryCodelist.from_dictionary_codelist_ar(item)
@@ -221,7 +221,9 @@ class DictionaryCodelistGenericService:
     def edit_draft(
         self, codelist_uid: str, codelist_input: DictionaryCodelistEditInput
     ) -> BaseModel:
-        item = self._find_by_uid_or_raise_not_found(codelist_uid, for_update=True)
+        item: DictionaryCodelistAR = self._find_by_uid_or_raise_not_found(
+            codelist_uid, for_update=True
+        )
         item.edit_draft(
             author_id=self.author_id,
             change_description=codelist_input.change_description,
@@ -243,7 +245,7 @@ class DictionaryCodelistGenericService:
 
     @db.transaction
     def approve(self, codelist_uid: str) -> BaseModel:
-        item = self._find_by_uid_or_raise_not_found(
+        item: DictionaryCodelistAR = self._find_by_uid_or_raise_not_found(
             codelist_uid=codelist_uid, for_update=True
         )
         item.approve(author_id=self.author_id)
@@ -276,8 +278,10 @@ class DictionaryCodelistGenericService:
             term_uid,
         )
 
-        dictionary_codelist_ar = self._find_by_uid_or_raise_not_found(
-            codelist_uid=codelist_uid, for_update=True
+        dictionary_codelist_ar: DictionaryCodelistAR = (
+            self._find_by_uid_or_raise_not_found(
+                codelist_uid=codelist_uid, for_update=True
+            )
         )
 
         dictionary_codelist_ar.add_term(
@@ -304,8 +308,10 @@ class DictionaryCodelistGenericService:
             term_uid,
         )
 
-        dictionary_codelist_ar = self._find_by_uid_or_raise_not_found(
-            codelist_uid=codelist_uid, for_update=True
+        dictionary_codelist_ar: DictionaryCodelistAR = (
+            self._find_by_uid_or_raise_not_found(
+                codelist_uid=codelist_uid, for_update=True
+            )
         )
 
         dictionary_codelist_ar.remove_term(

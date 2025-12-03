@@ -4,29 +4,30 @@ Feature: Studies - View Specification - Clinical Transparency
     Background: User must be logged in
         Given The user is logged in
 
+    @smoke_test
     Scenario: [Navigation] User must be able to navigate to the Study Disclosure page
         Given A test study is selected
         Given The '/studies' page is opened
         When The 'Clinical Transparency' submenu is clicked in the 'View Specifications' section
-        Then The current URL is '/studies/Study_000001/study_disclosure'
+        Then The current URL is '/study_disclosure'
 
     Scenario: [Table][Columns][Names][Data] User must be able to select Identification Pharma CM Specification
         Given The study disclosure page for CDISC DEV-0 is accessed
         And The user selects 'Identification' specification
         Then A table is visible with following headers
             | headers           |
-            | StudyBuilder term |
+            | OpenStudyBuilder term |
             | PharmaCM term     |
             | Values            |
         And The table display following predefined data
             | row | column            | value             |
-            | 0   | StudyBuilder term | Study ID          |
+            | 0   | OpenStudyBuilder term | Study ID          |
             | 0   | PharmaCM term     | Unique Study ID   |
-            | 1   | StudyBuilder term | Study Short Title |
+            | 1   | OpenStudyBuilder term | Study Short Title |
             | 1   | PharmaCM term     | Brief Title       |
-            | 2   | StudyBuilder term | Study Acronym     |
+            | 2   | OpenStudyBuilder term | Study Acronym     |
             | 2   | PharmaCM term     | Acronym           |
-            | 3   | StudyBuilder term | Study Title       |
+            | 3   | OpenStudyBuilder term | Study Title       |
             | 3   | PharmaCM term     | Official Title    |
         And The correct study values are presented for Identification
 
@@ -46,7 +47,7 @@ Feature: Studies - View Specification - Clinical Transparency
     #     And The user selects 'Conditions' specification
     #     Then A table is visible with following headers
     #         | headers           |
-    #         | StudyBuilder term |
+    #         | OpenStudyBuilder term |
     #         | PharmaCM term     |
     #         | Values            |
     #     And The correct study values are presented for Conditions
@@ -56,23 +57,23 @@ Feature: Studies - View Specification - Clinical Transparency
         And The user selects 'Design' specification
         Then A table is visible with following headers
             | headers           |
-            | StudyBuilder term |
+            | OpenStudyBuilder term |
             | PharmaCM term     |
             | Values            |
         And The table display following predefined data
-            | row | column             | value                      |
-            | 0   | StudyBuilder term  | Study Type                 |
-            | 0   | PharmaCM term      | Study Type                 |
-            | 1   | StudyBuilder term  | Study Intent Type          |
-            | 1   | PharmaCM term      | Primary Purpose            |
-            | 2   | StudyBuilder term  | Study Phase Classification |
-            | 2   | PharmaCM term      | Study Phase                |
-            | 3   | StudyBuilder term  | Intervention Model         |
-            | 3   | PharmaCM term      | Interventional Study Model |
-            | 4   | StudyBuilder term  | Number of Arms             |
-            | 4   | PharmaCM term      | Number of Arms             |
-            | 5   | StudyBuilder term  | Study is randomised        |
-            | 5   | PharmaCM term      | Allocation                 |
+            | row | column                 | value                      |
+            | 0   | OpenStudyBuilder term  | Study Type                 |
+            | 0   | PharmaCM term          | Study Type                 |
+            | 1   | OpenStudyBuilder term  | Study Intent Type          |
+            | 1   | PharmaCM term          | Primary Purpose            |
+            | 2   | OpenStudyBuilder term  | Study Phase Classification |
+            | 2   | PharmaCM term          | Study Phase                |
+            | 3   | OpenStudyBuilder term  | Intervention Model         |
+            | 3   | PharmaCM term          | Interventional Study Model |
+            | 4   | OpenStudyBuilder term  | Number of Arms             |
+            | 4   | PharmaCM term          | Number of Arms             |
+            | 5   | OpenStudyBuilder term  | Study is randomised        |
+            | 5   | PharmaCM term          | Allocation                 |
         And The correct study values are presented for Design
 
     Scenario: [Table][Columns][Names][Data] User must be able to select Interventions Pharma CM Specification

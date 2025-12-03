@@ -1,3 +1,6 @@
+from datetime import datetime
+from typing import Any
+
 from clinical_mdr_api.domain_repositories.biomedical_concepts.activity_item_class_repository import (
     ActivityItemClassRepository,
 )
@@ -5,29 +8,38 @@ from clinical_mdr_api.domains.biomedical_concepts.activity_item_class import (
     ActivityInstanceClassActivityItemClassRelVO,
     ActivityItemClassAR,
     ActivityItemClassVO,
+    CTTermItem,
 )
 from clinical_mdr_api.domains.versioned_object_aggregate import LibraryVO
 from clinical_mdr_api.models.biomedical_concepts.activity_item_class import (
     ActivityItemClass,
+    ActivityItemClassCodelist,
     ActivityItemClassCreateInput,
+    ActivityItemClassDetail,
     ActivityItemClassEditInput,
     ActivityItemClassMappingInput,
+    ActivityItemClassOverview,
     ActivityItemClassVersion,
+    CompactActivityItemClass,
+    SimpleActivityInstanceClassForItem,
 )
-from clinical_mdr_api.models.controlled_terminologies.ct_term import (
-    TermWithCodelistMetadata,
+from clinical_mdr_api.models.controlled_terminologies.ct_codelist import (
+    CTCodelistNameAndAttributes,
 )
-from clinical_mdr_api.models.utils import EmptyGenericFilteringResult
+from clinical_mdr_api.models.utils import (
+    EmptyGenericFilteringResult,
+    GenericFilteringReturn,
+)
 from clinical_mdr_api.repositories._utils import FilterOperator
-from clinical_mdr_api.services.controlled_terminologies.ct_term import CTTermService
-from clinical_mdr_api.services.neomodel_ext_generic import (
-    NeomodelExtGenericService,
-    _AggregateRootType,
+from clinical_mdr_api.services.controlled_terminologies.ct_codelist import (
+    CTCodelistService,
 )
+from clinical_mdr_api.services.neomodel_ext_generic import NeomodelExtGenericService
 from common.exceptions import NotFoundException
+from common.utils import version_string_to_tuple
 
 
-class ActivityItemClassService(NeomodelExtGenericService):
+class ActivityItemClassService(NeomodelExtGenericService[ActivityItemClassAR]):
     repository_interface = ActivityItemClassRepository
     api_model_class = ActivityItemClass
     version_class = ActivityItemClassVersion
@@ -38,12 +50,11 @@ class ActivityItemClassService(NeomodelExtGenericService):
         return ActivityItemClass.from_activity_item_class_ar(
             activity_item_class_ar=item_ar,
             find_activity_instance_class_by_uid=self._repos.activity_instance_class_repository.find_by_uid_2,
-            find_codelist_attribute_by_codelist_uid=self._repos.ct_codelist_attribute_repository.find_by_uid,
         )
 
     def _create_aggregate_root(
         self, item_input: ActivityItemClassCreateInput, library: LibraryVO
-    ) -> _AggregateRootType:
+    ) -> ActivityItemClassAR:
         return ActivityItemClassAR.from_input_values(
             author_id=self.author_id,
             activity_item_class_vo=ActivityItemClassVO.from_repository_values(
@@ -59,16 +70,16 @@ class ActivityItemClassService(NeomodelExtGenericService):
                     )
                     for item in item_input.activity_instance_classes
                 ],
-                role_uid=item_input.role_uid,
-                data_type_uid=item_input.data_type_uid,
-                codelist_uids=item_input.codelist_uids,
+                role=CTTermItem(uid=item_input.role_uid, name=None, codelist_uid=None),
+                data_type=CTTermItem(
+                    uid=item_input.data_type_uid, name=None, codelist_uid=None
+                ),
             ),
             library=library,
             generate_uid_callback=self.repository.generate_uid,
             activity_instance_class_exists=self._repos.activity_instance_class_repository.check_exists_final_version,
             activity_item_class_exists_by_name_callback=self._repos.activity_item_class_repository.check_exists_by_name,
             ct_term_exists=self._repos.ct_term_name_repository.term_exists,
-            ct_codelist_exists=self._repos.ct_codelist_attribute_repository.codelist_specific_exists_by_uid,
         )
 
     def _edit_aggregate(
@@ -78,10 +89,10 @@ class ActivityItemClassService(NeomodelExtGenericService):
             author_id=self.author_id,
             change_description=item_edit_input.change_description,
             activity_item_class_vo=ActivityItemClassVO.from_repository_values(
-                name=item_edit_input.name,
+                name=item_edit_input.name or item.activity_item_class_vo.name,
                 definition=item_edit_input.definition,
                 nci_concept_id=item_edit_input.nci_concept_id,
-                order=item_edit_input.order,
+                order=item_edit_input.order or item.activity_item_class_vo.order,
                 activity_instance_classes=[
                     ActivityInstanceClassActivityItemClassRelVO(
                         uid=item.uid,
@@ -90,22 +101,24 @@ class ActivityItemClassService(NeomodelExtGenericService):
                     )
                     for item in item_edit_input.activity_instance_classes
                 ],
-                role_uid=(
-                    item_edit_input.role_uid
+                role=(
+                    CTTermItem(
+                        uid=item_edit_input.role_uid, name=None, codelist_uid=None
+                    )
                     if item_edit_input.role_uid
-                    else item.activity_item_class_vo.role_uid
+                    else item.activity_item_class_vo.role
                 ),
-                data_type_uid=(
-                    item_edit_input.data_type_uid
+                data_type=(
+                    CTTermItem(
+                        uid=item_edit_input.data_type_uid, name=None, codelist_uid=None
+                    )
                     if item_edit_input.data_type_uid
-                    else item.activity_item_class_vo.data_type_uid
+                    else item.activity_item_class_vo.data_type
                 ),
-                codelist_uids=item_edit_input.codelist_uids,
             ),
             activity_instance_class_exists=self._repos.activity_instance_class_repository.check_exists_final_version,
             activity_item_class_exists_by_name_callback=self._repos.activity_item_class_repository.check_exists_by_name,
             ct_term_exists=self._repos.ct_term_name_repository.term_exists,
-            ct_codelist_exists=self._repos.ct_codelist_attribute_repository.codelist_specific_exists_by_uid,
         )
         return item
 
@@ -127,37 +140,199 @@ class ActivityItemClassService(NeomodelExtGenericService):
 
         return self.get_by_uid(uid)
 
-    def get_terms_of_activity_item_class(
+    def get_codelists_of_activity_item_class(
         self,
         activity_item_class_uid: str,
-        sort_by: dict | None = None,
+        dataset_uid: str,
+        use_sponsor_model: bool = True,
+        sort_by: dict[str, bool] | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: dict | None = None,
-        filter_operator: FilterOperator | None = FilterOperator.AND,
+        filter_by: dict[str, dict[str, Any]] | None = None,
+        filter_operator: FilterOperator = FilterOperator.AND,
         total_count: bool = False,
-    ) -> list[TermWithCodelistMetadata]:
-        codelist_uids = (
-            self._repos.activity_item_class_repository.get_related_codelist_uid(
-                activity_item_class_uid
-            )
+    ) -> GenericFilteringReturn[ActivityItemClassCodelist]:
+
+        codelists_and_terms = self._repos.activity_item_class_repository.get_referenced_codelist_and_term_uids(
+            activity_item_class_uid, dataset_uid, use_sponsor_model
         )
 
-        if not codelist_uids:
+        if not codelists_and_terms:
             return EmptyGenericFilteringResult
-        if not filter_by:
-            filter_by = {}
-        filter_by |= {"codelist_uid": {"v": codelist_uids}}
+        codelist_uids = codelists_and_terms.keys()
 
-        all_aggregated_terms = (
-            CTTermService()._repos.ct_term_name_repository.find_all_name_simple_result(
-                total_count=total_count,
-                sort_by=sort_by,
-                filter_by=filter_by,
-                filter_operator=filter_operator,
+        if filter_by is None:
+            filter_by = {}
+        filter_by["codelist_uid"] = {"v": codelist_uids, "op": "eq"}
+
+        (
+            all_aggregated_terms,
+            count,
+        ) = CTCodelistService()._repos.ct_codelist_aggregated_repository.find_all_aggregated_result(
+            total_count=total_count,
+            sort_by=sort_by,
+            filter_by=filter_by,
+            filter_operator=filter_operator,
+            page_number=page_number,
+            page_size=page_size,
+        )
+        items = [
+            ActivityItemClassCodelist.from_codelist_and_terms(
+                CTCodelistNameAndAttributes.from_ct_codelist_ar(
+                    name,
+                    attrs,
+                    paired_codes_codelist_uid=paired.paired_codes_codelist_uid,
+                    paired_names_codelist_uid=paired.paired_names_codelist_uid,
+                ),
+                codelists_and_terms[attrs.uid],
+            )
+            for name, attrs, paired in all_aggregated_terms
+        ]
+
+        return GenericFilteringReturn.create(items, count)
+
+    def get_all_for_activity_instance_class(
+        self, activity_item_class_uid: str, dataset_uid: str | None = None
+    ) -> list[CompactActivityItemClass]:
+        item_classes = self.repository.get_all_for_activity_instance_class(
+            activity_item_class_uid, dataset_uid
+        )
+        return [
+            CompactActivityItemClass.model_validate(item_class)
+            for item_class in item_classes
+        ]
+
+    def get_activity_item_class_overview(
+        self, activity_item_class_uid: str, version: str | None = None
+    ) -> ActivityItemClassOverview:
+        """
+        Get a complete overview of an activity item class including details,
+        Activity Instance Classes that use it, and version history.
+
+        Args:
+            activity_item_class_uid: The UID of the activity item class
+            version: Optional specific version, or None for latest
+
+        Returns:
+            ActivityItemClassOverview object with complete item class information
+        """
+        # Get the item class details with specific version
+        item_class_ar = self._find_by_uid_or_raise_not_found(
+            uid=activity_item_class_uid, version=version, for_update=False
+        )
+
+        # Transform to detail model
+        item_class_detail = ActivityItemClassDetail(
+            uid=item_class_ar.uid,
+            name=item_class_ar.name,
+            definition=item_class_ar.activity_item_class_vo.definition,
+            nci_code=item_class_ar.activity_item_class_vo.nci_concept_id,
+            library_name=item_class_ar.library.name if item_class_ar.library else None,
+            start_date=(
+                item_class_ar.item_metadata.start_date.isoformat()
+                if item_class_ar.item_metadata.start_date
+                else None
+            ),
+            end_date=(
+                item_class_ar.item_metadata.end_date.isoformat()
+                if item_class_ar.item_metadata.end_date
+                else None
+            ),
+            status=item_class_ar.item_metadata.status.value,
+            version=item_class_ar.item_metadata.version,
+            change_description=item_class_ar.item_metadata.change_description,
+            author_username=item_class_ar.item_metadata.author_username,
+            modified_date=(
+                item_class_ar.item_metadata.start_date.isoformat()
+                if item_class_ar.item_metadata.start_date
+                else None
+            ),
+        )
+
+        # Get all versions
+        version_history = self.get_version_history(activity_item_class_uid)
+        all_versions = list(set(v.version for v in version_history))
+        all_versions = self._sort_semantic_versions(all_versions, reverse=True)
+
+        return ActivityItemClassOverview(
+            activity_item_class=item_class_detail,
+            all_versions=all_versions,
+        )
+
+    def get_activity_instance_classes_using_item_paginated(
+        self,
+        activity_item_class_uid: str,
+        version: str | None = None,
+        page_number: int = 1,
+        page_size: int = 10,
+        total_count: bool = False,
+    ) -> GenericFilteringReturn[SimpleActivityInstanceClassForItem]:
+        """Get paginated Activity Instance Classes that use this Activity Item Class."""
+        instance_classes_data, total = (
+            self._repos.activity_item_class_repository.get_activity_instance_classes_using_item(
+                activity_item_class_uid,
+                version=version,
                 page_number=page_number,
                 page_size=page_size,
+                total_count=total_count,
             )
         )
 
-        return all_aggregated_terms
+        instance_classes = []
+        for instance in instance_classes_data:
+            instance_classes.append(
+                SimpleActivityInstanceClassForItem(
+                    uid=instance["uid"],
+                    name=instance["name"],
+                    adam_param_specific_enabled=(
+                        bool(instance.get("adam_param_specific_enabled"))
+                        if instance.get("adam_param_specific_enabled") is not None
+                        else False
+                    ),
+                    mandatory=(
+                        bool(instance.get("mandatory"))
+                        if instance.get("mandatory") is not None
+                        else False
+                    ),
+                    modified_date=(
+                        instance["modified_date"].isoformat()
+                        if instance.get("modified_date")
+                        else None
+                    ),
+                    modified_by=instance.get("modified_by") or "unknown",
+                    version=instance.get("version") or "1.0",
+                    status=instance.get("status") or "Final",
+                )
+            )
+        return GenericFilteringReturn(items=instance_classes, total=total)
+
+    def _find_by_uid_or_raise_not_found(  # pylint: disable=arguments-renamed
+        self,
+        uid: str,
+        version: str | None = None,
+        at_specific_date: datetime | None = None,
+        status: str | None = None,
+        for_update: bool = False,
+    ) -> ActivityItemClassAR:
+        """Find an activity item class by UID with optional version."""
+        item = self._repos.activity_item_class_repository.find_by_uid_2(
+            uid=uid,
+            version=version,
+            at_specific_date=at_specific_date,
+            status=status,
+            for_update=for_update,
+        )
+
+        NotFoundException.raise_if(
+            item is None,
+            "Activity Item Class",
+            f"{uid} (version: {version or 'latest'})",
+        )
+
+        return item
+
+    def _sort_semantic_versions(
+        self, versions: list[str], reverse: bool = True
+    ) -> list[str]:
+        """Sort semantic version strings properly (e.g., '2.0' before '10.0')."""
+        return sorted(versions, key=version_string_to_tuple, reverse=reverse)

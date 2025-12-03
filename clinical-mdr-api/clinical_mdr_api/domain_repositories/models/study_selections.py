@@ -22,7 +22,7 @@ from clinical_mdr_api.domain_repositories.models.concepts import (
     UnitDefinitionRoot,
 )
 from clinical_mdr_api.domain_repositories.models.controlled_terminology import (
-    CTTermRoot,
+    CTTermContext,
 )
 from clinical_mdr_api.domain_repositories.models.generic import (
     ClinicalMdrNodeWithUID,
@@ -105,7 +105,10 @@ class StudyObjective(StudySelection):
         cardinality=ZeroOrOne,
     )
     has_objective_level = RelationshipTo(
-        CTTermRoot, "HAS_OBJECTIVE_LEVEL", model=ClinicalMdrRel, cardinality=ZeroOrOne
+        CTTermContext,
+        "HAS_OBJECTIVE_LEVEL",
+        model=ClinicalMdrRel,
+        cardinality=ZeroOrOne,
     )
     study_endpoint_has_study_objective = RelationshipFrom(
         "StudyEndpoint", "STUDY_ENDPOINT_HAS_STUDY_OBJECTIVE", model=ClinicalMdrRel
@@ -148,13 +151,13 @@ class StudyEndpoint(StudySelection):
         TimeframeValue, "HAS_SELECTED_TIMEFRAME", model=ClinicalMdrRel
     )
     has_endpoint_level = RelationshipTo(
-        CTTermRoot,
+        CTTermContext,
         "HAS_ENDPOINT_LEVEL",
         model=ClinicalMdrRel,
         cardinality=ZeroOrOne,
     )
     has_endpoint_sublevel = RelationshipTo(
-        CTTermRoot,
+        CTTermContext,
         "HAS_ENDPOINT_SUB_LEVEL",
         model=ClinicalMdrRel,
         cardinality=ZeroOrOne,
@@ -188,7 +191,10 @@ class StudyCompound(StudySelection):
         cardinality=One,
     )
     has_type_of_treatment = RelationshipTo(
-        CTTermRoot, "HAS_TYPE_OF_TREATMENT", model=ClinicalMdrRel, cardinality=ZeroOrOne
+        CTTermContext,
+        "HAS_TYPE_OF_TREATMENT",
+        model=ClinicalMdrRel,
+        cardinality=ZeroOrOne,
     )
     has_medicinal_product = RelationshipTo(
         MedicinalProductValue,
@@ -203,10 +209,13 @@ class StudyCompound(StudySelection):
         cardinality=ZeroOrMore,
     )
     has_dose_frequency = RelationshipTo(
-        CTTermRoot, "HAS_DOSE_FREQUENCY", model=ClinicalMdrRel, cardinality=ZeroOrOne
+        CTTermContext, "HAS_DOSE_FREQUENCY", model=ClinicalMdrRel, cardinality=ZeroOrOne
     )
     has_delivery_device = RelationshipTo(
-        CTTermRoot, "HAS_DELIVERY_DEVICE", model=ClinicalMdrRel, cardinality=ZeroOrOne
+        CTTermContext,
+        "HAS_DELIVERY_DEVICE",
+        model=ClinicalMdrRel,
+        cardinality=ZeroOrOne,
     )
     has_dose_value = RelationshipTo(
         NumericValueWithUnitRoot,
@@ -215,10 +224,10 @@ class StudyCompound(StudySelection):
         cardinality=ZeroOrOne,
     )
     has_dispenser = RelationshipTo(
-        CTTermRoot, "HAS_DISPENSED_IN", model=ClinicalMdrRel, cardinality=One
+        CTTermContext, "HAS_DISPENSED_IN", model=ClinicalMdrRel, cardinality=One
     )
     has_reason_for_missing = RelationshipTo(
-        CTTermRoot,
+        CTTermContext,
         "HAS_REASON_FOR_NULL_VALUE",
         model=ClinicalMdrRel,
         cardinality=ZeroOrOne,
@@ -262,12 +271,12 @@ class StudyCriteria(StudySelection):
 class StudySoAGroup(StudySelection):
     show_soa_group_in_protocol_flowchart = BooleanProperty(default=False)
     has_study_soa_group = RelationshipFrom(
-        ".study.StudyValue",
+        STUDY_VALUE_CLASS_NAME,
         "HAS_STUDY_SOA_GROUP",
         cardinality=ZeroOrMore,
     )
     has_flowchart_group = RelationshipTo(
-        CTTermRoot,
+        CTTermContext,
         "HAS_FLOWCHART_GROUP",
         model=ClinicalMdrRel,
         cardinality=ZeroOrMore,
@@ -289,7 +298,7 @@ class StudySoAGroup(StudySelection):
 class StudyActivitySubGroup(StudySelection):
     show_activity_subgroup_in_protocol_flowchart = BooleanProperty(default=True)
     has_study_activity_sub_group = RelationshipFrom(
-        ".study.StudyValue",
+        STUDY_VALUE_CLASS_NAME,
         "HAS_STUDY_ACTIVITY_SUBGROUP",
         cardinality=ZeroOrMore,
     )
@@ -310,7 +319,7 @@ class StudyActivitySubGroup(StudySelection):
 class StudyActivityGroup(StudySelection):
     show_activity_group_in_protocol_flowchart = BooleanProperty(default=True)
     has_study_activity_group = RelationshipFrom(
-        ".study.StudyValue",
+        STUDY_VALUE_CLASS_NAME,
         "HAS_STUDY_ACTIVITY_GROUP",
         cardinality=ZeroOrMore,
     )
@@ -329,6 +338,7 @@ class StudyActivityGroup(StudySelection):
 
 
 class StudyActivity(StudySelection):
+    keep_old_version = BooleanProperty(default=False)
     show_activity_in_protocol_flowchart = BooleanProperty(default=False)
     has_study_activity = RelationshipFrom(
         STUDY_VALUE_CLASS_NAME,
@@ -386,8 +396,9 @@ class StudyActivity(StudySelection):
 
 
 class StudyActivityInstance(StudySelection):
+    keep_old_version = BooleanProperty(default=False)
     has_study_activity_instance = RelationshipFrom(
-        ".study.StudyValue",
+        STUDY_VALUE_CLASS_NAME,
         "HAS_STUDY_ACTIVITY_INSTANCE",
         cardinality=ZeroOrMore,
     )
@@ -473,8 +484,8 @@ class StudyArm(StudySelection):
     short_name = StringProperty()
     arm_code = StringProperty()
     description = StringProperty()
-    arm_colour = StringProperty()
     randomization_group = StringProperty()
+    merge_branch_for_this_arm_for_sdtm_adam = BooleanProperty(default=False)
     number_of_subjects = IntegerProperty()
 
     study_value = RelationshipFrom(
@@ -485,10 +496,10 @@ class StudyArm(StudySelection):
     )
 
     arm_type = RelationshipTo(
-        CTTermRoot,
+        CTTermContext,
         "HAS_ARM_TYPE",
         model=ClinicalMdrRel,
-        cardinality=ZeroOrOne,
+        cardinality=One,
     )
     has_design_cell = RelationshipTo(
         StudyDesignCell,
@@ -526,7 +537,7 @@ class StudyElement(StudySelection):
         cardinality=ZeroOrMore,
     )
     element_subtype = RelationshipTo(
-        CTTermRoot,
+        CTTermContext,
         "HAS_ELEMENT_SUBTYPE",
         model=ClinicalMdrRel,
         cardinality=ZeroOrOne,
@@ -571,7 +582,6 @@ class StudyBranchArm(StudySelection):
     short_name = StringProperty()
     branch_arm_code = StringProperty()
     description = StringProperty()
-    colour_code = StringProperty()
     randomization_group = StringProperty()
     number_of_subjects = IntegerProperty()
     order = StringProperty()
@@ -607,7 +617,6 @@ class StudyCohort(StudySelection):
     short_name = StringProperty()
     cohort_code = StringProperty()
     description = StringProperty()
-    colour_code = StringProperty()
     number_of_subjects = IntegerProperty()
 
     study_value = RelationshipFrom(
@@ -637,9 +646,8 @@ class StudyCompoundDosing(StudySelection):
         model=ClinicalMdrRel,
         cardinality=ZeroOrMore,
     )
-
     has_dose_frequency = RelationshipTo(
-        CTTermRoot, "HAS_DOSE_FREQUENCY", cardinality=ZeroOrOne
+        CTTermContext, "HAS_DOSE_FREQUENCY", cardinality=ZeroOrOne
     )
     has_dose_value = RelationshipTo(
         NumericValueWithUnitRoot, "HAS_DOSE_VALUE", cardinality=ZeroOrOne
@@ -659,7 +667,6 @@ class StudyCompoundDosing(StudySelection):
 
 
 class StudySoAFootnote(StudySelection):
-    footnote_number = IntegerProperty()
     references_study_activity = RelationshipTo(
         StudyActivity,
         "REFERENCES_STUDY_ACTIVITY",
@@ -722,4 +729,25 @@ class StudySoAFootnote(StudySelection):
     )
     has_deleted = RelationshipFrom(
         Delete, "AFTER", model=ConjunctionRelation, cardinality=ZeroOrOne
+    )
+
+
+class StudyDesignClass(StudySelection):
+    value = StringProperty()
+    has_study_design_class = RelationshipFrom(
+        STUDY_VALUE_CLASS_NAME,
+        "HAS_STUDY_DESIGN_CLASS",
+        cardinality=ZeroOrMore,
+        model=ClinicalMdrRel,
+    )
+
+
+class StudySourceVariable(StudySelection):
+    source_variable = StringProperty()
+    source_variable_description = StringProperty()
+    has_study_source_variable = RelationshipFrom(
+        STUDY_VALUE_CLASS_NAME,
+        "HAS_STUDY_SOURCE_VARIABLE",
+        cardinality=ZeroOrMore,
+        model=ClinicalMdrRel,
     )

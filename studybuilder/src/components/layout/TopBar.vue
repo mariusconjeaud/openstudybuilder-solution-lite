@@ -211,7 +211,7 @@
         height="50"
       />
     </div>
-    <v-dialog v-model="showAboutDialog" max-width="1200">
+    <v-dialog v-model="showAboutDialog" fullscreen>
       <AboutPage @close="showAboutDialog = false" />
     </v-dialog>
     <v-dialog
@@ -335,12 +335,12 @@ const availableApps = computed(() => {
         (!app.requiredRole || checkPermission(app.requiredRole)))
   )
 })
-const currentStudyStatus = () => {
+const currentStudyStatus = computed(() => {
   if (!selectedStudy.value) {
     return null
   }
   return selectedStudy.value.current_metadata.version_metadata.study_status
-}
+})
 
 function navigateToRoot() {
   emit('backToRoot')

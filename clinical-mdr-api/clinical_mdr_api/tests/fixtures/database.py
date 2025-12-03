@@ -7,7 +7,6 @@ from urllib.parse import urljoin
 
 import neo4j.exceptions
 import pytest
-from neomodel import config as neoconfig
 from neomodel.sync_.core import db
 
 from clinical_mdr_api.domain_repositories.models.controlled_terminology import (
@@ -21,7 +20,8 @@ from clinical_mdr_api.models.projects.project import Project
 from clinical_mdr_api.tests.integration.utils.data_library import inject_base_data
 from clinical_mdr_api.tests.integration.utils.utils import LIBRARY_NAME, TestUtils
 from clinical_mdr_api.tests.utils.utils import get_db_name
-from common import config
+from common.config import settings
+from common.database import configure_database
 
 __all__ = ["temp_database", "base_data", "temp_database_populated"]
 
@@ -50,8 +50,12 @@ def temp_database(request) -> str:
     )
 
     # Switch to "neo4j" database for creating a new database
-    neoconfig.DATABASE_URL = urljoin(config.settings.neo4j_dsn, "/neo4j")
-    db.set_connection(neoconfig.DATABASE_URL)
+    driver = configure_database(
+        urljoin(settings.neo4j_dsn, "/neo4j"),
+        max_connection_lifetime=settings.neo4j_connection_lifetime,
+        liveness_check_timeout=settings.neo4j_liveness_check_timeout,
+    )
+    db.set_connection(driver=driver)
     db.cypher_query("CREATE OR REPLACE DATABASE $db", {"db": db_name})
 
     log.debug(
@@ -59,7 +63,11 @@ def temp_database(request) -> str:
         request.fixturename,
         db_name,
     )
-    neoconfig.DATABASE_URL = urljoin(config.settings.neo4j_dsn, f"/{db_name}")
+    driver = configure_database(
+        urljoin(settings.neo4j_dsn, f"/{db_name}"),
+        max_connection_lifetime=settings.neo4j_connection_lifetime,
+        liveness_check_timeout=settings.neo4j_liveness_check_timeout,
+    )
 
     try_cnt = 1
     db_available = False
@@ -68,7 +76,7 @@ def temp_database(request) -> str:
             # Database creation can take a couple of seconds
             # db.set_connection will return a ClientError if the database isn't ready
             # This allows for retrying after a small pause
-            db.set_connection(neoconfig.DATABASE_URL)
+            db.set_connection(driver=driver)
 
             try_cnt = try_cnt + 1
             db.cypher_query(
@@ -103,14 +111,17 @@ def temp_database(request) -> str:
 
     yield db_name
 
-    config.settings = config.Settings()
     log.debug(
         "%s fixture: reset to database configuration: %s",
         request.fixturename,
-        config.settings.neo4j_dsn or config.settings.neo4j_database,
+        settings.neo4j_dsn or settings.neo4j_database,
     )
-    neoconfig.DATABASE_URL = config.settings.neo4j_dsn
-    db.set_connection(config.settings.neo4j_dsn)
+    driver = configure_database(
+        urljoin(settings.neo4j_dsn, "/neo4j"),
+        max_connection_lifetime=settings.neo4j_connection_lifetime,
+        liveness_check_timeout=settings.neo4j_liveness_check_timeout,
+    )
+    db.set_connection(driver=driver)
 
     # clear cached data after switching databases
     clear_caches()
@@ -163,21 +174,37 @@ def temp_database_populated(request, temp_database: str) -> TempDatabasePopulate
     log.info("%s: injecting base data", request.fixturename)
 
     ## Libraries
-    TestUtils.create_library(config.CDISC_LIBRARY_NAME, True)
+    TestUtils.create_library(settings.cdisc_library_name, True)
     TestUtils.create_library(LIBRARY_NAME, True)
     TestUtils.create_library("SNOMED", True)
-    TestUtils.create_library(name=config.REQUESTED_LIBRARY_NAME, is_editable=True)
+    TestUtils.create_library(name=settings.requested_library_name, is_editable=True)
 
     with db.write_transaction:
-        cdisc = Library.nodes.get(name=config.CDISC_LIBRARY_NAME)
+        cdisc = Library.nodes.get(name=settings.cdisc_library_name)
 
         CTCatalogue(
-            name=config.SDTM_CT_CATALOGUE_NAME
+            name=settings.sdtm_ct_catalogue_name
         ).save().contains_catalogue.connect(cdisc)
 
         CTCatalogue(
-            name=config.ADAM_CT_CATALOGUE_NAME
+            name=settings.adam_ct_catalogue_name
         ).save().contains_catalogue.connect(cdisc)
+
+    unit_dimensions = []
+    unit_dimension_codelist = TestUtils.create_ct_codelist(
+        name="Unit Dimension",
+        sponsor_preferred_name="unit dimension",
+        extensible=True,
+        approve=True,
+        submission_value="UNITDIM",
+        catalogue_name=settings.sdtm_ct_catalogue_name,
+    )
+    unit_dimension_term = TestUtils.create_ct_term(
+        codelist_uid=unit_dimension_codelist.codelist_uid,
+        sponsor_preferred_name_sentence_case="Weight",
+        sponsor_preferred_name="Weight",
+    )
+    unit_dimensions.append(unit_dimension_term.term_uid)
 
     unit_subsets = []
     unit_subset_codelist = TestUtils.create_ct_codelist(
@@ -185,6 +212,8 @@ def temp_database_populated(request, temp_database: str) -> TempDatabasePopulate
         sponsor_preferred_name="unit subset",
         extensible=True,
         approve=True,
+        submission_value="UNITSUBS",
+        catalogue_name=settings.sdtm_ct_catalogue_name,
     )
     unit_subset_term = TestUtils.create_ct_term(
         codelist_uid=unit_subset_codelist.codelist_uid,
@@ -195,33 +224,33 @@ def temp_database_populated(request, temp_database: str) -> TempDatabasePopulate
 
     ## Unit Definitions
     TestUtils.create_unit_definition(
-        name=config.DAY_UNIT_NAME,
+        name=settings.day_unit_name,
         convertible_unit=True,
         display_unit=True,
         master_unit=False,
         si_unit=True,
         us_conventional_unit=True,
-        conversion_factor_to_master=config.DAY_UNIT_CONVERSION_FACTOR_TO_MASTER,
+        conversion_factor_to_master=settings.day_unit_conversion_factor_to_master,
         unit_subsets=unit_subsets,
     )
     TestUtils.create_unit_definition(
-        name=config.DAYS_UNIT_NAME,
+        name=settings.days_unit_name,
         convertible_unit=True,
         display_unit=True,
         master_unit=False,
         si_unit=True,
         us_conventional_unit=True,
-        conversion_factor_to_master=config.DAY_UNIT_CONVERSION_FACTOR_TO_MASTER,
+        conversion_factor_to_master=settings.day_unit_conversion_factor_to_master,
         unit_subsets=unit_subsets,
     )
     TestUtils.create_unit_definition(
-        name=config.WEEK_UNIT_NAME,
+        name=settings.week_unit_name,
         convertible_unit=True,
         display_unit=True,
         master_unit=False,
         si_unit=True,
         us_conventional_unit=True,
-        conversion_factor_to_master=config.WEEK_UNIT_CONVERSION_FACTOR_TO_MASTER,
+        conversion_factor_to_master=settings.week_unit_conversion_factor_to_master,
         unit_subsets=unit_subsets,
     )
 

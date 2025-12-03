@@ -1,6 +1,7 @@
 .*.swp
 tags
 **/__pycache__/**
+**mypy_cache**
 .coverage
 /.vscode
 /.idea
@@ -27,3 +28,5 @@ linting_report.txt
 .coverage*
 /reports
 /consumer_api/reports
+traceability.html
+Consumer_API_Traceability.html

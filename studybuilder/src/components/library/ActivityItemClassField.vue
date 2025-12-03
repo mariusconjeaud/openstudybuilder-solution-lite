@@ -25,15 +25,17 @@
           "
           ref="termField"
           v-model="form.ct_term_uid"
+          v-model:codelist="codelist"
           v-model:search="search"
           :activity-item-class="form.activity_item_class"
           :data-domain="props.dataDomain"
-          item-title="name"
+          item-title="sponsor_preferred_name"
           class="ml-4 w-50"
           :multiple="props.multiple"
           :disabled="props.disabled"
           :rules="[formRules.required]"
           @update:model-value="update"
+          @update:codelist="update"
         />
         <v-select
           v-else
@@ -106,6 +108,7 @@ const emit = defineEmits(['update:modelValue'])
 const formRules = inject('formRules')
 
 const form = ref({})
+const codelist = ref(null)
 const allowedUnits = ref([])
 const loading = ref(false)
 const search = ref('')
@@ -142,7 +145,7 @@ function fetchUnits() {
 function update() {
   const value = {
     is_adam_param_specific: props.adamSpecific,
-    ct_term_uids: [],
+    ct_terms: [],
     unit_definition_uids: [],
     odm_item_uids: [],
   }
@@ -151,12 +154,16 @@ function update() {
     if (form.value.activity_item_class.name !== 'standard_unit') {
       if (!props.multiple) {
         if (selectedTerm.value) {
-          value.ct_term_uids = [form.value.ct_term_uid]
-          value.ct_term_name = selectedTerm.value.name // Only useful to propagate unit dimension name
+          value.ct_terms = [
+            { term_uid: form.value.ct_term_uid, codelist_uid: codelist.value },
+          ]
+          value.ct_term_name = selectedTerm.value.sponsor_preferred_name // Only useful to propagate unit dimension name
         }
       } else {
         // We assume there won't be any unit based activity item class in multiple mode
-        value.ct_term_uids = form.value.ct_term_uid
+        value.ct_terms = form.value.ct_term_uid.map((term_uid) => {
+          return { term_uid, codelist_uid: codelist.value }
+        })
       }
     } else if (form.value.unit_definition_uid) {
       value.unit_definition_uids = [form.value.unit_definition_uid]
@@ -166,7 +173,9 @@ function update() {
 }
 
 function resetAndUpdate() {
+  codelist.value = null
   form.value.ct_term_uid = null
+  termField.value.allowedValues = []
   update()
 }
 
@@ -174,6 +183,7 @@ watch(
   () => props.modelValue,
   (value) => {
     if (value) {
+      // FIXME: why this watcher is being called twice whereas there is nochange?
       form.value = {}
       if (value.activity_item_class_uid) {
         form.value.activity_item_class = props.allActivityItemClasses.find(
@@ -183,10 +193,18 @@ watch(
       if (value.unit_definition_uids && value.unit_definition_uids.length) {
         form.value.unit_definition_uid = value.unit_definition_uids[0]
       }
-      if (value.ct_term_uids && value.ct_term_uids.length) {
-        form.value.ct_term_uid = !props.multiple
-          ? value.ct_term_uids[0]
-          : value.ct_term_uids
+      if (value.ct_terms && value.ct_terms.length) {
+        if (!props.multiple) {
+          form.value.ct_term_uid = value.ct_terms[0].term_uid
+          codelist.value = value.ct_terms[0].codelist_uid
+        } else {
+          form.value.ct_term_uid = value.ct_terms.map(
+            (ct_term) => ct_term.term_uid
+          )
+          if (value.ct_terms.length) {
+            codelist.value = value.ct_terms[0].codelist_uid
+          }
+        }
       }
     } else {
       form.value = {}

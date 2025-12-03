@@ -11,6 +11,12 @@ from common.exceptions import BusinessLogicException
 
 @dataclass
 class OdmARBase(ConceptARBase):
+    _uid: str
+
+    @property
+    def should_disconnect_relationships(self) -> bool:
+        return self.item_metadata.minor_version > 1
+
     def get_possible_actions(self) -> AbstractSet[ObjectAction]:
         """
         Returns list of possible actions

@@ -40,17 +40,8 @@ from clinical_mdr_api.routers.concepts.numeric_values import (
 from clinical_mdr_api.routers.concepts.numeric_values_with_unit import (
     router as numeric_values_with_unit_router,
 )
-from clinical_mdr_api.routers.concepts.odms.odm_aliases import (
-    router as odm_aliases_router,
-)
 from clinical_mdr_api.routers.concepts.odms.odm_conditions import (
     router as odm_conditions_router,
-)
-from clinical_mdr_api.routers.concepts.odms.odm_descriptions import (
-    router as odm_descriptions_router,
-)
-from clinical_mdr_api.routers.concepts.odms.odm_formal_expressions import (
-    router as odm_formal_expressions_router,
 )
 from clinical_mdr_api.routers.concepts.odms.odm_forms import router as odm_forms_router
 from clinical_mdr_api.routers.concepts.odms.odm_item_groups import (
@@ -114,6 +105,9 @@ from clinical_mdr_api.routers.controlled_terminologies.ct_terms import (
     router as ct_terms_router,
 )
 from clinical_mdr_api.routers.ctr_xml.ctr_xml import router as ctr_xml_router
+from clinical_mdr_api.routers.data_suppliers.data_suppliers import (
+    router as data_suppliers_router,
+)
 from clinical_mdr_api.routers.ddf.study_definitions import router as ddf_router
 from clinical_mdr_api.routers.dictionaries.dictionary_codelists import (
     router as dictionary_codelists_router,
@@ -182,6 +176,9 @@ from clinical_mdr_api.routers.studies.study_days import router as study_days_rou
 from clinical_mdr_api.routers.studies.study_design_cell import (
     router as study_design_cell_router,
 )
+from clinical_mdr_api.routers.studies.study_design_classes import (
+    router as study_design_classes_router,
+)
 from clinical_mdr_api.routers.studies.study_design_figure import (
     router as study_design_figure,
 )
@@ -203,6 +200,9 @@ from clinical_mdr_api.routers.studies.study_interventions import (
 )
 from clinical_mdr_api.routers.studies.study_soa_footnotes import (
     router as study_soa_footnotes_router,
+)
+from clinical_mdr_api.routers.studies.study_source_variables import (
+    router as study_source_variables_router,
 )
 from clinical_mdr_api.routers.studies.study_standard_version import (
     router as study_standard_version_router,
@@ -276,15 +276,13 @@ __all__ = [
     "odm_item_router",
     "odm_conditions_router",
     "odm_methods_router",
-    "odm_formal_expressions_router",
-    "odm_descriptions_router",
-    "odm_aliases_router",
     "odm_vendor_namespace_router",
     "odm_vendor_element_router",
     "odm_vendor_attribute_router",
     "activity_instances_router",
     "activity_instance_classes_router",
     "activity_item_classes_router",
+    "data_suppliers_router",
     "odm_metadata_router",
     "compounds_router",
     "compound_aliases_router",

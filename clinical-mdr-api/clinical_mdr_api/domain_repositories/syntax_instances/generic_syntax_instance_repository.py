@@ -1,7 +1,7 @@
 import abc
 import re
 from datetime import datetime
-from typing import Iterable, TypeVar
+from typing import Generic, Iterable, TypeVar
 
 from neomodel import db
 
@@ -17,11 +17,11 @@ from clinical_mdr_api.domain_repositories.models.generic import (
     VersionValue,
 )
 from clinical_mdr_api.domains.libraries.object import ParametrizedTemplateVO
-from clinical_mdr_api.domains.libraries.parameter_term import (
-    ComplexParameterTerm,
-    SimpleParameterTermVO,
+from clinical_mdr_api.domains.libraries.parameter_term import SimpleParameterTermVO
+from clinical_mdr_api.domains.versioned_object_aggregate import (
+    LibraryItemAggregateRootBase,
+    LibraryItemStatus,
 )
-from clinical_mdr_api.domains.versioned_object_aggregate import LibraryItemStatus
 from clinical_mdr_api.models.controlled_terminologies.ct_term import (
     SimpleCTTermNameAndAttributes,
     SimpleTermAttributes,
@@ -29,11 +29,11 @@ from clinical_mdr_api.models.controlled_terminologies.ct_term import (
 )
 from common.exceptions import BusinessLogicException, NotFoundException
 
-_AggregateRootType = TypeVar("_AggregateRootType")
+_AggregateRootType = TypeVar("_AggregateRootType", bound=LibraryItemAggregateRootBase)
 
 
 class GenericSyntaxInstanceRepository(
-    GenericSyntaxRepository[_AggregateRootType], abc.ABC
+    GenericSyntaxRepository[_AggregateRootType], Generic[_AggregateRootType], abc.ABC
 ):
     template_class: type
 
@@ -82,40 +82,19 @@ class GenericSyntaxInstanceRepository(
         value.has_conjunction.disconnect_all()
         params = versioned_object.get_parameters()
         for position, parameter_config in enumerate(params):
-            if isinstance(parameter_config, ComplexParameterTerm):
-                root_id = self._maintain_complex_parameter(
-                    parameter_config=parameter_config
+            conjunction_string: str = parameter_config.conjunction
+            if len(conjunction_string) != 0:
+                result = Conjunction.nodes.get_or_none(string=conjunction_string)
+                if result is None:
+                    conjunction = Conjunction(string=conjunction_string)
+                    conjunction.save()
+                else:
+                    conjunction = result
+                value.has_conjunction.connect(conjunction, {"position": position + 1})
+            for index, value_config in enumerate(parameter_config.parameters):
+                self._add_value_parameter_relation(
+                    value, value_config.uid, position + 1, index + 1
                 )
-                cypher_query = f"""
-                    MATCH (siv:SyntaxInstanceValue), (pt:TemplateParameterTermRoot)
-                    WHERE elementId(siv) = $value_id and elementId(pt) = $root_id
-                    CREATE (siv)-[r:{value.PARAMETERS_LABEL} {{position: $position, index: $index}}]->(pt)
-                    """
-                db.cypher_query(
-                    cypher_query,
-                    {
-                        "root_id": root_id,
-                        "position": position,
-                        "index": 1,
-                        "value_id": value.element_id,
-                    },
-                )
-            else:
-                conjunction_string: str = parameter_config.conjunction
-                if len(conjunction_string) != 0:
-                    result = Conjunction.nodes.get_or_none(string=conjunction_string)
-                    if result is None:
-                        conjunction = Conjunction(string=conjunction_string)
-                        conjunction.save()
-                    else:
-                        conjunction = result
-                    value.has_conjunction.connect(
-                        conjunction, {"position": position + 1}
-                    )
-                for index, value_config in enumerate(parameter_config.parameters):
-                    self._add_value_parameter_relation(
-                        value, value_config.uid, position + 1, index + 1
-                    )
         template = self.template_class.nodes.get(uid=versioned_object.template_uid)
 
         if self.is_pre_instance(root):
@@ -162,7 +141,7 @@ class GenericSyntaxInstanceRepository(
         )
 
     def find_by(self, name: str) -> _AggregateRootType:
-        values: Iterable[VersionValue] = self.value_class.nodes.filter(name=name)
+        values = self.value_class.nodes.filter(name=name)
 
         NotFoundException.raise_if(
             len(values) < 1, self.root_class.__name__, name, "Name"
@@ -182,47 +161,47 @@ class GenericSyntaxInstanceRepository(
         WITH pre_instance_value, param.name as parameter, u.position as position
         OPTIONAL MATCH (pre_instance_value)-[rel:USES_VALUE]->(tptv:TemplateParameterTermValue)<-[:HAS_VERSION]-(tptr:TemplateParameterTermRoot)
         CALL apoc.when(tptr IS NOT NULL AND tptr:StudyEndpoint,
-        "MATCH (:StudyValue)-->(tptr)-[:HAS_SELECTED_ENDPOINT]->(ev:EndpointValue)
-        OPTIONAL MATCH (tptr)-[:HAS_SELECTED_TIMEFRAME]->(tv:TimeframeValue)
-        CALL
-        {{
-        WITH tptr
-        OPTIONAL MATCH (tptr)-[rel:HAS_UNIT]->(un:UnitDefinitionRoot)-[:LATEST_FINAL]->(udv:UnitDefinitionValue)
-        WITH rel, udv, tptr ORDER BY rel.index
-        WITH collect(udv.name) as unit_names, tptr
-        OPTIONAL MATCH (tptr)-[:HAS_CONJUNCTION]->(co:Conjunction)
-        WITH unit_names, co
-        RETURN apoc.text.join(unit_names, ' ' + coalesce(co.string, '') + ' ') AS unit
-        }}
-        RETURN ev.name + coalesce(' ' + unit, '') + coalesce(' ' + tv.name, '') AS tptv_name",
-        "CALL apoc.case(
-        [
-        tptv.name_sentence_case IS NOT NULL, 'RETURN tptv.name_sentence_case AS name',
-        tptv.name_sentence_case IS NULL, 'RETURN tptv.name AS name'
-        ],
-        '',
-        {{ tptv:tptv }})
-        YIELD value
-        RETURN value.name AS tptv_name
-        ",
+            "MATCH (:StudyValue)-->(tptr)-[:HAS_SELECTED_ENDPOINT]->(ev:EndpointValue)
+            OPTIONAL MATCH (tptr)-[:HAS_SELECTED_TIMEFRAME]->(tv:TimeframeValue)
+            CALL
+            {{
+                WITH tptr
+                OPTIONAL MATCH (tptr)-[rel:HAS_UNIT]->(un:UnitDefinitionRoot)-[:LATEST_FINAL]->(udv:UnitDefinitionValue)
+                WITH rel, udv, tptr ORDER BY rel.index
+                WITH collect(udv.name) as unit_names, tptr
+                OPTIONAL MATCH (tptr)-[:HAS_CONJUNCTION]->(co:Conjunction)
+                WITH unit_names, co
+                RETURN apoc.text.join(unit_names, ' ' + coalesce(co.string, '') + ' ') AS unit
+            }}
+            RETURN ev.name + coalesce(' ' + unit, '') + coalesce(' ' + tv.name, '') AS tptv_name",
+            "CALL apoc.case(
+                [
+                    tptv.name_sentence_case IS NOT NULL, 'RETURN tptv.name_sentence_case AS name',
+                    tptv.name_sentence_case IS NULL, 'RETURN tptv.name AS name'
+                ],
+                '',
+                {{ tptv:tptv }})
+                YIELD value
+                RETURN value.name AS tptv_name
+            ",
         {{tptr:tptr, tptv:tptv}})
         YIELD value
         WITH pre_instance_value,
-        head([(tptr)<-[:HAS_PARAMETER_TERM]-(tp) | tp]) as tp,
-        rel,
-        position,
-        parameter,
-        tptr,
-        value.tptv_name AS tptv_name
+            rel,
+            position,
+            parameter,
+            tptr,
+            value.tptv_name AS tptv_name
         OPTIONAL MATCH (ptv: ParameterTemplateValue)<-[:LATEST_FINAL]-(td: ParameterTemplateRoot)-[:HAS_COMPLEX_VALUE]->(tptr)
-        WHERE tptv_name iS NOT NULL AND tp is NOT NULL
+        WHERE tptv_name iS NOT NULL
         WITH pre_instance_value, position, parameter, collect(DISTINCT {{
             set_number: 0,
             position: rel.position,
             index: rel.index,
-            parameter_name: tp.name,
+            parameter_name: parameter,
             parameter_term: tptv_name,
-            parameter_uid: tptr.uid,definition: td.uid,
+            parameter_uid: tptr.uid,
+            definition: td.uid,
             template: ptv.template_string,
             labels: labels(tptr)
         }}) as data
@@ -268,21 +247,19 @@ class GenericSyntaxInstanceRepository(
             ",
             {{tptr:tptr}})
             YIELD value
-           WITH vv,
-                head([(tptr)<-[:HAS_PARAMETER_TERM]-(tp) | tp]) as tp,
+            WITH vv,
                 rel,
                 position,
                 parameter,
                 tptr,
                 value.tpv AS tpv
         OPTIONAL MATCH (tpvv: ParameterTemplateValue)<-[:LATEST_FINAL]-(td: ParameterTemplateRoot)-[:HAS_COMPLEX_VALUE]->(tptr)
-        WHERE tpv iS NOT NULL AND tp is NOT NULL
-        
+        WHERE tpv iS NOT NULL
         WITH vv, position, parameter, collect(DISTINCT {{
             set_number: 0,
             position: rel.position,
             index: rel.index,
-            parameter_name: tp.name,
+            parameter_name: parameter,
             parameter_term: tpv,
             parameter_uid: tptr.uid,
             definition: td.uid,
@@ -326,7 +303,6 @@ class GenericSyntaxInstanceRepository(
                         ],
                     ),
                     attributes=SimpleTermAttributes(
-                        code_submission_value=template["code_submission_value"],
                         nci_preferred_name=template["preferred_term"],
                     ),
                 )
@@ -340,22 +316,20 @@ class GenericSyntaxInstanceRepository(
     ) -> ParametrizedTemplateVO:
         parameter_terms = self._get_template_parameters(root, value)
 
+        template_object: VersionRoot
         if self.is_pre_instance(root):
-            template_object: VersionRoot = root.created_from.get()
+            template_object = root.created_from.get()
         else:
-            template_object: VersionRoot = root.has_template.get()
+            template_object = root.has_template.get()
 
+        template_value_object: VersionValue
         if date_before:
-            template_value_object: VersionValue = template_object.get_final_before(
-                date_before
-            )
+            template_value_object = template_object.get_final_before(date_before)
             if template_value_object is None:
-                template_value_object: VersionValue = (
-                    template_object.get_retired_before(date_before)
-                )
+                template_value_object = template_object.get_retired_before(date_before)
 
         if template_value_object is None:
-            template_value_object: VersionValue = template_object.latest_final.get()
+            template_value_object = template_object.latest_final.get()
 
         template = ParametrizedTemplateVO(
             template_name=template_value_object.name,

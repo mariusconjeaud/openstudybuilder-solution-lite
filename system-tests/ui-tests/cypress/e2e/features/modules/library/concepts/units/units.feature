@@ -4,11 +4,13 @@ Feature: Library - Concepts - Units
     Background: User must be logged in
         Given The user is logged in
 
+    @smoke_test
     Scenario: [Navigation] User must be able to navigate to the Units page
         Given The '/library' page is opened
         When The 'Units' submenu is clicked in the 'Concepts' section
         Then The current URL is '/library/units'
 
+    @smoke_test
     Scenario: [Table][Columns][Names] User must be able to see the columns list on the main page as below
         Given The '/library/units' page is opened
         Then A table is visible with following headers
@@ -37,9 +39,15 @@ Feature: Library - Concepts - Units
         When The first column is selected from Select Columns option for table with actions
         Then The table contain only selected column and actions column
 
+    @smoke_test
     Scenario: [Create][Positive case] User must be able to add a new Unit
         Given The '/library/units' page is opened
+        And Add unit button is clicked
         When The new unit is added
+        And Create unit request is intercepted
+        And Form save button is clicked
+        And The pop up displays 'Unit added'
+        And User waits for unit request to finish
         Then Unit is found
         And The newly added unit is visible within the Units table
         And The item has status 'Draft' and version '0.1'
@@ -47,12 +55,15 @@ Feature: Library - Concepts - Units
     Scenario: [Create][Uniqueness check][Name] User must not be able to add a new Unit with already existing name
         Given The '/library/units' page is opened
         And [API] Unit in status Draft exists
+        And Add unit button is clicked
         When The new unit with already existing name is added
+        And Form save button is clicked
         Then The validation message appears for already existing unit name
 
     Scenario: [Create][Mandatory fields] User must not be able to save new unit without mandatory data provided
         Given The '/library/units' page is opened
-        When The user tries to create unit without Unit Name, codelist term and library provided
+        When Add unit button is clicked
+        And Form save button is clicked
         Then The validation message appears for unit library field
         And The validation message appears for unit name field
         And The validation message appears for codelist term field
@@ -63,7 +74,11 @@ Feature: Library - Concepts - Units
         When [API] Unit in status Draft exists
         And Unit is found
         And The 'Edit' option is clicked from the three dot menu list
-        And The draft unit version is edited and saved with change description
+        And The unit edition form is filled with data
+        And Update unit request is intercepted
+        And Form save button is clicked
+        And The pop up displays 'Unit updated'
+        And User waits for unit request to finish
         And Unit is found
         Then The item has status 'Draft' and version '0.2'
 
@@ -107,13 +122,18 @@ Feature: Library - Concepts - Units
         When The 'New version' option is clicked from the three dot menu list
         Then The item has status 'Draft' and version '1.1'
         When The 'Edit' option is clicked from the three dot menu list
-        And The draft unit version is edited and saved with change description
+        And The unit edition form is filled with data
+        And Update unit request is intercepted
+        And Form save button is clicked
+        And The pop up displays 'Unit updated'
+        And User waits for unit request to finish
         Then The item has status 'Draft' and version '1.2'
         When The 'Approve' option is clicked from the three dot menu list
         Then The item has status 'Final' and version '2.0'
 
     Scenario: [Cancel][Creation] User must be able to Cancel creation of the unit
         Given The '/library/units' page is opened
+        And Add unit button is clicked
         And Unit mandatory data is filled in
         When Modal window form is closed by clicking cancel button
         And Action is confirmed by clicking continue
@@ -155,6 +175,7 @@ Feature: Library - Concepts - Units
         And The item actions button is clicked
         Then Only actions that should be avaiable for the Retired item are displayed
 
+    @smoke_test
     Scenario: [Table][Search][Positive case] User must be able to search created unit
         Given The '/library/units' page is opened
         When [API] First unit for search test is created

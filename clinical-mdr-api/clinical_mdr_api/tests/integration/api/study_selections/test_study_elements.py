@@ -30,12 +30,11 @@ from clinical_mdr_api.tests.integration.utils.api import (
     inject_base_data,
 )
 from clinical_mdr_api.tests.integration.utils.factory_controlled_terminology import (
-    create_codelist,
     get_catalogue_name_library_name,
 )
 from clinical_mdr_api.tests.integration.utils.utils import TestUtils
 from clinical_mdr_api.tests.utils.checks import assert_response_status_code
-from common import config as settings
+from common.config import settings
 
 log = logging.getLogger(__name__)
 
@@ -69,33 +68,46 @@ def test_data():
     TestUtils.set_study_standard_version(
         study_uid=study.uid,
     )
+    ct_term_start_date = datetime(2020, 3, 25, tzinfo=timezone.utc)
     element_subtype_codelist = TestUtils.create_ct_codelist(
-        name=settings.STUDY_ELEMENT_SUBTYPE_NAME,
-        sponsor_preferred_name=settings.STUDY_ELEMENT_SUBTYPE_NAME,
+        name=settings.study_element_subtype_name,
+        sponsor_preferred_name=settings.study_element_subtype_name,
         extensible=True,
         approve=True,
+        submission_value=settings.study_element_subtype_cl_submval,
+        effective_date=ct_term_start_date,
     )
     element_subtype = TestUtils.create_ct_term(
         codelist_uid=element_subtype_codelist.codelist_uid,
-        name_submission_value=settings.STUDY_ELEMENT_SUBTYPE_NAME,
-        sponsor_preferred_name=settings.STUDY_ELEMENT_SUBTYPE_NAME,
+        submission_value=settings.study_element_subtype_name,
+        sponsor_preferred_name=settings.study_element_subtype_name,
     )
     global element_type
-    element_type = TestUtils.create_ct_term()
+    element_type_codelist = TestUtils.create_ct_codelist(
+        name="Element Type",
+        sponsor_preferred_name="Element Type",
+        extensible=True,
+        approve=True,
+        submission_value=settings.study_element_type_cl_submval,
+        effective_date=ct_term_start_date,
+    )
+    element_type = TestUtils.create_ct_term(
+        codelist_uid=element_type_codelist.codelist_uid,
+        submission_value="Element Type",
+        sponsor_preferred_name="Element Type",
+    )
     TestUtils.add_ct_term_parent(element_subtype, element_type)
 
-    catalogue_name, library_name = get_catalogue_name_library_name(use_test_utils=True)
+    _catalogue_name, library_name = get_catalogue_name_library_name(use_test_utils=True)
+    catalogue_name = "SDTM CT"
     # Create a study selection
-    ct_term_codelist_name = settings.STUDY_ELEMENT_SUBTYPE_NAME
+    ct_term_codelist_name = settings.study_element_subtype_name
     ct_term_name = ct_term_codelist_name + " Name"
-    ct_term_codelist = create_codelist(
-        ct_term_codelist_name, "CTCodelist_Name", catalogue_name, library_name
-    )
-    ct_term_start_date = datetime(2020, 3, 25, tzinfo=timezone.utc)
+
     global initial_ct_term_study_standard_test
     initial_ct_term_study_standard_test = TestUtils.create_ct_term(
-        codelist_uid=ct_term_codelist.codelist_uid,
-        name_submission_value=ct_term_name,
+        codelist_uid=element_subtype_codelist.codelist_uid,
+        submission_value=ct_term_name,
         sponsor_preferred_name=ct_term_name,
         order=1,
         catalogue_name=catalogue_name,
@@ -109,11 +121,35 @@ def test_data():
         "uid": initial_ct_term_study_standard_test.term_uid,
         "date": datetime(2020, 3, 26, tzinfo=timezone.utc),
     }
+    # adjust term name start_date of the 1.0 final
     db.cypher_query(
         """
                     MATCH (n)-[:HAS_NAME_ROOT]-(ct_name:CTTermNameRoot)-[has_version:HAS_VERSION]-(val) 
                     where 
                         n.uid =$uid AND EXISTS((ct_name)-[:LATEST]-(val)) 
+                        AND has_version.status ='Final' 
+                    SET has_version.start_date = $date
+                """,
+        params=params,
+    )
+    # adjust codelist name start and end date
+    params["uid"] = element_subtype_codelist.codelist_uid
+    db.cypher_query(
+        """
+                    MATCH (n)-[:HAS_NAME_ROOT]-(ct_name:CTCodelistNameRoot)-[has_version:HAS_VERSION]-(val) 
+                    where 
+                        n.uid =$uid AND EXISTS((ct_name)-[:LATEST]-(val)) 
+                        AND has_version.status ='Final' 
+                    SET has_version.start_date = $date
+                """,
+        params=params,
+    )
+    # adjust codelist attributes start_date of the 1.0 final
+    db.cypher_query(
+        """
+                    MATCH (n)-[:HAS_ATTRIBUTES_ROOT]-(ct_attrs:CTCodelistAttributesRoot)-[has_version:HAS_VERSION]-(val) 
+                    where 
+                        n.uid =$uid AND EXISTS((ct_attrs)-[:LATEST]-(val)) 
                         AND has_version.status ='Final' 
                     SET has_version.start_date = $date
                 """,
@@ -202,7 +238,7 @@ def test_element_modify_actions_on_locked_study(api_client):
 def test_study_element_with_study_element_subtype_relationship(api_client):
     _element_subtype = TestUtils.create_ct_term(
         codelist_uid=element_subtype_codelist.codelist_uid,
-        name_submission_value="test element subtype",
+        submission_value="test element subtype",
         sponsor_preferred_name="test element subtype",
     )
     TestUtils.add_ct_term_parent(_element_subtype, TestUtils.create_ct_term())
@@ -331,7 +367,7 @@ def test_study_element_version_selecting_ct_package(api_client):
     res = response.json()
     assert_response_status_code(response, 200)
     assert res["element_subtype"]["term_uid"] == ctterm_uid
-    assert res["element_subtype"]["sponsor_preferred_name"] == new_ctterm_name
+    assert res["element_subtype"]["term_name"] == new_ctterm_name
 
     TestUtils.set_study_standard_version(
         study_uid=study_for_ctterm_versioning.uid,
@@ -347,7 +383,7 @@ def test_study_element_version_selecting_ct_package(api_client):
     assert_response_status_code(response, 200)
     assert res["element_subtype"]["term_uid"] == ctterm_uid
     assert (
-        res["element_subtype"]["sponsor_preferred_name"]
+        res["element_subtype"]["term_name"]
         == initial_ct_term_study_standard_test.sponsor_preferred_name
     )
 
@@ -361,7 +397,7 @@ def test_study_element_version_selecting_ct_package(api_client):
     res = response.json()
     assert_response_status_code(response, 200)
     assert (
-        res["element_subtype"]["sponsor_preferred_name"]
+        res["element_subtype"]["term_name"]
         == initial_ct_term_study_standard_test.sponsor_preferred_name
     )
 
@@ -372,10 +408,10 @@ def test_study_element_version_selecting_ct_package(api_client):
     res = response.json()
     assert_response_status_code(response, 200)
     assert (
-        res[0]["element_subtype"]["sponsor_preferred_name"]
+        res[0]["element_subtype"]["term_name"]
         == initial_ct_term_study_standard_test.sponsor_preferred_name
     )
-    assert res[1]["element_subtype"]["sponsor_preferred_name"] == new_ctterm_name
+    assert res[1]["element_subtype"]["term_name"] == new_ctterm_name
 
     # get all elements
     response = api_client.get(
@@ -384,10 +420,10 @@ def test_study_element_version_selecting_ct_package(api_client):
     res = response.json()
     assert_response_status_code(response, 200)
     assert (
-        res[0]["element_subtype"]["sponsor_preferred_name"]
+        res[0]["element_subtype"]["term_name"]
         == initial_ct_term_study_standard_test.sponsor_preferred_name
     )
-    assert res[1]["element_subtype"]["sponsor_preferred_name"] == new_ctterm_name
+    assert res[1]["element_subtype"]["term_name"] == new_ctterm_name
 
 
 def test_study_element_ct_term_retrieval_at_date(api_client):

@@ -1,3 +1,5 @@
+from typing import Any
+
 from neomodel import (
     ArrayProperty,
     BooleanProperty,
@@ -11,7 +13,7 @@ from neomodel import (
 
 from clinical_mdr_api.domain_repositories.models.concepts import UnitDefinitionRoot
 from clinical_mdr_api.domain_repositories.models.controlled_terminology import (
-    CTTermRoot,
+    CTTermContext,
 )
 from clinical_mdr_api.domain_repositories.models.dictionary import DictionaryTermRoot
 from clinical_mdr_api.domain_repositories.models.generic import (
@@ -23,7 +25,7 @@ from clinical_mdr_api.domain_repositories.models.study_selections import AuditTr
 
 
 class StudyField(ClinicalMdrNode, AuditTrailMixin):
-    has_type = RelationshipTo(CTTermRoot, "HAS_TYPE", model=ClinicalMdrRel)
+    has_type = RelationshipTo(CTTermContext, "HAS_TYPE", model=ClinicalMdrRel)
     has_dictionary_type = RelationshipTo(
         DictionaryTermRoot,
         "HAS_DICTIONARY_TYPE",
@@ -31,14 +33,14 @@ class StudyField(ClinicalMdrNode, AuditTrailMixin):
         cardinality=ZeroOrMore,
     )
     has_reason_for_null_value = RelationshipTo(
-        CTTermRoot, "HAS_REASON_FOR_NULL_VALUE", model=ClinicalMdrRel
+        CTTermContext, "HAS_REASON_FOR_NULL_VALUE", model=ClinicalMdrRel
     )
 
     @classmethod
     def get_specific_field_currently_used_in_study(
         cls,
         field_name: str,
-        value: any,
+        value: Any,
         study_uid: str,
         null_value_code: str | None = None,
     ):
@@ -70,7 +72,8 @@ class StudyField(ClinicalMdrNode, AuditTrailMixin):
                 """
         else:
             query = (
-                "MATCH (term_root {uid:$null_value_code})<-[:HAS_REASON_FOR_NULL_VALUE]-"
+                "MATCH (term_root {uid:$null_value_code})<-[:HAS_SELECTED_TERM]-"
+                "(:CTTermContext)<-[:HAS_REASON_FOR_NULL_VALUE]-"
                 "(f:StudyField {field_name:$field_name})<--(:StudyValue)<-[:HAS_VERSION]-"
                 "(s:StudyRoot{uid: $study_uid}) "
                 "RETURN f"

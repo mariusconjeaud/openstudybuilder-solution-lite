@@ -2,7 +2,7 @@
 
 ## Introduction
 
-CDISC provides Controlled Terminology (CT) that shall be integrated into the MDR project / studybuilder application.
+CDISC provides Controlled Terminology (CT) that shall be integrated into the MDR project / OpenStudybuilder application.
 
 ## Goals
 

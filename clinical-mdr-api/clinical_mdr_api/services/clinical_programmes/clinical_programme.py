@@ -1,3 +1,5 @@
+from typing import Any
+
 from neomodel import db  # type: ignore
 
 from clinical_mdr_api.domains.clinical_programmes.clinical_programme import (
@@ -27,11 +29,11 @@ class ClinicalProgrammeService:
 
     def get_all_clinical_programmes(
         self,
-        sort_by: dict | None = None,
+        sort_by: dict[str, bool] | None = None,
         page_number: int = 1,
         page_size: int = 10,
-        filter_by: dict | None = None,
-        filter_operator: FilterOperator | None = FilterOperator.AND,
+        filter_by: dict[str, dict[str, Any]] | None = None,
+        filter_operator: FilterOperator = FilterOperator.AND,
         total_count: bool = False,
     ) -> GenericFilteringReturn[ClinicalProgramme]:
         repos = MetaRepository()
@@ -53,8 +55,8 @@ class ClinicalProgrammeService:
                 page_number=page_number,
                 page_size=page_size,
             )
-            return GenericFilteringReturn.create(
-                filtered_items.items, filtered_items.total
+            return GenericFilteringReturn(
+                items=filtered_items.items, total=filtered_items.total
             )
         finally:
             repos.close()
@@ -80,9 +82,9 @@ class ClinicalProgrammeService:
     def get_clinical_programme_headers(
         self,
         field_name: str,
-        search_string: str | None = "",
-        filter_by: dict | None = None,
-        filter_operator: FilterOperator | None = FilterOperator.AND,
+        search_string: str = "",
+        filter_by: dict[str, dict[str, Any]] | None = None,
+        filter_operator: FilterOperator = FilterOperator.AND,
         page_size: int = 10,
     ):
         repos = MetaRepository()

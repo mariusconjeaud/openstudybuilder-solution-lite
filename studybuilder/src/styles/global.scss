@@ -12,6 +12,14 @@ body {
   color: #fff !important;
 }
 
+.text-nn-blue {
+  color: rgb(var(--v-theme-nnTrueBlue)) !important;
+}
+
+.text-gray {
+  color: gray !important;
+}
+
 .bg-white {
   background-color: #fff !important;
 }
@@ -163,6 +171,16 @@ thead.v-data-table-header {
   background-color: transparent !important;
 }
 
+// Fix v-select background in data table footers
+.v-data-table-footer {
+  .v-select {
+    .v-field__field,
+    .v-field__overlay {
+      background-color: white !important;
+    }
+  }
+}
+
 .v-select-list {
   .v-list-item {
     &-active {
@@ -273,6 +291,7 @@ thead.v-data-table-header {
 }
 
 .filterAutocompleteLabel {
+  min-width: 200px !important;
   .v-label {
     font-size: 14px;
   }
@@ -360,4 +379,28 @@ input[type='datetime-local'] {
 }
 .v-list-item__spacer {
   width: 16px !important;
+}
+
+.shake {
+  animation-name: shake;
+  animation-duration: 0.82s;
+}
+@keyframes shake {
+  10%,
+  90% {
+    transform: translate3d(-6px, 0, 0);
+  }
+  20%,
+  80% {
+    transform: translate3d(6px, 0, 0);
+  }
+  30%,
+  50%,
+  70% {
+    transform: translate3d(-10px, 0, 0);
+  }
+  40%,
+  60% {
+    transform: translate3d(10px, 0, 0);
+  }
 }

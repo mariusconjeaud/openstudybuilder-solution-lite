@@ -3,6 +3,9 @@ import datetime
 from fastapi import status
 from neomodel import db
 
+from clinical_mdr_api.domain_repositories._utils.helpers import (
+    acquire_write_lock_study_value,
+)
 from clinical_mdr_api.domain_repositories.models._utils import ListDistinct
 from clinical_mdr_api.domain_repositories.models.study_selections import (
     StudyActivitySchedule as StudyActivityScheduleNeoModel,
@@ -44,12 +47,14 @@ class StudyActivityScheduleService(StudySelectionMixin):
         study_uid: str,
         study_value_version: str | None = None,
         operational: bool = False,
+        study_visit_uid: str | None = None,
     ) -> list[StudyActivitySchedule]:
         study_activity_schedules = (
             self._repos.study_activity_schedule_repository._get_all_schedules_in_study(
                 study_uid=study_uid,
                 study_value_version=study_value_version,
                 operational=operational,
+                study_visit_uid=study_visit_uid,
             )
         )
         study_activity_schedules_response_model = [
@@ -60,42 +65,6 @@ class StudyActivityScheduleService(StudySelectionMixin):
             for i_study_activity_schedule_ogm in study_activity_schedules
         ]
         return study_activity_schedules_response_model
-
-    def get_all_schedules_for_specific_visit(
-        self, study_uid: str, study_visit_uid: str, detailed_soa: bool = True
-    ) -> list[StudyActivitySchedule]:
-        relations_to_fetch = [
-            "has_after__audit_trail",
-            "study_visit__has_visit_name__has_latest_value",
-            "study_activity__has_selected_activity",
-        ]
-        filters = {
-            "study_value__latest_value__uid": study_uid,
-            "study_visit__uid": study_visit_uid,
-            "study_visit__has_study_visit__latest_value__uid": study_uid,
-        }
-        if detailed_soa:
-            filters.update(
-                {"study_activity__has_study_activity__latest_value__uid": study_uid}
-            )
-        else:
-            relations_to_fetch.append(
-                "study_activity__study_activity_has_study_activity_instance"
-            )
-            filters.update(
-                {
-                    "study_activity__study_activity_has_study_activity_instance__has_study_activity_instance__latest_value__uid": study_uid
-                }
-            )
-        return [
-            StudyActivitySchedule.model_validate(sas_node)
-            for sas_node in ListDistinct(
-                StudyActivityScheduleNeoModel.nodes.fetch_relations(*relations_to_fetch)
-                .filter(**filters)
-                .order_by("uid")
-                .resolve_subgraph()
-            ).distinct()
-        ]
 
     def get_all_schedules_for_specific_activity(
         self, study_uid: str, study_activity_uid: str
@@ -136,6 +105,7 @@ class StudyActivityScheduleService(StudySelectionMixin):
     def create(
         self, study_uid: str, schedule_input: StudyActivityScheduleCreateInput
     ) -> StudyActivitySchedule:
+        acquire_write_lock_study_value(study_uid)
         schedule_vo = self._repos.study_activity_schedule_repository.save(
             self._from_input_values(study_uid, schedule_input), self.author
         )
@@ -144,6 +114,7 @@ class StudyActivityScheduleService(StudySelectionMixin):
     @ensure_transaction(db)
     def delete(self, study_uid: str, schedule_uid: str):
         try:
+            acquire_write_lock_study_value(study_uid)
             self._repos.study_activity_schedule_repository.delete(
                 study_uid, schedule_uid, self.author
             )
@@ -233,21 +204,27 @@ class StudyActivityScheduleService(StudySelectionMixin):
     ) -> list[StudyActivityScheduleBatchOutput]:
         results = []
         for operation in operations:
-            result = {}
             item = None
             try:
                 if operation.method == "POST":
-                    item = self.create(study_uid, operation.content)
-                    response_code = status.HTTP_201_CREATED
+                    if isinstance(operation.content, StudyActivityScheduleCreateInput):
+                        item = self.create(study_uid, operation.content)
+                        response_code = status.HTTP_201_CREATED
+                    else:
+                        raise exceptions.ValidationException(
+                            msg="POST operation requires StudyActivityScheduleCreateInput as request payload."
+                        )
+
                 elif operation.method == "DELETE":
                     self.delete(study_uid, operation.content.uid)
                     response_code = status.HTTP_204_NO_CONTENT
                 else:
                     raise exceptions.MethodNotAllowedException(method=operation.method)
-                result["response_code"] = response_code
-                if item:
-                    result["content"] = item.model_dump()
-                results.append(StudyActivityScheduleBatchOutput(**result))
+                results.append(
+                    StudyActivityScheduleBatchOutput(
+                        response_code=response_code, content=item
+                    )
+                )
             except exceptions.MDRApiBaseException as error:
                 results.append(
                     StudyActivityScheduleBatchOutput.model_construct(

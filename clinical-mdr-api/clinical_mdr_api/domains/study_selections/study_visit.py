@@ -2,7 +2,9 @@ import datetime
 from dataclasses import dataclass
 from enum import Enum
 from math import ceil, floor
-from typing import Any, Callable, Self
+from typing import Any, Self
+
+import neo4j.time
 
 from clinical_mdr_api.domains.study_definition_aggregates.study_metadata import (
     StudyStatus,
@@ -11,65 +13,34 @@ from clinical_mdr_api.models.controlled_terminologies.ct_term import (
     SimpleCTTermNameWithConflictFlag,
 )
 from common import exceptions
-from common.config import (
-    GLOBAL_ANCHOR_VISIT_NAME,
-    SPECIAL_VISIT_LETTERS,
-    SPECIAL_VISIT_MAX_NUMBER,
-    STUDY_VISIT_TYPE_EARLY_DISCONTINUATION_VISIT,
-)
-
-VisitTypeNamedTuple = SimpleCTTermNameWithConflictFlag
-StudyVisitType: dict[str, VisitTypeNamedTuple] = {}
-
-VisitRepeatingFrequencyNamedTuple = SimpleCTTermNameWithConflictFlag
-StudyVisitRepeatingFrequency: dict[str, VisitRepeatingFrequencyNamedTuple] = {}
-
-VisitTimeReferenceNamedTuple = SimpleCTTermNameWithConflictFlag
-StudyVisitTimeReference: dict[str, VisitTimeReferenceNamedTuple] = {}
-
-VisitContactModeNamedTuple = SimpleCTTermNameWithConflictFlag
-StudyVisitContactMode: dict[str, VisitContactModeNamedTuple] = {}
-
-VisitEpochAllocationNamedTuple = SimpleCTTermNameWithConflictFlag
-StudyVisitEpochAllocation: dict[str, VisitEpochAllocationNamedTuple] = {}
+from common.config import settings
+from common.utils import TimeUnit, VisitClass, VisitSubclass
 
 
-class VisitClass(Enum):
-    SINGLE_VISIT = "Single visit"
-    SPECIAL_VISIT = "Special visit"
-    NON_VISIT = "Non visit"
-    UNSCHEDULED_VISIT = "Unscheduled visit"
-    MANUALLY_DEFINED_VISIT = "Manually defined visit"
-
-
-class VisitSubclass(Enum):
-    SINGLE_VISIT = "Single visit"
-    ADDITIONAL_SUBVISIT_IN_A_GROUP_OF_SUBV = (
-        "Additional subvisit in a group of subvisits"
-    )
-    ANCHOR_VISIT_IN_GROUP_OF_SUBV = "Anchor visit in group of subvisits"
-    REPEATING_VISIT = "Repeating visit"
+class VisitGroupFormat(Enum):
+    RANGE = "range"
+    LIST = "list"
 
 
 @dataclass
-class TimeUnit:
-    name: str
-    conversion_factor_to_master: float
-    from_timedelta: Callable
+class VisitGroup:
+    uid: str
+    group_name: str
+    group_format: str
 
 
 @dataclass
 class TimePoint:
     uid: str
-    visit_timereference: SimpleCTTermNameWithConflictFlag
+    visit_timereference: SimpleCTTermNameWithConflictFlag | None
     time_unit_uid: str
-    visit_value: int
+    visit_value: int | None
 
 
 @dataclass
 class NumericValue:
     uid: str
-    value: int
+    value: int | float | None
 
 
 @dataclass
@@ -82,36 +53,36 @@ class TextValue:
 class SimpleStudyEpoch:
     uid: str
     study_uid: str
-    epoch: SimpleCTTermNameWithConflictFlag
+    epoch: SimpleCTTermNameWithConflictFlag | None
     order: int
 
 
 @dataclass
 class StudyVisitVO:
-    consecutive_visit_group: str
     visit_window_min: int | None
     visit_window_max: int | None
     window_unit_uid: str | None
 
-    description: str
-    start_rule: str  # Free text
-    end_rule: str  # Free text
+    description: str | None
+    start_rule: str | None
+    end_rule: str | None
     visit_contact_mode: (
-        SimpleCTTermNameWithConflictFlag  # CT Codelist Visit Contact Mode
+        SimpleCTTermNameWithConflictFlag | None  # CT Codelist Visit Contact Mode
     )
-    visit_type: SimpleCTTermNameWithConflictFlag  # CT Codelist VISIT_TYPE -
+    visit_type: SimpleCTTermNameWithConflictFlag | None  # CT Codelist VISIT_TYPE -
 
     status: StudyStatus
     start_date: datetime.datetime
     author_id: str
     author_username: str
 
-    visit_class: VisitClass
-    visit_subclass: VisitSubclass
+    visit_class: VisitClass | None
+    visit_subclass: VisitSubclass | None
     is_global_anchor_visit: bool
     visit_number: float
     visit_order: int
     show_visit: bool
+    study_visit_group: VisitGroup | None = None
     epoch_allocation: SimpleCTTermNameWithConflictFlag | None = None
     timepoint: TimePoint | None = None
     study_day: NumericValue | None = None
@@ -124,12 +95,11 @@ class StudyVisitVO:
 
     special_visit_number: int | None = None
     subvisit_number: int | None = None
-    subvisit_anchor: Self | None = None
     time_unit_object: TimeUnit | None = None
     window_unit_object: TimeUnit | None = None
 
     epoch_connector: Any = None
-    anchor_visit = None
+    anchor_visit: Self | None = None
     is_deleted: bool = False
     is_soa_milestone: bool = False
     uid: str | None = None
@@ -149,7 +119,6 @@ class StudyVisitVO:
     study_id: str | None = None
     study_id_prefix: str | None = None
     study_number: str | None = None
-    number_of_assigned_activities: int | None = None
 
     @property
     def visit_name(self):
@@ -204,24 +173,29 @@ class StudyVisitVO:
                 return visit_short_name + "D1"
             if self.visit_class == VisitClass.SPECIAL_VISIT:
                 if (
-                    self.visit_type.sponsor_preferred_name
-                    == STUDY_VISIT_TYPE_EARLY_DISCONTINUATION_VISIT
+                    self.visit_type_name
+                    == settings.study_visit_type_early_discontinuation_visit
                 ):
                     exceptions.BusinessLogicException.raise_if(
                         self.special_visit_number is None
                         or self.special_visit_number > 3,
-                        msg=f"There can be maximum 3 special visits in an epoch and current special visit is set to be {self.subvisit_number}",
+                        msg=f"There can be a maximum of 3 Early Discontinuation visits per scheduled visit and current Early Discontinuation visit is set to be {self.subvisit_number}",
                     )
-                    chosen_letter = SPECIAL_VISIT_LETTERS[-3:][
+                    assert self.special_visit_number is not None
+                    chosen_letter = settings.special_visit_letters[-3:][
                         self.special_visit_number - 1
                     ]
                 else:
                     exceptions.BusinessLogicException.raise_if(
                         self.special_visit_number is None
-                        or self.special_visit_number > SPECIAL_VISIT_MAX_NUMBER,
-                        msg=f"There can be maximum {SPECIAL_VISIT_MAX_NUMBER} special visits in an epoch and current special visit is set to be {self.subvisit_number}",
+                        or self.special_visit_number
+                        > settings.special_visit_max_number,
+                        msg=f"There can be a maximum of {settings.special_visit_max_number} special visits per scheduled visit and current special visit is set to be {self.subvisit_number}",
                     )
-                    chosen_letter = SPECIAL_VISIT_LETTERS[self.special_visit_number - 1]
+                    assert self.special_visit_number is not None
+                    chosen_letter = settings.special_visit_letters[
+                        self.special_visit_number - 1
+                    ]
                 return visit_short_name + chosen_letter
             if self.visit_class in (VisitClass.NON_VISIT, VisitClass.UNSCHEDULED_VISIT):
                 return visit_number
@@ -236,18 +210,15 @@ class StudyVisitVO:
     def study_uid(self):
         return self.epoch_connector.study_uid
 
-    def set_anchor_visit(self, visit):
-        self.anchor_visit = visit
+    @property
+    def visit_type_name(self) -> str:
+        return self.visit_type.sponsor_preferred_name
 
-    def set_order_and_number(self, order: int, number: int):
-        self.visit_order = order
-        self.visit_number = number
-
-    def set_subvisit_anchor(self, subvisit_anchor):
-        self.subvisit_anchor = subvisit_anchor
-
-    def set_subvisit_number(self, number):
-        self.subvisit_number = number
+    @property
+    def time_reference_name(self) -> str | None:
+        if self.timepoint:
+            return self.timepoint.visit_timereference.sponsor_preferred_name
+        return None
 
     @property
     def unique_visit_number(self):
@@ -282,16 +253,16 @@ class StudyVisitVO:
     def study_day_number(self):
         if self.study_day:
             return self.study_day.value
-        if self.visit_class == VisitClass.SPECIAL_VISIT and self.subvisit_anchor:
-            return self.subvisit_anchor.study_day_number
+        if self.visit_class == VisitClass.SPECIAL_VISIT and self.anchor_visit:
+            return self.anchor_visit.study_day_number
         return None
 
     @property
     def study_week_number(self):
         if self.study_week:
             return self.study_week.value
-        if self.visit_class == VisitClass.SPECIAL_VISIT and self.subvisit_anchor:
-            return self.subvisit_anchor.study_week_number
+        if self.visit_class == VisitClass.SPECIAL_VISIT and self.anchor_visit:
+            return self.anchor_visit.study_week_number
         return None
 
     def derive_study_day_number(self, relative_duration=False) -> int | None:
@@ -342,23 +313,32 @@ class StudyVisitVO:
 
     @property
     def study_week_label(self):
-        return f"Week {self.study_week.value}"
+        study_week = self.study_week.value if self.study_week else 0
+        return f"Week {study_week}"
 
     @property
     def study_duration_weeks_label(self):
-        return f"{self.study_duration_weeks.value} weeks"
+        study_duration_weeks = (
+            self.study_duration_weeks.value if self.study_duration_weeks else 0
+        )
+        return f"{study_duration_weeks} weeks"
 
     @property
     def week_in_study_label(self):
-        return f"Week {self.week_in_study.value}"
+        week_in_study = self.week_in_study.value if self.week_in_study else 0
+        return f"Week {week_in_study}"
 
     @property
     def study_day_label(self):
-        return f"Day {self.study_day.value}"
+        study_day = self.study_day.value if self.study_day else 0
+        return f"Day {study_day}"
 
     @property
     def study_duration_days_label(self):
-        return f"{self.study_duration_days.value} days"
+        study_duration_days = (
+            self.study_duration_days.value if self.study_duration_days else 0
+        )
+        return f"{study_duration_days} days"
 
     @property
     def visit_subnumber(self):
@@ -381,35 +361,28 @@ class StudyVisitVO:
     def get_absolute_duration(self) -> int | None:
         # Special visit doesn't have a timing but we want to place it
         # after the anchor visit for the special visit hence we derive timing based on the anchor visit
-        if self.visit_class == VisitClass.SPECIAL_VISIT and self.subvisit_anchor:
-            return self.subvisit_anchor.get_absolute_duration()
+        if self.visit_class == VisitClass.SPECIAL_VISIT and self.anchor_visit:
+            return self.anchor_visit.get_absolute_duration()
         if self.timepoint:
             if self.timepoint.visit_value == 0:
                 return 0
             if self.anchor_visit is not None:
-                if (
-                    self.timepoint.visit_timereference.sponsor_preferred_name.lower()
-                    == GLOBAL_ANCHOR_VISIT_NAME.lower()
-                ):
-                    return self.get_unified_duration()
                 return (
                     self.get_unified_duration()
                     + self.anchor_visit.get_absolute_duration()
                 )
-            if self.subvisit_anchor is not None:
-                return (
-                    self.get_unified_duration()
-                    + self.subvisit_anchor.get_absolute_duration()
-                )
-            if self.anchor_visit is None:
-                return self.get_unified_duration()
-            return None
+            return self.get_unified_duration()
         return None
 
     def get_unified_window(self):
+        absolute_duration: int | None = self.get_absolute_duration()
+        if absolute_duration is None:
+            raise exceptions.BusinessLogicException(
+                msg="Visit has no absolute duration, cannot derive visit window."
+            )
+
         _dur = int(
-            self.get_absolute_duration()
-            / self.time_unit_object.conversion_factor_to_master
+            absolute_duration / self.time_unit_object.conversion_factor_to_master
         )
         _dur += 1  # value for baseline visit.
         _min = int(
@@ -440,8 +413,6 @@ class StudyVisitVO:
             self.visit_type == other_visit.visit_type
             and self.epoch_uid == other_visit.epoch_uid
             and self.visit_contact_mode == other_visit.visit_contact_mode
-            and self.timepoint.visit_timereference
-            == other_visit.timepoint.visit_timereference
             and self.visit_window_min == other_visit.visit_window_min
             and self.visit_window_max == other_visit.visit_window_max
         )
@@ -450,4 +421,4 @@ class StudyVisitVO:
 @dataclass
 class StudyVisitHistoryVO(StudyVisitVO):
     change_type: str | None = None
-    end_date: datetime.datetime | None = None
+    end_date: neo4j.time.DateTime | None = None

@@ -18,7 +18,7 @@
             :label="$t('ObjectiveTemplateForm.objective_category')"
             data-cy="template-objective-category"
             :items="objectiveCategories"
-            item-title="name.sponsor_preferred_name"
+            item-title="sponsor_preferred_name"
             item-value="term_uid"
             :disabled="notApplicable"
             :rules="[
@@ -89,9 +89,19 @@ function preparePayload() {
   return result
 }
 
-terms.getByCodelist('objectiveCategories').then((resp) => {
+terms.getTermsByCodelist('objectiveCategories').then((resp) => {
   objectiveCategories.value = resp.data.items
 })
+
+// We get the large term model with name and attributes,
+// add sponsor_preferred_name on the root.
+if (localForm.value.categories) {
+  for (const category of localForm.value.categories) {
+    if (Object.prototype.hasOwnProperty.call(category, 'name')) {
+      category.sponsor_preferred_name = category.name.sponsor_preferred_name
+    }
+  }
+}
 
 defineExpose({
   preparePayload,

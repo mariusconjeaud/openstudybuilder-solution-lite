@@ -131,27 +131,27 @@ export const useStudiesGeneralStore = defineStore('studiesGeneral', {
       })
     },
     fetchStudyTypes() {
-      terms.getNamesByCodelist('studyType').then((resp) => {
+      terms.getTermsByCodelist('studyType').then((resp) => {
         this.studyTypes = resp.data.items
       })
     },
     fetchTrialIntentTypes() {
-      terms.getNamesByCodelist('trialIntentType').then((resp) => {
+      terms.getTermsByCodelist('trialIntentType').then((resp) => {
         this.trialIntentTypes = resp.data.items
       })
     },
     fetchTrialTypes() {
-      terms.getNamesByCodelist('trialType').then((resp) => {
+      terms.getTermsByCodelist('trialType').then((resp) => {
         this.trialTypes = resp.data.items
       })
     },
     fetchTrialPhases() {
-      terms.getNamesByCodelist('trialPhase').then((resp) => {
+      terms.getTermsByCodelist('trialPhase').then((resp) => {
         this.trialPhases = resp.data.items
       })
     },
     fetchInterventionTypes() {
-      terms.getNamesByCodelist('interventionTypes').then((resp) => {
+      terms.getTermsByCodelist('interventionTypes').then((resp) => {
         this.interventionTypes = resp.data.items
       })
     },
@@ -168,46 +168,55 @@ export const useStudiesGeneralStore = defineStore('studiesGeneral', {
       })
     },
     fetchSexOfParticipants() {
-      terms.getNamesByCodelist('sexOfParticipants').then((resp) => {
+      terms.getTermsByCodelist('sexOfParticipants').then((resp) => {
         this.sexOfParticipants = resp.data.items
       })
     },
     fetchTrialBlindingSchemas() {
-      terms.getNamesByCodelist('trialBlindingSchema').then((resp) => {
+      terms.getTermsByCodelist('trialBlindingSchema').then((resp) => {
         this.trialBlindingSchemas = resp.data.items
       })
     },
     fetchControlTypes() {
-      terms.getNamesByCodelist('controlType').then((resp) => {
+      terms.getTermsByCodelist('controlType').then((resp) => {
         this.controlTypes = resp.data.items
       })
     },
     fetchInterventionModels() {
-      terms.getNamesByCodelist('interventionModel').then((resp) => {
+      terms.getTermsByCodelist('interventionModel').then((resp) => {
         this.interventionModels = resp.data.items
       })
     },
     fetchNullValues() {
-      terms.getByCodelist('nullValues').then((resp) => {
+      terms.getTermsByCodelist('nullValues').then((resp) => {
         this.nullValues = resp.data.items
       })
     },
     fetchObjectiveLevels() {
-      terms.getNamesByCodelist('objectiveLevels').then((resp) => {
+      terms.getTermsByCodelist('objectiveLevels').then((resp) => {
         // FIXME: deal with pagination to retrieve all items
         this.objectiveLevels = resp.data.items
+        this.objectiveLevels.forEach((item) => {
+          item.preferred_term = item.sponsor_preferred_name
+        })
       })
     },
     fetchEndpointLevels() {
-      terms.getNamesByCodelist('endpointLevels').then((resp) => {
+      terms.getTermsByCodelist('endpointLevels').then((resp) => {
         // FIXME: deal with pagination to retrieve all items
         this.endpointLevels = resp.data.items
+        this.endpointLevels.forEach((item) => {
+          item.term_name = item.sponsor_preferred_name
+        })
       })
     },
     fetchEndpointSubLevels() {
-      terms.getNamesByCodelist('endpointSubLevels').then((resp) => {
+      terms.getTermsByCodelist('endpointSubLevels').then((resp) => {
         // FIXME: deal with pagination to retrieve all items
         this.endpointSubLevels = resp.data.items
+        this.endpointSubLevels.forEach((item) => {
+          item.term_name = item.sponsor_preferred_name
+        })
       })
     },
   },

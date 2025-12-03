@@ -7,6 +7,14 @@
         :items="helpItems"
       />
     </div>
+    <v-alert
+      v-if="selectedStudy.study_parent_part"
+      color="nnLightBlue200"
+      icon="mdi-information-outline"
+      class="text-nnTrueBlue mx-4 my-2"
+    >
+      {{ $t('_global.sub_study_edit_warning') }}
+    </v-alert>
     <div class="d-flex">
       <v-spacer />
       <v-btn
@@ -17,6 +25,7 @@
         :title="$t('StudyTitleView.edit_title')"
         :data-cy="$t('StudyTitleView.edit_title')"
         :disabled="
+          !checkPermission($roles.STUDY_WRITE) ||
           selectedStudyVersion !== null ||
           Boolean(selectedStudy.study_parent_part)
         "
@@ -62,6 +71,7 @@ import StudyTitleForm from '@/components/studies/StudyTitleForm.vue'
 import HelpButtonWithPanels from '@/components/tools/HelpButtonWithPanels.vue'
 import CommentThreadList from '@/components/tools/CommentThreadList.vue'
 import { useStudiesGeneralStore } from '@/stores/studies-general'
+import { useAccessGuard } from '@/composables/accessGuard'
 
 export default {
   components: {
@@ -77,6 +87,7 @@ export default {
         () => studiesGeneralStore.selectedStudyVersion
       ),
       studyId: studiesGeneralStore.studyId,
+      ...useAccessGuard(),
     }
   },
   data() {

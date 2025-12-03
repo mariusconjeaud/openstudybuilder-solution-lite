@@ -20,9 +20,12 @@ from clinical_mdr_api.domain_repositories.models.concepts import (
     WeekInStudyRoot,
 )
 from clinical_mdr_api.domain_repositories.models.controlled_terminology import (
-    CTTermRoot,
+    CTTermContext,
 )
-from clinical_mdr_api.domain_repositories.models.generic import ClinicalMdrRel
+from clinical_mdr_api.domain_repositories.models.generic import (
+    ClinicalMdrNodeWithUID,
+    ClinicalMdrRel,
+)
 from clinical_mdr_api.domain_repositories.models.study import StudyValue
 from clinical_mdr_api.domain_repositories.models.study_epoch import StudyEpoch
 from clinical_mdr_api.domain_repositories.models.study_selections import (
@@ -32,7 +35,17 @@ from clinical_mdr_api.domain_repositories.models.study_selections import (
 )
 
 
+class StudyVisitGroup(ClinicalMdrNodeWithUID):
+    group_format = StringProperty()
+
+
 class StudyVisit(StudySelection):
+    in_visit_group = RelationshipTo(
+        StudyVisitGroup,
+        "IN_VISIT_GROUP",
+        model=ClinicalMdrRel,
+        cardinality=ZeroOrOne,
+    )
     has_study_visit = RelationshipFrom(
         StudyValue,
         "HAS_STUDY_VISIT",
@@ -49,7 +62,7 @@ class StudyVisit(StudySelection):
     visit_number = FloatProperty()
 
     has_visit_type = RelationshipTo(
-        CTTermRoot,
+        CTTermContext,
         "HAS_VISIT_TYPE",
         model=ClinicalMdrRel,
         cardinality=ZeroOrOne,
@@ -61,7 +74,6 @@ class StudyVisit(StudySelection):
     visit_name_label = StringProperty()
     short_visit_label = StringProperty()
     unique_visit_number = StringProperty()
-    consecutive_visit_group = StringProperty()
     show_visit = BooleanProperty()
 
     visit_window_min = IntegerProperty()
@@ -78,13 +90,13 @@ class StudyVisit(StudySelection):
     start_rule = StringProperty()
     end_rule = StringProperty()
     has_visit_contact_mode = RelationshipTo(
-        CTTermRoot,
+        CTTermContext,
         "HAS_VISIT_CONTACT_MODE",
         model=ClinicalMdrRel,
         cardinality=ZeroOrOne,
     )
     has_epoch_allocation = RelationshipTo(
-        CTTermRoot,
+        CTTermContext,
         "HAS_EPOCH_ALLOCATION",
         model=ClinicalMdrRel,
         cardinality=ZeroOrOne,
@@ -96,7 +108,7 @@ class StudyVisit(StudySelection):
     is_soa_milestone = BooleanProperty(default=False)
 
     has_repeating_frequency = RelationshipTo(
-        CTTermRoot,
+        CTTermContext,
         "HAS_REPEATING_FREQUENCY",
         model=ClinicalMdrRel,
         cardinality=ZeroOrOne,

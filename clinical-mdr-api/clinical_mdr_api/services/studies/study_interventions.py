@@ -1,7 +1,7 @@
 """Study Protocol Interventions service"""
 
 import logging
-from typing import Mapping
+from typing import Any, Mapping
 
 from docx.enum.style import WD_STYLE_TYPE
 
@@ -126,7 +126,9 @@ class StudyInterventionsService:
         for cmp in compounds:
             row.cells.append(
                 TableCell(
-                    text=cmp.type_of_treatment.name if cmp.type_of_treatment else ""
+                    text=(
+                        cmp.type_of_treatment.term_name if cmp.type_of_treatment else ""
+                    )
                 )
             )
 
@@ -324,7 +326,7 @@ class StudyInterventionsService:
             .items
         )
 
-        mapping = {}
+        mapping: dict[str, Any] = {}
         for dosing in results:
             key = dosing.study_compound.study_compound_uid
             mapping.setdefault(key, []).append(dosing)

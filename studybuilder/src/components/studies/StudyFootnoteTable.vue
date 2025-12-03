@@ -281,19 +281,23 @@ function needUpdate(item) {
 }
 
 function actionsMenuBadge(item) {
-  if (!item.footnote && item.template.parameters.length > 0) {
-    return {
-      color: 'error',
-      icon: 'mdi-exclamation',
+  try {
+    if (!item.footnote && item.template.parameters.length > 0) {
+      return {
+        color: 'error',
+        icon: 'mdi-exclamation',
+      }
     }
-  }
-  if (needUpdate(item) && !studiesGeneralStore.selectedStudyVersion) {
-    return {
-      color: item.accepted_version ? 'lightgray' : 'error',
-      icon: 'mdi-bell-outline',
+    if (needUpdate(item) && !studiesGeneralStore.selectedStudyVersion) {
+      return {
+        color: item.accepted_version ? 'lightgray' : 'error',
+        icon: 'mdi-bell-outline',
+      }
     }
+    return null
+  } catch (error) {
+    console.error(error)
   }
-  return null
 }
 
 function footnoteUpdateAborted(item) {
@@ -370,7 +374,7 @@ async function deleteStudyFootnote(studyFootnote) {
     : '(unnamed)'
 
   if (
-    await confirm.value.open(
+    await confirm.value.openHtml(
       t('StudyFootnoteTable.confirm_delete', { footnote }),
       options
     )

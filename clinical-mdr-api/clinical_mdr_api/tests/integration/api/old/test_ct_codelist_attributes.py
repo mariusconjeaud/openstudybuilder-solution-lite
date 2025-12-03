@@ -1,4 +1,6 @@
-# pylint: disable=unused-argument, redefined-outer-name, too-many-arguments, line-too-long, too-many-statements
+# pylint: disable=unused-argument
+# pylint: disable=redefined-outer-name
+# pylint: disable=too-many-arguments
 
 # pytest fixture functions have other fixture functions as arguments,
 # which pylint interprets as unused arguments
@@ -34,17 +36,24 @@ def test_data():
 
 def test_post_create_codelist(api_client):
     data = {
-        "catalogue_name": "SDTM CT",
+        "catalogue_names": ["SDTM CT"],
         "name": "name",
         "parent_codelist_uid": None,
         "submission_value": "Submission value",
         "nci_preferred_name": "Nci preferred name",
         "definition": "definition",
         "extensible": True,
+        "ordinal": False,
         "sponsor_preferred_name": "Sponsor preferred name",
         "template_parameter": True,
         "library_name": "Sponsor",
-        "terms": [{"term_uid": "term1", "order": 999999}],
+        "terms": [
+            {
+                "term_uid": "term1",
+                "order": 999999,
+                "submission_value": "term1 submission value",
+            }
+        ],
     }
     response = api_client.post("/ct/codelists", json=data)
 
@@ -52,7 +61,7 @@ def test_post_create_codelist(api_client):
 
     res = response.json()
 
-    assert res["catalogue_name"] == "SDTM CT"
+    assert res["catalogue_names"] == ["SDTM CT"]
     assert res["codelist_uid"] == "CTCodelist_000001"
     assert res["parent_codelist_uid"] is None
     assert res["child_codelist_uids"] == []
@@ -61,6 +70,7 @@ def test_post_create_codelist(api_client):
     assert res["nci_preferred_name"] == "Nci preferred name"
     assert res["definition"] == "definition"
     assert res["extensible"] is True
+    assert res["ordinal"] is False
     assert res["sponsor_preferred_name"] == "Sponsor preferred name"
     assert res["template_parameter"] is True
     assert res["library_name"] == "Sponsor"
@@ -69,13 +79,14 @@ def test_post_create_codelist(api_client):
 
 def test_post_create_codelist_with_parent_codelist(api_client):
     data = {
-        "catalogue_name": "SDTM CT",
+        "catalogue_names": ["SDTM CT"],
         "name": "name with parent",
         "parent_codelist_uid": "ct_codelist_root3",
         "submission_value": "Submission value with parent",
         "nci_preferred_name": "Nci preferred name with parent",
         "definition": "definition",
         "extensible": True,
+        "ordinal": False,
         "sponsor_preferred_name": "Sponsor preferred name with parent",
         "template_parameter": True,
         "library_name": "Sponsor",
@@ -87,7 +98,7 @@ def test_post_create_codelist_with_parent_codelist(api_client):
 
     res = response.json()
 
-    assert res["catalogue_name"] == "SDTM CT"
+    assert res["catalogue_names"] == ["SDTM CT"]
     assert res["codelist_uid"] == "CTCodelist_000002"
     assert res["parent_codelist_uid"] == "ct_codelist_root3"
     assert res["child_codelist_uids"] == []
@@ -96,6 +107,7 @@ def test_post_create_codelist_with_parent_codelist(api_client):
     assert res["nci_preferred_name"] == "Nci preferred name with parent"
     assert res["definition"] == "definition"
     assert res["extensible"] is True
+    assert res["ordinal"] is False
     assert res["sponsor_preferred_name"] == "Sponsor preferred name with parent"
     assert res["template_parameter"] is True
     assert res["library_name"] == "Sponsor"
@@ -117,7 +129,7 @@ def test_patch_draft_codelist(api_client):
 
     res = response.json()
 
-    assert res["catalogue_name"] == "SDTM CT"
+    assert res["catalogue_names"] == ["SDTM CT"]
     assert res["codelist_uid"] == "ct_codelist_root3"
     assert res["parent_codelist_uid"] is None
     assert res["child_codelist_uids"] == ["CTCodelist_000002"]
@@ -126,6 +138,7 @@ def test_patch_draft_codelist(api_client):
     assert res["nci_preferred_name"] == "new codelist preferred term"
     assert res["definition"] == "new codelist definition"
     assert res["extensible"] is True
+    assert res["ordinal"] is False
     assert res["library_name"] == "Sponsor"
     assert res["end_date"] is None
     assert res["status"] == "Draft"
@@ -135,7 +148,7 @@ def test_patch_draft_codelist(api_client):
     assert res["possible_actions"] == ["approve", "edit"]
 
 
-def test_patch_draft_codelist_that_is_not_tp(api_client):
+def test_patch_draft_codelist_that_is_not_tp1(api_client):
     data = {
         "name": "codelist another new name",
         "submission_value": "new codelist submission value",
@@ -150,7 +163,7 @@ def test_patch_draft_codelist_that_is_not_tp(api_client):
 
     res = response.json()
 
-    assert res["catalogue_name"] == "SDTM CT"
+    assert res["catalogue_names"] == ["SDTM CT"]
     assert res["codelist_uid"] == "ct_codelist_root3"
     assert res["parent_codelist_uid"] is None
     assert res["child_codelist_uids"] == ["CTCodelist_000002"]
@@ -159,6 +172,7 @@ def test_patch_draft_codelist_that_is_not_tp(api_client):
     assert res["nci_preferred_name"] == "new codelist preferred term"
     assert res["definition"] == "new codelist definition"
     assert res["extensible"] is True
+    assert res["ordinal"] is False
     assert res["library_name"] == "Sponsor"
     assert res["end_date"] is None
     assert res["status"] == "Draft"
@@ -168,14 +182,14 @@ def test_patch_draft_codelist_that_is_not_tp(api_client):
     assert res["possible_actions"] == ["approve", "edit"]
 
 
-def test_post_versions_codelist(api_client):
+def test_post_versions_codelist2(api_client):
     response = api_client.post("/ct/codelists/ct_codelist_root1/attributes/versions")
 
     assert_response_status_code(response, 201)
 
     res = response.json()
 
-    assert res["catalogue_name"] == "SDTM CT"
+    assert res["catalogue_names"] == ["SDTM CT"]
     assert res["codelist_uid"] == "ct_codelist_root1"
     assert res["parent_codelist_uid"] is None
     assert res["child_codelist_uids"] == []
@@ -184,6 +198,7 @@ def test_post_versions_codelist(api_client):
     assert res["nci_preferred_name"] == "codelist preferred term"
     assert res["definition"] == "codelist definition"
     assert res["extensible"] is False
+    assert res["ordinal"] is False
     assert res["library_name"] == "Sponsor"
     assert res["end_date"] is None
     assert res["status"] == "Draft"
@@ -200,7 +215,7 @@ def test_post_approve_codelist(api_client):
 
     res = response.json()
 
-    assert res["catalogue_name"] == "SDTM CT"
+    assert res["catalogue_names"] == ["SDTM CT"]
     assert res["codelist_uid"] == "ct_codelist_root3"
     assert res["parent_codelist_uid"] is None
     assert res["child_codelist_uids"] == ["CTCodelist_000002"]
@@ -209,6 +224,7 @@ def test_post_approve_codelist(api_client):
     assert res["nci_preferred_name"] == "new codelist preferred term"
     assert res["definition"] == "new codelist definition"
     assert res["extensible"] is True
+    assert res["ordinal"] is False
     assert res["library_name"] == "Sponsor"
     assert res["end_date"] is None
     assert res["status"] == "Final"
@@ -225,7 +241,7 @@ def test_get_codelist_with_parent_codelist_uid(api_client):
 
     res = response.json()
 
-    assert res["catalogue_name"] == "SDTM CT"
+    assert res["catalogue_names"] == ["SDTM CT"]
     assert res["codelist_uid"] == "CTCodelist_000002"
     assert res["parent_codelist_uid"] == "ct_codelist_root3"
     assert res["child_codelist_uids"] == []
@@ -234,6 +250,7 @@ def test_get_codelist_with_parent_codelist_uid(api_client):
     assert res["nci_preferred_name"] == "Nci preferred name with parent"
     assert res["definition"] == "definition"
     assert res["extensible"] is True
+    assert res["ordinal"] is False
     assert res["library_name"] == "Sponsor"
     assert res["end_date"] is None
     assert res["status"] == "Draft"
@@ -244,14 +261,18 @@ def test_get_codelist_with_parent_codelist_uid(api_client):
 
 
 def test_post_add_term_to_codelist(api_client):
-    data = {"term_uid": "term1"}
+    data = {
+        "term_uid": "term1",
+        "order": 999999,
+        "submission_value": "term1 submission value",
+    }
     response = api_client.post("/ct/codelists/ct_codelist_root3/terms", json=data)
 
     assert_response_status_code(response, 201)
 
     res = response.json()
 
-    assert res["catalogue_name"] == "SDTM CT"
+    assert res["catalogue_names"] == ["SDTM CT"]
     assert res["codelist_uid"] == "ct_codelist_root3"
     assert res["parent_codelist_uid"] is None
     assert res["child_codelist_uids"] == ["CTCodelist_000002"]
@@ -260,6 +281,7 @@ def test_post_add_term_to_codelist(api_client):
     assert res["nci_preferred_name"] == "new codelist preferred term"
     assert res["definition"] == "new codelist definition"
     assert res["extensible"] is True
+    assert res["ordinal"] is False
     assert res["sponsor_preferred_name"] == "codelist_name_value"
     assert res["template_parameter"] is False
     assert res["library_name"] == "Sponsor"
@@ -273,7 +295,7 @@ def test_post_approve_child_codelist(api_client):
 
     res = response.json()
 
-    assert res["catalogue_name"] == "SDTM CT"
+    assert res["catalogue_names"] == ["SDTM CT"]
     assert res["codelist_uid"] == "CTCodelist_000002"
     assert res["parent_codelist_uid"] == "ct_codelist_root3"
     assert res["child_codelist_uids"] == []
@@ -282,6 +304,7 @@ def test_post_approve_child_codelist(api_client):
     assert res["nci_preferred_name"] == "Nci preferred name with parent"
     assert res["definition"] == "definition"
     assert res["extensible"] is True
+    assert res["ordinal"] is False
     assert res["library_name"] == "Sponsor"
     assert res["end_date"] is None
     assert res["status"] == "Final"
@@ -292,14 +315,18 @@ def test_post_approve_child_codelist(api_client):
 
 
 def test_post_add_term_to_child_codelist(api_client):
-    data = {"term_uid": "term1"}
+    data = {
+        "term_uid": "term1",
+        "submission_value": "Submission value with parent",
+        "order": 999999,
+    }
     response = api_client.post("/ct/codelists/CTCodelist_000002/terms", json=data)
 
     assert_response_status_code(response, 201)
 
     res = response.json()
 
-    assert res["catalogue_name"] == "SDTM CT"
+    assert res["catalogue_names"] == ["SDTM CT"]
     assert res["codelist_uid"] == "CTCodelist_000002"
     assert res["parent_codelist_uid"] == "ct_codelist_root3"
     assert res["child_codelist_uids"] == []
@@ -308,6 +335,7 @@ def test_post_add_term_to_child_codelist(api_client):
     assert res["nci_preferred_name"] == "Nci preferred name with parent"
     assert res["definition"] == "definition"
     assert res["extensible"] is True
+    assert res["ordinal"] is False
     assert res["sponsor_preferred_name"] == "Sponsor preferred name with parent"
     assert res["template_parameter"] is True
     assert res["library_name"] == "Sponsor"
@@ -315,15 +343,16 @@ def test_post_add_term_to_child_codelist(api_client):
 
 
 def test_get_all_sub_codelists_that_have_the_provided_terms(api_client):
+    data = {"term_uid": "term1"}
     response = api_client.get(
-        "/ct/codelists/ct_codelist_root3/sub-codelists?term_uids=term1",
+        "/ct/codelists/ct_codelist_root3/sub-codelists?term_uids=term1", params=data
     )
 
     assert_response_status_code(response, 200)
 
     res = response.json()
 
-    assert res["items"][0]["catalogue_name"] == "SDTM CT"
+    assert res["items"][0]["catalogue_names"] == ["SDTM CT"]
     assert res["items"][0]["codelist_uid"] == "CTCodelist_000002"
     assert res["items"][0]["parent_codelist_uid"] == "ct_codelist_root3"
     assert res["items"][0]["child_codelist_uids"] == []

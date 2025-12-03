@@ -5,6 +5,7 @@ from pydantic.types import Json
 
 from clinical_mdr_api.domains.listings.utils import AdamReport
 from clinical_mdr_api.models.listings.listings_adam import (
+    FlowchartMetadataAdamListing,
     StudyEndpntAdamListing,
     StudyVisitAdamListing,
 )
@@ -14,8 +15,9 @@ from clinical_mdr_api.routers import _generic_descriptions
 from clinical_mdr_api.services.listings.listings_adam import (
     ADAMListingsService as ListingsService,
 )
-from common import config
 from common.auth import rbac
+from common.auth.dependencies import security
+from common.config import settings
 
 # Prefixed with "/listings"
 router = APIRouter()
@@ -23,7 +25,7 @@ router = APIRouter()
 
 @router.get(
     "/studies/{study_uid}/adam/{adam_report}",
-    dependencies=[rbac.STUDY_READ],
+    dependencies=[security, rbac.STUDY_READ],
     summary="ADaM report listing, could be MDVISIT or MDENDPT as specified on adam_report",
     response_model_exclude_unset=True,
     status_code=200,
@@ -46,16 +48,16 @@ def get_adam_listing(
         Json | None, Query(description=_generic_descriptions.SORT_BY)
     ] = None,
     page_number: Annotated[
-        int | None, Query(ge=1, description=_generic_descriptions.PAGE_NUMBER)
-    ] = config.DEFAULT_PAGE_NUMBER,
+        int, Query(ge=1, description=_generic_descriptions.PAGE_NUMBER)
+    ] = settings.default_page_number,
     page_size: Annotated[
-        int | None,
+        int,
         Query(
             ge=0,
-            le=config.MAX_PAGE_SIZE,
+            le=settings.max_page_size,
             description=_generic_descriptions.PAGE_SIZE,
         ),
-    ] = config.DEFAULT_PAGE_SIZE,
+    ] = settings.default_page_size,
     filters: Annotated[
         Json | None,
         Query(
@@ -64,15 +66,17 @@ def get_adam_listing(
         ),
     ] = None,
     operator: Annotated[
-        str | None, Query(description=_generic_descriptions.FILTER_OPERATOR)
-    ] = config.DEFAULT_FILTER_OPERATOR,
+        str, Query(description=_generic_descriptions.FILTER_OPERATOR)
+    ] = settings.default_filter_operator,
     total_count: Annotated[
-        bool | None, Query(description=_generic_descriptions.TOTAL_COUNT)
+        bool, Query(description=_generic_descriptions.TOTAL_COUNT)
     ] = False,
     study_value_version: Annotated[
         str | None, _generic_descriptions.STUDY_VALUE_VERSION_QUERY
     ] = None,
-) -> CustomPage[StudyVisitAdamListing] | CustomPage[StudyEndpntAdamListing]:
+) -> CustomPage[
+    StudyVisitAdamListing | StudyEndpntAdamListing | FlowchartMetadataAdamListing
+]:
     service = ListingsService()
     all_items = service.get_report(
         adam_report=adam_report,
@@ -86,7 +90,7 @@ def get_adam_listing(
         study_value_version=study_value_version,
     )
 
-    return CustomPage.create(
+    return CustomPage(
         items=all_items.items,
         total=all_items.total,
         page=page_number,
@@ -96,7 +100,7 @@ def get_adam_listing(
 
 @router.get(
     "/studies/{study_uid}/adam/{adam_report}/headers",
-    dependencies=[rbac.STUDY_READ],
+    dependencies=[security, rbac.STUDY_READ],
     summary="Returns possible values from the database for a given header",
     description="""Allowed parameters include : field name for which to get possible
     values, search string to provide filtering for the field name, additional filters to apply on other fields""",
@@ -120,7 +124,7 @@ def get_distinct_adam_listing_values_for_header(
         str, Query(description=_generic_descriptions.HEADER_FIELD_NAME)
     ],
     search_string: Annotated[
-        str | None, Query(description=_generic_descriptions.HEADER_SEARCH_STRING)
+        str, Query(description=_generic_descriptions.HEADER_SEARCH_STRING)
     ] = "",
     filters: Annotated[
         Json | None,
@@ -130,11 +134,11 @@ def get_distinct_adam_listing_values_for_header(
         ),
     ] = None,
     operator: Annotated[
-        str | None, Query(description=_generic_descriptions.FILTER_OPERATOR)
-    ] = config.DEFAULT_FILTER_OPERATOR,
+        str, Query(description=_generic_descriptions.FILTER_OPERATOR)
+    ] = settings.default_filter_operator,
     page_size: Annotated[
-        int | None, Query(description=_generic_descriptions.HEADER_PAGE_SIZE)
-    ] = config.DEFAULT_HEADER_PAGE_SIZE,
+        int, Query(description=_generic_descriptions.HEADER_PAGE_SIZE)
+    ] = settings.default_header_page_size,
     study_value_version: Annotated[
         str | None, _generic_descriptions.STUDY_VALUE_VERSION_QUERY
     ] = None,

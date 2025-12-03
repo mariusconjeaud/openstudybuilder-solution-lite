@@ -16,13 +16,13 @@ export const useTermsStore = defineStore('terms', {
       if (filters) {
         params.filters = filters
       }
-      const resp = await controlledTerminology.getCodelistTermsNames(params)
+      const resp = await controlledTerminology.getCodelistTerms(params)
       const nameMap = {}
       resp.data.items.forEach((item) => {
-        if (nameMap[item.sponsor_preferred_name]) {
-          nameMap[item.sponsor_preferred_name].push(item.term_uid)
+        if (nameMap[item.name.sponsor_preferred_name]) {
+          nameMap[item.name.sponsor_preferred_name].push(item.term_uid)
         } else {
-          nameMap[item.sponsor_preferred_name] = [item.term_uid]
+          nameMap[item.name.sponsor_preferred_name] = [item.term_uid]
         }
       })
       const items = []

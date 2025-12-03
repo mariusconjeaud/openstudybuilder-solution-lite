@@ -1,4 +1,6 @@
-# pylint: disable=unused-argument, redefined-outer-name, too-many-arguments, line-too-long, too-many-statements
+# pylint: disable=unused-argument
+# pylint: disable=redefined-outer-name
+# pylint: disable=too-many-arguments
 
 # pytest fixture functions have other fixture functions as arguments,
 # which pylint interprets as unused arguments
@@ -42,7 +44,7 @@ def test_patch_draft_codelist_that_is_tp(api_client):
 
     res = response.json()
 
-    assert res["catalogue_name"] == "SDTM CT"
+    assert res["catalogue_names"] == ["SDTM CT"]
     assert res["codelist_uid"] == "ct_codelist_root3"
     assert res["name"] == "codelist new name"
     assert res["template_parameter"] is True
@@ -55,7 +57,7 @@ def test_patch_draft_codelist_that_is_tp(api_client):
     assert res["possible_actions"] == ["approve", "edit"]
 
 
-def test_patch_draft_codelist_that_is_not_tp1(api_client):
+def test_patch_draft_codelist_that_is_not_tp(api_client):
     data = {
         "name": "codelist new name",
         "template_parameter": False,
@@ -67,7 +69,7 @@ def test_patch_draft_codelist_that_is_not_tp1(api_client):
 
     res = response.json()
 
-    assert res["catalogue_name"] == "SDTM CT"
+    assert res["catalogue_names"] == ["SDTM CT"]
     assert res["codelist_uid"] == "ct_codelist_root3"
     assert res["name"] == "codelist new name"
     assert res["template_parameter"] is False
@@ -80,14 +82,14 @@ def test_patch_draft_codelist_that_is_not_tp1(api_client):
     assert res["possible_actions"] == ["approve", "edit"]
 
 
-def test_post_versions_codelist1(api_client):
+def test_post_versions_codelist(api_client):
     response = api_client.post("/ct/codelists/ct_codelist_root1/names/versions")
 
     assert_response_status_code(response, 201)
 
     res = response.json()
 
-    assert res["catalogue_name"] == "SDTM CT"
+    assert res["catalogue_names"] == ["SDTM CT"]
     assert res["codelist_uid"] == "ct_codelist_root1"
     assert res["name"] == "tp_codelist_name_value"
     assert res["template_parameter"] is True
@@ -100,14 +102,14 @@ def test_post_versions_codelist1(api_client):
     assert res["possible_actions"] == ["approve", "edit"]
 
 
-def test_post_versions_codelist2(api_client):
+def test_post_versions_codelist1(api_client):
     response = api_client.post("/ct/codelists/ct_codelist_root3/names/approvals")
 
     assert_response_status_code(response, 201)
 
     res = response.json()
 
-    assert res["catalogue_name"] == "SDTM CT"
+    assert res["catalogue_names"] == ["SDTM CT"]
     assert res["codelist_uid"] == "ct_codelist_root3"
     assert res["name"] == "codelist new name"
     assert res["template_parameter"] is False

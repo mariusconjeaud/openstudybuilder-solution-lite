@@ -9,6 +9,7 @@ from fastapi.testclient import TestClient
 
 from clinical_mdr_api.main import app
 from clinical_mdr_api.models import study_selections
+from clinical_mdr_api.models.study_selections.study import Study
 from clinical_mdr_api.services.studies.study import StudyService
 from clinical_mdr_api.tests.integration.utils.api import inject_and_clear_db
 from clinical_mdr_api.tests.integration.utils.data_library import inject_base_data
@@ -27,11 +28,12 @@ from clinical_mdr_api.tests.integration.utils.method_library import (
 )
 from clinical_mdr_api.tests.integration.utils.utils import TestUtils
 from clinical_mdr_api.tests.utils.checks import assert_response_status_code
-from common.config import STUDY_ENDPOINT_TP_NAME
+from common.config import settings
 
 study_uid: str
 study_number: str
 project_id: str
+study: Study
 
 
 @pytest.fixture(scope="module")
@@ -45,21 +47,17 @@ def api_client(test_data):
 def test_data():
     inject_and_clear_db("StudyListingTestAPI")
     TestUtils.create_library(name="UCUM", is_editable=True)
-    inject_base_data()
-    codelist = TestUtils.create_ct_codelist()
-    TestUtils.create_study_ct_data_map(codelist_uid=codelist.codelist_uid)
-    study_service = StudyService()
-    studies = study_service.get_all()
+    global study
+    study, _ = inject_base_data()
+    TestUtils.create_ct_codelist()
+    TestUtils.create_study_ct_data_map(codelist_uid=None)
+
     global study_uid
-    study_uid = studies.items[0].uid
+    study_uid = study.uid
     global study_number
-    study_number = studies.items[
-        0
-    ].current_metadata.identification_metadata.study_number
+    study_number = study.current_metadata.identification_metadata.study_number
     global project_id
-    project_id = studies.items[
-        0
-    ].current_metadata.identification_metadata.project_number
+    project_id = study.current_metadata.identification_metadata.project_number
     # Inject study metadata
     input_metadata_in_study(study_uid)
     # Create study epochs
@@ -73,43 +71,84 @@ def test_data():
     )
     # Create study elements
     element_type_codelist = create_codelist(
-        "Element Type", "CTCodelist_ElementType", catalogue_name, library_name
+        "Element Type",
+        "CTCodelist_ElementType",
+        catalogue_name,
+        library_name,
+        submission_value="ELEMTP",
     )
-    element_type_term = create_ct_term(
-        element_type_codelist.codelist_uid,
+    create_ct_term(
         "Element Type",
         "ElementType_0001",
-        1,
         catalogue_name,
         library_name,
+        codelists=[
+            {
+                "uid": element_type_codelist.codelist_uid,
+                "order": 1,
+                "submission_value": "ElementType1",
+            }
+        ],
     )
-    element_type_term_2 = create_ct_term(
-        element_type_codelist.codelist_uid,
-        "Element Type",
-        "ElementType_0002",
-        2,
+
+    element_subtype_codelist = create_codelist(
+        "Element Sub Type",
+        "CTCodelist_ElementSubType",
         catalogue_name,
         library_name,
+        submission_value="ELEMSTP",
+    )
+    element_subtype_term = create_ct_term(
+        "Element Sub Type",
+        "ElementSubType_0001",
+        catalogue_name,
+        library_name,
+        codelists=[
+            {
+                "uid": element_subtype_codelist.codelist_uid,
+                "order": 1,
+                "submission_value": "Element Sub Type",
+            }
+        ],
+    )
+    element_subtype_term_2 = create_ct_term(
+        "Element Sub Type 2",
+        "ElementSubType_0002",
+        catalogue_name,
+        library_name,
+        codelists=[
+            {
+                "uid": element_subtype_codelist.codelist_uid,
+                "order": 2,
+                "submission_value": "Element Sub Type 2",
+            }
+        ],
     )
     study_elements = [
-        create_study_element(element_type_term.uid, study_uid),
-        create_study_element(element_type_term_2.uid, study_uid),
+        create_study_element(element_subtype_term.uid, study_uid),
+        create_study_element(element_subtype_term_2.uid, study_uid),
     ]
 
     # Create study arms
     codelist = create_codelist(
         name="Arm Type",
-        uid="CTCodelist_00009",
+        uid="CTCodelist_00019",
         catalogue=catalogue_name,
         library=library_name,
+        submission_value="ARMTTP",
     )
     arm_type = create_ct_term(
-        codelist=codelist.codelist_uid,
         name="Arm Type",
         uid="ArmType_0001",
-        order=1,
         catalogue_name=catalogue_name,
         library_name=library_name,
+        codelists=[
+            {
+                "uid": codelist.codelist_uid,
+                "order": 1,
+                "submission_value": "Arm Type",
+            },
+        ],
     )
 
     create_study_arm(
@@ -118,7 +157,6 @@ def test_data():
         short_name="Arm_Short_Name_1",
         code="Arm_code_1",
         description="desc...",
-        colour_code="colour...",
         randomization_group="Arm_randomizationGroup",
         number_of_subjects=100,
         arm_type_uid=arm_type.uid,
@@ -129,7 +167,6 @@ def test_data():
         short_name="Arm_Short_Name_2",
         code="Arm_code_2",
         description="desc...",
-        colour_code="colour...",
         randomization_group="Arm_randomizationGroup2",
         number_of_subjects=100,
         arm_type_uid=arm_type.uid,
@@ -140,7 +177,6 @@ def test_data():
         short_name="Arm_Short_Name_3",
         code="Arm_code_3",
         description="desc...",
-        colour_code="colour...",
         randomization_group="Arm_randomizationGroup3",
         number_of_subjects=100,
         arm_type_uid=arm_type.uid,
@@ -152,7 +188,6 @@ def test_data():
         short_name="Arm_Short_Name_9",
         code="Arm_code_9",
         description="desc...",
-        colour_code="colour...",
         randomization_group="Arm_randomizationGroup9",
         number_of_subjects=100,
         arm_type_uid=arm_type.uid,
@@ -162,13 +197,13 @@ def test_data():
     create_study_design_cell(
         study_element_uid=study_elements[0].element_uid,
         study_epoch_uid=study_epoch.uid,
-        study_arm_uid="StudyArm_000003",
+        study_arm_uid="StudyArm_000002",
         study_uid=study_uid,
     )
     create_study_design_cell(
         study_element_uid=study_elements[0].element_uid,
         study_epoch_uid=study_epoch2.uid,
-        study_arm_uid="StudyArm_000003",
+        study_arm_uid="StudyArm_000002",
         study_uid=study_uid,
     )
 
@@ -182,7 +217,7 @@ def test_data():
     create_study_design_cell(
         study_element_uid=study_elements[0].element_uid,
         study_epoch_uid=study_epoch2.uid,
-        study_arm_uid="StudyArm_000005",
+        study_arm_uid="StudyArm_000003",
         study_uid=study_uid,
     )
 
@@ -193,10 +228,9 @@ def test_data():
         short_name="Branch_Arm_Short_Name_1",
         code="Branch_Arm_code_1",
         description="desc...",
-        colour_code="colour...",
         randomization_group="Branch_Arm_randomizationGroup",
         number_of_subjects=100,
-        arm_uid="StudyArm_000003",
+        arm_uid="StudyArm_000002",
     )
 
     # Create study cohort
@@ -206,7 +240,6 @@ def test_data():
         short_name="Cohort_Short_Name_1",
         code="Cohort_code_1",
         description="desc...",
-        colour_code="desc...",
         number_of_subjects=100,
         arm_uids=["StudyArm_000001"],
     )
@@ -219,12 +252,22 @@ def test_data():
         epoch1=study_epoch,
         epoch2=study_epoch2,
     )
+
+    type_codelist = TestUtils.create_ct_codelist(
+        name="Criteria Type",
+        submission_value="CRITRTP",
+        extensible=True,
+        approve=True,
+    )
+
     # Create CT Terms
     ct_term_inclusion_criteria = TestUtils.create_ct_term(
-        sponsor_preferred_name="INCLUSION CRITERIA"
+        sponsor_preferred_name="INCLUSION CRITERIA",
+        codelist_uid=type_codelist.codelist_uid,
     )
     ct_term_exclusion_criteria = TestUtils.create_ct_term(
-        sponsor_preferred_name="EXCLUSION CRITERIA"
+        sponsor_preferred_name="EXCLUSION CRITERIA",
+        codelist_uid=type_codelist.codelist_uid,
     )
 
     # Create templates
@@ -267,7 +310,7 @@ def test_data():
     )
 
     # Create endpoint templates
-    TestUtils.create_template_parameter(STUDY_ENDPOINT_TP_NAME)
+    TestUtils.create_template_parameter(settings.study_endpoint_tp_name)
     endpoint_template = TestUtils.create_endpoint_template()
 
     unit_definitions = [
@@ -300,6 +343,7 @@ def test_data():
     )
 
     # lock study
+    study_service = StudyService()
     study_service.lock(uid=study_uid, change_description="locking it")
     study_service.unlock(uid=study_uid)
 
@@ -314,7 +358,7 @@ def test_study_metadata_listing_api(api_client):
 
     expected_output = {
         "api_ver": "TBA",
-        "study_id": "123-123",
+        "study_id": f"{study.current_metadata.identification_metadata.project_number}-{study.current_metadata.identification_metadata.study_number}",
         "study_ver": 1.0,
         "specified_dt": "2099-12-30",
         "request_dt": "2024-03-18T10:41:58",
@@ -414,7 +458,7 @@ def test_study_metadata_listing_api(api_client):
                 "type": "test",
             },
             {
-                "uid": "StudyArm_000003",
+                "uid": "StudyArm_000002",
                 "name": "Arm_Name_2",
                 "short_name": "Arm_Short_Name_2",
                 "code": "Arm_code_2",
@@ -425,7 +469,7 @@ def test_study_metadata_listing_api(api_client):
                 "type": "test",
             },
             {
-                "uid": "StudyArm_000005",
+                "uid": "StudyArm_000003",
                 "name": "Arm_Name_3",
                 "short_name": "Arm_Short_Name_3",
                 "code": "Arm_code_3",
@@ -436,7 +480,7 @@ def test_study_metadata_listing_api(api_client):
                 "type": "test",
             },
             {
-                "uid": "StudyArm_000007",
+                "uid": "StudyArm_000004",
                 "name": "Arm_Name_9",
                 "short_name": "Arm_Short_Name_9",
                 "code": "Arm_code_9",
@@ -456,7 +500,7 @@ def test_study_metadata_listing_api(api_client):
                 "no_subject": 100,
                 "desc": "desc...",
                 "order": 1,
-                "arm_uid": "StudyArm_000003",
+                "arm_uid": "StudyArm_000002",
                 "rand_grp": "Branch_Arm_randomizationGroup",
             }
         ],
@@ -540,7 +584,7 @@ def test_study_metadata_listing_api(api_client):
                 "element_uid": "StudyElement_000003",
             },
             {
-                "arm_uid": "StudyArm_000005",
+                "arm_uid": "StudyArm_000003",
                 "branch_uid": "",
                 "epoch_uid": "StudyEpoch_000002",
                 "element_uid": "StudyElement_000001",
@@ -857,7 +901,7 @@ def test_study_metadata_listing_with_subpart(api_client):
                 "type": "test",
             },
             {
-                "uid": "StudyArm_000003",
+                "uid": "StudyArm_000002",
                 "name": "Arm_Name_2",
                 "short_name": "Arm_Short_Name_2",
                 "code": "Arm_code_2",
@@ -868,7 +912,7 @@ def test_study_metadata_listing_with_subpart(api_client):
                 "type": "test",
             },
             {
-                "uid": "StudyArm_000005",
+                "uid": "StudyArm_000003",
                 "name": "Arm_Name_3",
                 "short_name": "Arm_Short_Name_3",
                 "code": "Arm_code_3",
@@ -879,7 +923,7 @@ def test_study_metadata_listing_with_subpart(api_client):
                 "type": "test",
             },
             {
-                "uid": "StudyArm_000007",
+                "uid": "StudyArm_000004",
                 "name": "Arm_Name_9",
                 "short_name": "Arm_Short_Name_9",
                 "code": "Arm_code_9",
@@ -899,7 +943,7 @@ def test_study_metadata_listing_with_subpart(api_client):
                 "no_subject": 100,
                 "desc": "desc...",
                 "order": 1,
-                "arm_uid": "StudyArm_000003",
+                "arm_uid": "StudyArm_000002",
                 "rand_grp": "Branch_Arm_randomizationGroup",
             }
         ],
@@ -983,7 +1027,7 @@ def test_study_metadata_listing_with_subpart(api_client):
                 "element_uid": "StudyElement_000003",
             },
             {
-                "arm_uid": "StudyArm_000005",
+                "arm_uid": "StudyArm_000003",
                 "branch_uid": "",
                 "epoch_uid": "StudyEpoch_000002",
                 "element_uid": "StudyElement_000001",

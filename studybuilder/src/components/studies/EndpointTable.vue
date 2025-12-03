@@ -43,8 +43,8 @@
             <v-icon size="small"> mdi-sort </v-icon>
           </td>
           <td>{{ endpoint.order }}</td>
-          <td><CTTermDisplay :term="endpoint.endpoint_level" /></td>
-          <td><CTTermDisplay :term="endpoint.endpoint_sublevel" /></td>
+          <td><CTCodelistTermDisplay :term="endpoint.endpoint_level" /></td>
+          <td><CTCodelistTermDisplay :term="endpoint.endpoint_sublevel" /></td>
           <td>
             <NNParameterHighlighter
               v-if="endpoint.endpoint"
@@ -95,11 +95,11 @@
         @click.stop="showForm = true"
       />
     </template>
-    <template #[`item.endpoint_level.sponsor_preferred_name`]="{ item }">
-      <CTTermDisplay :term="item.endpoint_level" />
+    <template #[`item.endpoint_level.term_name`]="{ item }">
+      <CTCodelistTermDisplay :term="item.endpoint_level" />
     </template>
-    <template #[`item.endpoint_sublevel.sponsor_preferred_name`]="{ item }">
-      <CTTermDisplay :term="item.endpoint_sublevel" />
+    <template #[`item.endpoint_sublevel.term_name`]="{ item }">
+      <CTCodelistTermDisplay :term="item.endpoint_sublevel" />
     </template>
     <template #[`item.actions`]="{ item }">
       <ActionsMenu
@@ -199,7 +199,7 @@
 <script setup>
 import study from '@/api/study'
 import ActionsMenu from '@/components/tools/ActionsMenu.vue'
-import CTTermDisplay from '@/components/tools/CTTermDisplay.vue'
+import CTCodelistTermDisplay from '../tools/CTCodelistTermDisplay.vue'
 import NNParameterHighlighter from '@/components/tools/NNParameterHighlighter.vue'
 import EndpointEditForm from '@/components/studies/EndpointEditForm.vue'
 import EndpointForm from '@/components/studies/EndpointForm.vue'
@@ -298,11 +298,11 @@ const headers = [
   },
   {
     title: t('StudyEndpointsTable.endpoint_level'),
-    key: 'endpoint_level.sponsor_preferred_name',
+    key: 'endpoint_level.term_name',
   },
   {
     title: t('StudyEndpointsTable.endpoint_sub_level'),
-    key: 'endpoint_sublevel.sponsor_preferred_name',
+    key: 'endpoint_sublevel.term_name',
   },
   {
     title: t('StudyEndpointsTable.endpoint_title'),

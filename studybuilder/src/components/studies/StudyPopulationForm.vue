@@ -210,6 +210,7 @@ import DurationField from '@/components/tools/DurationField.vue'
 import MultipleSelect from '@/components/tools/MultipleSelect.vue'
 import NotApplicableField from '@/components/tools/NotApplicableField.vue'
 import SimpleFormDialog from '@/components/tools/SimpleFormDialog.vue'
+import studyConstants from '@/constants/study'
 import YesNoField from '@/components/tools/YesNoField.vue'
 import { useStudiesGeneralStore } from '@/stores/studies-general'
 import { useStudiesManageStore } from '@/stores/studies-manage'
@@ -301,8 +302,12 @@ export default {
       if (this.form.disease_condition_or_indication_null_value_code) {
         this.form.disease_condition_or_indication_null_value_code = null
       } else {
+        const termUid = this.studiesGeneralStore.nullValues.find(
+          (el) =>
+            el.submission_value === studyConstants.TERM_NOT_APPLICABLE_SUBMVAL
+        ).term_uid
         this.form.disease_condition_or_indication_null_value_code = {
-          term_uid: this.$t('_global.na_uid'),
+          term_uid: termUid,
           name: this.$t('_global.not_applicable_full_name'),
         }
       }
@@ -312,8 +317,12 @@ export default {
       if (this.form.stable_disease_minimum_duration_null_value_code) {
         this.form.stable_disease_minimum_duration_null_value_code = null
       } else {
+        const termUid = this.studiesGeneralStore.nullValues.find(
+          (el) =>
+            el.submission_value === studyConstants.TERM_NOT_APPLICABLE_SUBMVAL
+        ).term_uid
         this.form.stable_disease_minimum_duration_null_value_code = {
-          term_uid: this.$t('_global.na_uid'),
+          term_uid: termUid,
           name: this.$t('_global.not_applicable_full_name'),
         }
       }
@@ -323,8 +332,12 @@ export default {
       if (this.form.relapse_criteria_null_value_code) {
         this.form.relapse_criteria_null_value_code = null
       } else {
+        const termUid = this.studiesGeneralStore.nullValues.find(
+          (el) =>
+            el.submission_value === studyConstants.TERM_NOT_APPLICABLE_SUBMVAL
+        ).term_uid
         this.form.relapse_criteria_null_value_code = {
-          term_uid: this.$t('_global.na_uid'),
+          term_uid: termUid,
           name: this.$t('_global.not_applicable_full_name'),
         }
       }
@@ -334,8 +347,12 @@ export default {
       if (this.form.number_of_expected_subjects_null_value_code) {
         this.form.number_of_expected_subjects_null_value_code = null
       } else {
+        const termUid = this.studiesGeneralStore.nullValues.find(
+          (el) =>
+            el.submission_value === studyConstants.TERM_NOT_APPLICABLE_SUBMVAL
+        ).term_uid
         this.form.number_of_expected_subjects_null_value_code = {
-          term_uid: this.$t('_global.na_uid'),
+          term_uid: termUid,
           name: this.$t('_global.not_applicable_full_name'),
         }
       }
@@ -345,10 +362,12 @@ export default {
       if (this.form.planned_maximum_age_of_subjects_null_value_code) {
         this.form.planned_maximum_age_of_subjects_null_value_code = null
       } else {
+        const termUid = this.studiesGeneralStore.nullValues.find(
+          (el) =>
+            el.submission_value === studyConstants.TERM_POSITIVE_INF_SUBMVAL
+        ).term_uid
         this.form.planned_maximum_age_of_subjects_null_value_code = {
-          term_uid: this.studiesGeneralStore.nullValues.find(
-            (el) => el.name.sponsor_preferred_name === 'Positive infinity'
-          ).term_uid,
+          term_uid: termUid,
           name: this.$t('_global.positive_infinity_full_name'),
         }
       }

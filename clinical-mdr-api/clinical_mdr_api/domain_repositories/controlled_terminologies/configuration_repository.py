@@ -40,7 +40,7 @@ from clinical_mdr_api.domains.versioned_object_aggregate import (
 from clinical_mdr_api.models.controlled_terminologies.configuration import CTConfigOGM
 
 
-class CTConfigRepository(LibraryItemRepositoryImplBase[CTConfigAR]):
+class CTConfigRepository(LibraryItemRepositoryImplBase):
     value_class = CTConfigValue
     root_class = CTConfigRoot
     user: str
@@ -51,7 +51,7 @@ class CTConfigRepository(LibraryItemRepositoryImplBase[CTConfigAR]):
         *,
         status: LibraryItemStatus | None = None,
         library_name: str | None = None,
-        return_study_count: bool | None = False,
+        return_study_count: bool = False,
     ) -> list[CTConfigOGM]:
         all_configurations = [
             CTConfigOGM.model_validate(sas_node)
@@ -130,7 +130,9 @@ class CTConfigRepository(LibraryItemRepositoryImplBase[CTConfigAR]):
         # method required by interface, does nothing #
         pass
 
-    def _get_or_create_value(self, root: VersionRoot, ar: CTConfigAR) -> VersionValue:
+    def _get_or_create_value(
+        self, root: VersionRoot, ar: CTConfigAR, force_new_value_node: bool = False
+    ) -> VersionValue:
         value = CTConfigValue(
             study_field_name=ar.value.study_field_name,
             study_field_data_type=ar.value.study_field_data_type,

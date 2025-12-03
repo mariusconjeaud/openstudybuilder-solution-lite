@@ -32,11 +32,9 @@ from clinical_mdr_api.tests.integration.utils.api import (
     inject_and_clear_db,
     inject_base_data,
 )
-from clinical_mdr_api.tests.integration.utils.data_library import (
-    get_codelist_with_term_cypher,
-)
 from clinical_mdr_api.tests.integration.utils.factory_controlled_terminology import (
     create_codelist,
+    create_ct_term,
     get_catalogue_name_library_name,
 )
 from clinical_mdr_api.tests.integration.utils.utils import TestUtils
@@ -71,13 +69,7 @@ def test_data():
     db_name = "study-activity-subgroup.api"
     inject_and_clear_db(db_name)
     global study
-    study = inject_base_data()
-
-    db.cypher_query(
-        get_codelist_with_term_cypher(
-            "EFFICACY", "Flowchart Group", term_uid="term_efficacy_uid"
-        )
-    )
+    study, _test_data_dict = inject_base_data()
 
     global general_activity_group
     global randomisation_activity_subgroup
@@ -123,25 +115,45 @@ def test_data():
         activity_groups=[general_activity_group.uid, general_activity_group.uid],
         library_name="Sponsor",
     )
-    global term_efficacy_uid
-    term_efficacy_uid = "term_efficacy_uid"
-    db.cypher_query(
-        get_codelist_with_term_cypher(
-            "EFFICACY", "Flowchart Group", term_uid=term_efficacy_uid
-        )
-    )
-    global informed_consent_uid
-    informed_consent_uid = "informed_consent_uid"
-    db.cypher_query(
-        get_codelist_with_term_cypher(
-            "INFORMED_CONSENT", "Flowchart Group", term_uid=informed_consent_uid
-        )
-    )
 
     catalogue_name, library_name = get_catalogue_name_library_name(use_test_utils=True)
     # Create a study selection
     ct_term_codelist = create_codelist(
-        "Flowchart Group", "CTCodelist_Name", catalogue_name, library_name
+        "Flowchart Group",
+        "CTCodelist_Name",
+        catalogue_name,
+        library_name,
+        submission_value="FLWCRTGRP",
+    )
+    global term_efficacy_uid
+    term_efficacy_uid = "term_efficacy_uid"
+    create_ct_term(
+        codelists=[
+            {
+                "uid": ct_term_codelist.codelist_uid,
+                "submission_value": "EFFICACY",
+                "order": 1,
+            },
+        ],
+        name="EFFICACY",
+        catalogue_name=catalogue_name,
+        library_name=library_name,
+        uid=term_efficacy_uid,
+    )
+    global informed_consent_uid
+    informed_consent_uid = "informed_consent_uid"
+    create_ct_term(
+        codelists=[
+            {
+                "uid": ct_term_codelist.codelist_uid,
+                "submission_value": "SAFETY",
+                "order": 2,
+            },
+        ],
+        name="SAFETY",
+        catalogue_name=catalogue_name,
+        library_name=library_name,
+        uid=informed_consent_uid,
     )
 
     global initial_ct_term_study_standard_test
@@ -149,7 +161,7 @@ def test_data():
     ct_term_start_date = datetime(2020, 3, 25, tzinfo=timezone.utc)
     initial_ct_term_study_standard_test = TestUtils.create_ct_term(
         codelist_uid=ct_term_codelist.codelist_uid,
-        name_submission_value=ct_term_name,
+        submission_value=ct_term_name,
         sponsor_preferred_name=ct_term_name,
         order=1,
         catalogue_name=catalogue_name,

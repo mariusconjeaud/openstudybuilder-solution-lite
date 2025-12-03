@@ -5,6 +5,7 @@ from typing import Any, Callable, Iterable, Self
 from clinical_mdr_api.services.user_info import UserInfoService
 from clinical_mdr_api.utils import normalize_string
 from common import exceptions
+from common.utils import is_larger_than_or_equal
 
 
 @dataclass(frozen=True)
@@ -16,20 +17,20 @@ class StudySelectionObjectiveVO:
     study_selection_uid: str
     study_uid: str | None
     objective_uid: str | None
-    objective_version: str | None
+    objective_version: str
     objective_level_uid: str | None
-    objective_level_order: int | None
+    objective_level_order: int
     is_instance: bool
     # Study selection Versioning
     start_date: datetime.datetime
-    author_id: str | None
+    author_id: str
     author_username: str | None = None
     accepted_version: bool = False
 
     @classmethod
     def from_input_values(
         cls,
-        objective_uid: str,
+        objective_uid: str | None,
         objective_version: str,
         objective_level_uid: str | None,
         objective_level_order: int | None,
@@ -38,7 +39,7 @@ class StudySelectionObjectiveVO:
         study_selection_uid: str | None = None,
         is_instance: bool = True,
         start_date: datetime.datetime | None = None,
-        generate_uid_callback: Callable[[], str] | None = None,
+        generate_uid_callback: Callable[[], str] = lambda: "",
         accepted_version: bool = False,
     ):
         if not objective_level_order:
@@ -66,8 +67,12 @@ class StudySelectionObjectiveVO:
 
     def validate(
         self,
-        objective_exist_callback: Callable[[str], bool] = (lambda _: True),
-        ct_term_level_exist_callback: Callable[[str], bool] = (lambda _: True),
+        objective_exist_callback: Callable[[str | None | None], bool] = (
+            lambda _: True
+        ),
+        ct_term_level_exist_callback: Callable[[str | None | None], bool] = (
+            lambda _: True
+        ),
     ) -> None:
         # Checks if there exists a objective which is approved with objective_uid
         exceptions.BusinessLogicException.raise_if_not(
@@ -99,7 +104,7 @@ class StudySelectionObjectivesAR:
     """
 
     _study_uid: str
-    _study_objectives_selection: tuple
+    _study_objectives_selection: tuple[StudySelectionObjectiveVO, ...]
     repository_closure_data: Any = field(
         init=False, compare=False, repr=True, default=None
     )
@@ -109,7 +114,7 @@ class StudySelectionObjectivesAR:
         return self._study_uid
 
     @property
-    def study_objectives_selection(self) -> tuple[StudySelectionObjectiveVO]:
+    def study_objectives_selection(self) -> tuple[StudySelectionObjectiveVO, ...]:
         return self._study_objectives_selection
 
     @study_objectives_selection.setter
@@ -127,8 +132,8 @@ class StudySelectionObjectivesAR:
     def add_objective_selection(
         self,
         study_objective_selection: StudySelectionObjectiveVO,
-        objective_exist_callback: Callable[[str], bool] = (lambda _: True),
-        ct_term_level_exist_callback: Callable[[str], bool] = (lambda _: True),
+        objective_exist_callback: Callable[[str | None], bool] = lambda _: True,
+        ct_term_level_exist_callback: Callable[[str | None], bool] = lambda _: True,
     ) -> None:
         study_objective_selection.validate(
             objective_exist_callback, ct_term_level_exist_callback
@@ -197,15 +202,13 @@ class StudySelectionObjectivesAR:
             objective_version=selected_value.objective_version,
         )
         # change the order
-        updated_selections = []
+        updated_selections: list[Any] = []
         # We need to handle if front end selects a order number there is out of range
         #  then we just move it to best possible position
         selection_needs_inserting = False
         for order, selection in enumerate(self.study_objectives_selection, start=1):
-            if (
-                selection_needs_inserting
-                and selection.objective_level_order
-                >= selected_value.objective_level_order
+            if selection_needs_inserting and is_larger_than_or_equal(
+                selection.objective_level_order, selected_value.objective_level_order
             ):
                 updated_selections.append(selected_value)
                 selection_needs_inserting = False
@@ -214,13 +217,12 @@ class StudySelectionObjectivesAR:
             if order == new_order:
                 # we check if the order is being changed to lower or higher and add it to the list appropriately
                 if old_order >= new_order:
-                    if (
-                        selection.objective_level_order
-                        >= selected_value.objective_level_order
+                    if is_larger_than_or_equal(
+                        selection.objective_level_order,
+                        selected_value.objective_level_order,
                     ):
                         updated_selections.append(selected_value)
-                    else:
-                        updated_selections = True
+
                     if (
                         selection.study_selection_uid
                         != selected_value.study_selection_uid
@@ -237,13 +239,12 @@ class StudySelectionObjectivesAR:
                         != selected_value.study_selection_uid
                     ):
                         updated_selections.append(selection)
-                    if (
-                        selection.objective_level_order
-                        >= selected_value.objective_level_order
+                    if is_larger_than_or_equal(
+                        selection.objective_level_order,
+                        selected_value.objective_level_order,
                     ):
                         updated_selections.append(selected_value)
-                    else:
-                        updated_selections = True
+
             # We add all other vo to in the same order as before, except for the vo we are moving
             elif selection.study_selection_uid != selected_value.study_selection_uid:
                 updated_selections.append(selection)
@@ -252,14 +253,14 @@ class StudySelectionObjectivesAR:
     def update_selection(
         self,
         updated_study_objective_selection: StudySelectionObjectiveVO,
-        objective_exist_callback: Callable[[str], bool] = (lambda _: True),
-        ct_term_level_exist_callback: Callable[[str], bool] = (lambda _: True),
+        objective_exist_callback: Callable[[str | None], bool] = lambda _: True,
+        ct_term_level_exist_callback: Callable[[str | None], bool] = lambda _: True,
     ) -> None:
         updated_study_objective_selection.validate(
             objective_exist_callback=objective_exist_callback,
             ct_term_level_exist_callback=ct_term_level_exist_callback,
         )
-        updated_selection = []
+        updated_selection: list[StudySelectionObjectiveVO] = []
         further_update = False
         for selection in self.study_objectives_selection:
             if (
@@ -282,9 +283,14 @@ class StudySelectionObjectivesAR:
             updated_selections = []
             for selection in updated_selection:
                 if (
-                    selection.objective_level_order
-                    > updated_study_objective_selection.objective_level_order
-                    and not selection_inserted
+                    selection.objective_level_order is not None
+                    and updated_study_objective_selection.objective_level_order
+                    is not None
+                    and (
+                        selection.objective_level_order
+                        > updated_study_objective_selection.objective_level_order
+                        and not selection_inserted
+                    )
                 ):
                     updated_selections.append(updated_study_objective_selection)
                     selection_inserted = True

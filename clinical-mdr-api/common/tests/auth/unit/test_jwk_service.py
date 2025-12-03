@@ -4,7 +4,7 @@
 
 import logging
 import time
-from typing import Iterable, Mapping
+from typing import Any, Iterable, Mapping
 
 import authlib.jose.errors
 import pytest
@@ -139,11 +139,11 @@ class MockOauthClient:
 
 def mk_claims(
     now: int | float | None = None,
-    exp: int | float | None = 300,
+    exp: int | float = 300,
     audience: str | None = GOOD_AUDIENCE,
     issuer: str | None = ISSUER,
-    scopes: Iterable | None = SCOPES,
-) -> dict:
+    scopes: Iterable[str] = SCOPES,
+) -> dict[str, Any]:
     if now is None:
         now = time.time()
 
@@ -214,6 +214,7 @@ async def test_wrong_signing_key(jwk_service, jwk_wrong_key):
 @pytest.mark.asyncio
 async def test_invalid_signature(jwk_service, jwk_good_key):
     claims = mk_claims()
+    token: str | bytes | list[str]
     token = mk_jwt(claims, jwk_good_key)
 
     # change payload part of token #

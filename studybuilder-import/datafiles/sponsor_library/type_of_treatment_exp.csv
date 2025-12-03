@@ -1,7 +1,5 @@
-CT_CD_LIST_SUBMVAL,CT_NAME,NAME_SENTENSE_CASE,CT_SUBMVAL,DEFINITION,ORDER,CT_CD,NCI_PREFERRED_NAME,
-TPOFTRT,Comparative Treatment,comparative treatment,COMPARATIVE TREATMENT TYPE OF TREATMENT,COMPARATIVE TREATMENT TYPE OF TREATMENT,1,,Comparative treatment,
-TPOFTRT,Current Treatment,current treatment,CURRENT TREATMENT TYPE OF TREATMENT,Current Treatment,2,,Current treatment,
-TPOFTRT,Investigational Product,investigational product,INVESTIGATIONAL PRODUCT TYPE OF TREATMENT,Investigational Medical Product,3,,Investigational product,
-TPOFTRT,Placebo Treatment,placebo treatment,PLACEBO TYPE OF TREATMENT,"Used when the planned compound is a placebo treatment
-This type of treatment will not drive a record in SDTM.TS
-A planned dosing should be made for the placebo compound creating rows in SDTM.EX",4,,Placebo treatment,
+CODELIST_SUBMVAL,TERM_SUBMVAL,SPONSOR_NAME,SPONSOR_NAME_SENTENCE_CASE,NCI_PREFERRED_NAME,ORDER,CONCEPT_ID,CATALOGUES,DEFINITION
+TPOFTRT,COMPARATIVE TREATMENT TYPE OF TREATMENT,Comparative Treatment,comparative treatment,Comparative treatment,1,,,Comparative Treatment
+TPOFTRT,URRENT TREATMENT TYPE OF TREATMENT,Current Treatment,current treatment,Current Treatment,2,,,Current treatment,
+TPOFTRT,INVESTIGATIONAL PRODUCT TYPE OF TREATMENT,Investigational Product,investigational product,Investigational product,3,,,Investigational Medical Product,
+TPOFTRT,PLACEBO TYPE OF TREATMENT,Placebo Treatment,placebo treatment,Placebo treatment,4,,,"Used when the planned compound is a placebo treatment. This type of treatment will not drive a record in SDTM.TS. A planned dosing should be made for the placebo compound creating rows in SDTM.EX",4

@@ -43,7 +43,12 @@ def test_get_packages_changes_returned_valid_data(api_client):
     assert res["to_package"] == "new_package"
     assert res["new_codelists"] == [
         {
-            "value_node": {"name": "new_name", "definition": "codelist_added"},
+            "value_node": {
+                "name": "new_name",
+                "definition": "codelist_added",
+                "extensible": False,
+                "ordinal": False,
+            },
             "uid": "added_codelist_uid",
             "change_date": "2020-06-26T00:00:00Z",
             "is_change_of_codelist": True,
@@ -51,7 +56,7 @@ def test_get_packages_changes_returned_valid_data(api_client):
     ]
     assert res["deleted_codelists"] == [
         {
-            "value_node": {"name": "old_name", "extensible": False},
+            "value_node": {"name": "old_name", "extensible": False, "ordinal": False},
             "uid": "deleted_codelist_uid",
             "change_date": "2020-03-27T00:00:00Z",
             "is_change_of_codelist": True,
@@ -60,8 +65,8 @@ def test_get_packages_changes_returned_valid_data(api_client):
     assert res["updated_codelists"] == [
         {
             "value_node": {
-                "left_only": {"extensible": False},
-                "in_common": {},
+                "left_only": {},
+                "in_common": {"extensible": False, "ordinal": False},
                 "different": {"name": {"left": "old_name", "right": "new_name"}},
                 "right_only": {"definition": "new_definition"},
             },
@@ -72,7 +77,12 @@ def test_get_packages_changes_returned_valid_data(api_client):
         {
             "uid": "added_codelist_uid",
             "is_change_of_codelist": False,
-            "value_node": {"name": "new_name", "definition": "codelist_added"},
+            "value_node": {
+                "name": "new_name",
+                "definition": "codelist_added",
+                "extensible": False,
+                "ordinal": False,
+            },
             "change_date": "2020-06-26T00:00:00Z",
         },
     ]
@@ -134,8 +144,8 @@ def test_get_packages_changes_for_a_specific_codelist_returned_valid_data(api_cl
     assert res["updated_codelists"] == [
         {
             "value_node": {
-                "left_only": {"extensible": False},
-                "in_common": {},
+                "left_only": {},
+                "in_common": {"extensible": False, "ordinal": False},
                 "different": {"name": {"left": "old_name", "right": "new_name"}},
                 "right_only": {"definition": "new_definition"},
             },

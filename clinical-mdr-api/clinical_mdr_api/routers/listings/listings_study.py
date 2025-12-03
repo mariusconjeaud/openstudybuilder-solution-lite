@@ -9,6 +9,7 @@ from clinical_mdr_api.services.listings.listings_study import (
     StudyMetadataListingService,
 )
 from common.auth import rbac
+from common.auth.dependencies import security
 from common.models.error import ErrorResponse
 
 # Prefixed with "/listings"
@@ -17,7 +18,7 @@ router = APIRouter()
 
 @router.get(
     "/studies/study-metadata",
-    dependencies=[rbac.STUDY_READ],
+    dependencies=[security, rbac.STUDY_READ],
     summary="Retrieve study metadata of a specific study",
     response_class=PrettyJSONResponse,
     status_code=200,
@@ -36,7 +37,7 @@ def get_study_metadata(
     project_id: Annotated[str, Query(description="Project ID of study requested")],
     study_number: Annotated[str, Query(description="Study number of study requested")],
     subpart_acronym: Annotated[
-        str, Query(description="subpart, if exists, of study requested")
+        str | None, Query(description="subpart, if exists, of study requested")
     ] = None,
     study_value_version: Annotated[
         str | None, _generic_descriptions.STUDY_VALUE_VERSION_QUERY

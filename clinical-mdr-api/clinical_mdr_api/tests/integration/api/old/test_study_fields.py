@@ -14,6 +14,7 @@ from clinical_mdr_api.tests.integration.utils.method_library import (
 )
 from clinical_mdr_api.tests.integration.utils.utils import TestUtils
 from clinical_mdr_api.tests.utils.checks import assert_response_status_code
+from common.config import settings
 
 
 @pytest.fixture(scope="module")
@@ -42,39 +43,71 @@ def test_data():
     TestUtils.create_library(name="UCUM", is_editable=True)
     # create catalogue
     catalogue_name = TestUtils.create_ct_catalogue()
-    codelist = TestUtils.create_ct_codelist()
-    TestUtils.create_study_ct_data_map(codelist_uid=codelist.codelist_uid)
+    _codelist = TestUtils.create_ct_codelist()
+    TestUtils.create_study_ct_data_map(codelist_uid=None)
     TestUtils.create_study_fields_configuration()
 
     library_name = library["name"]
 
     codelist = create_codelist(
+        name="Null Flavor",
+        catalogue=catalogue_name,
+        uid="null_flav_cl_uid",
+        library=library_name,
+        submission_value=settings.null_flavor_cl_submval,
+    )
+    create_ct_term(
+        name="Not applicable",  # "Hours",
+        uid="na_term_001",  # "Hours_001",
+        catalogue_name=catalogue_name,
+        library_name=library_name,
+        codelists=[
+            {
+                "uid": codelist.codelist_uid,
+                "order": 1,
+                "submission_value": "NA",
+            }
+        ],
+    )
+    codelist = create_codelist(
         name="time",  # "Hours",
         uid="C66781",  # "CTCodelist_00004-HOUR",
         catalogue=catalogue_name,
         library=library_name,
+        submission_value="UNIT",
     )
     hour_term = create_ct_term(
-        codelist=codelist.codelist_uid,
         name="hours",  # "Hours",
         uid="hours001",  # "Hours_001",
-        order=1,
         catalogue_name=catalogue_name,
         library_name=library_name,
+        codelists=[
+            {
+                "uid": codelist.codelist_uid,
+                "order": 1,
+                "submission_value": "hours",
+            }
+        ],
     )
     subset_codelist = create_codelist(
         name="Unit Subset",
         uid="UnitSubsetCuid",
         catalogue=catalogue_name,
         library=library_name,
+        submission_value="UNITSUBS",
     )
     study_time_subset = create_ct_term(
-        codelist=subset_codelist.codelist_uid,
         name="Study Time",
         uid="StudyTimeSuid",
-        order=1,
         catalogue_name=catalogue_name,
         library_name=library_name,
+        codelists=[
+            {
+                "uid": subset_codelist.codelist_uid,
+                "order": 1,
+                "submission_value": "Study Time",
+            }
+        ],
     )
     TestUtils.create_unit_definition(
         name="hours",

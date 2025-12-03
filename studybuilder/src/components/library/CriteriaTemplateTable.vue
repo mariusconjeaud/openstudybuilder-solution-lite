@@ -160,7 +160,7 @@ const columnDataParameters = computed(() => {
   return { filters }
 })
 const extraRouteParams = computed(() => {
-  return { type: props.criteriaType.name.sponsor_preferred_name }
+  return { type: props.criteriaType.sponsor_preferred_name }
 })
 
 function getExtraFilters(filters, preInstanceMode) {

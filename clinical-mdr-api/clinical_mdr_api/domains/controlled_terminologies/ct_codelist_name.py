@@ -23,19 +23,19 @@ class CTCodelistNameVO:
     """
 
     name: str | None
-    catalogue_name: str
-    is_template_parameter: bool | None
+    catalogue_names: list[str]
+    is_template_parameter: bool
 
     @classmethod
     def from_repository_values(
         cls,
         name: str | None,
-        catalogue_name: str,
-        is_template_parameter: bool | None,
+        catalogue_names: list[str],
+        is_template_parameter: bool,
     ) -> Self:
         ct_codelist_name_vo = cls(
             name=name,
-            catalogue_name=catalogue_name,
+            catalogue_names=catalogue_names,
             is_template_parameter=is_template_parameter,
         )
 
@@ -45,22 +45,26 @@ class CTCodelistNameVO:
     def from_input_values(
         cls,
         name: str | None,
-        catalogue_name: str,
-        is_template_parameter: bool | None,
+        catalogue_names: list[str],
+        is_template_parameter: bool,
         catalogue_exists_callback: Callable[[str], bool],
         codelist_exists_by_name_callback: Callable[[str], bool] = lambda _: False,
     ) -> Self:
-        ValidationException.raise_if_not(
-            catalogue_exists_callback(catalogue_name),
-            msg=f"Catalogue with Name '{catalogue_name}' doesn't exist.",
-        )
+        for catalogue_name in catalogue_names:
+            ValidationException.raise_if_not(
+                catalogue_exists_callback(catalogue_name),
+                msg=f"Catalogue with Name '{catalogue_name}' doesn't exist.",
+            )
         AlreadyExistsException.raise_if(
-            codelist_exists_by_name_callback(name), "CT Codelist Name", name, "Name"
+            name and codelist_exists_by_name_callback(name),
+            "CT Codelist Name",
+            name,
+            "Name",
         )
 
         ct_codelist_name_vo = cls(
             name=name,
-            catalogue_name=catalogue_name,
+            catalogue_names=catalogue_names,
             is_template_parameter=is_template_parameter,
         )
 
@@ -87,7 +91,7 @@ class CTCodelistNameAR(LibraryItemAggregateRootBase):
         cls,
         uid: str,
         ct_codelist_name_vo: CTCodelistNameVO,
-        library: LibraryVO | None,
+        library: LibraryVO,
         item_metadata: LibraryItemMetadataVO,
     ) -> Self:
         ct_codelist_ar = cls(
@@ -106,7 +110,7 @@ class CTCodelistNameAR(LibraryItemAggregateRootBase):
         ct_codelist_name_vo: CTCodelistNameVO,
         library: LibraryVO,
         start_date: datetime | None = None,
-        generate_uid_callback: Callable[[], str | None] = (lambda: None),
+        generate_uid_callback: Callable[[], str | None] = lambda: None,
     ) -> Self:
         item_metadata = LibraryItemMetadataVO.get_initial_item_metadata(
             author_id=author_id, start_date=start_date
@@ -125,7 +129,7 @@ class CTCodelistNameAR(LibraryItemAggregateRootBase):
     def edit_draft(
         self,
         author_id: str,
-        change_description: str | None,
+        change_description: str,
         ct_codelist_vo: CTCodelistNameVO,
         codelist_exists_by_name_callback: Callable[[str], bool],
     ) -> None:
@@ -133,7 +137,8 @@ class CTCodelistNameAR(LibraryItemAggregateRootBase):
         Creates a new draft version for the object.
         """
         AlreadyExistsException.raise_if(
-            codelist_exists_by_name_callback(ct_codelist_vo.name)
+            ct_codelist_vo.name
+            and codelist_exists_by_name_callback(ct_codelist_vo.name)
             and self.name != ct_codelist_vo.name,
             "CT Codelist Name",
             ct_codelist_vo.name,

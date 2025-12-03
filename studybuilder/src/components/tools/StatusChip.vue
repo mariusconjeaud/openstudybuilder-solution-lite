@@ -37,7 +37,7 @@ const color = computed(() => {
   if (props.status === statuses.RETIRED) {
     return 'orange'
   }
-  if (props.status === statuses.RELEASED) {
+  if (props.status === statuses.STUDY_RELEASED) {
     return 'info'
   }
   if (props.status === statuses.STUDY_LOCKED) {

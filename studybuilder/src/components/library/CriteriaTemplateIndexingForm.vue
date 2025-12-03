@@ -19,7 +19,7 @@
             :label="$t('CriteriaTemplateForm.criterion_cat')"
             data-cy="template-criterion-category"
             :items="categories"
-            item-title="name.sponsor_preferred_name"
+            item-title="sponsor_preferred_name"
             item-value="term_uid"
             :disabled="notApplicable"
             :rules="[
@@ -42,7 +42,7 @@
             :label="$t('CriteriaTemplateForm.criterion_sub_cat')"
             data-cy="template-criterion-sub-category"
             :items="subCategories"
-            item-title="name.sponsor_preferred_name"
+            item-title="sponsor_preferred_name"
             item-value="term_uid"
             :disabled="notApplicable"
             :rules="[
@@ -87,10 +87,27 @@ export default {
     }
   },
   mounted() {
-    terms.getByCodelist('criteriaCategories').then((resp) => {
+    // We get the large term model with name and attributes,
+    // add sponsor_preferred_name on the root.
+    if (this.localForm.categories) {
+      for (const category of this.localForm.categories) {
+        if (Object.prototype.hasOwnProperty.call(category, 'name')) {
+          category.sponsor_preferred_name = category.name.sponsor_preferred_name
+        }
+      }
+    }
+    if (this.localForm.sub_categories) {
+      for (const subcategory of this.localForm.sub_categories) {
+        if (Object.prototype.hasOwnProperty.call(subcategory, 'name')) {
+          subcategory.sponsor_preferred_name =
+            subcategory.name.sponsor_preferred_name
+        }
+      }
+    }
+    terms.getTermsByCodelist('criteriaCategories').then((resp) => {
       this.categories = resp.data.items
     })
-    terms.getByCodelist('criteriaSubCategories').then((resp) => {
+    terms.getTermsByCodelist('criteriaSubCategories').then((resp) => {
       this.subCategories = resp.data.items
     })
   },

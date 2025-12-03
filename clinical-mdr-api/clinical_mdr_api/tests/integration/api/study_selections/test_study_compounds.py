@@ -12,6 +12,7 @@ Tests for /studies/{study_uid}/study-compounds endpoints
 import copy
 import json
 import logging
+from typing import Any
 from unittest import mock
 
 import pytest
@@ -34,8 +35,12 @@ from clinical_mdr_api.tests.integration.utils.api import (
     inject_and_clear_db,
     inject_base_data,
 )
-from clinical_mdr_api.tests.integration.utils.utils import TestUtils
+from clinical_mdr_api.tests.integration.utils.factory_controlled_terminology import (
+    create_codelist,
+)
+from clinical_mdr_api.tests.integration.utils.utils import CT_CODELIST_UIDS, TestUtils
 from clinical_mdr_api.tests.utils.checks import assert_response_status_code
+from common.config import settings
 
 log = logging.getLogger(__name__)
 
@@ -43,7 +48,7 @@ HEADERS = {"content-type": "application/json"}
 BASE_URL = "/studies/{study_uid}/study-compounds"
 
 rand: str
-CREATE_STUDY_COMPOUND_PAYLOAD_OK: dict
+CREATE_STUDY_COMPOUND_PAYLOAD_OK: dict[Any, Any]
 study: Study
 ct_term_dosage: CTTerm
 ct_term_delivery_device: CTTerm
@@ -119,16 +124,74 @@ def test_data():
     rand = TestUtils.random_str(10)
 
     # Create CT Terms
-    ct_term_dosage = TestUtils.create_ct_term(sponsor_preferred_name="dosage_form_1")
-    ct_term_delivery_device = TestUtils.create_ct_term(
-        sponsor_preferred_name="delivery_device_1"
+    catalogue_name = "SDTM CT"
+    library_name = "Sponsor"
+
+    ct_term_dosage = TestUtils.create_ct_term(
+        codelist_uid=CT_CODELIST_UIDS.dosage_form,
+        submission_value="dosage_form_1",
+        sponsor_preferred_name="dosage_form_1",
+        order=1,
+        catalogue_name=catalogue_name,
+        library_name=library_name,
+        approve=True,
     )
-    ct_term_dose_frequency = TestUtils.create_ct_term(
-        sponsor_preferred_name="dose_frequency_1"
-    )
-    ct_term_dispenser = TestUtils.create_ct_term(sponsor_preferred_name="dispenser_1")
     ct_term_roa = TestUtils.create_ct_term(
-        sponsor_preferred_name="route_of_administration_1"
+        codelist_uid=CT_CODELIST_UIDS.roa,
+        submission_value="route_of_administration_1",
+        sponsor_preferred_name="route_of_administration_1",
+        order=1,
+        catalogue_name=catalogue_name,
+        library_name=library_name,
+        approve=True,
+    )
+
+    ct_term_delivery_device = TestUtils.create_ct_term(
+        codelist_uid=CT_CODELIST_UIDS.delivery_device,
+        submission_value="delivery_device_1",
+        sponsor_preferred_name="delivery_device_1",
+        order=1,
+        catalogue_name=catalogue_name,
+        library_name=library_name,
+        approve=True,
+    )
+
+    ct_term_dose_frequency = TestUtils.create_ct_term(
+        codelist_uid=CT_CODELIST_UIDS.frequency,
+        submission_value="dose_frequency_1",
+        sponsor_preferred_name="dose_frequency_1",
+        order=1,
+        catalogue_name=catalogue_name,
+        library_name=library_name,
+        approve=True,
+    )
+
+    ct_term_dispenser = TestUtils.create_ct_term(
+        codelist_uid=CT_CODELIST_UIDS.dispenser,
+        submission_value="dispenser_1",
+        sponsor_preferred_name="dispenser_1",
+        order=1,
+        catalogue_name=catalogue_name,
+        library_name=library_name,
+        approve=True,
+    )
+
+    ttype_codelist = create_codelist(
+        "Type of Treatment",
+        "CTCodelist_TType",
+        catalogue_name,
+        library_name,
+        submission_value=settings.type_of_treatment_cl_submval,
+    )
+
+    ct_term_ttype = TestUtils.create_ct_term(
+        codelist_uid=ttype_codelist.codelist_uid,
+        submission_value="treatment_type_1",
+        sponsor_preferred_name="treatment_type_1",
+        order=1,
+        catalogue_name=catalogue_name,
+        library_name=library_name,
+        approve=True,
     )
 
     # Create Numeric values with unit
@@ -221,11 +284,7 @@ def test_data():
             study_uid=study.uid,
             compound_alias_uid=compound_alias.uid,
             medicinal_product_uid=medicinal_products_all[idx].uid,
-            type_of_treatment_uid="CTTerm_000001",
-            dispenser_uid=ct_term_dispenser.term_uid,
-            dose_value_uid=dose_value.uid,
-            dose_frequency_uid=ct_term_dose_frequency.term_uid,
-            delivery_device_uid=ct_term_delivery_device.term_uid,
+            type_of_treatment_uid=ct_term_ttype.term_uid,
             other_info=f"other_info_{rand}_{idx}",
         )
         study_compounds_all.append(study_compound)
@@ -336,14 +395,16 @@ def test_get_study_compound_by_id(api_client):
     assert res["project_number"] == study_compounds_all[0].project_number
     assert res["project_name"] == study_compounds_all[0].project_name
     assert res["dispenser"]["term_uid"] == ct_term_dispenser.term_uid
-    assert res["dispenser"]["name"] == ct_term_dispenser.sponsor_preferred_name
+    assert res["dispenser"]["term_name"] == ct_term_dispenser.sponsor_preferred_name
     assert res["dose_frequency"]["term_uid"] == ct_term_dose_frequency.term_uid
     assert (
-        res["dose_frequency"]["name"] == ct_term_dose_frequency.sponsor_preferred_name
+        res["dose_frequency"]["term_name"]
+        == ct_term_dose_frequency.sponsor_preferred_name
     )
     assert res["delivery_device"]["term_uid"] == ct_term_delivery_device.term_uid
     assert (
-        res["delivery_device"]["name"] == ct_term_delivery_device.sponsor_preferred_name
+        res["delivery_device"]["term_name"]
+        == ct_term_delivery_device.sponsor_preferred_name
     )
     assert res["other_info"] == study_compounds_all[0].other_info
     assert (
@@ -643,14 +704,16 @@ def test_patch_study_compounds_medicinal_product(api_client):
     assert res["project_number"] == initial_study_compound["project_number"]
     assert res["project_name"] == initial_study_compound["project_name"]
     assert res["dispenser"]["term_uid"] == ct_term_dispenser.term_uid
-    assert res["dispenser"]["name"] == ct_term_dispenser.sponsor_preferred_name
+    assert res["dispenser"]["term_name"] == ct_term_dispenser.sponsor_preferred_name
     assert res["dose_frequency"]["term_uid"] == ct_term_dose_frequency.term_uid
     assert (
-        res["dose_frequency"]["name"] == ct_term_dose_frequency.sponsor_preferred_name
+        res["dose_frequency"]["term_name"]
+        == ct_term_dose_frequency.sponsor_preferred_name
     )
     assert res["delivery_device"]["term_uid"] == ct_term_delivery_device.term_uid
     assert (
-        res["delivery_device"]["name"] == ct_term_delivery_device.sponsor_preferred_name
+        res["delivery_device"]["term_name"]
+        == ct_term_delivery_device.sponsor_preferred_name
     )
     assert res["other_info"] == initial_study_compound["other_info"]
     assert (
@@ -695,14 +758,16 @@ def test_patch_study_compounds_compound_alias(api_client):
     assert res["project_number"] == initial_study_compound["project_number"]
     assert res["project_name"] == initial_study_compound["project_name"]
     assert res["dispenser"]["term_uid"] == ct_term_dispenser.term_uid
-    assert res["dispenser"]["name"] == ct_term_dispenser.sponsor_preferred_name
+    assert res["dispenser"]["term_name"] == ct_term_dispenser.sponsor_preferred_name
     assert res["dose_frequency"]["term_uid"] == ct_term_dose_frequency.term_uid
     assert (
-        res["dose_frequency"]["name"] == ct_term_dose_frequency.sponsor_preferred_name
+        res["dose_frequency"]["term_name"]
+        == ct_term_dose_frequency.sponsor_preferred_name
     )
     assert res["delivery_device"]["term_uid"] == ct_term_delivery_device.term_uid
     assert (
-        res["delivery_device"]["name"] == ct_term_delivery_device.sponsor_preferred_name
+        res["delivery_device"]["term_name"]
+        == ct_term_delivery_device.sponsor_preferred_name
     )
     assert res["other_info"] == initial_study_compound["other_info"]
     assert (

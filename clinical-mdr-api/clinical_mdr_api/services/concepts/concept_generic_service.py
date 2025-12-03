@@ -9,7 +9,6 @@ from pydantic import BaseModel
 from clinical_mdr_api.domain_repositories.concepts.concept_generic_repository import (
     ConceptGenericRepository,
 )
-from clinical_mdr_api.domains._utils import ObjectStatus
 from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryItemStatus,
     LibraryVO,
@@ -21,6 +20,7 @@ from clinical_mdr_api.models.concepts.unit_definitions.unit_definition import (
     UnitDefinitionModel,
 )
 from clinical_mdr_api.models.controlled_terminologies.ct_term import (
+    SimpleCodelistTermModel,
     SimpleCTTermAttributes,
     SimpleTermModel,
 )
@@ -45,7 +45,7 @@ class ConceptGenericService(Generic[_AggregateRootType], ABC):
     version_class: type
     repository_interface: type
     _repos: MetaRepository
-    author_id: str | None
+    author_id: str
 
     def __init__(self):
         self.author_id = user().id()
@@ -91,12 +91,34 @@ class ConceptGenericService(Generic[_AggregateRootType], ABC):
                     field_name,
                     getattr(reference_base_model, field_name).term_uid,
                 )
+            elif isinstance(
+                getattr(reference_base_model, field_name), SimpleCodelistTermModel
+            ):
+                setattr(
+                    base_model_with_missing_values,
+                    field_name,
+                    getattr(reference_base_model, field_name).term_uid,
+                )
             elif isinstance(getattr(reference_base_model, field_name), Sequence):
                 if (
                     get_field_type(
                         reference_base_model.model_fields[field_name].annotation
                     )
                     is SimpleTermModel
+                ):
+                    setattr(
+                        base_model_with_missing_values,
+                        field_name,
+                        [
+                            term.term_uid
+                            for term in getattr(reference_base_model, field_name)
+                        ],
+                    )
+                if (
+                    get_field_type(
+                        reference_base_model.model_fields[field_name].annotation
+                    )
+                    is SimpleCodelistTermModel
                 ):
                     setattr(
                         base_model_with_missing_values,
@@ -182,13 +204,12 @@ class ConceptGenericService(Generic[_AggregateRootType], ABC):
     def get_all_concepts(
         self,
         library: str | None = None,
-        sort_by: dict | None = None,
+        sort_by: dict[str, bool] | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: dict | None = None,
-        filter_operator: FilterOperator | None = FilterOperator.AND,
+        filter_by: dict[str, dict[str, Any]] | None = None,
+        filter_operator: FilterOperator = FilterOperator.AND,
         total_count: bool = False,
-        only_specific_status: str = ObjectStatus.LATEST.name,
         **kwargs,
     ) -> GenericFilteringReturn[BaseModel]:
         return self.non_transactional_get_all_concepts(
@@ -199,25 +220,23 @@ class ConceptGenericService(Generic[_AggregateRootType], ABC):
             filter_by,
             filter_operator,
             total_count,
-            only_specific_status,
             **kwargs,
         )
 
     def non_transactional_get_all_concepts(
         self,
         library: str | None = None,
-        sort_by: dict | None = None,
+        sort_by: dict[str, bool] | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: dict | None = None,
-        filter_operator: FilterOperator | None = FilterOperator.AND,
+        filter_by: dict[str, dict[str, Any]] | None = None,
+        filter_operator: FilterOperator = FilterOperator.AND,
         total_count: bool = False,
-        only_specific_status: str = ObjectStatus.LATEST.name,
         **kwargs,
     ) -> GenericFilteringReturn[BaseModel]:
         self.enforce_library(library)
 
-        items, total = self.repository.find_all(
+        item_ars, total = self.repository.find_all(
             library=library,
             total_count=total_count,
             sort_by=sort_by,
@@ -225,39 +244,53 @@ class ConceptGenericService(Generic[_AggregateRootType], ABC):
             filter_operator=filter_operator,
             page_number=page_number,
             page_size=page_size,
-            only_specific_status=only_specific_status,
             **kwargs,
         )
 
-        all_concepts = GenericFilteringReturn.create(items, total)
-        all_concepts.items = [
+        items = [
             self._transform_aggregate_root_to_pydantic_model(concept_ar)
-            for concept_ar in all_concepts.items
+            for concept_ar in item_ars
         ]
-
-        return all_concepts
+        return GenericFilteringReturn(items=items, total=total)
 
     def get_distinct_values_for_header(
         self,
         library: str | None,
         field_name: str,
-        search_string: str | None = "",
-        filter_by: dict | None = None,
-        filter_operator: FilterOperator | None = FilterOperator.AND,
+        search_string: str = "",
+        filter_by: dict[str, dict[str, Any]] | None = None,
+        filter_operator: FilterOperator = FilterOperator.AND,
         page_size: int = 10,
+        lite: bool = False,
         **kwargs,
     ) -> list[Any]:
         self.enforce_library(library)
 
-        header_values = self.repository.get_distinct_headers(
-            library=library,
-            field_name=field_name,
-            search_string=search_string,
-            filter_by=filter_by,
-            filter_operator=filter_operator,
-            page_size=page_size,
-            **kwargs,
-        )
+        # Lite mode doesn't support filtering by relationship fields like status
+        # Fall back to non-lite mode when these filters are present
+        if lite and filter_by and "status" in filter_by:
+            lite = False
+
+        if lite:
+            header_values = self.repository.get_distinct_headers_lite(
+                library=library,
+                field_name=field_name,
+                search_string=search_string,
+                filter_by=filter_by,
+                filter_operator=filter_operator,
+                page_size=page_size,
+                **kwargs,
+            )
+        else:
+            header_values = self.repository.get_distinct_headers(
+                library=library,
+                field_name=field_name,
+                search_string=search_string,
+                filter_by=filter_by,
+                filter_operator=filter_operator,
+                page_size=page_size,
+                **kwargs,
+            )
 
         return header_values
 
@@ -265,17 +298,17 @@ class ConceptGenericService(Generic[_AggregateRootType], ABC):
     def get_all_concept_versions(
         self,
         library: str | None = None,
-        sort_by: dict | None = None,
+        sort_by: dict[str, bool] | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: dict | None = None,
-        filter_operator: FilterOperator | None = FilterOperator.AND,
+        filter_by: dict[str, dict[str, Any]] | None = None,
+        filter_operator: FilterOperator = FilterOperator.AND,
         total_count: bool = False,
         **kwargs,
     ) -> GenericFilteringReturn[BaseModel]:
         self.enforce_library(library)
 
-        items, total = self.repository.find_all(
+        item_ars, total = self.repository.find_all(
             library=library,
             total_count=total_count,
             sort_by=sort_by,
@@ -288,13 +321,11 @@ class ConceptGenericService(Generic[_AggregateRootType], ABC):
             **kwargs,
         )
 
-        all_concept_versions = GenericFilteringReturn.create(items, total)
-        all_concept_versions.items = [
+        items = [
             self._transform_aggregate_root_to_pydantic_model(concept_ar)
-            for concept_ar in all_concept_versions.items
+            for concept_ar in item_ars
         ]
-
-        return all_concept_versions
+        return GenericFilteringReturn(items=items, total=total)
 
     @db.transaction
     def get_by_uid(
@@ -302,7 +333,7 @@ class ConceptGenericService(Generic[_AggregateRootType], ABC):
         uid: str,
         version: str | None = None,
         at_specific_date: datetime | None = None,
-        status: str | None = None,
+        status: LibraryItemStatus | None = None,
     ) -> BaseModel:
         item = self._find_by_uid_or_raise_not_found(
             uid=uid, version=version, at_specific_date=at_specific_date, status=status
@@ -315,7 +346,7 @@ class ConceptGenericService(Generic[_AggregateRootType], ABC):
         version: str | None = None,
         at_specific_date: datetime | None = None,
         status: LibraryItemStatus | None = None,
-        for_update: bool | None = False,
+        for_update: bool = False,
     ) -> _AggregateRootType:
         item = self.repository.find_by_uid_2(
             uid=uid,
@@ -349,18 +380,37 @@ class ConceptGenericService(Generic[_AggregateRootType], ABC):
             return calculate_diffs(versions, self.version_class)
         return []
 
-    @db.transaction
+    @ensure_transaction(db)
     def create_new_version(
-        self, uid: str, cascade_new_version: bool = False
+        self,
+        uid: str,
+        cascade_new_version: bool = False,
+        force_new_value_node: bool = False,
+        ignore_exc: bool = False,
     ) -> BaseModel:
-        return self.non_transactional_create_new_version(uid, cascade_new_version)
+        return self.non_transactional_create_new_version(
+            uid, cascade_new_version, force_new_value_node, ignore_exc
+        )
 
     def non_transactional_create_new_version(
-        self, uid: str, cascade_new_version: bool = False
+        self,
+        uid: str,
+        cascade_new_version: bool = False,
+        force_new_value_node: bool = False,
+        ignore_exc: bool = False,
     ) -> BaseModel:
         item = self._find_by_uid_or_raise_not_found(uid, for_update=True)
-        item.create_new_version(author_id=self.author_id)
-        self.repository.save(item)
+        try:
+            item.create_new_version(author_id=self.author_id)
+            self.repository.save(item, force_new_value_node)
+        except BusinessLogicException as exc:
+            if (
+                not ignore_exc
+                or exc.msg
+                != "New draft version can be created only for FINAL versions."
+            ):
+                raise
+
         if cascade_new_version:
             self.cascade_new_version(item)
         return self._transform_aggregate_root_to_pydantic_model(item)
@@ -419,7 +469,7 @@ class ConceptGenericService(Generic[_AggregateRootType], ABC):
                         self._repos.unit_definition_repository.find_by_uid_2(
                             item.unit_definitions[0].uid
                         ),
-                        find_term_by_uid=self._repos.ct_term_name_repository.find_by_uid,
+                        find_codelist_term_by_uid_and_submission_value=self._repos.ct_codelist_name_repository.get_codelist_term_by_uid_and_submval,
                         find_dictionary_term_by_uid=self._repos.dictionary_term_generic_repository.find_by_uid,
                     ).name
             for ct_term in item.ct_terms:
@@ -568,8 +618,23 @@ class ConceptGenericService(Generic[_AggregateRootType], ABC):
                     uid=item.ct_terms[0].uid,
                     find_term_by_uid=self._repos.ct_term_attributes_repository.find_by_uid,
                 )
+                # EXTRACT code_submission_value
+                params = {"ct_uid": item.ct_terms[0].uid}
+                cypher_expression_ct_code_extraction = """
+                    match (lib:Library)--(n:CTTermRoot)-[:HAS_ATTRIBUTES_ROOT]->(o:CTTermAttributesRoot)-[:LATEST]->(ctav:CTTermAttributesValue)
+                    where lib.name="CDISC" 
+                        AND n.uid = $ct_uid
+                    MATCH (n)<-[:HAS_TERM_ROOT]-(m:CTCodelistTerm) 
+                    where tolower(m.submission_value) <> tolower(ctav.preferred_term) 
+                    return m.submission_value
+                """
+                cypher_result, _ = db.cypher_query(
+                    cypher_expression_ct_code_extraction,
+                    params=params,
+                    resolve_objects=True,
+                )
                 ct_code_submission_value = (
-                    ct_attribute.code_submission_value if ct_attribute else None
+                    cypher_result[0][0] if cypher_result else None
                 )
                 if not ct_attribute:
                     break
@@ -614,7 +679,7 @@ class ConceptGenericService(Generic[_AggregateRootType], ABC):
             activity_sequence_number += 1
             # add research flag
             if response_model.is_research_lab and len(adam_final) <= 6:
-                final_generated_name = f"{adam_final+"X"}{activity_sequence_number}"
+                final_generated_name = f"{adam_final}X{activity_sequence_number}"
             else:
                 final_generated_name = f"{adam_final}{activity_sequence_number}"
             number_of_letters_to_remove = 0
@@ -628,7 +693,7 @@ class ConceptGenericService(Generic[_AggregateRootType], ABC):
     ) -> BaseModel:
         BusinessLogicException.raise_if_not(
             self._repos.library_repository.library_exists(
-                normalize_string(concept_input.library_name)
+                normalize_string(concept_input.library_name)  # type: ignore[arg-type]
             ),
             msg=f"Library with Name '{concept_input.library_name}' doesn't exist.",
         )
@@ -667,36 +732,46 @@ class ConceptGenericService(Generic[_AggregateRootType], ABC):
             )
         return response_model
 
-    @db.transaction
-    def approve(self, uid: str, cascade_edit_and_approve: bool = False) -> BaseModel:
-        return self.non_transactional_approve(uid, cascade_edit_and_approve)
-
-    def non_transactional_approve(
-        self, uid: str, cascade_edit_and_approve: bool = False
+    @ensure_transaction(db)
+    def approve(
+        self, uid: str, cascade_edit_and_approve: bool = False, ignore_exc: bool = False
     ) -> BaseModel:
         item = self._find_by_uid_or_raise_not_found(uid, for_update=True)
-        item.approve(author_id=self.author_id)
-        self.repository.save(item)
+        try:
+            item.approve(author_id=self.author_id)
+            self.repository.save(item)
+        except BusinessLogicException as exc:
+            if not ignore_exc or exc.msg != "The object isn't in draft status.":
+                raise
+
         if cascade_edit_and_approve:
             self.cascade_edit_and_approve(item)
         return self._transform_aggregate_root_to_pydantic_model(item)
 
-    @db.transaction
-    def inactivate_final(self, uid: str, cascade_inactivate: bool = False) -> BaseModel:
+    @ensure_transaction(db)
+    def inactivate_final(
+        self,
+        uid: str,
+        cascade_inactivate: bool = False,
+        force_new_value_node: bool = False,
+    ) -> BaseModel:
         item = self._find_by_uid_or_raise_not_found(uid, for_update=True)
         item.inactivate(author_id=self.author_id)
-        self.repository.save(item)
+        self.repository.save(item, force_new_value_node=force_new_value_node)
         if cascade_inactivate:
             self.cascade_inactivate(item)
         return self._transform_aggregate_root_to_pydantic_model(item)
 
-    @db.transaction
+    @ensure_transaction(db)
     def reactivate_retired(
-        self, uid: str, cascade_reactivate: bool = False
+        self,
+        uid: str,
+        cascade_reactivate: bool = False,
+        force_new_value_node: bool = False,
     ) -> BaseModel:
         item = self._find_by_uid_or_raise_not_found(uid, for_update=True)
         item.reactivate(author_id=self.author_id)
-        self.repository.save(item)
+        self.repository.save(item, force_new_value_node=force_new_value_node)
         if cascade_reactivate:
             self.cascade_reactivate(item)
         return self._transform_aggregate_root_to_pydantic_model(item)
@@ -720,17 +795,17 @@ class ConceptGenericService(Generic[_AggregateRootType], ABC):
             "Name",
         )
 
-    def cascade_edit_and_approve(self, item: BaseModel):
+    def cascade_edit_and_approve(self, item: _AggregateRootType):
         pass
 
-    def cascade_new_version(self, item: BaseModel):
+    def cascade_new_version(self, item: _AggregateRootType):
         pass
 
-    def cascade_inactivate(self, item: BaseModel):
+    def cascade_inactivate(self, item: _AggregateRootType):
         pass
 
-    def cascade_reactivate(self, item: BaseModel):
+    def cascade_reactivate(self, item: _AggregateRootType):
         pass
 
-    def cascade_delete(self, item: BaseModel):
+    def cascade_delete(self, item: _AggregateRootType):
         pass

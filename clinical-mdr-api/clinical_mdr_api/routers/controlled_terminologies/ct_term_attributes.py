@@ -18,8 +18,9 @@ from clinical_mdr_api.routers import _generic_descriptions
 from clinical_mdr_api.services.controlled_terminologies.ct_term_attributes import (
     CTTermAttributesService,
 )
-from common import config
 from common.auth import rbac
+from common.auth.dependencies import security
+from common.config import settings
 from common.models.error import ErrorResponse
 
 # Prefixed with "/ct"
@@ -30,7 +31,7 @@ CTTermUID = Path(description="The unique id of the CTTermAttributes")
 
 @router.get(
     "/terms/attributes",
-    dependencies=[rbac.LIBRARY_READ],
+    dependencies=[security, rbac.LIBRARY_READ],
     summary="Returns all terms attributes.",
     response_model_exclude_unset=True,
     status_code=200,
@@ -67,16 +68,16 @@ def get_terms(
         Json | None, Query(description=_generic_descriptions.SORT_BY)
     ] = None,
     page_number: Annotated[
-        int | None, Query(ge=1, description=_generic_descriptions.PAGE_NUMBER)
-    ] = config.DEFAULT_PAGE_NUMBER,
+        int, Query(ge=1, description=_generic_descriptions.PAGE_NUMBER)
+    ] = settings.default_page_number,
     page_size: Annotated[
-        int | None,
+        int,
         Query(
             ge=0,
-            le=config.MAX_PAGE_SIZE,
+            le=settings.max_page_size,
             description=_generic_descriptions.PAGE_SIZE,
         ),
-    ] = config.DEFAULT_PAGE_SIZE,
+    ] = settings.default_page_size,
     filters: Annotated[
         Json | None,
         Query(
@@ -85,10 +86,10 @@ def get_terms(
         ),
     ] = None,
     operator: Annotated[
-        str | None, Query(description=_generic_descriptions.FILTER_OPERATOR)
-    ] = config.DEFAULT_FILTER_OPERATOR,
+        str, Query(description=_generic_descriptions.FILTER_OPERATOR)
+    ] = settings.default_filter_operator,
     total_count: Annotated[
-        bool | None, Query(description=_generic_descriptions.TOTAL_COUNT)
+        bool, Query(description=_generic_descriptions.TOTAL_COUNT)
     ] = False,
 ) -> CustomPage[CTTermAttributes]:
     ct_term_attribute_service = CTTermAttributesService()
@@ -105,14 +106,14 @@ def get_terms(
         filter_by=filters,
         filter_operator=FilterOperator.from_str(operator),
     )
-    return CustomPage.create(
+    return CustomPage(
         items=results.items, total=results.total, page=page_number, size=page_size
     )
 
 
 @router.get(
     "/terms/attributes/headers",
-    dependencies=[rbac.LIBRARY_READ],
+    dependencies=[security, rbac.LIBRARY_READ],
     summary="Returns possibles values from the database for a given header",
     description="""Allowed parameters include : field name for which to get possible
     values, search string to provide filtering for the field name, additional filters to apply on other fields""",
@@ -146,7 +147,7 @@ def get_distinct_values_for_header(
         Query(description="If specified, only terms from given package are returned."),
     ] = None,
     search_string: Annotated[
-        str | None, Query(description=_generic_descriptions.HEADER_SEARCH_STRING)
+        str, Query(description=_generic_descriptions.HEADER_SEARCH_STRING)
     ] = "",
     filters: Annotated[
         Json | None,
@@ -156,11 +157,11 @@ def get_distinct_values_for_header(
         ),
     ] = None,
     operator: Annotated[
-        str | None, Query(description=_generic_descriptions.FILTER_OPERATOR)
-    ] = config.DEFAULT_FILTER_OPERATOR,
+        str, Query(description=_generic_descriptions.FILTER_OPERATOR)
+    ] = settings.default_filter_operator,
     page_size: Annotated[
-        int | None, Query(description=_generic_descriptions.HEADER_PAGE_SIZE)
-    ] = config.DEFAULT_HEADER_PAGE_SIZE,
+        int, Query(description=_generic_descriptions.HEADER_PAGE_SIZE)
+    ] = settings.default_header_page_size,
 ) -> list[Any]:
     ct_term_service = CTTermAttributesService()
     return ct_term_service.get_distinct_values_for_header(
@@ -178,7 +179,7 @@ def get_distinct_values_for_header(
 
 @router.get(
     "/terms/{term_uid}/attributes",
-    dependencies=[rbac.LIBRARY_READ],
+    dependencies=[security, rbac.LIBRARY_READ],
     summary="Returns the latest/newest version of a specific ct term identified by 'term_uid'",
     status_code=200,
     responses={
@@ -227,7 +228,7 @@ def get_term_attributes(
 
 @router.get(
     "/terms/{term_uid}/attributes/versions",
-    dependencies=[rbac.LIBRARY_READ],
+    dependencies=[security, rbac.LIBRARY_READ],
     summary="Returns the version history of a specific CTTermAttributes identified by 'term_uid'.",
     description="The returned versions are ordered by\n"
     "0. start_date descending (newest entries first)",
@@ -247,7 +248,7 @@ def get_versions(term_uid: Annotated[str, CTTermUID]) -> list[CTTermAttributesVe
 
 @router.patch(
     "/terms/{term_uid}/attributes",
-    dependencies=[rbac.LIBRARY_WRITE],
+    dependencies=[security, rbac.LIBRARY_WRITE],
     summary="Updates the term identified by 'term_uid'.",
     description="""This request is only valid if the term
 * is in 'Draft' status and
@@ -291,7 +292,7 @@ def edit(
 
 @router.post(
     "/terms/{term_uid}/attributes/versions",
-    dependencies=[rbac.LIBRARY_WRITE],
+    dependencies=[security, rbac.LIBRARY_WRITE],
     summary="Creates a new term in 'Draft' status.",
     description="""This request is only valid if
 * the specified term is in 'Final' status and
@@ -326,7 +327,7 @@ def create(term_uid: Annotated[str, CTTermUID]) -> CTTermAttributes:
 
 @router.post(
     "/terms/{term_uid}/attributes/approvals",
-    dependencies=[rbac.LIBRARY_WRITE],
+    dependencies=[security, rbac.LIBRARY_WRITE],
     summary="Approves the term identified by 'term_uid'.",
     description="""This request is only valid if the term
 * is in 'Draft' status and
@@ -360,7 +361,7 @@ def approve(term_uid: Annotated[str, CTTermUID]) -> CTTermAttributes:
 
 @router.delete(
     "/terms/{term_uid}/attributes/activations",
-    dependencies=[rbac.LIBRARY_WRITE],
+    dependencies=[security, rbac.LIBRARY_WRITE],
     summary="Inactivates/deactivates the term identified by 'term_uid'.",
     description="""This request is only valid if the term
 * is in 'Final' status only (so no latest 'Draft' status exists).
@@ -392,7 +393,7 @@ def inactivate(term_uid: Annotated[str, CTTermUID]) -> CTTermAttributes:
 
 @router.post(
     "/terms/{term_uid}/attributes/activations",
-    dependencies=[rbac.LIBRARY_WRITE],
+    dependencies=[security, rbac.LIBRARY_WRITE],
     summary="Reactivates the term identified by 'term_uid'.",
     description="""This request is only valid if the term
 * is in 'Retired' status only (so no latest 'Draft' status exists).
@@ -424,7 +425,7 @@ def reactivate(term_uid: Annotated[str, CTTermUID]) -> CTTermAttributes:
 
 @router.delete(
     "/terms/{term_uid}/attributes",
-    dependencies=[rbac.LIBRARY_WRITE],
+    dependencies=[security, rbac.LIBRARY_WRITE],
     summary="Deletes the term identified by 'term_uid'.",
     description="""This request is only valid if \n
 * the term is in 'Draft' status and

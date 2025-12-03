@@ -10,8 +10,9 @@ from typing import Sequence
 import aiohttp
 import requests
 
-from .metrics import Metrics
-from .path_join import path_join
+from importers.functions.caselessdict import CaselessDict
+from importers.utils.metrics import Metrics
+from importers.utils.path_join import path_join
 
 # CDISC codelists
 CODELIST_STUDY_TYPE = "Study Type"
@@ -281,6 +282,21 @@ class ApiBinding:
             self.metrics.icrement(path + "--Patch-ERROR")
         return None
 
+    def delete_to_api(self, path: str):
+        url = path_join(self.api_base_url, path)
+        response = requests.delete(url, headers=self.api_headers)
+        if response.ok:
+            self.metrics.icrement(path + "--Delete")
+            self.log.info("Delete %s %s", path, "success")
+            return response.text
+
+        self.log.warning("Delete %s %s", path, "error")
+
+        self.log.warning(response.text)
+        self.metrics.icrement(path + "--Patch-ERROR")
+
+        return None
+
     def approve_item(self, uid: str, url: str):
         full_url = path_join(self.api_base_url, url, uid, "approvals")
         response = requests.post(full_url, headers=self.api_headers)
@@ -370,7 +386,7 @@ class ApiBinding:
         }
         if params is not None:
             page_params.update(params)
-        self.log.info(f"Fetching {path}, page size: {page_size}")
+        self.log.debug(f"Fetching {path}, page size: {page_size}")
         data = self.get_all_from_api(path, params=page_params, items_only=False)
         all_items = data["items"]
         count = data["total"]
@@ -381,7 +397,7 @@ class ApiBinding:
         while page_size * page_number < count:
             page_number += 1
             page_params["page_number"] = page_number
-            self.log.info(f"Fetching {path}, page {page_number} of {nbr_pages}")
+            self.log.debug(f"Fetching {path}, page {page_number} of {nbr_pages}")
             additional_data = self.get_all_from_api(
                 path, params=page_params, items_only=True
             )
@@ -536,6 +552,19 @@ class ApiBinding:
             codelists_uids[res["name"]] = res["codelist_uid"]
         return codelists_uids
 
+    # Get a dictionary with key = submission value and value = uid
+    def get_codelists_uid_and_submval(self):
+        all_codelist_attributes = self.get_all_from_api("/ct/codelists/attributes")
+
+        all_codelist_uids = CaselessDict(
+            self.get_all_identifiers(
+                all_codelist_attributes,
+                identifier="submission_value",
+                value="codelist_uid",
+            )
+        )
+        return all_codelist_uids
+
     def get_all_activity_objects(self, object_type, filters=None):
         page_number = 1
         page_size = 100
@@ -547,7 +576,7 @@ class ApiBinding:
         }
         if filters:
             params["filters"] = filters
-        self.log.info(
+        self.log.debug(
             f"Getting {object_type} page_number:{page_number}, page_size:{page_size}"
         )
         all_activities_initial = self.get_all_from_api(
@@ -570,7 +599,7 @@ class ApiBinding:
             }
             if filters:
                 params["filters"] = filters
-            self.log.info(
+            self.log.debug(
                 f"Getting {object_type} page_number:{page_number}, page_size:{page_size}, total:{count}"
             )
             items = self.get_all_from_api(
@@ -696,7 +725,7 @@ class ApiBinding:
         full_url = path_join(self.api_base_url, url)
         response = requests.patch(full_url, headers=self.api_headers, json=body)
         if response.ok:
-            self.metrics.icrement(path + "--Patch")
+            self.metrics.icrement(path + "--PATCH")
             self.log.info("Patch %s %s", path, "success")
             return response.json()
 
@@ -715,6 +744,33 @@ class ApiBinding:
         else:
             self.log.warning("Patch %s %s", url, response.text)
             self.metrics.icrement(path + "--Patch-ERROR")
+        return None
+
+    def simple_put(self, body, url, path):
+        full_url = path_join(self.api_base_url, url)
+        response = requests.put(full_url, headers=self.api_headers, json=body)
+        msg = "Put %s %s"
+
+        if response.ok:
+            self.metrics.icrement(path + "--PUT")
+            self.log.info(msg, url, "success")
+            return response.json()
+
+        if (
+            "message" in response.json().keys()
+            and "already exists" in response.json()["message"]
+        ):
+            self.log.warning(msg, url, "error, item already exists")
+            self.metrics.icrement(path + "--AlreadyExists")
+        elif (
+            "message" in response.json().keys()
+            and "does not exist" in response.json()["message"]
+        ):
+            self.log.warning(msg, url, "error, item not found")
+            self.metrics.icrement(path + "--NotFound")
+        else:
+            self.log.warning(msg, url, response.text)
+            self.metrics.icrement(path + "--PUT-ERROR")
         return None
 
     # ---------------------------------------------------------------
@@ -743,6 +799,24 @@ class ApiBinding:
             path_join(self.api_base_url, path), json=body, headers=self.api_headers
         ) as response:
             status = response.status
+
+            if status == 405:
+                async with session.put(
+                    path_join(self.api_base_url, path),
+                    json=body,
+                    headers=self.api_headers,
+                ) as response:
+                    status = response.status
+
+                    try:
+                        result = await response.json()
+                    except aiohttp.ContentTypeError:
+                        textresult = await response.text()
+                        result = {}
+                        self.log.error(
+                            f"Failed to patch to '{path}', status: {status}, message: {textresult}"
+                        )
+                    return status, result
             try:
                 result = await response.json()
             except aiohttp.ContentTypeError:
@@ -893,7 +967,7 @@ class ApiBinding:
         if approve and uid is not None:
             # Sleeping to avoid errors when running locally (with limited resources for the db).
             time.sleep(SLEEP_BEFORE_APPROVE)
-            status, reponse = await self.approve_item_async(
+            status, _response = await self.approve_item_async(
                 uid=response.get("uid"), url=data["approve_path"], session=session
             )
             if not status_ok(status):
@@ -901,3 +975,46 @@ class ApiBinding:
             return response
         elif approve:
             self.log.error("No uid returned, unable to approve the new version")
+
+    def get_codelist_uid(self, codelist_submval):
+        filters = json.dumps(
+            {"submission_value": {"v": [codelist_submval], "op": "eq"}}
+        )
+        result = self.get_all_from_api(
+            "/ct/codelists/attributes", params={"filters": filters}
+        )
+        if result is not None and len(result) > 0:
+            uid = result[0]["codelist_uid"]
+            self.log.debug(f"Found codelist uid for {codelist_submval}: {uid}")
+            return uid
+
+    def find_sponsor_term_by_name_and_definition(self, name, definition):
+        filters = json.dumps(
+            {
+                "name.sponsor_preferred_name": {"v": [name], "op": "eq"},
+                "attributes.definition": {"v": [definition], "op": "eq"},
+            }
+        )
+        result = self.get_all_from_api(
+            "/ct/terms", params={"filters": filters, "library": "Sponsor"}
+        )
+        if result is not None and len(result) > 0:
+            return result[0]
+
+    def find_term_by_submission_value(self, codelist_uid, submission_value):
+        filters = json.dumps(
+            {"submission_value": {"v": [submission_value], "op": "eq"}}
+        )
+        result = self.get_all_from_api(
+            f"/ct/codelists/{codelist_uid}/terms", params={"filters": filters}
+        )
+        if result is not None and len(result) > 0:
+            return result[0]
+
+    def find_term_by_concept_id(self, concept_id: str):
+        filters = json.dumps({"concept_id": {"v": [concept_id], "op": "eq"}})
+        result = self.get_all_from_api(
+            "/ct/terms/attributes", params={"filters": filters, "library": "CDISC"}
+        )
+        if result is not None and len(result) > 0:
+            return result[0]

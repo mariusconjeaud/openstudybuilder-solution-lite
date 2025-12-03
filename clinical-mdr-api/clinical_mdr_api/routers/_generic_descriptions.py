@@ -1,7 +1,7 @@
 from fastapi import Query
 
 from clinical_mdr_api.models.validators import FLOAT_REGEX
-from common import config
+from common.config import settings
 from common.models.error import ErrorResponse
 
 
@@ -63,7 +63,7 @@ Errors: `page_size` not provided, `page_number` must be equal or greater than 1.
 
 PAGE_SIZE = f"""
 Number of items to be returned per page.\n
-Default: {config.DEFAULT_PAGE_SIZE}\n
+Default: {settings.default_page_size}\n
 Functionality: Provided together with `page_number`, selects the number of results per page.\n
 In case the value is set to `0`, all rows will be returned.\n
 Errors: `page_number` not provided.
@@ -114,6 +114,11 @@ FILTER_OPERATOR = (
 )
 
 FILTERS_EXAMPLE = {
+    "none": {
+        "summary": "No Filters",
+        "description": "No filters are applied.",
+        "value": {},
+    },
     "wildcard": {
         "summary": "Wildcard Filter",
         "description": "Apply a wildcard filter.",
@@ -139,11 +144,6 @@ FILTERS_EXAMPLE = {
         "description": "Apply a filter to display only those records with **exact** matching names.",
         "value": """{"name":{ "v": [""], "op": "eq"}}""",
     },
-    "none": {
-        "summary": "No Filters",
-        "description": "No filters are applied.",
-        "value": {},
-    },
 }
 
 TOTAL_COUNT = (
@@ -161,6 +161,8 @@ HEADER_SEARCH_STRING = """Optionally, a (part of the) text for a given field.
 The query result will be values of the field that contain the provided search string."""
 
 HEADER_PAGE_SIZE = "Optionally, the number of results to return. Default = 10."
+
+HEADERS_QUERY_LITE = "Whether to use the lightweight implementation of this endpoint, which doesn't support `filters` and `operator` parameters."
 
 DATA_EXPORTS_HEADER = """\n
 Response format:\n
@@ -184,13 +186,11 @@ STUDY_VALUE_VERSION_QUERY = Query(
 ERROR_400 = {"model": ErrorResponse, "description": "Error"}
 ERROR_403 = {"model": ErrorResponse, "description": "Forbidden"}
 ERROR_404 = {"model": ErrorResponse, "description": "Entity not found"}
-ERROR_405 = {"model": ErrorResponse, "description": "Unsupported method"}
 ERROR_409 = {
     "model": ErrorResponse,
     "description": "The request could not be completed due to a conflict with the current state of the target resource. "
     "This typically occurs when attempting to create or modify a resource that already exists or violates a uniqueness constraint.",
 }
-ERROR_422 = {"model": ErrorResponse, "description": "Unprocessable Content"}
 
 
 SYNTAX_FILTERS = (

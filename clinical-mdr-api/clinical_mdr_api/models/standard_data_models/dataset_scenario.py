@@ -1,4 +1,4 @@
-from typing import Annotated
+from typing import Annotated, Any
 
 from pydantic import Field
 
@@ -14,14 +14,14 @@ class DatasetScenario(BaseModel):
     data_model_ig_names: Annotated[list[str], Field()]
 
     @classmethod
-    def from_repository_output(cls, input_dict: dict):
+    def from_repository_output(cls, input_dict: dict[str, Any]):
         return cls(
-            uid=input_dict.get("uid"),
+            uid=input_dict["uid"],
             label=input_dict.get("standard_value").get("label"),
-            catalogue_name=input_dict.get("catalogue_name"),
+            catalogue_name=input_dict["catalogue_name"],
             dataset=SimpleDataset(
                 ordinal=input_dict.get("dataset").get("ordinal"),
                 name=input_dict.get("dataset").get("name"),
             ),
-            data_model_ig_names=input_dict.get("data_model_ig_names"),
+            data_model_ig_names=input_dict["data_model_ig_names"],
         )

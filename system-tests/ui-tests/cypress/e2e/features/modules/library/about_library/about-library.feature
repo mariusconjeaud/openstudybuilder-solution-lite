@@ -69,6 +69,7 @@ Feature: Library - About Library
             Find listings of all codes list and terms for controlled terminology, dictionaries, concepts as well as the data exchange standards, in both new and legacy format.
             """
 
+    @smoke_test
     Scenario Outline: [Navigation] User must be able to use tile dropdowns to navigate to the pages
         Given A test study is selected
         And The '/library' page is opened
@@ -91,7 +92,8 @@ Feature: Library - About Library
             | Dictionaries            | UCUM                  | /library/ucum                                  |
             | Concepts                | Activities            | /library/activities/activities                 |
             | Concepts                | Units                 | /library/units                                 |
-            | Concepts                | CRFs                  | /library/crfs/templates                        |
+            | Data Collection Standards | CRF Viewer            | /library/crf-viewer/odm-viewer              |
+            | Data Collection Standards | CRF Builder           | /library/crf-builder/collections              |
             | Syntax Templates        | Objectives            | /library/objective_templates                   |
             | Syntax Templates        | Endpoints             | /library/endpoint_templates                    |
             | Syntax Templates        | Time Frames           | /library/timeframe_templates                   |

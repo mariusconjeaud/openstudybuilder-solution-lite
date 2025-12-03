@@ -5,9 +5,6 @@ from pydantic import Field
 
 from clinical_mdr_api.descriptions.general import CHANGES_FIELD_DESC
 from clinical_mdr_api.domains.controlled_terminologies.ct_term_name import CTTermNameAR
-from clinical_mdr_api.models.controlled_terminologies.ct_term_codelist import (
-    CTTermCodelist,
-)
 from clinical_mdr_api.models.libraries.library import Library
 from clinical_mdr_api.models.utils import BaseModel, PatchInputModel
 
@@ -15,17 +12,14 @@ from clinical_mdr_api.models.utils import BaseModel, PatchInputModel
 class CTTermName(BaseModel):
     @classmethod
     def from_ct_term_ar(cls, ct_term_name_ar: CTTermNameAR) -> Self:
+        catalogue_names = (
+            ct_term_name_ar.ct_term_vo.catalogue_names
+            if ct_term_name_ar.ct_term_vo.catalogue_names
+            else []
+        )
         return cls(
             term_uid=ct_term_name_ar.uid,
-            catalogue_name=ct_term_name_ar.ct_term_vo.catalogue_name,
-            codelists=[
-                CTTermCodelist(
-                    codelist_uid=x.codelist_uid,
-                    order=x.order,
-                    library_name=x.library_name,
-                )
-                for x in ct_term_name_ar.ct_term_vo.codelists
-            ],
+            catalogue_names=catalogue_names,
             sponsor_preferred_name=ct_term_name_ar.ct_term_vo.name,
             sponsor_preferred_name_sentence_case=ct_term_name_ar.ct_term_vo.name_sentence_case,
             library_name=Library.from_library_vo(ct_term_name_ar.library).name,
@@ -49,14 +43,6 @@ class CTTermName(BaseModel):
         return cls(
             sponsor_preferred_name=ct_term_name_ar.ct_term_vo.name,
             sponsor_preferred_name_sentence_case=ct_term_name_ar.ct_term_vo.name_sentence_case,
-            codelists=[
-                CTTermCodelist(
-                    codelist_uid=x.codelist_uid,
-                    order=x.order,
-                    library_name=x.library_name,
-                )
-                for x in ct_term_name_ar.ct_term_vo.codelists
-            ],
             possible_actions=sorted(
                 [_.value for _ in ct_term_name_ar.get_possible_actions()]
             ),
@@ -70,13 +56,11 @@ class CTTermName(BaseModel):
             date_conflict=ct_term_name_ar.ct_term_vo.date_conflict,
         )
 
-    term_uid: Annotated[str | None, Field(json_schema_extra={"nullable": True})] = None
+    term_uid: Annotated[str, Field()] = ""
 
-    catalogue_name: Annotated[
-        str | None, Field(json_schema_extra={"nullable": True})
-    ] = None
-
-    codelists: list[CTTermCodelist] = Field(default_factory=list)
+    catalogue_names: Annotated[
+        list[str], Field(json_schema_extra={"remove_from_wildcard": True})
+    ] = []
 
     sponsor_preferred_name: Annotated[str, Field()]
 
@@ -139,4 +123,4 @@ class CTTermNameEditInput(PatchInputModel):
     sponsor_preferred_name_sentence_case: Annotated[str | None, Field(min_length=1)] = (
         None
     )
-    change_description: Annotated[str | None, Field(min_length=1)] = None
+    change_description: Annotated[str, Field(min_length=1)]

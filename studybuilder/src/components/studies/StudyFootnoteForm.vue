@@ -446,6 +446,7 @@ export default {
   },
   watch: {
     creationMode(value) {
+      this.preInstanceMode = true
       if (value === 'template') {
         this.steps = this.getInitialSteps()
         this.getFootnoteTemplates()
@@ -477,11 +478,10 @@ export default {
         (study) => study.uid !== this.selectedStudy.uid
       )
     })
-    terms.getByCodelist('footnoteTypes').then((resp) => {
+    terms.getTermsByCodelist('footnoteTypes').then((resp) => {
       for (const type of resp.data.items) {
         if (
-          type.name.sponsor_preferred_name ===
-          footnoteConstants.FOOTNOTE_TYPE_SOA
+          type.sponsor_preferred_name === footnoteConstants.FOOTNOTE_TYPE_SOA
         ) {
           this.footnoteType = type
           break
@@ -538,7 +538,7 @@ export default {
           }
         } else {
           params.filters['type.name.sponsor_preferred_name'] = {
-            v: [this.footnoteType.name.sponsor_preferred_name],
+            v: [this.footnoteType.sponsor_preferred_name],
           }
         }
         this.apiEndpoint.get(params).then((resp) => {

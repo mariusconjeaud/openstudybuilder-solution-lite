@@ -10,6 +10,7 @@ Tests for /studies/{study_uid}/study-visits endpoints
 # which pylint interprets as unused arguments
 
 from datetime import datetime, timezone
+from typing import Any
 from unittest import mock
 
 import pytest
@@ -17,7 +18,6 @@ from fastapi.testclient import TestClient
 from neomodel import db
 
 from clinical_mdr_api import main
-from clinical_mdr_api.domains.study_selections.study_visit import VisitClass
 from clinical_mdr_api.models.clinical_programmes.clinical_programme import (
     ClinicalProgramme,
 )
@@ -46,7 +46,7 @@ from clinical_mdr_api.tests.integration.utils.method_library import (
 )
 from clinical_mdr_api.tests.integration.utils.utils import TestUtils
 from clinical_mdr_api.tests.utils.checks import assert_response_status_code
-from common import config
+from common.utils import VisitClass
 
 # Global variables shared between fixtures and tests
 study: Study
@@ -54,7 +54,7 @@ study_visit_uid: str
 epoch_uid: str
 DAYUID: str
 WEEKUID: str
-visits_basic_data: dict
+visits_basic_data: dict[Any, Any]
 clinical_programme: ClinicalProgramme
 project: Project
 initial_ct_term_study_standard_test: CTTermName
@@ -112,7 +112,7 @@ def test_data():
     global initial_ct_term_study_standard_test
     initial_ct_term_study_standard_test = TestUtils.create_ct_term(
         codelist_uid="CTCodelist_00004",
-        name_submission_value=ct_term_name,
+        submission_value=ct_term_name,
         sponsor_preferred_name=ct_term_name,
         order=1,
         catalogue_name=catalogue_name,
@@ -635,6 +635,7 @@ def test_non_manually_defined_visit(api_client):
         f"/studies/{study_for_i_visit.uid}/study-visits",
         json=datadict,
     )
+    assert_response_status_code(response, 201)
 
     # Create Manually defined Visit
     manually_defined_name = "Visit 2"
@@ -669,6 +670,13 @@ def test_non_manually_defined_visit(api_client):
     assert res["visit_number"] == manually_defined_number
     assert res["unique_visit_number"] == manually_defined_unique_number
     manual_visit_uid = res["uid"]
+
+    response = api_client.get(
+        f"/studies/{study_for_i_visit.uid}/study-visits/{manual_visit_uid}/audit-trail/",
+    )
+    assert_response_status_code(response, 200)
+    res = response.json()
+    assert len(res) == 1
 
     # failed post on the uniqueness check for non_manually defined visit
 
@@ -716,6 +724,7 @@ def test_non_manually_defined_visit(api_client):
             "visit_number": manually_defined_number,
             "unique_visit_number": manually_defined_unique_number,
             "visit_class": "MANUALLY_DEFINED_VISIT",
+            "uid": manual_visit_uid,
         }
     )
 
@@ -996,42 +1005,43 @@ def test_study_visit_timings(api_client):
     assert visits[0]["study_day_number"] == -14
     assert visits[0]["study_duration_days_label"] == "-14 days"
     assert visits[0]["study_week_number"] == -2
+    assert visits[0]["study_duration_weeks"] == -2
     assert visits[0]["study_duration_weeks_label"] == "-2 weeks"
     assert visits[0]["week_in_study_label"] == "Week -2"
     # timing -1
     assert visits[1]["study_day_number"] == -1
     assert visits[1]["study_duration_days_label"] == "-1 days"
     assert visits[1]["study_week_number"] == -1
+    assert visits[1]["study_duration_weeks"] == 0
     assert visits[1]["study_duration_weeks_label"] == "0 weeks"
     assert visits[1]["week_in_study_label"] == "Week 0"
     # timing 0
     assert visits[2]["study_day_number"] == 1
     assert visits[2]["study_duration_days_label"] == "0 days"
     assert visits[2]["study_week_number"] == 1
+    assert visits[2]["study_duration_weeks"] == 0
     assert visits[2]["study_duration_weeks_label"] == "0 weeks"
     assert visits[2]["week_in_study_label"] == "Week 0"
     # timing 1
     assert visits[3]["study_day_number"] == 2
     assert visits[3]["study_duration_days_label"] == "1 days"
     assert visits[3]["study_week_number"] == 1
+    assert visits[3]["study_duration_weeks"] == 0
     assert visits[3]["study_duration_weeks_label"] == "0 weeks"
     assert visits[3]["week_in_study_label"] == "Week 0"
     # timing 14
     assert visits[4]["study_day_number"] == 15
     assert visits[4]["study_duration_days_label"] == "14 days"
     assert visits[4]["study_week_number"] == 3
+    assert visits[4]["study_duration_weeks"] == 2
     assert visits[4]["study_duration_weeks_label"] == "2 weeks"
     assert visits[4]["week_in_study_label"] == "Week 2"
 
 
 def test_create_repeating_visit(api_client):
-    _codelist = TestUtils.create_ct_codelist(
-        name=config.STUDY_VISIT_REPEATING_FREQUENCY,
-        sponsor_preferred_name=config.STUDY_VISIT_REPEATING_FREQUENCY,
-        extensible=True,
-        approve=True,
+    _term = TestUtils.create_ct_term(
+        codelist_uid="CTCodelist_Repeating_Visit_Frequency"
     )
-    _term = TestUtils.create_ct_term(codelist_uid=_codelist.codelist_uid)
     _study = TestUtils.create_study()
     _study_epoch = create_study_epoch("EpochSubType_0001", study_uid=_study.uid)
 
@@ -1055,7 +1065,7 @@ def test_create_repeating_visit(api_client):
     )
     res = response.json()
     assert_response_status_code(response, 201)
-    assert res["repeating_frequency_uid"] == _term.term_uid
+    assert res["repeating_frequency"]["term_uid"] == _term.term_uid
     assert (
         res["repeating_frequency"]["sponsor_preferred_name"]
         == _term.sponsor_preferred_name
@@ -1068,7 +1078,7 @@ def test_create_repeating_visit(api_client):
     response = api_client.get(f"/studies/{_study.uid}/study-visits/{res['uid']}")
     res = response.json()
     assert_response_status_code(response, 200)
-    assert res["repeating_frequency_uid"] == _term.term_uid
+    assert res["repeating_frequency"]["term_uid"] == _term.term_uid
     assert (
         res["repeating_frequency"]["sponsor_preferred_name"]
         == _term.sponsor_preferred_name
@@ -1631,7 +1641,7 @@ def test_study_visist_version_selecting_ct_package(api_client):
         f"/ct/terms/{ctterm_uid}/names/versions",
     )
     assert_response_status_code(response, 201)
-    response = api_client.patch(
+    api_client.patch(
         f"/ct/terms/{ctterm_uid}/names",
         json={
             "sponsor_preferred_name": new_ctterm_name,
@@ -2256,3 +2266,119 @@ def test_editing_special_visit(api_client):
     assert_response_status_code(response, 200)
     special_visit_after_update = response.json()
     assert special_visit_after_update["show_visit"] is False
+
+
+@pytest.mark.parametrize(
+    ("study_uid", "study_value_version"),
+    [
+        ("Study_000492", "57"),
+        ("Study_000787", None),
+        (
+            None,
+            "99",
+        ),  # None as study_uid will get replaced with study.uid provided by test_data fixture
+    ],
+)
+def test_get_all_visits_invalid_study_uid_or_version(
+    api_client, test_data, study_uid: str, study_value_version: str
+):
+    if study_uid is None:
+        # study global was not available at parametrizing time
+        study_uid = study.uid
+        response = api_client.get(f"/studies/{study_uid}/study-visits")
+        assert_response_status_code(response, 200)
+
+    if study_value_version is not None:
+        params = {"study_value_version": study_value_version}
+    else:
+        params = None
+
+    response = api_client.get(f"/studies/{study_uid}/study-visits", params=params)
+    assert_response_status_code(response, 404)
+
+
+def test_assert_uvn_is_changed_when_group_of_visits_is_modified(api_client):
+    study = TestUtils.create_study(project_number=project.project_number)
+    study_epoch = create_study_epoch("EpochSubType_0001", study_uid=study.uid)
+
+    # Global Anchor Visit
+    inputs = {
+        "study_epoch_uid": study_epoch.uid,
+        "visit_type_uid": "VisitType_0002",
+        "time_reference_uid": "VisitSubType_0005",
+        "time_value": 0,
+        "time_unit_uid": DAYUID,
+        "visit_class": "SINGLE_VISIT",
+        "visit_subclass": "ANCHOR_VISIT_IN_GROUP_OF_SUBV",
+        "is_global_anchor_visit": True,
+    }
+    datadict = visits_basic_data
+    datadict.update(inputs)
+    response = api_client.post(
+        f"/studies/{study.uid}/study-visits",
+        json=datadict,
+    )
+    assert_response_status_code(response, 201)
+    anchor_visit = response.json()
+    anchor_visit_uid = anchor_visit["uid"]
+    assert anchor_visit["unique_visit_number"] == 100
+
+    inputs = {
+        "study_epoch_uid": study_epoch.uid,
+        "visit_type_uid": "VisitType_0003",
+        "time_reference_uid": "VisitSubType_0002",
+        "time_value": -10,
+        "time_unit_uid": DAYUID,
+        "visit_sublabel_reference": anchor_visit_uid,
+        "is_global_anchor_visit": False,
+        "visit_class": "SINGLE_VISIT",
+        "visit_subclass": "ADDITIONAL_SUBVISIT_IN_A_GROUP_OF_SUBV",
+    }
+    datadict = visits_basic_data
+    datadict.update(inputs)
+
+    response = api_client.post(
+        f"/studies/{study.uid}/study-visits",
+        json=datadict,
+    )
+    assert_response_status_code(response, 201)
+    subvisit = response.json()
+    subvisit_uid = subvisit["uid"]
+    assert subvisit["unique_visit_number"] == 100
+
+    response = api_client.get(
+        f"/studies/{study.uid}/study-visits/{anchor_visit_uid}/audit-trail",
+    )
+    assert_response_status_code(response, 200)
+    audit_trail = response.json()
+    assert len(audit_trail) == 2
+    assert audit_trail[0]["unique_visit_number"] == 110
+    assert audit_trail[1]["unique_visit_number"] == 100
+
+    datadict.update({"time_value": 10, "uid": subvisit_uid})
+    response = api_client.patch(
+        f"/studies/{study.uid}/study-visits/{subvisit_uid}",
+        json=datadict,
+    )
+    assert_response_status_code(response, 200)
+    assert response.json()["unique_visit_number"] == 110
+
+    response = api_client.get(
+        f"/studies/{study.uid}/study-visits/{subvisit_uid}/audit-trail",
+    )
+    assert_response_status_code(response, 200)
+    audit_trail = response.json()
+    assert len(audit_trail) == 2
+    assert audit_trail[0]["unique_visit_number"] == 110
+    assert audit_trail[1]["unique_visit_number"] == 100
+
+    response = api_client.get(
+        f"/studies/{study.uid}/study-visits/{anchor_visit_uid}/audit-trail",
+    )
+    assert_response_status_code(response, 200)
+    audit_trail = response.json()
+    assert len(audit_trail) == 3
+    print(audit_trail[2]["unique_visit_number"])
+    assert audit_trail[0]["unique_visit_number"] == 100
+    assert audit_trail[1]["unique_visit_number"] == 110
+    assert audit_trail[2]["unique_visit_number"] == 100

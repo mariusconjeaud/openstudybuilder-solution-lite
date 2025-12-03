@@ -443,7 +443,7 @@
               <y:Geometry height="34.89999961853027" width="40.0" x="530.9299165089938" y="235.28675041198733"/>
               <y:Fill color="#CCCCFF" transparent="false"/>
               <y:BorderStyle color="#000000" type="line" width="1.0"/>
-              <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="18.701171875" horizontalTextPosition="center" iconTextGap="4" modelName="sandwich" modelPosition="s" textColor="#000000" verticalTextPosition="bottom" visible="true" width="70.708984375" x="-15.3544921875" xml:space="preserve" y="38.89999961853027">Studybuilder</y:NodeLabel>
+              <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="18.701171875" horizontalTextPosition="center" iconTextGap="4" modelName="sandwich" modelPosition="s" textColor="#000000" verticalTextPosition="bottom" visible="true" width="70.708984375" x="-15.3544921875" xml:space="preserve" y="38.89999961853027">OpenStudybuilder</y:NodeLabel>
               <y:SVGNodeProperties usingVisualBounds="true"/>
               <y:SVGModel svgBoundsPolicy="0">
                 <y:SVGContent refid="6"/>

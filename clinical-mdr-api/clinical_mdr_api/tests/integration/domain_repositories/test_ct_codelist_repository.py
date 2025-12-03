@@ -126,11 +126,11 @@ class TestCTCodelistRepository(unittest.TestCase):
                 ):
                     if filter_tuple[0] is not None:
                         self.assertEqual(
-                            codelist_attributes.ct_codelist_vo.catalogue_name,
+                            codelist_attributes.ct_codelist_vo.catalogue_names[0],
                             filter_tuple[0],
                         )
                         self.assertEqual(
-                            codelist_names.ct_codelist_vo.catalogue_name,
+                            codelist_names.ct_codelist_vo.catalogue_names[0],
                             filter_tuple[0],
                         )
                     if filter_tuple[1] is not None:

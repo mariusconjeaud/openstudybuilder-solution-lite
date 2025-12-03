@@ -1,7 +1,10 @@
 import abc
 from datetime import datetime
-from typing import TypeVar
+from typing import Any, Generic, Literal, TypeVar, overload
 
+from clinical_mdr_api.domain_repositories.controlled_terminologies.ct_codelist_attributes_repository import (
+    CTCodelistAttributesRepository,
+)
 from clinical_mdr_api.domain_repositories.library_item_repository import (
     LibraryItemRepositoryImplBase,
 )
@@ -9,10 +12,6 @@ from clinical_mdr_api.domain_repositories.models.activities import (
     ActivityGroupRoot,
     ActivityRoot,
     ActivitySubGroupRoot,
-)
-from clinical_mdr_api.domain_repositories.models.concepts import (
-    NumericValue,
-    NumericValueRoot,
 )
 from clinical_mdr_api.domain_repositories.models.controlled_terminology import (
     CTTermRoot,
@@ -28,15 +27,7 @@ from clinical_mdr_api.domain_repositories.models.syntax import (
     SyntaxTemplateRoot,
     SyntaxTemplateValue,
 )
-from clinical_mdr_api.domain_repositories.models.template_parameter import (
-    ParameterTemplateRoot,
-    TemplateParameterComplexRoot,
-    TemplateParameterComplexValue,
-    TemplateParameterTermRoot,
-)
 from clinical_mdr_api.domains.libraries.parameter_term import (
-    ComplexParameterTerm,
-    NumericParameterTermVO,
     ParameterTermEntryVO,
     SimpleParameterTermVO,
 )
@@ -49,13 +40,16 @@ from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryItemStatus,
 )
 from clinical_mdr_api.repositories._utils import FilterOperator, sb_clear_cache
+from common.config import settings
 from common.exceptions import NotFoundException
 
 _AggregateRootType = TypeVar("_AggregateRootType", bound=LibraryItemAggregateRootBase)
 
 
 class GenericSyntaxRepository(
-    LibraryItemRepositoryImplBase[_AggregateRootType], abc.ABC
+    LibraryItemRepositoryImplBase[_AggregateRootType],
+    Generic[_AggregateRootType],
+    abc.ABC,
 ):
 
     def find_by_uid_2(
@@ -66,7 +60,7 @@ class GenericSyntaxRepository(
         status: LibraryItemStatus | None = None,
         at_specific_date: datetime | None = None,
         for_update: bool = False,
-        return_study_count: bool | None = False,
+        return_study_count: bool = False,
         return_instantiation_counts: bool = False,
     ):
         "Use find_by_uid instead"
@@ -76,7 +70,7 @@ class GenericSyntaxRepository(
         *,
         status: LibraryItemStatus | None = None,
         library_name: str | None = None,
-        return_study_count: bool | None = False,
+        return_study_count: bool = False,
     ):
         "Use get_all instead"
 
@@ -88,7 +82,7 @@ class GenericSyntaxRepository(
         value: VersionValue,
         study_count: int = 0,
         counts: InstantiationCountsVO | None = None,
-    ) -> _AggregateRootType:
+    ):
         "Use _create_ar instead"
 
     @abc.abstractmethod
@@ -103,18 +97,42 @@ class GenericSyntaxRepository(
     ) -> TemplateAggregateRootBase:
         raise NotImplementedError
 
+    @overload
     def find_by_uid(
         self,
-        uid: str,
+        uid: str | None,
         for_update=False,
         *,
         library_name: str | None = None,
         status: LibraryItemStatus | None = None,
         version: str | None = None,
-        return_study_count: bool | None = False,
+        return_study_count: bool = False,
+        for_audit_trail: Literal[False] = False,
+    ) -> _AggregateRootType: ...
+    @overload
+    def find_by_uid(
+        self,
+        uid: str | None,
+        for_update=False,
+        *,
+        library_name: str | None = None,
+        status: LibraryItemStatus | None = None,
+        version: str | None = None,
+        return_study_count: bool = False,
+        for_audit_trail: Literal[True] = True,
+    ) -> list[_AggregateRootType]: ...
+    def find_by_uid(
+        self,
+        uid: str | None,
+        for_update=False,
+        *,
+        library_name: str | None = None,
+        status: LibraryItemStatus | None = None,
+        version: str | None = None,
+        return_study_count: bool = False,
         for_audit_trail: bool = False,
     ) -> _AggregateRootType | list[_AggregateRootType]:
-        return self.find_by_uid_optimized(
+        return self.find_by_uid_optimized(  # type: ignore[call-overload]
             uid=uid,
             for_update=for_update,
             library_name=library_name,
@@ -129,15 +147,15 @@ class GenericSyntaxRepository(
         *,
         status: LibraryItemStatus | None = None,
         library_name: str | None = None,
-        return_study_count: bool | None = False,
-        sort_by: dict | None = None,
+        return_study_count: bool = False,
+        sort_by: dict[str, bool] | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: dict | None = None,
-        filter_operator: FilterOperator | None = FilterOperator.AND,
+        filter_by: dict[str, dict[str, Any]] | None = None,
+        filter_operator: FilterOperator = FilterOperator.AND,
         total_count: bool = False,
         for_audit_trail: bool = False,
-    ) -> tuple[list, int]:
+    ) -> tuple[list[Any], int]:
         return self.get_all_optimized(
             status=status,
             library_name=library_name,
@@ -156,9 +174,9 @@ class GenericSyntaxRepository(
         *,
         field_name: str,
         status: LibraryItemStatus | None = None,
-        search_string: str | None = "",
-        filter_by: dict | None = None,
-        filter_operator: FilterOperator | None = FilterOperator.AND,
+        search_string: str = "",
+        filter_by: dict[str, dict[str, Any]] | None = None,
+        filter_operator: FilterOperator = FilterOperator.AND,
         page_size: int = 10,
     ):
         return self.get_headers_optimized(
@@ -169,48 +187,6 @@ class GenericSyntaxRepository(
             filter_operator=filter_operator,
             page_size=page_size,
         )
-
-    def _maintain_complex_parameter(self, parameter_config: ComplexParameterTerm):
-        complex_value = TemplateParameterComplexValue.nodes.get_or_none(
-            name=parameter_config.value
-        )
-        if complex_value is None:
-            root: TemplateParameterComplexRoot = TemplateParameterComplexRoot(
-                is_active_parameter=True
-            )
-            root.save()
-            complex_value = TemplateParameterComplexValue(name=parameter_config.value)
-            complex_value.save()
-            root.latest_final.connect(complex_value)
-            root.has_latest_value.connect(complex_value)
-            parameter_root = ParameterTemplateRoot.get(uid=parameter_config.uid)
-            root.has_complex_value.connect(parameter_root)
-            template_root = ParameterTemplateRoot.nodes.get(uid=parameter_config.uid)
-            template_parameter = template_root.has_definition.get()
-            root.has_parameter_term.connect(template_parameter)
-        else:
-            root_uid = complex_value.get_root_uid_by_latest()
-            root = TemplateParameterComplexRoot.nodes.get(uid=root_uid)
-        for i, param in enumerate(parameter_config.parameters):
-            param_uid = param.uid
-            if isinstance(param, NumericParameterTermVO):
-                numeric_value = NumericValue.nodes.get_or_none(name=param.value)
-                if not numeric_value:
-                    numeric_value_root = NumericValueRoot(
-                        uid="NumericValue_" + str(param.value)
-                    )
-                    numeric_value_root.save()
-                    numeric_value = NumericValue(name=param.value)
-                    numeric_value.save()
-                    numeric_value_root.latest_final.connect(numeric_value, {})
-                    numeric_value_root.has_latest_value.connect(numeric_value)
-                    numeric_value_root = numeric_value_root.uid
-                else:
-                    numeric_value_root = numeric_value.get_root_uid_by_latest()
-                param_uid = numeric_value_root
-            tptr = TemplateParameterTermRoot.nodes.get(uid=param_uid)
-            complex_value.uses_parameter.connect(tptr, {"position": i + 1})
-        return root.element_id
 
     def _parse_parameter_terms(
         self, instance_parameters
@@ -255,7 +231,7 @@ class GenericSyntaxRepository(
                 )
 
         # Then, start building the nested dictionary to group parameter terms in a list
-        data_dict = {}
+        data_dict: dict[Any, Any] = {}
         # Create the first two levels, like
         # set_number
         # --> position
@@ -268,16 +244,15 @@ class GenericSyntaxRepository(
                 "template": param["template"],
                 "parameter_uids": [],
                 "conjunction": next(
-                    filter(
-                        lambda x, param=param: x[0] == param["position"]
-                        and (
-                            len(x[2]) == 0
-                            or (
-                                "set_number" in x[2][0]
-                                and x[2][0]["set_number"] == param["set_number"]
-                            )
-                        ),
-                        instance_parameters,
+                    x
+                    for x in instance_parameters
+                    if x[0] == param["position"]  # type: ignore[arg-type,misc]
+                    and (
+                        len(x[2]) == 0
+                        or (
+                            "set_number" in x[2][0]
+                            and x[2][0]["set_number"] == param["set_number"]
+                        )
                     )
                 )[3],
                 "labels": param["labels"],
@@ -302,62 +277,25 @@ class GenericSyntaxRepository(
         return_dict = {}
         for set_number, term_set in data_dict.items():
             term_set = [x[1] for x in sorted(term_set.items(), key=lambda x: x[0])]
-            parameter_list = []
+            parameter_list: list[ParameterTermEntryVO] = []
             for item in term_set:
                 term_list = []
-                if item.get("definition"):
-                    tpcr = TemplateParameterComplexRoot.nodes.get(
-                        uid=item["parameter_uids"][0]["parameter_uid"]
-                    )
-                    defr: ParameterTemplateRoot = tpcr.has_complex_value.get()
-                    tpcv: TemplateParameterComplexValue = tpcr.latest_final.get()
-                    items = tpcv.get_all()
-                    cpx_params = []
-                    param_terms = []
-                    for itemp in items:
-                        param_terms.append(
-                            {
-                                "position": itemp[2],
-                                "value": itemp[3],
-                                "vv": itemp[4],
-                                "item": itemp[1],
-                            }
+                for value in sorted(
+                    item["parameter_uids"],
+                    key=lambda x: x["index"] or 0,
+                ):
+                    if value["parameter_uid"]:
+                        simple_parameter_term_vo = (
+                            self._parameter_from_repository_values(value)
                         )
-                    param_terms.sort(key=lambda x: x["position"])
-                    for param in param_terms:
-                        if param["value"] is not None:
-                            simple_template_parameter_term_vo = NumericParameterTermVO(
-                                uid=param["item"], value=param["value"]
-                            )
-                        else:
-                            simple_template_parameter_term_vo = SimpleParameterTermVO(
-                                uid=param["item"], value=param["vv"]
-                            )
-                        cpx_params.append(simple_template_parameter_term_vo)
-                    parameter_list.append(
-                        ComplexParameterTerm(
-                            uid=defr.uid,
-                            parameter_template=item["template"],
-                            parameters=cpx_params,
-                        )
-                    )
-                else:
-                    for value in sorted(
-                        item["parameter_uids"],
-                        key=lambda x: x["index"] or 0,
-                    ):
-                        if value["parameter_uid"]:
-                            simple_parameter_term_vo = (
-                                self._parameter_from_repository_values(value)
-                            )
-                            term_list.append(simple_parameter_term_vo)
-                    pve = ParameterTermEntryVO.from_repository_values(
-                        parameters=term_list,
-                        parameter_name=item["parameter_name"],
-                        conjunction=item.get("conjunction", ""),
-                        labels=item.get("labels", []),
-                    )
-                    parameter_list.append(pve)
+                        term_list.append(simple_parameter_term_vo)
+                pve = ParameterTermEntryVO.from_repository_values(
+                    parameters=term_list,
+                    parameter_name=item["parameter_name"],
+                    conjunction=item.get("conjunction", ""),
+                    labels=item.get("labels", []),
+                )
+                parameter_list.append(pve)
             return_dict[set_number] = parameter_list
         return return_dict
 
@@ -388,6 +326,9 @@ class GenericSyntaxRepository(
         )
 
         ct_term = syntax_node.has_type.get_or_none()
+
+        if ct_term:
+            ct_term = ct_term.has_selected_term.get_or_none()
 
         return ct_term.uid if ct_term else None
 
@@ -423,23 +364,63 @@ class GenericSyntaxRepository(
             indication = self._get_indication(indication)
             root.has_indication.connect(indication)
 
+    def _get_mapped_codelist_submission_value(self):
+        mapping = {
+            "Endpoint": (
+                settings.syntax_endpoint_category_cl_submval,
+                settings.syntax_endpoint_sub_category_cl_submval,
+            ),
+            "Criteria": (
+                settings.syntax_criteria_category_cl_submval,
+                settings.syntax_criteria_sub_category_cl_submval,
+            ),
+            "Objective": (settings.syntax_objective_category_cl_submval, None),
+        }
+
+        target = getattr(self, "template_class", None) or self.root_class
+        target = (
+            target.__label__.removesuffix("Root")
+            .removesuffix("Template")
+            .removesuffix("PreInstance")
+        )
+
+        return mapping.get(target)
+
     @sb_clear_cache(caches=["cache_store_item_by_uid"])
     def patch_categories(self, uid: str, category_uids: list[str] | None) -> None:
+        cl_submval = self._get_mapped_codelist_submission_value()
+
         root = self.root_class.nodes.get(uid=uid)
         root.has_category.disconnect_all()
-        for category in category_uids or []:
-            category = self._get_category(category)
-            root.has_category.connect(category)
+        for category_uid in category_uids or []:
+            if category := self._get_category(category_uid):
+                selected_term_node = (
+                    CTCodelistAttributesRepository().get_or_create_selected_term(
+                        category,
+                        codelist_submission_value=cl_submval[0],
+                        catalogue_name=settings.sdtm_ct_catalogue_name,
+                    )
+                )
+                root.has_category.connect(selected_term_node)
 
     @sb_clear_cache(caches=["cache_store_item_by_uid"])
     def patch_subcategories(
         self, uid: str, sub_category_uids: list[str] | None
     ) -> None:
+        cl_submval = self._get_mapped_codelist_submission_value()
+
         root = self.root_class.nodes.get(uid=uid)
         root.has_subcategory.disconnect_all()
-        for sub_category in sub_category_uids or []:
-            sub_category = self._get_category(sub_category)
-            root.has_subcategory.connect(sub_category)
+        for sub_category_uid in sub_category_uids or []:
+            if sub_category := self._get_category(sub_category_uid):
+                selected_term_node = (
+                    CTCodelistAttributesRepository().get_or_create_selected_term(
+                        sub_category,
+                        codelist_submission_value=cl_submval[1],
+                        catalogue_name=settings.sdtm_ct_catalogue_name,
+                    )
+                )
+                root.has_subcategory.connect(selected_term_node)
 
     @sb_clear_cache(caches=["cache_store_item_by_uid"])
     def patch_activities(self, uid: str, activity_uids: list[str] | None) -> None:

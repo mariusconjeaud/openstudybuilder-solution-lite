@@ -1,5 +1,6 @@
-export let group_uid, subgroup_uid, activity_uid
-let activityInstance_uid, class_uid, requestedActivity_uid
+export let group_uid, subgroup_uid, activity_uid, activityInstance_uid
+let groups_uids = []
+let class_uid, requestedActivity_uid
 const activityInstanceClassUrl = '/activity-instance-classes'
 const baseUrl = '/concepts/activities'
 const activityUrl = `${baseUrl}/activities`
@@ -20,6 +21,8 @@ const activateActivityUrl = (activity_uid) => `${activityUrl}/${activity_uid}/ac
 const activateActivityInstanceUrl = (activityInstance_uid) => `${activityInstanceUrl}/${activityInstance_uid}/activations`
 const activateActivityGroupUrl = (group_uid) => `${activityGroupUrl}/${group_uid}/activations`
 const activateActivitySubGroupUrl = (subgroup_uid) =>`${activitySubGroupUrl}/${subgroup_uid}/activations`
+const newVersionActivityUrl = (activity_uid) =>`${activityUrl}/${activity_uid}/versions`
+const newVersionActivityInstanceUrl = (activityInstance_uid) =>`${activityInstanceUrl}/${activityInstance_uid}/versions`
 const newVersionActivityGroupUrl = (group_uid) =>`${activityGroupUrl}/${group_uid}/versions`
 const newVersionActivitySubGroupUrl = (subgroup_uid) =>`${activitySubGroupUrl}/${subgroup_uid}/versions`
 
@@ -35,8 +38,18 @@ Cypress.Commands.add('createGroup', (customName = '') => {
     cy.sendPostRequest(activityGroupUrl, createGroupBody(customName)).then(response => group_uid = response.body.uid)
 })
 
+Cypress.Commands.add('createTwoGroups', () => {
+    cy.sendPostRequest(activityGroupUrl, createGroupBody()).then(response => groups_uids.push(response.body.uid)).then(() => {
+        cy.sendPostRequest(activityGroupUrl, createGroupBody()).then(response => groups_uids.push(response.body.uid))
+    })
+})    
+
 Cypress.Commands.add('createSubGroup', (customName = '') => {
     cy.sendPostRequest(activitySubGroupUrl, createSubGroupBody(customName, group_uid)).then(response => subgroup_uid = response.body.uid)
+})
+
+Cypress.Commands.add('createSubGroupWithTwoGroups', () => {
+    cy.sendPostRequest(activitySubGroupUrl, createSubGroupWithGrouBody()).then(response => subgroup_uid = response.body.uid)
 })
 
 Cypress.Commands.add('createRequestedActivity', (customName = '') => {
@@ -49,9 +62,15 @@ Cypress.Commands.add('approveActivityInstance', () => cy.sendPostRequest(approve
 
 Cypress.Commands.add('approveGroup', () => cy.sendPostRequest(approveActivityGroupUrl(group_uid), {}))
 
+Cypress.Commands.add('approveTwoGroups', () => groups_uids.forEach(uid => cy.sendPostRequest(approveActivityGroupUrl(uid, {}))))
+
 Cypress.Commands.add('approveSubGroup', () => cy.sendPostRequest(approveActivitySubGroupUrl(subgroup_uid), {}))
 
 Cypress.Commands.add('approveRequestedActivity', () => cy.sendPostRequest(approveActivityUrl(requestedActivity_uid), {}))
+
+Cypress.Commands.add('activityNewVersion', () => cy.sendPostRequest(newVersionActivityUrl(activity_uid), {}))
+
+Cypress.Commands.add('activityInstanceNewVersion', () => cy.sendPostRequest(newVersionActivityInstanceUrl(activityInstance_uid), {}))
 
 Cypress.Commands.add('groupNewVersion', () => cy.sendPostRequest(newVersionActivityGroupUrl(group_uid), {}))
 
@@ -84,6 +103,8 @@ Cypress.Commands.add('getActivityNameByUid', () => cy.getName(activityInfoUrl(ac
 Cypress.Commands.add('getActivityInstanceNameByUid', () => cy.getName(activityInstanceInfoUrl(activityInstance_uid)))
 
 Cypress.Commands.add('getGroupNameByUid', () => cy.getName(activityGroupInfoUrl(group_uid)))
+
+Cypress.Commands.add('getGroupNameFromListByUid', () => cy.getName(activityGroupInfoUrl(groups_uids[0])))
 
 Cypress.Commands.add('getSubGroupNameByUid', () => cy.getName(activitySubGroupInfoUrl(subgroup_uid)))
 
@@ -161,6 +182,17 @@ const createSubGroupBody = (customName = '', group_uid) => {
         name: name,
         name_sentence_case: name.toLowerCase(),
         activity_groups: [group_uid]
+    }
+}
+
+const createSubGroupWithGrouBody = () => {
+    const name = `API_SubGroup${Date.now()}`
+    return {
+        definition: "def",
+        library_name: "Sponsor",
+        name: name,
+        name_sentence_case: name.toLowerCase(),
+        activity_groups: groups_uids
     }
 }
 

@@ -11,7 +11,7 @@ from neomodel import (
 )
 
 from clinical_mdr_api.domain_repositories.models.controlled_terminology import (
-    CTTermRoot,
+    CTTermContext,
 )
 from clinical_mdr_api.domain_repositories.models.dictionary import UCUMTermRoot
 from clinical_mdr_api.domain_repositories.models.generic import (
@@ -55,13 +55,13 @@ class UnitDefinitionValue(ConceptValue):
     comment = StringProperty()
 
     has_ct_unit = RelationshipTo(
-        CTTermRoot, "HAS_CT_UNIT", cardinality=ZeroOrMore, model=ClinicalMdrRel
+        CTTermContext, "HAS_CT_UNIT", cardinality=ZeroOrMore, model=ClinicalMdrRel
     )
     has_unit_subset = RelationshipTo(
-        CTTermRoot, "HAS_UNIT_SUBSET", cardinality=ZeroOrMore, model=ClinicalMdrRel
+        CTTermContext, "HAS_UNIT_SUBSET", cardinality=ZeroOrMore, model=ClinicalMdrRel
     )
     has_ct_dimension = RelationshipTo(
-        CTTermRoot, "HAS_CT_DIMENSION", cardinality=ZeroOrOne, model=ClinicalMdrRel
+        CTTermContext, "HAS_CT_DIMENSION", cardinality=ZeroOrOne, model=ClinicalMdrRel
     )
     has_ucum_term = RelationshipTo(
         UCUMTermRoot, "HAS_UCUM_TERM", cardinality=ZeroOrOne, model=ClinicalMdrRel
@@ -241,7 +241,7 @@ class TimePointValue(SimpleConceptValue):
         UnitDefinitionRoot, "HAS_UNIT_DEFINITION", cardinality=One, model=ClinicalMdrRel
     )
     has_time_reference = RelationshipTo(
-        CTTermRoot, "HAS_TIME_REFERENCE", cardinality=One, model=ClinicalMdrRel
+        CTTermContext, "HAS_TIME_REFERENCE", cardinality=One, model=ClinicalMdrRel
     )
 
 
@@ -290,7 +290,7 @@ class LagTimeValue(NumericValue):
     )
 
     has_sdtm_domain = RelationshipTo(
-        CTTermRoot, "HAS_SDTM_DOMAIN", cardinality=One, model=ClinicalMdrRel
+        CTTermContext, "HAS_SDTM_DOMAIN", cardinality=One, model=ClinicalMdrRel
     )
 
 

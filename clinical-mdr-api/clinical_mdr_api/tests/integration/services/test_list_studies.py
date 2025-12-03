@@ -53,7 +53,7 @@ class TestListStudiesForObjectiveAndEndpoint(unittest.TestCase):
         EndpointRoot.generate_node_uids_if_not_present()
 
     def test__list_objectives_studies(self):
-        objective_service = ObjectiveService()
+        objective_service: ObjectiveService = ObjectiveService()
         studies = objective_service.get_referencing_studies(
             "Objective_000001", node_type=ObjectiveValue
         )
@@ -61,7 +61,7 @@ class TestListStudiesForObjectiveAndEndpoint(unittest.TestCase):
         assert len(studies) == 1
 
     def test__list_endpoints_studies(self):
-        endpoint_service = EndpointService()
+        endpoint_service: EndpointService = EndpointService()
         studies = endpoint_service.get_referencing_studies(
             "Endpoint_000001", node_type=EndpointValue
         )
@@ -76,9 +76,7 @@ class TestListStudies(unittest.TestCase):
         db.cypher_query(data_library.STARTUP_ACTIVITY_GROUPS)
         db.cypher_query(data_library.STARTUP_ACTIVITY_SUB_GROUPS)
         db.cypher_query(data_library.STARTUP_ACTIVITIES)
-        db.cypher_query(
-            data_library.get_codelist_with_term_cypher("EFFICACY", "Flowchart Group")
-        )
+
         db.cypher_query(data_library.STARTUP_CRITERIA)
         TestUtils.create_study_fields_configuration()
 
@@ -87,8 +85,24 @@ class TestListStudies(unittest.TestCase):
         ObjectiveRoot.generate_node_uids_if_not_present()
         EndpointRoot.generate_node_uids_if_not_present()
 
+        _type_codelist = TestUtils.create_ct_codelist(
+            name="Footnote Type",
+            submission_value="FTNTTP",
+            extensible=True,
+            approve=True,
+        )
         footnote = TestUtils.create_footnote()
-
+        fl_grp_codelist = TestUtils.create_ct_codelist(
+            name="Flowchart Group",
+            submission_value="FLWCRTGRP",
+            extensible=True,
+            approve=True,
+        )
+        _efficacy_term = TestUtils.create_ct_term(
+            sponsor_preferred_name="Efficacy",
+            codelist_uid=fl_grp_codelist.codelist_uid,
+            term_uid="term_efficacy_uid",
+        )
         # Create a SoA Study Footnote
         StudySoAFootnoteService().create(
             "study_root",
@@ -100,7 +114,7 @@ class TestListStudies(unittest.TestCase):
         StudyActivitySelectionService().make_selection(
             "study_root",
             StudySelectionActivityCreateInput(
-                soa_group_term_uid="term_root_final",
+                soa_group_term_uid="term_efficacy_uid",
                 activity_uid="activity_root1",
                 activity_subgroup_uid="activity_subgroup_root1",
                 activity_group_uid="activity_group_root1",
@@ -112,9 +126,8 @@ class TestListStudies(unittest.TestCase):
             """
             MATCH (incl:CTTermRoot {uid: "C25532"})
             MATCH (library:Library {name: "Sponsor"})
-            MERGE (incl)<-[:HAS_TYPE]-(ctr1:CriteriaTemplateRoot:SyntaxTemplateRoot:SyntaxIndexingTemplateRoot {uid: "incl_criteria_1"})
-            -[relt:LATEST_FINAL]->(ctv1:CriteriaTemplateValue:SyntaxTemplateValue:SyntaxIndexingTemplateValue
-              {name : "incl_criteria_1", name_plain : "incl_criteria_1"})
+            MERGE (incl)<-[:HAS_SELECTED_TERM]-(:CTTermContext)<-[:HAS_TYPE]-(ctr1:CriteriaTemplateRoot:SyntaxTemplateRoot:SyntaxIndexingTemplateRoot {uid: "incl_criteria_1"})
+            -[relt:LATEST_FINAL]->(ctv1:CriteriaTemplateValue:SyntaxTemplateValue:SyntaxIndexingTemplateValue {name : "incl_criteria_1", name_plain : "incl_criteria_1"})
             MERGE (ctr1)-[:LATEST]->(ctv1)
             MERGE (ctr1)-[hv:HAS_VERSION]->(ctv1)
             set hv.change_description="Approved version"

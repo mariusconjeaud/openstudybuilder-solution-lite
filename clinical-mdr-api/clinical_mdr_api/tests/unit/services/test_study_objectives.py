@@ -6,7 +6,10 @@ from clinical_mdr_api.domains.study_selections.study_selection_endpoint import (
     EndpointUnitItem,
     EndpointUnits,
 )
-from clinical_mdr_api.models.controlled_terminologies.ct_term import CTTermName
+from clinical_mdr_api.models.controlled_terminologies.ct_term import (
+    CTTermName,
+    SimpleCodelistTermModel,
+)
 from clinical_mdr_api.models.study_selections.study_selection import (
     StudySelectionEndpoint,
     StudySelectionObjective,
@@ -24,26 +27,47 @@ DATETIME_811 = datetime.datetime(2022, 9, 14, 15, 43, 32, 561811)
 DATETIME_874 = datetime.datetime(2022, 9, 14, 15, 28, 16, 236874)
 DATETIME_668 = datetime.datetime(2022, 9, 14, 15, 41, 34, 287668)
 
-TERM_PRIMARY = CTTermName(
-    term_uid="CTTerm_000053",
-    sponsor_preferred_name="Primary",
-    sponsor_preferred_name_sentence_case="primary",
-)
-TERM_PRI_OBJ = CTTermName(
-    term_uid="C85826_OBJPRIM",
-    sponsor_preferred_name="Primary Objective",
-    sponsor_preferred_name_sentence_case="primary objective",
+TERM_PRI_OBJ = SimpleCodelistTermModel(
+    term_uid="C85826",
+    term_name="Primary Objective",
+    codelist_uid="CTCodelist_123456",
+    codelist_name="Objective Level",
+    codelist_submission_value="OBJLEVL",
+    submission_value="OBJPRIM",
     order=1,
 )
 TERM_PRI_END = CTTermName(
     term_uid="C98772_OUTMSPRI",
     sponsor_preferred_name="Primary Endpoint",
     sponsor_preferred_name_sentence_case="primary endpoint",
+    queried_effective_date=None,
 )
-TERM_SEC_END = CTTermName(
-    term_uid="C98781_OUTMSSEC",
-    sponsor_preferred_name="Secondary Endpoint",
-    sponsor_preferred_name_sentence_case="secondary endpoint",
+TERM_PRI_END = SimpleCodelistTermModel(
+    term_uid="C98772",
+    term_name="Primary Endpoint",
+    codelist_uid="CTCodelist_234567",
+    codelist_name="Enedpoint Level",
+    codelist_submission_value="ENDPLEVL",
+    submission_value="OUTMSPRI",
+    order=1,
+)
+TERM_SEC_END = SimpleCodelistTermModel(
+    term_uid="C98781",
+    term_name="Secondary Endpoint",
+    codelist_uid="CTCodelist_234567",
+    codelist_name="Enedpoint Level",
+    codelist_submission_value="ENDPLEVL",
+    submission_value="OUTMSSEC",
+    order=2,
+)
+TERM_PRI_SUBEND = SimpleCodelistTermModel(
+    term_uid="CTTerm_000053",
+    term_name="Primary",
+    codelist_uid="CTCodelist_345678",
+    codelist_name="Endpoint Subevel",
+    codelist_submission_value="ENDPSBLV",
+    submission_value="PRIMARY ENDPOINT SUB LEVEL",
+    order=1,
 )
 
 TIMEFRAME_1 = Timeframe(
@@ -131,7 +155,7 @@ STUDY_ENDPOINT_17 = StudySelectionEndpoint(
     study_endpoint_uid="StudyEndpoint_000017",
     study_objective=STUDY_OBJECTIVE_3,
     endpoint_level=TERM_PRI_END,
-    endpoint_sublevel=TERM_PRIMARY,
+    endpoint_sublevel=TERM_PRI_SUBEND,
     endpoint_units=ENDPOINT_UNITS_2,
     endpoint=ENDPOINT_3,
     timeframe=TIMEFRAME_1,
@@ -146,18 +170,18 @@ STUDY_ENDPOINTS = (
 )
 
 STANDARD_TREE = {
-    "C85826_OBJPRIM": (
+    "C85826": (
         TERM_PRI_OBJ,
         {
             "StudyObjective_000003": (
                 STUDY_OBJECTIVE_3,
                 {
-                    "C98781_OUTMSSEC": (
+                    "C98781": (
                         TERM_SEC_END,
                         {"StudyEndpoint_000020": STUDY_ENDPOINT_20},
                     ),
                     "CTTerm_000053": (
-                        TERM_PRIMARY,
+                        TERM_PRI_SUBEND,
                         {"StudyEndpoint_000017": STUDY_ENDPOINT_17},
                     ),
                 },
@@ -167,15 +191,15 @@ STANDARD_TREE = {
 }
 
 CONDENSED_TREE = {
-    "C85826_OBJPRIM": (
+    "C85826": (
         TERM_PRI_OBJ,
         {"StudyObjective_000003": STUDY_OBJECTIVE_3},
         {
             "CTTerm_000053": (
-                TERM_PRIMARY,
+                TERM_PRI_SUBEND,
                 {"StudyEndpoint_000017": STUDY_ENDPOINT_17},
             ),
-            "C98781_OUTMSSEC": (
+            "C98781": (
                 TERM_SEC_END,
                 {"StudyEndpoint_000020": STUDY_ENDPOINT_20},
             ),
@@ -211,8 +235,8 @@ def test_build_condensed_html(study_objectives_service):
     # Search for objective text in document
     for objective in STUDY_OBJECTIVES:
         assert (
-            objective.objective_level.sponsor_preferred_name in doc
-        ), f'objective level "{objective.objective_level.sponsor_preferred_name}" was not found in document'
+            objective.objective_level.term_name in doc
+        ), f'objective level "{objective.objective_level.term_name}" was not found in document'
         assert (
             objective.objective.name_plain in doc
         ), f'objective "{objective.objective.name_plain}" was not found in document'
@@ -230,8 +254,8 @@ def test_build_standard_html(study_objectives_service):
     # Search for objective text in document
     for objective in STUDY_OBJECTIVES:
         assert (
-            objective.objective_level.sponsor_preferred_name in doc
-        ), f'objective level "{objective.objective_level.sponsor_preferred_name}" was not found in document'
+            objective.objective_level.term_name in doc
+        ), f'objective level "{objective.objective_level.term_name}" was not found in document'
         assert (
             objective.objective.name_plain in doc
         ), f'objective "{objective.objective.name_plain}" was not found in document'
@@ -273,8 +297,9 @@ def assert_patterns_in_document(doc: str):
     # Search for objective text in document
     for objective in STUDY_OBJECTIVES:
         assert (
-            objective.objective_level.sponsor_preferred_name in doc
-        ), f'objective level "{objective.objective_level.sponsor_preferred_name}" was not found in document'
+            objective.objective_level.term_name in doc
+        ), f'objective level "{objective.objective_level.term_name}" was not found in document'
+        assert objective.objective.name_plain is not None
         assert (
             objective.objective.name_plain in doc
         ), f'objective "{objective.objective.name_plain}" was not found in document'
@@ -285,10 +310,11 @@ def assert_patterns_in_document(doc: str):
             continue
         if endpoint.endpoint_sublevel:
             assert (
-                endpoint.endpoint_sublevel.sponsor_preferred_name in doc
-            ), f'endpoint sub-level "{endpoint.endpoint_sublevel.sponsor_preferred_name}" was not found in document'
+                endpoint.endpoint_sublevel.term_name in doc
+            ), f'endpoint sub-level "{endpoint.endpoint_sublevel.term_name}" was not found in document'
         elif endpoint.endpoint_level:
             assert (
-                endpoint.endpoint_level.sponsor_preferred_name in doc
-            ), f'endpoint level "{endpoint.endpoint_level.sponsor_preferred_name}" was not found in document'
+                endpoint.endpoint_level.term_name in doc
+            ), f'endpoint level "{endpoint.endpoint_level.term_name}" was not found in document'
+        assert endpoint.endpoint.name_plain is not None
         assert endpoint.endpoint.name_plain in doc

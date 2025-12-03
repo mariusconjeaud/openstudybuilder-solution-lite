@@ -12,6 +12,7 @@ Tests for endpoints endpoints
 import json
 import logging
 from functools import reduce
+from typing import Any
 
 import pytest
 from fastapi.testclient import TestClient
@@ -21,6 +22,7 @@ from clinical_mdr_api.domain_repositories.template_parameters.complex_parameter 
 )
 from clinical_mdr_api.main import app
 from clinical_mdr_api.models.concepts.concept import TextValue
+from clinical_mdr_api.models.controlled_terminologies.ct_codelist import CTCodelist
 from clinical_mdr_api.models.controlled_terminologies.ct_term import CTTerm
 from clinical_mdr_api.models.dictionaries.dictionary_codelist import DictionaryCodelist
 from clinical_mdr_api.models.dictionaries.dictionary_term import DictionaryTerm
@@ -48,8 +50,9 @@ log = logging.getLogger(__name__)
 # Global variables shared between fixtures and tests
 endpoints: list[Endpoint]
 endpoint_template: EndpointTemplate
-ct_term_inclusion: CTTerm
 dictionary_term_indication: DictionaryTerm
+category_codelist: CTCodelist
+sub_category_codelist: CTCodelist
 ct_term_category: CTTerm
 ct_term_subcategory: CTTerm
 indications_codelist: DictionaryCodelist
@@ -78,8 +81,9 @@ def test_data():
 
     global endpoints
     global endpoint_template
-    global ct_term_inclusion
     global dictionary_term_indication
+    global category_codelist
+    global sub_category_codelist
     global ct_term_category
     global ct_term_subcategory
     global indications_codelist
@@ -97,10 +101,20 @@ def test_data():
     text_value_1 = TestUtils.create_text_value()
     text_value_2 = TestUtils.create_text_value()
 
-    # Create Dictionary/CT Terms
-    ct_term_inclusion = TestUtils.create_ct_term(
-        sponsor_preferred_name="INCLUSION ENDPOINT"
+    category_codelist = TestUtils.create_ct_codelist(
+        name="Endpoint Category",
+        submission_value="ENDPCAT",
+        extensible=True,
+        approve=True,
     )
+    sub_category_codelist = TestUtils.create_ct_codelist(
+        name="Endpoint Sub Category",
+        submission_value="ENDPSCAT",
+        extensible=True,
+        approve=True,
+    )
+
+    # Create Dictionary/CT Terms
     indications_library_name = "SNOMED"
     indications_codelist = TestUtils.create_dictionary_codelist(
         name="DiseaseDisorder", library_name=indications_library_name
@@ -109,8 +123,12 @@ def test_data():
         codelist_uid=indications_codelist.codelist_uid,
         library_name=indications_library_name,
     )
-    ct_term_category = TestUtils.create_ct_term()
-    ct_term_subcategory = TestUtils.create_ct_term()
+    ct_term_category = TestUtils.create_ct_term(
+        codelist_uid=category_codelist.codelist_uid
+    )
+    ct_term_subcategory = TestUtils.create_ct_term(
+        codelist_uid=sub_category_codelist.codelist_uid
+    )
 
     def generate_parameter_terms():
         text_value = TestUtils.create_text_value()
@@ -388,7 +406,7 @@ def test_get_endpoint(api_client):
 
     # Check fields included in the response
     fields_all_set = set(ENDPOINT_FIELDS_ALL)
-    assert set(list(res.keys())) == fields_all_set
+    assert set(res.keys()) == fields_all_set
     for key in ENDPOINT_FIELDS_NOT_NULL:
         assert res[key] is not None
 
@@ -406,28 +424,28 @@ def test_get_endpoint(api_client):
 
 
 def test_get_endpoints_pagination(api_client):
-    results_paginated: dict = {}
+    results_paginated: dict[Any, Any] = {}
     sort_by = '{"uid": true}'
     for page_number in range(1, 4):
         response = api_client.get(
             f"{URL}?page_number={page_number}&page_size=10&sort_by={sort_by}"
         )
         res = response.json()
-        res_uids = list(map(lambda x: x["uid"], res["items"]))
+        res_uids = [item["uid"] for item in res["items"]]
         results_paginated[page_number] = res_uids
         log.info("Page %s: %s", page_number, res_uids)
 
     log.info("All pages: %s", results_paginated)
 
     results_paginated_merged = list(
-        list(reduce(lambda a, b: a + b, list(results_paginated.values())))
+        reduce(lambda a, b: list(a) + list(b), list(results_paginated.values()))
     )
     log.info("All rows returned by pagination: %s", results_paginated_merged)
 
     res_all = api_client.get(
         f"{URL}?page_number=1&page_size=100&sort_by={sort_by}"
     ).json()
-    results_all_in_one_page = list(map(lambda x: x["uid"], res_all["items"]))
+    results_all_in_one_page = [item["uid"] for item in res_all["items"]]
     log.info("All rows in one page: %s", results_all_in_one_page)
     assert len(results_all_in_one_page) == len(results_paginated_merged)
     assert len(
@@ -652,7 +670,7 @@ def test_create_endpoint(api_client):
     assert res["parameter_terms"][0]["terms"][0]["type"] == "TextValue"
     assert res["version"] == "0.1"
     assert res["status"] == "Draft"
-    assert set(list(res.keys())) == set(ENDPOINT_FIELDS_ALL)
+    assert set(res.keys()) == set(ENDPOINT_FIELDS_ALL)
     for key in ENDPOINT_FIELDS_NOT_NULL:
         assert res[key] is not None
 
@@ -733,7 +751,7 @@ def test_update_endpoint(api_client):
     assert res["parameter_terms"][0]["terms"][0]["type"] == "TextValue"
     assert res["version"] == "0.2"
     assert res["status"] == "Draft"
-    assert set(list(res.keys())) == set(ENDPOINT_FIELDS_ALL)
+    assert set(res.keys()) == set(ENDPOINT_FIELDS_ALL)
     for key in ENDPOINT_FIELDS_NOT_NULL:
         assert res[key] is not None
 
@@ -811,7 +829,7 @@ def test_preview_endpoint(api_client):
     assert res["parameter_terms"][0]["terms"][0]["type"] == "TextValue"
     assert res["version"] == "0.1"
     assert res["status"] == "Draft"
-    assert set(list(res.keys())) == set(ENDPOINT_FIELDS_ALL)
+    assert set(res.keys()) == set(ENDPOINT_FIELDS_ALL)
     for key in ENDPOINT_FIELDS_NOT_NULL:
         assert res[key] is not None
 
@@ -929,7 +947,6 @@ def test_cannot_update_endpoint_without_change_description(api_client):
 
 def test_cannot_update_endpoint_in_final_status(api_client):
     data = {
-        "name": "test name [TextValue]",
         "parameter_terms": [
             {
                 "position": 1,

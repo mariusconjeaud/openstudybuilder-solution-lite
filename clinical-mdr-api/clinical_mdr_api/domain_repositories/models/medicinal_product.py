@@ -7,7 +7,7 @@ from clinical_mdr_api.domain_repositories.models.concepts import (
     NumericValueWithUnitRoot,
 )
 from clinical_mdr_api.domain_repositories.models.controlled_terminology import (
-    CTTermRoot,
+    CTTermContext,
 )
 from clinical_mdr_api.domain_repositories.models.generic import (
     ClinicalMdrRel,
@@ -36,10 +36,13 @@ class MedicinalProductValue(ConceptValue):
         model=ClinicalMdrRel,
     )
     has_delivery_device = RelationshipTo(
-        CTTermRoot, "HAS_DELIVERY_DEVICE", cardinality=ZeroOrOne, model=ClinicalMdrRel
+        CTTermContext,
+        "HAS_DELIVERY_DEVICE",
+        cardinality=ZeroOrOne,
+        model=ClinicalMdrRel,
     )
     has_dispenser = RelationshipTo(
-        CTTermRoot,
+        CTTermContext,
         "HAS_DISPENSER",
         cardinality=ZeroOrOne,
         model=ClinicalMdrRel,
@@ -51,7 +54,7 @@ class MedicinalProductValue(ConceptValue):
         model=ClinicalMdrRel,
     )
     has_dose_frequency = RelationshipTo(
-        CTTermRoot,
+        CTTermContext,
         "HAS_DOSE_FREQUENCY",
         cardinality=ZeroOrOne,
         model=ClinicalMdrRel,

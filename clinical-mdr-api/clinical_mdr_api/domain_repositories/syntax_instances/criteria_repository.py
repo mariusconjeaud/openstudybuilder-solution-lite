@@ -34,7 +34,7 @@ class CriteriaRepository(GenericSyntaxInstanceRepository[CriteriaAR]):
             uid=root.uid,
             library=LibraryVO.from_input_values_2(
                 library_name=library.name,
-                is_library_editable_callback=(lambda _: library.is_editable),
+                is_library_editable_callback=lambda _: library.is_editable,
             ),
             item_metadata=self._library_item_metadata_vo_from_relation(relationship),
             template=self.get_template_vo(root, value, kwargs["instance_template"]),
@@ -43,7 +43,7 @@ class CriteriaRepository(GenericSyntaxInstanceRepository[CriteriaAR]):
 
     def check_exists_by_name_for_type(self, name: str, criteria_type_uid: str) -> bool:
         query = f"""
-MATCH (type WHERE type.uid=$type_uid)<-[:HAS_TYPE]-(:CriteriaTemplateRoot)-->(:{self.root_class.__label__})
+MATCH (term:CTTermRoot WHERE term.uid=$type_uid)<-[:HAS_SELECTED_TERM]-(:CTTermContext)<-[:HAS_TYPE]-(:CriteriaTemplateRoot)-->(:{self.root_class.__label__})
 -[:LATEST_FINAL|LATEST_DRAFT|LATEST_RETIRED|LATEST]->(v:{self.value_class.__label__} WHERE v.name=$name)
 RETURN count(DISTINCT v)
 """

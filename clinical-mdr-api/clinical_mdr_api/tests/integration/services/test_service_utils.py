@@ -2,10 +2,14 @@ import pytest
 from neomodel import db
 
 from clinical_mdr_api.services._utils import ensure_transaction
+from clinical_mdr_api.tests.integration.utils.api import inject_and_clear_db
 
 
 class TestEnsureTransaction:
     """tests @ensure_transaction decorator and intrinsically AggregatedTransactionProxy"""
+
+    def setup_class(self):
+        inject_and_clear_db("service.utils")
 
     @staticmethod
     def assert_transaction_started():

@@ -1,11 +1,7 @@
 from dataclasses import dataclass
-from typing import Callable, Self
+from typing import Any, Callable, Self
 
-from clinical_mdr_api.domains.concepts.concept_base import (
-    ConceptARBase,
-    ConceptVO,
-    _ConceptVOType,
-)
+from clinical_mdr_api.domains.concepts.concept_base import ConceptARBase, ConceptVO
 from clinical_mdr_api.domains.versioned_object_aggregate import (
     LibraryItemMetadataVO,
     LibraryVO,
@@ -35,7 +31,7 @@ class ActivityVO(ConceptVO):
     nci_concept_name: str | None
     synonyms: list[str]
     activity_groupings: list[ActivityGroupingVO]
-    activity_instances: list[dict]
+    activity_instances: list[dict[Any, Any]]
 
     # ActivityRequest related
     request_rationale: str | None
@@ -64,7 +60,7 @@ class ActivityVO(ConceptVO):
         abbreviation: str | None,
         activity_groupings: list[ActivityGroupingVO],
         request_rationale: str | None,
-        activity_instances: list[dict],
+        activity_instances: list[dict[Any, Any]],
         is_request_final: bool = False,
         replaced_by_activity: str | None = None,
         requester_study_id: str | None = None,
@@ -107,22 +103,30 @@ class ActivityVO(ConceptVO):
         activity_exists_by_name_callback: Callable[[str, str], bool],
         activity_subgroup_exists: Callable[[str], bool],
         activity_group_exists: Callable[[str], bool],
-        get_activity_uids_by_synonyms_callback: Callable[[str], dict[str, list[str]]],
+        get_activity_uids_by_synonyms_callback: Callable[
+            [list[str]], dict[str, list[str]]
+        ],
         previous_name: str | None = None,
-        previous_synonyms: str | None = None,
+        previous_synonyms: list[str] | None = None,
         library_name: str | None = None,
     ) -> None:
         if previous_synonyms is None:
             previous_synonyms = []
 
         self.validate_name_sentence_case()
-        existing_name = activity_exists_by_name_callback(library_name, self.name)
+
+        if self.name and library_name is not None:
+            existing_name = activity_exists_by_name_callback(library_name, self.name)
+
+            AlreadyExistsException.raise_if(
+                existing_name and previous_name != self.name,
+                "Activity",
+                self.name,
+                "Name",
+            )
+
         existing_synonyms_with_uids = get_activity_uids_by_synonyms_callback(
             list(set(self.synonyms) - set(previous_synonyms))
-        )
-
-        AlreadyExistsException.raise_if(
-            existing_name and previous_name != self.name, "Activity", self.name, "Name"
         )
 
         AlreadyExistsException.raise_if(
@@ -148,8 +152,12 @@ class ActivityAR(ConceptARBase):
     _concept_vo: ActivityVO
 
     @property
-    def concept_vo(self) -> _ConceptVOType:
+    def concept_vo(self) -> ActivityVO:
         return self._concept_vo
+
+    @concept_vo.setter
+    def concept_vo(self, value: ActivityVO) -> None:
+        self._concept_vo = value
 
     @property
     def name(self) -> str:
@@ -161,17 +169,17 @@ class ActivityAR(ConceptARBase):
         author_id: str,
         concept_vo: ActivityVO,
         library: LibraryVO,
-        generate_uid_callback: Callable[[], str | None] = (lambda: None),
+        generate_uid_callback: Callable[[], str | None] = lambda: None,
         concept_exists_by_callback: Callable[
             [str, str, bool], bool
         ] = lambda x, y, z: True,
         concept_exists_by_library_and_name_callback: Callable[
             [str, str], bool
-        ] = lambda _: True,
+        ] = lambda x, y: True,
         activity_subgroup_exists: Callable[[str], bool] = lambda _: False,
         activity_group_exists: Callable[[str], bool] = lambda _: False,
         get_activity_uids_by_synonyms_callback: Callable[
-            [str], dict[str, list[str]]
+            [list[str]], dict[str, list[str]]
         ] = lambda _: {},
     ) -> Self:
         item_metadata = LibraryItemMetadataVO.get_initial_item_metadata(
@@ -201,18 +209,18 @@ class ActivityAR(ConceptARBase):
     def edit_draft(
         self,
         author_id: str,
-        change_description: str | None,
+        change_description: str,
         concept_vo: ActivityVO,
         concept_exists_by_callback: Callable[
             [str, str, bool], bool
         ] = lambda x, y, z: True,
         concept_exists_by_library_and_name_callback: Callable[
             [str, str], bool
-        ] = lambda x, y, z: True,
-        activity_subgroup_exists: Callable[[str], bool] | None = None,
+        ] = lambda x, y: True,
+        activity_subgroup_exists: Callable[[str], bool] = lambda _: False,
         activity_group_exists: Callable[[str], bool] = lambda _: False,
         get_activity_uids_by_synonyms_callback: Callable[
-            [str], dict[str, list[str]]
+            [list[str]], dict[str, list[str]]
         ] = lambda _: {},
     ) -> None:
         """

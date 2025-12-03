@@ -1,9 +1,11 @@
-from neomodel import NodeSet
+from typing import Any
+
+from neomodel import NodeSet, db
 from neomodel.sync_.match import (
     Collect,
     Last,
     NodeNameResolver,
-    Optional,
+    Path,
     RawCypher,
     RelationNameResolver,
 )
@@ -15,9 +17,6 @@ from clinical_mdr_api.domain_repositories.library_item_repository import (
 from clinical_mdr_api.domain_repositories.models.biomedical_concepts import (
     ActivityInstanceClassRoot,
     ActivityInstanceClassValue,
-)
-from clinical_mdr_api.domain_repositories.models.controlled_terminology import (
-    CTTermRoot,
 )
 from clinical_mdr_api.domain_repositories.models.generic import (
     Library,
@@ -35,10 +34,11 @@ from clinical_mdr_api.domains.biomedical_concepts.activity_instance_class import
 from clinical_mdr_api.domains.versioned_object_aggregate import LibraryVO
 from clinical_mdr_api.models.biomedical_concepts.activity_instance_class import (
     ActivityInstanceClass,
+    ActivityInstanceClassWithDataset,
 )
 
 
-class ActivityInstanceClassRepository(
+class ActivityInstanceClassRepository(  # type: ignore[misc]
     NeomodelExtBaseRepository, LibraryItemRepositoryImplBase[_AggregateRootType]
 ):
     root_class = ActivityInstanceClassRoot
@@ -47,32 +47,25 @@ class ActivityInstanceClassRepository(
 
     def get_neomodel_extension_query(self) -> NodeSet:
         return (
-            ActivityInstanceClassRoot.nodes.fetch_relations(
+            ActivityInstanceClassRoot.nodes.traverse(
                 "has_latest_value",
                 "has_library",
-                Optional("parent_class"),
-                Optional("parent_class__has_latest_value"),
-                Optional("maps_dataset_class__has_instance"),
-                Optional("has_activity_item_class__has_latest_value"),
-                Optional("parent_class__has_activity_item_class__has_latest_value"),
-                Optional("has_data_domain"),
-                Optional("has_data_domain__has_name_root__has_latest_value"),
-                Optional("has_data_domain__has_attributes_root__has_latest_value"),
-                Optional("parent_class__has_data_domain"),
-                Optional(
-                    "parent_class__has_data_domain__has_name_root__has_latest_value"
+                Path(
+                    value="parent_class",
+                    optional=True,
+                    include_rels_in_return=False,
                 ),
-                Optional(
-                    "parent_class__has_data_domain__has_attributes_root__has_latest_value"
+                Path(
+                    value="parent_class__has_latest_value",
+                    optional=True,
+                    include_rels_in_return=False,
                 ),
             )
             .unique_variables(
-                "parent_class", "has_data_domain", "parent_class__has_data_domain"
+                "parent_class",
             )
             .subquery(
-                ActivityInstanceClassRoot.nodes.traverse_relations(
-                    latest_version="has_version"
-                )
+                ActivityInstanceClassRoot.nodes.traverse(latest_version="has_version")
                 .intermediate_transform(
                     {"rel": {"source": RelationNameResolver("has_version")}},
                     ordering=[
@@ -86,146 +79,30 @@ class ActivityInstanceClassRepository(
                 ["latest_version"],
                 initial_context=[NodeNameResolver("self")],
             )
-            .annotate(
-                Collect(NodeNameResolver("has_activity_item_class"), distinct=True),
-                Collect(RelationNameResolver("has_activity_item_class"), distinct=True),
-                Collect(
-                    NodeNameResolver("has_activity_item_class__has_latest_value"),
-                    distinct=True,
-                ),
-                Collect(
-                    RelationNameResolver("has_activity_item_class__has_latest_value"),
-                    distinct=True,
-                ),
-                Collect(
-                    NodeNameResolver("parent_class__has_activity_item_class"),
-                    distinct=True,
-                ),
-                Collect(
-                    RelationNameResolver("parent_class__has_activity_item_class"),
-                    distinct=True,
-                ),
-                Collect(
-                    NodeNameResolver(
-                        "parent_class__has_activity_item_class__has_latest_value"
-                    ),
-                    distinct=True,
-                ),
-                Collect(
-                    RelationNameResolver(
-                        "parent_class__has_activity_item_class__has_latest_value"
-                    ),
-                    distinct=True,
-                ),
-                Collect(NodeNameResolver("has_data_domain"), distinct=True),
-                Collect(RelationNameResolver("has_data_domain"), distinct=True),
-                Collect(
-                    NodeNameResolver("has_data_domain__has_name_root"), distinct=True
-                ),
-                Collect(
-                    RelationNameResolver("has_data_domain__has_name_root"),
-                    distinct=True,
-                ),
-                Collect(
-                    NodeNameResolver(
-                        "has_data_domain__has_name_root__has_latest_value"
-                    ),
-                    distinct=True,
-                ),
-                Collect(
-                    RelationNameResolver(
-                        "has_data_domain__has_name_root__has_latest_value"
-                    ),
-                    distinct=True,
-                ),
-                Collect(
-                    NodeNameResolver("has_data_domain__has_attributes_root"),
-                    distinct=True,
-                ),
-                Collect(
-                    RelationNameResolver("has_data_domain__has_attributes_root"),
-                    distinct=True,
-                ),
-                Collect(
-                    NodeNameResolver(
-                        "has_data_domain__has_attributes_root__has_latest_value"
-                    ),
-                    distinct=True,
-                ),
-                Collect(
-                    RelationNameResolver(
-                        "has_data_domain__has_attributes_root__has_latest_value"
-                    ),
-                    distinct=True,
-                ),
-                Collect(
-                    NodeNameResolver("parent_class__has_data_domain"),
-                    distinct=True,
-                ),
-                Collect(
-                    RelationNameResolver("parent_class__has_data_domain"),
-                    distinct=True,
-                ),
-                Collect(
-                    NodeNameResolver("parent_class__has_data_domain__has_name_root"),
-                    distinct=True,
-                ),
-                Collect(
-                    RelationNameResolver(
-                        "parent_class__has_data_domain__has_name_root"
-                    ),
-                    distinct=True,
-                ),
-                Collect(
-                    NodeNameResolver(
-                        "parent_class__has_data_domain__has_name_root__has_latest_value"
-                    ),
-                    distinct=True,
-                ),
-                Collect(
-                    RelationNameResolver(
-                        "parent_class__has_data_domain__has_name_root__has_latest_value"
-                    ),
-                    distinct=True,
-                ),
-                Collect(
-                    NodeNameResolver(
-                        "parent_class__has_data_domain__has_attributes_root"
-                    ),
-                    distinct=True,
-                ),
-                Collect(
-                    RelationNameResolver(
-                        "parent_class__has_data_domain__has_attributes_root"
-                    ),
-                    distinct=True,
-                ),
-                Collect(
-                    NodeNameResolver(
-                        "parent_class__has_data_domain__has_attributes_root__has_latest_value"
-                    ),
-                    distinct=True,
-                ),
-                Collect(
-                    RelationNameResolver(
-                        "parent_class__has_data_domain__has_attributes_root__has_latest_value"
-                    ),
-                    distinct=True,
-                ),
+        )
+
+    def extend_distinct_headers_query(self, nodeset: NodeSet) -> NodeSet:
+        return nodeset.subquery(
+            self.root_class.nodes.fetch_relations("has_version")
+            .intermediate_transform(
+                {"rel": {"source": RelationNameResolver("has_version")}},
+                ordering=[
+                    RawCypher("toInteger(split(rel.version, '.')[0])"),
+                    RawCypher("toInteger(split(rel.version, '.')[1])"),
+                    "rel.end_date",
+                    "rel.start_date",
+                ],
             )
+            .annotate(latest_version=Last(Collect("rel"))),
+            ["latest_version"],
+            initial_context=[NodeNameResolver("self")],
         )
 
     def _has_data_changed(
         self, ar: ActivityInstanceClassAR, value: ActivityInstanceClassValue
     ) -> bool:
-        if parent := value.has_latest_value.get_or_none():
-            parent = parent.parent_class.get_or_none()
         if dataset_class := value.has_latest_value.get_or_none():
             dataset_class = dataset_class.maps_dataset_class.get_or_none()
-        if data_domains := value.has_latest_value.get_or_none():
-            data_domains = data_domains.has_data_domain.all()
-        else:
-            data_domains = []
 
         return (
             ar.activity_instance_class_vo.name != value.name
@@ -235,15 +112,6 @@ class ActivityInstanceClassRepository(
             != value.is_domain_specific
             or ar.activity_instance_class_vo.level != value.level
             or (
-                ar.activity_instance_class_vo.data_domain_uids
-                != [data_domain.uid for data_domain in data_domains]
-            )
-            or (
-                ar.activity_instance_class_vo.parent_uid != parent.uid
-                if parent
-                else None
-            )
-            or (
                 ar.activity_instance_class_vo.dataset_class_uid != dataset_class.uid
                 if dataset_class
                 else None
@@ -251,20 +119,25 @@ class ActivityInstanceClassRepository(
         )
 
     def _get_or_create_value(
-        self, root: ActivityInstanceClassRoot, ar: ActivityInstanceClassAR
+        self,
+        root: ActivityInstanceClassRoot,
+        ar: ActivityInstanceClassAR,
+        force_new_value_node: bool = False,
     ) -> ActivityInstanceClassValue:
-        for itm in root.has_version.all():
-            if not self._has_data_changed(ar, itm):
-                return itm
-        latest_draft = root.latest_draft.get_or_none()
-        if latest_draft and not self._has_data_changed(ar, latest_draft):
-            return latest_draft
-        latest_final = root.latest_final.get_or_none()
-        if latest_final and not self._has_data_changed(ar, latest_final):
-            return latest_final
-        latest_retired = root.latest_retired.get_or_none()
-        if latest_retired and not self._has_data_changed(ar, latest_retired):
-            return latest_retired
+        if not force_new_value_node:
+            for itm in root.has_version.all():
+                if not self._has_data_changed(ar, itm):
+                    return itm
+            latest_draft = root.latest_draft.get_or_none()
+            if latest_draft and not self._has_data_changed(ar, latest_draft):
+                return latest_draft
+            latest_final = root.latest_final.get_or_none()
+            if latest_final and not self._has_data_changed(ar, latest_final):
+                return latest_final
+            latest_retired = root.latest_retired.get_or_none()
+            if latest_retired and not self._has_data_changed(ar, latest_retired):
+                return latest_retired
+
         new_value = ActivityInstanceClassValue(
             name=ar.activity_instance_class_vo.name,
             order=ar.activity_instance_class_vo.order,
@@ -275,19 +148,11 @@ class ActivityInstanceClassRepository(
 
         self._db_save_node(new_value)
 
-        if ar.activity_instance_class_vo.parent_uid:
-            parent = ActivityInstanceClassRoot.nodes.get_or_none(
-                uid=ar.activity_instance_class_vo.parent_uid
-            )
-            root.parent_class.connect(parent)
         if ar.activity_instance_class_vo.dataset_class_uid:
             dataset = DatasetClass.nodes.get_or_none(
                 uid=ar.activity_instance_class_vo.dataset_class_uid
             )
             root.maps_dataset_class.connect(dataset)
-        for data_domain_uid in ar.activity_instance_class_vo.data_domain_uids or []:
-            data_domain = CTTermRoot.nodes.get_or_none(uid=data_domain_uid)
-            root.has_data_domain.connect(data_domain)
 
         return new_value
 
@@ -302,10 +167,8 @@ class ActivityInstanceClassRepository(
         value: ActivityInstanceClassValue,
         **_kwargs,
     ) -> ActivityInstanceClassAR:
-        parent_class = root.parent_class.get_or_none()
         dataset_class = root.maps_dataset_class.get_or_none()
         activity_item_classes = root.has_activity_item_class.all()
-        data_domains = root.has_data_domain.all()
 
         return ActivityInstanceClassAR.from_repository_values(
             uid=root.uid,
@@ -315,7 +178,6 @@ class ActivityInstanceClassRepository(
                 definition=value.definition,
                 is_domain_specific=value.is_domain_specific,
                 level=value.level,
-                parent_uid=parent_class.uid if parent_class else None,
                 dataset_class_uid=dataset_class.uid if dataset_class else None,
                 activity_item_classes=[
                     ActivityInstanceClassActivityItemClassRelVO(
@@ -329,14 +191,56 @@ class ActivityInstanceClassRepository(
                     )
                     for activity_item_class in activity_item_classes
                 ],
-                data_domain_uids=[data_domain.uid for data_domain in data_domains],
             ),
             library=LibraryVO.from_input_values_2(
                 library_name=library.name,
-                is_library_editable_callback=(lambda _: library.is_editable),
+                is_library_editable_callback=lambda _: library.is_editable,
             ),
             item_metadata=self._library_item_metadata_vo_from_relation(relationship),
         )
+
+    def patch_mappings(self, uid: str, dataset_class_uid: str) -> None:
+        root = ActivityInstanceClassRoot.nodes.get(uid=uid)
+        root.maps_dataset_class.disconnect_all()
+        dataset_class = DatasetClass.nodes.get(uid=dataset_class_uid)
+        root.maps_dataset_class.connect(dataset_class)
+
+    def get_mapped_datasets(
+        self,
+        activity_instance_class_uid: str | None = None,
+        include_sponsor: bool = True,
+    ) -> list[ActivityInstanceClassWithDataset]:
+        dataset_label = (
+            "DatasetInstance|SponsorModelDatasetInstance"
+            if include_sponsor
+            else "DatasetInstance"
+        )
+        query = "MATCH (aicv:ActivityInstanceClassValue)<-[:LATEST]-(aicr:ActivityInstanceClassRoot) "
+        if activity_instance_class_uid:
+            query += "WHERE aicr.uid=$activity_instance_class_uid"
+        query += f"""
+            OPTIONAL MATCH (aicr)-[:MAPS_DATASET_CLASS]->(:DatasetClass)-[:HAS_INSTANCE]->(:DatasetClassInstance)<-[:IMPLEMENTS_DATASET_CLASS]-(:{dataset_label})<-[:HAS_INSTANCE]-(d:Dataset)
+            OPTIONAL MATCH (aicr)-[:PARENT_CLASS]->{{1,3}}()-[:MAPS_DATASET_CLASS]->(:DatasetClass)
+            -[:HAS_INSTANCE]->(:DatasetClassInstance)<-[:IMPLEMENTS_DATASET_CLASS]-(:{dataset_label})<-[:HAS_INSTANCE]-(parent_d:Dataset)
+            WITH DISTINCT aicr.uid AS uid, aicv.name AS name, d.uid AS dataset_uid, parent_d.uid AS parent_dataset_uid ORDER BY name, dataset_uid, parent_dataset_uid 
+            WITH uid, name, apoc.coll.sort(apoc.coll.toSet(collect(dataset_uid) + collect(parent_dataset_uid))) AS dataset_uids WHERE size(dataset_uids) > 0
+            RETURN uid, name, dataset_uids
+        """
+
+        results, meta = db.cypher_query(
+            query, params={"activity_instance_class_uid": activity_instance_class_uid}
+        )
+
+        mapped_datasets = [dict(zip(meta, row)) for row in results]
+
+        output = [
+            ActivityInstanceClassWithDataset(
+                uid=el["uid"], name=el["name"], datasets=el["dataset_uids"]
+            )
+            for el in mapped_datasets
+        ]
+
+        return output
 
     def _maintain_parameters(
         self,
@@ -347,3 +251,309 @@ class ActivityInstanceClassRepository(
         # This method from parent repo is not needed for this repo
         # So we use pass to skip implementation
         pass
+
+    def update_parent(self, parent_uid: str | None, uid: str) -> None:
+        root = ActivityInstanceClassRoot.nodes.get(uid=uid)
+        root.parent_class.disconnect_all()
+
+        if parent_uid:
+            parent = ActivityInstanceClassRoot.nodes.get_or_none(uid=parent_uid)
+            root.parent_class.connect(parent)
+
+    def get_parent_class(self, uid: str) -> tuple[str, str] | None:
+        root = ActivityInstanceClassRoot.nodes.get_or_none(uid=uid)
+        if not root:
+            return None
+
+        parent_root = root.parent_class.get_or_none()
+        if not parent_root:
+            return None
+
+        parent_value = parent_root.has_latest_value.get_or_none()
+
+        return parent_root.uid, parent_value.name
+
+    def get_child_instance_classes(
+        self,
+        parent_uid: str,
+        version: str | None = None,
+        page_number: int = 1,
+        page_size: int = 10,
+        total_count: bool = False,
+        sort_by: dict[str, bool] | None = None,
+        ignore_parent_version: bool = False,
+    ) -> tuple[list[dict[str, Any]], int]:
+        """Get paginated child activity instance classes for a parent class at a specific version
+
+        Args:
+            parent_uid: UID of the parent class
+            version: Specific version to query, or None for parent's latest version
+            page_number: Page number for pagination
+            page_size: Number of items per page
+            total_count: Whether to compute total count
+            sort_by: Dictionary mapping field names to sort order (True=ascending, False=descending)
+            ignore_parent_version: If True, returns latest version of all structural children regardless of parent version
+                                  (used for checking if a class is structurally a parent)
+        """
+        # Build ORDER BY clause
+        order_clause = "ORDER BY name"  # default
+        if sort_by:
+            fields = [
+                f"{field} {'ASC' if ascending else 'DESC'}"
+                for field, ascending in sort_by.items()
+            ]
+            order_clause = f"ORDER BY {', '.join(fields)}"
+
+        if ignore_parent_version:
+            # Structural check: get latest version of all children regardless of parent version
+            query = """
+                MATCH (parent:ActivityInstanceClassRoot {uid: $parent_uid})
+                MATCH (child:ActivityInstanceClassRoot)-[:PARENT_CLASS]->(parent)
+                MATCH (child)-[:LATEST]->(childValue:ActivityInstanceClassValue)
+                OPTIONAL MATCH (child)-[ver:HAS_VERSION]->(childValue)
+                WITH child, childValue, ver
+                ORDER BY ver.start_date DESC
+                WITH child, childValue, COLLECT(ver)[0] as latest_ver
+                OPTIONAL MATCH (child)<-[:HAS_DATA_DOMAIN]-(lib:Library)
+                WITH child.uid as uid,
+                       childValue.name as name,
+                       childValue.definition as definition,
+                       childValue.is_domain_specific as is_domain_specific,
+                       latest_ver.status as status,
+                       latest_ver.version as version,
+                       latest_ver.start_date as modified_date,
+                       latest_ver.author_username as modified_by,
+                       lib.name as library_name
+            """
+            query += f"\n                {order_clause}"
+        else:
+            # Temporal query: Get children that existed during/after the parent version's lifetime
+            # If no version specified, use parent's LATEST version
+            query = """
+                // Get the parent at the specific version (or LATEST if not specified)
+                MATCH (parent:ActivityInstanceClassRoot {uid: $parent_uid})
+                MATCH (parent)-[pv:HAS_VERSION]->(parentValue:ActivityInstanceClassValue)
+                WHERE ($version IS NOT NULL AND pv.version = $version)
+                   OR ($version IS NULL AND EXISTS((parent)-[:LATEST]->(parentValue)))
+
+                // Get all children that have a parent relationship
+                MATCH (child:ActivityInstanceClassRoot)-[:PARENT_CLASS]->(parent)
+
+                // For each child, get versions that existed during the parent version's lifetime
+                MATCH (child)-[cv:HAS_VERSION]->(childValue:ActivityInstanceClassValue)
+                WHERE cv.start_date >= pv.start_date
+                  AND (pv.end_date IS NULL OR cv.start_date < pv.end_date)
+
+                // Get the latest version of each child
+                WITH child, childValue, cv
+                ORDER BY
+                    toInteger(split(cv.version, '.')[0]) DESC,
+                    toInteger(split(cv.version, '.')[1]) DESC,
+                    cv.start_date DESC
+                WITH child, collect({value: childValue, ver: cv})[0] as childData
+
+                OPTIONAL MATCH (child)<-[:HAS_DATA_DOMAIN]-(lib:Library)
+                WITH child.uid as uid,
+                       childData.value.name as name,
+                       childData.value.definition as definition,
+                       childData.value.is_domain_specific as is_domain_specific,
+                       childData.ver.status as status,
+                       childData.ver.version as version,
+                       childData.ver.start_date as modified_date,
+                       childData.ver.author_username as modified_by,
+                       lib.name as library_name
+            """
+            query += f"\n                {order_clause}"
+
+        # Get total count if requested
+        if total_count:
+            count_query = query + " RETURN COUNT(*) as total"
+            count_params = {"parent_uid": parent_uid, "version": version}
+            count_results, _ = db.cypher_query(count_query, params=count_params)
+            total = count_results[0][0] if count_results else 0
+        else:
+            total = 0
+
+        # Add pagination to main query
+        if page_size > 0:
+            query += "\n                SKIP $skip LIMIT $limit"
+
+        # Build final query
+        final_query = (
+            query
+            + """
+                RETURN uid, name, definition, is_domain_specific,
+                       status, version, modified_date, modified_by, library_name
+            """
+        )
+
+        params: dict[str, Any] = {"parent_uid": parent_uid, "version": version}
+        if page_size > 0:
+            params["skip"] = (page_number - 1) * page_size
+            params["limit"] = page_size
+
+        results, meta = db.cypher_query(final_query, params=params)
+
+        return [dict(zip(meta, row)) for row in results], total
+
+    def get_activity_item_classes(
+        self,
+        activity_instance_class_uid: str,
+        version: str | None = None,
+        page_number: int = 1,
+        page_size: int = 10,
+        total_count: bool = False,
+        sort_by: dict[str, bool] | None = None,
+    ) -> tuple[list[dict[str, Any]], int]:
+        """Get paginated activity item classes for an activity instance class at a specific version"""
+
+        # Build ORDER BY clause
+        order_clause = "ORDER BY name"  # default
+        if sort_by:
+            fields = [
+                f"{field} {'ASC' if ascending else 'DESC'}"
+                for field, ascending in sort_by.items()
+            ]
+            order_clause = f"ORDER BY {', '.join(fields)}"
+
+        # When no version specified, show current state with latest item versions
+        if not version:
+            # Query to get the latest versions of all connected items
+            query = """
+                // Get the activity instance class
+                MATCH (aic:ActivityInstanceClassRoot {uid: $uid})
+
+                // Get all item classes DIRECTLY connected to this activity instance class
+                // or its direct parent (not items the parent inherits from its ancestors)
+                OPTIONAL MATCH (aic)-[:HAS_ITEM_CLASS]->(directItem:ActivityItemClassRoot)
+                OPTIONAL MATCH (aic)-[:PARENT_CLASS]->(directParent:ActivityInstanceClassRoot)
+                OPTIONAL MATCH (directParent)-[:HAS_ITEM_CLASS]->(parentItem:ActivityItemClassRoot)
+                WITH aic, COLLECT(DISTINCT directItem) + COLLECT(DISTINCT parentItem) as items
+                UNWIND items as item
+
+                // Get the LATEST version of each item (current state)
+                MATCH (item)-[:LATEST]->(itemLatest:ActivityItemClassValue)
+                MATCH (item)-[iv:HAS_VERSION]->(itemLatest)
+                WHERE iv.end_date IS NULL
+
+                // Get the direct parent UID and name for this item
+                OPTIONAL MATCH (directParentItem:ActivityInstanceClassRoot)-[:HAS_ITEM_CLASS]->(item)
+                WHERE directParentItem.uid <> $uid
+                OPTIONAL MATCH (directParentItem)-[:LATEST]->(directParentValue:ActivityInstanceClassValue)
+                WITH item, iv, itemLatest,
+                     COLLECT(DISTINCT {parent_uid: directParentItem.uid, parent_name: directParentValue.name})[0] as parentInfo
+
+                WITH item.uid as uid,
+                       itemLatest.name as name,
+                       parentInfo.parent_name as parent_name,
+                       parentInfo.parent_uid as parent_uid,
+                       itemLatest.definition as definition,
+                       iv.status as status,
+                       iv.version as version,
+                       iv.start_date as modified_date,
+                       iv.author_username as modified_by
+            """
+            query += f"\n                {order_clause}"
+        else:
+            # For specific version, show items as they were at that time
+            query = """
+                // First get the activity instance class at the specific version
+                MATCH (aic:ActivityInstanceClassRoot {uid: $uid})
+                MATCH (aic)-[av:HAS_VERSION {version: $version}]->(aicValue:ActivityInstanceClassValue)
+
+                // Get all item classes DIRECTLY connected to this activity instance class
+                // or its direct parent (not items the parent inherits from its ancestors)
+                OPTIONAL MATCH (aic)-[:HAS_ITEM_CLASS]->(directItem:ActivityItemClassRoot)
+                OPTIONAL MATCH (aic)-[:PARENT_CLASS]->(directParent:ActivityInstanceClassRoot)
+                OPTIONAL MATCH (directParent)-[:HAS_ITEM_CLASS]->(parentItem:ActivityItemClassRoot)
+                WITH aic, av, COLLECT(DISTINCT directItem) + COLLECT(DISTINCT parentItem) as items
+                UNWIND items as item
+
+                // Get all versions of each item
+                MATCH (item)-[iv:HAS_VERSION]->(itemValue:ActivityItemClassValue)
+                WITH aic, item, av, iv, itemValue
+                ORDER BY iv.start_date ASC
+                WITH aic, item, av, COLLECT({ver: iv, value: itemValue}) as allVersions
+
+                // Find the appropriate version for this ActivityInstanceClass version
+                WITH aic, item, av, allVersions,
+                     CASE
+                         // For current ActivityInstanceClass versions (no end date), show the latest item versions
+                         WHEN av.end_date IS NULL THEN
+                             // Get the latest version, preferring Final over Draft
+                             CASE
+                                 WHEN SIZE([v IN allVersions WHERE v.ver.end_date IS NULL]) > 0 THEN
+                                     [v IN allVersions WHERE v.ver.end_date IS NULL][0]
+                                 WHEN SIZE([v IN allVersions WHERE v.ver.status = 'Final']) > 0 THEN
+                                     [v IN allVersions WHERE v.ver.status = 'Final' | v][-1]
+                                 ELSE allVersions[-1]
+                             END
+                         // For historical versions, find what was valid at that time
+                         WHEN SIZE([v IN allVersions WHERE v.ver.start_date <= av.start_date AND (v.ver.end_date IS NULL OR v.ver.end_date > av.start_date)]) > 0 THEN
+                             [v IN allVersions WHERE v.ver.start_date <= av.start_date AND (v.ver.end_date IS NULL OR v.ver.end_date > av.start_date)][-1]
+                         // If item was created after, find the version valid during the ActivityInstanceClass's lifetime
+                         // Prefer Final versions that existed while this ActivityInstanceClass version was active
+                         WHEN SIZE([v IN allVersions WHERE v.ver.start_date <= av.end_date AND v.ver.status = 'Final']) > 0 THEN
+                             [v IN allVersions WHERE v.ver.start_date <= av.end_date AND v.ver.status = 'Final'][0]
+                         // If no Final version during lifetime, get any version that overlapped
+                         WHEN SIZE([v IN allVersions WHERE v.ver.start_date <= av.end_date]) > 0 THEN
+                             [v IN allVersions WHERE v.ver.start_date <= av.end_date][0]
+                         // Item was created after this version ended - don't show it
+                         ELSE NULL
+                     END as itemData
+                WHERE itemData IS NOT NULL
+
+                // Get the direct parent UID and name for this item
+                // Show which ActivityInstanceClass directly owns this item (not the one we're querying from)
+                OPTIONAL MATCH (directParent:ActivityInstanceClassRoot)-[:HAS_ITEM_CLASS]->(item)
+                WHERE directParent.uid <> $uid
+                OPTIONAL MATCH (directParent)-[:LATEST]->(directParentValue:ActivityInstanceClassValue)
+                WITH item, itemData,
+                     COLLECT(DISTINCT {parent_uid: directParent.uid, parent_name: directParentValue.name})[0] as parentInfo
+
+                WITH item.uid as uid,
+                       itemData.value.name as name,
+                       parentInfo.parent_name as parent_name,
+                       parentInfo.parent_uid as parent_uid,
+                       itemData.value.definition as definition,
+                       itemData.ver.status as status,
+                       itemData.ver.version as version,
+                       itemData.ver.start_date as modified_date,
+                       itemData.ver.author_username as modified_by
+            """
+            query += f"\n                {order_clause}"
+
+        # Get total count if requested
+        if total_count:
+            count_query = query + " RETURN COUNT(DISTINCT uid) as total"
+            count_params = {"uid": activity_instance_class_uid}
+            if version:
+                count_params["version"] = version
+            count_results, _ = db.cypher_query(count_query, params=count_params)
+            total = count_results[0][0] if count_results else 0
+        else:
+            total = 0
+
+        # Add pagination to main query
+        if page_size > 0:
+            query += "\n                SKIP $skip LIMIT $limit"
+
+        # Build final query
+        final_query = (
+            query
+            + """
+                RETURN DISTINCT uid, name, parent_name, parent_uid, definition,
+                       status, version, modified_date, modified_by
+            """
+        )
+
+        params: dict[str, Any] = {"uid": activity_instance_class_uid}
+        if version:
+            params["version"] = version
+        if page_size > 0:
+            params["skip"] = (page_number - 1) * page_size
+            params["limit"] = page_size
+
+        results, meta = db.cypher_query(final_query, params=params)
+
+        return [dict(zip(meta, row)) for row in results], total

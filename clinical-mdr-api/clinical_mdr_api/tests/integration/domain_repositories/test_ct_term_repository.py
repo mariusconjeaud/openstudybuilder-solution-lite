@@ -1,5 +1,6 @@
 import itertools
 import unittest
+from typing import Any
 
 from neomodel import db
 
@@ -46,7 +47,7 @@ class TestCTTermRepository(unittest.TestCase):
         db.cypher_query(
             """
         CREATE(:Library{name:"CDISC", is_editable:true})
-        CREATE(:Library{name:"Sponsor1", is_editable:true})
+        CREATE(:Library{name:"Sponsor", is_editable:true})
         CREATE(sdtm_ct:CTCatalogue{name:"SDTM CT"})-[:CONTAINS_PACKAGE]->(:CTPackage{uid: "SDTM_PACKAGE_1",name:"SDTM_PACKAGE_1"})
         MERGE(sdtm_ct)-[:CONTAINS_PACKAGE]->(:CTPackage{uid: "SDTM_PACKAGE_2", name:"SDTM_PACKAGE_2"})
         CREATE(cdash_ct:CTCatalogue{name:"CDASH CT"})-[:CONTAINS_PACKAGE]->(:CTPackage{uid: "CDASH_PACKAGE_1",name:"CDASH_PACKAGE_1"})
@@ -73,30 +74,30 @@ class TestCTTermRepository(unittest.TestCase):
         available_codelist_names = []
         codelist_uid_to_name_dict = {}
         available_catalogues = ["SDTM CT", "CDASH CT"]
-        available_libraries = ["CDISC", "Sponsor1"]
+        available_libraries = ["CDISC", "Sponsor"]
         available_packages = {
             "SDTM CT": ["SDTM_PACKAGE_1", "SDTM_PACKAGE_2"],
             "CDASH CT": ["CDASH_PACKAGE_1", "CDASH_PACKAGE_2"],
         }
         term_uid_to_package_name = {}
-        all_terms_for_package = {}
-        all_terms_for_library = {}
-        all_terms_for_codelist = {}
-        all_terms_for_codelist_name = {}
+        all_terms_for_package: dict[Any, Any] = {}
+        all_terms_for_library: dict[Any, Any] = {}
+        all_terms_for_codelist: dict[Any, Any] = {}
+        all_terms_for_codelist_name: dict[Any, Any] = {}
 
-        for library in available_libraries:
+        for cl_library in available_libraries:
             for catalogue in available_catalogues:
                 for _ in range(2):
                     with db.transaction:
                         codelist_attributes = create_random_ct_codelist_attributes_ar(
-                            library=library, is_editable=True, catalogue=catalogue
+                            library=cl_library, is_editable=True, catalogue=catalogue
                         )
 
                         codelist_attributes.approve(author_id=current_function_name())
                         self.codelist_attributes_repo.save(codelist_attributes)
                         codelist_names = create_random_ct_codelist_name_ar(
                             generate_uid_callback=lambda x=codelist_attributes.uid: x,
-                            library=library,
+                            library=cl_library,
                             is_editable=True,
                             catalogue=catalogue,
                         )
@@ -108,15 +109,17 @@ class TestCTTermRepository(unittest.TestCase):
                     codelist_uid_to_name_dict[codelist_attributes.uid] = (
                         codelist_names.name
                     )
+                    all_terms_for_codelist[codelist_attributes.uid] = []
+                    all_terms_for_codelist_name[codelist_names.name] = []
 
                     # for codelist in available_codelists:
-                    for lib in available_libraries:
+                    term_order = 1
+                    for term_library in available_libraries:
                         for package_catalogue, packages in available_packages.items():
                             for _ in range(1):
                                 term_attributes = create_random_ct_term_attributes_ar(
-                                    library=lib,
+                                    library=term_library,
                                     is_editable=True,
-                                    codelist_uid=codelist_attributes.uid,
                                 )
                                 term_attributes.approve(
                                     author_id=current_function_name()
@@ -124,9 +127,8 @@ class TestCTTermRepository(unittest.TestCase):
                                 self.term_attributes_repo.save(term_attributes)
                                 term_names = create_random_ct_term_name_ar(
                                     generate_uid_callback=lambda x=term_attributes.uid: x,
-                                    library=lib,
+                                    library=term_library,
                                     is_editable=True,
-                                    codelist_uid=codelist_attributes.uid,
                                 )
                                 term_names.approve(author_id=current_function_name())
                                 self.term_names_repo.save(term_names)
@@ -138,7 +140,7 @@ class TestCTTermRepository(unittest.TestCase):
                                         db.cypher_query(
                                             """
                                         MATCH(package:CTPackage {name: $package_name})
-                                        MATCH(term_attributes_value:CTTermAttributesValue {name_submission_value: $term_name})
+                                        MATCH(term_attributes_value:CTTermAttributesValue {preferred_term: $term_name})
                                         MERGE(package)-[:CONTAINS_CODELIST]->(package_codelist:CTPackageCodelist)-[:CONTAINS_TERM]->
                                         (package_term:CTPackageTerm)-[:CONTAINS_ATTRIBUTES]->(term_attributes_value)
                                         """,
@@ -168,7 +170,7 @@ class TestCTTermRepository(unittest.TestCase):
                                         """,
                                     {
                                         "catalogue": catalogue,
-                                        "library": library,
+                                        "library": cl_library,
                                         "codelist_uid": codelist_attributes.uid,
                                     },
                                 )
@@ -183,8 +185,10 @@ class TestCTTermRepository(unittest.TestCase):
                                         codelist_uid=codelist_uid,
                                         term_uid=term_attributes.uid,
                                         author_id=AUTHOR_ID,
-                                        order=term_names.ct_term_vo.codelists[0].order,
+                                        order=term_order,
+                                        submission_value=term_attributes.name,
                                     )
+                                    term_order += 1
                                     all_terms_for_codelist[codelist_uid].append(
                                         term_attributes.uid
                                     )
@@ -192,49 +196,17 @@ class TestCTTermRepository(unittest.TestCase):
                                         term_attributes.uid
                                     )
 
-                                if all_terms_for_library.get(lib) is None:
-                                    all_terms_for_library[lib] = [term_attributes.uid]
+                                if all_terms_for_library.get(term_library) is None:
+                                    all_terms_for_library[term_library] = [
+                                        term_attributes.uid
+                                    ]
                                 elif (
                                     term_attributes.uid
-                                    not in all_terms_for_library[lib]
+                                    not in all_terms_for_library[term_library]
                                 ):
-                                    all_terms_for_library[lib].append(
+                                    all_terms_for_library[term_library].append(
                                         term_attributes.uid
                                     )
-
-                                if (
-                                    all_terms_for_codelist.get(codelist_attributes.uid)
-                                    is None
-                                ):
-                                    all_terms_for_codelist[codelist_attributes.uid] = [
-                                        term_attributes.uid
-                                    ]
-                                elif (
-                                    term_attributes.uid
-                                    not in all_terms_for_codelist[
-                                        codelist_attributes.uid
-                                    ]
-                                ):
-                                    all_terms_for_codelist[
-                                        codelist_attributes.uid
-                                    ].append(term_attributes.uid)
-
-                                if (
-                                    all_terms_for_codelist_name.get(codelist_names.name)
-                                    is None
-                                ):
-                                    all_terms_for_codelist_name[codelist_names.name] = [
-                                        term_attributes.uid
-                                    ]
-                                elif (
-                                    term_attributes.uid
-                                    not in all_terms_for_codelist_name[
-                                        codelist_names.name
-                                    ]
-                                ):
-                                    all_terms_for_codelist_name[
-                                        codelist_names.name
-                                    ].append(term_attributes.uid)
 
         available_codelists.append(None)
         available_codelist_names.append(None)
@@ -243,77 +215,76 @@ class TestCTTermRepository(unittest.TestCase):
             value for key, values in available_packages.items() for value in values
         ]
         available_packages.append(None)
+
         # Initializes all possible combinations of filtering parameters with possibility of assigning None to them
         # The following mappings describes the possible optional filter parameters:
-        # * codelist.uid = filter_tuple[0]
-        # * codelist.name = filter_tuple[1]
-        # * library = filter_tuple[2]
-        # * package.name = filter_tuple[3]
+        # * codelist.uid = cl_uid
+        # * codelist.name = cl_name
+        # * library = library
+        # * package.name = package
         filter_tuples = itertools.product(
             available_codelists,
             available_codelist_names,
             available_libraries,
             available_packages,
         )
-        for filter_tuple in filter_tuples:
-            with self.subTest(filter_tuple):
+        for cl_uid, cl_name, library, package in filter_tuples:
+            with self.subTest(f"{cl_uid}, {cl_name}, {library}, {package}"):
                 all_term_in_db_aggregated_res = (
                     self.term_aggregated_repo.find_all_aggregated_result(
-                        codelist_uid=filter_tuple[0],
-                        codelist_name=filter_tuple[1],
-                        library=filter_tuple[2],
-                        package=filter_tuple[3],
-                    ).items
+                        codelist_uid=cl_uid,
+                        codelist_name=cl_name,
+                        library=library,
+                        package=package,
+                    )[0]
                 )
                 all_filters_results = []
                 # check if Terms are properly filtered
-                for term_names, term_attributes in all_term_in_db_aggregated_res:
-                    if filter_tuple[0] is not None:
+                for (
+                    term_names,
+                    term_attributes,
+                    codelists,
+                ) in all_term_in_db_aggregated_res:
+                    if cl_uid is not None:
                         self.assertEqual(
-                            term_attributes.ct_term_vo.codelists[0].codelist_uid,
-                            filter_tuple[0],
+                            codelists.codelists[0].codelist_uid,
+                            cl_uid,
                         )
                         self.assertEqual(
-                            term_names.ct_term_vo.codelists[0].codelist_uid,
-                            filter_tuple[0],
+                            codelists.codelists[0].codelist_uid,
+                            cl_uid,
                         )
-                        all_filters_results.append(
-                            set(all_terms_for_codelist[filter_tuple[0]])
-                        )
-                    if filter_tuple[1] is not None:
-                        self.assertEqual(
-                            codelist_uid_to_name_dict[
-                                term_attributes.ct_term_vo.codelists[0].codelist_uid
-                            ],
-                            filter_tuple[1],
-                        )
+                        all_filters_results.append(set(all_terms_for_codelist[cl_uid]))
+                    if cl_name is not None:
                         self.assertEqual(
                             codelist_uid_to_name_dict[
-                                term_names.ct_term_vo.codelists[0].codelist_uid
+                                codelists.codelists[0].codelist_uid
                             ],
-                            filter_tuple[1],
+                            cl_name,
+                        )
+                        self.assertEqual(
+                            codelist_uid_to_name_dict[
+                                codelists.codelists[0].codelist_uid
+                            ],
+                            cl_name,
                         )
                         all_filters_results.append(
-                            set(all_terms_for_codelist_name[filter_tuple[1]])
+                            set(all_terms_for_codelist_name[cl_name])
                         )
-                    if filter_tuple[2] is not None:
-                        self.assertEqual(term_attributes.library.name, filter_tuple[2])
-                        self.assertEqual(term_names.library.name, filter_tuple[2])
-                        all_filters_results.append(
-                            set(all_terms_for_library[filter_tuple[2]])
-                        )
-                    if filter_tuple[3] is not None:
+                    if library is not None:
+                        self.assertEqual(term_attributes.library.name, library)
+                        self.assertEqual(term_names.library.name, library)
+                        all_filters_results.append(set(all_terms_for_library[library]))
+                    if package is not None:
                         self.assertIn(
-                            filter_tuple[3],
+                            package,
                             term_uid_to_package_name[term_attributes.uid],
                         )
                         self.assertIn(
-                            filter_tuple[3],
+                            package,
                             term_uid_to_package_name[term_attributes.uid],
                         )
-                        all_filters_results.append(
-                            set(all_terms_for_package[filter_tuple[3]])
-                        )
+                        all_filters_results.append(set(all_terms_for_package[package]))
 
                 predicted_result = set()
                 if len(all_filters_results) > 0:
@@ -346,26 +317,32 @@ class TestCTTermRepository(unittest.TestCase):
                         },
                     )
 
-                self.assertEqual(
-                    len(predicted_result),
-                    len({name.uid for name, _ in all_term_in_db_aggregated_res}),
+                # Check that we got the expected terms
+                assert predicted_result == set(
+                    name.uid for name, _, _ in all_term_in_db_aggregated_res
                 )
+
                 # Check if result lists contains unique terms
                 # the tuples of (term_uid, codelist_uid) are compared, as we allow multiple same term_uid unless if they
                 # come from different codelists
+                def get_cl_uid(codelists):
+                    if len(codelists.codelists) > 0:
+                        return codelists.codelists[0].codelist_uid
+                    return None
+
                 attributes_uids = [
-                    (attributes.uid, attributes.ct_term_vo.codelists[0].codelist_uid)
-                    for _, attributes in all_term_in_db_aggregated_res
-                ]
-                names_uids = [
-                    (names.uid, names.ct_term_vo.codelists[0].codelist_uid)
-                    for names, _ in all_term_in_db_aggregated_res
+                    (attributes.uid, get_cl_uid(codelists))
+                    for _, attributes, codelists in all_term_in_db_aggregated_res
                 ]
                 self.assertEqual(
                     len(attributes_uids),
                     len(set(attributes_uids)),
                     "CTTermsAttributes are duplicated in the repository response",
                 )
+                names_uids = [
+                    (names.uid, get_cl_uid(codelists))
+                    for names, _, codelists in all_term_in_db_aggregated_res
+                ]
                 self.assertEqual(
                     len(names_uids),
                     len(set(names_uids)),

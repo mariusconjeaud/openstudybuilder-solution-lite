@@ -2,18 +2,41 @@
 
 import os
 
-from fastapi import APIRouter, HTTPException
-from fastapi.responses import FileResponse
+from fastapi import APIRouter, HTTPException, Request
+from fastapi.responses import FileResponse, HTMLResponse
 
-from consumer_api.shared.common import APP_ROOT_DIR
+from common import templating
+from common.config import settings
+from consumer_api.shared.common import get_api_version
 from consumer_api.system import service
 
-# Mounted under "/system" path as a sub-application, endpoints do not require authentication.
 router = APIRouter()
 
 
+@router.get("/", response_class=HTMLResponse)
+def root(request: Request):
+    root_path = os.environ.get("UVICORN_ROOT_PATH", "").strip("/")
+
+    if str(request.base_url).endswith("/" + root_path):
+        root_path = ""
+    else:
+        root_path = "/" + root_path
+
+    return templating.templates.TemplateResponse(
+        "pages/api-welcome.html",
+        {
+            "request": request,
+            "data": {
+                "app_name": "StudyBuilder Consumer API",
+                "version": get_api_version(),
+                "root_path": root_path,
+            },
+        },
+    )
+
+
 @router.get(
-    "/information",
+    "/system/information",
     summary="Returns various information about this API (running version, etc.)",
     status_code=200,
 )
@@ -22,44 +45,46 @@ def get_system_information() -> service.SystemInformation:
 
 
 @router.get(
-    "/information/build-id",
+    "/system/information/build-id",
     summary="Returns build id as plain text",
     status_code=200,
 )
-def get_build_id() -> str:
+async def get_build_id() -> str:
     return service.get_build_id()
 
 
 @router.get(
-    "/healthcheck",
+    "/system/healthcheck",
     summary="Returns 200 OK status if the system is ready to serve requests",
     status_code=200,
 )
-def healthcheck() -> str:
+async def healthcheck() -> str:
     return "OK"
 
 
 @router.get(
-    "/information/sbom.md",
+    "/system/information/sbom.md",
     summary="Returns SBOM as markdown text",
+    response_class=FileResponse,
     status_code=200,
 )
-def get_sbom_md() -> FileResponse:
+async def get_sbom_md() -> FileResponse:
     filename = "sbom.md"
-    filepath = os.path.join(APP_ROOT_DIR, filename)
+    filepath = os.path.join(settings.app_root_dir, filename)
     if not os.path.isfile(filepath):
         raise HTTPException(status_code=404, detail=f"file not found: {filename}")
     return FileResponse(path=filepath, media_type="text/markdown", filename=filename)
 
 
 @router.get(
-    "/information/license.md",
+    "/system/information/license.md",
     summary="Returns license as markdown text",
+    response_class=FileResponse,
     status_code=200,
 )
-def get_license_md() -> FileResponse:
+async def get_license_md() -> FileResponse:
     filename = "LICENSE.md"
-    filepath = os.path.join(APP_ROOT_DIR, filename)
+    filepath = os.path.join(settings.app_root_dir, filename)
     if not os.path.isfile(filepath):
         raise HTTPException(status_code=404, detail=f"file not found: {filename}")
     return FileResponse(path=filepath, media_type="text/markdown", filename=filename)

@@ -1,7 +1,9 @@
 import datetime
 from collections import OrderedDict
 
-from clinical_mdr_api.models.controlled_terminologies.ct_term import CTTermName
+from clinical_mdr_api.models.controlled_terminologies.ct_term import (
+    SimpleCodelistTermModel,
+)
 from clinical_mdr_api.models.study_selections.study import StudySoaPreferences
 from clinical_mdr_api.models.study_selections.study_epoch import StudyEpoch
 from clinical_mdr_api.models.study_selections.study_selection import (
@@ -29,14 +31,15 @@ STUDY_ARMS = OrderedDict(
                 short_name="NPH insulin",
                 description=None,
                 code="A",
-                arm_colour="#FFFDE7FF",
                 randomization_group="A",
                 number_of_subjects=50,
-                arm_type=CTTermName(
+                arm_type=SimpleCodelistTermModel(
                     term_uid="CTTerm_000081",
                     codelist_uid="CTCodelist_000022",
-                    sponsor_preferred_name="Investigational Arm",
-                    sponsor_preferred_name_sentence_case="investigational arm",
+                    codelist_name="TODO",
+                    term_name="Investigational Arm",
+                    submission_value="investigational arm",
+                    codelist_submission_value="ARMTTP",
                     order=1,
                     start_date=datetime.datetime(2022, 7, 14, 11, 18, 29, 635044),
                 ),
@@ -54,14 +57,15 @@ STUDY_ARMS = OrderedDict(
                 short_name="Metformin is longer",
                 description=None,
                 code="B",
-                arm_colour="#FFEBEEFF",
                 randomization_group="B",
                 number_of_subjects=50,
-                arm_type=CTTermName(
+                arm_type=SimpleCodelistTermModel(
                     term_uid="CTTerm_000081",
                     codelist_uid="CTCodelist_000022",
-                    sponsor_preferred_name="Investigational Arm",
-                    sponsor_preferred_name_sentence_case="investigational arm",
+                    codelist_name="TODO",
+                    term_name="Investigational Arm",
+                    submission_value="investigational arm",
+                    codelist_submission_value="ARMTTP",
                     order=1,
                     start_date=datetime.datetime(2022, 7, 14, 11, 18, 29, 635044),
                 ),
@@ -79,7 +83,6 @@ STUDY_ARMS = OrderedDict(
                 short_name="Another arm",
                 description=None,
                 code=None,
-                arm_colour="#F3E5F5FF",
                 randomization_group=None,
                 number_of_subjects=None,
                 arm_type=None,
@@ -97,7 +100,6 @@ STUDY_ARMS = OrderedDict(
                 short_name="More arms",
                 description=None,
                 code=None,
-                arm_colour="#E8EAF6FF",
                 randomization_group=None,
                 number_of_subjects=None,
                 arm_type=None,
@@ -354,11 +356,13 @@ STUDY_ELEMENTS = OrderedDict(
                 planned_duration=None,
                 element_colour=None,
                 element_type=None,
-                element_subtype=CTTermName(
+                element_subtype=SimpleCodelistTermModel(
                     term_uid="CTTerm_000135",
+                    term_name="TODO",
                     codelist_uid="CTCodelist_000024",
-                    sponsor_preferred_name="Screening",
-                    sponsor_preferred_name_sentence_case="screening",
+                    codelist_name="TODO",
+                    codelist_submission_value="TODO",
+                    submission_value="TODO",
                     order=1,
                     start_date=datetime.datetime(2022, 7, 14, 11, 18, 43, 459307),
                 ),
@@ -382,11 +386,13 @@ STUDY_ELEMENTS = OrderedDict(
                 planned_duration=None,
                 element_colour=None,
                 element_type=None,
-                element_subtype=CTTermName(
+                element_subtype=SimpleCodelistTermModel(
                     term_uid="CTTerm_000131",
+                    term_name="TODO",
                     codelist_uid="CTCodelist_000024",
-                    sponsor_preferred_name="Treatment",
-                    sponsor_preferred_name_sentence_case="treatment",
+                    codelist_name="TODO",
+                    codelist_submission_value="TODO",
+                    submission_value="TODO",
                     order=3,
                     start_date=datetime.datetime(2022, 7, 14, 11, 18, 42, 889737),
                 ),
@@ -410,11 +416,13 @@ STUDY_ELEMENTS = OrderedDict(
                 planned_duration=None,
                 element_colour=None,
                 element_type=None,
-                element_subtype=CTTermName(
+                element_subtype=SimpleCodelistTermModel(
                     term_uid="CTTerm_000131",
+                    term_name="TODO",
                     codelist_uid="CTCodelist_000024",
-                    sponsor_preferred_name="Treatment",
-                    sponsor_preferred_name_sentence_case="treatment",
+                    codelist_name="TODO",
+                    codelist_submission_value="TODO",
+                    submission_value="TODO",
                     order=3,
                     start_date=datetime.datetime(2022, 7, 14, 11, 18, 42, 889737),
                 ),
@@ -438,11 +446,13 @@ STUDY_ELEMENTS = OrderedDict(
                 planned_duration=None,
                 element_colour=None,
                 element_type=None,
-                element_subtype=CTTermName(
+                element_subtype=SimpleCodelistTermModel(
                     term_uid="CTTerm_000134",
+                    term_name="TODO",
                     codelist_uid="CTCodelist_000024",
-                    sponsor_preferred_name="Follow-up",
-                    sponsor_preferred_name_sentence_case="follow-up",
+                    codelist_name="TODO",
+                    codelist_submission_value="TODO",
+                    submission_value="TODO",
                     order=5,
                     start_date=datetime.datetime(2022, 7, 14, 11, 18, 43, 264949),
                 ),
@@ -748,7 +758,6 @@ STUDY_VISITS = (
         start_date="2022-08-24 11:52:48",
         author_username=AUTHOR_USERNAME,
         possible_actions=["edit", "delete", "lock"],
-        study_activity_count=0,
     ),
     StudyVisit(
         study_epoch_uid="StudyEpoch_000002",
@@ -816,7 +825,6 @@ STUDY_VISITS = (
         start_date="2022-08-24 11:52:49",
         author_username=AUTHOR_USERNAME,
         possible_actions=["edit", "delete", "lock"],
-        study_activity_count=0,
     ),
     StudyVisit(
         study_epoch_uid="StudyEpoch_000002",
@@ -884,7 +892,6 @@ STUDY_VISITS = (
         start_date="2022-08-24 11:52:49",
         author_username=AUTHOR_USERNAME,
         possible_actions=["edit", "delete", "lock"],
-        study_activity_count=0,
     ),
     StudyVisit(
         study_epoch_uid="StudyEpoch_000002",
@@ -952,7 +959,6 @@ STUDY_VISITS = (
         start_date="2022-08-24 11:52:49",
         author_username=AUTHOR_USERNAME,
         possible_actions=["edit", "delete", "lock"],
-        study_activity_count=0,
     ),
     StudyVisit(
         study_epoch_uid="StudyEpoch_000002",
@@ -1020,7 +1026,6 @@ STUDY_VISITS = (
         start_date="2022-08-24 11:52:50",
         author_username=AUTHOR_USERNAME,
         possible_actions=["edit", "delete", "lock"],
-        study_activity_count=0,
     ),
     StudyVisit(
         study_epoch_uid="StudyEpoch_000002",
@@ -1088,7 +1093,6 @@ STUDY_VISITS = (
         start_date="2022-08-24 11:52:50",
         author_username=AUTHOR_USERNAME,
         possible_actions=["edit", "delete", "lock"],
-        study_activity_count=0,
     ),
     StudyVisit(
         study_epoch_uid="StudyEpoch_000002",
@@ -1156,7 +1160,6 @@ STUDY_VISITS = (
         start_date="2022-08-24 11:52:50",
         author_username=AUTHOR_USERNAME,
         possible_actions=["edit", "delete", "lock"],
-        study_activity_count=0,
     ),
     StudyVisit(
         study_epoch_uid="StudyEpoch_000002",
@@ -1224,7 +1227,6 @@ STUDY_VISITS = (
         start_date="2022-08-24 11:52:50",
         author_username=AUTHOR_USERNAME,
         possible_actions=["edit", "delete", "lock"],
-        study_activity_count=0,
     ),
     StudyVisit(
         study_epoch_uid="StudyEpoch_000002",
@@ -1292,7 +1294,6 @@ STUDY_VISITS = (
         start_date="2022-08-24 11:52:50",
         author_username=AUTHOR_USERNAME,
         possible_actions=["edit", "delete", "lock"],
-        study_activity_count=0,
     ),
     StudyVisit(
         study_epoch_uid="StudyEpoch_000002",
@@ -1360,7 +1361,6 @@ STUDY_VISITS = (
         start_date="2022-08-24 11:52:51",
         author_username=AUTHOR_USERNAME,
         possible_actions=["edit", "delete", "lock"],
-        study_activity_count=0,
     ),
     StudyVisit(
         study_epoch_uid="StudyEpoch_000042",
@@ -1428,7 +1428,6 @@ STUDY_VISITS = (
         start_date="2022-08-26 02:14:58",
         author_username=AUTHOR_USERNAME,
         possible_actions=["edit", "delete", "lock"],
-        study_activity_count=0,
     ),
     StudyVisit(
         study_epoch_uid="StudyEpoch_000003",
@@ -1496,7 +1495,6 @@ STUDY_VISITS = (
         start_date="2022-08-26 02:14:31",
         author_username=AUTHOR_USERNAME,
         possible_actions=["edit", "delete", "lock"],
-        study_activity_count=0,
     ),
     StudyVisit(
         study_epoch_uid="StudyEpoch_000034",
@@ -1564,7 +1562,6 @@ STUDY_VISITS = (
         start_date="2022-09-01 09:39:57",
         author_username=AUTHOR_USERNAME,
         possible_actions=["edit", "delete", "lock"],
-        study_activity_count=0,
     ),
 )
 
@@ -1625,7 +1622,7 @@ MATRIX = [
             "klass": "arm",
             "id": "StudyArm_000009",
             "text": "NPH insulin",
-            "colors": ("#fffde7", "#665d00", "#000"),
+            "colors": ("#fef8e4", "#624c04", "#000"),
             "margin": 5,
             "paddings": (5, 5),
         },
@@ -1676,7 +1673,7 @@ MATRIX = [
             "klass": "arm",
             "id": "StudyArm_000011",
             "text": "Metformin is longer",
-            "colors": ("#ffebee", "#66000f", "#000"),
+            "colors": ("#fef8e4", "#624c04", "#000"),
             "margin": 5,
             "paddings": (5, 5),
         },
@@ -1727,7 +1724,7 @@ MATRIX = [
             "klass": "arm",
             "id": "StudyArm_000045",
             "text": "Another arm",
-            "colors": ("#f3e5f5", "#441c4a", "#000"),
+            "colors": ("#fef8e4", "#624c04", "#000"),
             "margin": 5,
             "paddings": (5, 5),
         },
@@ -1764,7 +1761,7 @@ MATRIX = [
             "klass": "arm",
             "id": "StudyArm_000048",
             "text": "More arms",
-            "colors": ("#e8eaf6", "#1d2349", "#000"),
+            "colors": ("#fef8e4", "#624c04", "#000"),
             "margin": 5,
             "paddings": (5, 5),
         },
@@ -2271,29 +2268,29 @@ SVG_DOCUMENT = """
       marker-end: url(#arrowhead2);
     }
     #StudyArm_000009 rect {
-      fill: #fffde7;
-      stroke: #665d00;
+      fill: #fef8e4;
+      stroke: #624c04;
     }
     #StudyArm_000009 text {
       fill: #000;
     }
     #StudyArm_000011 rect {
-      fill: #ffebee;
-      stroke: #66000f;
+      fill: #fef8e4;
+      stroke: #624c04;
     }
     #StudyArm_000011 text {
       fill: #000;
     }
     #StudyArm_000045 rect {
-      fill: #f3e5f5;
-      stroke: #441c4a;
+      fill: #fef8e4;
+      stroke: #624c04;
     }
     #StudyArm_000045 text {
       fill: #000;
     }
     #StudyArm_000048 rect {
-      fill: #e8eaf6;
-      stroke: #1d2349;
+      fill: #fef8e4;
+      stroke: #624c04;
     }
     #StudyArm_000048 text {
       fill: #000;

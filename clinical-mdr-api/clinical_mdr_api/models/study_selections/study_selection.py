@@ -1,8 +1,17 @@
 import re
 from datetime import datetime
-from typing import Annotated, Callable, Iterable, Mapping, NamedTuple, Self
+from typing import (
+    Annotated,
+    Any,
+    Callable,
+    Iterable,
+    Mapping,
+    NamedTuple,
+    Self,
+    TypeVar,
+)
 
-from pydantic import ConfigDict, Field, model_validator
+from pydantic import ConfigDict, Field, field_validator, model_validator
 
 from clinical_mdr_api.domain_repositories.study_selections.study_activity_instance_repository import (
     SelectionHistory as StudyActivityInstanceSelectionHistory,
@@ -40,6 +49,10 @@ from clinical_mdr_api.domains.concepts.simple_concepts.numeric_value_with_unit i
 from clinical_mdr_api.domains.concepts.unit_definitions.unit_definition import (
     UnitDefinitionAR,
 )
+from clinical_mdr_api.domains.controlled_terminologies.ct_codelist_term import (
+    CTSimpleCodelistTermAR,
+)
+from clinical_mdr_api.domains.enums import StudyDesignClassEnum, StudySourceVariableEnum
 from clinical_mdr_api.domains.study_selections.study_activity_instruction import (
     StudyActivityInstructionVO,
 )
@@ -98,18 +111,19 @@ from clinical_mdr_api.domains.study_selections.study_selection_objective import 
 from clinical_mdr_api.domains.study_selections.study_soa_group_selection import (
     StudySoAGroupVO,
 )
-from clinical_mdr_api.models.concepts.activities.activity import (
-    Activity,
-    ActivityForStudyActivity,
+from clinical_mdr_api.models.biomedical_concepts.activity_instance_class import (
+    CompactActivityInstanceClass,
 )
-from clinical_mdr_api.models.concepts.activities.activity_instance import (
-    ActivityInstance,
+from clinical_mdr_api.models.concepts.activities.activity import (
+    ActivityForStudyActivity,
 )
 from clinical_mdr_api.models.concepts.compound import Compound
 from clinical_mdr_api.models.concepts.compound_alias import CompoundAlias
 from clinical_mdr_api.models.concepts.concept import Concept, SimpleNumericValueWithUnit
 from clinical_mdr_api.models.concepts.medicinal_product import MedicinalProduct
-from clinical_mdr_api.models.controlled_terminologies.ct_term import SimpleTermModel
+from clinical_mdr_api.models.controlled_terminologies.ct_term import (
+    SimpleCodelistTermModel,
+)
 from clinical_mdr_api.models.controlled_terminologies.ct_term_name import CTTermName
 from clinical_mdr_api.models.error import BatchErrorResponse
 from clinical_mdr_api.models.study_selections.duration import DurationJsonModel
@@ -146,7 +160,7 @@ from clinical_mdr_api.models.utils import (
     get_latest_on_datetime_str,
 )
 from clinical_mdr_api.services.user_info import UserInfoService
-from common import config as settings
+from common.config import settings
 from common.exceptions import BusinessLogicException
 from common.utils import version_string_to_tuple
 
@@ -157,9 +171,9 @@ STUDY_ARM_UID_DESC = "the uid of the related study arm"
 STUDY_EPOCH_UID_DESC = "the uid of the related study epoch"
 STUDY_ELEMENT_UID_DESC = "the uid of the related study element"
 STUDY_BRANCH_ARM_UID_DESC = "the uid of the related study branch arm"
+STUDY_COHORT_ARM_UID_DESC = "the uid of the related study cohort"
 ARM_UID_DESC = "uid for the study arm"
 ELEMENT_UID_DESC = "uid for the study element"
-ACCEPTED_VERSION_DESC = "Accepted Version"
 TRANSITION_RULE_DESC = "transition rule for the cell"
 ORDER_DESC = "The ordering of the selection"
 OBJECTIVE_LEVEL_DESC = "level defining the objective"
@@ -219,13 +233,14 @@ class StudySelection(BaseModel):
     study_version: Annotated[
         str | None,
         Field(
-            title="study version or date information",
             description="Study version number, if specified, otherwise None.",
             json_schema_extra={"nullable": True},
         ),
     ] = None
 
-    order: Annotated[int, Field(description=ORDER_DESC)]
+    order: Annotated[
+        int | None, Field(description=ORDER_DESC, json_schema_extra={"nullable": True})
+    ]
 
     project_number: Annotated[
         str | None,
@@ -280,7 +295,7 @@ class StudySelectionObjectiveCore(StudySelection):
     ]
 
     objective_level: Annotated[
-        CTTermName | None,
+        SimpleCodelistTermModel | None,
         Field(description=OBJECTIVE_LEVEL_DESC, json_schema_extra={"nullable": True}),
     ] = None
 
@@ -307,7 +322,6 @@ class StudySelectionObjectiveCore(StudySelection):
     author_username: Annotated[
         str | None,
         Field(
-            title="author_username",
             description=AUTHOR_FIELD_DESC,
             json_schema_extra={"nullable": True},
         ),
@@ -324,18 +338,24 @@ class StudySelectionObjectiveCore(StudySelection):
         cls,
         study_selection_history: StudyObjectiveSelectionHistory,
         study_uid: str,
-        get_ct_term_objective_level: Callable[[str], CTTermName],
-        get_objective_by_uid_version_callback: Callable[[str], Objective],
-        effective_date: datetime = None,
+        find_codelist_term_by_uid_and_submval: Callable[
+            [str | None, str | None, datetime | None], CTSimpleCodelistTermAR | None
+        ],
+        get_objective_by_uid_version_callback: Callable[[str, str | None], Objective],
+        effective_date: datetime | None = None,
     ) -> Self:
         if study_selection_history.objective_level_uid:
-            objective_level = get_ct_term_objective_level(
-                study_selection_history.objective_level_uid,
-                codelist_name=settings.STUDY_OBJECTIVE_LEVEL_NAME,
-                at_specific_date=effective_date,
+            objective_level = SimpleCodelistTermModel.from_term_uid_and_codelist_submval(
+                term_uid=study_selection_history.objective_level_uid,
+                codelist_submission_value=settings.study_objective_level_cl_submval,
+                find_codelist_term_by_uid_and_submission_value=find_codelist_term_by_uid_and_submval,
+                at_specific_date_time=effective_date,
             )
         else:
             objective_level = None
+
+        if study_selection_history.objective_uid is None:
+            raise BusinessLogicException("Objective UID must be provided")
 
         return cls(
             study_objective_uid=study_selection_history.study_selection_uid,
@@ -373,7 +393,6 @@ class StudySelectionObjective(StudySelectionObjectiveCore):
     accepted_version: Annotated[
         bool | None,
         Field(
-            title=ACCEPTED_VERSION_DESC,
             description="Denotes if user accepted obsolete objective versions",
             json_schema_extra={"nullable": True},
         ),
@@ -386,7 +405,7 @@ class StudySelectionObjective(StudySelectionObjectiveCore):
         order: int,
         get_objective_template_by_uid_callback: Callable[[str], ObjectiveTemplate],
         get_objective_template_by_uid_version_callback: Callable[
-            [str], ObjectiveTemplate
+            [str, str | None], ObjectiveTemplate
         ],
         find_project_by_study_uid: Callable,
         accepted_version: bool = False,
@@ -403,6 +422,7 @@ class StudySelectionObjective(StudySelectionObjectiveCore):
         study_objective_uid = single_study_selection.study_selection_uid
         objective_template_uid = single_study_selection.objective_uid
         #
+        latest_objective_template: ObjectiveTemplate | None
         assert objective_template_uid is not None
         latest_objective_template = get_objective_template_by_uid_callback(
             objective_template_uid
@@ -443,9 +463,11 @@ class StudySelectionObjective(StudySelectionObjectiveCore):
         study_selection_objectives_ar: StudySelectionObjectivesAR,
         order: int,
         get_objective_by_uid_callback: Callable[[str], Objective],
-        get_objective_by_uid_version_callback: Callable[[str], Objective],
-        get_ct_term_by_uid: Callable[[str], CTTermName],
-        get_study_endpoint_count_callback: Callable[[str], int],
+        get_objective_by_uid_version_callback: Callable[[str, str | None], Objective],
+        find_codelist_term_by_uid_and_submval: Callable[
+            [str | None, str | None, datetime | None], CTSimpleCodelistTermAR | None
+        ],
+        get_study_endpoint_count_callback: Callable[[str, str, str | None], int],
         find_project_by_study_uid: Callable,
         terms_at_specific_datetime: datetime | None,
         no_brackets: bool = False,
@@ -469,10 +491,11 @@ class StudySelectionObjective(StudySelectionObjectiveCore):
         )
 
         if single_study_selection.objective_level_uid:
-            objective_level = get_ct_term_by_uid(
-                single_study_selection.objective_level_uid,
-                codelist_name=settings.STUDY_OBJECTIVE_LEVEL_NAME,
-                at_specific_date=terms_at_specific_datetime,
+            objective_level = SimpleCodelistTermModel.from_term_uid_and_codelist_submval(
+                term_uid=single_study_selection.objective_level_uid,
+                codelist_submission_value=settings.study_objective_level_cl_submval,
+                find_codelist_term_by_uid_and_submission_value=find_codelist_term_by_uid_and_submval,
+                at_specific_date_time=terms_at_specific_datetime,
             )
         else:
             objective_level = None
@@ -564,8 +587,8 @@ class StudySelectionObjectiveNewOrder(PatchInputModel):
         int,
         Field(
             description="Uid of the selected objective",
-            gt=-settings.MAX_INT_NEO4J,
-            lt=settings.MAX_INT_NEO4J,
+            gt=-settings.max_int_neo4j,
+            lt=settings.max_int_neo4j,
         ),
     ]
 
@@ -605,7 +628,7 @@ class StudySelectionEndpoint(StudySelection):
     ] = None
 
     endpoint_level: Annotated[
-        CTTermName | None,
+        SimpleCodelistTermModel | None,
         Field(
             description="level defining the endpoint",
             json_schema_extra={"nullable": True},
@@ -613,7 +636,7 @@ class StudySelectionEndpoint(StudySelection):
     ] = None
 
     endpoint_sublevel: Annotated[
-        CTTermName | None,
+        SimpleCodelistTermModel | None,
         Field(
             description="sub level defining the endpoint",
             json_schema_extra={"nullable": True},
@@ -674,16 +697,6 @@ class StudySelectionEndpoint(StudySelection):
     author_username: Annotated[
         str | None,
         Field(
-            title="author_username",
-            description=AUTHOR_FIELD_DESC,
-            json_schema_extra={"nullable": True},
-        ),
-    ] = None
-
-    author_username: Annotated[
-        str | None,
-        Field(
-            title="author_username",
             description=AUTHOR_FIELD_DESC,
             json_schema_extra={"nullable": True},
         ),
@@ -697,7 +710,6 @@ class StudySelectionEndpoint(StudySelection):
     accepted_version: Annotated[
         bool | None,
         Field(
-            title=ACCEPTED_VERSION_DESC,
             description="Denotes if user accepted obsolete endpoint versions",
             json_schema_extra={"nullable": True},
         ),
@@ -710,9 +722,9 @@ class StudySelectionEndpoint(StudySelection):
         order: int,
         get_endpoint_template_by_uid_callback: Callable[[str], EndpointTemplate],
         get_endpoint_template_by_uid_version_callback: Callable[
-            [str], EndpointTemplate
+            [str, str | None], EndpointTemplate
         ],
-        get_study_objective_by_uid: Callable[[str], StudySelectionObjective],
+        get_study_objective_by_uid: Callable[..., StudySelectionObjective],
         find_project_by_study_uid: Callable,
         accepted_version: bool = False,
     ) -> "StudySelectionEndpoint":
@@ -728,6 +740,7 @@ class StudySelectionEndpoint(StudySelection):
         endpoint_template_uid = single_study_selection.endpoint_uid
         #
         assert endpoint_template_uid is not None
+        latest_endpoint_template: EndpointTemplate | None
         latest_endpoint_template = get_endpoint_template_by_uid_callback(
             endpoint_template_uid
         )
@@ -769,12 +782,14 @@ class StudySelectionEndpoint(StudySelection):
         study_selection: StudySelectionEndpointVO,
         study_uid: str,
         order: int,
-        get_endpoint_by_uid_and_version: Callable[[str], Endpoint],
+        get_endpoint_by_uid_and_version: Callable[[str, str | None], Endpoint],
         get_latest_endpoint_by_uid: Callable[[str], Endpoint],
-        get_timeframe_by_uid_and_version: Callable[[str], Timeframe],
+        get_timeframe_by_uid_and_version: Callable[[str, str | None], Timeframe],
         get_latest_timeframe: Callable[[str], Timeframe],
-        get_ct_term_by_uid: Callable[[str], CTTermName],
-        get_study_objective_by_uid: Callable[[str], StudySelectionObjective],
+        find_codelist_term_by_uid_and_submval: Callable[
+            [str | None, str | None, datetime | None], CTSimpleCodelistTermAR | None
+        ],
+        get_study_objective_by_uid: Callable[..., StudySelectionObjective],
         find_project_by_study_uid: Callable,
         terms_at_specific_datetime: datetime | None,
         accepted_version: bool = False,
@@ -831,18 +846,20 @@ class StudySelectionEndpoint(StudySelection):
                     object_to_clear=study_obj_model.objective
                 )
         if study_selection.endpoint_level_uid:
-            endpoint_level = get_ct_term_by_uid(
-                study_selection.endpoint_level_uid,
-                codelist_name=settings.STUDY_ENDPOINT_LEVEL_NAME,
-                at_specific_date=terms_at_specific_datetime,
+            endpoint_level = SimpleCodelistTermModel.from_term_uid_and_codelist_submval(
+                term_uid=study_selection.endpoint_level_uid,
+                codelist_submission_value=settings.study_endpoint_level_cl_submval,
+                find_codelist_term_by_uid_and_submission_value=find_codelist_term_by_uid_and_submval,
+                at_specific_date_time=terms_at_specific_datetime,
             )
         else:
             endpoint_level = None
         if study_selection.endpoint_sublevel_uid:
-            endpoint_sublevel = get_ct_term_by_uid(
-                study_selection.endpoint_sublevel_uid,
-                codelist_name="Endpoint Sub Level",
-                at_specific_date=terms_at_specific_datetime,
+            endpoint_sublevel = SimpleCodelistTermModel.from_term_uid_and_codelist_submval(
+                term_uid=study_selection.endpoint_sublevel_uid,
+                codelist_submission_value=settings.study_endpoint_sublevel_cl_submval,
+                find_codelist_term_by_uid_and_submission_value=find_codelist_term_by_uid_and_submval,
+                at_specific_date_time=terms_at_specific_datetime,
             )
         else:
             endpoint_sublevel = None
@@ -879,7 +896,7 @@ class StudySelectionEndpoint(StudySelection):
             author_username=study_selection.author_username,
             project_name=project.name,
             project_number=project.project_number,
-            **model,
+            **model,  # type: ignore[arg-type]
         )
 
     @classmethod
@@ -887,11 +904,13 @@ class StudySelectionEndpoint(StudySelection):
         cls,
         study_selection_history: StudyEndpointSelectionHistory,
         study_uid: str,
-        get_endpoint_by_uid: Callable[[str], Endpoint],
-        get_timeframe_by_uid: Callable[[str], Timeframe],
-        get_ct_term_by_uid: Callable[[str], CTTermName],
-        get_study_objective_by_uid: Callable[[str], StudySelectionObjective],
-        effective_date: datetime = None,
+        get_endpoint_by_uid: Callable[[str, str | None], Endpoint],
+        get_timeframe_by_uid: Callable[[str, str | None], Timeframe],
+        find_codelist_term_by_uid_and_submval: Callable[
+            [str | None, str | None, datetime | None], CTSimpleCodelistTermAR | None
+        ],
+        get_study_objective_by_uid: Callable[..., StudySelectionObjective],
+        effective_date: datetime | None = None,
     ) -> Self:
         if study_selection_history.endpoint_uid:
             endpoint = get_endpoint_by_uid(
@@ -916,31 +935,34 @@ class StudySelectionEndpoint(StudySelection):
         else:
             study_objective = None
         if study_selection_history.endpoint_level:
-            endpoint_level = get_ct_term_by_uid(
-                study_selection_history.endpoint_level,
-                codelist_name=settings.STUDY_ENDPOINT_LEVEL_NAME,
-                at_specific_date=effective_date,
+            endpoint_level = SimpleCodelistTermModel.from_term_uid_and_codelist_submval(
+                term_uid=study_selection_history.endpoint_level,
+                codelist_submission_value=settings.study_endpoint_level_cl_submval,
+                find_codelist_term_by_uid_and_submission_value=find_codelist_term_by_uid_and_submval,
+                at_specific_date_time=effective_date,
             )
         else:
             endpoint_level = None
         if study_selection_history.endpoint_sublevel:
-            endpoint_sublevel = get_ct_term_by_uid(
-                study_selection_history.endpoint_sublevel,
-                codelist_name="Endpoint Sub Level",
+            endpoint_sublevel = SimpleCodelistTermModel.from_term_uid_and_codelist_submval(
+                term_uid=study_selection_history.endpoint_sublevel,
+                codelist_submission_value=settings.study_endpoint_sublevel_cl_submval,
+                find_codelist_term_by_uid_and_submission_value=find_codelist_term_by_uid_and_submval,
+                at_specific_date_time=effective_date,
             )
         else:
             endpoint_sublevel = None
 
-        units = None
+        unit_items = None
         if study_selection_history.endpoint_units:
-            units = tuple(
-                EndpointUnitItem(**u)
+            unit_items = tuple(
+                EndpointUnitItem(**u)  # type: ignore[arg-type]
                 for u in study_selection_history.endpoint_units
                 if u.get("uid")
             )
-        if units:
+        if unit_items:
             units = EndpointUnits(
-                units=units,
+                units=unit_items,
                 separator=study_selection_history.unit_separator,
             )
         else:
@@ -1043,8 +1065,8 @@ class StudySelectionEndpointNewOrder(PatchInputModel):
         int,
         Field(
             description="Uid of the selected endpoint",
-            gt=-settings.MAX_INT_NEO4J,
-            lt=settings.MAX_INT_NEO4J,
+            gt=-settings.max_int_neo4j,
+            lt=settings.max_int_neo4j,
         ),
     ]
 
@@ -1062,7 +1084,9 @@ class StudySelectionCompound(StudySelection):
         compound_model: Compound | None,
         compound_alias_model: CompoundAlias | None,
         medicinal_product_model: MedicinalProduct | None,
-        find_simple_term_model_name_by_term_uid: Callable,
+        find_codelist_term_by_uid_and_submval: Callable[
+            [str | None, str | None, datetime | None], CTSimpleCodelistTermAR | None
+        ],
         find_project_by_study_uid: Callable,
         terms_at_specific_datetime: datetime | None,
         study_value_version: str | None = None,
@@ -1080,26 +1104,36 @@ class StudySelectionCompound(StudySelection):
             compound=compound_model,
             compound_alias=compound_alias_model,
             medicinal_product=medicinal_product_model,
-            type_of_treatment=find_simple_term_model_name_by_term_uid(
-                selection.type_of_treatment_uid,
-                at_specific_date=terms_at_specific_datetime,
+            type_of_treatment=SimpleCodelistTermModel.from_term_uid_and_codelist_submval(
+                term_uid=selection.type_of_treatment_uid,
+                codelist_submission_value=settings.type_of_treatment_cl_submval,
+                find_codelist_term_by_uid_and_submission_value=find_codelist_term_by_uid_and_submval,
+                at_specific_date_time=terms_at_specific_datetime,
             ),
-            dose_frequency=find_simple_term_model_name_by_term_uid(
-                selection.dose_frequency_uid,
-                at_specific_date=terms_at_specific_datetime,
+            dose_frequency=SimpleCodelistTermModel.from_term_uid_and_codelist_submval(
+                term_uid=selection.dose_frequency_uid,
+                codelist_submission_value=settings.dose_frequency_cl_submval,
+                find_codelist_term_by_uid_and_submission_value=find_codelist_term_by_uid_and_submval,
+                at_specific_date_time=terms_at_specific_datetime,
             ),
-            dispenser=find_simple_term_model_name_by_term_uid(
-                selection.dispenser_uid,
-                at_specific_date=terms_at_specific_datetime,
+            dispenser=SimpleCodelistTermModel.from_term_uid_and_codelist_submval(
+                term_uid=selection.dispenser_uid,
+                codelist_submission_value=settings.compound_dispensed_in_cl_submval,
+                find_codelist_term_by_uid_and_submission_value=find_codelist_term_by_uid_and_submval,
+                at_specific_date_time=terms_at_specific_datetime,
             ),
-            delivery_device=find_simple_term_model_name_by_term_uid(
-                selection.delivery_device_uid,
-                at_specific_date=terms_at_specific_datetime,
+            delivery_device=SimpleCodelistTermModel.from_term_uid_and_codelist_submval(
+                term_uid=selection.delivery_device_uid,
+                codelist_submission_value=settings.delivery_device_cl_submval,
+                find_codelist_term_by_uid_and_submission_value=find_codelist_term_by_uid_and_submval,
+                at_specific_date_time=terms_at_specific_datetime,
             ),
             other_info=selection.other_info,
-            reason_for_missing_null_value=find_simple_term_model_name_by_term_uid(
-                selection.reason_for_missing_value_uid,
-                at_specific_date=terms_at_specific_datetime,
+            reason_for_missing_null_value=SimpleCodelistTermModel.from_term_uid_and_codelist_submval(
+                term_uid=selection.reason_for_missing_value_uid,
+                codelist_submission_value=settings.null_flavor_cl_submval,
+                find_codelist_term_by_uid_and_submission_value=find_codelist_term_by_uid_and_submval,
+                at_specific_date_time=terms_at_specific_datetime,
             ),
             start_date=selection.start_date,
             author_username=selection.author_username,
@@ -1134,7 +1168,7 @@ class StudySelectionCompound(StudySelection):
     ]
 
     type_of_treatment: Annotated[
-        SimpleTermModel | None,
+        SimpleCodelistTermModel | None,
         Field(
             description="type of treatment uid defined for the selection",
             json_schema_extra={"nullable": True},
@@ -1142,7 +1176,7 @@ class StudySelectionCompound(StudySelection):
     ] = None
 
     dispenser: Annotated[
-        SimpleTermModel | None,
+        SimpleCodelistTermModel | None,
         Field(
             description="route of administration defined for the study selection",
             json_schema_extra={"nullable": True},
@@ -1150,7 +1184,7 @@ class StudySelectionCompound(StudySelection):
     ] = None
 
     dose_frequency: Annotated[
-        SimpleTermModel | None,
+        SimpleCodelistTermModel | None,
         Field(
             description="dose frequency defined for the study selection",
             json_schema_extra={"nullable": True},
@@ -1158,7 +1192,7 @@ class StudySelectionCompound(StudySelection):
     ] = None
 
     dispensed_in: Annotated[
-        SimpleTermModel | None,
+        SimpleCodelistTermModel | None,
         Field(
             description="dispense method defined for the study selection",
             json_schema_extra={"nullable": True},
@@ -1166,7 +1200,7 @@ class StudySelectionCompound(StudySelection):
     ] = None
 
     delivery_device: Annotated[
-        SimpleTermModel | None,
+        SimpleCodelistTermModel | None,
         Field(
             description="delivery device used for the compound in the study selection",
             json_schema_extra={"nullable": True},
@@ -1182,7 +1216,7 @@ class StudySelectionCompound(StudySelection):
     ] = None
 
     reason_for_missing_null_value: Annotated[
-        SimpleTermModel | None,
+        SimpleCodelistTermModel | None,
         Field(
             description="Reason why no compound is used in the study selection, e.g. exploratory study",
             json_schema_extra={"nullable": True},
@@ -1205,7 +1239,6 @@ class StudySelectionCompound(StudySelection):
     author_username: Annotated[
         str | None,
         Field(
-            title="author_username",
             description=AUTHOR_FIELD_DESC,
             json_schema_extra={"nullable": True},
         ),
@@ -1224,8 +1257,10 @@ class StudySelectionCompound(StudySelection):
         study_uid: str,
         get_compound_by_uid: Callable[[str], Compound],
         get_compound_alias_by_uid: Callable[[str], CompoundAlias],
-        get_medicinal_product_by_uid: Callable[[str], MedicinalProduct],
-        find_simple_term_model_name_by_term_uid: Callable,
+        get_medicinal_product_by_uid: Callable[[str | None], MedicinalProduct | None],
+        find_codelist_term_by_uid_and_submval: Callable[
+            [str | None, str | None, datetime | None], CTSimpleCodelistTermAR | None
+        ],
     ) -> Self:
         if study_selection_history.compound_uid:
             compound = get_compound_by_uid(study_selection_history.compound_uid)
@@ -1245,27 +1280,56 @@ class StudySelectionCompound(StudySelection):
             )
         else:
             medicinal_product = None
-
+        if study_selection_history.type_of_treatment_uid:
+            type_of_treatment = SimpleCodelistTermModel.from_term_uid_and_codelist_submval(
+                term_uid=study_selection_history.type_of_treatment_uid,
+                codelist_submission_value=settings.type_of_treatment_cl_submval,
+                find_codelist_term_by_uid_and_submission_value=find_codelist_term_by_uid_and_submval,
+            )
+        else:
+            type_of_treatment = None
+        if study_selection_history.dispenser_uid:
+            dispenser = SimpleCodelistTermModel.from_term_uid_and_codelist_submval(
+                term_uid=study_selection_history.dispenser_uid,
+                codelist_submission_value=settings.compound_dispensed_in_cl_submval,
+                find_codelist_term_by_uid_and_submission_value=find_codelist_term_by_uid_and_submval,
+            )
+        else:
+            dispenser = None
+        if study_selection_history.dose_frequency_uid:
+            dose_frequency = SimpleCodelistTermModel.from_term_uid_and_codelist_submval(
+                term_uid=study_selection_history.dose_frequency_uid,
+                codelist_submission_value=settings.dose_frequency_cl_submval,
+                find_codelist_term_by_uid_and_submission_value=find_codelist_term_by_uid_and_submval,
+            )
+        else:
+            dose_frequency = None
+        if study_selection_history.delivery_device_uid:
+            delivery_device = SimpleCodelistTermModel.from_term_uid_and_codelist_submval(
+                term_uid=study_selection_history.delivery_device_uid,
+                codelist_submission_value=settings.delivery_device_cl_submval,
+                find_codelist_term_by_uid_and_submission_value=find_codelist_term_by_uid_and_submval,
+            )
+        else:
+            delivery_device = None
+        if study_selection_history.reason_for_missing_value_uid:
+            reason_for_missing_null_value = SimpleCodelistTermModel.from_term_uid_and_codelist_submval(
+                term_uid=study_selection_history.reason_for_missing_value_uid,
+                codelist_submission_value=settings.null_flavor_cl_submval,
+                find_codelist_term_by_uid_and_submission_value=find_codelist_term_by_uid_and_submval,
+            )
+        else:
+            reason_for_missing_null_value = None
         return cls(
             study_compound_uid=study_selection_history.study_selection_uid,
             order=study_selection_history.order,
             study_uid=study_uid,
-            type_of_treatment=find_simple_term_model_name_by_term_uid(
-                study_selection_history.type_of_treatment_uid
-            ),
-            dispenser=find_simple_term_model_name_by_term_uid(
-                study_selection_history.dispenser_uid
-            ),
-            dose_frequency=find_simple_term_model_name_by_term_uid(
-                study_selection_history.dose_frequency_uid
-            ),
-            delivery_device=find_simple_term_model_name_by_term_uid(
-                study_selection_history.delivery_device_uid
-            ),
+            type_of_treatment=type_of_treatment,
+            dispenser=dispenser,
+            dose_frequency=dose_frequency,
+            delivery_device=delivery_device,
             other_info=study_selection_history.other_info,
-            reason_for_missing_null_value=find_simple_term_model_name_by_term_uid(
-                study_selection_history.reason_for_missing_value_uid
-            ),
+            reason_for_missing_null_value=reason_for_missing_null_value,
             start_date=study_selection_history.start_date,
             compound=compound,
             compound_alias=compound_alias,
@@ -1350,8 +1414,8 @@ class StudySelectionCompoundNewOrder(PatchInputModel):
         int,
         Field(
             description="new order selected for the study compound",
-            gt=-settings.MAX_INT_NEO4J,
-            lt=settings.MAX_INT_NEO4J,
+            gt=-settings.max_int_neo4j,
+            lt=settings.max_int_neo4j,
         ),
     ]
 
@@ -1369,7 +1433,7 @@ class StudySelectionCriteriaCore(StudySelection):
     ]
 
     criteria_type: Annotated[
-        CTTermName | None, Field(json_schema_extra={"nullable": True})
+        SimpleCodelistTermModel | None, Field(json_schema_extra={"nullable": True})
     ] = None
 
     criteria: Annotated[
@@ -1396,16 +1460,6 @@ class StudySelectionCriteriaCore(StudySelection):
     author_username: Annotated[
         str | None,
         Field(
-            title="author_username",
-            description=AUTHOR_FIELD_DESC,
-            json_schema_extra={"nullable": True},
-        ),
-    ] = None
-
-    author_username: Annotated[
-        str | None,
-        Field(
-            title="author_username",
             description=AUTHOR_FIELD_DESC,
             json_schema_extra={"nullable": True},
         ),
@@ -1426,7 +1480,7 @@ class StudySelectionCriteriaCore(StudySelection):
         study_selection_history: StudyCriteriaSelectionHistory,
         study_uid: str,
         get_criteria_template_by_uid_version_callback: Callable[
-            [str], CriteriaTemplate
+            [str, str | None], CriteriaTemplate
         ],
     ) -> Self:
         return cls(
@@ -1452,7 +1506,7 @@ class StudySelectionCriteriaCore(StudySelection):
         cls,
         study_selection_history: StudyCriteriaSelectionHistory,
         study_uid: str,
-        get_criteria_by_uid_version_callback: Callable[[str], Criteria],
+        get_criteria_by_uid_version_callback: Callable[[str, str | None], Criteria],
     ) -> Self:
         return cls(
             study_criteria_uid=study_selection_history.study_selection_uid,
@@ -1492,7 +1546,6 @@ class StudySelectionCriteria(StudySelectionCriteriaCore):
         bool | None,
         Field(
             json_schema_extra={"nullable": True},
-            title=ACCEPTED_VERSION_DESC,
             description="Denotes if user accepted obsolete criteria versions",
         ),
     ] = None
@@ -1505,9 +1558,11 @@ class StudySelectionCriteria(StudySelectionCriteriaCore):
         criteria_type_order: int,
         get_criteria_template_by_uid_callback: Callable[[str], CriteriaTemplate],
         get_criteria_template_by_uid_version_callback: Callable[
-            [str], CriteriaTemplate
+            [str, str | None], CriteriaTemplate
         ],
-        get_ct_term_criteria_type: Callable[[str], CTTermName],
+        find_codelist_term_by_uid_and_submval: Callable[
+            [str | None, str | None, datetime | None], CTSimpleCodelistTermAR | None
+        ],
         find_project_by_study_uid: Callable,
         terms_at_specific_datetime: datetime | None,
         accepted_version: bool = False,
@@ -1530,12 +1585,15 @@ class StudySelectionCriteria(StudySelectionCriteriaCore):
         study_criteria_uid = single_study_selection.study_selection_uid
         criteria_template_uid = single_study_selection.syntax_object_uid
 
-        criteria_type = get_ct_term_criteria_type(
-            criteria_type_uid,
-            at_specific_date=terms_at_specific_datetime,
+        criteria_type = SimpleCodelistTermModel.from_term_uid_and_codelist_submval(
+            term_uid=criteria_type_uid,
+            codelist_submission_value=settings.syntax_criteria_type_cl_submval,
+            find_codelist_term_by_uid_and_submission_value=find_codelist_term_by_uid_and_submval,
+            at_specific_date_time=terms_at_specific_datetime,
         )
 
         assert criteria_template_uid is not None
+        latest_criteria_template: CriteriaTemplate | None
         latest_criteria_template = get_criteria_template_by_uid_callback(
             criteria_template_uid
         )
@@ -1577,8 +1635,10 @@ class StudySelectionCriteria(StudySelectionCriteriaCore):
         criteria_type_uid: str,
         criteria_type_order: int,
         get_criteria_by_uid_callback: Callable[[str], Criteria],
-        get_criteria_by_uid_version_callback: Callable[[str], Criteria],
-        get_ct_term_criteria_type: Callable[[str], CTTermName],
+        get_criteria_by_uid_version_callback: Callable[[str, str | None], Criteria],
+        find_codelist_term_by_uid_and_submval: Callable[
+            [str | None, str | None, datetime | None], CTSimpleCodelistTermAR | None
+        ],
         find_project_by_study_uid: Callable,
         terms_at_specific_datetime: datetime | None,
         no_brackets: bool = False,
@@ -1602,12 +1662,15 @@ class StudySelectionCriteria(StudySelectionCriteriaCore):
         study_criteria_uid = single_study_selection.study_selection_uid
         criteria_uid = single_study_selection.syntax_object_uid
 
-        criteria_type = get_ct_term_criteria_type(
-            criteria_type_uid,
-            at_specific_date=terms_at_specific_datetime,
+        criteria_type = SimpleCodelistTermModel.from_term_uid_and_codelist_submval(
+            term_uid=criteria_type_uid,
+            codelist_submission_value=settings.syntax_criteria_type_cl_submval,
+            find_codelist_term_by_uid_and_submission_value=find_codelist_term_by_uid_and_submval,
+            at_specific_date_time=terms_at_specific_datetime,
         )
 
         assert criteria_uid is not None
+        latest_criteria: Criteria | None
         latest_criteria = get_criteria_by_uid_callback(criteria_uid)
         if (
             latest_criteria
@@ -1651,9 +1714,11 @@ class StudySelectionCriteria(StudySelectionCriteriaCore):
         study_selection_criteria_vo: StudySelectionCriteriaVO,
         get_criteria_template_by_uid_callback: Callable[[str], CriteriaTemplate],
         get_criteria_template_by_uid_version_callback: Callable[
-            [str], CriteriaTemplate
+            [str, str | None], CriteriaTemplate
         ],
-        get_ct_term_criteria_type: Callable[[str], CTTermName],
+        find_codelist_term_by_uid_and_submval: Callable[
+            [str | None, str | None, datetime | None], CTSimpleCodelistTermAR | None
+        ],
         find_project_by_study_uid: Callable,
         terms_at_specific_datetime: datetime | None,
         accepted_version: bool = False,
@@ -1667,12 +1732,15 @@ class StudySelectionCriteria(StudySelectionCriteriaCore):
         study_criteria_uid = study_selection_criteria_vo.study_selection_uid
         criteria_template_uid = study_selection_criteria_vo.syntax_object_uid
 
-        criteria_type = get_ct_term_criteria_type(
-            study_selection_criteria_vo.criteria_type_uid,
-            at_specific_date=terms_at_specific_datetime,
+        criteria_type = SimpleCodelistTermModel.from_term_uid_and_codelist_submval(
+            term_uid=study_selection_criteria_vo.criteria_type_uid,
+            codelist_submission_value=settings.syntax_criteria_type_cl_submval,
+            find_codelist_term_by_uid_and_submission_value=find_codelist_term_by_uid_and_submval,
+            at_specific_date_time=terms_at_specific_datetime,
         )
 
         assert criteria_template_uid is not None
+        latest_criteria_template: CriteriaTemplate | None
         latest_criteria_template = get_criteria_template_by_uid_callback(
             criteria_template_uid
         )
@@ -1713,8 +1781,10 @@ class StudySelectionCriteria(StudySelectionCriteriaCore):
         study_selection_criteria_ar: StudySelectionCriteriaAR,
         study_selection_criteria_vo: StudySelectionCriteriaVO,
         get_criteria_by_uid_callback: Callable[[str], Criteria],
-        get_criteria_by_uid_version_callback: Callable[[str], Criteria],
-        get_ct_term_criteria_type: Callable[[str], CTTermName],
+        get_criteria_by_uid_version_callback: Callable[[str, str | None], Criteria],
+        find_codelist_term_by_uid_and_submval: Callable[
+            [str | None, str | None, datetime | None], CTSimpleCodelistTermAR | None
+        ],
         find_project_by_study_uid: Callable,
         terms_at_specific_datetime: datetime | None,
         no_brackets: bool = False,
@@ -1729,12 +1799,15 @@ class StudySelectionCriteria(StudySelectionCriteriaCore):
         study_criteria_uid = study_selection_criteria_vo.study_selection_uid
         criteria_uid = study_selection_criteria_vo.syntax_object_uid
 
-        criteria_type = get_ct_term_criteria_type(
-            study_selection_criteria_vo.criteria_type_uid,
-            at_specific_date=terms_at_specific_datetime,
+        criteria_type = SimpleCodelistTermModel.from_term_uid_and_codelist_submval(
+            term_uid=study_selection_criteria_vo.criteria_type_uid,
+            codelist_submission_value=settings.syntax_criteria_type_cl_submval,
+            find_codelist_term_by_uid_and_submission_value=find_codelist_term_by_uid_and_submval,
+            at_specific_date_time=terms_at_specific_datetime,
         )
 
         assert criteria_uid is not None
+        latest_criteria: Criteria | None
         latest_criteria = get_criteria_by_uid_callback(criteria_uid)
         if (
             latest_criteria
@@ -1811,8 +1884,8 @@ class StudySelectionCriteriaNewOrder(PatchInputModel):
         int,
         Field(
             description="New value to set for the order property of the selection",
-            gt=-settings.MAX_INT_NEO4J,
-            lt=settings.MAX_INT_NEO4J,
+            gt=-settings.max_int_neo4j,
+            lt=settings.max_int_neo4j,
         ),
     ]
 
@@ -1836,7 +1909,6 @@ class DetailedSoAHistory(BaseModel):
     author_username: Annotated[
         str | None,
         Field(
-            title="author_username",
             description=AUTHOR_FIELD_DESC,
             json_schema_extra={"nullable": True},
         ),
@@ -1844,20 +1916,19 @@ class DetailedSoAHistory(BaseModel):
     start_date: Annotated[
         datetime,
         Field(
-            title="start_date",
             description=START_DATE_DESC,
         ),
     ]
     end_date: Annotated[datetime | None, END_DATE_FIELD] = None
 
     @classmethod
-    def from_history(cls, detailed_soa_history_item: dict):
+    def from_history(cls, detailed_soa_history_item: dict[Any, Any]):
         return cls(
-            object_type=detailed_soa_history_item.get("object_type"),
-            description=detailed_soa_history_item.get("description"),
-            action=detailed_soa_history_item.get("change_type"),
+            object_type=detailed_soa_history_item["object_type"],
+            description=detailed_soa_history_item["description"],
+            action=detailed_soa_history_item["change_type"],
             author_username=detailed_soa_history_item.get("author_username"),
-            start_date=detailed_soa_history_item.get("start_date"),
+            start_date=detailed_soa_history_item["start_date"],
             end_date=detailed_soa_history_item.get("end_date"),
         )
 
@@ -1912,6 +1983,12 @@ class StudySelectionActivityCore(StudySelection):
     show_soa_group_in_protocol_flowchart: Annotated[
         bool, SHOW_SOA_GROUP_IN_PROTOCOL_FLOWCHART_FIELD
     ] = False
+    keep_old_version: Annotated[
+        bool,
+        Field(
+            description="Boolean indicating that someone has not updated to latest version of Activity but reviewed the changes ",
+        ),
+    ] = False
     study_activity_uid: Annotated[
         str | None,
         Field(
@@ -1935,11 +2012,10 @@ class StudySelectionActivityCore(StudySelection):
             description=START_DATE_DESC,
             json_schema_extra={"source": AFTER_DATE_QUALIFIER, "nullable": True},
         ),
-    ]
+    ] = None
     author_username: Annotated[
         str | None,
         Field(
-            title="author_username",
             description=AUTHOR_FIELD_DESC,
             json_schema_extra={"source": AFTER_USER_QUALIFIER, "nullable": True},
         ),
@@ -1953,11 +2029,13 @@ class StudySelectionActivityCore(StudySelection):
         cls,
         study_selection_history: StudyActivitySelectionHistory,
         study_uid: str,
-        get_ct_term_flowchart_group: Callable[[str], CTTermName],
-        get_activity_by_uid_version_callback: Callable[[str], ActivityForStudyActivity],
-        effective_date: datetime = None,
+        get_ct_term_flowchart_group: Callable[..., CTTermName],
+        get_activity_by_uid_version_callback: Callable[
+            [str, str | None], ActivityForStudyActivity
+        ],
+        effective_date: datetime | None = None,
     ) -> Self:
-        flowchart_group = get_ct_term_flowchart_group(
+        flowchart_group: CTTermName = get_ct_term_flowchart_group(
             study_selection_history.soa_group_term_uid,
             at_specific_date=effective_date,
         )
@@ -2032,7 +2110,6 @@ class StudySelectionActivity(StudySelectionActivityCore):
     accepted_version: Annotated[
         bool | None,
         Field(
-            title=ACCEPTED_VERSION_DESC,
             description="Denotes if user accepted obsolete activity versions",
             json_schema_extra={"nullable": True},
         ),
@@ -2045,7 +2122,7 @@ class StudySelectionActivity(StudySelectionActivityCore):
         study_selection: StudySelectionActivityVO,
         get_activity_by_uid_callback: Callable[[str], ActivityForStudyActivity],
         get_activity_by_uid_version_callback: Callable[
-            [str, str], ActivityForStudyActivity
+            [str, str | None], ActivityForStudyActivity
         ],
         get_ct_term_flowchart_group: Callable[..., CTTermName],
         terms_at_specific_datetime: datetime | None,
@@ -2095,7 +2172,7 @@ class StudySelectionActivity(StudySelectionActivityCore):
             study_soa_group=SimpleStudySoAGroup(
                 study_soa_group_uid=study_selection.study_soa_group_uid,
                 soa_group_term_uid=study_selection.soa_group_term_uid,
-                soa_group_term_name=soa_group_term_name,
+                soa_group_term_name=soa_group_term_name or "",
                 order=study_selection.study_soa_group_order,
             ),
             activity=selected_activity,
@@ -2105,6 +2182,7 @@ class StudySelectionActivity(StudySelectionActivityCore):
             show_activity_subgroup_in_protocol_flowchart=study_selection.show_activity_subgroup_in_protocol_flowchart,
             show_activity_in_protocol_flowchart=study_selection.show_activity_in_protocol_flowchart,
             show_soa_group_in_protocol_flowchart=study_selection.show_soa_group_in_protocol_flowchart,
+            keep_old_version=study_selection.keep_old_version,
             accepted_version=accepted_version,
             study_uid=study_uid,
             study_version=(
@@ -2133,20 +2211,20 @@ class StudySelectionActivityInSoACreateInput(PatchInputModel):
     activity_instance_uid: Annotated[str | None, Field()] = None
     order: Annotated[
         int,
-        Field(json_schema_extra={"nullable": True}, gt=0, lt=settings.MAX_INT_NEO4J),
+        Field(json_schema_extra={"nullable": True}, gt=0, lt=settings.max_int_neo4j),
     ]
 
 
 class StudyActivitySubGroupEditInput(PatchInputModel):
     show_activity_subgroup_in_protocol_flowchart: Annotated[
-        bool | None, SHOW_ACTIVITY_SUBGROUP_IN_PROTOCOL_FLOWCHART_FIELD
-    ] = None
+        bool, SHOW_ACTIVITY_SUBGROUP_IN_PROTOCOL_FLOWCHART_FIELD
+    ] = False
 
 
 class StudyActivitySubGroup(BaseModel):
-    show_activity_subgroup_in_protocol_flowchart: Annotated[bool | None, Field()] = (
-        SHOW_ACTIVITY_SUBGROUP_IN_PROTOCOL_FLOWCHART_FIELD
-    )
+    show_activity_subgroup_in_protocol_flowchart: Annotated[
+        bool, SHOW_ACTIVITY_SUBGROUP_IN_PROTOCOL_FLOWCHART_FIELD
+    ]
     study_uid: Annotated[
         str | None,
         Field(description=STUDY_UID_DESC, json_schema_extra={"nullable": True}),
@@ -2190,14 +2268,14 @@ class StudyActivitySubGroup(BaseModel):
 
 class StudyActivityGroupEditInput(PatchInputModel):
     show_activity_group_in_protocol_flowchart: Annotated[
-        bool | None, SHOW_ACTIVITY_GROUP_IN_PROTOCOL_FLOWCHART_FIELD
-    ] = None
+        bool, SHOW_ACTIVITY_GROUP_IN_PROTOCOL_FLOWCHART_FIELD
+    ] = False
 
 
 class StudyActivityGroup(BaseModel):
     show_activity_group_in_protocol_flowchart: Annotated[
-        bool | None, SHOW_ACTIVITY_GROUP_IN_PROTOCOL_FLOWCHART_FIELD
-    ] = None
+        bool, SHOW_ACTIVITY_GROUP_IN_PROTOCOL_FLOWCHART_FIELD
+    ]
     study_uid: Annotated[
         str | None,
         Field(description=STUDY_UID_DESC, json_schema_extra={"nullable": True}),
@@ -2209,24 +2287,6 @@ class StudyActivityGroup(BaseModel):
         list[str] | None, Field(json_schema_extra={"nullable": True})
     ] = None
     study_activity_group_uid: Annotated[str, Field(json_schema_extra={"source": "uid"})]
-    activity_group_uid: Annotated[str, Field()]
-    activity_group_name: Annotated[
-        str | None, Field(json_schema_extra={"nullable": True})
-    ] = None
-    study_uid: Annotated[
-        str | None,
-        Field(description=STUDY_UID_DESC, json_schema_extra={"nullable": True}),
-    ]
-    study_soa_group_uid: Annotated[
-        str | None, Field(json_schema_extra={"nullable": True})
-    ] = None
-    study_activity_subgroup_uids: Annotated[
-        list[str] | None, Field(json_schema_extra={"nullable": True})
-    ] = None
-    study_activity_group_uid: Annotated[
-        str,
-        Field(json_schema_extra={"source": "uid"}),
-    ]
     activity_group_uid: Annotated[str, Field()]
     activity_group_name: Annotated[
         str | None, Field(json_schema_extra={"nullable": True})
@@ -2268,15 +2328,6 @@ class StudySoAGroup(BaseModel):
         str | None,
         Field(description=STUDY_UID_DESC, json_schema_extra={"nullable": True}),
     ]
-    study_soa_group_uid: Annotated[str, Field(json_schema_extra={"source": "uid"})]
-    soa_group_term_uid: Annotated[str, Field()]
-    soa_group_term_name: Annotated[
-        str | None, Field(json_schema_extra={"nullable": True})
-    ] = None
-    study_uid: Annotated[
-        str | None,
-        Field(description=STUDY_UID_DESC, json_schema_extra={"nullable": True}),
-    ] = None
     study_soa_group_uid: Annotated[
         str | None, Field(json_schema_extra={"source": "uid", "nullable": True})
     ] = None
@@ -2310,12 +2361,13 @@ class StudySoAGroup(BaseModel):
 
 
 class StudySelectionActivityInput(PatchInputModel):
-    show_activity_in_protocol_flowchart: Annotated[bool | None, Field()] = None
+    show_activity_in_protocol_flowchart: Annotated[bool, Field()] = False
     soa_group_term_uid: Annotated[
         str | None, Field(description="flowchart CT term uid")
     ] = None
     activity_group_uid: Annotated[str | None, Field()] = None
     activity_subgroup_uid: Annotated[str | None, Field()] = None
+    keep_old_version: Annotated[bool, Field()] = False
 
 
 class StudyActivityReplaceActivityInput(StudySelectionActivityInput):
@@ -2331,8 +2383,8 @@ class StudySelectionActivityRequestEditInput(StudySelectionActivityInput):
     activity_uid: Annotated[str | None, Field()] = None
     activity_name: Annotated[str | None, Field()] = None
     request_rationale: Annotated[str | None, Field()] = None
-    is_data_collected: Annotated[bool | None, Field()] = None
-    is_request_final: Annotated[bool | None, Field()] = None
+    is_data_collected: Annotated[bool, Field()] = False
+    is_request_final: Annotated[bool, Field()] = False
 
 
 class UpdateActivityPlaceholderToSponsorActivity(StudySelectionActivityInput):
@@ -2346,8 +2398,8 @@ class StudySelectionActivityNewOrder(PatchInputModel):
         int,
         Field(
             description="new order selected for the study activity",
-            gt=-settings.MAX_INT_NEO4J,
-            lt=settings.MAX_INT_NEO4J,
+            gt=-settings.max_int_neo4j,
+            lt=settings.max_int_neo4j,
         ),
     ]
 
@@ -2368,8 +2420,8 @@ class StudySelectionActivityBatchDeleteInput(InputModel):
 class StudySelectionActivityBatchInput(BatchInputModel):
     method: Annotated[str, METHOD_FIELD]
     content: Annotated[
-        StudySelectionActivityCreateInput
-        | StudySelectionActivityBatchUpdateInput
+        StudySelectionActivityBatchUpdateInput
+        | StudySelectionActivityCreateInput
         | StudySelectionActivityBatchDeleteInput,
         Field(),
     ]
@@ -2380,9 +2432,171 @@ class StudySelectionActivityBatchOutput(BaseModel):
     content: Annotated[StudySelectionActivity | None | BatchErrorResponse, Field()]
 
 
+class StudyActivitySyncLatestVersionInput(BaseModel):
+    activity_group_uid: Annotated[str | None, Field()] = None
+    activity_subgroup_uid: Annotated[str | None, Field()] = None
+
+
 #
 # Study Activity Instance
 #
+class CompactActivity(BaseModel):
+    uid: Annotated[str, Field(description="Activity UID")]
+    name: Annotated[
+        str | None,
+        Field(description="Activity name", json_schema_extra={"nullable": True}),
+    ] = None
+    library_name: Annotated[
+        str | None,
+        Field(
+            description="Activity library name", json_schema_extra={"nullable": True}
+        ),
+    ] = None
+    is_data_collected: Annotated[
+        bool, Field(description="Specifies if Activity is meant for data collection")
+    ]
+
+    @classmethod
+    def activity_from_study_activity_instance_vo(
+        cls,
+        study_activity_instance_vo: (
+            StudySelectionActivityInstanceVO | StudyActivityInstanceSelectionHistory
+        ),
+    ) -> Self:
+        return cls(
+            uid=study_activity_instance_vo.activity_uid,
+            name=study_activity_instance_vo.activity_name,
+            library_name=study_activity_instance_vo.activity_library_name,
+            is_data_collected=study_activity_instance_vo.activity_is_data_collected,
+        )
+
+
+class CompactActivityInstance(BaseModel):
+    uid: Annotated[
+        str | None,
+        Field(
+            description="Activity instance UID", json_schema_extra={"nullable": True}
+        ),
+    ] = None
+    name: Annotated[
+        str | None,
+        Field(
+            description="Activity instance name", json_schema_extra={"nullable": True}
+        ),
+    ] = None
+    topic_code: Annotated[
+        str | None,
+        Field(
+            description="Activity instance topic code",
+            json_schema_extra={"nullable": True},
+        ),
+    ] = None
+    adam_param_code: Annotated[
+        str | None,
+        Field(
+            description="Activity instance adam param code",
+            json_schema_extra={"nullable": True},
+        ),
+    ] = None
+    activity_instance_class: Annotated[
+        CompactActivityInstanceClass,
+        Field(description="The uid and the name of the linked activity instance class"),
+    ]
+    class_uid: Annotated[
+        str | None,
+        Field(
+            description="Activity instance class UID",
+            json_schema_extra={"nullable": True},
+        ),
+    ] = None
+    class_name: Annotated[
+        str | None,
+        Field(
+            description="Activity instance class name",
+            json_schema_extra={"nullable": True},
+        ),
+    ] = None
+    specimen: Annotated[
+        str | None,
+        Field(
+            description="Activity instance specimen",
+            json_schema_extra={"nullable": True},
+        ),
+    ] = None
+    test_name_code: Annotated[
+        str | None,
+        Field(
+            description="Activity instance test name code",
+            json_schema_extra={"nullable": True},
+        ),
+    ] = None
+    standard_unit: Annotated[
+        str | None,
+        Field(
+            description="Activity instance standard unit",
+            json_schema_extra={"nullable": True},
+        ),
+    ] = None
+    version: Annotated[
+        str | None,
+        Field(
+            description="Activity instance version",
+            json_schema_extra={"nullable": True},
+        ),
+    ] = None
+    is_default_selected_for_activity: Annotated[
+        bool,
+        Field(
+            description="Specifies whether given Activity Instance is selected by default for an Activity"
+        ),
+    ] = False
+    is_required_for_activity: Annotated[
+        bool,
+        Field(
+            description="Specifies whether given Activity Instance is required for an Activity"
+        ),
+    ] = False
+
+    @classmethod
+    def activity_instance_from_study_activity_instance_vo(
+        cls,
+        study_activity_instance_vo: (
+            StudySelectionActivityInstanceVO | StudyActivityInstanceSelectionHistory
+        ),
+    ) -> Self:
+        return cls(
+            uid=study_activity_instance_vo.activity_instance_uid,
+            name=study_activity_instance_vo.activity_instance_name,
+            topic_code=study_activity_instance_vo.activity_instance_topic_code,
+            adam_param_code=study_activity_instance_vo.activity_instance_adam_param_code,
+            activity_instance_class=CompactActivityInstanceClass(
+                uid=study_activity_instance_vo.activity_instance_class_uid,
+                name=study_activity_instance_vo.activity_instance_class_name,
+            ),
+            specimen=study_activity_instance_vo.activity_instance_specimen,
+            test_name_code=study_activity_instance_vo.activity_instance_test_name_code,
+            standard_unit=study_activity_instance_vo.activity_instance_standard_unit,
+            version=study_activity_instance_vo.activity_instance_version,
+            is_default_selected_for_activity=study_activity_instance_vo.activity_instance_is_default_selected_for_activity,
+            is_required_for_activity=study_activity_instance_vo.activity_instance_is_required_for_activity,
+        )
+
+    @classmethod
+    def latest_activity_instance_from_study_activity_instance_vo(
+        cls, study_activity_instance_vo: StudySelectionActivityInstanceVO
+    ) -> Self:
+        return cls(
+            uid=study_activity_instance_vo.latest_activity_instance_uid,
+            name=study_activity_instance_vo.latest_activity_instance_name,
+            topic_code=study_activity_instance_vo.latest_activity_instance_topic_code,
+            activity_instance_class=CompactActivityInstanceClass(
+                uid=study_activity_instance_vo.activity_instance_class_uid,
+                name=study_activity_instance_vo.activity_instance_class_name,
+            ),
+            version=study_activity_instance_vo.latest_activity_instance_version,
+        )
+
+
 class StudySelectionActivityInstance(BaseModel):
     study_uid: Annotated[
         str | None,
@@ -2392,6 +2606,12 @@ class StudySelectionActivityInstance(BaseModel):
     show_activity_instance_in_protocol_flowchart: Annotated[bool, Field()] = (
         SHOW_ACTIVITY_INSTANCE_IN_PROTOCOL_FLOWCHART_FIELD
     )
+    keep_old_version: Annotated[
+        bool,
+        Field(
+            description="Boolean indicating that someone has not updated to latest version of ActivityInstance but reviewed the changes ",
+        ),
+    ] = False
     study_activity_instance_uid: Annotated[
         str | None,
         Field(
@@ -2408,24 +2628,22 @@ class StudySelectionActivityInstance(BaseModel):
     study_version: Annotated[
         str | None,
         Field(
-            title="study version or date information",
             description="Study version number, if specified, otherwise None.",
             json_schema_extra={"nullable": True},
         ),
     ] = None
-    activity: Annotated[Activity, Field()]
+    activity: Annotated[CompactActivity, Field()]
     activity_instance: Annotated[
-        ActivityInstance | None, Field(json_schema_extra={"nullable": True})
+        CompactActivityInstance | None, Field(json_schema_extra={"nullable": True})
     ] = None
     start_date: Annotated[
         datetime | None,
         Field(description=START_DATE_DESC, json_schema_extra={"nullable": True}),
-    ]
+    ] = None
 
     author_username: Annotated[
         str | None,
         Field(
-            title="author_username",
             description=AUTHOR_FIELD_DESC,
             json_schema_extra={"nullable": True},
         ),
@@ -2433,15 +2651,8 @@ class StudySelectionActivityInstance(BaseModel):
     end_date: Annotated[datetime | None, END_DATE_FIELD] = None
     status: Annotated[str | None, STATUS_FIELD] = None
     change_type: Annotated[str | None, CHANGE_TYPE_FIELD] = None
-    latest_activity: Annotated[
-        Activity | None,
-        Field(
-            description="Latest version of activity selected for study.",
-            json_schema_extra={"nullable": True},
-        ),
-    ] = None
     latest_activity_instance: Annotated[
-        ActivityInstance | None,
+        CompactActivityInstance | None,
         Field(
             description="Latest version of activity instace selected for study.",
             json_schema_extra={"nullable": True},
@@ -2457,7 +2668,9 @@ class StudySelectionActivityInstance(BaseModel):
 
     @classmethod
     def _get_state_out_of_activity_and_activity_instance(
-        cls, activity: Activity, activity_instance: ActivityInstance
+        cls,
+        activity: CompactActivity,
+        activity_instance: CompactActivityInstance | None,
     ) -> StudyActivityInstanceState:
         if activity.is_data_collected:
             if activity_instance:
@@ -2474,21 +2687,17 @@ class StudySelectionActivityInstance(BaseModel):
         cls,
         study_selection_history: StudyActivityInstanceSelectionHistory,
         study_uid: str,
-        get_activity_by_uid_version_callback: Callable[[str, str], Activity],
-        get_activity_instance_by_uid_version_callback: Callable[
-            [str, str], ActivityInstance
-        ],
     ) -> Self:
-        activity = get_activity_by_uid_version_callback(
-            study_selection_history.activity_uid,
-            study_selection_history.activity_version,
+        activity = CompactActivity.activity_from_study_activity_instance_vo(
+            study_activity_instance_vo=study_selection_history
         )
-        activity_instance = None
-        if study_selection_history.activity_instance_uid:
-            activity_instance = get_activity_instance_by_uid_version_callback(
-                study_selection_history.activity_instance_uid,
-                study_selection_history.activity_instance_version,
+        activity_instance = (
+            CompactActivityInstance.activity_instance_from_study_activity_instance_vo(
+                study_activity_instance_vo=study_selection_history
             )
+            if study_selection_history.activity_instance_uid
+            else None
+        )
         return cls(
             study_uid=study_uid,
             study_activity_instance_uid=study_selection_history.study_selection_uid,
@@ -2497,6 +2706,35 @@ class StudySelectionActivityInstance(BaseModel):
             start_date=study_selection_history.start_date,
             activity=activity,
             activity_instance=activity_instance,
+            study_activity_subgroup=(
+                SimpleStudyActivitySubGroup(
+                    study_activity_subgroup_uid=study_selection_history.study_activity_subgroup_uid,
+                    activity_subgroup_uid=study_selection_history.activity_subgroup_uid,
+                    activity_subgroup_name=study_selection_history.activity_subgroup_name,
+                )
+                if study_selection_history.study_activity_subgroup_uid
+                else None
+            ),
+            study_activity_group=(
+                SimpleStudyActivityGroup(
+                    study_activity_group_uid=study_selection_history.study_activity_group_uid,
+                    activity_group_uid=study_selection_history.activity_group_uid,
+                    activity_group_name=study_selection_history.activity_group_name,
+                )
+                if study_selection_history.study_activity_group_uid
+                else None
+            ),
+            study_soa_group=(
+                SimpleStudySoAGroup(
+                    study_soa_group_uid=study_selection_history.study_soa_group_uid,
+                    soa_group_term_uid=study_selection_history.soa_group_term_uid,
+                    soa_group_term_name=study_selection_history.soa_group_term_name,
+                )
+                if study_selection_history.study_soa_group_uid
+                and study_selection_history.soa_group_term_uid
+                and study_selection_history.soa_group_term_name
+                else None
+            ),
             end_date=study_selection_history.end_date,
             change_type=study_selection_history.change_type,
             author_username=UserInfoService.get_author_username_from_id(
@@ -2512,48 +2750,35 @@ class StudySelectionActivityInstance(BaseModel):
         cls,
         study_uid: str,
         study_selection: StudySelectionActivityInstanceVO,
-        get_activity_by_uid_callback: Callable[[str], Activity],
-        get_activity_by_uid_version_callback: Callable[[str, str], Activity],
-        get_activity_instance_by_uid_callback: Callable[[str], ActivityInstance],
-        get_activity_instance_by_uid_version_callback: Callable[
-            [str, str], ActivityInstance
-        ],
-        activity_versions_by_uid: (
-            Mapping[str, Iterable[ActivityForStudyActivity]] | None
-        ) = None,
-        activity_instance_versions_by_uid: (
-            Mapping[str, Iterable[ActivityInstance]] | None
-        ) = None,
     ) -> Self:
 
-        latest_activity, selected_activity = _find_versions(
-            uid=study_selection.activity_uid,
-            version=study_selection.activity_version,
-            versions_by_uid=activity_versions_by_uid,
-            get_by_uid_callback=get_activity_by_uid_callback,
-            get_by_uid_version_callback=get_activity_by_uid_version_callback,
+        selected_activity = CompactActivity.activity_from_study_activity_instance_vo(
+            study_activity_instance_vo=study_selection
         )
-
-        latest_activity_instance, selected_activity_instance = (
-            _find_versions(
-                uid=study_selection.activity_instance_uid,
-                version=study_selection.activity_instance_version,
-                versions_by_uid=activity_instance_versions_by_uid,
-                get_by_uid_callback=get_activity_instance_by_uid_callback,
-                get_by_uid_version_callback=get_activity_instance_by_uid_version_callback,
+        selected_activity_instance = (
+            CompactActivityInstance.activity_instance_from_study_activity_instance_vo(
+                study_activity_instance_vo=study_selection
             )
             if study_selection.activity_instance_uid
-            else (None, None)
+            else None
         )
 
         return cls(
             study_activity_instance_uid=study_selection.study_selection_uid,
             study_activity_uid=study_selection.study_activity_uid,
             activity=selected_activity,
-            latest_activity=latest_activity,
             activity_instance=selected_activity_instance,
-            latest_activity_instance=latest_activity_instance,
+            latest_activity_instance=(
+                CompactActivityInstance.latest_activity_instance_from_study_activity_instance_vo(
+                    study_activity_instance_vo=study_selection
+                )
+                if study_selection.latest_activity_instance_version
+                and study_selection.activity_instance_version
+                != study_selection.latest_activity_instance_version
+                else None
+            ),
             show_activity_instance_in_protocol_flowchart=study_selection.show_activity_instance_in_protocol_flowchart,
+            keep_old_version=study_selection.keep_old_version,
             study_uid=study_uid,
             start_date=study_selection.start_date,
             author_username=study_selection.author_username,
@@ -2585,6 +2810,8 @@ class StudySelectionActivityInstance(BaseModel):
                     soa_group_term_name=study_selection.soa_group_term_name,
                 )
                 if study_selection.study_soa_group_uid
+                and study_selection.soa_group_term_uid
+                and study_selection.soa_group_term_name
                 else None
             ),
         )
@@ -2604,11 +2831,21 @@ class StudySelectionActivityInstanceEditInput(PatchInputModel):
     show_activity_instance_in_protocol_flowchart: Annotated[
         bool, SHOW_ACTIVITY_INSTANCE_IN_PROTOCOL_FLOWCHART_FIELD
     ] = False
+    keep_old_version: Annotated[bool, Field()] = False
 
 
-class StudySelectionActivityInstanceBatchCreate(InputModel):
-    activity_instance_uids: list[str] = Field(default_factory=list)
-    study_activity_uid: Annotated[str | None, Field()] = None
+class StudySelectionActivityInstanceBatchEditInput(InputModel):
+    activity_instance_uid: Annotated[str | None, Field()] = None
+    study_activity_instance_uid: Annotated[str, Field()]
+    study_activity_uid: Annotated[str, Field()]
+
+
+class StudySelectionActivityInstanceBatchInput(BatchInputModel):
+    method: Annotated[str, METHOD_FIELD]
+    content: (
+        StudySelectionActivityInstanceBatchEditInput
+        | StudySelectionActivityInstanceCreateInput
+    )
 
 
 class StudySelectionActivityInstanceBatchOutput(BaseModel):
@@ -2629,17 +2866,16 @@ class StudyActivitySchedule(BaseModel):
     study_version: Annotated[
         str | None,
         Field(
-            title="study version or date information",
             description="Study version number, if specified, otherwise None",
             json_schema_extra={"nullable": True},
         ),
     ] = None
 
     study_activity_schedule_uid: Annotated[
-        str | None,
+        str,
         Field(
             description="uid for the study activity schedule",
-            json_schema_extra={"source": "uid", "nullable": True},
+            json_schema_extra={"source": "uid"},
         ),
     ]
 
@@ -2678,7 +2914,6 @@ class StudyActivitySchedule(BaseModel):
     author_username: Annotated[
         str | None,
         Field(
-            title="author_username",
             description=AUTHOR_FIELD_DESC,
             json_schema_extra={"source": AFTER_USER_QUALIFIER, "nullable": True},
         ),
@@ -2692,6 +2927,16 @@ class StudyActivitySchedule(BaseModel):
         schedule_vo: StudyActivityScheduleVO,
         study_value_version: str | None = None,
     ) -> Self:
+        if not schedule_vo.uid:
+            raise BusinessLogicException(
+                "Study UID is required to create a StudyActivitySchedule instance."
+            )
+
+        if not schedule_vo.study_visit_uid:
+            raise BusinessLogicException(
+                "Study visit UID is required to create a StudyActivitySchedule instance."
+            )
+
         return cls(
             study_activity_schedule_uid=schedule_vo.uid,
             study_uid=schedule_vo.study_uid,
@@ -2800,7 +3045,6 @@ class StudyDesignCell(BaseModel):
     study_version: Annotated[
         str | None,
         Field(
-            title="study version or date information",
             description="Study version number, if specified, otherwise None",
             json_schema_extra={"nullable": True},
         ),
@@ -2859,7 +3103,7 @@ class StudyDesignCell(BaseModel):
         Field(
             description="the name of the related study epoch",
             json_schema_extra={
-                "source": "study_epoch.has_epoch.has_name_root.has_latest_value.name"
+                "source": "study_epoch.has_epoch.has_selected_term.has_name_root.has_latest_value.name"
             },
         ),
     ]
@@ -2896,7 +3140,6 @@ class StudyDesignCell(BaseModel):
     author_username: Annotated[
         str | None,
         Field(
-            title="author_username",
             description=AUTHOR_FIELD_DESC,
             json_schema_extra={"source": AFTER_USER_QUALIFIER, "nullable": True},
         ),
@@ -2927,9 +3170,9 @@ class StudyDesignCell(BaseModel):
             study_branch_arm_uid=design_cell_vo.study_branch_arm_uid,
             study_branch_arm_name=design_cell_vo.study_branch_arm_name,
             study_epoch_uid=design_cell_vo.study_epoch_uid,
-            study_epoch_name=design_cell_vo.study_epoch_name,
+            study_epoch_name=design_cell_vo.study_epoch_name or "",
             study_element_uid=design_cell_vo.study_element_uid,
-            study_element_name=design_cell_vo.study_element_name,
+            study_element_name=design_cell_vo.study_element_name or "",
             transition_rule=design_cell_vo.transition_rule,
             start_date=design_cell_vo.start_date,
             author_username=UserInfoService.get_author_username_from_id(
@@ -3006,7 +3249,7 @@ class StudyDesignCellCreateInput(PostInputModel):
     ] = None
 
     order: Annotated[
-        int | None, Field(description=ORDER_DESC, gt=0, lt=settings.MAX_INT_NEO4J)
+        int | None, Field(description=ORDER_DESC, gt=0, lt=settings.max_int_neo4j)
     ] = None
 
 
@@ -3095,14 +3338,6 @@ class StudySelectionBranchArmWithoutStudyArm(StudySelection):
         ),
     ] = None
 
-    colour_code: Annotated[
-        str | None,
-        Field(
-            description="colour_code for the study Brancharm",
-            json_schema_extra={"nullable": True},
-        ),
-    ] = None
-
     randomization_group: Annotated[
         str | None,
         Field(
@@ -3127,16 +3362,6 @@ class StudySelectionBranchArmWithoutStudyArm(StudySelection):
     author_username: Annotated[
         str | None,
         Field(
-            title="author_username",
-            description=AUTHOR_FIELD_DESC,
-            json_schema_extra={"nullable": True},
-        ),
-    ] = None
-
-    author_username: Annotated[
-        str | None,
-        Field(
-            title="author_username",
             description=AUTHOR_FIELD_DESC,
             json_schema_extra={"nullable": True},
         ),
@@ -3151,7 +3376,6 @@ class StudySelectionBranchArmWithoutStudyArm(StudySelection):
     accepted_version: Annotated[
         bool | None,
         Field(
-            title=ACCEPTED_VERSION_DESC,
             description="Denotes if user accepted obsolete branch arm versions",
             json_schema_extra={"nullable": True},
         ),
@@ -3167,11 +3391,10 @@ class StudySelectionBranchArmWithoutStudyArm(StudySelection):
         return cls(
             study_uid=study_uid,
             branch_arm_uid=selection.study_selection_uid,
-            name=selection.name,
-            short_name=selection.short_name,
+            name=selection.name or "",
+            short_name=selection.short_name or "",
             code=selection.code,
             description=selection.description,
-            colour_code=selection.colour_code,
             order=order,
             randomization_group=selection.randomization_group,
             number_of_subjects=selection.number_of_subjects,
@@ -3185,12 +3408,84 @@ class StudySelectionBranchArmWithoutStudyArm(StudySelection):
 
 
 # Study arms
+class CompactStudyBranchArm(BaseModel):
+    uid: Annotated[str, Field(description="uid for the study branch arm")]
+    name: Annotated[str, Field(description="name for the study branch arm")]
+    number_of_subjects: Annotated[
+        int | None, Field(description="number_of_subjects for the study cohort")
+    ] = None
+    short_name: Annotated[str, Field(description="short name for the study branch arm")]
+    code: Annotated[str | None, Field(description="code for the study branch arm")] = (
+        None
+    )
+    randomization_group: Annotated[
+        str | None,
+        Field(description="randomization group name for the study branch arm"),
+    ] = None
+
+
+class CompactStudyCohort(BaseModel):
+    uid: Annotated[str, Field(description="uid for the study cohort")]
+    name: Annotated[str, Field(description="name for the study cohort")]
+    short_name: Annotated[str, Field(description="short name for the study cohort")]
+    number_of_subjects: Annotated[
+        int | None, Field(description="number_of_subjects for the study cohort")
+    ] = None
+    study_branch_arms: Annotated[
+        list[CompactStudyBranchArm], Field(description="list of nested StudyBranchArms")
+    ]
+
+
+class CompactStudyArm(BaseModel):
+    uid: Annotated[str, Field(description="uid for the study arm")]
+    name: Annotated[str, Field(description="name for the study arm")]
+    short_name: Annotated[str, Field(description="short name for the study arm")]
+    number_of_subjects: Annotated[
+        int | None, Field(description="number_of_subjects for the study arm")
+    ] = None
+    study_cohorts: Annotated[
+        list[CompactStudyCohort], Field(description="list of nested StudyCohorts")
+    ]
+
+    @classmethod
+    def from_repository_output(
+        cls,
+        arm_structure: dict[str, Any],
+    ) -> Self:
+        cohorts = []
+        for study_cohort in arm_structure["study_cohorts"]:
+            branch_arms = []
+            for study_branch_arm in study_cohort["study_branch_arms"]:
+                branch_arm = CompactStudyBranchArm(
+                    uid=study_branch_arm["uid"],
+                    name=study_branch_arm["name"],
+                    number_of_subjects=study_branch_arm["number_of_subjects"],
+                    short_name=study_branch_arm["short_name"],
+                    code=study_branch_arm["branch_arm_code"],
+                    randomization_group=study_branch_arm["randomization_group"],
+                )
+                branch_arms.append(branch_arm)
+            cohort = CompactStudyCohort(
+                uid=study_cohort["uid"],
+                name=study_cohort["name"],
+                short_name=study_cohort["short_name"],
+                number_of_subjects=study_cohort["number_of_subjects"],
+                study_branch_arms=branch_arms,
+            )
+            cohorts.append(cohort)
+        return CompactStudyArm(
+            uid=arm_structure["uid"],
+            name=arm_structure["name"],
+            short_name=arm_structure["short_name"],
+            number_of_subjects=arm_structure["number_of_subjects"],
+            study_cohorts=cohorts,
+        )
 
 
 class StudySelectionArm(StudySelection):
     arm_uid: Annotated[
-        str | None,
-        Field(description=ARM_UID_DESC, json_schema_extra={"nullable": True}),
+        str,
+        Field(description=ARM_UID_DESC),
     ]
 
     name: Annotated[str, Field(description="name for the study arm")]
@@ -3215,13 +3510,6 @@ class StudySelectionArm(StudySelection):
         ),
     ] = None
 
-    arm_colour: Annotated[
-        str | None,
-        Field(
-            description="colour for the study arm", json_schema_extra={"nullable": True}
-        ),
-    ] = None
-
     randomization_group: Annotated[
         str | None,
         Field(
@@ -3239,30 +3527,17 @@ class StudySelectionArm(StudySelection):
     ] = None
 
     arm_type: Annotated[
-        CTTermName | None,
+        SimpleCodelistTermModel | None,
         Field(
             description="type for the study arm", json_schema_extra={"nullable": True}
         ),
     ] = None
 
-    start_date: Annotated[
-        datetime | None,
-        Field(description=START_DATE_DESC, json_schema_extra={"nullable": True}),
-    ]
+    start_date: Annotated[datetime, Field(description=START_DATE_DESC)]
 
     author_username: Annotated[
         str | None,
         Field(
-            title="author_username",
-            description=AUTHOR_FIELD_DESC,
-            json_schema_extra={"nullable": True},
-        ),
-    ] = None
-
-    author_username: Annotated[
-        str | None,
-        Field(
-            title="author_username",
             description=AUTHOR_FIELD_DESC,
             json_schema_extra={"nullable": True},
         ),
@@ -3277,11 +3552,16 @@ class StudySelectionArm(StudySelection):
     accepted_version: Annotated[
         bool | None,
         Field(
-            title=ACCEPTED_VERSION_DESC,
             description="Denotes if user accepted obsolete arm versions",
             json_schema_extra={"nullable": True},
         ),
     ] = None
+    merge_branch_for_this_arm_for_sdtm_adam: Annotated[
+        bool,
+        Field(
+            description="Indicates whether to merge branches for this arm for SDTM/ADM"
+        ),
+    ] = False
 
     @classmethod
     def from_study_selection_arm_ar_and_order(
@@ -3289,13 +3569,17 @@ class StudySelectionArm(StudySelection):
         study_uid: str,
         selection: StudySelectionArmVO,
         order: int,
-        find_simple_term_arm_type_by_term_uid: Callable,
+        find_codelist_term_arm_type: Callable[
+            [str | None, str | None, datetime | None], CTSimpleCodelistTermAR | None
+        ],
         terms_at_specific_datetime: datetime | None,
     ):
         if selection.arm_type_uid:
-            arm_type_call_back = find_simple_term_arm_type_by_term_uid(
+            arm_type_call_back = SimpleCodelistTermModel.from_term_uid_and_codelist_submval(
                 term_uid=selection.arm_type_uid,
-                at_specific_date=terms_at_specific_datetime,
+                codelist_submission_value="ARMTTP",
+                find_codelist_term_by_uid_and_submission_value=find_codelist_term_arm_type,
+                at_specific_date_time=terms_at_specific_datetime,
             )
         else:
             arm_type_call_back = None
@@ -3307,7 +3591,6 @@ class StudySelectionArm(StudySelection):
             short_name=selection.short_name,
             code=selection.code,
             description=selection.description,
-            arm_colour=selection.arm_colour,
             order=order,
             randomization_group=selection.randomization_group,
             number_of_subjects=selection.number_of_subjects,
@@ -3320,6 +3603,7 @@ class StudySelectionArm(StudySelection):
             status=selection.status,
             change_type=selection.change_type,
             accepted_version=selection.accepted_version,
+            merge_branch_for_this_arm_for_sdtm_adam=selection.merge_branch_for_this_arm_for_sdtm_adam,
         )
 
     @classmethod
@@ -3327,12 +3611,17 @@ class StudySelectionArm(StudySelection):
         cls,
         study_selection_history: SelectionHistoryArm,
         study_uid: str,
-        get_ct_term_arm_type: Callable[[str], CTTermName],
-        effective_date: datetime = None,
+        find_codelist_term_arm_type: Callable[
+            [str | None, str | None, datetime | None], CTSimpleCodelistTermAR | None
+        ],
+        effective_date: datetime | None = None,
     ) -> Self:
         if study_selection_history.arm_type:
-            arm_type_call_back = get_ct_term_arm_type(
-                study_selection_history.arm_type, at_specific_date=effective_date
+            arm_type_call_back = SimpleCodelistTermModel.from_term_uid_and_codelist_submval(
+                term_uid=study_selection_history.arm_type,
+                codelist_submission_value="ARMTTP",
+                find_codelist_term_by_uid_and_submission_value=find_codelist_term_arm_type,
+                at_specific_date_time=effective_date,
             )
         else:
             arm_type_call_back = None
@@ -3345,7 +3634,6 @@ class StudySelectionArm(StudySelection):
             short_name=study_selection_history.arm_short_name,
             code=study_selection_history.arm_code,
             description=study_selection_history.arm_description,
-            arm_colour=study_selection_history.arm_colour,
             randomization_group=study_selection_history.arm_randomization_group,
             number_of_subjects=study_selection_history.arm_number_of_subjects,
             arm_type=arm_type_call_back,
@@ -3357,6 +3645,7 @@ class StudySelectionArm(StudySelection):
             status=study_selection_history.status,
             change_type=study_selection_history.change_type,
             accepted_version=study_selection_history.accepted_version,
+            merge_branch_for_this_arm_for_sdtm_adam=study_selection_history.merge_branch_for_this_arm_for_sdtm_adam,
         )
 
 
@@ -3375,15 +3664,23 @@ class StudySelectionArmWithConnectedBranchArms(StudySelectionArm):
         study_uid: str,
         selection: StudySelectionArmVO,
         order: int,
-        find_simple_term_arm_type_by_term_uid: Callable,
+        find_codelist_term_arm_type: Callable[
+            [str | None, str | None, datetime | None], CTSimpleCodelistTermAR | None
+        ],
         find_multiple_connected_branch_arm: Callable,
         terms_at_specific_datetime: datetime | None,
         study_value_version: str | None = None,
     ):
         if selection.arm_type_uid:
-            arm_type_call_back = find_simple_term_arm_type_by_term_uid(
+            # arm_type_call_back = find_simple_term_arm_type_by_term_uid(
+            #    term_uid=selection.arm_type_uid,
+            #    at_specific_date=terms_at_specific_datetime,
+            # )
+            arm_type_call_back = SimpleCodelistTermModel.from_term_uid_and_codelist_submval(
                 term_uid=selection.arm_type_uid,
-                at_specific_date=terms_at_specific_datetime,
+                codelist_submission_value="ARMTTP",
+                find_codelist_term_by_uid_and_submission_value=find_codelist_term_arm_type,
+                at_specific_date_time=terms_at_specific_datetime,
             )
         else:
             arm_type_call_back = None
@@ -3400,7 +3697,6 @@ class StudySelectionArmWithConnectedBranchArms(StudySelectionArm):
             ),
             code=selection.code,
             description=selection.description,
-            arm_colour=selection.arm_colour,
             order=order,
             randomization_group=selection.randomization_group,
             number_of_subjects=selection.number_of_subjects,
@@ -3419,6 +3715,7 @@ class StudySelectionArmWithConnectedBranchArms(StudySelectionArm):
             status=selection.status,
             change_type=selection.change_type,
             accepted_version=selection.accepted_version,
+            merge_branch_for_this_arm_for_sdtm_adam=selection.merge_branch_for_this_arm_for_sdtm_adam,
         )
 
 
@@ -3435,10 +3732,6 @@ class StudySelectionArmCreateInput(PostInputModel):
         str | None, Field(description="description for the study arm")
     ] = None
 
-    arm_colour: Annotated[str | None, Field(description="colour for the study arm")] = (
-        None
-    )
-
     randomization_group: Annotated[
         str | None, Field(description="randomization group for the study arm")
     ] = None
@@ -3448,11 +3741,17 @@ class StudySelectionArmCreateInput(PostInputModel):
         Field(
             description="number of subjects for the study arm",
             ge=0,
-            lt=settings.MAX_INT_NEO4J,
+            lt=settings.max_int_neo4j,
         ),
     ] = None
 
     arm_type_uid: Annotated[str | None, Field(description=ARM_UID_DESC)] = None
+    merge_branch_for_this_arm_for_sdtm_adam: Annotated[
+        bool,
+        Field(
+            description="Indicates whether to merge branches for this arm for SDTM/ADM"
+        ),
+    ] = False
 
 
 class StudySelectionArmInput(PatchInputModel):
@@ -3468,10 +3767,6 @@ class StudySelectionArmInput(PatchInputModel):
         str | None, Field(description="description for the study arm")
     ] = None
 
-    arm_colour: Annotated[str | None, Field(description="colour for the study arm")] = (
-        None
-    )
-
     randomization_group: Annotated[
         str | None, Field(description="randomization group for the study arm")
     ] = None
@@ -3481,12 +3776,18 @@ class StudySelectionArmInput(PatchInputModel):
         Field(
             description="number of subjects for the study arm",
             ge=0,
-            lt=settings.MAX_INT_NEO4J,
+            lt=settings.max_int_neo4j,
         ),
     ] = None
 
     arm_type_uid: Annotated[str | None, Field(description=ARM_UID_DESC)] = None
     arm_uid: Annotated[str | None, Field(description=ARM_UID_DESC)] = None
+    merge_branch_for_this_arm_for_sdtm_adam: Annotated[
+        bool,
+        Field(
+            description="Indicates whether to merge branches for this arm for SDTM/ADM"
+        ),
+    ] = False
 
 
 class StudySelectionArmNewOrder(PatchInputModel):
@@ -3494,14 +3795,37 @@ class StudySelectionArmNewOrder(PatchInputModel):
         int,
         Field(
             description="new order of the selected arm",
-            gt=-settings.MAX_INT_NEO4J,
-            lt=settings.MAX_INT_NEO4J,
+            gt=-settings.max_int_neo4j,
+            lt=settings.max_int_neo4j,
         ),
     ]
 
 
 class StudySelectionArmVersion(StudySelectionArm):
     changes: Annotated[list[str], Field()]
+
+
+class StudySelectionArmBatchUpdateInput(StudySelectionArmInput):
+    arm_uid: Annotated[str, Field(description="UID of the Study Arm to update")]
+
+
+class StudySelectionArmBatchInput(BatchInputModel):
+    method: Annotated[str, METHOD_FIELD]
+    content: Annotated[
+        StudySelectionArmBatchUpdateInput | StudySelectionArmCreateInput,
+        Field(),
+    ]
+
+
+class StudySelectionArmBatchOutput(BaseModel):
+    response_code: Annotated[int, RESPONSE_CODE_FIELD]
+    content: Annotated[
+        StudySelectionArm
+        | StudySelectionArmWithConnectedBranchArms
+        | None
+        | BatchErrorResponse,
+        Field(),
+    ]
 
 
 # Study Activity Instructions
@@ -3514,7 +3838,7 @@ class StudyActivityInstruction(BaseModel):
         str | None,
         Field(
             description="uid for the study activity instruction",
-            json_schema_extra={"source": "uid", "nullable": True},
+            json_schema_extra={"source": "uid"},
         ),
     ]
 
@@ -3523,16 +3847,7 @@ class StudyActivityInstruction(BaseModel):
     study_version: Annotated[
         str | None,
         Field(
-            title="study version or date information",
             description="Study version number, if specified, otherwise None",
-            json_schema_extra={"nullable": True},
-        ),
-    ] = None
-    study_version: Annotated[
-        str | None,
-        Field(
-            title="study version or date information",
-            description="Study version number, if specified, otherwise None.",
             json_schema_extra={"nullable": True},
         ),
     ] = None
@@ -3545,7 +3860,7 @@ class StudyActivityInstruction(BaseModel):
     ]
 
     activity_instruction_uid: Annotated[
-        str,
+        str | None,
         Field(
             description="The related activity instruction UID",
             json_schema_extra={
@@ -3555,7 +3870,7 @@ class StudyActivityInstruction(BaseModel):
     ]
 
     activity_instruction_name: Annotated[
-        str,
+        str | None,
         Field(
             description="The related activity instruction name",
             json_schema_extra={"source": "activity_instruction_value.name"},
@@ -3563,17 +3878,16 @@ class StudyActivityInstruction(BaseModel):
     ]
 
     start_date: Annotated[
-        datetime | None,
+        datetime,
         Field(
             description=START_DATE_DESC,
-            json_schema_extra={"source": AFTER_DATE_QUALIFIER, "nullable": True},
+            json_schema_extra={"source": AFTER_DATE_QUALIFIER},
         ),
     ]
 
     author_username: Annotated[
         str | None,
         Field(
-            title="author_username",
             description=AUTHOR_FIELD_DESC,
             json_schema_extra={"source": AFTER_USER_QUALIFIER, "nullable": True},
         ),
@@ -3728,7 +4042,7 @@ class StudySelectionElement(StudySelection):
     ] = None
 
     element_subtype: Annotated[
-        CTTermName | None,
+        SimpleCodelistTermModel | None,
         Field(
             description="subtype for the study element",
             json_schema_extra={"nullable": True},
@@ -3736,7 +4050,7 @@ class StudySelectionElement(StudySelection):
     ] = None
 
     element_type: Annotated[
-        CTTermName | None,
+        SimpleCodelistTermModel | None,
         Field(
             description="type for the study element",
             json_schema_extra={"nullable": True},
@@ -3759,7 +4073,6 @@ class StudySelectionElement(StudySelection):
     author_username: Annotated[
         str | None,
         Field(
-            title="author_username",
             description=AUTHOR_FIELD_DESC,
             json_schema_extra={"nullable": True},
         ),
@@ -3774,7 +4087,6 @@ class StudySelectionElement(StudySelection):
     accepted_version: Annotated[
         bool | None,
         Field(
-            title=ACCEPTED_VERSION_DESC,
             description="Denotes if user accepted obsolete element versions",
             json_schema_extra={"nullable": True},
         ),
@@ -3786,26 +4098,35 @@ class StudySelectionElement(StudySelection):
         study_uid: str,
         selection: StudySelectionElementVO,
         order: int,
-        find_simple_term_element_by_term_uid: Callable[[str], CTTermName],
-        get_term_element_type_by_element_subtype: Callable[[str], CTTermName],
-        find_all_study_time_units: Callable[[str], Iterable[UnitDefinitionAR]],
+        get_term_element_type_by_element_subtype: Callable[[str | None], str | None],
+        find_codelist_term_by_uid_and_submval: Callable[
+            [str | None, str | None, datetime | None], CTSimpleCodelistTermAR | None
+        ],
+        find_all_study_time_units: Callable[[str], tuple[list[UnitDefinitionAR], int]],
         terms_at_specific_datetime: datetime | None,
         study_value_version: str | None = None,
     ) -> Self:
-        element_subtype = find_simple_term_element_by_term_uid(
-            selection.element_subtype_uid, at_specific_date=terms_at_specific_datetime
-        )
         term_element_type = get_term_element_type_by_element_subtype(
-            selection.element_subtype_uid
+            selection.element_subtype_uid or ""
         )
-        element_type = (
-            find_simple_term_element_by_term_uid(
-                term_element_type,
-                at_specific_date=terms_at_specific_datetime,
+        if term_element_type:
+            element_type = SimpleCodelistTermModel.from_term_uid_and_codelist_submval(
+                term_uid=term_element_type,
+                codelist_submission_value=settings.study_element_type_cl_submval,
+                find_codelist_term_by_uid_and_submission_value=find_codelist_term_by_uid_and_submval,
+                at_specific_date_time=terms_at_specific_datetime,
             )
-            if term_element_type
-            else None
-        )
+        else:
+            element_type = None
+        if selection.element_subtype_uid:
+            element_subtype = SimpleCodelistTermModel.from_term_uid_and_codelist_submval(
+                term_uid=selection.element_subtype_uid,
+                codelist_submission_value=settings.study_element_subtype_cl_submval,
+                find_codelist_term_by_uid_and_submission_value=find_codelist_term_by_uid_and_submval,
+                at_specific_date_time=terms_at_specific_datetime,
+            )
+        else:
+            element_subtype = None
         return cls(
             study_uid=study_uid,
             study_version=(
@@ -3846,25 +4167,34 @@ class StudySelectionElement(StudySelection):
         cls,
         study_selection_history: SelectionHistoryElement,
         study_uid: str,
-        get_ct_term_element_subtype: Callable[[str], CTTermName],
-        get_term_element_type_by_element_subtype: Callable[[str], CTTermName],
-        find_all_study_time_units: Callable[[str], Iterable[UnitDefinitionAR]],
-        effective_date: datetime = None,
+        find_codelist_term_by_uid_and_submval: Callable[
+            [str | None, str | None, datetime | None], CTSimpleCodelistTermAR | None
+        ],
+        get_term_element_type_by_element_subtype: Callable[[str | None], str | None],
+        find_all_study_time_units: Callable[[str], tuple[list[UnitDefinitionAR], int]],
+        effective_date: datetime | None = None,
     ) -> Self:
-        element_subtype = get_ct_term_element_subtype(
-            study_selection_history.element_subtype, at_specific_date=effective_date
+        term_element_type = get_term_element_type_by_element_subtype(
+            study_selection_history.element_subtype
         )
-        element_type = (
-            get_ct_term_element_subtype(
-                get_term_element_type_by_element_subtype(
-                    study_selection_history.element_subtype
-                )
+        if term_element_type:
+            element_type = SimpleCodelistTermModel.from_term_uid_and_codelist_submval(
+                term_uid=term_element_type,
+                codelist_submission_value=settings.study_element_type_cl_submval,
+                find_codelist_term_by_uid_and_submission_value=find_codelist_term_by_uid_and_submval,
+                at_specific_date_time=effective_date,
             )
-            if get_term_element_type_by_element_subtype(
-                study_selection_history.element_subtype
+        else:
+            element_type = None
+        if study_selection_history.element_subtype:
+            element_subtype = SimpleCodelistTermModel.from_term_uid_and_codelist_submval(
+                term_uid=study_selection_history.element_subtype,
+                codelist_submission_value=settings.study_element_subtype_cl_submval,
+                find_codelist_term_by_uid_and_submission_value=find_codelist_term_by_uid_and_submval,
+                at_specific_date_time=effective_date,
             )
-            else None
-        )
+        else:
+            element_subtype = None
         return cls(
             study_uid=study_uid,
             order=study_selection_history.order,
@@ -4003,7 +4333,7 @@ class StudySelectionElementInput(PatchInputModel):
     def from_study_selection_element(
         cls,
         selection: StudySelectionElementVO,
-        find_all_study_time_units: Callable[[str], Iterable[UnitDefinitionAR]],
+        find_all_study_time_units: Callable[..., tuple[list[UnitDefinitionAR], int]],
     ) -> Self:
         return cls(
             element_uid=selection.study_selection_uid,
@@ -4027,7 +4357,7 @@ class StudySelectionElementInput(PatchInputModel):
 
 
 class StudyElementTypes(BaseModel):
-    type: Annotated[str, Field(title="Type uid", description="Element type uid")]
+    type: Annotated[str, Field(description="Element type uid")]
     type_name: Annotated[str, Field(description="Element type name")]
     subtype: Annotated[str, Field(description="Element subtype uid")]
     subtype_name: Annotated[str, Field(description="Element subtype name")]
@@ -4038,8 +4368,8 @@ class StudySelectionElementNewOrder(PatchInputModel):
         int,
         Field(
             description="new order of the selected element",
-            gt=-settings.MAX_INT_NEO4J,
-            lt=settings.MAX_INT_NEO4J,
+            gt=-settings.max_int_neo4j,
+            lt=settings.max_int_neo4j,
         ),
     ]
 
@@ -4051,11 +4381,18 @@ class StudySelectionElementVersion(StudySelectionElement):
 # Study brancharms adding Arm Root parameter
 
 
+class StudyCohortInBranchArm(BaseModel):
+    study_cohort_uid: Annotated[str, Field()]
+    study_cohort_name: Annotated[str | None, Field()] = None
+    study_cohort_code: Annotated[str | None, Field()] = None
+
+
 class StudySelectionBranchArm(StudySelectionBranchArmWithoutStudyArm):
     arm_root: Annotated[
         StudySelectionArm,
         Field(description="Root for the study branch arm"),
     ]
+    study_cohorts: Annotated[list[StudyCohortInBranchArm] | None, Field()] = None
 
     @classmethod
     def from_study_selection_branch_arm_ar_and_order(
@@ -4075,11 +4412,10 @@ class StudySelectionBranchArm(StudySelectionBranchArmWithoutStudyArm):
                 else get_latest_on_datetime_str()
             ),
             branch_arm_uid=selection.study_selection_uid,
-            name=selection.name,
-            short_name=selection.short_name,
+            name=selection.name or "",
+            short_name=selection.short_name or "",
             code=selection.code,
             description=selection.description,
-            colour_code=selection.colour_code,
             order=order,
             randomization_group=selection.randomization_group,
             number_of_subjects=selection.number_of_subjects,
@@ -4088,6 +4424,18 @@ class StudySelectionBranchArm(StudySelectionBranchArmWithoutStudyArm):
                 study_selection_uid=selection.arm_root_uid,
                 study_value_version=study_value_version,
                 terms_at_specific_datetime=terms_at_specific_datetime,
+            ),
+            study_cohorts=(
+                [
+                    StudyCohortInBranchArm(
+                        study_cohort_uid=study_cohort.study_cohort_uid,
+                        study_cohort_name=study_cohort.study_cohort_name,
+                        study_cohort_code=study_cohort.study_cohort_code,
+                    )
+                    for study_cohort in selection.study_cohorts
+                ]
+                if selection.study_cohorts
+                else []
             ),
             start_date=selection.start_date,
             author_username=selection.author_username,
@@ -4102,17 +4450,18 @@ class StudySelectionBranchArm(StudySelectionBranchArmWithoutStudyArm):
         cls,
         study_selection_history: SelectionHistoryBranchArm,
         study_uid: str,
-        find_simple_term_branch_arm_root_by_term_uid: Callable[[str], CTTermName],
+        find_simple_term_branch_arm_root_by_term_uid: Callable[
+            [str, str], StudySelectionArm
+        ],
     ) -> Self:
         return cls(
             study_uid=study_uid,
             order=study_selection_history.order,
             branch_arm_uid=study_selection_history.study_selection_uid,
-            name=study_selection_history.branch_arm_name,
-            short_name=study_selection_history.branch_arm_short_name,
+            name=study_selection_history.branch_arm_name or "",
+            short_name=study_selection_history.branch_arm_short_name or "",
             code=study_selection_history.branch_arm_code,
             description=study_selection_history.branch_arm_description,
-            colour_code=study_selection_history.branch_arm_colour_code,
             randomization_group=study_selection_history.branch_arm_randomization_group,
             number_of_subjects=study_selection_history.branch_arm_number_of_subjects,
             arm_root=find_simple_term_branch_arm_root_by_term_uid(
@@ -4149,11 +4498,10 @@ class StudySelectionBranchArmHistory(StudySelectionBranchArmWithoutStudyArm):
             study_uid=study_uid,
             order=study_selection_history.order,
             branch_arm_uid=study_selection_history.study_selection_uid,
-            name=study_selection_history.branch_arm_name,
-            short_name=study_selection_history.branch_arm_short_name,
+            name=study_selection_history.branch_arm_name or "",
+            short_name=study_selection_history.branch_arm_short_name or "",
             code=study_selection_history.branch_arm_code,
             description=study_selection_history.branch_arm_description,
-            colour_code=study_selection_history.branch_arm_colour_code,
             randomization_group=study_selection_history.branch_arm_randomization_group,
             number_of_subjects=study_selection_history.branch_arm_number_of_subjects,
             arm_root_uid=study_selection_history.arm_root,
@@ -4191,11 +4539,6 @@ class StudySelectionBranchArmCreateInput(PostInputModel):
         Field(description="description for the study Brancharm"),
     ] = None
 
-    colour_code: Annotated[
-        str | None,
-        Field(description="colour_code for the study Brancharm"),
-    ] = None
-
     randomization_group: Annotated[
         str | None,
         Field(
@@ -4208,11 +4551,14 @@ class StudySelectionBranchArmCreateInput(PostInputModel):
         Field(
             description="number of subjects for the study Brancharm",
             ge=0,
-            lt=settings.MAX_INT_NEO4J,
+            lt=settings.max_int_neo4j,
         ),
     ] = None
 
-    arm_uid: Annotated[str | None, Field(description=ARM_UID_DESC)] = None
+    study_cohort_uid: Annotated[
+        str | None, Field(description=STUDY_COHORT_ARM_UID_DESC)
+    ] = None
+    arm_uid: Annotated[str, Field(description=ARM_UID_DESC)]
 
 
 class StudySelectionBranchArmEditInput(PatchInputModel):
@@ -4238,11 +4584,6 @@ class StudySelectionBranchArmEditInput(PatchInputModel):
         Field(description="description for the study Brancharm"),
     ] = None
 
-    colour_code: Annotated[
-        str | None,
-        Field(description="colour_code for the study Brancharm"),
-    ] = None
-
     randomization_group: Annotated[
         str | None,
         Field(
@@ -4255,13 +4596,16 @@ class StudySelectionBranchArmEditInput(PatchInputModel):
         Field(
             description="number of subjects for the study Brancharm",
             ge=0,
-            lt=settings.MAX_INT_NEO4J,
+            lt=settings.max_int_neo4j,
         ),
     ] = None
 
     arm_uid: Annotated[str | None, Field(description=ARM_UID_DESC)] = None
     branch_arm_uid: Annotated[
         str | None, Field(description="uid for the study branch arm")
+    ] = None
+    study_cohort_uid: Annotated[
+        str | None, Field(description=STUDY_COHORT_ARM_UID_DESC)
     ] = None
 
 
@@ -4270,14 +4614,41 @@ class StudySelectionBranchArmNewOrder(PatchInputModel):
         int,
         Field(
             description="new order of the selected branch arm",
-            gt=-settings.MAX_INT_NEO4J,
-            lt=settings.MAX_INT_NEO4J,
+            gt=-settings.max_int_neo4j,
+            lt=settings.max_int_neo4j,
         ),
     ]
 
 
 class StudySelectionBranchArmVersion(StudySelectionBranchArmHistory):
     changes: Annotated[list[str], Field()]
+
+
+class StudySelectionBranchArmBatchDeleteInput(InputModel):
+    branch_arm_uid: Annotated[
+        str, Field(description="UID of the Study Branch Arm to delete")
+    ]
+
+
+class StudySelectionBranchArmBatchUpdateInput(StudySelectionBranchArmEditInput):
+    branch_arm_uid: Annotated[
+        str, Field(description="UID of the Study Branch Arm to update")
+    ]
+
+
+class StudySelectionBranchArmBatchInput(BatchInputModel):
+    method: Annotated[str, METHOD_FIELD]
+    content: Annotated[
+        StudySelectionBranchArmBatchUpdateInput
+        | StudySelectionBranchArmCreateInput
+        | StudySelectionBranchArmBatchDeleteInput,
+        Field(),
+    ]
+
+
+class StudySelectionBranchArmBatchOutput(BaseModel):
+    response_code: Annotated[int, RESPONSE_CODE_FIELD]
+    content: Annotated[StudySelectionBranchArm | None | BatchErrorResponse, Field()]
 
 
 # Study cohorts
@@ -4317,14 +4688,6 @@ class StudySelectionCohortWithoutArmBranArmRoots(StudySelection):
         ),
     ]
 
-    colour_code: Annotated[
-        str | None,
-        Field(
-            description="colour code for the study Cohort",
-            json_schema_extra={"nullable": True},
-        ),
-    ]
-
     number_of_subjects: Annotated[
         int | None,
         Field(
@@ -4341,7 +4704,6 @@ class StudySelectionCohortWithoutArmBranArmRoots(StudySelection):
     author_username: Annotated[
         str | None,
         Field(
-            title="author_username",
             description=AUTHOR_FIELD_DESC,
             json_schema_extra={"nullable": True},
         ),
@@ -4356,7 +4718,6 @@ class StudySelectionCohortWithoutArmBranArmRoots(StudySelection):
     accepted_version: Annotated[
         bool | None,
         Field(
-            title=ACCEPTED_VERSION_DESC,
             description="Denotes if user accepted obsolete cohort versions",
             json_schema_extra={"nullable": True},
         ),
@@ -4387,8 +4748,8 @@ class StudySelectionCohort(StudySelectionCohortWithoutArmBranArmRoots):
         selection: StudySelectionCohortVO,
         order: int,
         terms_at_specific_datetime: datetime | None,
-        find_arm_root_by_uid: Callable | None = None,
-        find_branch_arm_root_cohort_by_uid: Callable | None = None,
+        find_arm_root_by_uid: Callable = lambda: None,
+        find_branch_arm_root_cohort_by_uid: Callable = lambda: None,
         study_value_version: str | None = None,
     ):
         """
@@ -4440,7 +4801,6 @@ class StudySelectionCohort(StudySelectionCohortWithoutArmBranArmRoots):
             code=selection.code,
             description=selection.description,
             order=order,
-            colour_code=selection.colour_code,
             number_of_subjects=selection.number_of_subjects,
             branch_arm_roots=branch_arm_roots,
             arm_roots=arm_roots,
@@ -4490,11 +4850,10 @@ class StudySelectionCohortHistory(StudySelectionCohortWithoutArmBranArmRoots):
             study_uid=study_uid,
             order=study_selection_history.order,
             cohort_uid=study_selection_history.study_selection_uid,
-            name=study_selection_history.cohort_name,
-            short_name=study_selection_history.cohort_short_name,
+            name=study_selection_history.cohort_name or "",
+            short_name=study_selection_history.cohort_short_name or "",
             code=study_selection_history.cohort_code,
             description=study_selection_history.cohort_description,
-            colour_code=study_selection_history.cohort_colour_code,
             number_of_subjects=study_selection_history.cohort_number_of_subjects,
             branch_arm_roots_uids=branch_arm_roots_uids,
             arm_roots_uids=arm_roots_uids,
@@ -4522,10 +4881,6 @@ class StudySelectionCohortCreateInput(PostInputModel):
         str | None, Field(description="description for the study Cohort")
     ] = None
 
-    colour_code: Annotated[
-        str | None, Field(description="colour code for the study Cohort")
-    ] = None
-
     number_of_subjects: Annotated[
         int | None, Field(description="number of subjects for the study Cohort")
     ] = None
@@ -4550,16 +4905,12 @@ class StudySelectionCohortEditInput(PatchInputModel):
         str | None, Field(description="description for the study Cohort")
     ] = None
 
-    colour_code: Annotated[
-        str | None, Field(description="colour code for the study Cohort")
-    ] = None
-
     number_of_subjects: Annotated[
         int | None,
         Field(
             description="number of subjects for the study Cohort",
             ge=0,
-            lt=settings.MAX_INT_NEO4J,
+            lt=settings.max_int_neo4j,
         ),
     ] = None
 
@@ -4578,14 +4929,31 @@ class StudySelectionCohortNewOrder(PatchInputModel):
         int,
         Field(
             description="new order of the selected Cohort",
-            gt=-settings.MAX_INT_NEO4J,
-            lt=settings.MAX_INT_NEO4J,
+            gt=-settings.max_int_neo4j,
+            lt=settings.max_int_neo4j,
         ),
     ]
 
 
 class StudySelectionCohortVersion(StudySelectionCohortHistory):
     changes: Annotated[list[str], Field()]
+
+
+class StudySelectionCohortBatchUpdateInput(StudySelectionCohortEditInput):
+    cohort_uid: Annotated[str, Field(description="UID of the Study Cohort to update")]
+
+
+class StudySelectionCohortBatchInput(BatchInputModel):
+    method: Annotated[str, METHOD_FIELD]
+    content: Annotated[
+        StudySelectionCohortBatchUpdateInput | StudySelectionCohortCreateInput,
+        Field(),
+    ]
+
+
+class StudySelectionCohortBatchOutput(BaseModel):
+    response_code: Annotated[int, RESPONSE_CODE_FIELD]
+    content: Annotated[StudySelectionCohort | None | BatchErrorResponse, Field()]
 
 
 #
@@ -4626,7 +4994,6 @@ class StudyCompoundDosing(StudySelection):
     author_username: Annotated[
         str | None,
         Field(
-            title="author_username",
             description=AUTHOR_FIELD_DESC,
             json_schema_extra={"nullable": True},
         ),
@@ -4642,10 +5009,8 @@ class StudyCompoundDosing(StudySelection):
         order: int,
         study_compound_model: StudySelectionCompound,
         study_element_model: StudySelectionElement,
-        find_simple_term_model_name_by_term_uid: Callable,
         find_unit_by_uid: Callable[[str], UnitDefinitionAR | None],
         find_numeric_value_by_uid: Callable[[str], NumericValueWithUnitAR | None],
-        terms_at_specific_datetime: datetime | None,
         study_value_version: str | None = None,
     ) -> Self:
         return cls(
@@ -4664,10 +5029,6 @@ class StudyCompoundDosing(StudySelection):
                 find_unit_by_uid=find_unit_by_uid,
                 find_numeric_value_by_uid=find_numeric_value_by_uid,
             ),
-            dose_frequency=find_simple_term_model_name_by_term_uid(
-                compound_dosing_vo.dose_frequency_uid,
-                at_specific_date=terms_at_specific_datetime,
-            ),
             start_date=compound_dosing_vo.start_date,
             author_username=compound_dosing_vo.author_username,
         )
@@ -4680,7 +5041,6 @@ class StudyCompoundDosing(StudySelection):
         order: int,
         study_compound_model: StudySelectionCompound,
         study_element_model: StudySelectionElement,
-        find_simple_term_model_name_by_term_uid: Callable,
         find_unit_by_uid: Callable[[str], UnitDefinitionAR | None],
         find_numeric_value_by_uid: Callable[[str], NumericValueWithUnitAR | None],
     ) -> Self:
@@ -4694,9 +5054,6 @@ class StudyCompoundDosing(StudySelection):
                 uid=study_selection_history.dose_value_uid,
                 find_unit_by_uid=find_unit_by_uid,
                 find_numeric_value_by_uid=find_numeric_value_by_uid,
-            ),
-            dose_frequency=find_simple_term_model_name_by_term_uid(
-                study_selection_history.dose_frequency_uid
             ),
             start_date=study_selection_history.start_date,
             end_date=study_selection_history.end_date,
@@ -4757,19 +5114,24 @@ class CellCoordinates(NamedTuple):
     col: Annotated[int, Field()]
 
 
+ConceptType = TypeVar("ConceptType", bound=Concept)  # pylint: disable=invalid-name
+
+
 def _find_versions(
     uid: str,
-    version: str,
-    versions_by_uid: Mapping[str, Iterable[Concept]] | None = None,
-    get_by_uid_callback: Callable[[str], Concept] | None = None,
-    get_by_uid_version_callback: Callable[[str, str], Concept] | None = None,
-) -> tuple[Concept, Concept]:
+    version: str | None,
+    versions_by_uid: Mapping[str, Iterable[ConceptType]] | None = None,
+    get_by_uid_callback: Callable[[str], ConceptType] | None = None,
+    get_by_uid_version_callback: Callable[[str, str | None], ConceptType] | None = None,
+) -> tuple[ConceptType, ConceptType]:
     latest_version, selected_version = None, None
 
     if versions_by_uid:
+        # There can be a few versions with the same version number
+        # If so we should pick with the latest start_date
         latest_version = max(
             versions_by_uid[uid],
-            key=lambda a: version_string_to_tuple(a.version),
+            key=lambda a: (version_string_to_tuple(a.version), a.start_date),  # type: ignore[arg-type]
         )
         BusinessLogicException.raise_if_not(
             latest_version,
@@ -4801,3 +5163,86 @@ def _find_versions(
         selected_version = get_by_uid_version_callback(uid, version)
 
     return latest_version, selected_version
+
+
+class StudyDesignClassInput(PatchInputModel):
+    model_config = ConfigDict(populate_by_name=True, title="Study Design Class input")
+    value: Annotated[
+        StudyDesignClassEnum,
+        Field(
+            json_schema_extra={"source": "value"},
+        ),
+    ]
+
+
+class StudyDesignClass(StudyDesignClassInput):
+    model_config = ConfigDict(populate_by_name=True, title="Study Design Class")
+
+    study_uid: Annotated[str, STUDY_UID_FIELD]
+    start_date: Annotated[
+        datetime,
+        Field(
+            description=START_DATE_DESC,
+            json_schema_extra={"source": AFTER_DATE_QUALIFIER, "nullable": True},
+        ),
+    ]
+
+    author_username: Annotated[
+        str,
+        Field(
+            description=AUTHOR_FIELD_DESC,
+            json_schema_extra={"source": AFTER_USER_QUALIFIER},
+        ),
+    ]
+
+    @field_validator("author_username", mode="before")
+    @classmethod
+    def instantiate_author_username(cls, value):
+        return UserInfoService.get_author_username_from_id(value)
+
+
+class StudySourceVariableInput(PatchInputModel):
+    model_config = ConfigDict(
+        populate_by_name=True, title="Study source variable input"
+    )
+    source_variable: Annotated[
+        StudySourceVariableEnum | None,
+        Field(
+            json_schema_extra={"source": "source_variable", "nullable": True},
+        ),
+    ] = None
+    source_variable_description: Annotated[
+        str | None,
+        Field(
+            json_schema_extra={
+                "source": "source_variable_description",
+                "nullable": True,
+            }
+        ),
+    ] = None
+
+
+class StudySourceVariable(StudySourceVariableInput):
+    model_config = ConfigDict(populate_by_name=True, title="Study Source Variable")
+
+    study_uid: Annotated[str, STUDY_UID_FIELD]
+    start_date: Annotated[
+        datetime,
+        Field(
+            description=START_DATE_DESC,
+            json_schema_extra={"source": AFTER_DATE_QUALIFIER, "nullable": True},
+        ),
+    ]
+
+    author_username: Annotated[
+        str,
+        Field(
+            description=AUTHOR_FIELD_DESC,
+            json_schema_extra={"source": AFTER_USER_QUALIFIER},
+        ),
+    ]
+
+    @field_validator("author_username", mode="before")
+    @classmethod
+    def instantiate_author_username(cls, value):
+        return UserInfoService.get_author_username_from_id(value)

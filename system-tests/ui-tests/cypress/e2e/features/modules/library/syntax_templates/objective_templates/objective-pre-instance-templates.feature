@@ -3,6 +3,7 @@ Feature: Library - Syntax Templates - Objectives - Pre-instance
     Background: User must be logged in
         Given The user is logged in
 
+    @smoke_test
     Scenario: [Table][Columns][Names] User must be able to see the table with correct columns
         Given The '/library/objective_templates/pre-instances' page is opened
         Then A table is visible with following headers
@@ -18,8 +19,10 @@ Feature: Library - Syntax Templates - Objectives - Pre-instance
         When The first column is selected from Select Columns option for table with actions
         Then The table contain only selected column and actions column
 
+    @smoke_test
     Scenario: [Create][Positive case] User must be able to create Objective Template Pre-instantiation in Parent Template tab
         Given The '/library/objective_templates/parent' page is opened
+        And The Add template button is clicked
         When The new objective to be used as pre-instantiation is added in the library
         And Objective template for pre-instantiation is found
         When The 'Approve' option is clicked from the three dot menu list

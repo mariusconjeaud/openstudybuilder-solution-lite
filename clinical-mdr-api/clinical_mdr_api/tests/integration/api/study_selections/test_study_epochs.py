@@ -35,7 +35,7 @@ from clinical_mdr_api.tests.integration.utils.method_library import (
 )
 from clinical_mdr_api.tests.integration.utils.utils import TestUtils
 from clinical_mdr_api.tests.utils.checks import assert_response_status_code
-from common import config as settings
+from common.config import settings
 
 # Global variables shared between fixtures and tests
 study: Study
@@ -75,14 +75,14 @@ def test_data():
 
     catalogue_name, library_name = get_catalogue_name_library_name(use_test_utils=True)
     # Create a study selection
-    ct_term_codelist_name = settings.STUDY_EPOCH_SUBTYPE_NAME
+    ct_term_codelist_name = settings.study_epoch_subtype_name
     ct_term_name = ct_term_codelist_name + " Name For StudyStandardVersioning test"
     ct_term_start_date = datetime(2020, 3, 25, tzinfo=timezone.utc)
 
     epoch_type_term_name = "Epoch Type for StudyStandardVersion"
     epoch_type_standard_version = TestUtils.create_ct_term(
         codelist_uid="CTCodelist_00002",
-        name_submission_value=epoch_type_term_name,
+        submission_value=epoch_type_term_name,
         sponsor_preferred_name=epoch_type_term_name,
         order=1,
         catalogue_name=catalogue_name,
@@ -94,7 +94,7 @@ def test_data():
     global initial_ct_term_study_standard_test
     initial_ct_term_study_standard_test = TestUtils.create_ct_term(
         codelist_uid="CTCodelist_00003",  # ct_term_codelist.codelist_uid,
-        name_submission_value=ct_term_name,
+        submission_value=ct_term_name,
         sponsor_preferred_name=ct_term_name,
         order=2,
         catalogue_name=catalogue_name,
@@ -113,7 +113,7 @@ def test_data():
     global epoch_epoch
     epoch_epoch = TestUtils.create_ct_term(
         codelist_uid="C99079",
-        name_submission_value=epoch_term_name,
+        submission_value=epoch_term_name,
         sponsor_preferred_name=epoch_term_name,
         order=3,
         catalogue_name=catalogue_name,
@@ -606,3 +606,32 @@ def test_study_epoch_audit_trail(api_client):
     res = response.json()
     assert_response_status_code(response, 200)
     assert len(res) == 4
+
+
+@pytest.mark.parametrize(
+    ("study_uid", "study_value_version"),
+    [
+        ("Study_000492", "57"),
+        ("Study_000787", None),
+        (
+            None,
+            "99",
+        ),  # None as study_uid will get replaced with study.uid provided by test_data fixture
+    ],
+)
+def test_get_all_epochs_invalid_study_uid_or_version(
+    api_client, test_data, study_uid: str, study_value_version: str
+):
+    if study_uid is None:
+        # study global was not available at parametrizing time
+        study_uid = study.uid
+        response = api_client.get(f"/studies/{study_uid}/study-epochs")
+        assert_response_status_code(response, 200)
+
+    if study_value_version is not None:
+        params = {"study_value_version": study_value_version}
+    else:
+        params = None
+
+    response = api_client.get(f"/studies/{study_uid}/study-epochs", params=params)
+    assert_response_status_code(response, 404)

@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Any, Sequence
 
 from neomodel import db
 
@@ -40,6 +41,7 @@ from clinical_mdr_api.services.studies.study_selection_base import StudySelectio
 from clinical_mdr_api.services.syntax_instances.endpoints import EndpointService
 from common import exceptions
 from common.auth.user import user
+from common.config import settings
 
 
 class StudyEndpointSelectionService(StudySelectionMixin):
@@ -76,7 +78,7 @@ class StudyEndpointSelectionService(StudySelectionMixin):
             order=order,
             get_objective_by_uid_callback=self._transform_latest_objective_model,
             get_objective_by_uid_version_callback=self._transform_objective_model,
-            get_ct_term_by_uid=self._find_by_uid_or_raise_not_found,
+            find_codelist_term_by_uid_and_submval=self._repos.ct_codelist_name_repository.get_codelist_term_by_uid_and_submval,
             get_study_endpoint_count_callback=self._repos.study_endpoint_repository.quantity_of_study_endpoints_in_study_objective_uid,
             no_brackets=no_brackets,
             find_project_by_study_uid=self._repos.project_repository.find_by_study_uid,
@@ -87,10 +89,13 @@ class StudyEndpointSelectionService(StudySelectionMixin):
 
     def _transform_all_to_response_model(
         self,
-        study_selection: StudySelectionEndpointsAR,
+        study_selection: StudySelectionEndpointsAR | None,
         no_brackets: bool = False,
         study_value_version: str | None = None,
     ) -> list[StudySelectionEndpoint]:
+        if study_selection is None:
+            return []
+
         result = []
         terms_at_specific_datetime = self._extract_study_standards_effective_date(
             study_uid=study_selection.study_uid,
@@ -151,7 +156,7 @@ class StudyEndpointSelectionService(StudySelectionMixin):
             get_latest_endpoint_by_uid=get_latest_endpoint_by_uid,
             get_timeframe_by_uid_and_version=self._transform_timeframe_model,
             get_latest_timeframe=self._transform_latest_timeframe_model,
-            get_ct_term_by_uid=self._find_by_uid_or_raise_not_found,
+            find_codelist_term_by_uid_and_submval=self._repos.ct_codelist_name_repository.get_codelist_term_by_uid_and_submval,
             get_study_objective_by_uid=self._transform_single_study_objective_to_model,
             order=order,
             accepted_version=study_selection.accepted_version,
@@ -175,8 +180,9 @@ class StudyEndpointSelectionService(StudySelectionMixin):
             endpoint_repo = repos.endpoint_repository
             timeframe_repo = repos.timeframe_repository
 
+            endpoint_ar: EndpointAR | None
             if selection_create_input.endpoint_uid:
-                endpoint_ar: EndpointAR = endpoint_repo.find_by_uid(
+                endpoint_ar = endpoint_repo.find_by_uid(
                     selection_create_input.endpoint_uid, for_update=True
                 )
                 exceptions.NotFoundException.raise_if(
@@ -195,8 +201,9 @@ class StudyEndpointSelectionService(StudySelectionMixin):
             else:
                 endpoint_ar = None
 
+            timeframe_ar: TimeframeAR | None
             if selection_create_input.timeframe_uid:
-                timeframe_ar: TimeframeAR = timeframe_repo.find_by_uid(
+                timeframe_ar = timeframe_repo.find_by_uid(
                     selection_create_input.timeframe_uid, for_update=True
                 )
                 exceptions.NotFoundException.raise_if(
@@ -231,10 +238,9 @@ class StudyEndpointSelectionService(StudySelectionMixin):
 
             # get order from the endpoint level CT term
             if selection_create_input.endpoint_level_uid is not None:
-                endpoint_level_order = (
-                    self._repos.ct_term_name_repository.term_specific_order_by_uid(
-                        uid=selection_create_input.endpoint_level_uid
-                    )
+                endpoint_level_order = self._repos.ct_term_name_repository.term_specific_order_by_uid_and_cl_submval(
+                    uid=selection_create_input.endpoint_level_uid,
+                    cl_submval=settings.study_endpoint_level_cl_submval,
                 )
             else:
                 endpoint_level_order = None
@@ -267,10 +273,8 @@ class StudyEndpointSelectionService(StudySelectionMixin):
                 unit_definition_exists_callback=repos.unit_definition_repository.check_exists_final_version,
             )
             selection_aggregate.validate()
-
             # sync with DB and save the update
             repos.study_endpoint_repository.save(selection_aggregate, self.author)
-
             # Fetch the new selection which was just added
             new_selection, order = selection_aggregate.get_specific_endpoint_selection(
                 new_selection.study_selection_uid
@@ -294,7 +298,7 @@ class StudyEndpointSelectionService(StudySelectionMixin):
         repos = self._repos
         try:
             # check if name exists
-            endpoint_service = EndpointService()
+            endpoint_service: EndpointService = EndpointService()
             endpoint_ar = endpoint_service.create_ar_from_input_values(
                 selection_create_input.endpoint_data
             )
@@ -324,8 +328,9 @@ class StudyEndpointSelectionService(StudySelectionMixin):
                     msg=f"There is no approved Objective with UID '{endpoint_uid}'."
                 )
 
+            timeframe_ar: TimeframeAR | None
             if selection_create_input.timeframe_uid:
-                timeframe_ar: TimeframeAR = repos.timeframe_repository.find_by_uid(
+                timeframe_ar = repos.timeframe_repository.find_by_uid(
                     selection_create_input.timeframe_uid, for_update=True
                 )
                 exceptions.NotFoundException.raise_if(
@@ -348,12 +353,12 @@ class StudyEndpointSelectionService(StudySelectionMixin):
                 selection_create_input.endpoint_units
                 and selection_create_input.endpoint_units.units is not None
             ):
-                units = ()
+                units = []
                 for unit in selection_create_input.endpoint_units.units:
                     name = self._repos.unit_definition_repository.get_property_by_uid(
                         unit, "name"
                     )
-                    units += ({"uid": unit, "name": name},)
+                    units += [{"uid": unit, "name": name}]
                 separator = selection_create_input.endpoint_units.separator
 
             else:
@@ -376,7 +381,7 @@ class StudyEndpointSelectionService(StudySelectionMixin):
                 endpoint_version=endpoint_ar.item_metadata.version,
                 endpoint_level_uid=selection_create_input.endpoint_level_uid,
                 endpoint_sublevel_uid=selection_create_input.endpoint_sublevel_uid,
-                endpoint_units=units,
+                endpoint_units=tuple(units or []),
                 unit_separator=separator,
                 timeframe_uid=selection_create_input.timeframe_uid,
                 timeframe_version=(
@@ -560,10 +565,10 @@ class StudyEndpointSelectionService(StudySelectionMixin):
             # Load aggregate
             with db.transaction:
                 # check if name exists
-                endpoint_service = EndpointService()
+                endpoint_service: EndpointService = EndpointService()
                 endpoint_ar = endpoint_service.create_ar_from_input_values(
                     selection_create_input.endpoint_data,
-                    generate_uid_callback=(lambda: "preview"),
+                    generate_uid_callback=lambda: "preview",
                 )
 
                 endpoint_uid = endpoint_ar.uid
@@ -574,8 +579,9 @@ class StudyEndpointSelectionService(StudySelectionMixin):
                 )
 
                 timeframe_repo = repos.timeframe_repository
+                timeframe_ar: TimeframeAR | None
                 if selection_create_input.timeframe_uid:
-                    timeframe_ar: TimeframeAR = timeframe_repo.find_by_uid(
+                    timeframe_ar = timeframe_repo.find_by_uid(
                         selection_create_input.timeframe_uid, for_update=True
                     )
                     exceptions.NotFoundException.raise_if(
@@ -610,14 +616,14 @@ class StudyEndpointSelectionService(StudySelectionMixin):
                         timeframe_ar.item_metadata.version if timeframe_ar else None
                     ),
                     study_objective_uid=selection_create_input.study_objective_uid,
-                    generate_uid_callback=(lambda: "preview"),
+                    generate_uid_callback=lambda: "preview",
                     author_id=self.author,
                     endpoint_level_order=None,
                 )
                 # add VO to aggregate
                 selection_aggregate.add_endpoint_selection(
                     study_endpoint_selection=new_selection,
-                    endpoint_exist_callback=(lambda _: True),
+                    endpoint_exist_callback=lambda _: True,
                     study_objective_exist_callback=repos.study_objective_repository.study_objective_exists,
                     timeframe_exist_callback=repos.timeframe_repository.check_exists_final_version,
                     ct_term_exists_callback=repos.ct_term_name_repository.term_specific_exists_by_uid,
@@ -655,11 +661,11 @@ class StudyEndpointSelectionService(StudySelectionMixin):
         no_brackets: bool,
         project_name: str | None = None,
         project_number: str | None = None,
-        sort_by: dict | None = None,
+        sort_by: dict[str, bool] | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: dict | None = None,
-        filter_operator: FilterOperator | None = FilterOperator.AND,
+        filter_by: dict[str, dict[str, Any]] | None = None,
+        filter_operator: FilterOperator = FilterOperator.AND,
         total_count: bool = False,
     ) -> GenericFilteringReturn[StudySelectionEndpoint]:
         # Extract the study uids to use database level filtering for these
@@ -706,9 +712,9 @@ class StudyEndpointSelectionService(StudySelectionMixin):
         study_uid: str | None = None,
         project_name: str | None = None,
         project_number: str | None = None,
-        search_string: str | None = "",
-        filter_by: dict | None = None,
-        filter_operator: FilterOperator | None = FilterOperator.AND,
+        search_string: str = "",
+        filter_by: dict[str, dict[str, Any]] | None = None,
+        filter_operator: FilterOperator = FilterOperator.AND,
         page_size: int = 10,
         study_value_version: str | None = None,
     ):
@@ -718,7 +724,7 @@ class StudyEndpointSelectionService(StudySelectionMixin):
             validate_is_dict("filter_by", filter_by)
 
         if study_uid:
-            endpoint_selection_ars = repos.study_endpoint_repository.find_by_study(
+            endpoint_selection_ar = repos.study_endpoint_repository.find_by_study(
                 study_uid, study_value_version=study_value_version
             )
 
@@ -730,16 +736,18 @@ class StudyEndpointSelectionService(StudySelectionMixin):
                 if field_name not in self._vo_to_ar_filter_map:
                     # We can filter using data only fromt he AR,
                     # but we need to transform all to response model to be able to get header values
-                    items = list(endpoint_selection_ars.study_endpoints_selection)
+                    items = list(endpoint_selection_ar.study_endpoints_selection)
                     filtered_items = generic_item_filtering(
                         items=items,
                         filter_by=simple_filters["filter_by"],
                         filter_operator=filter_operator,
                         sort_by=None,
                     )
-                    endpoint_selection_ars.study_endpoints_selection = filtered_items
+                    endpoint_selection_ar.study_endpoints_selection = tuple(
+                        filtered_items
+                    )
                     filtered_items = self._transform_all_to_response_model(
-                        endpoint_selection_ars, no_brackets=False
+                        endpoint_selection_ar, no_brackets=False
                     )
 
                 else:
@@ -747,17 +755,17 @@ class StudyEndpointSelectionService(StudySelectionMixin):
                     field_name = self._vo_to_ar_filter_map[field_name]
                     filter_by = simple_filters["filter_by"]
                     filtered_items = list(
-                        endpoint_selection_ars.study_endpoints_selection
+                        endpoint_selection_ar.study_endpoints_selection
                     )
             else:
                 # We need to transform all to response model to filter
                 filtered_items = self._transform_all_to_response_model(
-                    endpoint_selection_ars, no_brackets=False
+                    endpoint_selection_ar, no_brackets=False
                 )
 
             header_values = service_level_generic_header_filtering(
                 items=self._transform_all_to_response_model(
-                    endpoint_selection_ars, no_brackets=False
+                    endpoint_selection_ar, no_brackets=False
                 ),
                 field_name=field_name,
                 search_string=search_string,
@@ -809,9 +817,9 @@ class StudyEndpointSelectionService(StudySelectionMixin):
         self,
         study_uid: str,
         no_brackets: bool,
-        sort_by: dict | None = None,
-        filter_by: dict | None = None,
-        filter_operator: FilterOperator | None = FilterOperator.AND,
+        sort_by: dict[str, bool] | None = None,
+        filter_by: dict[str, dict[str, Any]] | None = None,
+        filter_operator: FilterOperator = FilterOperator.AND,
         page_number: int = 1,
         page_size: int = 0,
         total_count: bool = False,
@@ -849,13 +857,13 @@ class StudyEndpointSelectionService(StudySelectionMixin):
                     page_size=page_size,
                 )
                 # Put the sorted and filtered items back into the AR and transform them to the response model
-                endpoint_selection_ar.study_endpoints_selection = filtered_items
+                endpoint_selection_ar.study_endpoints_selection = tuple(filtered_items)
                 filtered_items = self._transform_all_to_response_model(
                     endpoint_selection_ar,
                     no_brackets=no_brackets,
                     study_value_version=study_value_version,
                 )
-                return GenericFilteringReturn.create(filtered_items, count)
+                return GenericFilteringReturn(items=filtered_items, total=count)
 
             # Fall back to full generic filtering
             selection = self._transform_all_to_response_model(
@@ -864,7 +872,7 @@ class StudyEndpointSelectionService(StudySelectionMixin):
                 study_value_version=study_value_version,
             )
             # Do filtering, sorting, pagination and count
-            selection = service_level_generic_filtering(
+            return service_level_generic_filtering(
                 items=selection,
                 sort_by=sort_by,
                 filter_by=filter_by,
@@ -873,7 +881,6 @@ class StudyEndpointSelectionService(StudySelectionMixin):
                 page_number=page_number,
                 page_size=page_size,
             )
-            return selection
         finally:
             repos.close()
 
@@ -978,22 +985,20 @@ class StudyEndpointSelectionService(StudySelectionMixin):
     ) -> StudySelectionEndpointVO:
         endpoint_repo = self._repos.endpoint_repository
         timeframe_repo = self._repos.timeframe_repository
+        endpoint_ar: EndpointAR | None
         if request_study_endpoint.endpoint_uid:
-            endpoint_ar: EndpointAR = endpoint_repo.find_by_uid(
-                request_study_endpoint.endpoint_uid
-            )
+            endpoint_ar = endpoint_repo.find_by_uid(request_study_endpoint.endpoint_uid)
         elif current_study_endpoint.endpoint_uid:
-            endpoint_ar: EndpointAR = endpoint_repo.find_by_uid(
-                current_study_endpoint.endpoint_uid
-            )
+            endpoint_ar = endpoint_repo.find_by_uid(current_study_endpoint.endpoint_uid)
         else:
             endpoint_ar = None
+        timeframe_ar: TimeframeAR | None
         if request_study_endpoint.timeframe_uid:
-            timeframe_ar: TimeframeAR = timeframe_repo.find_by_uid(
+            timeframe_ar = timeframe_repo.find_by_uid(
                 request_study_endpoint.timeframe_uid
             )
         elif current_study_endpoint.timeframe_uid:
-            timeframe_ar: TimeframeAR = timeframe_repo.find_by_uid(
+            timeframe_ar = timeframe_repo.find_by_uid(
                 current_study_endpoint.timeframe_uid
             )
         else:
@@ -1029,9 +1034,9 @@ class StudyEndpointSelectionService(StudySelectionMixin):
             endpoint_level_order = None
 
         if request_study_endpoint.endpoint_units:
-            units = tuple(
+            units = [
                 {"uid": unit} for unit in request_study_endpoint.endpoint_units.units
-            )
+            ]
             separator = request_study_endpoint.endpoint_units.separator
         else:
             units = None
@@ -1042,7 +1047,7 @@ class StudyEndpointSelectionService(StudySelectionMixin):
             endpoint_version=endpoint_ar.item_metadata.version if endpoint_ar else None,
             endpoint_level_uid=request_study_endpoint.endpoint_level_uid,
             endpoint_sublevel_uid=request_study_endpoint.endpoint_sublevel_uid,
-            endpoint_units=units,
+            endpoint_units=tuple(units or []),
             timeframe_uid=request_study_endpoint.timeframe_uid,
             timeframe_version=(
                 timeframe_ar.item_metadata.version if timeframe_ar else None
@@ -1214,7 +1219,7 @@ class StudyEndpointSelectionService(StudySelectionMixin):
         self,
         study_selection_history: list[StudyEndpointSelectionHistory],
         study_uid: str,
-        effective_dates: datetime | None = None,
+        effective_dates: Sequence[datetime | None],
     ) -> list[StudySelectionEndpoint]:
         # Transform each history to the response model
         result = []
@@ -1227,7 +1232,7 @@ class StudyEndpointSelectionService(StudySelectionMixin):
                     get_endpoint_by_uid=self._transform_endpoint_model,
                     get_timeframe_by_uid=self._transform_timeframe_model,
                     get_study_objective_by_uid=self._transform_single_study_objective_to_model,
-                    get_ct_term_by_uid=self._find_by_uid_or_raise_not_found,
+                    find_codelist_term_by_uid_and_submval=self._repos.ct_codelist_name_repository.get_codelist_term_by_uid_and_submval,
                     effective_date=effective_date,
                 )
             )

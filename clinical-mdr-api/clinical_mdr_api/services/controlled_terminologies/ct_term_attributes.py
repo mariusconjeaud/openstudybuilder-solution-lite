@@ -35,29 +35,22 @@ class CTTermAttributesService(CTTermGenericService[CTTermAttributesAR]):
             author_id=self.author_id,
             change_description=term_input.change_description,
             ct_term_vo=CTTermAttributesVO.from_input_values(
-                codelists=item.ct_term_vo.codelists,
-                catalogue_name=item.ct_term_vo.catalogue_name,
-                code_submission_value=self.get_input_or_previous_property(
-                    term_input.code_submission_value,
-                    item.ct_term_vo.code_submission_value,
-                ),
-                name_submission_value=self.get_input_or_previous_property(
-                    term_input.name_submission_value,
-                    item.ct_term_vo.name_submission_value,
-                ),
+                catalogue_names=item.ct_term_vo.catalogue_names,
                 preferred_term=self.get_input_or_previous_property(
                     term_input.nci_preferred_name, item.ct_term_vo.preferred_term
                 ),
                 definition=self.get_input_or_previous_property(
                     term_input.definition, item.ct_term_vo.definition
                 ),
+                concept_id=self.get_input_or_previous_property(
+                    term_input.concept_id, item.ct_term_vo.concept_id
+                ),
                 # passing always True callbacks, as we can't change catalogue
                 # in scope of CTTermName or CTTermAttributes, it can be only changed via CTTermRoot
-                codelist_exists_callback=lambda _: True,
                 catalogue_exists_callback=lambda _: True,
+                term_uid=item.uid,
+                concept_id_exists_callback=self._repos.ct_term_attributes_repository.entity_exists_by_concept_id,
             ),
-            term_exists_by_name_callback=self.repository.term_specific_exists_by_name,
-            term_exists_by_code_submission_value_callback=self.repository.term_attributes_exists_by_code_submission_value,
         )
         self.repository.save(item)
         return self._transform_aggregate_root_to_pydantic_model(item)

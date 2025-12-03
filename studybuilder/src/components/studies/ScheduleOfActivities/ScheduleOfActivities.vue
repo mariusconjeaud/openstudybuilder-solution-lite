@@ -22,9 +22,6 @@
         <v-btn value="protocol">
           {{ $t('DetailedFlowchart.protocol') }}
         </v-btn>
-        <v-btn value="operational">
-          {{ $t('DetailedFlowchart.operational') }}
-        </v-btn>
       </v-btn-toggle>
     </v-row>
     <ProtocolFlowchart
@@ -53,6 +50,26 @@
           @update:model-value="toggleAllRowState"
         />
         <v-spacer />
+
+        <div
+          v-if="
+            featureFlagsStore.getFeatureFlag('complexity_score_calculation') ===
+            true
+          "
+          style="width: 280px"
+        >
+          {{ $t('DetailedFlowchart.complexity_score') }}
+          <b v-if="!complexityScoreLoading" class="pl-1">{{
+            complexityScore
+          }}</b>
+          <v-progress-circular
+            v-else
+            color="primary"
+            indeterminate
+            size="24"
+            class="ml-2"
+          />
+        </div>
         <template v-if="!props.readOnly">
           <v-btn
             v-show="multipleConsecutiveVisitsSelected()"
@@ -914,14 +931,12 @@
       @remove="unselectItem"
     />
     <ConfirmDialog ref="confirm" :text-cols="6" :action-cols="5" />
-    <v-dialog v-model="showCollapsibleGroupForm" persistent max-width="1000px">
-      <CollapsibleVisitGroupForm
-        :open="showCollapsibleGroupForm"
-        :visits="selectedVisits"
-        @close="closeCollapsibleVisitGroupForm"
-        @created="collapsibleVisitGroupCreated"
-      />
-    </v-dialog>
+    <CollapsibleVisitDisplaySelectForm
+      :open="showCollapsibleGroupForm"
+      :visits="selectedVisits"
+      @close="closeCollapsibleVisitGroupForm"
+      @created="collapsibleVisitGroupCreated"
+    />
     <v-dialog
       v-model="showFootnoteForm"
       persistent
@@ -979,7 +994,7 @@
 import { computed, inject, ref, watch, onUpdated, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import CollapsibleVisitGroupForm from './../CollapsibleVisitGroupForm.vue'
+import CollapsibleVisitDisplaySelectForm from './../CollapsibleVisitDisplaySelectForm.vue'
 import ConfirmDialog from '@/components/tools/ConfirmDialog.vue'
 import HistoryTable from '@/components/tools/HistoryTable.vue'
 import study from '@/api/study'
@@ -1004,7 +1019,9 @@ import ReorderingDetailedSoATbody from './ReorderingDetailedSoATbody.vue'
 import scheduleMethods from '@/utils/scheduleMethods'
 import EmptySoATbody from './EmptySoATbody.vue'
 import { escapeHTML, sanitizeHTML } from '@/utils/sanitize'
+import { useFeatureFlagsStore } from '@/stores/feature-flags'
 
+const featureFlagsStore = useFeatureFlagsStore()
 const { t } = useI18n()
 const eventBusEmit = inject('eventBusEmit')
 const roles = inject('roles')
@@ -1035,6 +1052,8 @@ const secondCol = ref()
 const table = ref()
 const confirm = ref()
 const tableContainer = ref()
+const complexityScore = ref(0)
+const complexityScoreLoading = ref(false)
 
 const currentSelectionMatrix = ref({})
 const expandAllRows = ref(false)
@@ -1333,6 +1352,7 @@ function observeWidth() {
 }
 
 async function removeActivity(activity) {
+  localStorage.setItem('refresh-activities', true)
   activity = activity.row.cells[0].refs[0]
   const options = { type: 'warning' }
   if (
@@ -1356,6 +1376,7 @@ async function removeActivity(activity) {
 }
 
 function addStudyActivity(item) {
+  localStorage.setItem('refresh-activities', true)
   item = item.row.cells[0].refs[0]
   scrollItemId.value = `row-scroll-${item?.uid}`
   study
@@ -1367,6 +1388,7 @@ function addStudyActivity(item) {
 }
 
 function exchangeStudyActivity(item) {
+  localStorage.setItem('refresh-activities', true)
   item = item.row.cells[0].refs[0]
   selectedStudyActivity.value = item.uid
   activityExchangeMode.value = true
@@ -1388,6 +1410,7 @@ function onActivityExchanged() {
 }
 
 function editStudyActivity(item) {
+  localStorage.setItem('refresh-activities', true)
   try {
     item = item.row.cells[0].refs[0]
     scrollItemId.value = `row-scroll-${item?.uid}`
@@ -1413,7 +1436,7 @@ function closeEditForm() {
   showActivityEditForm.value = false
   showDraftedActivityEditForm.value = false
   selectedStudyActivity.value = null
-  loadSoaContent()
+  loadSoaContent(true)
 }
 
 function openRemoveFootnoteForm(ele, rowUid) {
@@ -1614,6 +1637,20 @@ function fetchFootnotes() {
   footnotesStore.fetchStudyFootnotes(params)
 }
 
+function getComplexityScore() {
+  if (
+    featureFlagsStore.getFeatureFlag('complexity_score_calculation') === true
+  ) {
+    complexityScoreLoading.value = true
+    study
+      .getComplexityScore(studiesGeneralStore.selectedStudy.uid)
+      .then((resp) => {
+        complexityScore.value = resp.data
+        complexityScoreLoading.value = false
+      })
+  }
+}
+
 function isCheckboxDisabled(studyActivityUid, studyVisitUid) {
   const state = currentSelectionMatrix.value[studyActivityUid][studyVisitUid]
   return (
@@ -1708,6 +1745,7 @@ function updateGroupedSchedule(value, studyActivityUid, studyVisitCell) {
         currentSelectionMatrix.value[studyActivityUid][
           studyVisitCell.refs[0].uid
         ].uid = scheduleUids
+        getComplexityScore()
       })
   } else {
     const data = []
@@ -1730,11 +1768,13 @@ function updateGroupedSchedule(value, studyActivityUid, studyVisitCell) {
         currentSelectionMatrix.value[studyActivityUid][
           studyVisitCell.refs[0].uid
         ].uid = null
+        getComplexityScore()
       })
   }
 }
 
 function updateSchedule(value, studyActivityUid, studyVisitCell) {
+  complexityScoreLoading.value = true
   if (studyVisitCell.refs.length > 1) {
     updateGroupedSchedule(value, studyActivityUid, studyVisitCell)
     return
@@ -1750,6 +1790,7 @@ function updateSchedule(value, studyActivityUid, studyVisitCell) {
         currentSelectionMatrix.value[studyActivityUid][
           studyVisitCell.refs[0].uid
         ].uid = resp.data.study_activity_schedule_uid
+        getComplexityScore()
       })
   } else {
     const scheduleUid =
@@ -1764,11 +1805,13 @@ function updateSchedule(value, studyActivityUid, studyVisitCell) {
         currentSelectionMatrix.value[studyActivityUid][
           studyVisitCell.refs[0].uid
         ].uid = null
+        getComplexityScore()
       })
   }
 }
 
 async function openBatchEditForm() {
+  localStorage.setItem('refresh-activities', true)
   if (!studyActivitySelection.value.length) {
     eventBusEmit('notification', {
       type: 'warning',
@@ -1786,6 +1829,7 @@ function unselectItem(item) {
 }
 
 async function batchRemoveStudyActivities() {
+  localStorage.setItem('refresh-activities', true)
   if (!studyActivitySelection.value.length) {
     eventBusEmit('notification', {
       type: 'warning',
@@ -1855,7 +1899,9 @@ function toggleSubgroupActivitiesSelection(subgroupRow, value) {
       const index = studyActivitySelection.value.findIndex(
         (cell) => cell.refs?.[0]?.uid === activityCell.refs?.[0]?.uid
       )
-      studyActivitySelection.value.splice(index, 1)
+      if (index != -1) {
+        studyActivitySelection.value.splice(index, 1)
+      }
     }
   }
   // Remove duplicates in case if any activities in subgroup were already selected
@@ -1869,6 +1915,7 @@ async function loadSoaContent(keepDisplayState) {
   soaContentLoadingStore.changeLoadingState()
   studyActivitySelection.value = []
   try {
+    getComplexityScore()
     const resp = await study.getStudyProtocolFlowchart(
       studiesGeneralStore.selectedStudy.uid,
       { layout: 'detailed' }
@@ -1969,16 +2016,19 @@ function onResize() {
 }
 
 function groupSelectedVisits() {
-  const visitUids = selectedVisitIndexes.value.map(
-    (cell) => soaVisitRow.value[cell].refs[0].uid
-  )
+  const visitUids = selectedVisitIndexes.value
+    .sort(function (a, b) {
+      return a - b
+    })
+    .map((cell) => soaVisitRow.value[cell].refs[0].uid)
+  const data = {
+    visits_to_assign: visitUids,
+    validate_only: true,
+  }
   studyEpochs
-    .createCollapsibleVisitGroup(
-      studiesGeneralStore.selectedStudy.uid,
-      visitUids
-    )
+    .createCollapsibleVisitGroup(studiesGeneralStore.selectedStudy.uid, data)
     .then(() => {
-      collapsibleVisitGroupCreated()
+      showCollapsibleGroupForm.value = true
     })
     .catch((err) => {
       if (err.response.status === 400) {

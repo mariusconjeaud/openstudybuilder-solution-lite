@@ -1,3 +1,5 @@
+from typing import Any
+
 from neomodel import db
 
 from clinical_mdr_api.domain_repositories.study_selections.study_compound_repository import (
@@ -38,9 +40,12 @@ class StudyCompoundSelectionService(
 
     def _transform_all_to_response_model(
         self,
-        study_selection: StudySelectionCompoundsAR,
+        study_selection: StudySelectionCompoundsAR | None,
         study_value_version: str | None = None,
     ) -> list[StudySelectionCompound]:
+        if study_selection is None:
+            return []
+
         result = []
         terms_at_specific_datetime = self._extract_study_standards_effective_date(
             study_uid=study_selection.study_uid,
@@ -78,7 +83,7 @@ class StudyCompoundSelectionService(
                     compound_model=compound_model,
                     compound_alias_model=compound_alias_model,
                     medicinal_product_model=medicinal_product_model,
-                    find_simple_term_model_name_by_term_uid=self.find_term_name_by_uid,
+                    find_codelist_term_by_uid_and_submval=self._repos.ct_codelist_name_repository.get_codelist_term_by_uid_and_submval,
                     find_project_by_study_uid=self._repos.project_repository.find_by_study_uid,
                     study_value_version=study_value_version,
                     terms_at_specific_datetime=terms_at_specific_datetime,
@@ -120,7 +125,7 @@ class StudyCompoundSelectionService(
             compound_model=compound_model,
             compound_alias_model=compound_alias_model,
             medicinal_product_model=medicinal_product_model,
-            find_simple_term_model_name_by_term_uid=self.find_term_name_by_uid,
+            find_codelist_term_by_uid_and_submval=self._repos.ct_codelist_name_repository.get_codelist_term_by_uid_and_submval,
             find_project_by_study_uid=self._repos.project_repository.find_by_study_uid,
             terms_at_specific_datetime=terms_at_specific_datetime,
         )
@@ -202,11 +207,11 @@ class StudyCompoundSelectionService(
         self,
         project_name: str | None = None,
         project_number: str | None = None,
-        sort_by: dict | None = None,
+        sort_by: dict[str, bool] | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: dict | None = None,
-        filter_operator: FilterOperator | None = FilterOperator.AND,
+        filter_by: dict[str, dict[str, Any]] | None = None,
+        filter_operator: FilterOperator = FilterOperator.AND,
         total_count: bool = False,
     ) -> GenericFilteringReturn[StudySelectionCompound]:
         repos = self._repos
@@ -244,20 +249,20 @@ class StudyCompoundSelectionService(
         study_value_version: str | None = None,
         project_name: str | None = None,
         project_number: str | None = None,
-        search_string: str | None = "",
-        filter_by: dict | None = None,
-        filter_operator: FilterOperator | None = FilterOperator.AND,
+        search_string: str = "",
+        filter_by: dict[str, dict[str, Any]] | None = None,
+        filter_operator: FilterOperator = FilterOperator.AND,
         page_size: int = 10,
     ):
         repos = self._repos
 
         if study_uid:
-            compound_selection_ars = repos.study_compound_repository.find_by_study(
+            compound_selection_ar = repos.study_compound_repository.find_by_study(
                 study_uid, study_value_version
             )
 
             header_values = service_level_generic_header_filtering(
-                items=self._transform_all_to_response_model(compound_selection_ars),
+                items=self._transform_all_to_response_model(compound_selection_ar),
                 field_name=field_name,
                 search_string=search_string,
                 filter_by=filter_by,
@@ -299,8 +304,8 @@ class StudyCompoundSelectionService(
         self,
         study_uid: str,
         study_value_version: str | None = None,
-        filter_by: dict | None = None,
-        filter_operator: FilterOperator | None = FilterOperator.AND,
+        filter_by: dict[str, dict[str, Any]] | None = None,
+        filter_operator: FilterOperator = FilterOperator.AND,
         page_number: int = 1,
         page_size: int = 0,
         total_count: bool = False,
@@ -315,7 +320,7 @@ class StudyCompoundSelectionService(
                 compound_selection_ar, study_value_version=study_value_version
             )
             # Do filtering, sorting, pagination and count
-            selection = service_level_generic_filtering(
+            return service_level_generic_filtering(
                 items=selection,
                 filter_by=filter_by,
                 filter_operator=filter_operator,
@@ -323,7 +328,6 @@ class StudyCompoundSelectionService(
                 page_number=page_number,
                 page_size=page_size,
             )
-            return selection
         finally:
             repos.close()
 
@@ -426,6 +430,9 @@ class StudyCompoundSelectionService(
             msg=f"There is no approved Medicinal Product with UID '{request_study_compound.medicinal_product_uid}'.",
         )
 
+        if request_study_compound.compound_alias_uid is None:
+            raise BusinessLogicException(msg="Compound Alias UID must be provided.")
+
         return StudySelectionCompoundVO.from_input_values(
             compound_uid=self._repos.compound_alias_repository.get_compound_uid_by_alias_uid(
                 request_study_compound.compound_alias_uid
@@ -507,7 +514,7 @@ class StudyCompoundSelectionService(
                     get_compound_by_uid=self._transform_compound_model,
                     get_compound_alias_by_uid=self._transform_compound_alias_model,
                     get_medicinal_product_by_uid=self._transform_medicinal_product_model,
-                    find_simple_term_model_name_by_term_uid=self.find_term_name_by_uid,
+                    find_codelist_term_by_uid_and_submval=self._repos.ct_codelist_name_repository.get_codelist_term_by_uid_and_submval,
                 )
             )
         return result

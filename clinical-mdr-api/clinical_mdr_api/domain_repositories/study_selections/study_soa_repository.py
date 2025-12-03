@@ -1,5 +1,7 @@
 import datetime
+import logging
 from enum import Enum
+from textwrap import dedent
 from typing import Iterable
 
 from neomodel import DoesNotExist, RelationshipManager, db
@@ -22,7 +24,9 @@ from clinical_mdr_api.models.study_selections.study_selection import (
     SoAFootnoteReference,
 )
 from clinical_mdr_api.services._utils import ensure_transaction
+from common import queries
 from common.auth.user import user
+from common.config import settings
 from common.exceptions import NotFoundException
 from common.telemetry import trace_calls
 
@@ -38,6 +42,8 @@ SOA_ITEM_TYPE_TO_RELATIONSHIP_MODEL_MAME_MAP = {
     SoAItemType.STUDY_SOA_FOOTNOTE: "has_study_footnote",
 }
 
+log = logging.getLogger(__name__)
+
 
 class SoALayout(Enum):
     PROTOCOL = "protocol"
@@ -49,7 +55,7 @@ class StudySoARepository:
     @staticmethod
     def _study_value_query(
         study_uid: str, study_value_version: str | None
-    ) -> tuple[str, dict[str:str]]:
+    ) -> tuple[list[str], dict[str, str]]:
         """constructs a Cypher query and params for getting the StudyValue node of a given study version
 
         Returns:
@@ -74,7 +80,7 @@ class StudySoARepository:
         return query, params
 
     @classmethod
-    @trace_calls(args=[0, 1, 2], kwargs=["study_uid", "study_value_version", "layout"])
+    @trace_calls(args=[1, 2, 3], kwargs=["study_uid", "study_value_version", "layout"])
     def _disconnect_soa_rows(
         cls, study_uid: str, study_value_version: str, layout: SoALayout
     ):
@@ -103,6 +109,7 @@ class StudySoARepository:
         )
         db.cypher_query(query, params)
 
+    @trace_calls(args=[1, 2, 3], kwargs=["study_uid", "study_value_version", "layout"])
     def load(
         self,
         study_uid: str,
@@ -128,8 +135,7 @@ class StudySoARepository:
         )
         query.append("RETURN cell, ss, sfns")
 
-        query = "\n".join(query)
-        results, _ = db.cypher_query(query, params)
+        results, _ = db.cypher_query("\n".join(query), params)
 
         cell_references = [self._to_soa_cell_reference(*result) for result in results]
 
@@ -140,8 +146,7 @@ class StudySoARepository:
         query.append("RETURN fn, sfn")
         query.append("ORDER BY fn.order")
 
-        query = "\n".join(query)
-        results, _ = db.cypher_query(query, params)
+        results, _ = db.cypher_query("\n".join(query), params)
 
         footnote_references = [
             self._to_soa_footnote_reference(*result) for result in results
@@ -177,6 +182,8 @@ class StudySoARepository:
 
     @staticmethod
     def _to_soa_footnote_reference(relationship, soa_footnote):
+        """Returns SoAFootnoteReference obj. from "HAS_PROTOCOL_SOA_FOOTNOTE" relation and StudySoAFootnote node"""
+
         return SoAFootnoteReference(
             order=relationship["order"],
             symbol=relationship["symbol"],
@@ -188,7 +195,7 @@ class StudySoARepository:
 
     @classmethod
     @trace_calls(
-        args=[0, 3, 4, 5],
+        args=[1, 4, 5, 6],
         kwargs=["study_uid", "study_value_version", "layout", "study_status"],
     )
     @ensure_transaction(db)
@@ -211,12 +218,13 @@ class StudySoARepository:
         except DoesNotExist as e:
             raise NotFoundException("Study", study_uid) from e
 
+        study_value: StudyValue
         if study_value_version:
             if study_status is None:
                 study_status = StudyStatus.RELEASED
 
             try:
-                study_value: StudyValue = study_root.has_version.match(
+                study_value = study_root.has_version.match(
                     status=study_status.value, version=study_value_version
                 )[0]
             except IndexError as e:
@@ -228,7 +236,7 @@ class StudySoARepository:
             if study_status is None:
                 study_status = StudyStatus.DRAFT
 
-            study_value: StudyValue = study_root.latest_value.get()
+            study_value = study_root.latest_value.get()
 
         # delete previous SoA snapshot
         cls._disconnect_soa_rows(
@@ -312,3 +320,211 @@ class StudySoARepository:
         )
         action.save()
         study_root.audit_trail.connect(action)
+
+    @staticmethod
+    @trace_calls(
+        args=[0, 1, 2], kwargs=["study_uid", "study_value_version", "get_instances"]
+    )
+    def query_study_activities(
+        study_uid: str,
+        study_value_version: str | None = None,
+        get_instances: bool = False,
+    ):
+        query = []
+        params = {
+            "study_uid": study_uid,
+            "study_version": study_value_version,
+            "study_status": StudyStatus.RELEASED.value,  # used only if study_value_version set
+            "requested_library_name": settings.requested_library_name,
+        }
+
+        if study_value_version:
+            query.append(
+                "MATCH (study_root:StudyRoot {uid: $study_uid})-[study_version:HAS_VERSION {status: $study_status, version: $study_version}]->(study_value:StudyValue)"
+            )
+        else:
+            query.append(
+                "MATCH (study_root:StudyRoot {uid: $study_uid})-[study_version:LATEST]->(study_value:StudyValue)"
+            )
+
+        query.append(queries.study_standard_version_ct_terms_datetime)
+
+        query.append(
+            dedent(
+                """
+            MATCH (study_value)-[:HAS_STUDY_ACTIVITY]->
+                (study_activity:StudyActivity)-[:HAS_SELECTED_ACTIVITY]->
+                (activity_value:ActivityValue)<-[:HAS_VERSION]-
+                (activity_root:ActivityRoot)<-[:CONTAINS_CONCEPT]-
+                (act_library:Library)
+        """
+            )
+        )
+        if get_instances:
+            query.append("WHERE act_library.name <> $requested_library_name")
+        query.append(
+            dedent(
+                """
+            MATCH (study_activity)-[:STUDY_ACTIVITY_HAS_STUDY_SOA_GROUP]->
+                (study_soa_group:StudySoAGroup)-[:HAS_FLOWCHART_GROUP]->
+                (:CTTermContext)-[:HAS_SELECTED_TERM]->
+                (soa_group_term_root:CTTermRoot)
+            WHERE (study_soa_group)<-[:HAS_STUDY_SOA_GROUP]-(study_value)
+        """
+            )
+        )
+
+        query.append(
+            queries.ct_term_name_at_datetime.format(
+                root="soa_group_term_root",
+                value="soa_group_term_name",
+            )
+        )
+
+        query.append(
+            dedent(
+                """
+            OPTIONAL MATCH (study_activity)-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_GROUP]->
+                (study_activity_group:StudyActivityGroup)-[:HAS_SELECTED_ACTIVITY_GROUP]->
+                (activity_group_value:ActivityGroupValue)<-[:HAS_VERSION]-(activity_group_root:ActivityGroupRoot)
+            WHERE (study_activity_group)<-[:HAS_STUDY_ACTIVITY_GROUP]-(study_value)
+
+            OPTIONAL MATCH (study_activity)-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_SUBGROUP]->
+                (study_activity_subgroup:StudyActivitySubGroup)-[:HAS_SELECTED_ACTIVITY_SUBGROUP]->
+                (activity_subgroup_value:ActivitySubGroupValue)<-[:HAS_VERSION]-(activity_subgroup_root:ActivitySubGroupRoot)
+            WHERE (study_activity_subgroup)<-[:HAS_STUDY_ACTIVITY_SUBGROUP]-(study_value)
+        """
+            )
+        )
+
+        if get_instances:
+            query.append(
+                dedent(
+                    """
+            OPTIONAL MATCH (study_activity)-[:STUDY_ACTIVITY_HAS_STUDY_ACTIVITY_INSTANCE]->
+                (study_activity_instance:StudyActivityInstance)
+            WHERE (study_activity_instance)<-[:HAS_STUDY_ACTIVITY_INSTANCE]-(study_value)
+            // by optional match, it keeps study activity instance placeholders in the results
+            OPTIONAL MATCH (study_activity_instance)-[:HAS_SELECTED_ACTIVITY_INSTANCE]->
+                (activity_instance_value:ActivityInstanceValue)<-[:HAS_VERSION]-
+                (activity_instance_root:ActivityInstanceRoot)<-[:CONTAINS_CONCEPT]-
+                (act_inst_library:Library)
+
+            OPTIONAL MATCH (activity_instance_value:ActivityInstanceValue)-[:ACTIVITY_INSTANCE_CLASS]->
+                (activity_instance_class_root:ActivityInstanceClassRoot)-[:LATEST]->
+                (activity_instance_class_latest_value:ActivityInstanceClassValue)
+            """
+                )
+            )
+
+        query.append(
+            dedent(
+                """
+            WITH DISTINCT *
+            ORDER BY COALESCE(study_soa_group.order, 0), COALESCE(study_activity_group.order, 0),
+                COALESCE(study_activity_subgroup.order, 0), COALESCE(study_activity.order, 0)
+        """
+            )
+        )
+        if get_instances:
+            query.append(", study_activity_instance.order")
+
+        query.append(
+            dedent(
+                """
+            RETURN {
+                study_activity_uid: study_activity.uid,
+                activity: {
+                    uid: activity_root.uid,
+                    name: activity_value.name,
+                    name_sentence_case: activity_value.name_sentence_case,
+                    is_data_collected: COALESCE(activity_value.is_data_collected, false),
+                    is_request_rejected: COALESCE(activity_value.is_request_rejected, false),
+                    is_request_final: COALESCE(activity_value.is_request_final, false),
+                    is_multiple_selection_allowed: COALESCE(activity_value.is_multiple_selection_allowed, true),
+                    library_name: act_library.name
+                },
+                accepted_version: study_activity.accepted_version,
+                keep_old_version: COALESCE(study_activity.keep_old_version, false),
+            """
+            )
+        )
+        if get_instances:
+            query.append(
+                dedent(
+                    """
+                study_activity_instance_uid: study_activity_instance.uid,
+                activity_instance: CASE WHEN activity_instance_root IS NOT NULL THEN {
+                    uid: activity_instance_root.uid,
+                    name: activity_instance_value.name,
+                    name_sentence_case: activity_instance_value.name_sentence_case,
+                    definition: activity_instance_value.definition,
+                    abbreviation: activity_instance_value.abbreviation,
+                    topic_code: activity_instance_value.topic_code,
+                    adam_param_code: activity_instance_value.adam_param_code,
+                    is_derived: COALESCE(activity_instance_value.is_derived, false),
+                    is_default_selected_for_activity: COALESCE(activity_instance_value.is_default_selected_for_activity, false),
+                    is_data_sharing: COALESCE(activity_instance_value.is_data_sharing, false),
+                    is_required_for_activity: COALESCE(activity_instance_value.is_required_for_activity, false),
+                    is_research_lab: COALESCE(activity_instance_value.is_research_lab, false),
+                    is_legacy_usage: COALESCE(activity_instance_value.is_legacy_usage, false),
+                    library_name: act_inst_library.name,
+                    activity_instance_class: {
+                        uid: activity_instance_class_root.uid,
+                        name: activity_instance_class_latest_value.name
+                    }
+                } ELSE null END,
+                state: CASE
+                    WHEN activity_value.is_data_collected THEN
+                        CASE
+                            WHEN activity_instance_root.uid IS NOT NULL THEN
+                                CASE
+                                    WHEN activity_instance_value.is_required_for_activity THEN 'Required'
+                                    WHEN activity_instance_value.is_default_selected_for_activity THEN 'Defaulted'
+                                    ELSE 'Suggestion'
+                                END
+                            ELSE 'Missing selection'
+                        END
+                    ELSE 'Not required'
+                END,
+                show_activity_instance_in_protocol_flowchart: COALESCE(study_activity_instance.show_activity_instance_in_protocol_flowchart, false),
+                order: study_activity_instance.order,
+            """
+                )
+            )
+        else:
+            query.append("    order: study_activity.order,")
+        query.append(
+            dedent(
+                """
+                show_activity_in_protocol_flowchart: study_activity.show_activity_in_protocol_flowchart,
+                show_activity_group_in_protocol_flowchart: COALESCE(study_activity_group.show_activity_group_in_protocol_flowchart, false),
+                show_activity_subgroup_in_protocol_flowchart: COALESCE(study_activity_subgroup.show_activity_subgroup_in_protocol_flowchart, false),
+                show_soa_group_in_protocol_flowchart: study_soa_group.show_soa_group_in_protocol_flowchart,
+                study_activity_subgroup: {
+                    study_activity_subgroup_uid: study_activity_subgroup.uid,
+                    activity_subgroup_uid: activity_subgroup_root.uid,
+                    activity_subgroup_name: activity_subgroup_value.name,
+                    order: study_activity_subgroup.order
+                },
+                study_activity_group: {
+                    study_activity_group_uid: study_activity_group.uid,
+                    activity_group_uid: activity_group_root.uid,
+                    activity_group_name: activity_group_value.name,
+                    order: study_activity_group.order
+                },
+                study_soa_group: {
+                    study_soa_group_uid: study_soa_group.uid,
+                    soa_group_term_uid: soa_group_term_root.uid,
+                    soa_group_term_name: soa_group_term_name.name,
+                    order: study_soa_group.order
+                },
+                study_uid: study_root.uid,
+                study_version: study_version.version
+            } AS selection
+        """
+            )
+        )
+
+        results, headers = db.cypher_query("\n".join(query), params=params)
+        return results, headers

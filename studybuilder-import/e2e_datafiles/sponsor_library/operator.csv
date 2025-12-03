@@ -1,6 +1,6 @@
-CT_CD_LIST_SUBMVAL,CT_NAME,NAME_SENTENSE_CASE,CT_SUBMVAL,DEFINITION,ORDER,CT_CD,NCI_PREFERRED_NAME
-Operator,=,=,=,Equal to,1,,Equal
-Operator,>=,>=,≥,Greather than or equal to,2,,Greather than or equal to
-Operator,<=,<=,≤,Less than or equal to,3,,Less than or equal to
-Operator,>,>,>,Greather than,4,,Greater than
-Operator,<,<,<,Less than,5,,Less than
+CODELIST_SUBMVAL,TERM_SUBMVAL,SPONSOR_NAME,SPONSOR_NAME_SENTENCE_CASE,NCI_PREFERRED_NAME,ORDER,CONCEPT_ID,CATALOGUES,DEFINITION
+OPERATOR,=,=,=,Equal to,1,,,Equal
+OPERATOR,≥,>=,>=,Greather than or equal to,2,,,Greather than or equal to
+OPERATOR,≤,<=,<=,Less than or equal to,3,,,Less than or equal to
+OPERATOR,>,>,>,Greather than,4,,,Greater than
+OPERATOR,<,<,<,Less than,5,,,Less than

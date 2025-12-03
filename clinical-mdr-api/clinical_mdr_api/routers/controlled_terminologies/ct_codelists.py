@@ -1,5 +1,6 @@
 """CTCodelist router."""
 
+from datetime import datetime
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Body, Path, Query
@@ -10,6 +11,9 @@ from clinical_mdr_api.models.controlled_terminologies.ct_codelist import (
     CTCodelist,
     CTCodelistCreateInput,
     CTCodelistNameAndAttributes,
+    CTCodelistPaired,
+    CTCodelistPairedInput,
+    CTCodelistTerm,
     CTCodelistTermInput,
 )
 from clinical_mdr_api.models.utils import CustomPage
@@ -18,8 +22,9 @@ from clinical_mdr_api.routers import _generic_descriptions, decorators
 from clinical_mdr_api.services.controlled_terminologies.ct_codelist import (
     CTCodelistService,
 )
-from common import config
 from common.auth import rbac
+from common.auth.dependencies import security
+from common.config import settings
 from common.models.error import ErrorResponse
 
 # Prefixed with "/ct"
@@ -31,7 +36,7 @@ TermUID = Path(description="The unique id of the Codelist Term")
 
 @router.post(
     "/codelists",
-    dependencies=[rbac.LIBRARY_WRITE],
+    dependencies=[security, rbac.LIBRARY_WRITE],
     summary="Creates new codelist.",
     description="""The following nodes are created
 * CTCodelistRoot
@@ -67,7 +72,7 @@ def create(
 
 @router.get(
     "/codelists",
-    dependencies=[rbac.LIBRARY_READ],
+    dependencies=[security, rbac.LIBRARY_READ],
     summary="Returns all codelists names and attributes.",
     description=_generic_descriptions.DATA_EXPORTS_HEADER,
     response_model_exclude_unset=True,
@@ -123,7 +128,7 @@ def get_codelists(
         ),
     ] = None,
     is_sponsor: Annotated[
-        bool | None,
+        bool,
         Query(
             description="Boolean value to indicate desired package is a sponsor package. Defaults to False.",
         ),
@@ -132,16 +137,16 @@ def get_codelists(
         Json | None, Query(description=_generic_descriptions.SORT_BY)
     ] = None,
     page_number: Annotated[
-        int | None, Query(ge=1, description=_generic_descriptions.PAGE_NUMBER)
-    ] = config.DEFAULT_PAGE_NUMBER,
+        int, Query(ge=1, description=_generic_descriptions.PAGE_NUMBER)
+    ] = settings.default_page_number,
     page_size: Annotated[
-        int | None,
+        int,
         Query(
             ge=0,
-            le=config.MAX_PAGE_SIZE,
+            le=settings.max_page_size,
             description=_generic_descriptions.PAGE_SIZE,
         ),
-    ] = config.DEFAULT_PAGE_SIZE,
+    ] = settings.default_page_size,
     filters: Annotated[
         Json | None,
         Query(
@@ -150,10 +155,10 @@ def get_codelists(
         ),
     ] = None,
     operator: Annotated[
-        str | None, Query(description=_generic_descriptions.FILTER_OPERATOR)
-    ] = config.DEFAULT_FILTER_OPERATOR,
+        str, Query(description=_generic_descriptions.FILTER_OPERATOR)
+    ] = settings.default_filter_operator,
     total_count: Annotated[
-        bool | None, Query(description=_generic_descriptions.TOTAL_COUNT)
+        bool, Query(description=_generic_descriptions.TOTAL_COUNT)
     ] = False,
     term_filter: Annotated[
         Json | None,
@@ -164,8 +169,12 @@ def get_codelists(
 
 `operator` specifies which logical operation - `and` or `or` - should be used in case multiple CT Term UIDs are provided. Default: `and`""",
             openapi_examples={
+                "none": {
+                    "value": None,
+                    "summary": "No term filtering",
+                },
                 "basic": {
-                    "value": """{"term_uids": [""], "operator": "and"}""",
+                    "value": """{"term_uids": ["C12345"], "operator": "and"}""",
                     "summary": "Filter by the provided CT Term UIDs",
                 },
             },
@@ -186,14 +195,14 @@ def get_codelists(
         filter_operator=FilterOperator.from_str(operator),
         term_filter=term_filter,
     )
-    return CustomPage.create(
+    return CustomPage(
         items=results.items, total=results.total, page=page_number, size=page_size
     )
 
 
 @router.get(
     "/codelists/{codelist_uid}/sub-codelists",
-    dependencies=[rbac.LIBRARY_READ],
+    dependencies=[security, rbac.LIBRARY_READ],
     summary="Returns all sub codelists names and attributes that only have the provided terms.",
     response_model_exclude_unset=True,
     status_code=200,
@@ -220,18 +229,18 @@ def get_sub_codelists_that_have_given_terms(
         Json | None, Query(description=_generic_descriptions.SORT_BY)
     ] = None,
     page_number: Annotated[
-        int | None, Query(ge=1, description=_generic_descriptions.PAGE_NUMBER)
-    ] = config.DEFAULT_PAGE_NUMBER,
+        int, Query(ge=1, description=_generic_descriptions.PAGE_NUMBER)
+    ] = settings.default_page_number,
     page_size: Annotated[
-        int | None,
+        int,
         Query(
             ge=0,
-            le=config.MAX_PAGE_SIZE,
+            le=settings.max_page_size,
             description=_generic_descriptions.PAGE_SIZE,
         ),
-    ] = config.DEFAULT_PAGE_SIZE,
+    ] = settings.default_page_size,
     total_count: Annotated[
-        bool | None, Query(description=_generic_descriptions.TOTAL_COUNT)
+        bool, Query(description=_generic_descriptions.TOTAL_COUNT)
     ] = False,
 ) -> CustomPage[CTCodelistNameAndAttributes]:
     ct_codelist_service = CTCodelistService()
@@ -244,14 +253,60 @@ def get_sub_codelists_that_have_given_terms(
         page_size=page_size,
         total_count=total_count,
     )
-    return CustomPage.create(
+    return CustomPage(
         items=results.items, total=results.total, page=page_number, size=page_size
     )
 
 
 @router.get(
+    "/codelists/{codelist_uid}/paired",
+    dependencies=[security, rbac.LIBRARY_READ],
+    summary="Returns any codelist paired with the specified one.",
+    status_code=200,
+    responses={
+        404: _generic_descriptions.ERROR_404,
+    },
+)
+def get_paired_codelists(
+    codelist_uid: str = CTCodelistUID,
+) -> CTCodelistPaired:
+    ct_codelist_service = CTCodelistService()
+    results = ct_codelist_service.get_paired_codelists(
+        codelist_uid=codelist_uid,
+    )
+    return results
+
+
+@router.patch(
+    "/codelists/{codelist_uid}/paired",
+    dependencies=[security, rbac.LIBRARY_WRITE],
+    summary="Update any codelist paired with the specified one.",
+    response_model=CTCodelistPaired,
+    status_code=200,
+    responses={
+        404: _generic_descriptions.ERROR_404,
+    },
+)
+def update_paired_codelist(
+    codelist_uid: Annotated[str, CTCodelistUID],
+    codelist_input: Annotated[
+        CTCodelistPairedInput,
+        Body(
+            description="Properties to pair codelists",
+        ),
+    ],
+) -> CTCodelistPaired:
+    ct_codelist_service = CTCodelistService()
+    results = ct_codelist_service.update_paired_codelists(
+        codelist_uid=codelist_uid,
+        paired_codelists=codelist_input,
+    )
+    return results
+
+
+@router.get(
     "/codelists/headers",
-    dependencies=[rbac.LIBRARY_READ],
+    dependencies=[security, rbac.LIBRARY_READ],
     summary="Returns possibles values from the database for a given header",
     description="""Allowed parameters include : field name for which to get possible
     values, search string to provide filtering for the field name, additional filters to apply on other fields""",
@@ -283,13 +338,13 @@ def get_distinct_values_for_header(
         Query(description="If specified, only terms from given package are returned."),
     ] = None,
     is_sponsor: Annotated[
-        bool | None,
+        bool,
         Query(
             description="Boolean value to indicate desired package is a sponsor package. Defaults to False.",
         ),
     ] = False,
     search_string: Annotated[
-        str | None, Query(description=_generic_descriptions.HEADER_SEARCH_STRING)
+        str, Query(description=_generic_descriptions.HEADER_SEARCH_STRING)
     ] = "",
     filters: Annotated[
         Json | None,
@@ -299,11 +354,11 @@ def get_distinct_values_for_header(
         ),
     ] = None,
     operator: Annotated[
-        str | None, Query(description=_generic_descriptions.FILTER_OPERATOR)
-    ] = config.DEFAULT_FILTER_OPERATOR,
+        str, Query(description=_generic_descriptions.FILTER_OPERATOR)
+    ] = settings.default_filter_operator,
     page_size: Annotated[
-        int | None, Query(description=_generic_descriptions.HEADER_PAGE_SIZE)
-    ] = config.DEFAULT_HEADER_PAGE_SIZE,
+        int, Query(description=_generic_descriptions.HEADER_PAGE_SIZE)
+    ] = settings.default_header_page_size,
 ) -> list[Any]:
     ct_codelist_service = CTCodelistService()
     return ct_codelist_service.get_distinct_values_for_header(
@@ -319,9 +374,164 @@ def get_distinct_values_for_header(
     )
 
 
+@router.get(
+    "/codelists/{codelist_uid}/terms",
+    dependencies=[security, rbac.LIBRARY_READ],
+    summary="List the CTTerms of a CTCodelist.",
+    response_model=CustomPage[CTCodelistTerm],
+    status_code=200,
+    responses={
+        403: _generic_descriptions.ERROR_403,
+        404: _generic_descriptions.ERROR_404,
+    },
+)
+def get_codelist_terms(
+    codelist_uid: str = CTCodelistUID,
+    package: str | None = Query(
+        None,
+        description="If specified, only codelists from given package are returned.",
+    ),
+    include_removed: bool | None = Query(
+        False, description="Include removed terms in the lisiting."
+    ),
+    at_specific_date_time: Annotated[
+        datetime | None,
+        Query(
+            description="""If specified, return the terms that were part of the codelist at the specified date and time in format YYYY-MM-DDThh:mm:ss+hh:mm'""",
+        ),
+    ] = None,
+    sort_by: Json = Query(None, description=_generic_descriptions.SORT_BY),
+    page_number: Annotated[
+        int, Query(ge=1, description=_generic_descriptions.PAGE_NUMBER)
+    ] = settings.default_page_number,
+    page_size: Annotated[
+        int,
+        Query(
+            ge=0,
+            le=settings.max_page_size,
+            description=_generic_descriptions.PAGE_SIZE,
+        ),
+    ] = settings.default_page_size,
+    filters: Annotated[
+        Json | None,
+        Query(
+            description=_generic_descriptions.FILTERS,
+            openapi_examples=_generic_descriptions.FILTERS_EXAMPLE,
+        ),
+    ] = None,
+    operator: str | None = Query(
+        "and", description=_generic_descriptions.FILTER_OPERATOR
+    ),
+    total_count: Annotated[
+        bool, Query(description=_generic_descriptions.TOTAL_COUNT)
+    ] = False,
+):
+    ct_codelist_service = CTCodelistService()
+
+    results = ct_codelist_service.list_terms(
+        codelist_uid,
+        package=package,
+        include_removed=include_removed,
+        at_specific_date_time=at_specific_date_time,
+        sort_by=sort_by,
+        page_number=page_number,
+        page_size=page_size,
+        total_count=total_count,
+        filter_by=filters,
+        filter_operator=FilterOperator.from_str(operator),
+    )
+    return CustomPage.create(
+        items=results.items, total=results.total, page=page_number, size=page_size
+    )
+
+
+@router.get(
+    "/codelists/terms",
+    dependencies=[security, rbac.LIBRARY_READ],
+    summary="List the CTTerms of a CTCodelist identified either by codelist uid, submission value or name",
+    response_model=CustomPage[CTCodelistTerm],
+    status_code=200,
+    responses={
+        403: _generic_descriptions.ERROR_403,
+        404: _generic_descriptions.ERROR_404,
+    },
+)
+def get_codelist_terms_by_name_or_submval(
+    codelist_uid: str | None = Query(
+        None,
+        description="UID of the codelist.",
+    ),
+    codelist_submission_value: str | None = Query(
+        None,
+        description="Submission value of the codelist.",
+    ),
+    codelist_name: str | None = Query(
+        None,
+        description="Name of the codelist.",
+    ),
+    package: str | None = Query(
+        None,
+        description="If specified, only codelists from given package are returned.",
+    ),
+    include_removed: bool | None = Query(
+        False, description="Include removed terms in the lisiting."
+    ),
+    at_specific_date_time: Annotated[
+        datetime | None,
+        Query(
+            description="""If specified, return the terms that were part of the codelist at the specified date and time in format YYYY-MM-DDThh:mm:ss+hh:mm'""",
+        ),
+    ] = None,
+    sort_by: Json = Query(None, description=_generic_descriptions.SORT_BY),
+    page_number: Annotated[
+        int, Query(ge=1, description=_generic_descriptions.PAGE_NUMBER)
+    ] = settings.default_page_number,
+    page_size: Annotated[
+        int,
+        Query(
+            ge=0,
+            le=settings.max_page_size,
+            description=_generic_descriptions.PAGE_SIZE,
+        ),
+    ] = settings.default_page_size,
+    filters: Annotated[
+        Json | None,
+        Query(
+            description=_generic_descriptions.FILTERS,
+            openapi_examples=_generic_descriptions.FILTERS_EXAMPLE,
+        ),
+    ] = None,
+    operator: str | None = Query(
+        "and", description=_generic_descriptions.FILTER_OPERATOR
+    ),
+    total_count: Annotated[
+        bool, Query(description=_generic_descriptions.TOTAL_COUNT)
+    ] = False,
+):
+    ct_codelist_service = CTCodelistService()
+
+    results = ct_codelist_service.list_terms(
+        codelist_uid=codelist_uid,
+        codelist_submission_value=codelist_submission_value,
+        codelist_name=codelist_name,
+        package=package,
+        include_removed=include_removed,
+        at_specific_date_time=at_specific_date_time,
+        sort_by=sort_by,
+        page_number=page_number,
+        page_size=page_size,
+        total_count=total_count,
+        filter_by=filters,
+        filter_operator=FilterOperator.from_str(operator),
+    )
+    return CustomPage.create(
+        items=results.items, total=results.total, page=page_number, size=page_size
+    )
+
+
 @router.post(
     "/codelists/{codelist_uid}/terms",
-    dependencies=[rbac.LIBRARY_WRITE],
+    dependencies=[security, rbac.LIBRARY_WRITE],
     summary="Adds new CTTerm to CTCodelist.",
     status_code=201,
     responses={
@@ -349,20 +559,21 @@ def add_term(
 ) -> CTCodelist:
     ct_codelist_service = CTCodelistService()
     return ct_codelist_service.add_term(
-        codelist_uid=codelist_uid, term_uid=term_input.term_uid, order=term_input.order
+        codelist_uid=codelist_uid,
+        term_uid=term_input.term_uid,
+        order=term_input.order,
+        submission_value=term_input.submission_value,
     )
 
 
 @router.delete(
     "/codelists/{codelist_uid}/terms/{term_uid}",
-    dependencies=[rbac.LIBRARY_WRITE],
+    dependencies=[security, rbac.LIBRARY_WRITE],
     summary="Removes given CTTerm from CTCodelist.",
-    status_code=201,
+    status_code=200,
     responses={
-        403: _generic_descriptions.ERROR_403,
-        201: {
-            "description": "The HAS_TERM relationship was successfully deleted and "
-            "HAD_TERM relationship was successfully created.\n"
+        200: {
+            "description": "The HAS_TERM relationship was successfully ended.\n"
             "The HAS_PARAMETER_TERM relationship was successfully deleted if codelist identified by "
             "codelist_uid is a TemplateParameter"
         },
@@ -374,6 +585,7 @@ def add_term(
             "- The codelist is not extensible.\n"
             "- The codelist doesn't have passed term.\n",
         },
+        403: _generic_descriptions.ERROR_403,
     },
 )
 def remove_term(
@@ -382,3 +594,58 @@ def remove_term(
 ) -> CTCodelist:
     ct_codelist_service = CTCodelistService()
     return ct_codelist_service.remove_term(codelist_uid=codelist_uid, term_uid=term_uid)
+
+
+@router.get(
+    "/codelists/terms/headers",
+    dependencies=[security, rbac.LIBRARY_READ],
+    summary="Returns possibles values from the database for a given header",
+    description="""Allowed parameters include : field name for which to get possible
+    values, search string to provide filtering for the field name, additional filters to apply on other fields""",
+    response_model=list[Any],
+    status_code=200,
+    responses={
+        404: {
+            "model": ErrorResponse,
+            "description": "Not Found - Invalid field name specified",
+        },
+    },
+)
+def get_distinct_term_values_for_header(
+    codelist_uid: str,
+    package: str | None = Query(
+        None,
+        description="If specified, only codelists from given package are returned.",
+    ),
+    include_removed: bool | None = Query(
+        False, description="Include removed terms in the lisiting."
+    ),
+    field_name: str = Query(..., description=_generic_descriptions.HEADER_FIELD_NAME),
+    search_string: str | None = Query(
+        "", description=_generic_descriptions.HEADER_SEARCH_STRING
+    ),
+    filters: Annotated[
+        Json | None,
+        Query(
+            description=_generic_descriptions.FILTERS,
+            openapi_examples=_generic_descriptions.FILTERS_EXAMPLE,
+        ),
+    ] = None,
+    operator: str | None = Query(
+        "and", description=_generic_descriptions.FILTER_OPERATOR
+    ),
+    page_size: Annotated[
+        int, Query(description=_generic_descriptions.HEADER_PAGE_SIZE)
+    ] = settings.default_header_page_size,
+):
+    ct_codelist_service = CTCodelistService()
+    return ct_codelist_service.get_distinct_term_values_for_header(
+        codelist_uid=codelist_uid,
+        package=package,
+        include_removed=include_removed,
+        field_name=field_name,
+        search_string=search_string,
+        filter_by=filters,
+        filter_operator=FilterOperator.from_str(operator),
+        page_size=page_size,
+    )

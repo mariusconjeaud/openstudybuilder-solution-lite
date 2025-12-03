@@ -23,6 +23,7 @@ from clinical_mdr_api.tests.data.odm_xml import (
 from clinical_mdr_api.tests.integration.utils.api import drop_db, inject_and_clear_db
 from clinical_mdr_api.tests.integration.utils.data_library import (
     STARTUP_CT_TERM_ATTRIBUTES_CYPHER,
+    STARTUP_DOMAIN_CL_CYPHER,
     STARTUP_ODM_VENDOR_ATTRIBUTES,
     STARTUP_ODM_VENDOR_ELEMENTS,
     STARTUP_ODM_VENDOR_NAMESPACES,
@@ -47,6 +48,7 @@ def test_data():
     db.cypher_query(STARTUP_ODM_VENDOR_ATTRIBUTES)
     db.cypher_query(STARTUP_UNIT_DEFINITIONS)
     db.cypher_query(STARTUP_CT_TERM_ATTRIBUTES_CYPHER)
+    db.cypher_query(STARTUP_DOMAIN_CL_CYPHER)
 
     yield
 
@@ -172,8 +174,7 @@ def test_throw_exception_if_measurementunits_dont_exist(api_client):
 
     assert res["type"] == "BusinessLogicException"
     assert (
-        res["message"]
-        == "MeasurementUnits with OIDs '{'wrong name'}' don't match any Unit Definition."
+        res["message"] == "MeasurementUnit with Name 'non-existing unit' doesn't exist."
     )
 
 
@@ -190,7 +191,4 @@ def test_throw_exception_if_measurementunitref_refers_to_non_present_measurement
     res = response.json()
 
     assert res["type"] == "BusinessLogicException"
-    assert (
-        res["message"]
-        == """ODM Item tried to connect to non-existent concepts [('Concept Name: Unit Definition', "uids: {'name1'}")]."""
-    )
+    assert res["message"] == "MeasurementUnit with OID 'unitOID' was not provided."

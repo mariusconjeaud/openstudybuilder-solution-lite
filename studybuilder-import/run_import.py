@@ -1,4 +1,5 @@
 from importers.run_import_activities import Activities
+from importers.run_import_complexity_burdens import ComplexityBurdens
 from importers.run_import_compounds import Compounds
 from importers.run_import_config import Configuration
 from importers.run_import_crfs import Crfs
@@ -28,45 +29,47 @@ def main():
     # Import standard codelist terms, part 1
     standardterms1 = StandardCodelistTerms1(metrics_inst=metr)
     standardterms1.run()
-
+    # raise RuntimeError("stop here")
     # Import standard codelist terms, part 2
     standardterms2 = StandardCodelistTerms2(metrics_inst=metr)
     standardterms2.run()
-
+    # raise RuntimeError("stop here")
     # Import unit definitions
     units = Units(metrics_inst=metr)
     units.run()
 
     activities = Activities(metrics_inst=metr)
     activities.run()
-    cache = activities.get_cache()
+
+    complexity_burdens = ComplexityBurdens(metrics_inst=metr)
+    complexity_burdens.run()
 
     # Import sponsor models
-    sponsor_models = SponsorModels(metrics_inst=metr, cache=cache)
+    sponsor_models = SponsorModels(metrics_inst=metr)
     sponsor_models.run()
 
     # Finish up sponsor library
-    finishing = StandardCodelistFinish(metrics_inst=metr, cache=cache)
+    finishing = StandardCodelistFinish(metrics_inst=metr)
     finishing.run()
 
     # Import compounds
-    compounds = Compounds(metrics_inst=metr, cache=cache)
+    compounds = Compounds(metrics_inst=metr)
     compounds.run()
 
     # Import crfs
-    crfs = Crfs(metrics_inst=metr, cache=cache)
+    crfs = Crfs(metrics_inst=metr)
     crfs.run()
 
     # Import mock data
-    mockdata = Mockdata(metrics_inst=metr, cache=cache)
+    mockdata = Mockdata(metrics_inst=metr)
     mockdata.run()
 
     # Import mock data from json
-    mockdatajson = MockdataJson(metrics_inst=metr, cache=cache)
+    mockdatajson = MockdataJson(metrics_inst=metr)
     mockdatajson.run()
 
     # Import E2E specific data from json
-    mockdatae2e = MockdataJsonE2E(metrics_inst=metr, cache=cache)
+    mockdatae2e = MockdataJsonE2E(metrics_inst=metr)
     mockdatae2e.run()
 
     # Display metrics

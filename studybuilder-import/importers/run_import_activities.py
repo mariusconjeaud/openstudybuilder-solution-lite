@@ -1,16 +1,16 @@
 import asyncio
-from collections import defaultdict
 import csv
 import json
+from functools import lru_cache
 
 import aiohttp
 
-from .functions.caselessdict import CaselessDict
-from .functions.parsers import map_boolean
-from .functions.utils import load_env
-from .utils.importer import BaseImporter, open_file_async
-from .utils.metrics import Metrics
-from .utils.path_join import path_join
+from importers.functions.caselessdict import CaselessDict
+from importers.functions.parsers import map_boolean
+from importers.functions.utils import load_env
+from importers.utils.importer import BaseImporter, open_file_async
+from importers.utils.metrics import Metrics
+from importers.utils.path_join import path_join
 
 # ---------------------------------------------------------------
 # Env loading
@@ -66,12 +66,22 @@ class ConflictingItemError(ValueError):
     pass
 
 
+# TODO delete! Queries to clear groups and subgroups
+"""
+MATCH (root:ActivityGroupRoot)-[]->(value:ActivityGroupValue) DETACH DELETE root, value;
+MATCH (root:ActivitySubGroupRoot)-[]->(value:ActivitySubGroupValue)-[:HAS_GROUP]-(avg:ActivityValidGroup) DETACH DELETE root, value, avg;
+MATCH (n:ActivityGroupCounter) DETACH DELETE n;
+MATCH (n:ActivitySubGroupCounter) DETACH DELETE n;
+MATCH (n:ActivityValidGroupCounter) DETACH DELETE n;
+"""
+
+
 # Activities with instances, groups and subgroups in sponsor library
 class Activities(BaseImporter):
     logging_name = "activities"
 
-    def __init__(self, api=None, metrics_inst=None, cache=None):
-        super().__init__(api=api, metrics_inst=metrics_inst, cache=cache)
+    def __init__(self, api=None, metrics_inst=None):
+        super().__init__(api=api, metrics_inst=metrics_inst)
         self._limit_import_to = None
 
     def limit_import_to(self, limit):
@@ -80,68 +90,6 @@ class Activities(BaseImporter):
         else:
             self.log.info("Importing all activity content")
         self._limit_import_to = limit
-
-    # Get all terms belonging to any of the category and subcategory codelists
-    def _get_all_cats_and_subcats(self):
-        self.ensure_cache()
-        sdtm_cat_lists = [
-            "QSCAT",
-            "ACSPCAT",
-            "DECAT",
-            "FTCAT",
-            "CCCAT",
-            "ONCRSCAT",
-            "FXRESCAT",
-            "ICRESCAT",
-            "PYRESCAT",
-            "BACAT",
-            "CAGTCAT",
-            "SAERCAT",
-            "CPCAT",
-            "IECAT",
-            "DSCAT",
-            "MSRESCAT",
-            "CLCAT",
-            "STCAT",
-            "EGCATSND",
-            "MIRESCAT",
-        ]
-        sdtm_subcat_lists = ["DSSCAT"]
-
-        all_codelist_uids = self._get_codelists_uid_and_submval()
-        sdtm_cat_uids = []
-        sdtm_subcat_uids = []
-        for submval in sdtm_cat_lists:
-            cl_uid = all_codelist_uids.get(submval)
-            if cl_uid is not None:
-                if OLD_CT_API:
-                    sdtm_cat_uids.extend(
-                        term
-                        for term in self.cache.all_terms_attributes
-                        if term["codelist_uid"] == cl_uid
-                    )
-                else:
-                    sdtm_cat_uids.extend(
-                        term
-                        for term in self.cache.all_terms_attributes
-                        if cl_uid in [x["codelist_uid"] for x in term["codelists"]]
-                    )
-        for submval in sdtm_subcat_lists:
-            cl_uid = all_codelist_uids.get(submval)
-            if cl_uid is not None:
-                if OLD_CT_API:
-                    sdtm_subcat_uids.extend(
-                        term
-                        for term in self.cache.all_terms_attributes
-                        if term["codelist_uid"] == cl_uid
-                    )
-                else:
-                    sdtm_subcat_uids.extend(
-                        term
-                        for term in self.cache.all_terms_attributes
-                        if cl_uid in [x["codelist_uid"] for x in term["codelists"]]
-                    )
-        return sdtm_cat_uids, sdtm_subcat_uids
 
     # Get a dictionary with key = submission value and value = uid
     def _get_codelists_uid_and_submval(self):
@@ -156,61 +104,55 @@ class Activities(BaseImporter):
         )
         return all_codelist_uids
 
+    @lru_cache(maxsize=10000)
+    def _get_codelist_submval(self, cl_uid):
+        cl = self.api.get_all_from_api(f"/ct/codelists/{cl_uid}/attributes")
+        return cl.get("submission_value")
+
+    @lru_cache(maxsize=10000)
+    def fetch_codelist_terms(self, cl_uid):
+        cl_terms = self.api.get_all_from_api(f"/ct/codelists/{cl_uid}/terms")
+        return cl_terms
+
     # Get all terms from a codelist identified by its submission value
     def _get_codelist_terms(self, codelist_submval):
-        self.ensure_cache()
         all_codelist_uids = self._get_codelists_uid_and_submval()
         cl_uid = all_codelist_uids.get(codelist_submval)
-        if cl_uid is not None:
-            if OLD_CT_API:
-                terms = [
-                    term
-                    for term in self.cache.all_terms_attributes
-                    if term["codelist_uid"] == cl_uid
-                ]
-            else:
-                terms = [
-                    term
-                    for term in self.cache.all_terms_attributes
-                    if cl_uid in [x["codelist_uid"] for x in term["codelists"]]
-                ]
-            return terms
+        terms = self.api.get_all_from_api(f"/ct/codelists/{cl_uid}/terms")
+        return terms
 
-    # Get a dictionary mapping submission values to term uids for a codelist identified by its uid
+    # Get a dictionary mapping submission values to term uids for a codelist identified by its submission value
     def _get_submissionvalues_for_codelist(self, cl):
         terms = self._get_codelist_terms(cl)
-        name_submvals = CaselessDict(
+        submvals = CaselessDict(
             self.api.get_all_identifiers(
                 terms,
-                identifier="name_submission_value",
+                identifier="submission_value",
                 value="term_uid",
             )
         )
-        code_submvals = CaselessDict(
-            self.api.get_all_identifiers(
-                terms,
-                identifier="code_submission_value",
-                value="term_uid",
-            )
+        return submvals
+
+    @lru_cache(maxsize=10000)
+    def _get_codelists_and_terms_for_item_class_and_domain(
+        self, item_class_uid, domain_uid
+    ):
+        # Get the terms for a specific item class and domain
+        self.log.debug(
+            "Get terms for item class: %s, domain: %s",
+            item_class_uid,
+            domain_uid,
         )
-        name_submvals.update(code_submvals)
-        return name_submvals
-
-    # Get a dictionary with valid ct terms that may map to values in a given column of the activity instances file
-    def _get_terms_for_item_classes(self):
-        ct_codelists = {
-            "specimen": "SPECTYPE",
-            "domain": "DOMAIN",
-            "unit_dimension": "UNITDIM",
-            "laterality": "LAT",
-            "location": "LOC",
-            "position": "POSITION",
-        }
-
-        result = {}
-        for key, val in ct_codelists.items():
-            result[key] = self._get_submissionvalues_for_codelist(val)
-        return result
+        codelists = self.api.get_all_from_api(
+            f"/activity-item-classes/{item_class_uid}/datasets/{domain_uid}/codelists"
+        )
+        if not codelists:
+            return {}
+        terms = {}
+        for cl in codelists:
+            cl_submval = self._get_codelist_submval(cl["uid"])
+            terms[cl_submval] = self.fetch_codelist_terms(cl["uid"])
+        return terms
 
     # Get a dictionary of terms for the most common SDTM variable codelists
     def _get_terms_for_codelist_submvals(self):
@@ -221,24 +163,6 @@ class Activities(BaseImporter):
         for cd in codelists:
             result[cd] = self._get_submissionvalues_for_codelist(cd)
         self.terms_for_codelist_submval = result
-
-    # Add a new codelist to the dictionary of terms for SDTM variable codelists
-    def _get_terms_for_additional_codelist_submval(self, submval):
-        self.log.info(f"Fetching terms for codelist with submission value '{submval}'")
-        cl_terms = self._get_submissionvalues_for_codelist(submval)
-        if cl_terms is not None and len(cl_terms) == 0:
-            cl_terms = None
-        self.terms_for_codelist_submval[submval] = cl_terms
-
-    # Sort a list of activity items by class, returns a dict with class as key
-    def _sort_activity_items_by_class(self, items):
-        result = {}
-        for item in items:
-            class_name = item["activity_item_class"]["name"]
-            if class_name not in result:
-                result[class_name] = {}
-            result[class_name][item["name"]] = item
-        return result
 
     @open_file_async()
     async def handle_activity_groups(self, csvfile, session):
@@ -654,8 +578,6 @@ class Activities(BaseImporter):
                 and existing.get("is_domain_specific") == new_is_specific
                 and existing.get("definition") == new.get("definition")
                 and existing.get("order") == new_order
-                and [domain["uid"] for domain in existing.get("data_domains") or []]
-                == new.get("data_domain_uids", [])
             )
             return result
 
@@ -694,39 +616,6 @@ class Activities(BaseImporter):
                 self.log.info(
                     f"Identical entry '{data['body']['name']}' already exists in library '{data['body']['library_name']}'"
                 )
-
-        with open(
-            load_env(
-                "MDR_MIGRATION_ACTIVITY_INSTANCE_CLASS_TO_DATA_DOMAIN_RELATIONSHIPS"
-            ),
-            encoding="utf-8",
-        ) as file:
-            data_domain_relationships = csv.reader(file)
-
-            # Skip the header row
-            next(data_domain_relationships)
-
-            data_domains = set()
-            activity_instance_class_data_domain_relationships = defaultdict(set)
-            for (
-                table,
-                _,
-                _,
-                level_2_class,
-            ) in data_domain_relationships:
-
-                if level_2_class.strip():
-                    data_domains.add(table.strip())
-                    activity_instance_class_data_domain_relationships[
-                        level_2_class.strip()
-                    ].add(table.strip())
-
-            rs_data_domains = {
-                data_domain_term["code_submission_value"]: data_domain_term["term_uid"]
-                for data_domain_term in self.api.get_filtered_terms(
-                    {"code_submission_value": {"v": list(data_domains)}}
-                )
-            }
 
         for row in readCSV:
             # migrating Level 0 ActivityInstanceClass
@@ -770,14 +659,6 @@ class Activities(BaseImporter):
                     "level": 2,
                     "parent_uid": existing_rows.get(ac_1_level_name, {}).get("uid"),
                     "library_name": "Sponsor",
-                    "data_domain_uids": [
-                        uid
-                        for domain, uid in rs_data_domains.items()
-                        if domain
-                        in activity_instance_class_data_domain_relationships[
-                            ac_2_level_name
-                        ]
-                    ],
                 },
             }
             if ac_2_level_name not in migrated_ac_level_2:
@@ -918,7 +799,6 @@ class Activities(BaseImporter):
 
     @open_file_async()
     async def handle_activity_item_classes(self, csvfile, session):
-        self.ensure_cache()
         # Populate then activity item classes in sponsor library
         readCSV = csv.reader(csvfile, delimiter=",")
         headers = next(readCSV)
@@ -934,6 +814,17 @@ class Activities(BaseImporter):
             value="uid",
         )
 
+        semantic_roles = self.api.get_all_identifiers(
+            self._get_codelist_terms("ROLE"),
+            identifier="submission_value",
+            value="term_uid",
+        )
+        data_types = self.api.get_all_identifiers(
+            self._get_codelist_terms("DATATYPE"),
+            identifier="submission_value",
+            value="term_uid",
+        )
+
         activity_item_data = {}
         for row in readCSV:
             activity_instance_class_name = row[headers.index("ACTIVITY_INSTANCE_CLASS")]
@@ -941,16 +832,16 @@ class Activities(BaseImporter):
                 activity_instance_class_name
             )
             role = row[headers.index("SEMANTIC_ROLE")]
-            if role in self.cache.all_terms_name_submission_values:
-                role_uid = self.cache.all_terms_name_submission_values[role]
+            if role in semantic_roles:
+                role_uid = semantic_roles[role]
             else:
                 self.log.warning(
                     f"The role ({role}) wasn't found for the following ActivityInstanceClass ({activity_instance_class_name})"
                 )
                 continue
             data_type = row[headers.index("SEMANTIC_DATA_TYPE")]
-            if data_type in self.cache.all_terms_name_submission_values:
-                data_type_uid = self.cache.all_terms_name_submission_values[data_type]
+            if data_type in data_types:
+                data_type_uid = data_types[data_type]
             else:
                 self.log.warning(
                     f"The data_type ({data_type}) wasn't found for the following ActivityInstanceClass ({activity_instance_class_name})"
@@ -1182,8 +1073,11 @@ class Activities(BaseImporter):
             value="uid",
         )
 
-        self.all_activity_item_classes = self.api.get_all_identifiers(
-            self.api.get_all_from_api(ACTIVITY_ITEM_CLASSES_PATH),
+        self.all_activity_item_classes = self.api.get_all_from_api(
+            ACTIVITY_ITEM_CLASSES_PATH
+        )
+        self.all_activity_item_classes_by_name = self.api.get_all_identifiers(
+            self.all_activity_item_classes,
             identifier="name",
             value="uid",
         )
@@ -1193,13 +1087,6 @@ class Activities(BaseImporter):
             identifier="name",
             value="uid",
         )
-
-        sdtm_cats, sdtm_subcats = self._get_all_cats_and_subcats()
-        self.sdtm_cats = sdtm_cats
-        self.sdtm_subcats = sdtm_subcats
-
-        self.log.info("Fetching terms for item classes")
-        terms_for_item_classes = self._get_terms_for_item_classes()
 
         self._get_terms_for_codelist_submvals()
 
@@ -1257,6 +1144,21 @@ class Activities(BaseImporter):
                 continue
 
             domain = row["GENERAL_DOMAIN_CLASS"]
+            sdtm_domain = row["SDTM_DOMAIN"]
+
+            # find related Activity Instance Class
+            sub_domain_class = row["sub_domain_class"]
+            instance_class_name = sub_domain_class.title().replace(" ", "")
+            activity_instance_class_uid = all_activity_instance_classes.get(
+                instance_class_name
+            )
+            if not activity_instance_class_uid:
+                # The activity instance type was not recognized
+                self.log.warning(
+                    f"Activity instance '{activity_instance_name}' has an unknown domain class '{sub_domain_class}'"
+                )
+                continue
+
             item_cols = [
                 "specimen",
                 "SDTM_DOMAIN",
@@ -1283,7 +1185,7 @@ class Activities(BaseImporter):
                 else:
                     items = [value]
                 data = self._create_activity_item(
-                    items, col, domain, terms_for_item_classes, sdtm_codelist
+                    items, col, domain, sdtm_codelist, sdtm_domain
                 )
                 if not data:
                     continue
@@ -1300,18 +1202,6 @@ class Activities(BaseImporter):
                 else:
                     item_data.append(data)
 
-            # find related Activity Instance Class
-            sub_domain_class = row["sub_domain_class"]
-            instance_class_name = sub_domain_class.title().replace(" ", "")
-            activity_instance_class_uid = all_activity_instance_classes.get(
-                instance_class_name
-            )
-            if not activity_instance_class_uid:
-                # The activity instance type was not recognized
-                self.log.warning(
-                    f"Activity instance '{activity_instance_name}' has an unknown domain class '{sub_domain_class}'"
-                )
-                continue
             # WIP, column names in data file are preliminary:
             # - nci_concept_id
             # - is_required_for_activity
@@ -1382,7 +1272,6 @@ class Activities(BaseImporter):
 
             # Convert the sets to lists, needed for json serialization
             for item in activity_instance_data["body"]["activity_items"]:
-                item["ct_term_uids"] = list(item["ct_term_uids"])
                 item["unit_definition_uids"] = list(item["unit_definition_uids"])
 
             topic_code = activity_instance_data["body"]["topic_code"]
@@ -1435,16 +1324,10 @@ class Activities(BaseImporter):
 
     # Get the item class for combination of column name and domain
     def _get_item_class(self, col, domain):
-        if col == "specimen":
-            return "specimen"
+        if col in ("specimen", "location", "laterality", "unit_dimension"):
+            return col
         if col == "SDTM_DOMAIN":
             return "domain"
-        if col == "location":
-            return "location"
-        if col == "laterality":
-            return "laterality"
-        if col == "unit_dimension":
-            return "unit_dimension"
         if col == "sdtm_cat":
             if domain == "FINDINGS":
                 return "finding_category"
@@ -1467,18 +1350,31 @@ class Activities(BaseImporter):
             return "standard_unit"
 
     # Helper to create a single activity item
-    def _create_activity_item(
-        self, items, column, domain, terms_for_item_classes, sdtm_codelist
-    ):
+    def _create_activity_item(self, items, column, domain, sdtm_codelist, sdtm_domain):
         item_class = self._get_item_class(column, domain)
         if not item_class:
             return
+        item_class_def = next(
+            (
+                class_def
+                for class_def in self.all_activity_item_classes
+                if class_def["name"] == item_class
+            ),
+            None,
+        )
+        if item_class_def is not None:
+            self.log.debug(f"Activity item class '{item_class}' found in definitions")
+        else:
+            self.log.warning(
+                f"Cannot find definition for item class '{item_class}' for activity items '{items}'"
+            )
         unit_uids = set()
-        term_uids = set()
+        terms = []
         for item in items:
             if item == "":
                 continue
             if item_class in ["standard_unit"]:
+                # This item links to a unit definition
                 unit_uid = self.all_units.get(item)
                 if unit_uid:
                     self.log.info(f"Activity item '{item}' found unit def '{unit_uid}'")
@@ -1488,92 +1384,96 @@ class Activities(BaseImporter):
                         f"Activity item '{item}' could not find unit definition"
                     )
             else:
-                if item_class == "finding_category":
-                    submval = item + " FIND_CAT"
-                elif item_class == "finding_subcategory":
-                    submval = item + " FIND_SUB_CAT"
-                elif item_class == "intervention_category":
-                    submval = item + " INTRV_CAT"
-                elif item_class == "intervention_subcategory":
-                    submval = item + " INTRV_SUB_CAT"
-                elif item_class == "event_category":
-                    submval = item + " EVNT_CAT"
-                elif item_class == "event_subcategory":
-                    submval = item + " EVNT_SUB_CAT"
-                else:
-                    submval = item
-                if column == "sdtm_cat" and item in self.sdtm_cats:
-                    term_uid = self.sdtm_cats[item]
-                    self.log.info(
-                        f"Activity item '{item}' found underlying ct term with uid '{term_uid}' for item class '{item_class}'"
+                # This item links to a CT term
+                codelists_with_terms = (
+                    self._get_codelists_and_terms_for_item_class_and_domain(
+                        item_class, sdtm_domain
                     )
-                    term_uids.add(term_uid)
-                elif column == "sdtm_sub_cat" and item in self.sdtm_subcats:
-                    term_uid = self.sdtm_subcats[item]
-                    self.log.info(
-                        f"Activity item '{item}' found underlying ct term with uid '{term_uid}' for item class '{item_class}'"
+                )
+
+                if column in ["sdtm_variable", "sdtm_variable_name"]:
+                    # SDTM variable, the codelist is given by the "sdtm_codelist" or "stdm_codelist_name" column
+                    codelist = codelists_with_terms.get(sdtm_codelist)
+                    if codelist is None:
+                        self.log.warning(
+                            f"Activity item '{item}' can't find codelist '{sdtm_codelist}' for item class '{item_class} and domain '{sdtm_domain}'"
+                        )
+                        continue
+
+                    term = next(
+                        (term for term in codelist if term["submission_value"] == item),
+                        None,
                     )
-                    term_uids.add(term_uid)
-                elif item_class in terms_for_item_classes:
-                    terms = terms_for_item_classes[item_class]
-                    if submval in terms:
-                        term_uid = terms[submval]
+                    if term:
+                        term_uid = term["term_uid"]
+                        codelist_uid = codelist["uid"]
                         self.log.info(
                             f"Activity item '{item}' found underlying ct term with uid '{term_uid}' for item class '{item_class}'"
                         )
-                        term_uids.add(term_uid)
+                        terms.append(
+                            {"term_uid": term_uid, "codelist_uid": codelist_uid}
+                        )
                     else:
+                        self.log.warning(
+                            f"Activity item '{item}' can't find term in codelist '{sdtm_codelist}' for item class '{item_class}'"
+                        )
+
+                elif item_class_def is not None and len(codelists_with_terms) > 0:
+                    # All remaining cases, look for the term in the codelists linked to the item class
+                    self.log.debug(
+                        f"Activity item class '{item_class}' looking for underlying ct term for item '{item}'"
+                    )
+                    term_uid = None
+                    codelist_uid = None
+                    for cl_submval, codelist in codelists_with_terms.items():
+                        # For sdtm_cat and sdtm_sub_cat, make sure to use the appropriate codelist,
+                        # for example DECAT for domain DE.
+                        if column in ("sdtm_cat", "sdtm_sub_cat"):
+                            if not cl_submval.startswith(sdtm_domain):
+                                continue
+                        term = next(
+                            (
+                                term
+                                for term in codelist
+                                if term["submission_value"] == item
+                            ),
+                            None,
+                        )
+                        if term:
+                            term_uid = term["term_uid"]
+                            codelist_uid = codelist["uid"]
+                            self.log.info(
+                                f"Activity item '{item}' found underlying ct term with uid '{term_uid}' for item class '{item_class}'"
+                            )
+                            terms.append(
+                                {"term_uid": term_uid, "codelist_uid": codelist_uid}
+                            )
+                            break
+                    if not term_uid:
                         self.log.warning(
                             f"Activity item '{item}' from column '{column}' can't find underlying ct term for item class '{item_class}'"
                         )
-                        continue
-                elif column in ["sdtm_variable", "sdtm_variable_name"]:
-                    if sdtm_codelist not in self.terms_for_codelist_submval:
-                        self.log.info(
-                            f"Fetching terms for codelist with submission value '{sdtm_codelist}'"
-                        )
-                        cl_terms = self._get_submissionvalues_for_codelist(
-                            sdtm_codelist
-                        )
-                        if cl_terms is not None and len(cl_terms) == 0:
-                            cl_terms = None
-                        self.terms_for_codelist_submval[sdtm_codelist] = cl_terms
-
-                    available_terms = self.terms_for_codelist_submval[sdtm_codelist]
-                    if available_terms is None:
-                        self.log.warning(
-                            f"Activity item '{item}' can't find codelist '{sdtm_codelist}' for item class '{item_class}'"
-                        )
-                        continue
-                    if submval in available_terms:
-                        term_uid = available_terms[submval]
-                        self.log.info(
-                            f"Activity item '{item}' found ct term for SDTM variable with submval '{submval}' with uid '{term_uid}' in codelist '{sdtm_codelist}' for item class '{item_class}'"
-                        )
-                        term_uids.add(term_uid)
-                    else:
-                        self.log.warning(
-                            f"Activity item '{item}' can't find ct term for SDTM variable with submval '{submval}' in codelist '{sdtm_codelist}' for item class '{item_class}'"
-                        )
-                        continue
                 else:
                     self.log.warning(
                         f"Activity item '{item}' from column '{column}' can't find underlying ct term for item class '{item_class}'"
                     )
-                    continue
         item_data = {
-            "activity_item_class_uid": self.all_activity_item_classes.get(item_class),
-            "ct_term_uids": set(),
+            "activity_item_class_uid": self.all_activity_item_classes_by_name.get(
+                item_class
+            ),
+            "ct_terms": [],
             "unit_definition_uids": set(),
             "is_adam_param_specific": False,
-            "odm_item_uids": [],
+            "odm_form_uid": None,
+            "odm_item_group_uid": None,
+            "odm_item_uid": None,
         }
-        if len(unit_uids) > 0 and len(term_uids) > 0:
+        if len(unit_uids) > 0 and len(terms) > 0:
             self.log.warning(
                 f"Activity Item '{items}' can't link both to CTTerm and UnitDefinition, ignoring the units"
             )
-        if len(term_uids) > 0:
-            item_data["ct_term_uids"] = term_uids
+        if len(terms) > 0:
+            item_data["ct_terms"] = terms
         elif len(unit_uids) > 0:
             item_data["unit_definition_uids"] = unit_uids
         else:
@@ -1588,11 +1488,19 @@ class Activities(BaseImporter):
         return item_data
 
     def _are_items_equal(self, new, existing):
+        existing_terms = set(
+            (term["term_uid"], term["codelist_uid"])
+            for term in existing.get("ct_terms")
+        )
+        new_terms = set(
+            (term["term_uid"], term["codelist_uid"]) for term in new.get("ct_terms")
+        )
         result = (
             existing.get("activity_item_class_uid")
             == new.get("activity_item_class_uid")
-            and existing.get("unit_definition_uids") == new.get("unit_definition_uids")
-            and existing.get("ct_term_uids") == new.get("ct_term_uids")
+            and set(existing.get("unit_definition_uids", []))
+            == set(new.get("unit_definition_uids", []))
+            and existing_terms == new_terms
         )
         return result
 
@@ -1609,7 +1517,18 @@ class Activities(BaseImporter):
         existing["unit_definition_uids"] = (
             existing["unit_definition_uids"] | additional["unit_definition_uids"]
         )
-        existing["ct_term_uids"] = existing["ct_term_uids"] | additional["ct_term_uids"]
+        existing_terms = set(
+            (term["term_uid"], term["codelist_uid"])
+            for term in existing.get("ct_terms")
+        )
+        new_terms = set(
+            (term["term_uid"], term["codelist_uid"])
+            for term in additional.get("ct_terms")
+        )
+        joined_terms = existing_terms | new_terms
+        existing["ct_terms"] = [
+            {"term_uid": term[0], "codelist_uid": term[1]} for term in joined_terms
+        ]
 
     async def async_run(self):
 
@@ -1624,6 +1543,7 @@ class Activities(BaseImporter):
         timeout = aiohttp.ClientTimeout(None)
         conn = aiohttp.TCPConnector(limit=4, force_close=True)
         async with aiohttp.ClientSession(timeout=timeout, connector=conn) as session:
+            # Activity Groups
             if (
                 self._limit_import_to is None
                 or ACTIVITY_GROUPS in self._limit_import_to
@@ -1634,6 +1554,7 @@ class Activities(BaseImporter):
             else:
                 self.log.info("Skipping activity groups import")
 
+            # Activity Subgroups
             if (
                 self._limit_import_to is None
                 or ACTIVITY_SUBGROUPS in self._limit_import_to
@@ -1647,17 +1568,17 @@ class Activities(BaseImporter):
             # The full import may time a while, we refresh the auth token between steps
             # to make sure it does not expire while the import is running.
 
+            # Activities
             if self._limit_import_to is None or ACTIVITIES in self._limit_import_to:
-                self.refresh_auth()
                 await self.handle_activities(mdr_migration_activity_instances, session)
             else:
                 self.log.info("Skipping activities import")
 
+            # Activity Instance Classes
             if (
                 self._limit_import_to is None
                 or ACTIVITY_INSTANCE_CLASSES in self._limit_import_to
             ):
-                self.refresh_auth()
                 await self.handle_activity_instance_classes(
                     mdr_migration_activity_instance_classes, session
                 )
@@ -1667,22 +1588,22 @@ class Activities(BaseImporter):
             else:
                 self.log.info("Skipping activity instance classes import")
 
+            # Activity Item Classes
             if (
                 self._limit_import_to is None
                 or ACTIVITY_ITEM_CLASSES in self._limit_import_to
             ):
-                self.refresh_auth()
                 await self.handle_activity_item_classes(
                     mdr_migration_activity_item_classes, session
                 )
             else:
                 self.log.info("Skipping activity item classes import")
 
+            # Activity Instances
             if (
                 self._limit_import_to is None
                 or ACTIVITY_INSTANCES in self._limit_import_to
             ):
-                self.refresh_auth()
                 await self.handle_activity_instances(
                     mdr_migration_activity_instances, session
                 )

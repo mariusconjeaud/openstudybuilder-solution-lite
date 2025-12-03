@@ -13,16 +13,20 @@ from clinical_mdr_api.tests.unit.domain.utils import AUTHOR_ID, random_str
 
 def create_random_ct_codelist_attributes_vo(
     catalogue: str = "Catalogue",
+    submission_value: str | None = None,
 ) -> CTCodelistAttributesVO:
+    if submission_value is None:
+        submission_value = random_str()
     random_ct_codelist_attributes_vo = CTCodelistAttributesVO.from_repository_values(
-        catalogue_name=catalogue,
+        catalogue_names=[catalogue],
         name=random_str(),
         parent_codelist_uid=None,
         child_codelist_uids=[],
-        submission_value=random_str(),
+        submission_value=submission_value,
         preferred_term=random_str(),
         definition=random_str(),
         extensible=True,
+        ordinal=False,
     )
     return random_ct_codelist_attributes_vo
 
@@ -56,7 +60,9 @@ class TestCTCodelistAttributeAR(unittest.TestCase):
 
         # then
         self.assertIsNotNone(ct_codelist_attributes_ar.ct_codelist_vo.name)
-        self.assertIsNotNone(ct_codelist_attributes_ar.ct_codelist_vo.catalogue_name)
+        self.assertGreater(
+            len(ct_codelist_attributes_ar.ct_codelist_vo.catalogue_names), 0
+        )
         self.assertIsNotNone(ct_codelist_attributes_ar.ct_codelist_vo.submission_value)
         self.assertIsNotNone(ct_codelist_attributes_ar.ct_codelist_vo.preferred_term)
         self.assertIsNotNone(ct_codelist_attributes_ar.ct_codelist_vo.definition)
@@ -128,9 +134,9 @@ class TestCTCodelistAttributeAR(unittest.TestCase):
             ct_codelist_attributes_ar.item_metadata.change_description, "Test"
         )
         self.assertEqual(ct_codelist_attributes_ar.name, codelist_name_vo.name)
-        self.assertEqual(
-            ct_codelist_attributes_ar.ct_codelist_vo.catalogue_name,
-            codelist_name_vo.catalogue_name,
+        self.assertListEqual(
+            ct_codelist_attributes_ar.ct_codelist_vo.catalogue_names,
+            codelist_name_vo.catalogue_names,
         )
         self.assertEqual(
             ct_codelist_attributes_ar.ct_codelist_vo.submission_value,

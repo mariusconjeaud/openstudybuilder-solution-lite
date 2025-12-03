@@ -22,15 +22,15 @@ from common.exceptions import NotFoundException, ValidationException
 class StandardDataModelRepository(ABC):
     root_class = type
     value_class = type
-    return_model = type
+    return_model: type
 
-    def _create_base_model_from_cypher_result(self, input_dict: dict):
+    def _create_base_model_from_cypher_result(self, input_dict: dict[str, Any]):
         return self.return_model.from_repository_output(input_dict)
 
     def specific_header_match_clause(self) -> str | None:
         return None
 
-    def sort_by(self) -> dict | None:
+    def sort_by(self) -> dict[str, bool] | None:
         return None
 
     @abstractmethod
@@ -42,14 +42,14 @@ class StandardDataModelRepository(ABC):
         """
 
     # pylint: disable=unused-argument
-    def union_match_clause(self, _: dict) -> str | None:
+    def union_match_clause(self, _: dict[Any, Any]) -> str | None:
         return None
 
     def find_by_uid(
         self,
         uid: str,
         **kwargs,
-    ) -> BaseModel:
+    ) -> BaseModel | None:
         if not uid:
             return None
 
@@ -76,7 +76,7 @@ class StandardDataModelRepository(ABC):
         )
 
         NotFoundException.raise_if(
-            len(extracted_items) == 0, self.return_model.__class__, uid
+            len(extracted_items) == 0, str(self.return_model.__class__), uid
         )
         ValidationException.raise_if(
             len(extracted_items) > 1,
@@ -141,9 +141,9 @@ class StandardDataModelRepository(ABC):
 
     def create_query_filter_statement(
         self,
-    ) -> tuple[str, dict]:
-        filter_parameters = []
-        filter_query_parameters = {}
+    ) -> tuple[str, dict[Any, Any]]:
+        filter_parameters: list[Any] = []
+        filter_query_parameters: dict[Any, Any] = {}
         filter_statements = " AND ".join(filter_parameters)
         filter_statements = (
             "WHERE " + filter_statements if len(filter_statements) > 0 else ""
@@ -152,11 +152,11 @@ class StandardDataModelRepository(ABC):
 
     def find_all(
         self,
-        sort_by: dict | None = None,
+        sort_by: dict[str, bool] | None = None,
         page_number: int = 1,
         page_size: int = 0,
-        filter_by: dict | None = None,
-        filter_operator: FilterOperator | None = FilterOperator.AND,
+        filter_by: dict[str, dict[str, Any]] | None = None,
+        filter_operator: FilterOperator = FilterOperator.AND,
         total_count: bool = False,
         **kwargs,
     ) -> tuple[list[BaseModel], int]:
@@ -187,14 +187,18 @@ class StandardDataModelRepository(ABC):
             match_clause=match_clause,
             alias_clause=alias_clause,
             union_match_clause=(
-                self.union_match_clause(filter_query_parameters) + filter_statements
-                if self.union_match_clause(filter_query_parameters)
+                _union_match_clause + filter_statements
+                if (
+                    _union_match_clause := self.union_match_clause(
+                        filter_query_parameters
+                    )
+                )
                 else None
             ),
             sort_by=self.sort_by() if self.sort_by() else sort_by,
             page_number=page_number,
             page_size=page_size,
-            filter_by=FilterDict(elements=filter_by),
+            filter_by=FilterDict.model_validate({"elements": filter_by}),
             filter_operator=filter_operator,
             total_count=total_count,
             return_model=self.return_model,
@@ -222,9 +226,9 @@ class StandardDataModelRepository(ABC):
     def get_distinct_headers(
         self,
         field_name: str,
-        search_string: str | None = "",
-        filter_by: dict | None = None,
-        filter_operator: FilterOperator | None = FilterOperator.AND,
+        search_string: str = "",
+        filter_by: dict[str, dict[str, Any]] | None = None,
+        filter_operator: FilterOperator = FilterOperator.AND,
         page_size: int = 10,
         **kwargs,
     ) -> list[Any]:
@@ -259,7 +263,7 @@ class StandardDataModelRepository(ABC):
 
         # Use Cypher query class to use reusable helper methods
         query = CypherQueryBuilder(
-            filter_by=FilterDict(elements=filter_by),
+            filter_by=FilterDict.model_validate({"elements": filter_by}),
             filter_operator=filter_operator,
             match_clause=match_clause,
             alias_clause=alias_clause,

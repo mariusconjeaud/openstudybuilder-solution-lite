@@ -18,7 +18,10 @@ Feature: Library - Concepts - Units (part 2)
         Then A form for unit creation is opened
         When Unit mandatory data is filled in
         Then Use complex unit conversion option is enabled
-        And Unit creation is saved without errors
+        And Create unit request is intercepted
+        And Form save button is clicked
+        And The pop up displays 'Unit added'
+        And User waits for unit request to finish
 
     Scenario: [Actions][Edit][Toggle][On/Off] Enable/Disable Complex Unit Conversion for Existing Unit
         Given The '/library/units' page is opened
@@ -27,11 +30,17 @@ Feature: Library - Concepts - Units (part 2)
         And The 'Edit' option is clicked from the three dot menu list
         Then A form for unit edition is opened
         And Use complex unit conversion option is enabled
-        And Unit editon is saved without errors
+        And Update unit request is intercepted
+        And Form save button is clicked
+        And The pop up displays 'Unit updated'
+        And User waits for unit request to finish
         And The 'Edit' option is clicked from the three dot menu list
         And The Use complex unit conversion toggle is set to true
         And Use complex unit conversion option is disabled
-        And Unit editon is saved without errors
+        And Update unit request is intercepted
+        And Form save button is clicked
+        And The pop up displays 'Unit updated'
+        And User waits for unit request to finish
         And The 'Edit' option is clicked from the three dot menu list
         And The Use complex unit conversion toggle is set to false
 
@@ -41,7 +50,10 @@ Feature: Library - Concepts - Units (part 2)
         Then A form for unit creation is opened
         And The Conversion factor to master field is blank
         When Unit mandatory data is filled in
-        Then Unit creation is saved without errors
+        And Create unit request is intercepted
+        And Form save button is clicked
+        And The pop up displays 'Unit added'
+        And User waits for unit request to finish
         And The created unit is found in table  
 
     Scenario: [Actions][Edit][Numeric conversion factor] Enter Numeric Value for Conversion Factor to Master for Existing Unit
@@ -51,7 +63,10 @@ Feature: Library - Concepts - Units (part 2)
         And The 'Edit' option is clicked from the three dot menu list
         Then A form for unit edition is opened
         When Conversion factor to master is filled with numeric value
-        And Unit editon is saved without errors  
+        And Update unit request is intercepted
+        And Form save button is clicked
+        And The pop up displays 'Unit updated'
+        And User waits for unit request to finish
 
     Scenario: [Create][Numeric conversion factor] Verify numeric Conversion Factor to Master for New Unit
         Given The '/library/units' page is opened
@@ -59,7 +74,10 @@ Feature: Library - Concepts - Units (part 2)
         Then A form for unit creation is opened
         When Unit mandatory data is filled in
         And Conversion factor to master is filled with numeric value
-        Then Unit creation is saved without errors
+        And Create unit request is intercepted
+        And Form save button is clicked
+        And The pop up displays 'Unit added'
+        And User waits for unit request to finish
   
     Scenario: [Actions][Edit][Non-numeric conversion factor] Verify Error for Non-Numeric Conversion Factor to Master for Existing Unit
         Given The '/library/units' page is opened
@@ -68,7 +86,8 @@ Feature: Library - Concepts - Units (part 2)
         And The 'Edit' option is clicked from the three dot menu list
         Then A form for unit edition is opened
         When Conversion factor to master is filled with text value
-        Then An error message appears when I save the unit
+        And Form save button is clicked
+        And The pop up displays 'Data validation error'
 
     Scenario: [Create][Non-numeric conversion factor] Verify Error for Non-Numeric Conversion Factor to Master for New Unit
         Given The '/library/units' page is opened
@@ -76,5 +95,6 @@ Feature: Library - Concepts - Units (part 2)
         Then A form for unit creation is opened
         When Unit mandatory data is filled in
         And Conversion factor to master is filled with text value
-        Then An error message appears when I save the unit
+        And Form save button is clicked
+        And The pop up displays 'Data validation error'
         And The unit is not saved

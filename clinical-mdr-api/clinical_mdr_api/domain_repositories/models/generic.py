@@ -1,6 +1,6 @@
 import datetime
 
-import neo4j
+import neo4j.time
 from neomodel import (
     BooleanProperty,
     DateTimeProperty,
@@ -18,7 +18,7 @@ from clinical_mdr_api.domain_repositories.models._utils import (
     convert_to_tz_aware_datetime,
 )
 from clinical_mdr_api.domains.enums import LibraryItemStatus
-from common.config import NUMBER_OF_UID_DIGITS
+from common.config import settings
 from common.exceptions import NotFoundException
 from common.utils import convert_to_datetime
 
@@ -66,6 +66,9 @@ class ClinicalMdrNodeWithUID(ClinicalMdrNode):
     __abstract_node__ = True
     uid = StringProperty(unique_index=True)
 
+    def __hash__(self):
+        return hash(self.uid)
+
     @classmethod
     def get_next_free_uid_and_increment_counter(cls) -> str:
         """
@@ -74,7 +77,7 @@ class ClinicalMdrNodeWithUID(ClinicalMdrNode):
         """
         object_name = cls.__name__.removesuffix("Root")
 
-        return str(
+        digits = str(
             db.cypher_query(
                 """
         MERGE (m:Counter{{counterId:'{LABEL}Counter'}})
@@ -84,10 +87,11 @@ class ClinicalMdrNodeWithUID(ClinicalMdrNode):
         WITH toInteger(newValue) as uid_number
         RETURN "{LABEL}_"+apoc.text.lpad(""+(uid_number), {number_of_digits}, "0")
         """.format(
-                    LABEL=object_name, number_of_digits=NUMBER_OF_UID_DIGITS
+                    LABEL=object_name, number_of_digits=settings.number_of_uid_digits
                 )
             )[0][0][0]
         )
+        return digits
 
     @classmethod
     def generate_node_uids_if_not_present(cls) -> None:
@@ -124,7 +128,7 @@ class ClinicalMdrNodeWithUID(ClinicalMdrNode):
         """.format(
                 LABEL=object_name,
                 NODE_LABEL=node_label,
-                number_of_digits=NUMBER_OF_UID_DIGITS,
+                number_of_digits=settings.number_of_uid_digits,
             )
         )
 
@@ -151,7 +155,11 @@ class ClinicalMdrNodeWithUID(ClinicalMdrNode):
                     LABEL=object_name
                 )
             )[0][0][0]
-            self.uid = str(object_name) + "_" + str(new_uid).zfill(NUMBER_OF_UID_DIGITS)
+            self.uid = (
+                str(object_name)
+                + "_"
+                + str(new_uid).zfill(settings.number_of_uid_digits)
+            )
         return super().save()
 
 
@@ -200,8 +208,8 @@ class VersionRelationship(ClinicalMdrRel):
     `LATEST_DRAFT` or `LATEST_FINAL`.
     """
 
-    start_date = ZonedDateTimeProperty()
-    end_date = ZonedDateTimeProperty()
+    start_date: datetime.datetime = ZonedDateTimeProperty()
+    end_date: datetime.datetime | None = ZonedDateTimeProperty()
     change_description = StringProperty()
     version = StringProperty()
     status = StringProperty()
@@ -272,7 +280,7 @@ class VersionRoot(ClinicalMdrNodeWithUID):
         model=TemplateUsesParameterRelation,
     )
 
-    def get_final_before(self, date_before: datetime):
+    def get_final_before(self, date_before: datetime.datetime):
         past_final_versions = self.has_version.match(
             start_date__lte=date_before,
             status=LibraryItemStatus.FINAL.value,
@@ -283,7 +291,7 @@ class VersionRoot(ClinicalMdrNodeWithUID):
             return past_final_versions[0]
         return None
 
-    def get_retired_before(self, date_before: datetime):
+    def get_retired_before(self, date_before: datetime.datetime):
         past_retired_versions = self.has_version.match(
             start_date__lte=date_before,
             status=LibraryItemStatus.RETIRED.value,
@@ -294,7 +302,7 @@ class VersionRoot(ClinicalMdrNodeWithUID):
             return past_retired_versions[0]
         return None
 
-    def get_value_for_version(self, version: str):
+    def get_value_for_version(self, version: str | None):
         matching_values = self.has_version.match(version=version)
         if len(matching_values) > 0:
             return matching_values[0]

@@ -68,6 +68,7 @@
       fixed-header
       :history-data-fetcher="fetchVisitsHistory"
       :history-title="$t('StudyVisitTable.global_history_title')"
+      :loading="tableLoading"
       @filter="fetchStudyVisits"
     >
       <template #headerCenter>
@@ -84,20 +85,8 @@
           {{ $t('StudyVisitTable.close_edit_mode') }}
         </v-btn>
       </template>
-      <template #actions="{ selected, showSelectBoxes }">
+      <template #actions>
         <v-progress-circular v-show="loading" indeterminate color="primary" />
-        <v-btn
-          v-show="!loading && showSelectBoxes"
-          size="small"
-          class="mr-2"
-          :title="$t('GroupStudyVisits.title')"
-          :disabled="
-            !accessGuard.checkPermission($roles.STUDY_WRITE) ||
-            studiesGeneralStore.selectedStudyVersion !== null
-          "
-          icon="mdi-arrow-expand-horizontal"
-          @click="groupSelectedVisits(selected)"
-        />
         <v-btn
           v-show="!loading"
           class="ml-2"
@@ -211,7 +200,7 @@
           <v-select
             v-model="item.repeating_frequency_uid"
             :items="frequencies"
-            item-title="name.sponsor_preferred_name"
+            item-title="sponsor_preferred_name"
             item-value="term_uid"
             density="compact"
             :disabled="
@@ -348,7 +337,7 @@
             v-model="item.visit_contact_mode_uid"
             class="cellWidth"
             :items="contactModes"
-            item-title="name.sponsor_preferred_name"
+            item-title="sponsor_preferred_name"
             item-value="term_uid"
             density="compact"
             :disabled="item.disabled && itemsDisabled"
@@ -379,7 +368,7 @@
             v-model="item.time_reference_uid"
             class="cellWidth"
             :items="timeReferences"
-            item-title="name.sponsor_preferred_name"
+            item-title="sponsor_preferred_name"
             item-value="term_uid"
             density="compact"
             :disabled="item.disabled && itemsDisabled"
@@ -523,14 +512,6 @@
         @close="closeVisitHistory"
       />
     </v-dialog>
-    <v-dialog v-model="showCollapsibleGroupForm" persistent max-width="1000px">
-      <CollapsibleVisitGroupForm
-        :open="showCollapsibleGroupForm"
-        :visits="visitSelection"
-        @close="closeCollapsibleVisitGroupForm"
-        @created="collapsibleVisitGroupCreated"
-      />
-    </v-dialog>
     <ConfirmDialog ref="confirmRef" :text-cols="6" :action-cols="5" />
   </div>
 </template>
@@ -544,7 +525,6 @@ import NNTable from '@/components/tools/NNTable.vue'
 import StudyVisitForm from './StudyVisitForm.vue'
 import BarChart from '@/components/tools/BarChart.vue'
 import BubbleChart from '@/components/tools/BubbleChart.vue'
-import CollapsibleVisitGroupForm from './CollapsibleVisitGroupForm.vue'
 import ConfirmDialog from '@/components/tools/ConfirmDialog.vue'
 import CTTermDisplay from '@/components/tools/CTTermDisplay.vue'
 import visitConstants from '@/constants/visits'
@@ -600,7 +580,6 @@ const actions = ref([
         visitConstants.CLASS_NON_VISIT,
         visitConstants.CLASS_UNSCHEDULED_VISIT,
         visitConstants.CLASS_MANUALLY_DEFINED_VISIT,
-        visitConstants.CLASS_SPECIAL_VISIT,
       ].includes(item.visit_class) &&
       item.visit_subclass !==
         visitConstants.SUBCLASS_ANCHOR_VISIT_IN_GROUP_OF_SUBV,
@@ -610,8 +589,7 @@ const actions = ref([
   {
     label: t('_global.history'),
     icon: 'mdi-history',
-    condition: (item) =>
-      item.visit_class === visitConstants.CLASS_SINGLE_VISIT && !editMode.value,
+    condition: () => !editMode.value,
     click: openVisitHistory,
   },
 ])
@@ -867,12 +845,11 @@ const editMode = ref(false)
 const contactModes = ref([])
 const itemsDisabled = ref(false)
 const timeReferences = ref([])
-const showCollapsibleGroupForm = ref(false)
 const visitHistoryItems = ref([])
-const visitSelection = ref([])
 const fetchedStudyEpochs = ref([])
 const timeLineVisits = ref([])
 const frequencies = ref([])
+const tableLoading = ref(false)
 const visitClasses = [
   {
     label: t('StudyVisitForm.scheduled_visit'),
@@ -967,13 +944,13 @@ onMounted(() => {
     .then((resp) => {
       preferredTimeUnits.value = resp.data.items
     })
-  terms.getByCodelist('contactModes').then((resp) => {
+  terms.getTermsByCodelist('contactModes').then((resp) => {
     contactModes.value = resp.data.items
   })
-  terms.getByCodelist('timepointReferences').then((resp) => {
+  terms.getTermsCodelist('timepointReferences').then((resp) => {
     timeReferences.value = resp.data.items
   })
-  codelists.getByCodelist('repeatingVisitFrequency').then((resp) => {
+  codelists.getTermsByCodelist('repeatingVisitFrequency').then((resp) => {
     frequencies.value = resp.data.items
   })
   if (studiesGeneralStore.studyPreferredTimeUnit) {
@@ -1026,6 +1003,7 @@ function transformItems(items) {
       newItem.is_global_anchor_visit
     )
     newItem.show_visit = dataFormating.yesno(newItem.show_visit)
+    newItem.visit_window = `${item.min_visit_window_value} / ${item.max_visit_window_value} ${getUnitName(item.visit_window_unit_uid)}`
     result.push(newItem)
   }
   return result
@@ -1080,9 +1058,25 @@ function cancelVisitEditing() {
   itemsDisabled.value = false
 }
 
-function openDuplicateForm(item) {
-  selectedStudyVisit.value = item
-  duplicateForm.value = true
+async function openDuplicateForm(item) {
+  if (item.visit_class === visitConstants.CLASS_SPECIAL_VISIT) {
+    const newVisit = JSON.parse(JSON.stringify(item))
+    delete newVisit.visit_number
+    delete newVisit.unique_visit_number
+    delete newVisit.visit_short_name
+    delete newVisit.visit_name
+    await epochsStore.addStudyVisit({
+      studyUid: studiesGeneralStore.selectedStudy.uid,
+      input: newVisit,
+    })
+    eventBusEmit('notification', {
+      msg: t('StudyVisitForm.visit_duplicated'),
+    })
+    tableRef.value.filterTable()
+  } else {
+    selectedStudyVisit.value = item
+    duplicateForm.value = true
+  }
 }
 
 function closeDuplicateForm() {
@@ -1133,10 +1127,12 @@ function closeForm() {
 }
 
 async function deleteVisit(item) {
+  tableLoading.value = true
   await epochsStore.deleteStudyVisit({
     studyUid: studiesGeneralStore.selectedStudy.uid,
     studyVisitUid: item.uid,
   })
+  tableLoading.value = false
   eventBusEmit('notification', { msg: t('StudyVisitTable.delete_success') })
   tableRef.value.filterTable()
 }
@@ -1267,43 +1263,6 @@ function buildChart() {
   loading.value = false
   chartsKey.value += 1
   barChartKey.value += 1
-}
-
-function groupSelectedVisits(selection) {
-  if (!selection.length) {
-    eventBusEmit('notification', {
-      msg: t('GroupStudyVisits.no_selection'),
-      type: 'warning',
-    })
-    return
-  }
-  const visitUids = selection.map((item) => item.uid)
-  studyEpochsApi
-    .createCollapsibleVisitGroup(
-      studiesGeneralStore.selectedStudy.uid,
-      visitUids
-    )
-    .then(() => {
-      collapsibleVisitGroupCreated()
-    })
-    .catch((err) => {
-      if (err.response.status === 400) {
-        visitSelection.value = selection
-        showCollapsibleGroupForm.value = true
-      }
-    })
-}
-
-function closeCollapsibleVisitGroupForm() {
-  showCollapsibleGroupForm.value = false
-  visitSelection.value = []
-}
-
-function collapsibleVisitGroupCreated() {
-  eventBusEmit('notification', {
-    msg: t('CollapsibleVisitGroupForm.creation_success'),
-  })
-  tableRef.value.filterTable()
 }
 
 function updatePreferredTimeUnit(value) {
