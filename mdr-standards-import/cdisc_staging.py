@@ -2241,12 +2241,6 @@ def main():
         action="store_true",
         help="Clear the CDISC staging database before loading new data.",
     )
-    args = parser.parse_args()
-    clear_staging_db = args.clear_staging_db
-
-    LOGGER.info(f"Creating database '{NEO4J_DATABASE}' if it does not exist")
-    db_driver = get_neo4j_driver(database=None)
-    create_database(db_driver, NEO4J_DATABASE, clear_db=clear_staging_db)
 
     db_driver = get_neo4j_driver(database=NEO4J_DATABASE)
 
